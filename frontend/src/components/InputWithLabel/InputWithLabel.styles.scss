@@ -1,0 +1,113 @@
+.input-with-label {
+	display: flex;
+	flex-direction: row;
+
+	border-radius: 2px 0px 0px 2px;
+
+	.label {
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: 0.56px;
+
+		max-width: 150px;
+		min-width: 60px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		padding: 0px 8px;
+
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		font-weight: var(--font-weight-light);
+	}
+
+	.input {
+		flex: 1;
+		min-width: 150px;
+		font-family: 'Space Mono', monospace !important;
+
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--bg-slate-400);
+
+		border-right: none;
+		border-left: none;
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
+		font-size: 12px !important;
+		line-height: 27px;
+		&::placeholder {
+			color: var(--bg-vanilla-400) !important;
+			font-size: 12px !important;
+		}
+		&[type='number']::-webkit-inner-spin-button,
+		&[type='number']::-webkit-outer-spin-button {
+			-webkit-appearance: none;
+			-moz-appearance: none;
+			appearance: none;
+			margin: 0;
+		}
+	}
+
+	.close-btn {
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		height: 38px;
+		width: 38px;
+	}
+
+	&.labelAfter {
+		.input {
+			border-radius: 0px 2px 2px 0px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+		}
+
+		.label {
+			border-left: none;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
+		}
+	}
+}
+
+.lightMode {
+	.input-with-label {
+		.label {
+			color: var(--bg-ink-500) !important;
+
+			border: 1px solid var(--bg-vanilla-300) !important;
+			background: var(--bg-vanilla-100) !important;
+		}
+
+		.input {
+			border: 1px solid var(--bg-vanilla-300) !important;
+			background: var(--bg-vanilla-100) !important;
+		}
+
+		.close-btn {
+			border: 1px solid var(--bg-vanilla-300) !important;
+			background: var(--bg-vanilla-100) !important;
+		}
+
+		&.labelAfter {
+			.input {
+				border: 1px solid var(--bg-vanilla-300) !important;
+				background: var(--bg-vanilla-100) !important;
+			}
+		}
+	}
+}

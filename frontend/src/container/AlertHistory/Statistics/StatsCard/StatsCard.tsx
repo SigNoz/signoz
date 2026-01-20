@@ -135,8 +135,8 @@ function StatsCard({
 				/>
 			</div>
 
-			<div className="stats-card__graph">
-				<div className="graph">
+			<div className="stats-card__alert-history-graph">
+				<div className="alert-history-graph">
 					{!isEmpty && timeSeries.length > 1 && (
 						<StatsGraph timeSeries={timeSeries} changeDirection={changeDirection} />
 					)}

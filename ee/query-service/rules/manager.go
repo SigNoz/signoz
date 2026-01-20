@@ -3,12 +3,16 @@ package rules
 import (
 	"context"
 	"fmt"
+
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 
@@ -18,16 +22,23 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	var task baserules.Task
 
 	ruleId := baserules.RuleIdFromTaskName(opts.TaskName)
-	if opts.Rule.RuleType == baserules.RuleTypeThreshold {
+	evaluation, err := opts.Rule.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
+	}
+	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
-			opts.FF,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
+			opts.Querier,
+			opts.SLogger,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -37,17 +48,21 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
-	} else if opts.Rule.RuleType == baserules.RuleTypeProm {
+	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		pr, err := baserules.NewPromRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
-			opts.Logger,
+			opts.SLogger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.Prometheus,
+			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
@@ -57,17 +72,22 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
-	} else if opts.Rule.RuleType == baserules.RuleTypeAnomaly {
+	} else if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
 		ar, err := NewAnomalyRule(
 			ruleId,
+			opts.OrgID,
 			opts.Rule,
-			opts.FF,
 			opts.Reader,
+			opts.Querier,
+			opts.SLogger,
 			opts.Cache,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
 			return task, err
@@ -76,10 +96,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, ar)
 
 		// create anomaly rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else {
-		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, baserules.RuleTypeProm, baserules.RuleTypeThreshold)
+		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
 	}
 
 	return task, nil
@@ -104,65 +124,76 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, baserules.TestAlertPostFix)
+	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix)
 
 	var rule baserules.Rule
 	var err error
 
-	if parsedRule.RuleType == baserules.RuleTypeThreshold {
+	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
-		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
 		parsedRule.Labels[labels.RuleSourceLabel] = ""
 		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
 
 		// create a threshold rule
 		rule, err = baserules.NewThresholdRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
-			opts.FF,
 			opts.Reader,
-			opts.UseLogsNewSchema,
-			opts.UseTraceNewSchema,
+			opts.Querier,
+			opts.SLogger,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", alertname), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
 
-	} else if parsedRule.RuleType == baserules.RuleTypeProm {
+	} else if parsedRule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		rule, err = baserules.NewPromRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
-			opts.Logger,
+			opts.SLogger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.Prometheus,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", alertname), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
-	} else if parsedRule.RuleType == baserules.RuleTypeAnomaly {
+	} else if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
 		rule, err = NewAnomalyRule(
 			alertname,
+			opts.OrgID,
 			parsedRule,
-			opts.FF,
 			opts.Reader,
+			opts.Querier,
+			opts.SLogger,
 			opts.Cache,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
+			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
+			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
-			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", rule.Name()), zap.Error(err))
+			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", alertname), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
 	} else {
@@ -188,9 +219,9 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 // newTask returns an appropriate group for
 // rule type
-func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, ruleDB baserules.RuleDB) baserules.Task {
+func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
-		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, ruleDB)
+		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
 	}
-	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, ruleDB)
+	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
 }

@@ -91,8 +91,8 @@ function ClickHouseQueryBuilder({
 
 	return (
 		<QueryHeader
-			name={queryData.name}
-			disabled={queryData.disabled}
+			name={queryData?.name}
+			disabled={queryData?.disabled}
 			onDisable={handleDisable}
 			onDelete={handleRemoveQuery}
 			deletable={deletable}
@@ -101,7 +101,7 @@ function ClickHouseQueryBuilder({
 				language="sql"
 				height="200px"
 				onChange={handleUpdateEditor}
-				value={queryData.query}
+				value={queryData?.query}
 				onMount={(_, monaco): void => {
 					document.fonts.ready.then(() => {
 						monaco.editor.remeasureFonts();
@@ -125,8 +125,8 @@ function ClickHouseQueryBuilder({
 				onChange={handleUpdateInput}
 				name="legend"
 				size="middle"
-				defaultValue={queryData.legend}
-				value={queryData.legend}
+				defaultValue={queryData?.legend}
+				value={queryData?.legend}
 				addonBefore="Legend Format"
 			/>
 		</QueryHeader>

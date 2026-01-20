@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/metrics"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
@@ -230,6 +231,35 @@ func ClickHouseFormattedValue(v interface{}) string {
 	}
 }
 
+func ClickHouseFormattedMetricNames(v interface{}) string {
+	if name, ok := v.(string); ok {
+		transitionedMetrics := metrics.GetTransitionedMetric(name, !constants.IsDotMetricsEnabled)
+		if transitionedMetrics != name {
+			return ClickHouseFormattedValue([]interface{}{transitionedMetrics})
+		} else {
+			return ClickHouseFormattedValue([]interface{}{name})
+		}
+	}
+
+	return ClickHouseFormattedValue(v)
+}
+
+func AddBackTickToFormatTag(str string) string {
+	if strings.Contains(str, ".") || strings.Contains(str, "-") {
+		if strings.HasPrefix(str, "`") && strings.HasSuffix(str, "`") { return str } else { return "`" + str + "`" }
+	} else {
+		return str
+	}
+}
+
+func AddBackTickToFormatTags(inputs ...string) []string {
+	result := make([]string, len(inputs))
+	for i, str := range inputs {
+		result[i] = AddBackTickToFormatTag(str)
+	}
+	return result
+}
+
 func getPointerValue(v interface{}) interface{} {
 	switch x := v.(type) {
 	case *uint8:
@@ -274,7 +304,7 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -290,7 +320,7 @@ func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -320,4 +350,43 @@ func GetEpochNanoSecs(epoch int64) int64 {
 		}
 	}
 	return temp * int64(math.Pow(10, float64(19-count)))
+}
+
+func NormalizeMap(data map[string]uint64) map[string]float64 {
+	if len(data) == 0 {
+		return nil
+	}
+
+	var minVal, maxVal uint64
+	first := true
+	for _, v := range data {
+		if first {
+			minVal, maxVal = v, v
+			first = false
+		} else {
+			if v < minVal {
+				minVal = v
+			}
+			if v > maxVal {
+				maxVal = v
+			}
+		}
+	}
+
+	// If all values are the same, avoid division by zero
+	if minVal == maxVal {
+		normalized := make(map[string]float64)
+		for k := range data {
+			normalized[k] = 1.0 // or 0.0, depending on the convention
+		}
+		return normalized
+	}
+
+	// Normalize the values using min-max normalization
+	normalized := make(map[string]float64)
+	for k, v := range data {
+		normalized[k] = float64(v-minVal) / float64(maxVal-minVal)
+	}
+
+	return normalized
 }

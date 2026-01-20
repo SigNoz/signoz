@@ -23,7 +23,6 @@ import {
 const groupBy: BaseAutocompleteData[] = [
 	{
 		dataType: DataTypes.String,
-		isColumn: false,
 		key: WidgetKeys.Address,
 		type: MetricsType.Tag,
 	},
@@ -33,17 +32,16 @@ export const externalCallErrorPercent = ({
 	servicename,
 	legend,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -51,9 +49,10 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -62,9 +61,8 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.StatusCode,
+				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				dataType: DataTypes.Int64,
-				isColumn: false,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -76,9 +74,10 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -121,16 +120,15 @@ export const externalCallErrorPercent = ({
 export const externalCallDuration = ({
 	servicename,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: ExternalCallProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
 		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: '',
 	};
@@ -143,8 +141,9 @@ export const externalCallDuration = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -184,11 +183,11 @@ export const externalCallRpsByAddress = ({
 	servicename,
 	legend,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.Float64,
-			isColumn: true,
 			key: WidgetKeys.SignozExternalCallLatencyCount,
 			type: '',
 		},
@@ -199,8 +198,9 @@ export const externalCallRpsByAddress = ({
 				id: '',
 				key: {
 					dataType: DataTypes.String,
-					isColumn: false,
-					key: WidgetKeys.Service_name,
+					key: dotMetricsEnabled
+						? WidgetKeys.Service_name
+						: WidgetKeys.Service_name_norm,
 					type: MetricsType.Resource,
 				},
 				op: OPERATORS.IN,
@@ -231,16 +231,15 @@ export const externalCallDurationByAddress = ({
 	servicename,
 	legend,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
 		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: '',
 	};
@@ -252,8 +251,9 @@ export const externalCallDurationByAddress = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,

@@ -5,12 +5,12 @@ import { TabRoutes } from 'components/RouteTab/types';
 import history from 'lib/history';
 import { useLocation } from 'react-use';
 
-import { Hosts } from './constants';
+import { Hosts, Kubernetes } from './constants';
 
 export default function InfrastructureMonitoringPage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	const routes: TabRoutes[] = [Hosts];
+	const routes: TabRoutes[] = [Hosts, Kubernetes];
 
 	return (
 		<div className="infra-monitoring-module-container">

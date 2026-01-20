@@ -3,8 +3,8 @@ package cumulative
 import (
 	"fmt"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 // PrepareMetricQueryCumulativeTable prepares the query to be used for fetching metrics

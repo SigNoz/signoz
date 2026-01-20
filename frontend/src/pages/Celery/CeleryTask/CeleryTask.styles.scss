@@ -1,0 +1,44 @@
+.celery-task-container {
+	.celery-content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 16px;
+		align-items: flex-start;
+
+		.celery-content-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			width: 100%;
+
+			.celery-content-header-title {
+				color: var(--bg-vanilla-100);
+				font-family: Inter;
+				font-size: 24px;
+				font-style: normal;
+				font-weight: 700;
+				line-height: 32px;
+				margin: 0;
+			}
+
+			.celery-content-header-right {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.celery-task-container {
+		.celery-content {
+			.celery-content-header {
+				.celery-content-header-title {
+					color: var(--bg-slate-200);
+				}
+			}
+		}
+	}
+}

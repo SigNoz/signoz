@@ -3,24 +3,30 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './LogsFormatOptionsMenu.styles.scss';
 
-import { Button, Input, InputNumber, Tooltip, Typography } from 'antd';
+import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Check, ChevronLeft, ChevronRight, Minus, Plus, X } from 'lucide-react';
+import {
+	Check,
+	ChevronLeft,
+	ChevronRight,
+	Minus,
+	Plus,
+	Sliders,
+	X,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface LogsFormatOptionsMenuProps {
-	title: string;
 	items: any;
 	selectedOptionFormat: any;
 	config: OptionsMenuConfig;
 }
 
-export default function LogsFormatOptionsMenu({
-	title,
+function OptionsMenu({
 	items,
 	selectedOptionFormat,
 	config,
@@ -344,7 +350,7 @@ export default function LogsFormatOptionsMenu({
 					</div>
 					<div className="horizontal-line" />
 					<div className="menu-container">
-						<div className="title"> {title} </div>
+						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
 							{items.map(
@@ -410,18 +416,20 @@ export default function LogsFormatOptionsMenu({
 									)}
 
 									<div className="column-format">
-										{addColumn?.value?.map(({ key, id }) => (
-											<div className="column-name" key={id}>
+										{addColumn?.value?.map(({ name }) => (
+											<div className="column-name" key={name}>
 												<div className="name">
-													<Tooltip placement="left" title={key}>
-														{key}
+													<Tooltip placement="left" title={name}>
+														{name}
 													</Tooltip>
 												</div>
-												<X
-													className="delete-btn"
-													size={14}
-													onClick={(): void => addColumn.onRemove(id as string)}
-												/>
+												{addColumn?.value?.length > 1 && (
+													<X
+														className="delete-btn"
+														size={14}
+														onClick={(): void => addColumn.onRemove(name)}
+													/>
+												)}
 											</div>
 										))}
 										{addColumn && addColumn?.value?.length === 0 && (
@@ -439,3 +447,39 @@ export default function LogsFormatOptionsMenu({
 		</div>
 	);
 }
+
+function LogsFormatOptionsMenu({
+	items,
+	selectedOptionFormat,
+	config,
+}: LogsFormatOptionsMenuProps): JSX.Element {
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+	return (
+		<Popover
+			content={
+				<OptionsMenu
+					items={items}
+					selectedOptionFormat={selectedOptionFormat}
+					config={config}
+				/>
+			}
+			trigger="click"
+			placement="bottomRight"
+			arrow={false}
+			open={isPopoverOpen}
+			onOpenChange={setIsPopoverOpen}
+			rootClassName="format-options-popover"
+			destroyTooltipOnHide
+		>
+			<Tooltip title="Options">
+				<Button
+					className="periscope-btn ghost"
+					icon={<Sliders size={14} />}
+					data-testid="periscope-btn-format-options"
+				/>
+			</Tooltip>
+		</Popover>
+	);
+}
+
+export default LogsFormatOptionsMenu;

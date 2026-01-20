@@ -1,0 +1,63 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - depguard
+    - errcheck
+    - forbidigo
+    - govet
+    - iface
+    - ineffassign
+    - misspell
+    - nilnil
+    - sloglint
+    - unparam
+    - unused
+  settings:
+    depguard:
+      rules:
+        noerrors:
+          deny:
+            - pkg: errors
+              desc: Do not use errors package. Use github.com/SigNoz/signoz/pkg/errors instead.
+        nozap:
+          deny:
+            - pkg: go.uber.org/zap
+              desc: Do not use zap logger. Use slog instead.
+    forbidigo:
+      forbid:
+        - pattern: fmt.Errorf
+        - pattern: ^(fmt\.Print.*|print|println)$
+    iface:
+      enable:
+        - identical
+    sloglint:
+      no-mixed-args: true
+      kv-only: true
+      no-global: all
+      context: all
+      static-msg: true
+      key-naming-case: snake
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - pkg/query-service
+      - ee/query-service
+      - scripts/
+      - tmp/
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

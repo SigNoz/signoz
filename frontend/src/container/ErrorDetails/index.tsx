@@ -5,6 +5,7 @@ import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
@@ -137,9 +138,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
-		<>
-			<Typography>{errorDetail.exceptionType}</Typography>
-			<Typography>{errorDetail.exceptionMessage}</Typography>
+		<div className="error-details-container">
+			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
+			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
 			<Divider />
 
 			<EventContainer>
@@ -148,7 +149,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					<Typography>
 						{formatTimezoneAdjustedTimestamp(
 							errorDetail.timestamp,
-							'DD/MM/YYYY hh:mm:ss A (UTC Z)',
+							DATE_TIME_FORMATS.UTC_FULL,
 						)}
 					</Typography>
 				</div>
@@ -199,7 +200,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
 			</EditorContainer>
-		</>
+		</div>
 	);
 }
 

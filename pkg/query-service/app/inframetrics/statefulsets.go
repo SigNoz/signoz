@@ -5,28 +5,29 @@ import (
 	"math"
 	"sort"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
 var (
-	metricToUseForStatefulSets = "k8s_pod_cpu_utilization"
-	k8sStatefulSetNameAttrKey  = "k8s_statefulset_name"
+	metricToUseForStatefulSets = GetDotMetrics("k8s_pod_cpu_usage")
+	k8sStatefulSetNameAttrKey  = GetDotMetrics("k8s_statefulset_name")
 
 	metricNamesForStatefulSets = map[string]string{
-		"desired_pods":   "k8s_statefulset_desired_pods",
-		"available_pods": "k8s_statefulset_current_pods",
+		"desired_pods":   GetDotMetrics("k8s_statefulset_desired_pods"),
+		"available_pods": GetDotMetrics("k8s_statefulset_current_pods"),
 	}
 
 	statefulSetAttrsToEnrich = []string{
-		"k8s_statefulset_name",
-		"k8s_namespace_name",
-		"k8s_cluster_name",
+		GetDotMetrics("k8s_statefulset_name"),
+		GetDotMetrics("k8s_namespace_name"),
+		GetDotMetrics("k8s_cluster_name"),
 	}
 
 	queryNamesForStatefulSets = map[string][]string{
@@ -198,7 +199,7 @@ func (d *StatefulSetsRepo) getMetadataAttributes(ctx context.Context, req model.
 	return statefulSetAttrs, nil
 }
 
-func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, req model.StatefulSetListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, orgID valuer.UUID, req model.StatefulSetListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopStatefulSets(req)
 
 	queryNames := queryNamesForStatefulSets[req.OrderBy.ColumnName]
@@ -229,7 +230,7 @@ func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, req mode
 		topStatefulSetGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, topStatefulSetGroupsQueryRangeParams)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topStatefulSetGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -268,7 +269,7 @@ func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, req mode
 	return topStatefulSetGroups, allStatefulSetGroups, nil
 }
 
-func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.StatefulSetListRequest) (model.StatefulSetListResponse, error) {
+func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, orgID valuer.UUID, req model.StatefulSetListRequest) (model.StatefulSetListResponse, error) {
 	resp := model.StatefulSetListResponse{}
 
 	if req.Limit == 0 {
@@ -296,7 +297,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 
 	// add additional queries for stateful sets
 	for _, statefulSetQuery := range builderQueriesForStatefulSets {
-		query.CompositeQuery.BuilderQueries[statefulSetQuery.QueryName] = statefulSetQuery
+		query.CompositeQuery.BuilderQueries[statefulSetQuery.QueryName] = statefulSetQuery.Clone()
 	}
 
 	for _, query := range query.CompositeQuery.BuilderQueries {
@@ -320,7 +321,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 		return resp, err
 	}
 
-	topStatefulSetGroups, allStatefulSetGroups, err := d.getTopStatefulSetGroups(ctx, req, query)
+	topStatefulSetGroups, allStatefulSetGroups, err := d.getTopStatefulSetGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -354,7 +355,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 		}
 	}
 
-	queryResponse, _, err := d.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
@@ -421,7 +422,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := statefulSetAttrs[record.StatefulSetName]; ok {
+			if _, ok := statefulSetAttrs[record.StatefulSetName]; ok && record.StatefulSetName != "" {
 				record.Meta = statefulSetAttrs[record.StatefulSetName]
 			}
 
@@ -439,6 +440,8 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 	}
 	resp.Total = len(allStatefulSetGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

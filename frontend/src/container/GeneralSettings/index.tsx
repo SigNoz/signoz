@@ -1,15 +1,15 @@
 import { Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
+import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';
 import Spinner from 'components/Spinner';
+import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';
 import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
-import AppReducer from 'types/reducer/app';
 
 import GeneralSettingsContainer from './GeneralSettings';
 
@@ -17,9 +17,13 @@ type TRetentionAPIReturn<T extends TTTLType> = Promise<
 	SuccessResponse<GetRetentionPeriodAPIPayloadProps<T>> | ErrorResponse
 >;
 
+type TRetentionAPIReturnV2<T extends TTTLType> = Promise<
+	SuccessResponseV2<GetRetentionPeriodAPIPayloadProps<T>>
+>;
+
 function GeneralSettings(): JSX.Element {
 	const { t } = useTranslation('common');
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [
 		getRetentionPeriodMetricsApiResponse,
@@ -38,7 +42,7 @@ function GeneralSettings(): JSX.Element {
 			queryKey: ['getRetentionPeriodApiTraces', user?.accessJwt],
 		},
 		{
-			queryFn: (): TRetentionAPIReturn<'logs'> => getRetentionPeriodApi('logs'),
+			queryFn: (): TRetentionAPIReturnV2<'logs'> => getRetentionPeriodApiV2(), // Only works for logs
 			queryKey: ['getRetentionPeriodApiLogs', user?.accessJwt],
 		},
 		{
@@ -72,7 +76,7 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{getRetentionPeriodLogsApiResponse.data?.error ||
+				{(getRetentionPeriodLogsApiResponse.error as APIError).getErrorMessage() ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>
@@ -88,7 +92,7 @@ function GeneralSettings(): JSX.Element {
 		getRetentionPeriodTracesApiResponse.isLoading ||
 		!getRetentionPeriodTracesApiResponse.data?.payload ||
 		getRetentionPeriodLogsApiResponse.isLoading ||
-		!getRetentionPeriodLogsApiResponse.data?.payload
+		!getRetentionPeriodLogsApiResponse.data?.data
 	) {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
@@ -101,7 +105,7 @@ function GeneralSettings(): JSX.Element {
 				metricsTtlValuesRefetch: getRetentionPeriodMetricsApiResponse.refetch,
 				tracesTtlValuesPayload: getRetentionPeriodTracesApiResponse.data?.payload,
 				tracesTtlValuesRefetch: getRetentionPeriodTracesApiResponse.refetch,
-				logsTtlValuesPayload: getRetentionPeriodLogsApiResponse.data?.payload,
+				logsTtlValuesPayload: getRetentionPeriodLogsApiResponse.data?.data,
 				logsTtlValuesRefetch: getRetentionPeriodLogsApiResponse.refetch,
 			}}
 		/>

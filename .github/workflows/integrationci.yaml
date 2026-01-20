@@ -1,0 +1,98 @@
+name: integrationci
+
+on:
+  pull_request:
+    types:
+      - labeled
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  fmtlint:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
+        run: |
+          cd tests/integration && uv sync
+      - name: fmt
+        run: |
+          make py-fmt
+      - name: lint
+        run: |
+          make py-lint
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        src:
+          - bootstrap
+          - passwordauthn
+          - callbackauthn
+          - cloudintegrations
+          - dashboard
+          - querier
+          - ttl
+          - preference
+          - logspipelines
+        sqlstore-provider:
+          - postgres
+          - sqlite
+        clickhouse-version:
+          - 25.5.6
+          - 25.10.1
+        schema-migrator-version:
+          - v0.129.7
+        postgres-version:
+          - 15
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
+        run: |
+          cd tests/integration && uv sync
+      - name: webdriver
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -qqy
+          sudo apt-get -qqy install google-chrome-stable
+          CHROME_VERSION=$(google-chrome-stable --version)
+          CHROME_FULL_VERSION=${CHROME_VERSION%%.*}
+          CHROME_MAJOR_VERSION=${CHROME_FULL_VERSION//[!0-9]}
+          sudo rm /etc/apt/sources.list.d/google-chrome.list
+          export CHROMEDRIVER_VERSION=`curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION%%.*}`
+          curl -L -O "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip && chmod +x chromedriver && sudo mv chromedriver /usr/local/bin
+          chromedriver -version
+      - name: run
+        run: |
+          cd tests/integration && \
+            uv run pytest \
+            --basetemp=./tmp/ \
+            src/${{matrix.src}} \
+            --sqlstore-provider ${{matrix.sqlstore-provider}} \
+            --postgres-version ${{matrix.postgres-version}} \
+            --clickhouse-version ${{matrix.clickhouse-version}} \
+            --schema-migrator-version ${{matrix.schema-migrator-version}}

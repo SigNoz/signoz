@@ -1,0 +1,299 @@
+{
+  "id": "lambda",
+  "title": "Lambda",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_Lambda_AsyncEventAge_count",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventAge_max",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventAge_min",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventAge_sum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsDropped_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsDropped_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsDropped_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsDropped_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsReceived_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsReceived_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsReceived_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_AsyncEventsReceived_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ClaimedAccountConcurrency_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ClaimedAccountConcurrency_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ClaimedAccountConcurrency_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ClaimedAccountConcurrency_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ConcurrentExecutions_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ConcurrentExecutions_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ConcurrentExecutions_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_ConcurrentExecutions_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Duration_count",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Duration_max",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Duration_min",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Duration_sum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Errors_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Errors_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Errors_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Errors_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Invocations_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Invocations_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Invocations_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Invocations_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Throttles_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Throttles_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Throttles_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_Throttles_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_UnreservedConcurrentExecutions_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_UnreservedConcurrentExecutions_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_UnreservedConcurrentExecutions_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_Lambda_UnreservedConcurrentExecutions_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Account Id",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/Lambda"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/aws/lambda",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "AWS Lambda Overview",
+        "description": "Overview of AWS Lambda",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

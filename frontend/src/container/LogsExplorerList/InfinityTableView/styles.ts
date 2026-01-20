@@ -7,13 +7,25 @@ import { getActiveLogBackground } from 'utils/logs';
 interface TableHeaderCellStyledProps {
 	$isDragColumn: boolean;
 	$isDarkMode: boolean;
-	$isTimestamp?: boolean;
+	$isLogIndicator?: boolean;
+	$hasSingleColumn?: boolean;
 	fontSize?: FontSize;
+	columnKey?: string;
 }
 
 export const TableStyled = styled.table`
 	width: 100%;
 `;
+
+const getTimestampColumnWidth = (
+	columnKey?: string,
+	$hasSingleColumn?: boolean,
+): string =>
+	columnKey === 'timestamp'
+		? $hasSingleColumn
+			? 'width: 100%;'
+			: 'width: 10%;'
+		: '';
 
 export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
@@ -28,11 +40,15 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 	background-color: ${(props): string =>
 		props.$isDarkMode ? 'inherit' : themeColors.whiteCream};
 
+	${({ $isLogIndicator }): string =>
+		$isLogIndicator ? 'padding: 0 0 0 8px;width: 1%;' : ''}
 	color: ${(props): string =>
 		props.$isDarkMode ? themeColors.white : themeColors.bckgGrey};
+
+	${({ columnKey, $hasSingleColumn }): string =>
+		getTimestampColumnWidth(columnKey, $hasSingleColumn)}
 `;
 
-// handle the light theme here
 export const TableRowStyled = styled.tr<{
 	$isActiveLog: boolean;
 	$isDarkMode: boolean;
@@ -75,7 +91,7 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	line-height: 18px;
 	letter-spacing: -0.07px;
 	background: ${(props): string => (props.$isDarkMode ? '#0b0c0d' : '#fdfdfd')};
-	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
+	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: grab;' : '')}
 
 	${({ fontSize }): string =>
 		fontSize === FontSize.SMALL
@@ -85,7 +101,11 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 			: fontSize === FontSize.LARGE
 			? `font-size:14px; line-height:24px; padding: 0.5rem;`
 			: ``};
-	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
+	${({ $isLogIndicator }): string =>
+		$isLogIndicator ? 'padding: 0px; width: 1%;' : ''}
 	color: ${(props): string =>
 		props.$isDarkMode ? 'var(--bg-vanilla-100, #fff)' : themeColors.bckgGrey};
+
+	${({ columnKey, $hasSingleColumn }): string =>
+		getTimestampColumnWidth(columnKey, $hasSingleColumn)}
 `;

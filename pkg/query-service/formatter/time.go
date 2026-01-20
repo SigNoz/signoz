@@ -26,7 +26,7 @@ func (f *durationFormatter) Format(value float64, unit string) string {
 		return toMilliSeconds(value)
 	case "s":
 		return toSeconds(value)
-	case "m":
+	case "m", "min":
 		return toMinutes(value)
 	case "h":
 		return toHours(value)

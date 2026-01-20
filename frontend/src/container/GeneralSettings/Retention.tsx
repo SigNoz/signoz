@@ -1,14 +1,16 @@
 import { Col, Row, Select } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
 	SetStateAction,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react';
-import { isCloudUser } from 'utils/app';
+import { TTTLType } from 'types/api/settings/common';
 
 import {
 	Input,
@@ -20,25 +22,50 @@ import {
 	convertHoursValueToRelevantUnit,
 	SettingPeriod,
 	TimeUnits,
+	TimeUnitsValues,
 } from './utils';
 
 const { Option } = Select;
 
 function Retention({
+	type,
 	retentionValue,
 	setRetentionValue,
 	text,
 	hide,
+	isS3Field = false,
 }: RetentionProps): JSX.Element | null {
+	// Filter available units based on type and field
+	const availableUnits = useMemo(
+		() =>
+			TimeUnits.filter((option) => {
+				if (type === 'logs') {
+					// For S3 cold storage fields: only allow Days
+					if (isS3Field) {
+						return option.value === TimeUnitsValues.day;
+					}
+					// For total retention: allow Days and Months (not Hours)
+					return option.value !== TimeUnitsValues.hr;
+				}
+				return true;
+			}),
+		[type, isS3Field],
+	);
+
+	// Convert the hours value using only the available units
 	const {
 		value: initialValue,
 		timeUnitValue: initialTimeUnitValue,
-	} = convertHoursValueToRelevantUnit(Number(retentionValue));
+	} = convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
+
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
 	const [selectedValue, setSelectedValue] = useState<number | null>(
 		initialValue,
 	);
 	const interacted = useRef(false);
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
 	useEffect(() => {
 		if (!interacted.current) setSelectedValue(initialValue);
 	}, [initialValue]);
@@ -47,27 +74,27 @@ function Retention({
 		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
 	}, [initialTimeUnitValue]);
 
-	const menuItems = TimeUnits.map((option) => (
+	const menuItems = availableUnits.map((option) => (
 		<Option key={option.value} value={option.value}>
 			{option.key}
 		</Option>
 	));
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
-		const selectedValue = find(TimeUnits, (e) => e.value === option)?.value;
+		const selectedValue = find(availableUnits, (e) => e.value === option)?.value;
 		if (selectedValue) setSelectTimeUnit(selectedValue);
 	};
 
 	useEffect(() => {
 		const inverseMultiplier = find(
-			TimeUnits,
+			availableUnits,
 			(timeUnit) => timeUnit.value === selectedTimeUnit,
 		)?.multiplier;
 		if (!selectedValue) setRetentionValue(null);
 		if (selectedValue && inverseMultiplier) {
 			setRetentionValue(selectedValue * (1 / inverseMultiplier));
 		}
-	}, [selectedTimeUnit, selectedValue, setRetentionValue]);
+	}, [selectedTimeUnit, selectedValue, setRetentionValue, availableUnits]);
 
 	const onChangeHandler = (
 		e: ChangeEvent<HTMLInputElement>,
@@ -90,8 +117,6 @@ function Retention({
 	if (hide) {
 		return null;
 	}
-
-	const isCloudUserVal = isCloudUser();
 
 	return (
 		<RetentionContainer>
@@ -123,10 +148,15 @@ function Retention({
 }
 
 interface RetentionProps {
+	type: TTTLType;
 	retentionValue: number | null;
 	text: string;
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
+	isS3Field?: boolean;
 }
 
+Retention.defaultProps = {
+	isS3Field: false,
+};
 export default Retention;

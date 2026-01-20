@@ -1,4 +1,5 @@
 import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,7 +11,20 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	return (
 		<>
-			<Form.Item name="routing_key" label={t('field_pager_routing_key')} required>
+			<Form.Item
+				name="routing_key"
+				label={t('field_pager_routing_key')}
+				tooltip={{
+					title: (
+						<MarkdownRenderer
+							markdownContent={t('tooltip_pager_routing_key')}
+							variables={{}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+			>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({

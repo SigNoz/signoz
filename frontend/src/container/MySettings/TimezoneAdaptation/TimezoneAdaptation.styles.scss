@@ -1,8 +1,11 @@
 .timezone-adaption {
 	padding: 16px;
-	background: var(--bg-ink-400);
-	border: 1px solid var(--bg-ink-500);
-	border-radius: 4px;
+
+	border-radius: 4px 4px 0px 0px;
+	border: 1px solid var(--Slate-500, #161922);
+	background: var(--Ink-400, #121317);
+
+	border-radius: 3px;
 
 	&__header {
 		display: flex;
@@ -20,7 +23,7 @@
 
 	&__description {
 		color: var(--bg-vanilla-400);
-		font-size: 14px;
+		font-size: 12px;
 		line-height: 20px;
 		margin: 0 0 12px 0;
 	}
@@ -52,7 +55,7 @@
 		align-items: center;
 		gap: 4px;
 		color: var(--bg-robin-400);
-		font-size: 14px;
+		font-size: 12px;
 		line-height: 20px;
 	}
 	&__note-text-overridden {

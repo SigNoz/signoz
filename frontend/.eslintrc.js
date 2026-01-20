@@ -1,4 +1,5 @@
 module.exports = {
+	ignorePatterns: ['src/parser/*.ts', 'scripts/update-registry.js'],
 	env: {
 		browser: true,
 		es2021: true,
@@ -6,8 +7,6 @@ module.exports = {
 		'jest/globals': true,
 	},
 	extends: [
-		'airbnb',
-		'airbnb-typescript',
 		'eslint:recommended',
 		'plugin:react/recommended',
 		'plugin:@typescript-eslint/recommended',
@@ -34,6 +33,7 @@ module.exports = {
 		'react-hooks',
 		'prettier',
 		'jest',
+		'jsx-a11y',
 	],
 	settings: {
 		react: {
@@ -71,9 +71,6 @@ module.exports = {
 		'react-hooks/rules-of-hooks': 'error',
 		'react-hooks/exhaustive-deps': 'error',
 
-		// airbnb
-		'no-underscore-dangle': 'off',
-		'no-console': 'off',
 		'import/prefer-default-export': 'off',
 		'import/extensions': [
 			'error',
@@ -86,6 +83,9 @@ module.exports = {
 			},
 		],
 		'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+		// Disabled because TypeScript already handles this check more accurately,
+		// and the rule has false positives with type-only imports (e.g., TooltipProps from antd)
+		'import/named': 'off',
 		'no-plusplus': 'off',
 		'jsx-a11y/label-has-associated-control': [
 			'error',
@@ -103,13 +103,18 @@ module.exports = {
 				},
 			},
 		],
-		'@typescript-eslint/no-unused-vars': 'error',
+		// Allow empty functions for mocks, default context values, and noop callbacks
+		'@typescript-eslint/no-empty-function': 'off',
+		// Allow underscore prefix for intentionally unused variables (e.g., const { id: _id, ...rest } = props)
+		'@typescript-eslint/no-unused-vars': 'warn',
 		'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
 		'arrow-body-style': ['error', 'as-needed'],
 
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
+		// https://typescript-eslint.io/rules/consistent-return/ check the warning for details
+		'consistent-return': 'off',
 		'prettier/prettier': [
 			'error',
 			{},
@@ -117,5 +122,6 @@ module.exports = {
 				usePrettierrc: true,
 			},
 		],
+		'react/jsx-props-no-spreading': 'off',
 	},
 };

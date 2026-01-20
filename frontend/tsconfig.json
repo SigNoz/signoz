@@ -3,6 +3,7 @@
 		"sourceMap": true,
 		"outDir": "./dist/",
 		"noImplicitAny": true,
+		"noImplicitReturns": true,
 		"module": "esnext",
 		"target": "es5",
 		"jsx": "react-jsx",
@@ -30,7 +31,7 @@
 		],
 		"types": ["node", "jest"]
 	},
-	"exclude": ["node_modules"],
+	"exclude": ["node_modules", "src/parser/*.ts", "src/parser/TraceOperatorParser/*.ts"],
 	"include": [
 		"./src",
 		"./src/**/*.ts",
@@ -42,13 +43,13 @@
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
-		"./tests",
-		"./playwright.config.ts",
 		"./commitlint.config.ts",
 		"./webpack.config.js",
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts"
+		"./**/*.d.ts",
+		"./playwright.config.ts",
+		"./e2e/**/*.ts"
 	]
 }

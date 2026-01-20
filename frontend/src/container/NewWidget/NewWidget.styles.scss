@@ -36,6 +36,11 @@
 		}
 	}
 
+	.right-header {
+		display: flex;
+		gap: 16px;
+	}
+
 	.save-btn {
 		display: flex;
 		height: 32px;

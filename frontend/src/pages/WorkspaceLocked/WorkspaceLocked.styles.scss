@@ -48,7 +48,15 @@ $dark-theme: 'darkMode';
 			&__actions {
 				display: flex;
 				align-items: center;
-				gap: 16px;
+				gap: 8px;
+
+				.ant-btn-link {
+					color: var(--text-vanilla-400);
+
+					.#{$light-theme} & {
+						color: var(--text-ink-200);
+					}
+				}
 			}
 		}
 		.ant-modal-content {

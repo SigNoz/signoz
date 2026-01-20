@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+version: 2
+
+project_name: signoz
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: signoz
+    binary: bin/signoz
+    main: ./cmd/enterprise
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    goarm64:
+      - v8.0
+    ldflags:
+      - -s -w
+      - -X github.com/SigNoz/signoz/pkg/version.version=v{{ .Version }}
+      - -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
+      - -X github.com/SigNoz/signoz/pkg/version.hash={{ .ShortCommit }}
+      - -X github.com/SigNoz/signoz/pkg/version.time={{ .CommitTimestamp }}
+      - -X github.com/SigNoz/signoz/pkg/version.branch={{ .Branch }}
+      - -X github.com/SigNoz/signoz/ee/zeus.url=https://api.signoz.cloud
+      - -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.signoz.io
+      - -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1
+      - -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    tags:
+      - timetzdata
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{- .Os }}_{{- .Arch }}
+    wrap_in_directory: true
+    strip_binary_directory: false
+    files:
+      - src: README.md
+        dst: README.md
+      - src: LICENSE
+        dst: LICENSE
+      - src: frontend/build
+        dst: web
+      - src: conf
+        dst: conf
+      - src: templates
+        dst: templates
+
+release:
+  name_template: "v{{ .Version }}"
+  draft: false
+  prerelease: auto

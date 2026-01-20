@@ -1,0 +1,208 @@
+.error-content {
+	display: flex;
+	flex-direction: column;
+	// === SECTION: Summary (Top)
+	&__summary-section {
+		display: flex;
+		flex-direction: column;
+		border-bottom: 1px solid var(--bg-slate-400);
+	}
+
+	&__summary {
+		display: flex;
+		justify-content: space-between;
+		padding: 16px;
+	}
+
+	&__summary-left {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+	}
+
+	&__summary-text {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__error-code {
+		color: var(--bg-vanilla-100);
+		margin: 0;
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 24px; /* 150% */
+		letter-spacing: -0.08px;
+	}
+
+	&__error-message {
+		margin: 0;
+		color: var(--bg-vanilla-400);
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+	}
+
+	&__docs-button {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 9px 12.5px;
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 18px; /* 150% */
+		letter-spacing: 0.12px;
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		box-shadow: none;
+	}
+
+	&__message-badge {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 0px 16px 16px;
+
+		.key-value-label {
+			width: fit-content;
+			border-color: var(--bg-slate-400);
+			border-radius: 20px;
+			overflow: hidden;
+			&__key {
+				padding-left: 8px;
+				padding-right: 8px;
+			}
+			&__value {
+				padding-right: 10px;
+				color: var(--bg-vanilla-400);
+				font-size: 12px;
+				font-weight: 500;
+				line-height: 18px; /* 150% */
+				letter-spacing: 0.48px;
+				pointer-events: none;
+			}
+		}
+		&-label {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			&-dot {
+				height: 6px;
+				width: 6px;
+				background: var(--bg-sakura-500);
+				border-radius: 50%;
+			}
+			&-text {
+				color: var(--bg-vanilla-100);
+				font-size: 10px;
+				font-weight: 500;
+				line-height: 18px; /* 180% */
+				letter-spacing: 0.5px;
+			}
+		}
+		&-line {
+			flex: 1;
+			height: 8px;
+			background-image: radial-gradient(circle, #444c63 1px, transparent 2px);
+			background-size: 8px 11px;
+			background-position: top left;
+			padding: 6px;
+		}
+	}
+
+	// === SECTION: Message List (Bottom)
+
+	&__message-list-container {
+		position: relative;
+	}
+
+	&__message-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		max-height: 275px;
+	}
+
+	&__message-item {
+		position: relative;
+		margin-bottom: 4px;
+		color: var(--bg-vanilla-400);
+		font-family: Geist Mono;
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 18px;
+		color: var(--bg-vanilla-400);
+		padding: 3px 12px;
+		padding-left: 26px;
+	}
+
+	&__message-item::before {
+		font-family: unset;
+		content: '';
+		position: absolute;
+		left: 12px;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 2px;
+		height: 4px;
+		border-radius: 50px;
+		background: var(--bg-slate-400);
+	}
+
+	&__scroll-hint {
+		position: absolute;
+		bottom: 10px;
+		left: 0px;
+		right: 0px;
+		margin: auto;
+		width: fit-content;
+		display: inline-flex;
+		padding: 4px 12px 4px 10px;
+		justify-content: center;
+		align-items: center;
+		gap: 3px;
+		background: var(--bg-slate-200);
+		border-radius: 20px;
+		box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+			0px 66px 18px 0px rgba(0, 0, 0, 0.01), 0px 37px 22px 0px rgba(0, 0, 0, 0.03),
+			0px 17px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 9px 0px rgba(0, 0, 0, 0.04);
+	}
+
+	&__scroll-hint-text {
+		color: var(--bg-vanilla-100);
+
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 18px;
+		letter-spacing: -0.06px;
+	}
+}
+
+.lightMode {
+	.error-content {
+		&__error-code {
+			color: var(--bg-ink-100);
+		}
+		&__error-message {
+			color: var(--bg-ink-400);
+		}
+		&__message-item {
+			color: var(--bg-ink-400);
+		}
+		&__message-badge {
+			&-label-text {
+				color: var(--bg-ink-400);
+			}
+			.key-value-label__value {
+				color: var(--bg-ink-400);
+			}
+		}
+		&__docs-button {
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-100);
+		}
+	}
+}

@@ -3,30 +3,25 @@ import './OnboardingQuestionaire.styles.scss';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
-import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
-import updateOrgPreferenceAPI from 'api/preferences/updateOrgPreference';
+import listOrgPreferences from 'api/v1/org/preferences/list';
+import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
 import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { FeatureKeys } from 'constants/features';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import {
-	UPDATE_IS_FETCHING_ORG_PREFERENCES,
-	UPDATE_ORG_PREFERENCES,
-} from 'types/actions/app';
-import AppReducer from 'types/reducer/app';
 
 import {
 	AboutSigNozQuestions,
 	SignozDetails,
 } from './AboutSigNozQuestions/AboutSigNozQuestions';
 import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
-import { OnboardingHeader } from './OnboardingHeader/OnboardingHeader';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
@@ -46,14 +41,13 @@ const INITIAL_ORG_DETAILS: OrgDetails = {
 	usesObservability: true,
 	observabilityTool: '',
 	otherTool: '',
-	familiarity: '',
+	usesOtel: null,
 };
 
 const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
-	hearAboutSignoz: '',
-	interestInSignoz: '',
+	interestInSignoz: [],
 	otherInterestInSignoz: '',
-	otherAboutSignoz: '',
+	discoverSignoz: '',
 };
 
 const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
@@ -62,14 +56,15 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 	services: 0,
 };
 
-const BACK_BUTTON_EVENT_NAME = 'Org Onboarding: Back Button Clicked';
 const NEXT_BUTTON_EVENT_NAME = 'Org Onboarding: Next Button Clicked';
 const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
 
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-	const dispatch = useDispatch();
+	const { org, updateOrgPreferences, featureFlags } = useAppContext();
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
 	const [currentStep, setCurrentStep] = useState<number>(1);
 	const [orgDetails, setOrgDetails] = useState<OrgDetails>(INITIAL_ORG_DETAILS);
 	const [signozDetails, setSignozDetails] = useState<SignozDetails>(
@@ -97,7 +92,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			setOrgDetails({
 				...orgDetails,
-				organisationName: org[0].name,
+				organisationName: org[0].displayName,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,30 +106,24 @@ function OnboardingQuestionaire(): JSX.Element {
 	}, []);
 
 	const { refetch: refetchOrgPreferences } = useQuery({
-		queryFn: () => getAllOrgPreferences(),
+		queryFn: () => listOrgPreferences(),
 		queryKey: ['getOrgPreferences'],
 		enabled: false,
 		refetchOnWindowFocus: false,
 		onSuccess: (response) => {
-			dispatch({
-				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
-				payload: {
-					isFetchingOrgPreferences: false,
-				},
-			});
-
-			dispatch({
-				type: UPDATE_ORG_PREFERENCES,
-				payload: {
-					orgPreferences: response.payload?.data || null,
-				},
-			});
+			if (response.data) {
+				updateOrgPreferences(response.data);
+			}
 
 			setUpdatingOrgOnboardingStatus(false);
 
 			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
-			history.push(ROUTES.GET_STARTED);
+			if (isOnboardingV3Enabled) {
+				history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			} else {
+				history.push(ROUTES.GET_STARTED);
+			}
 		},
 		onError: () => {
 			setUpdatingOrgOnboardingStatus(false);
@@ -154,6 +143,9 @@ function OnboardingQuestionaire(): JSX.Element {
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
+
+				// Allow user to proceed even if API fails
+				setCurrentStep(4);
 			},
 		},
 	);
@@ -176,22 +168,23 @@ function OnboardingQuestionaire(): JSX.Element {
 		});
 
 		updateProfile({
-			familiarity_with_observability: orgDetails?.familiarity as string,
+			uses_otel: orgDetails?.usesOtel as boolean,
 			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
 			existing_observability_tool:
 				orgDetails?.observabilityTool === 'Others'
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
-
-			reasons_for_interest_in_signoz:
-				signozDetails?.interestInSignoz === 'Others'
-					? (signozDetails?.otherInterestInSignoz as string)
-					: (signozDetails?.interestInSignoz as string),
-			where_did_you_hear_about_signoz:
-				signozDetails?.hearAboutSignoz === 'Others'
-					? (signozDetails?.otherAboutSignoz as string)
-					: (signozDetails?.hearAboutSignoz as string),
-
+			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
+			reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
+				'Others',
+			)
+				? ([
+						...(signozDetails?.interestInSignoz?.filter(
+							(item) => item !== 'Others',
+						) || []),
+						signozDetails?.otherInterestInSignoz,
+				  ] as string[])
+				: (signozDetails?.interestInSignoz as string[]),
 			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
 			number_of_services: optimiseSignozDetails?.services as number,
@@ -205,22 +198,21 @@ function OnboardingQuestionaire(): JSX.Element {
 
 		setUpdatingOrgOnboardingStatus(true);
 		updateOrgPreference({
-			preferenceID: 'ORG_ONBOARDING',
+			name: ORG_PREFERENCES.ORG_ONBOARDING,
 			value: true,
 		});
 	};
 
 	return (
 		<div className="onboarding-questionaire-container">
-			<div className="onboarding-questionaire-header">
-				<OnboardingHeader />
-			</div>
-
 			<div className="onboarding-questionaire-content">
 				{currentStep === 1 && (
 					<OrgQuestions
 						currentOrgData={currentOrgData}
-						orgDetails={orgDetails}
+						orgDetails={{
+							...orgDetails,
+							usesOtel: orgDetails.usesOtel ?? null,
+						}}
 						onNext={(orgDetails: OrgDetails): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 1,
@@ -237,13 +229,6 @@ function OnboardingQuestionaire(): JSX.Element {
 					<AboutSigNozQuestions
 						signozDetails={signozDetails}
 						setSignozDetails={setSignozDetails}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 2,
-								prevPageID: 1,
-							});
-							setCurrentStep(1);
-						}}
 						onNext={(): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 2,
@@ -260,15 +245,8 @@ function OnboardingQuestionaire(): JSX.Element {
 						isUpdatingProfile={isUpdatingProfile}
 						optimiseSignozDetails={optimiseSignozDetails}
 						setOptimiseSignozDetails={setOptimiseSignozDetails}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 3,
-								prevPageID: 2,
-							});
-							setCurrentStep(2);
-						}}
 						onNext={handleUpdateProfile}
-						onWillDoLater={(): void => setCurrentStep(4)}
+						onWillDoLater={handleUpdateProfile}
 					/>
 				)}
 
@@ -277,13 +255,6 @@ function OnboardingQuestionaire(): JSX.Element {
 						isLoading={updatingOrgOnboardingStatus}
 						teamMembers={teamMembers}
 						setTeamMembers={setTeamMembers}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 4,
-								prevPageID: 3,
-							});
-							setCurrentStep(3);
-						}}
 						onNext={handleOnboardingComplete}
 					/>
 				)}

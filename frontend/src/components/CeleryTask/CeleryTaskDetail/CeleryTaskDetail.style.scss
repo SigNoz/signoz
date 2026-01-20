@@ -1,0 +1,122 @@
+.celery-task-detail-drawer {
+	.ant-drawer-wrapper-body {
+		background: var(--bg-ink-500);
+		border: 1px solid var(--bg-ink-300);
+	}
+
+	.ant-drawer-body {
+		padding: 0px;
+
+		.ant-card {
+			border: none;
+			.ant-card-body {
+				height: 100%;
+				background: var(--bg-ink-500);
+
+				.ant-table {
+					background: var(--bg-ink-500);
+				}
+			}
+		}
+	}
+
+	.ant-drawer-header {
+		border-bottom: 1px solid var(--bg-ink-300);
+		.ant-drawer-header-title {
+			.ant-drawer-close {
+				position: absolute;
+				right: 0;
+			}
+
+			button > svg {
+				color: var(--bg-vanilla-100);
+			}
+
+			.ant-drawer-title {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+
+				.title {
+					color: var(--bg-vanilla-100);
+					font-family: Inter;
+					font-size: 18px;
+					font-style: normal;
+					font-weight: 600;
+					line-height: 18px;
+					letter-spacing: -0.45px;
+				}
+
+				.subtitle {
+					color: var(--bg-vanilla-400);
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 20px;
+				}
+			}
+		}
+	}
+
+	.ant-drawer-footer {
+		border-top: 1px solid var(--bg-ink-300);
+
+		.footer-text {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px;
+		}
+	}
+}
+
+.lightMode {
+	.celery-task-detail-drawer {
+		.ant-drawer-wrapper-body {
+			background: var(--bg-vanilla-100);
+			border: 1px solid var(--bg-vanilla-300);
+		}
+
+		.ant-drawer-body {
+			.ant-card {
+				.ant-card-body {
+					background: var(--bg-vanilla-100);
+
+					.ant-table {
+						background: var(--bg-vanilla-100);
+					}
+				}
+			}
+		}
+
+		.ant-drawer-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+			.ant-drawer-header-title {
+				button > svg {
+					color: var(--bg-ink-500);
+				}
+
+				.ant-drawer-title {
+					.title {
+						color: var(--bg-ink-400);
+					}
+
+					.subtitle {
+						color: var(--bg-ink-300);
+					}
+				}
+			}
+		}
+
+		.ant-drawer-footer {
+			border-top: 1px solid var(--bg-vanilla-300);
+
+			.footer-text {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

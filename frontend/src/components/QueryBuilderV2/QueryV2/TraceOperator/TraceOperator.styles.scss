@@ -1,0 +1,164 @@
+.qb-trace-operator {
+	padding: 8px;
+	display: flex;
+	gap: 8px;
+
+	&.non-list-view {
+		padding-left: 40px;
+		position: relative;
+
+		&::before {
+			content: '';
+			position: absolute;
+			top: 24px;
+			left: 12px;
+			height: 88px;
+			width: 1px;
+			background: repeating-linear-gradient(
+				to bottom,
+				var(--bg-slate-400),
+				var(--bg-slate-400) 4px,
+				transparent 4px,
+				transparent 8px
+			);
+		}
+	}
+
+	&-arrow {
+		position: relative;
+		&::before {
+			content: '';
+			position: absolute;
+			top: 16px;
+			transform: translateY(-50%);
+			left: -26px;
+			height: 1px;
+			width: 20px;
+			background: repeating-linear-gradient(
+				to right,
+				var(--bg-slate-400),
+				var(--bg-slate-400) 4px,
+				transparent 4px,
+				transparent 8px
+			);
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			top: 16px;
+			left: -10px;
+			transform: translateY(-50%);
+			height: 4px;
+			width: 4px;
+			border-radius: 50%;
+			background-color: var(--bg-slate-400);
+		}
+	}
+
+	&-input {
+		width: 100%;
+	}
+
+	&-container {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&-aggregation-container {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&-add-ons-container {
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		gap: 16px;
+	}
+
+	&-label-with-input {
+		position: relative;
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+
+		.qb-trace-operator-editor-container {
+			flex: 1;
+			.cm-activeLine > span {
+				font-size: 12px;
+			}
+		}
+
+		&.arrow-left {
+			&::before {
+				content: '';
+				position: absolute;
+				left: -16px;
+				top: 50%;
+				height: 1px;
+				width: 16px;
+				background-color: var(--bg-slate-400);
+			}
+		}
+
+		.label {
+			color: var(--bg-vanilla-400);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			padding: 0px 8px;
+			border-right: 1px solid var(--bg-slate-400);
+			font-size: 12px;
+			font-weight: 300;
+		}
+	}
+}
+
+.lightMode {
+	.qb-trace-operator {
+		&-arrow {
+			&::before {
+				background: repeating-linear-gradient(
+					to right,
+					var(--bg-vanilla-300),
+					var(--bg-vanilla-300) 4px,
+					transparent 4px,
+					transparent 8px
+				);
+			}
+			&::after {
+				background-color: var(--bg-vanilla-300);
+			}
+		}
+		&.non-list-view {
+			&::before {
+				background: repeating-linear-gradient(
+					to bottom,
+					var(--bg-vanilla-300),
+					var(--bg-vanilla-300) 4px,
+					transparent 4px,
+					transparent 8px
+				);
+			}
+		}
+
+		&-label-with-input {
+			border: 1px solid var(--bg-vanilla-300) !important;
+			background: var(--bg-vanilla-100) !important;
+
+			.label {
+				color: var(--bg-ink-500) !important;
+				border-right: 1px solid var(--bg-vanilla-300) !important;
+				background: var(--bg-vanilla-100) !important;
+			}
+		}
+	}
+}

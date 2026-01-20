@@ -1,4 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+
+import './ChannelsEdit.styles.scss';
+
 import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
@@ -12,28 +15,42 @@ import {
 import EditAlertChannels from 'container/EditAlertChannels';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
+import { Channels } from 'types/api/channels/getAll';
+import APIError from 'types/api/error';
 
 function ChannelsEdit(): JSX.Element {
-	const { id } = useParams<Params>();
 	const { t } = useTranslation();
 
-	const { isFetching, isError, data } = useQuery(['getChannel', id], {
+	// Extract channelId from URL pathname since useParams doesn't work in nested routing
+	const { pathname } = window.location;
+	const channelIdMatch = pathname.match(/\/settings\/channels\/edit\/([^/]+)/);
+	const channelId = channelIdMatch ? channelIdMatch[1] : undefined;
+
+	const { isFetching, isError, data, error } = useQuery<
+		SuccessResponseV2<Channels>,
+		APIError
+	>(['getChannel', channelId], {
 		queryFn: () =>
 			get({
-				id,
+				id: channelId || '',
 			}),
+		enabled: !!channelId,
 	});
 
 	if (isError) {
-		return <Typography>{data?.error || t('something_went_wrong')}</Typography>;
+		return (
+			<Typography>
+				{error?.getErrorMessage() || t('something_went_wrong')}
+			</Typography>
+		);
 	}
 
-	if (isFetching || !data?.payload) {
+	if (isFetching || !data?.data) {
 		return <Spinner tip="Loading Channels..." />;
 	}
 
-	const { data: ChannelData } = data.payload;
+	const { data: ChannelData } = data.data;
 
 	const value = JSON.parse(ChannelData);
 
@@ -53,8 +70,8 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if (value && 'msteams_configs' in value) {
-			const msteamsConfig = value.msteams_configs[0];
+		if (value && 'msteamsv2_configs' in value) {
+			const msteamsConfig = value.msteamsv2_configs[0];
 			channel = msteamsConfig;
 			return {
 				type: ChannelType.MsTeams,
@@ -118,19 +135,18 @@ function ChannelsEdit(): JSX.Element {
 	const target = prepChannelConfig();
 
 	return (
-		<EditAlertChannels
-			{...{
-				initialValue: {
-					...target.channel,
-					type: target.type,
-					name: value.name,
-				},
-			}}
-		/>
+		<div className="edit-alert-channels-container">
+			<EditAlertChannels
+				{...{
+					initialValue: {
+						...target.channel,
+						type: target.type,
+						name: value.name,
+					},
+				}}
+			/>
+		</div>
 	);
-}
-interface Params {
-	id: string;
 }
 
 export default ChannelsEdit;

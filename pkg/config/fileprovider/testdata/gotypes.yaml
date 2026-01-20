@@ -1,0 +1,6 @@
+bool: true
+string: string
+int: 1
+slice:
+  - 1
+  - 2

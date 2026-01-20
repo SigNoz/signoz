@@ -129,5 +129,6 @@
 	"text_num_points": "data points in each result group",
 	"text_alert_frequency": "Run alert every",
 	"text_for": "minutes",
-	"selected_query_placeholder": "Select query"
+	"selected_query_placeholder": "Select query",
+	"alert_rule_not_found": "Alert Rule not found"
 }

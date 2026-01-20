@@ -1,12 +1,17 @@
+import Convert from 'ansi-to-html';
 import { DataNode } from 'antd/es/tree';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';
 import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
 import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
+
+const convertInstance = new Convert();
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
@@ -34,9 +39,17 @@ export const computeDataNode = (
 	valueIsArray: boolean,
 	value: unknown,
 	nodeKey: string,
+	parentIsArray: boolean,
 ): DataNode => ({
 	key: uniqueId(),
-	title: `${key} ${valueIsArray ? '[...]' : ''}`,
+	title: (
+		<BodyTitleRenderer
+			title={`${key} ${valueIsArray ? '[...]' : ''}`}
+			nodeKey={nodeKey}
+			value={value}
+			parentIsArray={parentIsArray}
+		/>
+	),
 	// eslint-disable-next-line @typescript-eslint/no-use-before-define
 	children: jsonToDataNodes(
 		value as Record<string, unknown>,
@@ -62,7 +75,7 @@ export function jsonToDataNodes(
 
 		if (parentIsArray) {
 			if (typeof value === 'object' && value !== null) {
-				return computeDataNode(key, valueIsArray, value, nodeKey);
+				return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
 			}
 
 			return {
@@ -80,7 +93,7 @@ export function jsonToDataNodes(
 		}
 
 		if (typeof value === 'object' && value !== null) {
-			return computeDataNode(key, valueIsArray, value, nodeKey);
+			return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
 		}
 		return {
 			key: uniqueId(),
@@ -186,7 +199,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		id: logData.id,
 		severityNumber: logData.severityNumber,
 		severityText: logData.severityText,
-		spanId: logData.spanId,
+		spanID: logData.spanID,
 		timestamp: logData.timestamp,
 		traceFlags: logData.traceFlags,
 		traceId: logData.traceId,
@@ -259,10 +272,28 @@ export const getDataTypes = (value: unknown): DataTypes => {
 	return determineType(value);
 };
 
+// prevent html rendering in the value
+export const escapeHtml = (unsafe: string): string =>
+	unsafe
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+
+// parse field value to remove escaping characters
+export const parseFieldValue = (value: string): string => {
+	try {
+		return JSON.parse(value);
+	} catch (error) {
+		return value;
+	}
+};
+
 // now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
 // the log line readable
 export const removeEscapeCharacters = (str: string): string =>
-	str
+	(str ?? '')
 		.replace(/\\x1[bB][[0-9;]*m/g, '')
 		.replace(/\\u001[bB][[0-9;]*m/g, '')
 		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
@@ -274,7 +305,7 @@ export const removeEscapeCharacters = (str: string): string =>
 //
 // so we need to remove this escapes to render the color properly
 export const unescapeString = (str: string): string =>
-	str
+	(str ?? '')
 		.replace(/\\n/g, '\n') // Replaces escaped newlines
 		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
 		.replace(/\\t/g, '\t') // Replaces escaped tabs
@@ -318,3 +349,22 @@ export function findKeyPath(
 	});
 	return finalPath;
 }
+
+export const getSanitizedLogBody = (
+	text: string,
+	options: { shouldEscapeHtml?: boolean } = {},
+): string => {
+	const { shouldEscapeHtml = false } = options;
+	const escapedText = shouldEscapeHtml ? escapeHtml(text) : text;
+	try {
+		return convertInstance.toHtml(
+			dompurify.sanitize(unescapeString(escapedText), {
+				FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				FORBID_ATTR: [...FORBID_DOM_PURIFY_ATTR],
+			}),
+		);
+	} catch (error) {
+		console.error('Error sanitizing text', error, text);
+		return '{}';
+	}
+};

@@ -1,0 +1,40 @@
+.change-percentage-pill {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 1px 4px;
+	border-radius: 50px;
+
+	&__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	&__label {
+		font-family: 'Geist Mono';
+		font-size: 12px;
+		line-height: normal;
+	}
+	&--positive {
+		.change-percentage-pill {
+			&__icon {
+				color: var(--bg-forest-500);
+			}
+			&__label {
+				color: var(--bg-forest-500);
+			}
+		}
+	}
+	&--negative {
+		background: rgba(229, 72, 77, 0.1);
+
+		.change-percentage-pill {
+			&__icon {
+				color: var(--bg-cherry-500);
+			}
+			&__label {
+				color: var(--bg-cherry-500);
+			}
+		}
+	}
+}

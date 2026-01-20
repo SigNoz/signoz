@@ -3,6 +3,7 @@ import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import dayjs from 'dayjs';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -15,6 +16,8 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import {
 	getHostQueryPayload,
 	getNodeQueryPayload,
@@ -26,15 +29,15 @@ function NodeMetrics({
 	nodeName,
 	clusterName,
 	hostName,
-	logLineTimestamp,
+	timestamp,
 }: {
 	nodeName: string;
 	clusterName: string;
 	hostName: string;
-	logLineTimestamp: string;
+	timestamp: string;
 }): JSX.Element {
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
-		const logTimestamp = dayjs(logLineTimestamp);
+		const logTimestamp = dayjs(timestamp);
 		const now = dayjs();
 		const startTime = logTimestamp.subtract(3, 'hour');
 
@@ -47,14 +50,25 @@ function NodeMetrics({
 			end: endTime.unix(),
 			verticalLineTimestamp: logTimestamp.unix(),
 		};
-	}, [logLineTimestamp]);
+	}, [timestamp]);
+
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const queryPayloads = useMemo(() => {
 		if (nodeName) {
-			return getNodeQueryPayload(clusterName, nodeName, start, end);
+			return getNodeQueryPayload(
+				clusterName,
+				nodeName,
+				start,
+				end,
+				dotMetricsEnabled,
+			);
 		}
-		return getHostQueryPayload(hostName, start, end);
-	}, [nodeName, hostName, clusterName, start, end]);
+		return getHostQueryPayload(hostName, start, end, dotMetricsEnabled);
+	}, [nodeName, hostName, clusterName, start, end, dotMetricsEnabled]);
 
 	const widgetInfo = nodeName ? nodeWidgetInfo : hostWidgetInfo;
 	const queries = useQueries(
@@ -69,6 +83,13 @@ function NodeMetrics({
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const chartData = useMemo(
 		() => queries.map(({ data }) => getUPlotChartData(data?.payload)),
@@ -76,6 +97,7 @@ function NodeMetrics({
 	);
 
 	const { timezone } = useTimezone();
+	const { currentQuery } = useQueryBuilder();
 
 	const options = useMemo(
 		() =>
@@ -93,6 +115,14 @@ function NodeMetrics({
 					tzDate: (timestamp: number) =>
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
+					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[
@@ -104,6 +134,7 @@ function NodeMetrics({
 			verticalLineTimestamp,
 			end,
 			timezone.value,
+			currentQuery,
 		],
 	);
 

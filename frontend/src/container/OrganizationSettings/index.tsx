@@ -1,47 +1,33 @@
-import { Divider, Space } from 'antd';
-import { FeatureKeys } from 'constants/features';
-import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import './OrganizationSettings.styles.scss';
 
-import AuthDomains from './AuthDomains';
+import { Space } from 'antd';
+import { useAppContext } from 'providers/App/App';
+
+import AuthDomain from './AuthDomain';
 import DisplayName from './DisplayName';
 import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
 
 function OrganizationSettings(): JSX.Element {
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-
-	const isNotSSO = useIsFeatureDisabled(FeatureKeys.SSO);
-
-	const isNoUpSell = useIsFeatureDisabled(FeatureKeys.DISABLE_UPSELL);
-
-	const isAuthDomain = !isNoUpSell || (isNoUpSell && !isNotSSO);
+	const { org } = useAppContext();
 
 	if (!org) {
 		return <div />;
 	}
 
 	return (
-		<>
+		<div className="organization-settings-container">
 			<Space direction="vertical">
 				{org.map((e, index) => (
-					<DisplayName
-						isAnonymous={e.isAnonymous}
-						key={e.id}
-						id={e.id}
-						index={index}
-					/>
+					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
 			</Space>
-			<Divider />
+
 			<PendingInvitesContainer />
-			<Divider />
+
 			<Members />
-			<Divider />
-			{isAuthDomain && <AuthDomains />}
-		</>
+			<AuthDomain />
+		</div>
 	);
 }
 

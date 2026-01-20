@@ -5,7 +5,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -19,7 +19,6 @@ import {
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { LogTimeRange } from './logs/types';
 import { useCopyLogLink } from './logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from './queryBuilder/useGetExplorerQueryRange';
 import useUrlQueryData from './useUrlQueryData';
@@ -100,10 +99,7 @@ export const useLogsData = ({
 	): Query | null => {
 		if (!query) return null;
 
-		const paginateData = getPaginationQueryData({
-			filters: params.filters,
-			listItemId: params.log ? params.log.id : null,
-			orderByTimestamp,
+		const paginateData = getPaginationQueryDataV2({
 			page: params.page,
 			pageSize: params.pageSize,
 		});
@@ -129,7 +125,7 @@ export const useLogsData = ({
 		return data;
 	};
 
-	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId } = useCopyLogLink();
 
 	const { data, isFetching } = useGetExplorerQueryRange(
 		requestData,
@@ -150,7 +146,6 @@ export const useLogsData = ({
 	);
 
 	useEffect(() => {
-		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
@@ -160,11 +155,6 @@ export const useLogsData = ({
 			const newLogs = [...logs, ...currentLogs];
 
 			setLogs(newLogs);
-			onTimeRangeChange({
-				start: currentParams?.start,
-				end: currentParams?.end,
-				pageSize: newLogs.length,
-			});
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -188,7 +178,7 @@ export const useLogsData = ({
 		if (!stagedQuery) return;
 
 		const newRequestData = getRequestData(stagedQuery, {
-			filters,
+			filters: filters || { items: [], op: 'AND' },
 			page: page + 1,
 			log: orderByTimestamp ? lastLog : null,
 			pageSize: nextPageSize,

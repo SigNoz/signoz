@@ -6,36 +6,33 @@ import { executeSearchQueries } from '../utils';
 
 describe('executeSearchQueries', () => {
 	const firstDashboard: Dashboard = {
-		id: 11111,
-		uuid: uuid(),
-		created_at: '',
-		updated_at: '',
-		created_by: '',
-		updated_by: '',
+		id: uuid(),
+		createdAt: '',
+		updatedAt: '',
+		createdBy: '',
+		updatedBy: '',
 		data: {
 			title: 'first dashboard',
 			variables: {},
 		},
 	};
 	const secondDashboard: Dashboard = {
-		id: 22222,
-		uuid: uuid(),
-		created_at: '',
-		updated_at: '',
-		created_by: '',
-		updated_by: '',
+		id: uuid(),
+		createdAt: '',
+		updatedAt: '',
+		createdBy: '',
+		updatedBy: '',
 		data: {
 			title: 'second dashboard',
 			variables: {},
 		},
 	};
 	const thirdDashboard: Dashboard = {
-		id: 333333,
-		uuid: uuid(),
-		created_at: '',
-		updated_at: '',
-		created_by: '',
-		updated_by: '',
+		id: uuid(),
+		createdAt: '',
+		updatedAt: '',
+		createdBy: '',
+		updatedBy: '',
 		data: {
 			title: 'third dashboard (with special characters +?\\)',
 			variables: {},

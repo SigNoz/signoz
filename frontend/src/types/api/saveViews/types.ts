@@ -3,7 +3,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { ICompositeMetricQuery } from '../alerts/compositeQuery';
 
 export interface ViewProps {
-	uuid: string;
+	id: string;
 	name: string;
 	category: string;
 	createdAt: string;

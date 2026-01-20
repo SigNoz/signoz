@@ -5,6 +5,7 @@ import { ColumnsType } from 'antd/es/table';
 import ClientSideQBSearch, {
 	AttributeKey,
 } from 'components/ClientSideQBSearch/ClientSideQBSearch';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { transformKeyValuesToAttributeValuesMap } from 'container/QueryBuilder/filters/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -112,7 +113,7 @@ export const timelineTableColumns = ({
 		width: 200,
 		render: (value): JSX.Element => (
 			<div className="alert-rule__created-at">
-				{formatTimezoneAdjustedTimestamp(value, 'MMM D, YYYY ⎯ HH:mm:ss')}
+				{formatTimezoneAdjustedTimestamp(value, DATE_TIME_FORMATS.DASH_DATETIME)}
 			</div>
 		),
 	},

@@ -1,25 +1,28 @@
 import './MetricPage.styles.scss';
 
 import { Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
 import MetricColumnGraphs from './MetricColumnGraphs';
 import MetricPageGridGraph from './MetricPageGraph';
 import {
-	cpuRecentUtilizationWidgetData,
-	currentOffsetPartitionWidgetData,
-	insyncReplicasWidgetData,
-	jvmGcCollectionsElapsedWidgetData,
-	jvmGCCountWidgetData,
-	jvmMemoryHeapWidgetData,
-	oldestOffsetWidgetData,
-	partitionCountPerTopicWidgetData,
+	getCpuRecentUtilizationWidgetData,
+	getCurrentOffsetPartitionWidgetData,
+	getInsyncReplicasWidgetData,
+	getJvmGcCollectionsElapsedWidgetData,
+	getJvmGCCountWidgetData,
+	getJvmMemoryHeapWidgetData,
+	getOldestOffsetWidgetData,
+	getPartitionCountPerTopicWidgetData,
 } from './MetricPageUtil';
 
 interface CollapsibleMetricSectionProps {
@@ -28,6 +31,7 @@ interface CollapsibleMetricSectionProps {
 	graphCount: Widgets[];
 	isCollapsed: boolean;
 	onToggle: () => void;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }
 
 function CollapsibleMetricSection({
@@ -36,6 +40,7 @@ function CollapsibleMetricSection({
 	graphCount,
 	isCollapsed,
 	onToggle,
+	checkIfDataExists,
 }: CollapsibleMetricSectionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -63,6 +68,7 @@ function CollapsibleMetricSection({
 							<MetricPageGridGraph
 								key={`graph-${widgetData.id}`}
 								widgetData={widgetData}
+								checkIfDataExists={checkIfDataExists}
 							/>
 						))}
 					</div>
@@ -71,6 +77,10 @@ function CollapsibleMetricSection({
 		</div>
 	);
 }
+
+CollapsibleMetricSection.defaultProps = {
+	checkIfDataExists: undefined,
+};
 
 function MetricPage(): JSX.Element {
 	const [collapsedSections, setCollapsedSections] = useState<{
@@ -87,6 +97,11 @@ function MetricPage(): JSX.Element {
 		}));
 	};
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const { t } = useTranslation('messagingQueues');
 
 	const metricSections = [
@@ -95,10 +110,10 @@ function MetricPage(): JSX.Element {
 			title: t('metricGraphCategory.brokerJVMMetrics.title'),
 			description: t('metricGraphCategory.brokerJVMMetrics.description'),
 			graphCount: [
-				jvmGCCountWidgetData,
-				jvmGcCollectionsElapsedWidgetData,
-				cpuRecentUtilizationWidgetData,
-				jvmMemoryHeapWidgetData,
+				getJvmGCCountWidgetData(dotMetricsEnabled),
+				getJvmGcCollectionsElapsedWidgetData(dotMetricsEnabled),
+				getCpuRecentUtilizationWidgetData(dotMetricsEnabled),
+				getJvmMemoryHeapWidgetData(dotMetricsEnabled),
 			],
 		},
 		{
@@ -106,17 +121,34 @@ function MetricPage(): JSX.Element {
 			title: t('metricGraphCategory.partitionMetrics.title'),
 			description: t('metricGraphCategory.partitionMetrics.description'),
 			graphCount: [
-				partitionCountPerTopicWidgetData,
-				currentOffsetPartitionWidgetData,
-				oldestOffsetWidgetData,
-				insyncReplicasWidgetData,
+				getPartitionCountPerTopicWidgetData(dotMetricsEnabled),
+				getCurrentOffsetPartitionWidgetData(dotMetricsEnabled),
+				getOldestOffsetWidgetData(dotMetricsEnabled),
+				getInsyncReplicasWidgetData(dotMetricsEnabled),
 			],
 		},
 	];
 
+	const renderedGraphCountRef = useRef(0);
+	const hasLoggedRef = useRef(false);
+
+	const checkIfDataExists = useCallback((isDataAvailable: boolean): void => {
+		if (isDataAvailable) {
+			renderedGraphCountRef.current += 1;
+
+			// Only log when first graph has rendered and we haven't logged yet
+			if (renderedGraphCountRef.current === 1 && !hasLoggedRef.current) {
+				logEvent('MQ Kafka: Metric view', {
+					graphRendered: true,
+				});
+				hasLoggedRef.current = true;
+			}
+		}
+	}, []);
+
 	return (
 		<div className="metric-page">
-			<MetricColumnGraphs />
+			<MetricColumnGraphs checkIfDataExists={checkIfDataExists} />
 			{metricSections.map(({ key, title, description, graphCount }) => (
 				<CollapsibleMetricSection
 					key={key}
@@ -125,6 +157,7 @@ function MetricPage(): JSX.Element {
 					graphCount={graphCount}
 					isCollapsed={collapsedSections[key]}
 					onToggle={(): void => toggleCollapse(key)}
+					checkIfDataExists={checkIfDataExists}
 				/>
 			))}
 		</div>

@@ -1,3 +1,0 @@
-include:
-  - test-app-docker-compose.yaml
-  - docker-compose-minimal.yaml

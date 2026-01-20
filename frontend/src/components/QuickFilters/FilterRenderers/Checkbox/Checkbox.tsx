@@ -6,21 +6,33 @@ import './Checkbox.styles.scss';
 
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
-import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
-import { OPERATORS } from 'constants/queryBuilder';
+import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	IQuickFiltersConfig,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
+import { OPERATORS } from 'constants/antlrQueryConstants';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
+import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
+
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
-const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'nin'];
+const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
+
+const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 function setDefaultValues(
 	values: string[],
@@ -34,12 +46,16 @@ function setDefaultValues(
 }
 interface ICheckboxProps {
 	filter: IQuickFiltersConfig;
+	source: QuickFiltersSource;
+	onFilterChange?: (query: Query) => void;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
-	const { filter } = props;
+	const { source, filter, onFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
-	const [isOpen, setIsOpen] = useState<boolean>(filter.defaultOpen);
+	// null = no user action, true = user opened, false = user closed
+	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
 	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
 
 	const {
@@ -48,31 +64,103 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
+	// Check if this filter has active filters in the query
+	const isSomeFilterPresentForCurrentAttribute = useMemo(
+		() =>
+			currentQuery.builder.queryData?.[
+				lastUsedQuery || 0
+			]?.filters?.items?.some((item) =>
+				isEqual(item.key?.key, filter.attributeKey.key),
+			),
+		[currentQuery.builder.queryData, lastUsedQuery, filter.attributeKey.key],
+	);
+
+	// Derive isOpen from filter state + user action
+	const isOpen = useMemo(() => {
+		// If user explicitly toggled, respect that
+		if (userToggleState !== null) return userToggleState;
+
+		// Auto-open if this filter has active filters in the query
+		if (isSomeFilterPresentForCurrentAttribute) return true;
+
+		// Otherwise use default behavior (first 2 filters open)
+		return filter.defaultOpen;
+	}, [
+		userToggleState,
+		isSomeFilterPresentForCurrentAttribute,
+		filter.defaultOpen,
+	]);
+
 	const { data, isLoading } = useGetAggregateValues(
 		{
-			aggregateOperator: 'noop',
-			dataSource: DataSource.LOGS,
-			aggregateAttribute: '',
+			aggregateOperator: filter.aggregateOperator || 'noop',
+			dataSource: filter.dataSource || DataSource.LOGS,
+			aggregateAttribute: filter.aggregateAttribute || '',
 			attributeKey: filter.attributeKey.key,
 			filterAttributeKeyDataType: filter.attributeKey.dataType || DataTypes.EMPTY,
 			tagType: filter.attributeKey.type || '',
 			searchText: searchText ?? '',
 		},
 		{
-			enabled: isOpen,
+			enabled: isOpen && source !== QuickFiltersSource.METER_EXPLORER,
 			keepPreviousData: true,
 		},
 	);
 
-	const attributeValues: string[] = useMemo(
-		() =>
-			((Object.values(data?.payload || {}).find((el) => !!el) ||
-				[]) as string[]).filter((val) => !isEmpty(val)),
-		[data?.payload],
-	);
-	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
+	const {
+		data: keyValueSuggestions,
+		isLoading: isLoadingKeyValueSuggestions,
+	} = useGetQueryKeyValueSuggestions({
+		key: filter.attributeKey.key,
+		signal: filter.dataSource || DataSource.LOGS,
+		signalSource: 'meter',
+		options: {
+			enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
+			keepPreviousData: true,
+		},
+	});
 
-	// derive the state of each filter key here in the renderer itself and keep it in sync with staged query
+	const attributeValues: string[] = useMemo(() => {
+		const dataType = filter.attributeKey.dataType || DataTypes.String;
+
+		if (source === QuickFiltersSource.METER_EXPLORER && keyValueSuggestions) {
+			// Process the response data
+			const responseData = keyValueSuggestions?.data as any;
+			const values = responseData.data?.values || {};
+			const stringValues = values.stringValues || [];
+			const numberValues = values.numberValues || [];
+
+			// Generate options from string values - explicitly handle empty strings
+			const stringOptions = stringValues
+				// Strict filtering for empty string - we'll handle it as a special case if needed
+				.filter(
+					(value: string | null | undefined): value is string =>
+						value !== null && value !== undefined && value !== '',
+				);
+
+			// Generate options from number values
+			const numberOptions = numberValues
+				.filter(
+					(value: number | null | undefined): value is number =>
+						value !== null && value !== undefined,
+				)
+				.map((value: number) => value.toString());
+
+			// Combine all options and make sure we don't have duplicate labels
+			return [...stringOptions, ...numberOptions];
+		}
+
+		const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+		return (data?.payload?.[key] || []).filter(
+			(val) => val !== undefined && val !== null,
+		);
+	}, [data?.payload, filter.attributeKey.dataType, keyValueSuggestions, source]);
+
+	const setSearchTextDebounced = useDebouncedFn((...args) => {
+		setSearchText(args[0] as string);
+	}, DEBOUNCE_DELAY);
+
+	// derive the state of each filter key here in the renderer itself and keep it in sync with current query
 	// also we need to keep a note of last focussed query.
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const currentFilterState = useMemo(() => {
@@ -90,7 +178,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			if (SELECTED_OPERATORS.includes(filterSync.op)) {
 				if (isArray(filterSync.value)) {
 					filterSync.value.forEach((val) => {
-						filterState[val] = true;
+						filterState[String(val)] = true;
 					});
 				} else if (typeof filterSync.value === 'string') {
 					filterState[filterSync.value] = true;
@@ -103,7 +191,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				filterState = setDefaultValues(attributeValues, true);
 				if (isArray(filterSync.value)) {
 					filterSync.value.forEach((val) => {
-						filterState[val] = false;
+						filterState[String(val)] = false;
 					});
 				} else if (typeof filterSync.value === 'string') {
 					filterState[filterSync.value] = false;
@@ -140,6 +228,23 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const isMultipleValuesTrueForTheKey =
 		Object.values(currentFilterState).filter((val) => val).length > 1;
 
+	// Sort checked items to the top, then unchecked items
+	const currentAttributeKeys = useMemo(() => {
+		const checkedValues = attributeValues.filter(
+			(val) => currentFilterState[val],
+		);
+		const uncheckedValues = attributeValues.filter(
+			(val) => !currentFilterState[val],
+		);
+		return [...checkedValues, ...uncheckedValues].slice(0, visibleItemsCount);
+	}, [attributeValues, currentFilterState, visibleItemsCount]);
+
+	// Count of checked values in the currently visible items
+	const checkedValuesCount = useMemo(
+		() => currentAttributeKeys.filter((val) => currentFilterState[val]).length,
+		[currentAttributeKeys, currentFilterState],
+	);
+
 	const handleClearFilterAttribute = (): void => {
 		const preparedQuery: Query = {
 			...currentQuery,
@@ -147,26 +252,31 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				...currentQuery.builder,
 				queryData: currentQuery.builder.queryData.map((item, idx) => ({
 					...item,
+					filter: {
+						expression: removeKeysFromExpression(item.filter?.expression ?? '', [
+							filter.attributeKey.key,
+						]),
+					},
 					filters: {
 						...item.filters,
 						items:
 							idx === lastUsedQuery
-								? item.filters.items.filter(
+								? item.filters?.items?.filter(
 										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
-								  )
-								: [...item.filters.items],
+								  ) || []
+								: [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
 					},
 				})),
 			},
 		};
-		redirectWithQueryBuilderData(preparedQuery);
-	};
 
-	const isSomeFilterPresentForCurrentAttribute = currentQuery.builder.queryData?.[
-		lastUsedQuery || 0
-	]?.filters?.items?.some((item) =>
-		isEqual(item.key?.key, filter.attributeKey.key),
-	);
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(preparedQuery);
+		} else {
+			redirectWithQueryBuilderData(preparedQuery);
+		}
+	};
 
 	const onChange = (
 		value: string,
@@ -187,6 +297,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			query.filters.items = query.filters.items.filter(
 				(q) => !isEqual(q.key?.key, filter.attributeKey.key),
 			);
+
+			if (query.filter?.expression) {
+				query.filter.expression = removeKeysFromExpression(
+					query.filter.expression,
+					[filter.attributeKey.key],
+				);
+			}
+
 			if (isOnlyOrAll === 'Only') {
 				const newFilterItem: TagFilterItem = {
 					id: uuid(),
@@ -267,7 +385,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								}
 							}
 							break;
-						case 'nin':
+						case 'not in':
 							// if the current running operator is NIN then when unchecking the value it gets
 							// added to the clause like key NIN [value1 , currentUnselectedValue]
 							if (!checked) {
@@ -303,11 +421,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										...currentFilter,
 										value: currentFilter.value.filter((val) => val !== value),
 									};
-
 									if (newFilter.value.length === 0) {
 										query.filters.items = query.filters.items.filter(
 											(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 										);
+										if (query.filter?.expression) {
+											query.filter.expression = removeKeysFromExpression(
+												query.filter.expression,
+												[filter.attributeKey.key],
+											);
+										}
 									} else {
 										query.filters.items = query.filters.items.map((item) => {
 											if (isEqual(item.key?.key, filter.attributeKey.key)) {
@@ -317,6 +440,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										});
 									}
 								} else {
+									const newFilter = {
+										...currentFilter,
+										value: currentFilter.value === value ? null : currentFilter.value,
+									};
+									if (newFilter.value === null && query.filter?.expression) {
+										query.filter.expression = removeKeysFromExpression(
+											query.filter.expression,
+											[filter.attributeKey.key],
+										);
+									}
 									query.filters.items = query.filters.items.filter(
 										(item) => !isEqual(item.key?.key, filter.attributeKey.key),
 									);
@@ -346,7 +479,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							if (!checked) {
 								const newFilter = {
 									...currentFilter,
-									op: getOperatorValue(OPERATORS.NIN),
+									op: getOperatorValue('NOT_IN'),
 									value: [currentFilter.value as string, value],
 								};
 								query.filters.items = query.filters.items.map((item) => {
@@ -369,7 +502,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				// case  - when there is no filter for the current key that means all are selected right now.
 				const newFilterItem: TagFilterItem = {
 					id: uuid(),
-					op: getOperatorValue(OPERATORS.NIN),
+					op: getOperatorValue('NOT_IN'),
 					key: filter.attributeKey,
 					value,
 				};
@@ -391,8 +524,17 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			},
 		};
 
-		redirectWithQueryBuilderData(finalQuery);
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(finalQuery);
+		} else {
+			redirectWithQueryBuilderData(finalQuery);
+		}
 	};
+
+	const isEmptyStateWithDocsEnabled =
+		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(source) &&
+		!searchText &&
+		!attributeValues.length;
 
 	return (
 		<div className="checkbox-filter">
@@ -400,10 +542,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				className="filter-header-checkbox"
 				onClick={(): void => {
 					if (isOpen) {
-						setIsOpen(false);
+						setUserToggleState(false);
 						setVisibleItemsCount(10);
 					} else {
-						setIsOpen(true);
+						setUserToggleState(true);
 					}
 				}}
 			>
@@ -416,7 +558,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
-					{isOpen && (
+					{isOpen && !!attributeValues.length && (
 						<Typography.Text
 							className="clear-all"
 							onClick={(e): void => {
@@ -430,67 +572,83 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					)}
 				</section>
 			</section>
-			{isOpen && isLoading && !attributeValues.length && (
-				<section className="loading">
-					<Skeleton paragraph={{ rows: 4 }} />
-				</section>
-			)}
-			{isOpen && !isLoading && (
-				<>
-					<section className="search">
-						<Input
-							placeholder="Filter values"
-							onChange={(e): void => setSearchText(e.target.value)}
-							disabled={isFilterDisabled}
-						/>
+			{isOpen &&
+				(isLoading || isLoadingKeyValueSuggestions) &&
+				!attributeValues.length && (
+					<section className="loading">
+						<Skeleton paragraph={{ rows: 4 }} />
 					</section>
+				)}
+			{isOpen && !isLoading && !isLoadingKeyValueSuggestions && (
+				<>
+					{!isEmptyStateWithDocsEnabled && (
+						<section className="search">
+							<Input
+								placeholder="Filter values"
+								onChange={(e): void => setSearchTextDebounced(e.target.value)}
+								disabled={isFilterDisabled}
+							/>
+						</section>
+					)}
 					{attributeValues.length > 0 ? (
 						<section className="values">
-							{currentAttributeKeys.map((value: string) => (
-								<div key={value} className="value">
-									<Checkbox
-										onChange={(e): void => onChange(value, e.target.checked, false)}
-										checked={currentFilterState[value]}
-										disabled={isFilterDisabled}
-										rootClassName="check-box"
-									/>
+							{currentAttributeKeys.map((value: string, index: number) => (
+								<Fragment key={value}>
+									{index === checkedValuesCount && checkedValuesCount > 0 && (
+										<div
+											key="separator"
+											className="filter-separator"
+											data-testid="filter-separator"
+										/>
+									)}
+									<div className="value">
+										<Checkbox
+											onChange={(e): void => onChange(value, e.target.checked, false)}
+											checked={currentFilterState[value]}
+											disabled={isFilterDisabled}
+											rootClassName="check-box"
+										/>
 
-									<div
-										className={cx(
-											'checkbox-value-section',
-											isFilterDisabled ? 'filter-disabled' : '',
-										)}
-										onClick={(): void => {
-											if (isFilterDisabled) {
-												return;
-											}
-											onChange(value, currentFilterState[value], true);
-										}}
-									>
-										{filter.customRendererForValue ? (
-											filter.customRendererForValue(value)
-										) : (
-											<Typography.Text
-												className="value-string"
-												ellipsis={{ tooltip: { placement: 'right' } }}
-											>
-												{value}
-											</Typography.Text>
-										)}
-										<Button type="text" className="only-btn">
-											{isSomeFilterPresentForCurrentAttribute
-												? currentFilterState[value] && !isMultipleValuesTrueForTheKey
-													? 'All'
-													: 'Only'
-												: 'Only'}
-										</Button>
-										<Button type="text" className="toggle-btn">
-											Toggle
-										</Button>
+										<div
+											className={cx(
+												'checkbox-value-section',
+												isFilterDisabled ? 'filter-disabled' : '',
+											)}
+											onClick={(): void => {
+												if (isFilterDisabled) {
+													return;
+												}
+												onChange(value, currentFilterState[value], true);
+											}}
+										>
+											<div className={`${filter.title} label-${value}`} />
+											{filter.customRendererForValue ? (
+												filter.customRendererForValue(value)
+											) : (
+												<Typography.Text
+													className="value-string"
+													ellipsis={{ tooltip: { placement: 'top' } }}
+												>
+													{String(value)}
+												</Typography.Text>
+											)}
+											<Button type="text" className="only-btn">
+												{isSomeFilterPresentForCurrentAttribute
+													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
+														? 'All'
+														: 'Only'
+													: 'Only'}
+											</Button>
+											<Button type="text" className="toggle-btn">
+												Toggle
+											</Button>
+										</div>
 									</div>
-								</div>
+								</Fragment>
 							))}
 						</section>
+					) : isEmptyStateWithDocsEnabled ? (
+						<LogsQuickFilterEmptyState attributeKey={filter.attributeKey.key} />
 					) : (
 						<section className="no-data">
 							<Typography.Text>No values found</Typography.Text>{' '}
@@ -511,3 +669,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		</div>
 	);
 }
+
+CheckboxFilter.defaultProps = {
+	onFilterChange: null,
+};

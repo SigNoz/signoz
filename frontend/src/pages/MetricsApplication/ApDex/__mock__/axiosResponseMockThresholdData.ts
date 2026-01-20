@@ -1,4 +1,6 @@
-import { AxiosResponse } from 'axios';
+import { StatusCodes } from 'http-status-codes';
+import { SuccessResponseV2 } from 'types/api';
+import { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';
 
 export const axiosResponseThresholdData = {
 	data: [
@@ -6,4 +8,5 @@ export const axiosResponseThresholdData = {
 			threshold: 0.5,
 		},
 	],
-} as AxiosResponse;
+	httpStatusCode: StatusCodes.OK,
+} as SuccessResponseV2<ApDexPayloadAndSettingsProps[]>;

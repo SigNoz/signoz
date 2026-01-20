@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { VIEWS } from '../constants';
 import HostMetricsLogs from './HostMetricsLogs';
 
 interface Props {
@@ -23,7 +24,7 @@ interface Props {
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => void;
-	handleChangeLogFilters: (value: IBuilderQuery['filters']) => void;
+	handleChangeLogFilters: (value: IBuilderQuery['filters'], view: VIEWS) => void;
 	logFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 }
@@ -50,11 +51,17 @@ function HostMetricLogsDetailedView({
 						aggregateAttribute: {
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
+						filters: {
+							items:
+								logFilters?.items?.filter((item) => item.key?.key !== 'host.name') ||
+								[],
+							op: 'AND',
+						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, logFilters?.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -65,29 +72,27 @@ function HostMetricLogsDetailedView({
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
-							query={query}
-							onChange={handleChangeLogFilters}
+							query={query as IBuilderQuery}
+							onChange={(value): void => handleChangeLogFilters(value, VIEWS.LOGS)}
 							disableNavigationShortcuts
 						/>
 					)}
 				</div>
 				<div className="datetime-section">
 					<DateTimeSelectionV2
-						showAutoRefresh={false}
+						showAutoRefresh
 						showRefreshText={false}
 						hideShareModal
 						isModalTimeSelection={isModalTimeSelection}
 						onTimeChange={handleTimeChange}
 						defaultRelativeTime="5m"
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>
-			<HostMetricsLogs
-				timeRange={timeRange}
-				handleChangeLogFilters={handleChangeLogFilters}
-				filters={logFilters}
-			/>
+			<HostMetricsLogs timeRange={timeRange} filters={logFilters} />
 		</div>
 	);
 }

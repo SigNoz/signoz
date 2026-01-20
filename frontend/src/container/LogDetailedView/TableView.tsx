@@ -13,6 +13,9 @@ import AddToQueryHOC, {
 import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
@@ -31,11 +34,13 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import { TableViewActions } from './TableView/TableViewActions';
-import { filterKeyForField, findKeyPath, flattenObject } from './utils';
-
-// Fields which should be restricted from adding it to query
-const RESTRICTED_FIELDS = ['timestamp'];
+import TableViewActions from './TableView/TableViewActions';
+import {
+	filterKeyForField,
+	findKeyPath,
+	flattenObject,
+	getFieldAttributes,
+} from './utils';
 
 interface TableViewProps {
 	logData: ILog;
@@ -43,11 +48,7 @@ interface TableViewProps {
 	selectedOptions: OptionsQuery;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 type Props = TableViewProps &
@@ -61,8 +62,8 @@ function TableView({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
-	onGroupByAttribute,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -84,12 +85,17 @@ function TableView({
 				}
 			});
 		} else {
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			selectedOptions.selectColumns.forEach((val) => {
-				const path = findKeyPath(logData, val.key, '');
+				const path = findKeyPath(logData, val.name, '');
 				if (path) {
 					pinnedAttributes[path] = true;
 				}
 			});
+		}
+		// pin trace_id by default when present
+		if (logData?.trace_id) {
+			pinnedAttributes.trace_id = true;
 		}
 
 		setPinnedAttributes(pinnedAttributes);
@@ -109,10 +115,18 @@ function TableView({
 		operator: string,
 		fieldKey: string,
 		fieldValue: string,
+		dataType: string | undefined,
+		fieldType: string | undefined,
 	): void => {
 		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
 		if (onClickActionItem) {
-			onClickActionItem(fieldKey, validatedFieldValue, operator);
+			onClickActionItem(
+				fieldKey,
+				validatedFieldValue,
+				operator,
+				dataType as DataTypes,
+				fieldType,
+			);
 		}
 	};
 
@@ -120,8 +134,10 @@ function TableView({
 		operator: string,
 		fieldKey: string,
 		fieldValue: string,
+		dataType: string | undefined,
+		fieldType: MetricsType | undefined,
 	) => (): void => {
-		handleClick(operator, fieldKey, fieldValue);
+		handleClick(operator, fieldKey, fieldValue, dataType, fieldType);
 		if (operator === OPERATORS['=']) {
 			setIsFilterInLoading(true);
 		}
@@ -249,13 +265,15 @@ function TableView({
 				}
 
 				const fieldFilterKey = filterKeyForField(field);
-				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
+				const { dataType } = getFieldAttributes(field);
+				if (!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
 							fieldKey={fieldFilterKey}
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
 							fontSize={FontSize.SMALL}
+							dataType={dataType as DataTypes}
 						>
 							{renderedField}
 						</AddToQueryHOC>
@@ -278,7 +296,7 @@ function TableView({
 					isfilterInLoading={isfilterInLoading}
 					isfilterOutLoading={isfilterOutLoading}
 					onClickHandler={onClickHandler}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			),
 		},
@@ -321,7 +339,7 @@ function TableView({
 TableView.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
-	onGroupByAttribute: undefined,
+	handleChangeSelectedView: undefined,
 };
 
 export interface DataType {

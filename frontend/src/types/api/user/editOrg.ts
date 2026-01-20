@@ -1,8 +1,6 @@
 export interface Props {
-	name: string;
-	isAnonymous: boolean;
+	displayName: string;
 	orgId: string;
-	hasOptedUpdates?: boolean;
 }
 
 export interface PayloadProps {

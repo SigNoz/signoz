@@ -241,8 +241,6 @@ function ClientSideQBSearch(
 							key: 'body',
 							dataType: DataTypes.String,
 							type: '',
-							isColumn: true,
-							isJSON: false,
 							id: 'body--string----true',
 						},
 						op: OPERATORS.CONTAINS,

@@ -2,18 +2,20 @@ package kafka
 
 import (
 	"fmt"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 var defaultStepInterval int64 = 60
 
-func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) (*v3.QueryRangeParamsV3, error) {
+func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string, kafkaSpanEval bool) (*v3.QueryRangeParamsV3, error) {
 
-	if constants.KafkaSpanEval == "false" && queryContext == "producer-consumer-eval" {
+	if !kafkaSpanEval && queryContext == "producer-consumer-eval" {
 		return nil, fmt.Errorf("span evaluation feature is disabled and is experimental")
 	}
+
 	// ToDo: propagate this through APIs when there are different handlers
 	queueType := KafkaQueue
 
@@ -23,9 +25,10 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 		return nil, err
 	}
 
-	var cq *v3.CompositeQuery
-
-	cq, err = buildCompositeQuery(chq, queryContext)
+	cq, err := buildCompositeQuery(chq, queryContext)
+	if err != nil {
+		return nil, err
+	}
 
 	queryRangeParams := &v3.QueryRangeParamsV3{
 		Start:          messagingQueue.Start,
@@ -42,6 +45,7 @@ func BuildQueryRangeParams(messagingQueue *MessagingQueue, queryContext string) 
 func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType string) (*v3.ClickHouseQuery, error) {
 	start := messagingQueue.Start
 	end := messagingQueue.End
+
 	consumerGroup, ok := messagingQueue.Variables["consumer_group"]
 	if !ok {
 		return nil, fmt.Errorf("consumer_group not found in the request")
@@ -53,22 +57,30 @@ func buildClickHouseQueryNetwork(messagingQueue *MessagingQueue, queueType strin
 	}
 
 	query := generateNetworkLatencyThroughputSQL(start, end, consumerGroup, partitionID, queueType)
-
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
 }
 
-func buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
+func buildBuilderQueriesProducerBytes(
+	unixMilliStart, unixMilliEnd int64,
+	attributeCache *Clients,
+) (map[string]*v3.BuilderQuery, error) {
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
+
 	bq := make(map[string]*v3.BuilderQuery)
-	queryName := fmt.Sprintf("byte_rate")
+	queryName := "byte_rate"
 
 	chq := &v3.BuilderQuery{
 		QueryName:    queryName,
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      "kafka_producer_byte_rate",
+			Key:      getDotMetrics("kafka_producer_byte_rate", normalized),
 			DataType: v3.AttributeKeyDataTypeFloat64,
 			Type:     v3.AttributeKeyType("Gauge"),
 			IsColumn: true,
@@ -82,7 +94,7 @@ func buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd int64, attrib
 			Items: []v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "service_name",
+						Key:      getDotMetrics("service_name", normalized),
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -102,11 +114,12 @@ func buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd int64, attrib
 		},
 		Expression: queryName,
 		ReduceTo:   v3.ReduceToOperatorAvg,
-		GroupBy: []v3.AttributeKey{{
-			Key:      "service_name",
-			DataType: v3.AttributeKeyDataTypeString,
-			Type:     v3.AttributeKeyTypeTag,
-		},
+		GroupBy: []v3.AttributeKey{
+			{
+				Key:      getDotMetrics("service_name", normalized),
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+			},
 			{
 				Key:      "topic",
 				DataType: v3.AttributeKeyDataTypeString,
@@ -118,16 +131,25 @@ func buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd int64, attrib
 	return bq, nil
 }
 
-func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCache *Clients) (map[string]*v3.BuilderQuery, error) {
+func buildBuilderQueriesNetwork(
+	unixMilliStart, unixMilliEnd int64,
+	attributeCache *Clients,
+) (map[string]*v3.BuilderQuery, error) {
+
 	bq := make(map[string]*v3.BuilderQuery)
-	queryName := fmt.Sprintf("latency")
+	queryName := "latency"
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
 
 	chq := &v3.BuilderQuery{
 		QueryName:    queryName,
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: "kafka_consumer_fetch_latency_avg",
+			Key: getDotMetrics("kafka_consumer_fetch_latency_avg", normalized),
 		},
 		AggregateOperator: v3.AggregateOperatorAvg,
 		Temporality:       v3.Unspecified,
@@ -138,7 +160,7 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 			Items: []v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "service_name",
+						Key:      getDotMetrics("service_name", normalized),
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -147,7 +169,7 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 				},
 				{
 					Key: v3.AttributeKey{
-						Key:      "client_id",
+						Key:      getDotMetrics("client_id", normalized),
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -156,7 +178,7 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 				},
 				{
 					Key: v3.AttributeKey{
-						Key:      "service_instance_id",
+						Key:      getDotMetrics("service_instance_id", normalized),
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -167,18 +189,19 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 		},
 		Expression: queryName,
 		ReduceTo:   v3.ReduceToOperatorAvg,
-		GroupBy: []v3.AttributeKey{{
-			Key:      "service_name",
-			DataType: v3.AttributeKeyDataTypeString,
-			Type:     v3.AttributeKeyTypeTag,
-		},
+		GroupBy: []v3.AttributeKey{
 			{
-				Key:      "client_id",
+				Key:      getDotMetrics("service_name", normalized),
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
 			{
-				Key:      "service_instance_id",
+				Key:      getDotMetrics("client_id", normalized),
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+			},
+			{
+				Key:      getDotMetrics("service_instance_id", normalized),
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -189,17 +212,23 @@ func buildBuilderQueriesNetwork(unixMilliStart, unixMilliEnd int64, attributeCac
 }
 
 func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.QueryRangeParamsV3, error) {
+
 	bq := make(map[string]*v3.BuilderQuery)
 
 	unixMilliStart := messagingQueue.Start / 1000000
 	unixMilliEnd := messagingQueue.End / 1000000
+
+	normalized := true
+	if constants.IsDotMetricsEnabled {
+		normalized = false
+	}
 
 	buiderQuery := &v3.BuilderQuery{
 		QueryName:    "fetch_latency",
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: "kafka_consumer_fetch_latency_avg",
+			Key: getDotMetrics("kafka_consumer_fetch_latency_avg", normalized),
 		},
 		AggregateOperator: v3.AggregateOperatorCount,
 		Temporality:       v3.Unspecified,
@@ -214,7 +243,7 @@ func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.Que
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: "kafka_consumer_group_lag",
+			Key: getDotMetrics("kafka_consumer_group_lag", normalized),
 		},
 		AggregateOperator: v3.AggregateOperatorCount,
 		Temporality:       v3.Unspecified,
@@ -242,7 +271,11 @@ func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.Que
 	return queryRangeParams, nil
 }
 
-func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string, attributeCache *Clients) (*v3.QueryRangeParamsV3, error) {
+func BuildQRParamsWithCache(
+	messagingQueue *MessagingQueue,
+	queryContext string,
+	attributeCache *Clients,
+) (*v3.QueryRangeParamsV3, error) {
 
 	queueType := KafkaQueue
 
@@ -254,11 +287,9 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 
 	if queryContext == "throughput" {
 		chq, err := buildClickHouseQueryNetwork(messagingQueue, queueType)
-
 		if err != nil {
 			return nil, err
 		}
-
 		cq, err = buildCompositeQuery(chq, queryContext)
 
 	} else if queryContext == "fetch-latency" {
@@ -271,14 +302,15 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 			BuilderQueries: bhq,
 			PanelType:      v3.PanelTypeTable,
 		}
+
 	} else if queryContext == "producer-throughput-overview" {
 		start := messagingQueue.Start
 		end := messagingQueue.End
 		query := generateProducerPartitionThroughputSQL(start, end, queueType)
-
 		cq, err = buildCompositeQuery(&v3.ClickHouseQuery{
 			Query: query,
 		}, queryContext)
+
 	} else if queryContext == "producer-throughput-overview-byte-rate" {
 		bhq, err := buildBuilderQueriesProducerBytes(unixMilliStart, unixMilliEnd, attributeCache)
 		if err != nil {
@@ -304,22 +336,32 @@ func BuildQRParamsWithCache(messagingQueue *MessagingQueue, queryContext string,
 	return queryRangeParams, err
 }
 
-func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, queryContext string) (*v3.ClickHouseQuery, error) {
+func BuildClickHouseQuery(
+	messagingQueue *MessagingQueue,
+	queueType string,
+	queryContext string,
+) (*v3.ClickHouseQuery, error) {
+
 	start := messagingQueue.Start
 	end := messagingQueue.End
 
 	var topic, partition string
+
 	if queryContext == "producer" ||
 		queryContext == "consumer" ||
 		queryContext == "consumer_partition_latency" ||
 		queryContext == "producer-throughput-details" ||
 		queryContext == "consumer-throughput-details" {
+
 		var ok bool
 		topic, ok = messagingQueue.Variables["topic"]
 		if !ok {
 			return nil, fmt.Errorf("invalid type for Topic")
 		}
-		if !(queryContext == "consumer-throughput-details" || queryContext == "producer-throughput-details") {
+
+		if !(queryContext == "consumer-throughput-details" ||
+			queryContext == "producer-throughput-details") {
+
 			partition, ok = messagingQueue.Variables["partition"]
 			if !ok {
 				return nil, fmt.Errorf("invalid type for Partition")
@@ -328,39 +370,42 @@ func BuildClickHouseQuery(messagingQueue *MessagingQueue, queueType string, quer
 	}
 
 	var query string
-	if queryContext == "producer" {
+
+	switch queryContext {
+	case "producer":
 		query = generateProducerSQL(start, end, topic, partition, queueType)
-	} else if queryContext == "consumer" {
+	case "consumer":
 		consumerGroup, ok := messagingQueue.Variables["consumer_group"]
 		if !ok {
 			return nil, fmt.Errorf("invalid type for consumer group")
 		}
 		query = generateConsumerSQL(start, end, topic, partition, consumerGroup, queueType)
-	} else if queryContext == "producer-topic-throughput" {
+	case "producer-topic-throughput":
 		query = generatePartitionLatencySQL(start, end, queueType)
-	} else if queryContext == "consumer_partition_latency" {
+	case "consumer_partition_latency":
 		query = generateConsumerPartitionLatencySQL(start, end, topic, partition, queueType)
-	} else if queryContext == "producer-throughput-details" {
+	case "producer-throughput-details":
 		svcName, ok := messagingQueue.Variables["service_name"]
 		if !ok {
 			return nil, fmt.Errorf("invalid type for service")
 		}
 		query = generateProducerTopicLatencySQL(start, end, topic, svcName, queueType)
-	} else if queryContext == "consumer-throughput-overview" {
+	case "consumer-throughput-overview":
 		query = generateConsumerLatencySQL(start, end, queueType)
-	} else if queryContext == "consumer-throughput-details" {
+	case "consumer-throughput-details":
 		svcName, ok := messagingQueue.Variables["service_name"]
 		if !ok {
 			return nil, fmt.Errorf("invalid type for service")
 		}
 		query = generateConsumerServiceLatencySQL(start, end, topic, svcName, queueType)
-	} else if queryContext == "producer-consumer-eval" {
+	case "producer-consumer-eval":
 		query = generateProducerConsumerEvalSQL(start, end, queueType, messagingQueue.EvalTime)
-	} else if queryContext == "onboard_producers" {
+	case "onboard_producers":
 		query = onboardProducersSQL(start, end, queueType)
-	} else if queryContext == "onboard_consumers" {
+	case "onboard_consumers":
 		query = onboardConsumerSQL(start, end, queueType)
 	}
+
 	return &v3.ClickHouseQuery{
 		Query: query,
 	}, nil
@@ -381,4 +426,20 @@ func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.Comp
 		ClickHouseQueries: map[string]*v3.ClickHouseQuery{queryContext: chq},
 		PanelType:         v3.PanelTypeTable,
 	}, nil
+}
+
+func getDotMetrics(metricName string, normalized bool) string {
+	dotMetricsMap := map[string]string{
+		"kafka_producer_byte_rate":         "kafka.producer.byte-rate",
+		"service_name":                     "service.name",
+		"kafka_consumer_fetch_latency_avg": "kafka.consumer.fetch_latency_avg",
+		"service_instance_id":              "service.instance.id",
+		"client_id":                        "client-id",
+		"kafka_consumer_group_lag":         "kafka.consumer_group.lag",
+	}
+	if _, ok := dotMetricsMap[metricName]; ok && !normalized {
+		return dotMetricsMap[metricName]
+	} else {
+		return metricName
+	}
 }

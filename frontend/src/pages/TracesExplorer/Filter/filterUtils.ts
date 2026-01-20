@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
@@ -11,18 +12,28 @@ import { DataSource } from 'types/common/queryBuilder';
 export const AllTraceFilterKeyValue: Record<string, string> = {
 	durationNanoMin: 'Duration',
 	durationNano: 'Duration',
+	duration_nano: 'Duration',
 	durationNanoMax: 'Duration',
 	'deployment.environment': 'Environment',
 	hasError: 'Status',
+	has_error: 'Status',
 	serviceName: 'Service Name',
+	'service.name': 'service.name',
 	name: 'Operation / Name',
 	rpcMethod: 'RPC Method',
+	'rpc.method': 'RPC Method',
 	responseStatusCode: 'Status Code',
+	response_status_code: 'Status Code',
 	httpHost: 'HTTP Host',
+	http_host: 'HTTP Host',
 	httpMethod: 'HTTP Method',
+	http_method: 'HTTP Method',
 	httpRoute: 'HTTP Route',
+	'http.route': 'HTTP Route',
 	httpUrl: 'HTTP URL',
+	'http.url': 'HTTP URL',
 	traceID: 'Trace ID',
+	trace_id: 'Trace ID',
 } as const;
 
 export type AllTraceFilterKeys = keyof typeof AllTraceFilterKeyValue;
@@ -183,24 +194,18 @@ export const traceFilterKeys: Record<
 		key: 'durationNano',
 		dataType: DataTypes.Float64,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'durationNano--float64--tag--true',
 	},
 	hasError: {
 		key: 'hasError',
 		dataType: DataTypes.bool,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'hasError--bool--tag--true',
 	},
 	serviceName: {
 		key: 'serviceName',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'serviceName--string--tag--true',
 	},
 
@@ -208,88 +213,66 @@ export const traceFilterKeys: Record<
 		key: 'deployment.environment',
 		dataType: DataTypes.String,
 		type: 'resource',
-		isColumn: false,
-		isJSON: false,
 		id: 'deployment.environment--string--resource--false',
 	},
 	name: {
 		key: 'name',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'name--string--tag--true',
 	},
 	rpcMethod: {
 		key: 'rpcMethod',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'rpcMethod--string--tag--true',
 	},
 	responseStatusCode: {
 		key: 'responseStatusCode',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'responseStatusCode--string--tag--true',
 	},
 	httpHost: {
 		key: 'httpHost',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'httpHost--string--tag--true',
 	},
 	httpMethod: {
 		key: 'httpMethod',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'httpMethod--string--tag--true',
 	},
 	httpRoute: {
 		key: 'httpRoute',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'httpRoute--string--tag--true',
 	},
 	httpUrl: {
 		key: 'httpUrl',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'httpUrl--string--tag--true',
 	},
 	traceID: {
 		key: 'traceID',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'traceID--string--tag--true',
 	},
 	durationNanoMin: {
 		key: 'durationNanoMin',
 		dataType: DataTypes.Float64,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'durationNanoMin--float64--tag--true',
 	},
 	durationNanoMax: {
 		key: 'durationNanoMax',
 		dataType: DataTypes.Float64,
 		type: 'tag',
-		isColumn: true,
-		isJSON: false,
 		id: 'durationNanoMax--float64--tag--true',
 	},
 } as const;
@@ -327,8 +310,9 @@ export function useGetAggregateValues(
 			});
 
 			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
-				setResults(values);
+				const key =
+					DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[keyData.dataType as Partial<DataTypes>];
+				setResults(key ? payload[key] || [] : []);
 			}
 		} catch (e) {
 			console.error(e);

@@ -13,6 +13,8 @@ export const filterSpansByString = (
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
+export const SPAN_DETAILS_LEFT_COL_WIDTH = 350;
+
 type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
 
 export interface IIntervalUnit {

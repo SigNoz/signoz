@@ -82,7 +82,7 @@ export const getAPIKeysResponse = {
 			},
 			token: '1udrUFmRI6gdb8r/hLabS7zRlgfMQlUw/tz9sac82pE=',
 			role: 'ADMIN',
-			name: 'No Expiry Token',
+			name: 'No Expiry Key',
 			createdAt: 1708008178,
 			expiresAt: 0,
 			updatedAt: 1708008190,

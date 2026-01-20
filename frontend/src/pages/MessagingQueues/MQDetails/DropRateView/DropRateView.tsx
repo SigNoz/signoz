@@ -2,6 +2,9 @@
 import '../MQDetails.style.scss';
 
 import { Table, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
+import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import axios from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -13,14 +16,12 @@ import {
 	MessagingQueuesViewType,
 	RowData,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { MessagingQueueServicePayload } from '../MQTables/getConsumerLagDetails';
-import { getKafkaSpanEval } from '../MQTables/getKafkaSpanEval';
 import {
 	convertToMilliseconds,
 	DropRateAPIResponse,
@@ -93,6 +94,9 @@ export function getColumns(
 											className="traceid-text"
 											onClick={(): void => {
 												window.open(`${ROUTES.TRACE}/${item}`, '_blank');
+												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
+													item,
+												});
 											}}
 										>
 											{item}
@@ -226,6 +230,22 @@ function DropRateView(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, evaluationTime]);
+
+	const prevTableDataRef = useRef<string>();
+
+	useEffect(() => {
+		if (tableData.length > 0) {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(`MQ Kafka: Drop Rate View`, {
+					dataRender: tableData.length,
+				});
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(tableData)]);
 
 	return (
 		<div className={cx('mq-overview-container', 'droprate-view')}>

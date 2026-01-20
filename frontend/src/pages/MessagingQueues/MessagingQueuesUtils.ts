@@ -1,3 +1,10 @@
+import {
+	getConsumerLagDetails,
+	MessagingQueueServicePayload,
+	MessagingQueuesPayloadProps,
+} from 'api/messagingQueues/getConsumerLagDetails';
+import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
+import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -8,16 +15,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
-
-import {
-	getConsumerLagDetails,
-	MessagingQueueServicePayload,
-	MessagingQueuesPayloadProps,
-} from './MQDetails/MQTables/getConsumerLagDetails';
-import { getPartitionLatencyDetails } from './MQDetails/MQTables/getPartitionLatencyDetails';
-import { getTopicThroughputDetails } from './MQDetails/MQTables/getTopicThroughputDetails';
 
 export const KAFKA_SETUP_DOC_LINK =
 	'https://signoz.io/docs/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started';
@@ -63,8 +62,6 @@ export function createWidgetFilterItem(
 			key,
 			dataType: DataTypes.String,
 			type: 'tag',
-			isColumn: false,
-			isJSON: false,
 			id,
 		},
 		op: '=',
@@ -114,8 +111,6 @@ export function getWidgetQuery({
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
 							id: 'kafka_consumer_group_lag--float64--Gauge--true',
-							isColumn: true,
-							isJSON: false,
 							key: 'kafka_consumer_group_lag',
 							type: 'Gauge',
 						},
@@ -132,24 +127,18 @@ export function getWidgetQuery({
 							{
 								dataType: DataTypes.String,
 								id: 'group--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'group',
 								type: 'tag',
 							},
 							{
 								dataType: DataTypes.String,
 								id: 'topic--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'topic',
 								type: 'tag',
 							},
 							{
 								dataType: DataTypes.String,
 								id: 'partition--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'partition',
 								type: 'tag',
 							},
@@ -159,13 +148,14 @@ export function getWidgetQuery({
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'avg',
 						stepInterval: 60,
 						timeAggregation: 'max',
 					},
 				],
 				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [],
 			id: uuid(),
@@ -176,16 +166,32 @@ export function getWidgetQuery({
 export const convertToNanoseconds = (timestamp: number): bigint =>
 	BigInt((timestamp * 1e9).toFixed(0));
 
+export const getCustomTimeRangeWindowSweepInMS = (
+	customTimeRangeWindowForCoRelation: string | undefined,
+): number => {
+	switch (customTimeRangeWindowForCoRelation) {
+		case '5m':
+			return 2.5 * 60 * 1000;
+		case '10m':
+			return 5 * 60 * 1000;
+		default:
+			return 5 * 60 * 1000;
+	}
+};
+
 export const getStartAndEndTimesInMilliseconds = (
 	timestamp: number,
+	delta?: number,
 ): { start: number; end: number } => {
 	const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000; // 300,000 milliseconds
 
 	const pointInTime = Math.floor(timestamp * 1000);
 
 	// Convert timestamp to milliseconds and floor it
-	const start = Math.floor(pointInTime - FIVE_MINUTES_IN_MILLISECONDS);
-	const end = Math.floor(pointInTime + FIVE_MINUTES_IN_MILLISECONDS);
+	const start = Math.floor(
+		pointInTime - (delta || FIVE_MINUTES_IN_MILLISECONDS),
+	);
+	const end = Math.floor(pointInTime + (delta || FIVE_MINUTES_IN_MILLISECONDS));
 
 	return { start, end };
 };

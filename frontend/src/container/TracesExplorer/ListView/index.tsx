@@ -1,5 +1,10 @@
+import './ListView.styles.scss';
+
+import logEvent from 'api/common/logEvent';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -7,37 +12,69 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
+import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
+import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useMemo } from 'react';
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
+import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container, ErrorText, tableStyles } from './styles';
+import { Container, tableStyles } from './styles';
 import { getListColumns, transformDataWithDate } from './utils';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<any>;
 }
 
-function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
-	const { stagedQuery, panelType } = useQueryBuilder();
+function ListView({
+	isFilterApplied,
+	setWarning,
+	setIsLoadingQueries,
+	queryKeyRef,
+}: ListViewProps): JSX.Element {
+	const {
+		stagedQuery,
+		panelType: panelTypeFromQueryBuilder,
+	} = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
+
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+		loading: timeRangeUpdateLoading,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
@@ -55,39 +92,84 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
+	const paginationConfig =
+		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
-	const { data, isFetching, isLoading, isError } = useGetQueryRange(
+	const requestQuery = useMemo(
+		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
+		[stagedQuery, orderBy],
+	);
+
+	const queryKey = useMemo(
+		() => [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+			panelType,
+			paginationConfig,
+			options?.selectColumns,
+			orderBy,
+		],
+		[
+			stagedQuery,
+			panelType,
+			globalSelectedTime,
+			paginationConfig,
+			options?.selectColumns,
+			maxTime,
+			minTime,
+			orderBy,
+		],
+	);
+
+	if (queryKeyRef) {
+		// eslint-disable-next-line no-param-reassign
+		queryKeyRef.current = queryKey;
+	}
+
+	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
 		{
-			query: stagedQuery || initialQueriesMap.traces,
-			graphType: panelType || PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: globalSelectedTime,
+			query: requestQuery,
+			graphType: panelType,
+			selectedTime: 'GLOBAL_TIME' as const,
+			globalSelectedInterval: globalSelectedTime as CustomTimeType,
 			params: {
 				dataSource: 'traces',
 			},
 			tableParams: {
-				pagination: paginationQueryData,
+				pagination: paginationConfig,
 				selectColumns: options?.selectColumns,
 			},
 		},
-		DEFAULT_ENTITY_VERSION,
+		// ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				globalSelectedTime,
-				maxTime,
-				minTime,
-				stagedQuery,
-				panelType,
-				paginationQueryData,
-				options?.selectColumns,
-			],
+			queryKey,
 			enabled:
+				// don't make api call while the time range state in redux is loading
+				!timeRangeUpdateLoading &&
 				!!stagedQuery &&
 				panelType === PANEL_TYPES.LIST &&
 				!!options?.selectColumns?.length,
 		},
 	);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
+
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	const dataLength =
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
@@ -119,34 +201,62 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
-	const isDataPresent =
+	const handleOrderChange = useCallback((value: string) => {
+		setOrderBy(value);
+	}, []);
+
+	const isDataAbsent =
 		!isLoading &&
 		!isFetching &&
 		!isError &&
 		transformedQueryTableData.length === 0;
 
+	useEffect(() => {
+		if (
+			!isLoading &&
+			!isFetching &&
+			!isError &&
+			transformedQueryTableData.length !== 0
+		) {
+			logEvent('Traces Explorer: Data present', {
+				panelType,
+			});
+		}
+	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
 	return (
 		<Container>
-			{transformedQueryTableData.length !== 0 && (
+			<div className="trace-explorer-controls">
+				<div className="order-by-container">
+					<div className="order-by-label">
+						Order by <Minus size={14} /> <ArrowUp10 size={14} />
+					</div>
+
+					<ListViewOrderBy
+						value={orderBy}
+						onChange={handleOrderChange}
+						dataSource={DataSource.TRACES}
+					/>
+				</div>
+
 				<TraceExplorerControls
 					isLoading={isFetching}
 					totalCount={totalCount}
 					config={config}
 					perPageOptions={PER_PAGE_OPTIONS}
 				/>
-			)}
+			</div>
 
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+			{isError && error && <ErrorInPlace error={error as APIError} />}
 
 			{(isLoading || (isFetching && transformedQueryTableData.length === 0)) && (
 				<TracesLoading />
 			)}
 
-			{isDataPresent && !isFilterApplied && (
+			{isDataAbsent && !isFilterApplied && (
 				<NoLogs dataSource={DataSource.TRACES} />
 			)}
 
-			{isDataPresent && isFilterApplied && (
+			{isDataAbsent && isFilterApplied && (
 				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
 			)}
 
@@ -165,5 +275,9 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		</Container>
 	);
 }
+
+ListView.defaultProps = {
+	queryKeyRef: undefined,
+};
 
 export default memo(ListView);

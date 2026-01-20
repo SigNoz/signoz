@@ -5,7 +5,10 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import {
+	convertRawQueriesToTraceSelectedTags,
+	getResourceDeploymentKeys,
+} from 'hooks/useResourceAttribute/utils';
 import { isUndefined } from 'lodash-es';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -13,6 +16,8 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceTraceTable from './ServiceTracesTable';
 
@@ -34,6 +39,11 @@ function ServiceTraces(): JSX.Element {
 		selectedTags,
 	});
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	useErrorNotification(error);
 
 	const services = data || [];
@@ -51,7 +61,7 @@ function ServiceTraces(): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			const rps = data.reduce((total, service) => total + service.callRate, 0);

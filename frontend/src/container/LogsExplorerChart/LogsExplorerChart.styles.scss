@@ -1,0 +1,25 @@
+.logs-frequency-chart-container {
+	height: 200px;
+	min-height: 200px;
+	border-bottom: 1px solid #262626;
+
+	.ant-card-body {
+		height: 200px;
+		min-height: 200px;
+		padding: 0 16px 16px 16px;
+		font-family: 'Geist Mono';
+	}
+
+	.logs-frequency-chart-loading {
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+}
+
+.lightMode {
+	.logs-frequency-chart-container {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+	}
+}

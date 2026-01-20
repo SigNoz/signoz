@@ -1,184 +1,121 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Typography } from 'antd';
-import { getQueryStats, WsDataEvent } from 'api/common/getQueryStats';
+import getFromLocalstorage from 'api/browser/localstorage/get';
+import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
-import {
-	initialFilters,
-	initialQueriesMap,
-	initialQueryBuilderFormValues,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialFilters, PANEL_TYPES } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import Download from 'container/DownloadV2/DownloadV2';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
-import { useOptionsMenu } from 'container/OptionsMenu';
+import {
+	getExportQueryData,
+	getFrequencyChartData,
+	getListQuery,
+	getQueryByPanelType,
+} from 'container/LogsExplorerViews/explorerUtils';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
-import dayjs from 'dayjs';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
-import { LogTimeRange } from 'hooks/logs/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useAxiosError from 'hooks/useAxiosError';
-import useClickOutside from 'hooks/useClickOutside';
-import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { FlatLogData } from 'lib/logs/flatLogData';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { isEmpty, isUndefined } from 'lodash-es';
+import LiveLogs from 'pages/LiveLogs';
 import {
-	cloneDeep,
-	defaultTo,
-	isEmpty,
-	isUndefined,
-	omit,
-	set,
-} from 'lodash-es';
-import { Sliders } from 'lucide-react';
-import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
-import { useTimezone } from 'providers/Timezone';
-import {
+	Dispatch,
 	memo,
 	MutableRefObject,
+	SetStateAction,
 	useCallback,
 	useEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	IBuilderQuery,
-	OrderByPayload,
-	Query,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	LogsAggregatorOperator,
-	StringOperators,
-} from 'types/common/queryBuilder';
+import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Filter } from 'types/api/v5/queryRange';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-import QueryStatus from './QueryStatus';
+import LogsActionsContainer from './LogsActionsContainer';
 
-function LogsExplorerViews({
-	selectedView,
-	showFrequencyChart,
+function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
 	listQueryKeyRef,
 	chartQueryKeyRef,
+	setWarning,
+	showLiveLogs,
+	handleChangeSelectedView,
 }: {
-	selectedView: SELECTED_VIEWS;
-	showFrequencyChart: boolean;
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	listQueryKeyRef: MutableRefObject<any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	showLiveLogs: boolean;
+	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
-	const { notifications } = useNotifications();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
+	const dispatch = useDispatch();
 
-	// this is to respect the panel type present in the URL rather than defaulting it to list always.
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const [showFrequencyChart, setShowFrequencyChart] = useState(
+		() => getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART) === 'true',
+	);
 
-	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId } = useCopyLogLink();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
-	const {
-		initialDataSource,
-		currentQuery,
-		stagedQuery,
-		panelType,
-		updateAllQueriesOperators,
-		handleSetConfig,
-	} = useQueryBuilder();
+	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
-		panelType || PANEL_TYPES.LIST,
-	);
-
-	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const selectedPanelType = panelType || PANEL_TYPES.LIST;
 
 	// State
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
-	const [lastLogLineTimestamp, setLastLogLineTimestamp] = useState<
-		number | string | null
-	>();
 	const [requestData, setRequestData] = useState<Query | null>(null);
-	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
-	const [queryStats, setQueryStats] = useState<WsDataEvent>();
+	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
-	const handleAxisError = useAxiosError();
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
-	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 
-		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
-	}, [stagedQuery]);
-
-	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.LOGS,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
-
-	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
-		const timestampOrderBy = listQuery?.orderBy.find(
-			(item) => item.columnName === 'timestamp',
-		);
-
-		return timestampOrderBy || null;
-	}, [listQuery]);
-
-	const isMultipleQueries = useMemo(
-		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
-		[currentQuery],
-	);
-
-	const isGroupByExist = useMemo(() => {
-		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
-			(acc, query) => acc + query.groupBy.length,
-			0,
-		);
-
-		return groupByCount > 0;
-	}, [currentQuery]);
+	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
+		stagedQuery,
+	]);
 
 	const isLimit: boolean = useMemo(() => {
 		if (!listQuery) return false;
@@ -187,57 +124,15 @@ function LogsExplorerViews({
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
 
-	const listChartQuery = useMemo(() => {
-		if (!stagedQuery || !listQuery) return null;
-
-		const modifiedQueryData: IBuilderQuery = {
-			...listQuery,
-			aggregateOperator: LogsAggregatorOperator.COUNT,
-			groupBy: [
-				{
-					key: 'severity_text',
-					dataType: DataTypes.String,
-					type: '',
-					isColumn: true,
-					isJSON: false,
-					id: 'severity_text--string----true',
-				},
-			],
-			legend: '{{severity_text}}',
-		};
-
-		const modifiedQuery: Query = {
-			...stagedQuery,
-			builder: {
-				...stagedQuery.builder,
-				queryData: stagedQuery.builder.queryData.map((item) => ({
-					...item,
-					...modifiedQueryData,
-				})),
-			},
-		};
-
-		return modifiedQuery;
-	}, [stagedQuery, listQuery]);
+	useEffect(() => {
+		const modifiedQuery = getFrequencyChartData(stagedQuery, activeLogId);
+		setListChartQuery(modifiedQuery);
+	}, [stagedQuery, activeLogId]);
 
 	const exportDefaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				currentQuery || initialQueriesMap.logs,
-				selectedPanelType,
-				DataSource.LOGS,
-			),
-		[currentQuery, selectedPanelType, updateAllQueriesOperators],
+		() => getExportQueryData(requestData, selectedPanelType),
+		[selectedPanelType, requestData],
 	);
-
-	const handleModeChange = (panelType: PANEL_TYPES): void => {
-		if (selectedView === SELECTED_VIEWS.SEARCH) {
-			handleSetConfig(panelType, DataSource.LOGS);
-		}
-
-		setShowFormatMenuItems(false);
-		handleExplorerTabChange(panelType);
-	};
 
 	const {
 		data: listChartData,
@@ -246,13 +141,18 @@ function LogsExplorerViews({
 	} = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+			enabled:
+				showFrequencyChart &&
+				!!listChartQuery &&
+				selectedPanelType === PANEL_TYPES.LIST,
 		},
 		{},
 		undefined,
 		chartQueryKeyRef,
+		undefined,
+		'custom',
 	);
 
 	const {
@@ -261,10 +161,11 @@ function LogsExplorerViews({
 		isFetching,
 		isError,
 		isSuccess,
+		error,
 	} = useGetExplorerQueryRange(
 		requestData,
-		panelType,
-		DEFAULT_ENTITY_VERSION,
+		selectedPanelType,
+		ENTITY_VERSION_V5,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,
@@ -275,14 +176,6 @@ function LogsExplorerViews({
 					start: minTime,
 					end: maxTime,
 				}),
-			// send the lastLogTimeStamp only when the panel type is list and the orderBy is timestamp and the order is desc
-			lastLogLineTimestamp:
-				panelType === PANEL_TYPES.LIST &&
-				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.columnName ===
-					'timestamp' &&
-				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.order === 'desc'
-					? lastLogLineTimestamp
-					: undefined,
 		},
 		undefined,
 		listQueryKeyRef,
@@ -290,6 +183,8 @@ function LogsExplorerViews({
 			...(!isEmpty(queryId) &&
 				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
 		},
+		// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
+		'custom',
 	);
 
 	const getRequestData = useCallback(
@@ -297,112 +192,63 @@ function LogsExplorerViews({
 			query: Query | null,
 			params: {
 				page: number;
-				log: ILog | null;
 				pageSize: number;
 				filters: TagFilter;
+				filter: Filter;
 			},
-		): Query | null => {
-			if (!query) return null;
-
-			const paginateData = getPaginationQueryData({
-				filters: params.filters,
-				listItemId: params.log ? params.log.id : null,
-				orderByTimestamp,
-				page: params.page,
-				pageSize: params.pageSize,
-			});
-
-			const queryData: IBuilderQuery[] =
-				query.builder.queryData.length > 1
-					? query.builder.queryData
-					: [
-							{
-								...(listQuery || initialQueryBuilderFormValues),
-								...paginateData,
-							},
-					  ];
-
-			const data: Query = {
-				...query,
-				builder: {
-					...query.builder,
-					queryData,
-				},
-			};
-
-			return data;
-		},
-		[orderByTimestamp, listQuery],
+		): Query | null =>
+			getQueryByPanelType(query, selectedPanelType, {
+				...params,
+				activeLogId,
+				orderBy,
+			}),
+		[activeLogId, orderBy, selectedPanelType],
 	);
 
-	const handleEndReached = useCallback(
-		(index: number) => {
-			if (!listQuery) return;
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
 
-			if (isLimit) return;
-			if (logs.length < pageSize) return;
+	const handleEndReached = useCallback(() => {
+		if (!listQuery) return;
 
-			const { limit, filters } = listQuery;
+		if (isLimit) return;
+		if (logs.length < pageSize) return;
 
-			const lastLog = logs[index];
+		const { limit, filters, filter } = listQuery;
 
-			const nextLogsLength = logs.length + pageSize;
+		const nextLogsLength = logs.length + pageSize;
 
-			const nextPageSize =
-				limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
+		const nextPageSize =
+			limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
 
-			if (!stagedQuery) return;
+		if (!stagedQuery) return;
 
-			const newRequestData = getRequestData(stagedQuery, {
-				filters,
-				page: page + 1,
-				log: orderByTimestamp ? lastLog : null,
-				pageSize: nextPageSize,
-			});
+		const newRequestData = getRequestData(stagedQuery, {
+			filters: filters || { items: [], op: 'AND' },
+			filter: filter || { expression: '' },
+			page: page + 1,
+			pageSize: nextPageSize,
+		});
 
-			// initialise the last log timestamp to null as we don't have the logs.
-			// as soon as we scroll to the end of the logs we set the lastLogLineTimestamp to the last log timestamp.
-			setLastLogLineTimestamp(lastLog.timestamp);
+		setPage((prevPage) => prevPage + 1);
 
-			setPage((prevPage) => prevPage + 1);
-
-			setRequestData(newRequestData);
-		},
-		[
-			isLimit,
-			logs,
-			listQuery,
-			pageSize,
-			stagedQuery,
-			getRequestData,
-			page,
-			orderByTimestamp,
-		],
-	);
+		setRequestData(newRequestData);
+	}, [isLimit, logs, listQuery, pageSize, stagedQuery, getRequestData, page]);
 
 	useEffect(() => {
 		setQueryId(v4());
 	}, [data]);
-
-	useEffect(() => {
-		if (
-			!isEmpty(queryId) &&
-			(isLoading || isFetching) &&
-			selectedPanelType !== PANEL_TYPES.LIST
-		) {
-			setQueryStats(undefined);
-			setTimeout(() => {
-				getQueryStats({ queryId, setData: setQueryStats });
-			}, 500);
-		}
-	}, [queryId, isLoading, isFetching, selectedPanelType]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
 			const currentData = data?.payload?.data?.newResult?.data?.result || [];
 			logEvent('Logs Explorer: Page visited', {
-				panelType,
+				panelType: selectedPanelType,
 				isEmpty: !currentData?.[0]?.list,
 			});
 			logEventCalledRef.current = true;
@@ -410,133 +256,39 @@ function LogsExplorerViews({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload]);
 
-	const {
-		mutate: updateDashboard,
-		isLoading: isUpdateDashboardLoading,
-	} = useUpdateDashboard();
-
-	const getUpdatedQueryForExport = useCallback((): Query => {
-		const updatedQuery = cloneDeep(currentQuery);
-
-		set(updatedQuery, 'builder.queryData[0].pageSize', 10);
-
-		return updatedQuery;
-	}, [currentQuery]);
-
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
-			if (!dashboard || !panelType) return;
+			if (!dashboard || !selectedPanelType) return;
 
-			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
-				? panelType
+			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(
+				selectedPanelType,
+			)
+				? selectedPanelType
 				: PANEL_TYPES.TIME_SERIES;
 
 			const widgetId = v4();
 
-			const query =
-				panelType === PANEL_TYPES.LIST
-					? getUpdatedQueryForExport()
-					: exportDefaultQuery;
-
-			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
-				dashboard,
-				query,
-				widgetId,
-				panelTypeParam,
-				options.selectColumns,
-			);
+			if (!exportDefaultQuery) return;
 
 			logEvent('Logs Explorer: Add to dashboard successful', {
-				panelType,
+				panelType: selectedPanelType,
 				isNewDashboard,
 				dashboardName: dashboard?.data?.title,
 			});
 
-			updateDashboard(updatedDashboard, {
-				onSuccess: (data) => {
-					if (data.error) {
-						const message =
-							data.error === 'feature usage exceeded' ? (
-								<span>
-									Panel limit exceeded for {DataSource.LOGS} in community edition. Please
-									checkout our paid plans{' '}
-									<a
-										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
-										rel="noreferrer noopener"
-										target="_blank"
-									>
-										here
-									</a>
-								</span>
-							) : (
-								data.error
-							);
-						notifications.error({
-							message,
-						});
-
-						return;
-					}
-
-					const dashboardEditView = generateExportToDashboardLink({
-						query,
-						panelType: panelTypeParam,
-						dashboardId: data.payload?.uuid || '',
-						widgetId,
-					});
-
-					history.push(dashboardEditView);
-				},
-				onError: handleAxisError,
+			const dashboardEditView = generateExportToDashboardLink({
+				query: exportDefaultQuery,
+				panelType: panelTypeParam,
+				dashboardId: dashboard.id,
+				widgetId,
 			});
+
+			safeNavigate(dashboardEditView);
 		},
-		[
-			getUpdatedQueryForExport,
-			exportDefaultQuery,
-			options.selectColumns,
-			history,
-			notifications,
-			panelType,
-			updateDashboard,
-			handleAxisError,
-		],
+		[safeNavigate, exportDefaultQuery, selectedPanelType],
 	);
 
 	useEffect(() => {
-		const shouldChangeView =
-			(isMultipleQueries || isGroupByExist) &&
-			selectedView !== SELECTED_VIEWS.SEARCH;
-
-		if (selectedPanelType === PANEL_TYPES.LIST && shouldChangeView) {
-			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
-			setSelectedPanelType(PANEL_TYPES.TIME_SERIES);
-		}
-
-		if (panelType) {
-			setSelectedPanelType(panelType);
-		}
-	}, [
-		isMultipleQueries,
-		isGroupByExist,
-		selectedPanelType,
-		selectedView,
-		handleExplorerTabChange,
-		panelType,
-	]);
-
-	useEffect(() => {
-		if (
-			selectedView &&
-			selectedView === SELECTED_VIEWS.SEARCH &&
-			handleSetConfig
-		) {
-			handleSetConfig(defaultTo(panelTypes, PANEL_TYPES.LIST), DataSource.LOGS);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleSetConfig, panelTypes]);
-
-	useEffect(() => {
-		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
@@ -546,30 +298,38 @@ function LogsExplorerViews({
 			const newLogs = [...logs, ...currentLogs];
 
 			setLogs(newLogs);
-			onTimeRangeChange({
-				start: currentParams?.start,
-				end: currentParams?.end,
-				pageSize: newLogs.length,
-			});
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
-	useEffect(() => {
-		// clear the lastLogLineTimestamp when the data changes
-		setLastLogLineTimestamp(null);
-	}, [data]);
+	// Store previous orderDirection to detect changes
+	const prevOrderByRef = useRef(orderBy);
 
 	useEffect(() => {
+		const orderByChanged =
+			prevOrderByRef.current !== orderBy && selectedPanelType === PANEL_TYPES.LIST;
+		prevOrderByRef.current = orderBy;
+
 		if (
 			requestData?.id !== stagedQuery?.id ||
-			currentMinTimeRef.current !== minTime
+			currentMinTimeRef.current !== minTime ||
+			orderByChanged
 		) {
+			// Recalculate global time when query changes i.e. stage and run query clicked
+			if (
+				!!requestData?.id &&
+				stagedQuery?.id &&
+				requestData?.id !== stagedQuery?.id &&
+				selectedTime !== 'custom'
+			) {
+				dispatch(UpdateTimeInterval(selectedTime));
+			}
+
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
+				filter: listQuery?.filter || { expression: '' },
 				page: 1,
-				log: null,
 				pageSize,
 			});
 
@@ -586,70 +346,41 @@ function LogsExplorerViews({
 		pageSize,
 		minTime,
 		activeLogId,
-		onTimeRangeChange,
-		panelType,
-		selectedView,
+		selectedPanelType,
+		dispatch,
+		selectedTime,
+		maxTime,
+		orderBy,
 	]);
+
+	const onUnitChangeHandler = useCallback((value: string): void => {
+		setYAxisUnit(value);
+	}, []);
 
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
 
-		if (panelType === PANEL_TYPES.LIST) {
-			if (listChartData && listChartData.payload.data.result.length > 0) {
+		if (selectedPanelType === PANEL_TYPES.LIST) {
+			if (listChartData && listChartData.payload.data?.result.length > 0) {
 				return listChartData.payload.data.result;
 			}
 			return [];
 		}
 
-		if (!data || data.payload.data.result.length === 0) return [];
+		if (!data || data.payload.data?.result.length === 0) return [];
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
-		const firstPayloadQuery = data.payload.data.result.find(
+		const firstPayloadQuery = data.payload.data?.result.find(
 			(item) => item.queryName === listQuery?.queryName,
 		);
 
 		const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
 
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
-	}, [stagedQuery, panelType, data, listChartData, listQuery]);
-
-	const formatItems = [
-		{
-			key: 'raw',
-			label: 'Raw',
-			data: {
-				title: 'max lines per row',
-			},
-		},
-		{
-			key: 'list',
-			label: 'Default',
-		},
-		{
-			key: 'table',
-			label: 'Column',
-			data: {
-				title: 'columns',
-			},
-		},
-	];
-
-	const handleToggleShowFormatOptions = (): void =>
-		setShowFormatMenuItems(!showFormatMenuItems);
-
-	const menuRef = useRef<HTMLDivElement>(null);
-
-	useClickOutside({
-		ref: menuRef,
-		onClickOutside: () => {
-			if (showFormatMenuItems) {
-				setShowFormatMenuItems(false);
-			}
-		},
-	});
+	}, [stagedQuery, selectedPanelType, data, listChartData, listQuery]);
 
 	useEffect(() => {
 		if (
@@ -670,164 +401,99 @@ function LogsExplorerViews({
 		setIsLoadingQueries,
 	]);
 
-	const { timezone } = useTimezone();
+	const handleToggleFrequencyChart = useCallback(() => {
+		const newShowFrequencyChart = !showFrequencyChart;
 
-	const flattenLogData = useMemo(
-		() =>
-			logs.map((log) => {
-				const timestamp =
-					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp)
-								.tz(timezone.value)
-								.format('YYYY-MM-DD HH:mm:ss.SSS')
-						: dayjs(log.timestamp / 1e6)
-								.tz(timezone.value)
-								.format('YYYY-MM-DD HH:mm:ss.SSS');
+		// store the value in local storage
+		setToLocalstorage(
+			LOCALSTORAGE.SHOW_FREQUENCY_CHART,
+			newShowFrequencyChart?.toString() || 'false',
+		);
 
-				return FlatLogData({
-					timestamp,
-					body: log.body,
-					...omit(log, 'timestamp', 'body'),
-				});
-			}),
-		[logs, timezone.value],
-	);
+		setShowFrequencyChart(newShowFrequencyChart);
+	}, [showFrequencyChart]);
 
 	return (
 		<div className="logs-explorer-views-container">
-			{showFrequencyChart && (
-				<LogsExplorerChart
-					className="logs-histogram"
-					isLoading={isFetchingListChartData || isLoadingListChartData}
-					data={chartData}
-					isLogsExplorerViews={panelType === PANEL_TYPES.LIST}
-				/>
-			)}
-
 			<div className="logs-explorer-views-types">
-				<div className="views-tabs-container">
-					<Button.Group className="views-tabs">
-						<Button
-							value={PANEL_TYPES.LIST}
-							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
-							}
-							disabled={
-								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
-							}
-							onClick={(): void => handleModeChange(PANEL_TYPES.LIST)}
-							data-testid="logs-list-view"
-						>
-							List view
-						</Button>
-						<Button
-							value={PANEL_TYPES.TIME_SERIES}
-							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedPanelType === PANEL_TYPES.TIME_SERIES
-									? 'selected_view tab'
-									: 'tab'
-							}
-							onClick={(): void => handleModeChange(PANEL_TYPES.TIME_SERIES)}
-							data-testid="time-series-view"
-						>
-							Time series
-						</Button>
-						<Button
-							value={PANEL_TYPES.TABLE}
-							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
-							}
-							onClick={(): void => handleModeChange(PANEL_TYPES.TABLE)}
-							data-testid="table-view"
-						>
-							Table
-						</Button>
-					</Button.Group>
-					<div className="logs-actions-container">
-						{selectedPanelType === PANEL_TYPES.LIST && (
-							<div className="tab-options">
-								<Download
-									data={flattenLogData}
-									isLoading={isFetching}
-									fileName="log_data"
-								/>
-								<div className="format-options-container" ref={menuRef}>
-									<Button
-										className="periscope-btn"
-										onClick={handleToggleShowFormatOptions}
-										icon={<Sliders size={14} />}
-										data-testid="periscope-btn"
-									/>
+				{!showLiveLogs && (
+					<LogsActionsContainer
+						listQuery={listQuery}
+						selectedPanelType={selectedPanelType}
+						showFrequencyChart={showFrequencyChart}
+						handleToggleFrequencyChart={handleToggleFrequencyChart}
+						orderBy={orderBy}
+						setOrderBy={setOrderBy}
+						isFetching={isFetching}
+						isLoading={isLoading}
+						isError={isError}
+						isSuccess={isSuccess}
+						minTime={minTime}
+						maxTime={maxTime}
+					/>
+				)}
 
-									{showFormatMenuItems && (
-										<LogsFormatOptionsMenu
-											title="FORMAT"
-											items={formatItems}
-											selectedOptionFormat={options.format}
-											config={config}
-										/>
-									)}
-								</div>
-							</div>
-						)}
-						{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
-							selectedPanelType === PANEL_TYPES.TABLE) && (
-							<div className="query-stats">
-								<QueryStatus
-									loading={isLoading || isFetching}
-									error={isError}
-									success={isSuccess}
-								/>
-								{queryStats?.read_rows && (
-									<Typography.Text className="rows">
-										{getYAxisFormattedValue(queryStats.read_rows?.toString(), 'short')}{' '}
-										rows
-									</Typography.Text>
-								)}
-								{queryStats?.elapsed_ms && (
-									<>
-										<div className="divider" />
-										<Typography.Text className="time">
-											{getYAxisFormattedValue(queryStats?.elapsed_ms?.toString(), 'ms')}
-										</Typography.Text>
-									</>
-								)}
-							</div>
-						)}
-					</div>
-				</div>
+				{selectedPanelType === PANEL_TYPES.LIST &&
+					showFrequencyChart &&
+					!showLiveLogs && (
+						<div className="logs-frequency-chart-container">
+							<LogsExplorerChart
+								className="logs-frequency-chart"
+								isLoading={isFetchingListChartData || isLoadingListChartData}
+								data={chartData}
+								isLogsExplorerViews={selectedPanelType === PANEL_TYPES.LIST}
+							/>
+						</div>
+					)}
 
 				<div className="logs-explorer-views-type-content">
-					{selectedPanelType === PANEL_TYPES.LIST && (
+					{showLiveLogs && (
+						<LiveLogs handleChangeSelectedView={handleChangeSelectedView} />
+					)}
+					{selectedPanelType === PANEL_TYPES.LIST && !showLiveLogs && (
 						<LogsExplorerList
 							isLoading={isLoading}
 							isFetching={isFetching}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
+							isFrequencyChartVisible={showFrequencyChart}
 							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							error={error as APIError}
+							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
+							handleChangeSelectedView={handleChangeSelectedView}
 						/>
 					)}
-
-					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
-						<TimeSeriesView
-							isLoading={isLoading || isFetching}
-							data={data}
-							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
-							dataSource={DataSource.LOGS}
-						/>
+					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
+						<div className="time-series-view-container">
+							<div className="time-series-view-container-header">
+								<BuilderUnitsFilter
+									onChange={onUnitChangeHandler}
+									yAxisUnit={yAxisUnit}
+								/>
+							</div>
+							<TimeSeriesView
+								isLoading={isLoading || isFetching}
+								data={data}
+								isError={isError}
+								error={error as APIError}
+								yAxisUnit={yAxisUnit}
+								isFilterApplied={!isEmpty(listQuery?.filters?.items)}
+								dataSource={DataSource.LOGS}
+								setWarning={setWarning}
+							/>
+						</div>
 					)}
-
-					{selectedPanelType === PANEL_TYPES.TABLE && (
+					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<LogsExplorerTable
-							data={data?.payload?.data?.newResult?.data?.result || []}
+							data={
+								(data?.payload?.data?.newResult?.data?.result ||
+									data?.payload?.data?.result ||
+									[]) as QueryDataV3[]
+							}
 							isLoading={isLoading || isFetching}
 							isError={isError}
+							error={error as APIError}
 						/>
 					)}
 				</div>
@@ -838,12 +504,12 @@ function LogsExplorerViews({
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
-				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}
 				sourcepage={DataSource.LOGS}
+				handleChangeSelectedView={handleChangeSelectedView}
 			/>
 		</div>
 	);
 }
 
-export default memo(LogsExplorerViews);
+export default memo(LogsExplorerViewsContainer);

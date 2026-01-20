@@ -1,0 +1,153 @@
+:root {
+	--bg-vanilla-100-rgb: 255, 255, 255;
+}
+.funnel-table {
+	border-radius: 3px;
+	border: 1px solid var(--bg-slate-500);
+	table {
+		background: linear-gradient(
+				0deg,
+				rgba(171, 189, 255, 0.01) 0%,
+				rgba(171, 189, 255, 0.01) 100%
+			),
+			#0b0c0e;
+	}
+
+	&__header {
+		padding: 12px 14px 12px;
+		padding-bottom: 24px;
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px;
+		background: var(--bg-ink-400);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.ant-table {
+		.ant-table-thead > tr > th {
+			padding: 2px 12px;
+			border-bottom: none;
+			color: var(--text-vanilla-400);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 600;
+			line-height: 18px;
+			letter-spacing: 0.44px;
+			text-transform: uppercase;
+			background: none;
+			.ant-table-cell:first-child {
+				border-radius: 0px 4px 0px 0px !important;
+			}
+
+			&::before {
+				background-color: transparent;
+			}
+		}
+
+		.ant-table-cell {
+			padding: 12px;
+			font-size: 13px;
+			line-height: 20px;
+			color: var(--bg-vanilla-100);
+			border-bottom: none;
+		}
+
+		.ant-table-tbody > tr:hover > td {
+			background: rgba(255, 255, 255, 0.04);
+		}
+
+		.ant-table-cell:first-child {
+			text-align: justify;
+			background: rgba(171, 189, 255, 0.04);
+		}
+
+		.ant-table-cell:nth-child(2) {
+			padding-left: 16px;
+			padding-right: 16px;
+		}
+
+		.ant-table-cell:nth-child(n + 3) {
+			padding-right: 24px;
+		}
+
+		.column-header {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: 4px;
+		}
+
+		.ant-table-tbody > tr > td {
+			border-bottom: none;
+		}
+
+		.ant-table-thead
+			> tr
+			> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+			background-color: transparent;
+		}
+
+		.ant-empty-normal {
+			visibility: hidden;
+		}
+
+		.table-row-light {
+			background: none;
+		}
+
+		.table-row-dark {
+			background: rgba(var(--bg-vanilla-100-rgb), 0.01);
+		}
+
+		.trace-id-cell {
+			color: var(--bg-robin-400);
+			cursor: pointer;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.funnel-table {
+		border-color: var(--bg-vanilla-300);
+		.ant-table {
+			.ant-table-thead > tr > th {
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-500);
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(0, 0, 0, 0.04);
+			}
+
+			.table-row-light {
+				background: none;
+				color: var(--bg-ink-500);
+			}
+
+			.table-row-dark {
+				background: none;
+				color: var(--bg-ink-500);
+			}
+		}
+
+		&__header {
+			background: var(--bg-vanilla-100);
+			color: var(--text-ink-300);
+		}
+	}
+}

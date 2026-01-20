@@ -1,0 +1,2657 @@
+{
+  "description": "View DynamoDB metrics with an out-of-the-box dashboard.",
+  "image":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDY0ICg5MzUzNykgLSBodHRwczovL3NrZXRjaC5jb20gLS0+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRHluYW1vREJfNjQ8L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZGVmcz4KICAgICAgICA8bGluZWFyR3JhZGllbnQgeDE9IjAlIiB5MT0iMTAwJSIgeDI9IjEwMCUiIHkyPSIwJSIgaWQ9ImxpbmVhckdyYWRpZW50LTEiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjMkUyN0FEIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiM1MjdGRkYiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8L2RlZnM+CiAgICA8ZyBpZD0iSWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tRHluYW1vREJfNjQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJJY29uLUFyY2hpdGVjdHVyZS1CRy82NC9EYXRhYmFzZSIgZmlsbD0idXJsKCNsaW5lYXJHcmFkaWVudC0xKSI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNNTIuMDg1OTUyNSw1NC44NTAyNTA2IEM0OC43NDc5NTY5LDU3LjU0OTAzMzggNDEuNzQ0OTY2MSw1OC45NzUyOTI3IDM1LjA0Mzk3NDksNTguOTc1MjkyNyBDMjguMzQxOTgzOCw1OC45NzUyOTI3IDIxLjMzNjk5Myw1Ny41NDgwNDIgMTcuOTk5OTk3NCw1NC44NDkyNTg4IEwxNy45OTk5OTc0LDYwLjI4NDUxNSBMMTguMDAwOTk3NCw2MC4yODQ1MTUgQzE4LjAwMDk5NzQsNjIuOTk1MjAwMiAyNC45OTk5OTc0LDY2LjAxNjMyOTkgMzUuMDQzOTc0OSw2Ni4wMTYzMjk5IEM0NS4wNzk5NjE3LDY2LjAxNjMyOTkgNTIuMDc0OTUyNSw2Mi45OTkxNjc2IDUyLjA4NTk1MjUsNjAuMjkwNDY2IEw1Mi4wODU5NTI1LDU0Ljg1MDI1MDYgWiBNNTIuMDg2OTUyNSw0NC41MjIyNzIgTDU0LjA4Njk0OTksNDQuNTExMzYxOCBMNTQuMDg2OTQ5OSw0NC41MjIyNzIgQzU0LjA4Njk0OTksNDUuNzMwMzI3MSA1My40ODE5NTA3LDQ2Ljg1ODA0MzYgNTIuMzAzOTUyMiw0Ny44OTA1NDM5IEM1My43MzE5NTAzLDQ5LjE0NzE5OSA1NC4wODY5NDk5LDUwLjM4MDA0OTkgNTQuMDg2OTQ5OSw1MS4yNTc4MjQgQzU0LjA4Njk0OTksNTEuMjYzNzc1IDU0LjA4NTk0OTksNTEuMjY4NzM0MiA1NC4wODU5NDk5LDUxLjI3NDY4NTIgTDU0LjA4NTk0OTksNjAuMjg0NTE1IEw1NC4wODY5NDk5LDYwLjI4NDUxNSBDNTQuMDg2OTQ5OSw2NS4yOTUyNjU4IDQ0LjI3NDk2MjgsNjggMzUuMDQzOTc0OSw2OCBDMjUuODM0OTg3MSw2OCAxNi4wNDk5OTk5LDY1LjMwNzE2NzggMTYuMDAzLDYwLjMxOTIyOTIgQzE2LjAwMyw2MC4zMTQyNyAxNiw2MC4zMDkzMTA5IDE2LDYwLjMwNDM1MTcgTDE2LDUxLjI1NDg0ODUgQzE2LDUxLjI1Mjg2NDggMTYuMDAyLDUxLjI0OTg4OTMgMTYuMDAyLDUxLjI0NjkxMzggQzE2LjAwNSw1MC4zNjkxMzk4IDE2LjM2MDk5OTUsNDkuMTQxMjQ3OSAxNy43ODY5OTc2LDQ3Ljg4NzU2ODQgQzE2LjM2OTk5OTUsNDYuNjM1ODcyNSAxNi4wMSw0NS40MTQ5MjM2IDE2LjAwMSw0NC41NDQwOTI0IEwxNi4wMDIsNDQuNTQ0MDkyNCBDMTYuMDAyLDQ0LjU0MDEyNSAxNiw0NC41MzcxNDk1IDE2LDQ0LjUzMzE4MjIgTDE2LDM1LjQ4MzY3OSBDMTYsMzUuNDgwNzAzNSAxNi4wMDIsMzUuNDc3NzI4IDE2LjAwMiwzNS40NzQ3NTI1IEMxNi4wMDUsMzQuNTk2OTc4NCAxNi4zNjE5OTk1LDMzLjM2OTA4NjYgMTcuNzg3OTk3NiwzMi4xMTczOTA4IEMxNi4zNjk5OTk1LDMwLjg2NDcwMzEgMTYuMDEsMjkuNjQyNzYyMyAxNi4wMDEsMjguNzcyOTIyOSBMMTYuMDAyLDI4Ljc3MjkyMjkgQzE2LjAwMiwyOC43Njg5NTU2IDE2LDI4Ljc2NDk4ODIgMTYsMjguNzYxMDIwOSBMMTYsMTkuNzEyNTA5NSBDMTYsMTkuNzA5NTM0IDE2LjAwMiwxOS43MDY1NTg1IDE2LjAwMiwxOS43MDM1ODMgQzE2LjAxOSwxNC42OTk3NzUxIDI1LjgxOTk4NzEsMTIgMzUuMDQzOTc0OSwxMiBDNDAuMjU0OTY4MSwxMiA0NS4yNjA5NjE1LDEyLjgyODE4MjMgNDguNzc3OTU2OSwxNC4yNzIyOTQxIEw0OC4wMTI5NTc5LDE2LjEwNTIwNTQgQzQ0LjcyOTk2MjIsMTQuNzU3MzAxNSA0MC4wMDI5Njg0LDEzLjk4MzY3MDEgMzUuMDQzOTc0OSwxMy45ODM2NzAxIEMyNC45OTk5ODgyLDEzLjk4MzY3MDEgMTguMDAwOTk3NCwxNy4wMDQ3OTk4IDE4LjAwMDk5NzQsMTkuNzE3NDY4NyBDMTguMDAwOTk3NCwyMi40MjkxNDU4IDI0Ljk5OTk4ODIsMjUuNDUwMjc1NCAzNS4wNDM5NzQ5LDI1LjQ1MDI3NTQgQzM1LjMxNDk3NDYsMjUuNDUzMjUwOSAzNS41Nzk5NzQyLDI1LjQ1MDI3NTQgMzUuODQ3OTczOSwyNS40NDAzNTcxIEwzNS45MzE5NzM4LDI3LjQyMjA0MzUgQzM1LjYzNTk3NDIsMjcuNDMzOTQ1NiAzNS4zMzk5NzQ1LDI3LjQzMzk0NTYgMzUuMDQzOTc0OSwyNy40MzM5NDU2IEMyOC4zNDE5ODM4LDI3LjQzMzk0NTYgMjEuMzM2OTkzLDI2LjAwNjY5NDkgMTgsMjMuMzA3OTExNyBMMTgsMjguNzQwMTkyMyBMMTguMDAwOTk3NCwyOC43NDAxOTIzIEwxOC4wMDA5OTc0LDI4Ljc2MzAwNDYgQzE4LjAxMDk5NzQsMjkuODAzNDM5NSAxOS4wNzc5OTU5LDMwLjcxMTk2MDUgMTkuOTcxOTk0OCwzMS4yODkyMDg1IEMyMi42NjE5OTEyLDMzLjAwNDA5MTMgMjcuNDgxOTg0OSwzNC4xNzU0NDg1IDMyLjg1Njk3NzgsMzQuNDE4NDQ4MSBMMzIuNzY1OTc3OSwzNi40MDAxMzQ2IEMyNy4zMjA5ODUxLDM2LjE1MzE2NzcgMjIuNTUyOTkxNCwzNS4wMjM0Njc1IDE5LjQ4Mzk5NTQsMzMuMjkxNzIzNSBDMTguNzI3OTk2NCwzMy44NTcwNjk1IDE4LjAwMDk5NzQsMzQuNjIxNzc0MyAxOC4wMDA5OTc0LDM1LjQ4ODYzODIgQzE4LjAwMDk5NzQsMzguMjAwMzE1MyAyNC45OTk5ODgyLDQxLjIyMTQ0NDkgMzUuMDQzOTc0OSw0MS4yMjE0NDQ5IEMzNi4wMjg5NzM2LDQxLjIyMTQ0NDkgMzcuMDA2OTcyMyw0MS4xODg3MTQzIDM3Ljk1MTk3MTEsNDEuMTIzMjUzMiBMMzguMDkwOTcwOSw0My4xMDE5NjQyIEMzNy4xMDA5NzIyLDQzLjE3MDQwMDggMzYuMDc0OTczNiw0My4yMDUxMTUgMzUuMDQzOTc0OSw0My4yMDUxMTUgQzI4LjM0MTk4MzgsNDMuMjA1MTE1IDIxLjMzNjk5Myw0MS43Nzc4NjQ0IDE4LDM5LjA3OTA4MTEgTDE4LDQ0LjUxMTM2MTggTDE4LjAwMDk5NzQsNDQuNTExMzYxOCBDMTguMDEwOTk3NCw0NS41NzQ2MDkgMTkuMDc3OTk1OSw0Ni40ODIxMzgxIDE5Ljk3MTk5NDgsNDcuMDYwMzc4IEMyMy4wNDc5OTA3LDQ5LjAyMzIxOTYgMjguODIzOTgzMSw1MC4yNDUxNjA0IDM1LjA0Mzk3NDksNTAuMjQ1MTYwNCBMMzUuNDgzOTc0NCw1MC4yNDUxNjA0IEwzNS40ODM5NzQ0LDUyLjIyODgzMDUgTDM1LjA0Mzk3NDksNTIuMjI4ODMwNSBDMjguNzI0OTgzMiw1Mi4yMjg4MzA1IDIyLjk4MTk5MDgsNTEuMDU1NDg5NiAxOS40Njk5OTU0LDQ5LjA3MjgxMTMgQzE4LjcxNzk5NjQsNDkuNjM3MTY1NSAxOC4wMDA5OTc0LDUwLjM5NzkwMyAxOC4wMDA5OTc0LDUxLjI1NzgyNCBDMTguMDAwOTk3NCw1My45Njk1MDExIDI0Ljk5OTk4ODIsNTYuOTkxNjIyNSAzNS4wNDM5NzQ5LDU2Ljk5MTYyMjUgQzQ1LjA3OTk2MTcsNTYuOTkxNjIyNSA1Mi4wNzQ5NTI1LDUzLjk3NDQ2MDIgNTIuMDg1OTUyNSw1MS4yNjQ3NjY4IEw1Mi4wODU5NTI1LDUxLjI1NDg0ODUgTDUyLjA4NTk1MjUsNTEuMjUzODU2NiBDNTIuMDgzOTUyNSw1MC4zOTE5NTIgNTEuMzYzOTUzNCw0OS42MzEyMTQ1IDUwLjYwOTk1NDQsNDkuMDY2ODYwMyBDNTAuMTIxOTU1MSw0OS4zNDM1ODIzIDQ5LjU5ODk1NTgsNDkuNjEwMzg1OSA0OS4wMDM5NTY2LDQ5Ljg1NTM2OTIgTDQ4LjIzNzk1NzYsNDguMDIyNDU4IEM0OC45NjM5NTY2LDQ3LjcyMzkxNTYgNDkuNTkzOTU1OCw0Ny40MDE1NjkyIDUwLjExMDk1NTEsNDcuMDYyMzYxNiBDNTEuMDEyOTUzOSw0Ni40NzQyMDM0IDUyLjA4Njk1MjUsNDUuNTU0NzcyMyA1Mi4wODY5NTI1LDQ0LjUyMjI3MiBMNTIuMDg2OTUyNSw0NC41MjIyNzIgWiBNNjAuNjUyOTQxMiwzMC4wMTY2ODQxIEw1NS4wNDg5NDg2LDMwLjAxNjY4NDEgQzU0LjcxNzk0OSwzMC4wMTY2ODQxIDU0LjQwNjk0OTQsMjkuODU0MDIzMSA1NC4yMjE5NDk3LDI5LjU4MjI2MDMgQzU0LjAzNDk0OTksMjkuMzEwNDk3NSA1My45OTY5NSwyOC45NjQzNDcxIDU0LjExODk0OTgsMjguNjU5ODUzNyBMNTcuNTI3OTQ1MywyMC4xMzgwMDY4IEw0NC42MTg5NzAyLDIwLjEzODAwNjggTDM4LjYxODk3MDIsMzIuMDQwMDI3NiBMNDUuMDAwOTYxOCwzMi4wNDAwMjc2IEM0NS4zMTk5NjE0LDMyLjA0MDAyNzYgNDUuNjE5OTYxLDMyLjE5MTc3ODQgNDUuODA4OTYwOCwzMi40NDY2OCBDNDUuOTk1OTYwNSwzMi43MDI1NzM1IDQ2LjA1MDk2MDQsMzMuMDMwODcwOSA0NS45NTM5NjA2LDMzLjMzMzM4MDYgTDQwLjI1Nzk2ODEsNTEuMDg5MjEyIEw2MC42NTI5NDEyLDMwLjAxNjY4NDEgWiBNNjMuNzIxOTM3MiwyOS43MTIxOTA3IEwzOC43MjI5NzAxLDU1LjUzOTU3NiBDMzguNTI3OTcwMyw1NS43Mzk5MjY3IDM4LjI2NTk3MDcsNTUuODQ0MDY5NCAzOC4wMDA5NzEsNTUuODQ0MDY5NCBDMzcuODI0OTcxMyw1NS44NDQwNjk0IDM3LjY0Nzk3MTUsNTUuNzk5NDM2OCAzNy40ODk5NzE3LDU1LjcwNTIxMjQgQzM3LjA4OTk3MjIsNTUuNDY5MTU1NyAzNi45MDY5NzI1LDU0Ljk5MjA4MyAzNy4wNDc5NzIzLDU0LjU1MTcwODMgTDQzLjYzMzk2MzYsMzQuMDIzNjk3OCBMMzcuMDAwOTcyNCwzNC4wMjM2OTc4IEMzNi42NTM5NzI4LDM0LjAyMzY5NzggMzYuMzMyOTczMiwzMy44NDYxNTkzIDM2LjE0OTk3MzUsMzMuNTUzNTY3OSBDMzUuOTY3OTczNywzMy4yNjA5NzY2IDM1Ljk1MDk3MzcsMzIuODk1OTgxMyAzNi4xMDY5NzM1LDMyLjU4ODUxMjQgTDQzLjEwNjk2NDMsMTguNzAyODIxNCBDNDMuMjc1OTY0MSwxOC4zNjY1ODkzIDQzLjYyMTk2MzYsMTguMTU0MzM2NiA0NC4wMDA5NjMxLDE4LjE1NDMzNjYgTDU5LjAwMDk0MzQsMTguMTU0MzM2NiBDNTkuMzMxOTQzLDE4LjE1NDMzNjYgNTkuNjQyOTQyNSwxOC4zMTc5ODk0IDU5LjgyNzk0MjMsMTguNTg4NzYwNCBDNjAuMDE0OTQyMSwxOC44NjE1MTUgNjAuMDUyOTQyLDE5LjIwNjY3MzYgNTkuOTMwOTQyMiwxOS41MTIxNTg4IEw1Ni41MjE5NDY3LDI4LjAzMzAxMzkgTDYyLjk5OTkzODEsMjguMDMzMDEzOSBDNjMuMzk5OTM3NiwyOC4wMzMwMTM5IDYzLjc2MjkzNzEsMjguMjcxMDU0NCA2My45MTk5MzY5LDI4LjYzNjA0OTcgQzY0LjA3NjkzNjcsMjkuMDAyMDM2OCA2My45OTg5MzY4LDI5LjQyNTU1MDQgNjMuNzIxOTM3MiwyOS43MTIxOTA3IEw2My43MjE5MzcyLDI5LjcxMjE5MDcgWiBNMTkuNDU0OTk1NSw2MC42NzQzMDYyIEMyMC44NzE5OTM2LDYxLjQ3MjczMzQgMjIuNjU1OTkxMiw2Mi4xNDQyMDU3IDI0Ljc1Njk4ODUsNjIuNjY3ODk0NyBMMjUuMjQ0OTg3OCw2MC43NDM3MzQ2IEMyMy4zNDU5OTAzLDYwLjI3MDYyOTMgMjEuNjg1OTkyNSw1OS42NDk3NDA1IDIwLjQ0Mjk5NDIsNTguOTQ5NTA1IEwxOS40NTQ5OTU1LDYwLjY3NDMwNjIgWiBNMjQuNzU2OTg4NSw0Ni43OTg1MzM1IEwyNS4yNDQ5ODc4LDQ0Ljg3NTM2NTMgQzIzLjM0NTk5MDMsNDQuNDAxMjY4MSAyMS42ODU5OTI1LDQzLjc4MDM3OTQgMjAuNDQyOTk0Miw0My4wODAxNDM4IEwxOS40NTQ5OTU1LDQ0LjgwNDk0NSBDMjAuODcxOTkzNiw0NS42MDMzNzIyIDIyLjY1NDk5MTIsNDYuMjc0ODQ0NiAyNC43NTY5ODg1LDQ2Ljc5ODUzMzUgTDI0Ljc1Njk4ODUsNDYuNzk4NTMzNSBaIE0xOS40NTQ5OTU1LDI4LjkzNTU4MzkgTDIwLjQ0Mjk5NDIsMjcuMjEwNzgyNyBDMjEuNjgzOTkyNSwyNy45MTEwMTgyIDIzLjM0NDk5MDMsMjguNTMwOTE1MSAyNS4yNDQ5ODc4LDI5LjAwNjAwNDEgTDI0Ljc1Njk4ODUsMzAuOTI5MTcyMyBDMjIuNjUyOTkxMiwzMC40MDQ0OTE2IDIwLjg2OTk5MzYsMjkuNzMzMDE5MyAxOS40NTQ5OTU1LDI4LjkzNTU4MzkgTDE5LjQ1NDk5NTUsMjguOTM1NTgzOSBaIiBpZD0iQW1hem9uLUR5bmFtb0RCX0ljb25fNjRfU3F1aWQiIGZpbGw9IiNGRkZGRkYiPjwvcGF0aD4KICAgIDwvZz4KPC9zdmc+",
+  "layout": [
+    {
+      "h": 6,
+      "i": "9e1d91ec-fb66-4cff-b5c5-282270ebffb5",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "9a2daf2e-39bc-445d-947f-617c27fadd0f",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "5b50997d-3bca-466a-bdeb-841b2e49fd65",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "889c36ab-4d0c-4328-9c3c-6558aad6be89",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "0c3b97fe-56e0-4ce6-99f4-fd1cbd24f93e",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "70980d38-ee3c-47be-9520-e371df3b021a",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "fe1b71b5-1a3f-41c0-b6c2-46bf934787ad",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 18
+    },
+    {
+      "h": 6,
+      "i": "cc0938a5-af82-4bd8-b10e-67eabe717ee0",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 18
+    },
+    {
+      "h": 6,
+      "i": "4bb63c27-5eb4-4904-9947-42ffce15e92e",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 24
+    },
+    {
+      "h": 6,
+      "i": "5ffbe527-8cf3-4ed8-ac2d-8739fa7fa9af",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 24
+    },
+    {
+      "h": 6,
+      "i": "a02f64ac-e73e-4d4c-a26b-fcfc4265c148",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 30
+    },
+    {
+      "h": 6,
+      "i": "014e377d-b7c1-4469-a137-be34d7748f31",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 30
+    },
+    {
+      "h": 6,
+      "i": "b1b75926-7308-43b3-bcad-60f369715f0b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 36
+    },
+    {
+      "h": 6,
+      "i": "90f4d19d-8785-4a7a-97cf-c967108e1487",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 36
+    },
+    {
+      "h": 6,
+      "i": "5412cdad-174b-462b-916e-4e3de477446b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 42
+    }
+  ],
+  "panelMap": {},
+  "tags": [],
+  "title": "DynamoDB Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "1f7a94df-9735-4bfa-a1b8-dca8ac29f945": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "Account Region",
+      "id": "1f7a94df-9735-4bfa-a1b8-dca8ac29f945",
+      "key": "1f7a94df-9735-4bfa-a1b8-dca8ac29f945",
+      "modificationUUID": "8ef772a1-7df9-46a2-84e7-ab0c0bfc6886",
+      "multiSelect": false,
+      "name": "Region",
+      "order": 1,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like '%aws_DynamoDB%' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}} GROUP BY region",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "93ee15bf-baab-4abf-8828-fe6e75518417": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Account ID",
+      "id": "93ee15bf-baab-4abf-8828-fe6e75518417",
+      "key": "93ee15bf-baab-4abf-8828-fe6e75518417",
+      "modificationUUID": "409e6a7e-1ec1-4611-8624-492a3aac6ca0",
+      "multiSelect": false,
+      "name": "Account",
+      "order": 0,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.account.id') AS `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like '%aws_DynamoDB%' GROUP BY `cloud.account.id`",
+      "showALLOption": false,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "fd28f0e0-d4ec-4bcd-9c45-32395cb0c55b": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "DynamoDB Tables",
+      "id": "fd28f0e0-d4ec-4bcd-9c45-32395cb0c55b",
+      "modificationUUID": "8ebb9032-7e56-4981-8036-efdfc413f8a8",
+      "multiSelect": true,
+      "name": "Table",
+      "order": 2,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'TableName') AS table FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name like '%aws_DynamoDB%' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}  AND JSONExtractString(labels, 'cloud.region') IN {{.Region}} and table != '' GROUP BY table\n",
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "9e1d91ec-fb66-4cff-b5c5-282270ebffb5",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_AccountMaxReads_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_AccountMaxReads_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "fc55895c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "8b3f3e0b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "4fdb1c6c-8c7f-4f8b-a468-9326c811981a",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Account Max Reads",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "5b50997d-3bca-466a-bdeb-841b2e49fd65",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_AccountMaxTableLevelReads_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_AccountMaxTableLevelReads_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "f7b176f8",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "9a023ab7",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "310efa3b-d68a-4630-b279-bcbc22ddbefb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Account Max Table Level Reads",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "889c36ab-4d0c-4328-9c3c-6558aad6be89",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_AccountMaxTableLevelWrites_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_AccountMaxTableLevelWrites_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "avg",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "ec5ebf95",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "5b2fb00e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "473de955-bc5c-4a66-aa8d-2e37502c5643",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Account Max Table Level Writes",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "9a2daf2e-39bc-445d-947f-617c27fadd0f",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_AccountMaxWrites_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_AccountMaxWrites_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "3815cf09",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "a783bd91",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "avg",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "1115aaa1-fdb0-47a1-af79-8c6d439747d4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Account Max Writes",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "0c3b97fe-56e0-4ce6-99f4-fd1cbd24f93e",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "edcbcb83",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "224766cb",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "d42bc3cd-f457-42eb-936e-c931b0c77f61",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Account Provisioned Read Capacity",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "70980d38-ee3c-47be-9520-e371df3b021a",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_AccountProvisionedWriteCapacityUtilization_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_AccountProvisionedWriteCapacityUtilization_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "c237482a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "e3a117d5",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "d06d2f3d-8878-4c53-a8f1-10024091887a",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Account Provisioned Write Capacity",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "fe1b71b5-1a3f-41c0-b6c2-46bf934787ad",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_ConsumedReadCapacityUnits_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_ConsumedReadCapacityUnits_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "b867513b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "9c10cbaa",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "4ff7fb7c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TableName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TableName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Table"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TableName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TableName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TableName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "32c9f178-073c-4d1f-8193-76f804776df0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Consumed Read Capacity",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "cc0938a5-af82-4bd8-b10e-67eabe717ee0",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_ConsumedWriteCapacityUnits_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_ConsumedWriteCapacityUnits_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "7e2aa806",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "dd49e062",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "e7ada865",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TableName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TableName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Table"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TableName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TableName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TableName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "40397368-92df-42b9-b0e6-0e7dc7984bc4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Consumed Write Capacity",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "4bb63c27-5eb4-4904-9947-42ffce15e92e",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_MaxProvisionedTableReadCapacityUtilization_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_MaxProvisionedTableReadCapacityUtilization_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "b3e029fa",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "e6764d50",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6a33d44a-a337-422f-a964-89b88804343f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Max Provisioned Table Read Capacity",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "5ffbe527-8cf3-4ed8-ac2d-8739fa7fa9af",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_MaxProvisionedTableWriteCapacityUtilization_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_MaxProvisionedTableWriteCapacityUtilization_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "80ba9142",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "9c802cf0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "a98b7d13-63d3-46cf-b4e7-686b3be7d9f9",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Max Provisioned Table Write Capacity",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "a02f64ac-e73e-4d4c-a26b-fcfc4265c148",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_ReturnedItemCount_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_ReturnedItemCount_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "db6edb77",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "8b86de4a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "a8d39d03",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TableName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TableName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Table"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TableName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TableName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TableName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6322f225-471d-43a2-b13e-f2312c1a7b57",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Returned Item Count",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "014e377d-b7c1-4469-a137-be34d7748f31",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_SuccessfulRequestLatency_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_SuccessfulRequestLatency_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "93bef7f0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "4a293ec8",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "2e2286c6",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TableName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TableName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Table"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TableName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TableName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TableName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6ad1cbfe-9581-4d99-a14e-50bc5fef699f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Successful Request Latency",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "b1b75926-7308-43b3-bcad-60f369715f0b",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_ThrottledRequests_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_ThrottledRequests_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "28fcd3cd",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "619578e5",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "a6bc481e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TableName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TableName",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "$Table"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "TableName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "TableName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{TableName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "fd358cf0-a0b0-4106-a89c-a5196297c23b",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Max Throttled Requests",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "5412cdad-174b-462b-916e-4e3de477446b",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_UserErrors_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_UserErrors_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "5a060b5e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "3a1cb5ff",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "17db2e6d-d9dc-4568-85ea-ea4b373dfc5e",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "User Errors",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "90f4d19d-8785-4a7a-97cf-c967108e1487",
+      "isLogScale": false,
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_DynamoDB_WriteThrottleEvents_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_DynamoDB_WriteThrottleEvents_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "58bc06b3",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.account.id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.account.id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "d6d7a8fb",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud.region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud.region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": [],
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "713c6c70-3a62-4b67-8a67-7917ca9d4fbf",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Max Write Throttle Events",
+      "yAxisUnit": "none"
+    }
+  ]
+}

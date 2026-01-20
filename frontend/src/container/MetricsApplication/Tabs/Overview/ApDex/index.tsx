@@ -1,8 +1,8 @@
 import Spinner from 'components/Spinner';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
-import useErrorNotification from 'hooks/useErrorNotification';
-import { memo } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { memo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { IServiceName } from '../../types';
@@ -17,11 +17,20 @@ function ApDexApplication({
 }: ApDexApplicationProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
+	const { notifications } = useNotifications();
 
 	const { data, isLoading, error, isRefetching } = useGetApDexSettings(
 		servicename,
 	);
-	useErrorNotification(error);
+
+	useEffect(() => {
+		if (error) {
+			notifications.error({
+				message: error.getErrorCode(),
+				description: error.getErrorMessage(),
+			});
+		}
+	}, [error, notifications]);
 
 	if (isLoading || isRefetching) {
 		return (

@@ -7,9 +7,9 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
-import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport } from '../utils';
 import IntegrationDetailContent from './IntegrationDetailContent';
@@ -43,6 +43,8 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	} = useGetIntegration({
 		integrationId: selectedIntegration,
 	});
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const {
 		data: integrationStatus,
@@ -104,7 +106,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							</Button>
 							<div
 								className="contact-support"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								<Typography.Link className="text">Contact Support </Typography.Link>
 
@@ -126,7 +128,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								logs: null,
 								metrics: null,
 							})}
-							refetchIntegrationDetails={refetch}
+							onUnInstallSuccess={refetch}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
 						<IntegrationDetailContent
@@ -140,7 +142,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							<IntergrationsUninstallBar
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}
-								refetchIntegrationDetails={refetch}
+								onUnInstallSuccess={refetch}
 								connectionStatus={connectionStatus}
 							/>
 						)}

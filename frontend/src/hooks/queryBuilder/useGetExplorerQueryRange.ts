@@ -1,10 +1,12 @@
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { MutableRefObject, useMemo } from 'react';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -21,7 +23,11 @@ export const useGetExplorerQueryRange = (
 	isDependentOnQB = true,
 	keyRef?: MutableRefObject<any>,
 	headers?: Record<string, string>,
-): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
+	selectedTimeInterval?: GetQueryResultsProps['globalSelectedInterval'],
+): UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	Error
+> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
@@ -51,14 +57,15 @@ export const useGetExplorerQueryRange = (
 		{
 			graphType: panelType || PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval,
+			globalSelectedInterval: selectedTimeInterval ?? globalSelectedInterval,
+
 			query: requestData || initialQueriesMap.metrics,
 			params,
 		},
-		version,
+		// version,
+		ENTITY_VERSION_V5,
 		{
 			...options,
-			retry: false,
 			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
 			enabled: isEnabled,
 		},

@@ -1,0 +1,1189 @@
+{
+  "description": "Overview Dashboard for Amazon MSK",
+  "image": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDY0ICg5MzUzNykgLSBodHRwczovL3NrZXRjaC5jb20gLS0+CiAgICA8dGl0bGU+SWNvbi1BcmNoaXRlY3R1cmUvNjQvQXJjaF9BbWF6b24tTWFuYWdlZC1TdHJlYW1pbmctZm9yLUthZmthXzY0PC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGRlZnM+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIwJSIgeTE9IjEwMCUiIHgyPSIxMDAlIiB5Mj0iMCUiIGlkPSJsaW5lYXJHcmFkaWVudC0xIj4KICAgICAgICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iIzREMjdBOCIgb2Zmc2V0PSIwJSI+PC9zdG9wPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjQTE2NkZGIiBvZmZzZXQ9IjEwMCUiPjwvc3RvcD4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgogICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLzY0L0FyY2hfQW1hem9uLU1hbmFnZWQtU3RyZWFtaW5nLWZvci1LYWZrYV82NCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Ikljb24tQXJjaGl0ZWN0dXJlLUJHLzY0L0FuYWx5dGljcyIgZmlsbD0idXJsKCNsaW5lYXJHcmFkaWVudC0xKSI+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUiIHg9IjAiIHk9IjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PC9yZWN0PgogICAgICAgIDwvZz4KICAgICAgICA8cGF0aCBkPSJNMzYuMDA4MTM3MywzNi45NzcwODg4IEwzNi4wMDgxMzczLDI3Ljk4NjQ2MTYgTDM4LjAwNDA2ODYsMjcuOTg2NDYxNiBMMzguMDA0MDY4NiwzMS45ODIyOTU5IEw0MC42OTc1NzgsMjcuOTg2NDYxNiBMNDIuOTA3MDc0LDI3Ljk4NjQ2MTYgTDM5Ljc4NTQzNzQsMzIuMTkwMDc5MyBMNDMuMTY0NTQ5MiwzNi45NzcwODg4IEw0MC43OTczNzQ2LDM2Ljk3NzA4ODggTDM4LjAwNDA2ODYsMzIuNjMxNjE5IEwzOC4wMDQwNjg2LDM2Ljk3NzA4ODggTDM2LjAwODEzNzMsMzYuOTc3MDg4OCBaIE02Niw0OS4xMTc0MzI1IEw2NS4zMzEzNjMsNDkuNjk1ODI5NSBDNjMuOTg0MTA5Myw1MC44NzU1OTk2IDYyLjE3MTgwMzYsNTEuNDY1OTg0MSA2MC4zNTc1MDIsNTEuNDY1OTg0MSBDNTguNTQzMjAwNCw1MS40NjU5ODQxIDU2LjcyNzkwMDgsNTAuODc1NTk5NiA1NS4zNzg2NTEyLDQ5LjY5MjgzMjYgTDU0LjA0NTM2OTEsNDguNTM4MDM2NSBDNTIuMDg5MzU2Myw0Ni44MjM4MjM2IDQ4LjY2NTMzNiw0Ni44MjM4MjM2IDQ2LjcxMzMxNTIsNDguNTM0MDQwNiBMNDUuMzcyMDQ5Myw0OS42OTU4Mjk1IEM0Mi42Nzg1Mzk5LDUyLjA1NjM2ODYgMzguMTE2ODM4OCw1Mi4wNTgzNjY1IDM1LjQxOTMzNzUsNDkuNjkyODMyNiBMMzQuMDg2MDU1Myw0OC41MzgwMzY1IEMzMi4xMzAwNDI2LDQ2LjgyMzgyMzYgMjguNzA2MDIyMyw0Ni44MjM4MjM2IDI2Ljc1NDAwMTUsNDguNTM0MDQwNiBMMjUuNDEyNzM1Niw0OS42OTU4Mjk1IEMyMi43MTkyMjYyLDUyLjA1NjM2ODYgMTguMTU3NTI1LDUyLjA1ODM2NjUgMTUuNDYwMDIzOCw0OS42OTI4MzI2IEwxNC43OTUzNzg3LDQ5LjExNzQzMjUgTDE2LjEwMTcxNTcsNDcuNjA2MDA4MSBMMTYuNzcwMzUyNyw0OC4xODU0MDQxIEMxOC43MjczNjM1LDQ5Ljg5OTYxNyAyMi4xNTEzODM3LDQ5Ljg5OTYxNyAyNC4xMDI0MDY2LDQ4LjE4OTM5OTkgTDI1LjQ0MzY3MjUsNDcuMDI2NjEyMSBDMjguMTM3MTgxOSw0NC42NjcwNzIgMzIuNjk4ODgzLDQ0LjY2NzA3MiAzNS4zOTYzODQzLDQ3LjAzMDYwOCBMMzYuNzI5NjY2NCw0OC4xODU0MDQxIEMzOC42ODY2NzcyLDQ5Ljg5OTYxNyA0Mi4xMTA2OTc0LDQ5Ljg5OTYxNyA0NC4wNjE3MjAzLDQ4LjE4OTM5OTkgTDQ1LjQwMjk4NjIsNDcuMDI2NjEyMSBDNDguMDk2NDk1Niw0NC42NjcwNzIgNTIuNjU4MTk2OCw0NC42NjcwNzIgNTUuMzU1Njk4LDQ3LjAzMDYwOCBMNTYuNjg4OTgwMiw0OC4xODU0MDQxIEM1OC42NDQ5OTI5LDQ5Ljg5OTYxNyA2Mi4wNjkwMTMyLDQ5Ljg5OTYxNyA2NC4wMjEwMzQsNDguMTg5Mzk5OSBMNjQuNjkzNjYyOSw0Ny42MDYwMDgxIEw2Niw0OS4xMTc0MzI1IFogTTYzLjg5ODI4NDMsNjEuMTM5ODk5IEw2NS4yMDQ2MjEzLDYyLjY1MDMyNDQgTDY0LjUzNTk4NDMsNjMuMjI5NzIwMyBDNjMuMTg5NzI4Niw2NC40MDk0OTA0IDYxLjM3NzQyMjksNjQuOTk4ODc2IDU5LjU2NDExOTMsNjQuOTk4ODc2IEM1Ny43NDg4MTk3LDY0Ljk5ODg3NiA1NS45MzM1MjAxLDY0LjQwODQ5MTUgNTQuNTgzMjcyNiw2My4yMjU3MjQ1IEw1My4yNDk5OTA0LDYyLjA3MDkyODQgQzUxLjI5Mzk3NzcsNjAuMzU4NzEzNCA0Ny44Njk5NTc0LDYwLjM1ODcxMzQgNDUuOTE3OTM2NSw2Mi4wNjY5MzI2IEw0NC41NzY2NzA2LDYzLjIyOTcyMDMgQzQxLjg4NTE1NzIsNjUuNTkwMjU5NSAzNy4zMjM0NTYsNjUuNTkxMjU4NCAzNC42MjM5NTg5LDYzLjIyNTcyNDUgTDMzLjI5MDY3NjcsNjIuMDcwOTI4NCBDMzEuMzM1NjYxOSw2MC4zNTg3MTM0IDI3LjkxMTY0MTcsNjAuMzU4NzEzNCAyNS45NTg2MjI4LDYyLjA2NjkzMjYgTDI0LjYxNzM1NjksNjMuMjI5NzIwMyBDMjEuOTI0ODQ1NSw2NS41OTAyNTk1IDE3LjM2MzE0NDQsNjUuNTkxMjU4NCAxNC42NjQ2NDUxLDYzLjIyNTcyNDUgTDE0LDYyLjY1MDMyNDQgTDE1LjMwNjMzNzEsNjEuMTM5ODk5IEwxNS45NzQ5NzQxLDYxLjcxOTI5NSBDMTcuOTMxOTg0OCw2My40MzE1MSAyMS4zNTYwMDUxLDYzLjQzMjUwODkgMjMuMzA3MDI4LDYxLjcyMjI5MTggTDI0LjY0ODI5MzksNjAuNTYwNTAzIEMyNy4zNDI4MDEyLDU4LjIwMDk2MjggMzEuOTAyNTA2NCw1OC4xOTk5NjM5IDM0LjYwMTAwNTYsNjAuNTYzNDk5OSBMMzUuOTM0Mjg3OCw2MS43MTkyOTUgQzM3Ljg5MTI5ODUsNjMuNDMxNTEgNDEuMzE1MzE4OCw2My40MzI1MDg5IDQzLjI2NjM0MTcsNjEuNzIyMjkxOCBMNDQuNjA3NjA3Niw2MC41NjA1MDMgQzQ3LjMwMjExNDksNTguMjAwOTYyOCA1MS44NjE4MjAxLDU4LjE5OTk2MzkgNTQuNTYwMzE5Myw2MC41NjM0OTk5IEw1NS44OTM2MDE1LDYxLjcxOTI5NSBDNTcuODUwNjEyMiw2My40MzE1MSA2MS4yNzQ2MzI1LDYzLjQzMjUwODkgNjMuMjI1NjU1NCw2MS43MjIyOTE4IEw2My44OTgyODQzLDYxLjEzOTg5OSBaIE02My44OTgyODQzLDU0LjgwNjUwMTYgTDY1LjIwNDYyMTMsNTYuMzE1OTI4IEw2NC41MzU5ODQzLDU2Ljg5NTMyNCBDNjEuODQzNDcyOSw1OS4yNTY4NjIxIDU3LjI4MTc3MTgsNTkuMjU3ODYxIDU0LjU4MzI3MjYsNTYuODkyMzI3MSBMNTMuMjQ5OTkwNCw1NS43Mzc1MzEgQzUxLjI5Mzk3NzcsNTQuMDIzMzE4MSA0Ny44Njk5NTc0LDU0LjAyNDMxNyA0NS45MTc5MzY1LDU1LjczMzUzNTEgTDQ0LjU3NjY3MDYsNTYuODk2MzIyOSBDNDMuMjMwNDE0OSw1OC4wNzYwOTMgNDEuNDE3MTExMyw1OC42NjU0Nzg2IDM5LjYwNDgwNTYsNTguNjY1NDc4NiBDMzcuNzg5NTA2LDU4LjY2NTQ3ODYgMzUuOTc0MjA2NCw1OC4wNzUwOTQxIDM0LjYyMzk1ODksNTYuODkyMzI3MSBMMzMuMjkwNjc2Nyw1NS43Mzc1MzEgQzMxLjMzNTY2MTksNTQuMDIzMzE4MSAyNy45MTE2NDE3LDU0LjAyNDMxNyAyNS45NTg2MjI4LDU1LjczMzUzNTEgTDI0LjYxNzM1NjksNTYuODk2MzIyOSBDMjEuOTI1ODQzNSw1OS4yNTY4NjIxIDE3LjM2NDE0MjMsNTkuMjU2ODYyMSAxNC42NjQ2NDUxLDU2Ljg5MjMyNzEgTDE0LDU2LjMxNTkyOCBMMTUuMzA2MzM3MSw1NC44MDY1MDE2IEwxNS45NzQ5NzQxLDU1LjM4NTg5NzYgQzE3LjkzMTk4NDgsNTcuMTAwMTEwNSAyMS4zNTYwMDUxLDU3LjA5OTExMTUgMjMuMzA3MDI4LDU1LjM4ODg5NDQgTDI0LjY0ODI5MzksNTQuMjI3MTA1NiBDMjcuMzQyODAxMiw1MS44Njc1NjU0IDMxLjkwNDUwMjQsNTEuODY1NTY3NSAzNC42MDEwMDU2LDU0LjIzMDEwMjUgTDM1LjkzNDI4NzgsNTUuMzg0ODk4NiBDMzcuODkxMjk4NSw1Ny4xMDAxMTA1IDQxLjMxNTMxODgsNTcuMDk5MTExNSA0My4yNjYzNDE3LDU1LjM4ODg5NDQgTDQ0LjYwNzYwNzYsNTQuMjI3MTA1NiBDNDcuMzAyMTE0OSw1MS44Njc1NjU0IDUxLjg2MzgxNjEsNTEuODY1NTY3NSA1NC41NjAzMTkzLDU0LjIzMDEwMjUgTDU1Ljg5MzYwMTUsNTUuMzg0ODk4NiBDNTcuODUwNjEyMiw1Ny4xMDAxMTA1IDYxLjI3NDYzMjUsNTcuMDk5MTExNSA2My4yMjU2NTU0LDU1LjM4ODg5NDQgTDYzLjg5ODI4NDMsNTQuODA2NTAxNiBaIE0yNC4wMzI1NDksMzcuOTc2MDQ3NCBDMjUuMTMzMzA1MiwzNy45NzYwNDc0IDI2LjAyODQ4MDQsMzguODcyMTEzMiAyNi4wMjg0ODA0LDM5Ljk3Mzk2NDYgQzI2LjAyODQ4MDQsNDEuMDc1ODE1OSAyNS4xMzMzMDUyLDQxLjk3MTg4MTcgMjQuMDMyNTQ5LDQxLjk3MTg4MTcgQzIyLjkzMTc5MjksNDEuOTcxODgxNyAyMi4wMzY2MTc3LDQxLjA3NTgxNTkgMjIuMDM2NjE3NywzOS45NzM5NjQ2IEMyMi4wMzY2MTc3LDM4Ljg3MjExMzIgMjIuOTMxNzkyOSwzNy45NzYwNDc0IDI0LjAzMjU0OSwzNy45NzYwNDc0IEwyNC4wMzI1NDksMzcuOTc2MDQ3NCBaIE0zOS4wMDIwMzQzLDE2Ljk5NzkxNzIgQzQwLjEwMjc5MDUsMTYuOTk3OTE3MiA0MC45OTc5NjU3LDE3Ljg5Mzk4MyA0MC45OTc5NjU3LDE4Ljk5NTgzNDMgQzQwLjk5Nzk2NTcsMjAuMDk3Njg1NiA0MC4xMDI3OTA1LDIwLjk5Mzc1MTUgMzkuMDAyMDM0MywyMC45OTM3NTE1IEMzNy45MDEyNzgyLDIwLjk5Mzc1MTUgMzcuMDA2MTAyOSwyMC4wOTc2ODU2IDM3LjAwNjEwMjksMTguOTk1ODM0MyBDMzcuMDA2MTAyOSwxNy44OTM5ODMgMzcuOTAxMjc4MiwxNi45OTc5MTcyIDM5LjAwMjAzNDMsMTYuOTk3OTE3MiBMMzkuMDAyMDM0MywxNi45OTc5MTcyIFogTTU1Ljk2NzQ1MSwzOS45NzM5NjQ2IEM1NS45Njc0NTEsNDEuMDc1ODE1OSA1NS4wNzIyNzU3LDQxLjk3MTg4MTcgNTMuOTcxNTE5Niw0MS45NzE4ODE3IEM1Mi44NzA3NjM0LDQxLjk3MTg4MTcgNTEuOTc1NTg4Miw0MS4wNzU4MTU5IDUxLjk3NTU4ODIsMzkuOTczOTY0NiBDNTEuOTc1NTg4MiwzOC44NzIxMTMyIDUyLjg3MDc2MzQsMzcuOTc2MDQ3NCA1My45NzE1MTk2LDM3Ljk3NjA0NzQgQzU1LjA3MjI3NTcsMzcuOTc2MDQ3NCA1NS45Njc0NTEsMzguODcyMTEzMiA1NS45Njc0NTEsMzkuOTczOTY0NiBMNTUuOTY3NDUxLDM5Ljk3Mzk2NDYgWiBNMzkuMDAyMDM0MywyMi45OTE2Njg3IEMzOS42NjY2Nzk1LDIyLjk5MTY2ODcgNDAuMjg1NDE4MiwyMi44MTI4NTUxIDQwLjgzNzI5MzIsMjIuNTIzMTU3MSBMNTEuMDA0NTY3NiwzNy4zMjY3MjQzIEM1MC41ODg0MTU5LDM3Ljc5MjIzOSA1MC4yODMwMzg0LDM4LjM1MjY1NDggNTAuMTIyMzY1OSwzOC45NzUwMDYgTDI3Ljg4MTcwMjcsMzguOTc1MDA2IEMyNy43MjEwMzAyLDM4LjM1MjY1NDggMjcuNDE1NjUyNywzNy43OTIyMzkgMjYuOTk5NTAxLDM3LjMyNjcyNDMgTDM3LjE2Njc3NTQsMjIuNTIzMTU3MSBDMzcuNzE4NjUwNCwyMi44MTI4NTUxIDM4LjMzNzM4OTIsMjIuOTkxNjY4NyAzOS4wMDIwMzQzLDIyLjk5MTY2ODcgTDM5LjAwMjAzNDMsMjIuOTkxNjY4NyBaIE0yNC4wMzI1NDksNDMuOTY5Nzk4OSBDMjUuODg2NzY5Myw0My45Njk3OTg5IDI3LjQzNjYxLDQyLjY5MTEzMTkgMjcuODgxNzAyNyw0MC45NzI5MjMxIEw1MC4xMjIzNjU5LDQwLjk3MjkyMzEgQzUwLjU2NzQ1ODYsNDIuNjkxMTMxOSA1Mi4xMTcyOTk0LDQzLjk2OTc5ODkgNTMuOTcxNTE5Niw0My45Njk3OTg5IEM1Ni4xNzMwMzE5LDQzLjk2OTc5ODkgNTcuOTYzMzgyMyw0Mi4xNzc2NjcyIDU3Ljk2MzM4MjMsMzkuOTczOTY0NiBDNTcuOTYzMzgyMywzNy43NzAyNjE5IDU2LjE3MzAzMTksMzUuOTc4MTMwMiA1My45NzE1MTk2LDM1Ljk3ODEzMDIgQzUzLjUxMTQ1NzQsMzUuOTc4MTMwMiA1My4wNzYzNDQ0LDM2LjA3MjAzMjMgNTIuNjYzMTg2NiwzNi4yMTU4ODI0IEw0Mi4zMzcyMzU2LDIxLjE4MDU1NjcgQzQyLjc1MDM5MzQsMjAuNTUyMjExOCA0Mi45OTM4OTcxLDE5LjgwMjk5MjkgNDIuOTkzODk3MSwxOC45OTU4MzQzIEM0Mi45OTM4OTcxLDE2Ljc5MjEzMTcgNDEuMjAzNTQ2NiwxNSAzOS4wMDIwMzQzLDE1IEMzNi44MDA1MjIsMTUgMzUuMDEwMTcxNiwxNi43OTIxMzE3IDM1LjAxMDE3MTYsMTguOTk1ODM0MyBDMzUuMDEwMTcxNiwxOS44MDI5OTI5IDM1LjI1MzY3NTIsMjAuNTUyMjExOCAzNS42NjY4MzMsMjEuMTgwNTU2NyBMMjUuMzQwODgyLDM2LjIxNTg4MjQgQzI0LjkyNzcyNDMsMzYuMDcyMDMyMyAyNC40OTI2MTEyLDM1Ljk3ODEzMDIgMjQuMDMyNTQ5LDM1Ljk3ODEzMDIgQzIxLjgzMTAzNjcsMzUuOTc4MTMwMiAyMC4wNDA2ODYzLDM3Ljc3MDI2MTkgMjAuMDQwNjg2MywzOS45NzM5NjQ2IEMyMC4wNDA2ODYzLDQyLjE3NzY2NzIgMjEuODMxMDM2Nyw0My45Njk3OTg5IDI0LjAzMjU0OSw0My45Njk3OTg5IEwyNC4wMzI1NDksNDMuOTY5Nzk4OSBaIiBpZD0iQW1hem9uLU1hbmFnZWQtU3RyZWFtaW5nLWZvci1LYWZrYS1JY29uXzY0X1NxdWlkIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICA8L2c+Cjwvc3ZnPg==",
+  "layout": [
+    {
+      "h": 6,
+      "i": "238ff900-c0e4-4e29-83e3-d6acfcc9c6e5",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "e201e9c4-7a52-4558-a5f9-10d8686a6890",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "fcf5c63c-5da6-4f96-9243-5f42980df049",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "601ec1b7-f614-4678-b445-7f6b8fec2e16",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "e2ab4538-bc01-4e96-b3e0-c7f73a2c972f",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "f15ba73d-d85e-48ac-b478-e6911965e9e3",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 12
+    }
+  ],
+  "panelMap": {},
+  "tags": [],
+  "title": "Overview of Amazon MSK",
+  "uploadedGrafana": false,
+  "variables": {
+    "627dec44-a04e-44c7-9dd4-b0fdaf4b5b62": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "Cloud Account ID of AWS",
+      "id": "627dec44-a04e-44c7-9dd4-b0fdaf4b5b62",
+      "key": "627dec44-a04e-44c7-9dd4-b0fdaf4b5b62",
+      "modificationUUID": "b23952ff-b081-468c-bf50-96a062383743",
+      "multiSelect": false,
+      "name": "Account",
+      "order": 0,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud_account_id') AS cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_Kafka_KafkaDataLogsDiskUsed_max' GROUP BY cloud_account_id\n",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "c69e90bd-adaa-4f75-9108-1c6e91a00fbc": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Region",
+      "id": "c69e90bd-adaa-4f75-9108-1c6e91a00fbc",
+      "modificationUUID": "07f23d13-c94e-452c-b917-04124f910942",
+      "multiSelect": false,
+      "name": "Region",
+      "order": 0,
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud_region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_Kafka_KafkaDataLogsDiskUsed_max' AND JSONExtractString(labels, 'cloud_account_id') IN {{.Account}} GROUP BY region\n",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "238ff900-c0e4-4e29-83e3-d6acfcc9c6e5",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Kafka_KafkaDataLogsDiskUsed_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Kafka_KafkaDataLogsDiskUsed_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "be8452fb",
+                    "key": {
+                      "dataType": "string",
+                      "id": "Broker_ID--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "Broker_ID",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "8b658843",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "9cbc21ee",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "Cluster_Name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Cluster_Name",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "Broker_ID--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Broker_ID",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "caafc0b7-fc3c-472d-87cd-ae176e4d9602",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Disk usage by (Cluster, Broker)",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "e201e9c4-7a52-4558-a5f9-10d8686a6890",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Kafka_CpuUser_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Kafka_CpuUser_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "03054a63",
+                    "key": {
+                      "dataType": "string",
+                      "id": "Broker_ID--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "Broker_ID",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "754c3c99",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "09ad3a79",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "Broker_ID--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Broker_ID",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "Cluster_Name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Cluster_Name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "476bd12d-7454-41e9-89b3-27406083bbaa",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPU (User) usage by (Cluster, Broker)",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "fcf5c63c-5da6-4f96-9243-5f42980df049",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Kafka_CpuSystem_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Kafka_CpuSystem_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "1c4feb03",
+                    "key": {
+                      "dataType": "string",
+                      "id": "Broker_ID--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "Broker_ID",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "3e5db1d7",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "9e9bf94c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "Broker_ID--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Broker_ID",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "Cluster_Name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Cluster_Name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "91132e98-9068-48cf-ad89-af9a4bcb5a40",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPU (System) usage by (Cluster, Broker)",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "601ec1b7-f614-4678-b445-7f6b8fec2e16",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Kafka_NetworkTxPackets_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Kafka_NetworkTxPackets_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "df3f9941",
+                    "key": {
+                      "dataType": "string",
+                      "id": "Broker_ID--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "Broker_ID",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "2233f9a5",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "52bd69d4",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "Broker_ID--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Broker_ID",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "Cluster_Name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Cluster_Name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "47d4e8b7-2ca3-412c-a48a-bfbd592b0709",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": " Network TX packets by (Cluster, Broker)",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "e2ab4538-bc01-4e96-b3e0-c7f73a2c972f",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Kafka_NetworkRxPackets_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Kafka_NetworkRxPackets_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "sum",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "a00425be",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  },
+                  {
+                    "id": "726d60d7",
+                    "key": {
+                      "dataType": "string",
+                      "id": "Broker_ID--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "Broker_ID",
+                      "type": "tag"
+                    },
+                    "op": "exists",
+                    "value": ""
+                  },
+                  {
+                    "id": "02adea69",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "Broker_ID--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Broker_ID",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "Cluster_Name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Cluster_Name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "sum"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "1c6ec479-a7d2-4f8f-bb31-1bf2a6b6fc25",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Network RX packets by (Cluster, Broker)",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "f15ba73d-d85e-48ac-b478-e6911965e9e3",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Kafka_SumOffsetLag_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Kafka_SumOffsetLag_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "0626eebd",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "b633d867",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "Cluster_Name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "Cluster_Name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "({{Cluster_Name}})",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "49e4cbd5-d4d1-40a4-8724-7d6580dee56e",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Lag Offset by Cluster",
+      "yAxisUnit": "none"
+    }
+  ]
+}

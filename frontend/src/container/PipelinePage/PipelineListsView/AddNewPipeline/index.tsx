@@ -1,10 +1,8 @@
-import { Button, Divider, Form, Modal } from 'antd';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { Button, Divider, Form, FormInstance, Modal } from 'antd';
+import { useAppContext } from 'providers/App/App';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
-import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
@@ -12,6 +10,7 @@ import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
 function AddNewPipeline({
+	form,
 	isActionType,
 	setActionType,
 	selectedPipelineData,
@@ -19,28 +18,18 @@ function AddNewPipeline({
 	setCurrPipelineData,
 	currPipelineData,
 }: AddNewPipelineProps): JSX.Element {
-	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const isEdit = isActionType === 'edit-pipeline';
 	const isAdd = isActionType === 'add-pipeline';
-
-	useEffect(() => {
-		if (isEdit) {
-			form.setFieldsValue(selectedPipelineData);
-		}
-		if (isAdd) {
-			form.resetFields();
-		}
-	}, [form, isEdit, isAdd, selectedPipelineData]);
 
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
 			id: v4(),
 			orderId: (currPipelineData?.length || 0) + 1,
 			createdAt: new Date().toISOString(),
-			createdBy: user?.name || '',
+			createdBy: user?.displayName || '',
 			name: values.name,
 			alias: values.name.replace(/\s/g, ''),
 			description: values.description,
@@ -137,6 +126,7 @@ function AddNewPipeline({
 }
 
 interface AddNewPipelineProps {
+	form: FormInstance<PipelineData>;
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedPipelineData: PipelineData | undefined;

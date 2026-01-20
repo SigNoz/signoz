@@ -12,7 +12,6 @@ import {
 	transformHavingToStringValue,
 } from 'lib/query/transformQueryBuilderData';
 // ** Helpers
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -43,12 +42,7 @@ export function HavingFilter({
 	);
 
 	const aggregatorAttribute = useMemo(
-		() =>
-			transformStringWithPrefix({
-				str: query.aggregateAttribute.key,
-				prefix: query.aggregateAttribute.type || '',
-				condition: !query.aggregateAttribute.isColumn,
-			}),
+		() => query.aggregateAttribute?.key || '',
 		[query],
 	);
 
@@ -62,7 +56,9 @@ export function HavingFilter({
 			return `${query.spaceAggregation.toUpperCase()}(${aggregatorAttribute})`;
 		}
 
-		return `${query.aggregateOperator.toUpperCase()}(${aggregatorAttribute})`;
+		return `${
+			query.aggregateOperator?.toUpperCase() || ''
+		}(${aggregatorAttribute})`;
 	}, [query, aggregatorAttribute, entityVersion]);
 
 	const aggregatorOptions: SelectOption<string, string>[] = useMemo(
@@ -228,7 +224,7 @@ export function HavingFilter({
 	}, [searchText, parseSearchText]);
 
 	useEffect(() => {
-		setLocalValues(transformHavingToStringValue(having));
+		setLocalValues(transformHavingToStringValue(having as Having[]));
 	}, [having]);
 
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
@@ -244,7 +240,7 @@ export function HavingFilter({
 				tagRender={tagRender}
 				value={localValues}
 				data-testid="havingSelect"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={{ width: '100%' }}
 				notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 				placeholder="GroupBy(operation) > 5"

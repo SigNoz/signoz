@@ -1,7 +1,5 @@
 import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
-import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
@@ -11,8 +9,6 @@ import {
 	SlackChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
 import history from 'lib/history';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,27 +35,8 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
-
-	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
-
-	const hasFeature = useFeatureFlags(
-		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
-	);
-
-	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
 
 	const renderSettings = (): ReactElement | null => {
-		if (
-			// for ee plan
-			!isOssFeature?.active &&
-			(!hasFeature || !hasFeature.active) &&
-			type === 'msteams'
-		) {
-			// channel type is not available for users plan
-			return <UpgradePrompt />;
-		}
-
 		switch (type) {
 			case ChannelType.Slack:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
@@ -80,7 +57,9 @@ function FormAlertChannels({
 
 	return (
 		<>
-			<Typography.Title level={3}>{title}</Typography.Title>
+			<Typography.Title level={4} className="form-alert-channels-title">
+				{title}
+			</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
@@ -143,13 +122,10 @@ function FormAlertChannels({
 						<Select.Option value="email" key="email" data-testid="select-option">
 							Email
 						</Select.Option>
-						{!isOssFeature?.active && (
-							<Select.Option value="msteams" key="msteams" data-testid="select-option">
-								<div>
-									Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
-								</div>
-							</Select.Option>
-						)}
+
+						<Select.Option value="msteams" key="msteams" data-testid="select-option">
+							Microsoft Teams
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -157,7 +133,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
-						disabled={savingState || !hasFeature}
+						disabled={savingState}
 						loading={savingState}
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
@@ -165,7 +141,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
-						disabled={testingState || !hasFeature}
+						disabled={testingState}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
 					>
@@ -173,7 +149,7 @@ function FormAlertChannels({
 					</Button>
 					<Button
 						onClick={(): void => {
-							history.replace(ROUTES.SETTINGS);
+							history.replace(ROUTES.ALL_CHANNELS);
 						}}
 					>
 						{t('button_return')}

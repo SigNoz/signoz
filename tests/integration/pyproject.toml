@@ -1,0 +1,61 @@
+[project]
+name = "integration"
+version = "0.1.0"
+description = ""
+authors = [{ name = "therealpandey", email = "vibhupandey28@gmail.com" }]
+requires-python = ">=3.13"
+dependencies = [
+    "pytest>=8.3.5",
+    "psycopg2>=2.9.10",
+    "testcontainers[clickhouse,keycloak,postgres]>=4.13.1",
+    "wiremock>=2.6.1",
+    "numpy>=2.3.2",
+    "clickhouse-connect>=0.8.18",
+    "svix-ksuid>=0.6.2",
+    "requests>=2.32.4",
+    "sqlalchemy>=2.0.43",
+    "selenium>=4.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "pylint>=3.3.6",
+    "isort>=6.0.1",
+    "autoflake>=2.3.1",
+    "black>=25.1.0",
+]
+
+[tool.pytest.ini_options]
+python_files = "src/**/**.py"
+log_cli = true
+log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+addopts = "-ra -p no:warnings"
+
+[tool.pylint.main]
+ignore = [".venv"]
+
+[tool.pylint.format]
+max-line-length = "400"
+
+[tool.pylint.basic]
+# test ordering (example; 01_abc.py)
+module-rgx = "(([0-9]+_)?[a-z_][a-z0-9_]*)|(__.*__)$"
+
+# to avoid overly restrictive pylint naming for attributes
+attr-rgx = "([A-Z_][A-Z0-9_]*|[a-z_][a-z0-9_]*|(__.*__))$"
+class-attribute-rgx = "([A-Z_][A-Z0-9_]*|[a-z_][a-z0-9_]*|(__.*__))$"
+class-const-rgx = "[A-Z_][A-Z0-9_]*$"
+
+[tool.pylint."messages control"]
+disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements", "too-many-lines"]
+
+[tool.isort]
+profile = "black"
+
+[tool.autoflake]
+recursive = true
+remove-all-unused-imports = true
+remove-unused-variables = true
+exclude = [".venv/**"]
+in-place = true

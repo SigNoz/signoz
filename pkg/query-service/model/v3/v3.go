@@ -9,9 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type DataSource string
@@ -20,11 +22,12 @@ const (
 	DataSourceTraces  DataSource = "traces"
 	DataSourceLogs    DataSource = "logs"
 	DataSourceMetrics DataSource = "metrics"
+	DataSourceMeter   DataSource = "meter"
 )
 
 func (d DataSource) Validate() error {
 	switch d {
-	case DataSourceTraces, DataSourceLogs, DataSourceMetrics:
+	case DataSourceTraces, DataSourceLogs, DataSourceMetrics, DataSourceMeter:
 		return nil
 	default:
 		return fmt.Errorf("invalid data source: %s", d)
@@ -248,6 +251,7 @@ func (q TagType) Validate() error {
 type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
+	TagType            TagType           `json:"tagType"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
@@ -297,6 +301,8 @@ func (q AttributeKeyDataType) String() string {
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
 type FilterAttributeValueRequest struct {
+	StartTimeMillis            int64                `json:"startTimeMillis"`
+	EndTimeMillis              int64                `json:"endTimeMillis"`
 	DataSource                 DataSource           `json:"dataSource"`
 	AggregateOperator          AggregateOperator    `json:"aggregateOperator"`
 	AggregateAttribute         string               `json:"aggregateAttribute"`
@@ -305,6 +311,51 @@ type FilterAttributeValueRequest struct {
 	TagType                    TagType              `json:"tagType"`
 	SearchText                 string               `json:"searchText"`
 	Limit                      int                  `json:"limit"`
+	ExistingFilterItems        []FilterItem         `json:"existingFilterItems"`
+	MetricNames                []string             `json:"metricNames"`
+	IncludeRelated             bool                 `json:"includeRelated"`
+}
+
+func (f *FilterAttributeValueRequest) Validate() error {
+	if f.FilterAttributeKey == "" {
+		return fmt.Errorf("filterAttributeKey is required")
+	}
+
+	if f.StartTimeMillis == 0 {
+		return fmt.Errorf("startTimeMillis is required")
+	}
+
+	if f.EndTimeMillis == 0 {
+		return fmt.Errorf("endTimeMillis is required")
+	}
+
+	if f.Limit == 0 {
+		f.Limit = 100
+	}
+
+	if f.Limit > 1000 {
+		return fmt.Errorf("limit must be less than 1000")
+	}
+
+	if f.ExistingFilterItems != nil {
+		for _, value := range f.ExistingFilterItems {
+			if value.Key.Key == "" {
+				return fmt.Errorf("existingFilterItems must contain a valid key")
+			}
+		}
+	}
+
+	if err := f.DataSource.Validate(); err != nil {
+		return fmt.Errorf("invalid data source: %w", err)
+	}
+
+	if f.DataSource != DataSourceMetrics {
+		if err := f.AggregateOperator.Validate(); err != nil {
+			return fmt.Errorf("invalid aggregate operator: %w", err)
+		}
+	}
+
+	return nil
 }
 
 type AggregateAttributeResponse struct {
@@ -322,6 +373,7 @@ const (
 	AttributeKeyTypeTag                  AttributeKeyType = "tag"
 	AttributeKeyTypeResource             AttributeKeyType = "resource"
 	AttributeKeyTypeInstrumentationScope AttributeKeyType = "scope"
+	AttributeKeyTypeSpanSearchScope      AttributeKeyType = "spanSearchScope"
 )
 
 func (t AttributeKeyType) String() string {
@@ -365,9 +417,10 @@ func (a AttributeKey) Validate() error {
 }
 
 type FilterAttributeValueResponse struct {
-	StringAttributeValues []string      `json:"stringAttributeValues"`
-	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
-	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
+	StringAttributeValues []string                      `json:"stringAttributeValues"`
+	NumberAttributeValues []interface{}                 `json:"numberAttributeValues"`
+	BoolAttributeValues   []bool                        `json:"boolAttributeValues"`
+	RelatedValues         *FilterAttributeValueResponse `json:"relatedValues,omitempty"`
 }
 
 type QueryRangeParamsV3 struct {
@@ -460,8 +513,11 @@ type CompositeQuery struct {
 	BuilderQueries    map[string]*BuilderQuery    `json:"builderQueries,omitempty"`
 	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
-	PanelType         PanelType                   `json:"panelType"`
-	QueryType         QueryType                   `json:"queryType"`
+
+	Queries []qbtypes.QueryEnvelope `json:"queries,omitempty"`
+
+	PanelType PanelType `json:"panelType"`
+	QueryType QueryType `json:"queryType"`
 	// Unit for the time series data shown in the graph
 	// This is used in alerts to format the value and threshold
 	Unit string `json:"unit,omitempty"`
@@ -548,7 +604,7 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
+	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil && len(c.Queries) == 0 {
 		return fmt.Errorf("composite query must contain at least one query type")
 	}
 
@@ -594,6 +650,19 @@ const (
 	Delta       Temporality = "Delta"
 	Cumulative  Temporality = "Cumulative"
 )
+
+func (t *Temporality) Scan(src interface{}) error {
+	if src == nil {
+		*t = ""
+		return nil
+	}
+	s, ok := src.(string)
+	if !ok {
+		return fmt.Errorf("failed to scan Temporality: %v", src)
+	}
+	*t = Temporality(s)
+	return nil
+}
 
 type TimeAggregation string
 
@@ -646,6 +715,19 @@ const (
 	MetricTypeSummary              MetricType = "Summary"
 	MetricTypeExponentialHistogram MetricType = "ExponentialHistogram"
 )
+
+func (m *MetricType) Scan(src interface{}) error {
+	if src == nil {
+		*m = ""
+		return nil
+	}
+	s, ok := src.(string)
+	if !ok {
+		return fmt.Errorf("failed to scan MetricType: %v", src)
+	}
+	*m = MetricType(s)
+	return nil
+}
 
 type SpaceAggregation string
 
@@ -709,6 +791,28 @@ func GetPercentileFromOperator(operator SpaceAggregation) float64 {
 		return 0.99
 	default:
 		return 0
+	}
+}
+
+type SecondaryAggregation string
+
+const (
+	SecondaryAggregationUnspecified SecondaryAggregation = ""
+	SecondaryAggregationSum         SecondaryAggregation = "sum"
+	SecondaryAggregationAvg         SecondaryAggregation = "avg"
+	SecondaryAggregationMin         SecondaryAggregation = "min"
+	SecondaryAggregationMax         SecondaryAggregation = "max"
+)
+
+func (s SecondaryAggregation) Validate() error {
+	switch s {
+	case SecondaryAggregationSum,
+		SecondaryAggregationAvg,
+		SecondaryAggregationMin,
+		SecondaryAggregationMax:
+		return nil
+	default:
+		return fmt.Errorf("invalid series aggregation: %s", s)
 	}
 }
 
@@ -784,27 +888,28 @@ func (m *MetricValueFilter) Clone() *MetricValueFilter {
 }
 
 type BuilderQuery struct {
-	QueryName            string            `json:"queryName"`
-	StepInterval         int64             `json:"stepInterval"`
-	DataSource           DataSource        `json:"dataSource"`
-	AggregateOperator    AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute   AttributeKey      `json:"aggregateAttribute,omitempty"`
-	Temporality          Temporality       `json:"temporality,omitempty"`
-	Filters              *FilterSet        `json:"filters,omitempty"`
-	GroupBy              []AttributeKey    `json:"groupBy,omitempty"`
-	Expression           string            `json:"expression"`
-	Disabled             bool              `json:"disabled"`
-	Having               []Having          `json:"having,omitempty"`
-	Legend               string            `json:"legend,omitempty"`
-	Limit                uint64            `json:"limit"`
-	Offset               uint64            `json:"offset"`
-	PageSize             uint64            `json:"pageSize"`
-	OrderBy              []OrderBy         `json:"orderBy,omitempty"`
-	ReduceTo             ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns        []AttributeKey    `json:"selectColumns,omitempty"`
-	TimeAggregation      TimeAggregation   `json:"timeAggregation,omitempty"`
-	SpaceAggregation     SpaceAggregation  `json:"spaceAggregation,omitempty"`
-	Functions            []Function        `json:"functions,omitempty"`
+	QueryName            string               `json:"queryName"`
+	StepInterval         int64                `json:"stepInterval"`
+	DataSource           DataSource           `json:"dataSource"`
+	AggregateOperator    AggregateOperator    `json:"aggregateOperator"`
+	AggregateAttribute   AttributeKey         `json:"aggregateAttribute,omitempty"`
+	Temporality          Temporality          `json:"temporality,omitempty"`
+	Filters              *FilterSet           `json:"filters,omitempty"`
+	GroupBy              []AttributeKey       `json:"groupBy,omitempty"`
+	Expression           string               `json:"expression"`
+	Disabled             bool                 `json:"disabled"`
+	Having               []Having             `json:"having,omitempty"`
+	Legend               string               `json:"legend,omitempty"`
+	Limit                uint64               `json:"limit"`
+	Offset               uint64               `json:"offset"`
+	PageSize             uint64               `json:"pageSize"`
+	OrderBy              []OrderBy            `json:"orderBy,omitempty"`
+	ReduceTo             ReduceToOperator     `json:"reduceTo,omitempty"`
+	SelectColumns        []AttributeKey       `json:"selectColumns,omitempty"`
+	TimeAggregation      TimeAggregation      `json:"timeAggregation,omitempty"`
+	SpaceAggregation     SpaceAggregation     `json:"spaceAggregation,omitempty"`
+	SecondaryAggregation SecondaryAggregation `json:"seriesAggregation,omitempty"`
+	Functions            []Function           `json:"functions,omitempty"`
 	ShiftBy              int64
 	IsAnomaly            bool
 	QueriesUsedInFormula []string
@@ -958,6 +1063,12 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		// 	return fmt.Errorf("group by is not supported for list panel type")
 		// }
 
+		if panelType == PanelTypeValue && len(b.GroupBy) > 0 {
+			if err := b.SecondaryAggregation.Validate(); err != nil {
+				return fmt.Errorf("series aggregation is required for value type panel with group by: %w", err)
+			}
+		}
+
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
 				return fmt.Errorf("group by is invalid %w", err)
@@ -1035,6 +1146,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 				_, ok := function.Args[0].(float64)
 				if !ok {
 					// if string, attempt to convert to float
+					if _, ok := function.Args[0].(string); !ok {
+						return fmt.Errorf("threshold param should be a float")
+					}
 					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
 					if err != nil {
 						return fmt.Errorf("threshold param should be a float")
@@ -1119,6 +1233,9 @@ const (
 
 	FilterOperatorHas    FilterOperator = "has"
 	FilterOperatorNotHas FilterOperator = "nhas"
+
+	FilterOperatorILike    FilterOperator = "ilike"
+	FilterOperatorNotILike FilterOperator = "notilike"
 )
 
 type FilterItem struct {
@@ -1308,7 +1425,7 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 // The source page name is used to identify the page that initiated the query
 // The source page could be "traces", "logs", "metrics".
 type SavedView struct {
-	UUID           string          `json:"uuid,omitempty"`
+	ID             valuer.UUID     `json:"id,omitempty"`
 	Name           string          `json:"name"`
 	Category       string          `json:"category"`
 	CreatedAt      time.Time       `json:"createdAt"`
@@ -1328,9 +1445,6 @@ func (eq *SavedView) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if eq.UUID == "" {
-		eq.UUID = uuid.New().String()
-	}
 	return eq.CompositeQuery.Validate()
 }
 
@@ -1349,30 +1463,7 @@ type MetricMetadataResponse struct {
 	Temporality string    `json:"temporality"`
 }
 
-type URLShareableTimeRange struct {
-	Start    int64 `json:"start"`
-	End      int64 `json:"end"`
-	PageSize int64 `json:"pageSize"`
-}
-
-type URLShareableBuilderQuery struct {
-	QueryData     []BuilderQuery `json:"queryData"`
-	QueryFormulas []string       `json:"queryFormulas"`
-}
-
-type URLShareableCompositeQuery struct {
-	QueryType string                   `json:"queryType"`
-	Builder   URLShareableBuilderQuery `json:"builder"`
-}
-
-type URLShareableOptions struct {
-	MaxLines      int            `json:"maxLines"`
-	Format        string         `json:"format"`
-	SelectColumns []AttributeKey `json:"selectColumns"`
-}
-
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
-	PreferRPM       bool
 }

@@ -1,0 +1,62 @@
+.infra-monitoring-container {
+	.jobs-list-table {
+		.expanded-table-container {
+			padding-left: 40px;
+		}
+
+		.ant-table-cell.column-progress-bar {
+			min-width: 180px;
+			max-width: 180px;
+		}
+
+		.ant-table-row-expand-icon-cell {
+			min-width: 30px !important;
+			max-width: 30px !important;
+		}
+
+		.progress-container {
+			display: flex;
+			justify-content: start;
+		}
+	}
+}
+
+.ant-table-cell {
+	&:has(.job-name-header) {
+		min-width: 250px !important;
+		max-width: 250px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.namespace-name-header) {
+		min-width: 220px !important;
+		max-width: 220px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.med-col) {
+		min-width: 200px !important;
+		max-width: 200px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.small-col) {
+		min-width: 120px !important;
+		max-width: 120px !important;
+	}
+}
+
+.expanded-jobs-list-table {
+	.ant-table-cell {
+		min-width: 200px !important;
+		max-width: 200px !important;
+	}
+
+	.ant-table-row-expand-icon-cell {
+		min-width: 30px !important;
+		max-width: 30px !important;
+	}
+}

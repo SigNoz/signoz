@@ -1,0 +1,31 @@
+.attribute-with-expandable-popover {
+	&__popover {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		max-width: 50vw;
+	}
+
+	&__preview {
+		max-height: 40vh;
+		overflow-y: auto;
+		white-space: pre-wrap;
+		word-break: break-all;
+		padding: 8px;
+		border-radius: 4px;
+	}
+
+	&__expand-button {
+		align-self: flex-end;
+		display: flex;
+		align-items: center;
+		flex-grow: 0;
+	}
+
+	&__full-view {
+		max-height: 70vh;
+		overflow-y: auto;
+		white-space: pre-wrap;
+		word-break: break-all;
+	}
+}

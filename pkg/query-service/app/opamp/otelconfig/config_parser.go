@@ -160,7 +160,7 @@ func (cp *ConfigParser) CheckProcessorInPipeline(pipelineName, name string) bool
 func (cp *ConfigParser) Merge(c *confmap.Conf) {
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
-	cp.agentConf.Merge(c)
+	_ = cp.agentConf.Merge(c)
 }
 
 func (cp *ConfigParser) UpdateProcessors(processors map[string]interface{}) {

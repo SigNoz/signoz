@@ -12,20 +12,18 @@ import useDebounce from 'hooks/useDebounce';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getAutocompleteValueAndType } from 'lib/newQueryBuilder/getAutocompleteValueAndType';
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
 	BaseAutocompleteData,
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
-import { transformToUpperCase } from 'utils/transformToUpperCase';
 
-import { removePrefix } from '../GroupByFilter/utils';
 import { selectStyle } from '../QueryBuilderSearch/config';
 import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 // ** Types
@@ -35,10 +33,28 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	query,
 	disabled,
 	onChange,
+	defaultValue,
+	onSelect,
+	index,
+	signalSource,
+	setAttributeKeys,
 }: AgregatorFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
-	const [searchText, setSearchText] = useState<string>('');
+
+	// this function is only relevant for metrics and now operators are part of aggregations
+	const queryAggregation = useMemo(
+		() => query.aggregations?.[0] as MetricAggregation,
+		[query.aggregations],
+	);
+
+	const [searchText, setSearchText] = useState<string>(
+		(query.aggregations?.[0] as MetricAggregation)?.metricName || '',
+	);
+
+	useEffect(() => {
+		setSearchText('');
+	}, [signalSource]);
 
 	const debouncedSearchText = useMemo(() => {
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
@@ -48,41 +64,33 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	}, [searchText]);
 
 	const debouncedValue = useDebounce(debouncedSearchText, DEBOUNCE_DELAY);
-	const { isFetching } = useQuery(
+	const { isFetching, data: aggregateAttributeData } = useQuery(
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 			debouncedValue,
-			query.aggregateOperator,
+			queryAggregation.timeAggregation,
 			query.dataSource,
+			index,
+			signalSource,
 		],
 		async () =>
 			getAggregateAttribute({
 				searchText: debouncedValue,
-				aggregateOperator: query.aggregateOperator,
+				aggregateOperator: queryAggregation.timeAggregation,
 				dataSource: query.dataSource,
+				source: signalSource || '',
 			}),
 		{
 			enabled:
 				query.dataSource === DataSource.METRICS ||
-				(!!query.aggregateOperator && !!query.dataSource),
+				(!!queryAggregation.timeAggregation && !!query.dataSource),
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
 					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
 						label: (
 							<OptionRenderer
-								label={transformStringWithPrefix({
-									str: item.key,
-									prefix: item.type || '',
-									condition: !item.isColumn,
-								})}
-								value={removePrefix(
-									transformStringWithPrefix({
-										str: item.key,
-										prefix: item.type || '',
-										condition: !item.isColumn,
-									}),
-									!item.isColumn && item.type ? item.type : '',
-								)}
+								label={item.key}
+								value={item.key}
 								dataType={item.dataType}
 								type={item.type || ''}
 							/>
@@ -95,48 +103,116 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 					})) || [];
 
 				setOptionsData(options);
+				setAttributeKeys?.(data?.payload?.attributeKeys || []);
 			},
+			keepPreviousData: false,
 		},
 	);
+
+	// Handle edit mode: update aggregateAttribute type when data is available
+	useEffect(() => {
+		const metricName = queryAggregation?.metricName;
+		const hasAggregateAttributeType = query.aggregateAttribute?.type;
+
+		// Check if we're in edit mode and have data from the existing query
+		// Also ensure this is for the correct query by checking the metric name matches
+		if (
+			query.dataSource === DataSource.METRICS &&
+			metricName &&
+			!hasAggregateAttributeType &&
+			aggregateAttributeData?.payload?.attributeKeys &&
+			// Only update if the data contains the metric we're looking for
+			aggregateAttributeData.payload.attributeKeys.some(
+				(item) => item.key === metricName,
+			)
+		) {
+			const metricData = aggregateAttributeData.payload.attributeKeys.find(
+				(item) => item.key === metricName,
+			);
+
+			if (metricData) {
+				// Update the aggregateAttribute with the fetched type information
+				onChange(metricData, true);
+			}
+		}
+	}, [
+		query.dataSource,
+		queryAggregation?.metricName,
+		query.aggregateAttribute?.type,
+		aggregateAttributeData,
+		onChange,
+		index,
+		query,
+		setAttributeKeys,
+	]);
 
 	const handleSearchText = useCallback((text: string): void => {
 		setSearchText(text);
 	}, []);
 
-	const placeholder: string =
-		query.dataSource === DataSource.METRICS
-			? `${transformToUpperCase(query.dataSource)} name`
-			: 'Aggregate attribute';
+	const getPlaceholder = useCallback(() => {
+		if (signalSource === 'meter') {
+			return 'Meter name';
+		}
 
-	const getAttributesData = useCallback(
-		(): BaseAutocompleteData[] =>
+		if (query.dataSource === DataSource.METRICS) {
+			return 'Metric name';
+		}
+
+		return 'Aggregate attribute';
+	}, [signalSource, query.dataSource]);
+
+	const getAttributesData = useCallback((): BaseAutocompleteData[] => {
+		const attributeKeys =
 			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 				debouncedValue,
-				query.aggregateOperator,
+				queryAggregation.timeAggregation,
 				query.dataSource,
-			])?.payload?.attributeKeys || [],
-		[debouncedValue, query.aggregateOperator, query.dataSource, queryClient],
-	);
+				index,
+				signalSource,
+			])?.payload?.attributeKeys || [];
+
+		setAttributeKeys?.(attributeKeys);
+
+		return attributeKeys;
+	}, [
+		debouncedValue,
+		queryAggregation.timeAggregation,
+		query.dataSource,
+		queryClient,
+		index,
+		signalSource,
+		setAttributeKeys,
+	]);
 
 	const getResponseAttributes = useCallback(async () => {
 		const response = await queryClient.fetchQuery(
 			[
 				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
 				searchText,
-				query.aggregateOperator,
+				queryAggregation.timeAggregation,
 				query.dataSource,
+				index,
 			],
 			async () =>
 				getAggregateAttribute({
 					searchText,
-					aggregateOperator: query.aggregateOperator,
+					aggregateOperator: queryAggregation.timeAggregation,
 					dataSource: query.dataSource,
 				}),
 		);
 
+		setAttributeKeys?.(response.payload?.attributeKeys || []);
 		return response.payload?.attributeKeys || [];
-	}, [query.aggregateOperator, query.dataSource, queryClient, searchText]);
+	}, [
+		queryAggregation.timeAggregation,
+		query.dataSource,
+		queryClient,
+		searchText,
+		index,
+		setAttributeKeys,
+	]);
 
 	const handleChangeCustomValue = useCallback(
 		async (value: string, attributes: BaseAutocompleteData[]) => {
@@ -151,11 +227,16 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	);
 
 	const handleBlur = useCallback(async () => {
-		if (searchText) {
+		if (searchText && searchText !== queryAggregation.metricName) {
 			const aggregateAttributes = await getResponseAttributes();
 			handleChangeCustomValue(searchText, aggregateAttributes);
 		}
-	}, [getResponseAttributes, handleChangeCustomValue, searchText]);
+	}, [
+		getResponseAttributes,
+		handleChangeCustomValue,
+		searchText,
+		queryAggregation?.metricName,
+	]);
 
 	const handleChange = useCallback(
 		(
@@ -183,30 +264,46 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[getAttributesData, handleChangeCustomValue, onChange],
 	);
 
-	const value = removePrefix(
-		transformStringWithPrefix({
-			str: query.aggregateAttribute.key,
-			prefix: query.aggregateAttribute.type || '',
-			condition: !query.aggregateAttribute.isColumn,
-		}),
-		!query.aggregateAttribute.isColumn && query.aggregateAttribute.type
-			? query.aggregateAttribute.type
-			: '',
+	const handleSelect = useCallback(
+		(_: string, option: ExtendedSelectOption | ExtendedSelectOption[]): void => {
+			const currentOption = option as ExtendedSelectOption;
+
+			const aggregateAttributes = getAttributesData();
+
+			if (currentOption.key) {
+				const attribute = aggregateAttributes.find(
+					(item) => item.id === currentOption.key,
+				);
+
+				if (attribute && onSelect) {
+					onSelect(attribute);
+				}
+			}
+
+			setSearchText('');
+		},
+		[getAttributesData, onSelect],
 	);
+
+	const value =
+		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
+		query.aggregateAttribute?.key ||
+		'';
 
 	return (
 		<AutoComplete
 			getPopupContainer={popupContainer}
-			placeholder={placeholder}
+			placeholder={getPlaceholder()}
 			style={selectStyle}
 			filterOption={false}
 			onSearch={handleSearchText}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			options={optionsData}
-			value={value}
+			value={defaultValue || value}
 			onBlur={handleBlur}
 			onChange={handleChange}
 			disabled={disabled}
+			onSelect={handleSelect}
 		/>
 	);
 });

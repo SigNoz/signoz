@@ -1,13 +1,13 @@
 package middleware
 
 import (
+	"log/slog"
 	"net"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestTimeout(t *testing.T) {
@@ -16,7 +16,7 @@ func TestTimeout(t *testing.T) {
 	writeTimeout := 6 * time.Second
 	defaultTimeout := 2 * time.Second
 	maxTimeout := 4 * time.Second
-	m := NewTimeout(zap.NewNop(), map[string]struct{}{"/excluded": {}}, defaultTimeout, maxTimeout)
+	m := NewTimeout(slog.New(slog.DiscardHandler), []string{"/excluded"}, defaultTimeout, maxTimeout)
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
@@ -70,8 +70,11 @@ func TestTimeout(t *testing.T) {
 			require.NoError(t, err)
 			req.Header.Add(headerName, tc.header)
 
-			_, err = http.DefaultClient.Do(req)
+			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, res.Body.Close())
+			}()
 
 			// confirm that we waited at least till the "wait" time
 			require.GreaterOrEqual(t, time.Since(start), tc.wait)

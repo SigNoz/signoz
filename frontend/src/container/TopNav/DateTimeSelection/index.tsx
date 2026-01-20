@@ -5,6 +5,7 @@ import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -125,7 +126,7 @@ function DateTimeSelection({
 		timeInterval: Time | TimeV2 | CustomTimeType = '15m',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
-			const format = 'YYYY/MM/DD HH:mm';
+			const format = DATE_TIME_FORMATS.SLASH_DATETIME;
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
@@ -237,8 +238,6 @@ function DateTimeSelection({
 			setCustomDTPickerVisible(true);
 		}
 
-		const { maxTime, minTime } = GetMinMax(value, getTime());
-
 		if (!isLogsExplorerPage) {
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
@@ -249,7 +248,7 @@ function DateTimeSelection({
 		if (!stagedQuery) {
 			return;
 		}
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
+		initQueryBuilderData(updateStepInterval(stagedQuery));
 	};
 
 	const onRefreshHandler = (): void => {
@@ -367,6 +366,8 @@ function DateTimeSelection({
 						)}
 						data-testid="dropDown"
 						items={options}
+						minTime={minTime}
+						maxTime={maxTime}
 					/>
 
 					<FormItem hidden={refreshButtonHidden}>

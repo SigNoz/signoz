@@ -10,30 +10,34 @@ import {
 	InfoCircleOutlined,
 	MoreOutlined,
 	SearchOutlined,
-	WarningOutlined,
 } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, X } from 'lucide-react';
+import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
+import { useAppContext } from 'providers/App/App';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import AppReducer from 'types/reducer/app';
+import { buildAbsolutePath } from 'utils/app';
 
-import { errorTooltipPosition, WARNING_MESSAGE } from './config';
+import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
@@ -44,11 +48,12 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
 	onClone?: VoidFunction;
-	parentHover: boolean;
 	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+		SuccessResponse<MetricRangePayloadProps, unknown> & {
+			warning?: Warning;
+		},
+		Error
 	>;
-	errorMessage: string | undefined;
 	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 	isWarning: boolean;
@@ -63,9 +68,7 @@ function WidgetHeader({
 	onView,
 	onDelete,
 	onClone,
-	parentHover,
 	queryResponse,
-	errorMessage,
 	threshold,
 	headerMenuList,
 	isWarning,
@@ -74,6 +77,7 @@ function WidgetHeader({
 	setSearchTerm,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		urlQuery.set(QueryParams.widgetId, widgetId);
@@ -82,9 +86,12 @@ function WidgetHeader({
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(widget.query)),
 		);
-		const generatedUrl = `${window.location.pathname}/new?${urlQuery}`;
-		history.push(generatedUrl);
-	}, [urlQuery, widget.id, widget.panelTypes, widget.query]);
+		const generatedUrl = buildAbsolutePath({
+			relativePath: 'new',
+			urlQueryString: urlQuery.toString(),
+		});
+		safeNavigate(generatedUrl);
+	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
 
 	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
 
@@ -130,11 +137,11 @@ function WidgetHeader({
 		},
 		[keyMethodMapping],
 	);
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [deleteWidget, editWidget] = useComponentPermission(
 		['delete_widget', 'edit_widget'],
-		role,
+		user.role,
 	);
 
 	const actions = useMemo(
@@ -178,7 +185,18 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.CreateAlerts,
 				icon: <AlertOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				label: (
+					<span
+						style={{
+							display: 'flex',
+							alignItems: 'baseline',
+							justifyContent: 'space-between',
+						}}
+					>
+						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
+						<SquareArrowOutUpRight size={10} />
+					</span>
+				),
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},
@@ -206,6 +224,16 @@ function WidgetHeader({
 		[updatedMenuList, onMenuItemSelectHandler],
 	);
 
+	const { truncatedText, fullText } = useGetResolvedText({
+		text: widget.title as string,
+		maxLength: 100,
+	});
+
+	const renderErrorMessage = useMemo(
+		() => <ErrorContent error={queryResponse.error as APIError} />,
+		[queryResponse.error],
+	);
+
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
 	}
@@ -225,6 +253,7 @@ function WidgetHeader({
 							onClick={(e): void => {
 								e.stopPropagation();
 								e.preventDefault();
+								setSearchTerm('');
 								setShowGlobalSearch(false);
 							}}
 							className="search-header-icons"
@@ -238,13 +267,15 @@ function WidgetHeader({
 			) : (
 				<>
 					<div className="widget-header-title-container">
-						<Typography.Text
-							ellipsis
-							data-testid={title}
-							className="widget-header-title"
-						>
-							{title}
-						</Typography.Text>
+						<Tooltip title={fullText} placement="top">
+							<Typography.Text
+								ellipsis
+								data-testid={title}
+								className="widget-header-title"
+							>
+								{truncatedText}
+							</Typography.Text>
+						</Tooltip>
 						{widget.description && (
 							<Tooltip
 								title={widget.description}
@@ -262,23 +293,23 @@ function WidgetHeader({
 							<Spinner style={{ paddingRight: '0.25rem' }} />
 						)}
 						{queryResponse.isError && (
-							<Tooltip
-								title={errorMessage}
+							<ErrorPopover
+								content={renderErrorMessage}
 								placement={errorTooltipPosition}
-								className="widget-api-actions"
+								overlayStyle={{ padding: 0, maxWidth: '600px' }}
+								overlayInnerStyle={{ padding: 0 }}
+								autoAdjustOverflow
 							>
-								<CircleX size={20} />
-							</Tooltip>
+								<CircleX
+									size={16}
+									style={{ cursor: 'pointer' }}
+									color={Color.BG_CHERRY_500}
+								/>
+							</ErrorPopover>
 						)}
 
-						{isWarning && (
-							<Tooltip
-								title={WARNING_MESSAGE}
-								placement={errorTooltipPosition}
-								className="widget-api-actions"
-							>
-								<WarningOutlined />
-							</Tooltip>
+						{isWarning && queryResponse.data?.warning && (
+							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 						)}
 						{globalSearchAvailable && (
 							<SearchOutlined
@@ -287,14 +318,17 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-							<MoreOutlined
-								data-testid="widget-header-options"
-								className={`widget-header-more-options ${
-									parentHover ? 'widget-header-hover' : ''
-								} ${globalSearchAvailable ? 'widget-header-more-options-visible' : ''}`}
-							/>
-						</Dropdown>
+
+						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
+							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+								<MoreOutlined
+									data-testid="widget-header-options"
+									className={`widget-header-more-options ${
+										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
+									}`}
+								/>
+							</Dropdown>
+						)}
 					</div>
 				</>
 			)}

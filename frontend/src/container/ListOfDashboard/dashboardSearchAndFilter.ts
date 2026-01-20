@@ -14,7 +14,7 @@ export const generateSearchData = (
 
 	dashboards.forEach((dashboard) => {
 		dashboardSearchData.push({
-			id: dashboard.uuid,
+			id: dashboard.id,
 			title: dashboard.data.title,
 			description: dashboard.data.description,
 			tags: dashboard.data.tags || [],

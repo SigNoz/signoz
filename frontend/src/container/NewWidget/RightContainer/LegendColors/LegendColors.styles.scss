@@ -1,0 +1,169 @@
+.legend-colors-container {
+	.legend-colors-collapse {
+		.ant-collapse-header {
+			padding: 8px 0 !important;
+		}
+
+		.ant-collapse-content-box {
+			padding: 0 0 12px 0 !important;
+		}
+	}
+
+	.legend-colors-content {
+		.legend-colors-header {
+			display: flex;
+			justify-content: flex-end;
+			margin-bottom: 8px;
+		}
+
+		.legend-items {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			max-height: 200px;
+			overflow-y: auto;
+			padding-top: 4px;
+
+			/* Webkit scrollbar styling */
+			&::-webkit-scrollbar {
+				width: 1px;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-slate-400);
+				border-radius: 0.5px;
+			}
+
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--bg-slate-300);
+			}
+
+			/* Firefox scrollbar styling */
+			scrollbar-width: thin;
+			scrollbar-color: var(--bg-slate-400) transparent;
+		}
+
+		.legend-item-wrapper {
+			.ant-color-picker-trigger {
+				width: 100%;
+				height: auto;
+				padding: 0;
+				border: none;
+				background: transparent;
+				box-shadow: none;
+
+				&:hover {
+					border: none;
+					box-shadow: none;
+				}
+
+				&:focus {
+					border: none;
+					box-shadow: none;
+					outline: none;
+				}
+			}
+		}
+
+		.legend-item {
+			display: grid;
+			grid-template-columns: 1fr max-content;
+			gap: 12px;
+			align-items: center;
+			justify-content: center;
+			padding: 6px 8px;
+			border-radius: 4px;
+			transition: all 0.2s ease;
+			cursor: pointer;
+			width: 100%;
+			border: 1px solid transparent;
+
+			&:hover {
+				background-color: var(--bg-slate-400);
+				border-color: var(--bg-slate-500);
+				transform: translateY(-1px);
+			}
+
+			&:active {
+				transform: translateY(0);
+			}
+
+			.legend-info {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex: 1;
+				min-width: 0;
+
+				.legend-marker {
+					width: 12px;
+					height: 12px;
+					border-radius: 2px;
+					flex-shrink: 0;
+				}
+
+				.legend-label-text {
+					flex: 1;
+					font-size: 12px;
+					min-width: 0;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					display: block;
+				}
+			}
+
+			.legend-actions {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-shrink: 0;
+
+				.reset-link {
+					font-size: 11px;
+					text-decoration: none;
+
+					&:hover {
+						text-decoration: underline;
+					}
+				}
+			}
+		}
+	}
+
+	.legend-colors-header {
+		display: flex;
+		align-items: center;
+		margin-bottom: 8px;
+		gap: 8px;
+	}
+}
+
+.lightMode {
+	.legend-colors-container {
+		.legend-colors-content {
+			.legend-items {
+				&::-webkit-scrollbar-thumb {
+					background: var(--bg-vanilla-400);
+				}
+
+				&::-webkit-scrollbar-thumb:hover {
+					background: var(--bg-vanilla-500);
+				}
+
+				scrollbar-color: var(--bg-vanilla-400) transparent;
+			}
+
+			.legend-item {
+				&:hover {
+					background-color: var(--bg-vanilla-100);
+					border-color: var(--bg-slate-100);
+				}
+			}
+		}
+	}
+}

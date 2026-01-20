@@ -71,3 +71,34 @@ export const lightenColor = (color: string, opacity: number): string => {
 	// Create a new RGBA color string with the specified opacity
 	return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
+
+export const getTimeRangeFromUplotAxis = (
+	axis: any,
+	xValue: number,
+): { startTime: number; endTime: number } => {
+	let gap =
+		(axis as any)._splits && (axis as any)._splits.length > 1
+			? (axis as any)._splits[1] - (axis as any)._splits[0]
+			: 600; // 10 minutes in seconds
+
+	gap = Math.max(gap, 600); // Minimum gap of 10 minutes in seconds
+
+	const startTime = xValue - gap;
+	const endTime = xValue + gap;
+
+	return { startTime, endTime };
+};
+
+export const isApmMetric = (metric = ''): boolean =>
+	// if metric starts with 'signoz_', then it is an apm metric
+	metric.startsWith('signoz_');
+
+export const getTimeRangeFromStepInterval = (
+	stepInterval: number,
+	xValue: number,
+	isApmMetric: boolean,
+): { startTime: number; endTime: number } => {
+	const startTime = isApmMetric ? xValue - stepInterval : xValue;
+	const endTime = xValue + stepInterval;
+	return { startTime, endTime };
+};

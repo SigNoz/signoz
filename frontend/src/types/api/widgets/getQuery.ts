@@ -5,7 +5,10 @@ export interface PayloadProps {
 	result: QueryData[];
 }
 
-export type ListItem = { timestamp: string; data: Omit<ILog, 'timestamp'> };
+export type ListItem = {
+	timestamp: string;
+	data: Omit<ILog, 'timestamp' | 'span_id'>;
+};
 
 export interface QueryData {
 	lowerBoundSeries?: [number, string][];
@@ -20,6 +23,21 @@ export interface QueryData {
 	values: [number, string][];
 	quantity?: number[];
 	unit?: string;
+	table?: {
+		rows: {
+			data: {
+				[key: string]: any;
+			};
+		}[];
+		columns: {
+			[key: string]: string;
+		}[];
+	};
+	metaData?: {
+		alias: string;
+		index: number;
+		queryName: string;
+	};
 }
 
 export interface SeriesItem {
@@ -28,6 +46,18 @@ export interface SeriesItem {
 	};
 	labelsArray: { [key: string]: string }[];
 	values: { timestamp: number; value: string }[];
+	metaData?: {
+		alias: string;
+		index: number;
+		queryName: string;
+	};
+}
+
+export interface Column {
+	name: string;
+	queryName: string;
+	isValueColumn: boolean;
+	id?: string;
 }
 
 export interface QueryDataV3 {
@@ -43,6 +73,14 @@ export interface QueryDataV3 {
 	predictedSeries?: SeriesItem[] | null;
 	anomalyScores?: SeriesItem[] | null;
 	isAnomaly?: boolean;
+	table?: {
+		rows: {
+			data: {
+				[key: string]: any;
+			};
+		}[];
+		columns: Column[];
+	};
 }
 
 export interface Props {

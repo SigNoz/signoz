@@ -1,0 +1,89 @@
+.configure-service-modal {
+	&__body {
+		display: flex;
+		flex-direction: column;
+		border-radius: 3px;
+		border: 1px solid var(--bg-slate-500);
+		padding: 14px;
+
+		&-regions-switch-switch {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+
+			&-label {
+				color: var(--bg-vanilla-100);
+				font-size: 14px;
+				font-weight: 500;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+		}
+
+		&-switch-description {
+			margin-top: 4px;
+			color: var(--bg-vanilla-400);
+			font-size: 12px;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.06px;
+		}
+		&-form-item {
+			&:last-child {
+				margin-bottom: 0px;
+			}
+		}
+	}
+	.ant-modal-body {
+		padding-bottom: 0;
+	}
+	.ant-modal-footer {
+		margin: 0;
+		padding-bottom: 12px;
+	}
+}
+
+.lightMode {
+	.configure-service-modal {
+		&__body {
+			border-color: var(--bg-vanilla-300);
+
+			&-regions-switch-switch {
+				&-label {
+					color: var(--bg-ink-500);
+				}
+			}
+
+			&-switch-description {
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.ant-btn {
+			&.ant-btn-default {
+				background: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-vanilla-300);
+				color: var(--bg-ink-400);
+
+				&:hover {
+					border-color: var(--bg-vanilla-400);
+					color: var(--bg-ink-500);
+				}
+			}
+
+			&.ant-btn-primary {
+				// Keep primary button same as dark mode
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+
+				&:hover {
+					background: var(--bg-robin-400);
+				}
+
+				&:disabled {
+					opacity: 0.6;
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,5594 @@
+[
+	{
+		"dataSource": "quickstart",
+		"label": "Start with Demo Data in <5 minutes",
+		"tags": [
+			"quickstart"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"data",
+			"demo",
+			"minutes",
+			"quickstart",
+			"send data",
+			"start",
+			"start with demo data in <5 minutes",
+			"traces",
+			"tracing"
+		],
+		"imgUrl": "/Logos/quickstart.svg",
+		"link": "/docs/cloud/quickstart/"
+	},
+	{
+		"dataSource": "migrate-from-datadog",
+		"label": "From Datadog",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"datadog",
+			"from datadog",
+			"home",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-datadog",
+			"opentelemetry",
+			"otel",
+			"signoz"
+		],
+		"imgUrl": "/Logos/datadog.svg",
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "/docs/migration/migrate-from-datadog/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "/docs/migration/migrate-from-datadog/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "/docs/migration/migrate-from-datadog/logs/"
+				},
+				{
+					"key": "dashboards",
+					"label": "Dashboards",
+					"imgUrl": "/Logos/dashboards.svg",
+					"link": "/docs/migration/migrate-from-datadog/dashboards/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "migrate-from-grafana",
+		"label": "From Grafana",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"alloy",
+			"from grafana",
+			"grafana",
+			"home",
+			"lgtm",
+			"loki",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-lgtm",
+			"mirmir",
+			"opentelemetry",
+			"otel",
+			"signoz",
+			"tempo"
+		],
+		"imgUrl": "/Logos/grafana.svg",
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "/docs/migration/migrate-from-grafana/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "/docs/migration/migrate-from-grafana/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "/docs/migration/migrate-from-grafana/logs/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "migrate-from-elk",
+		"label": "From ELK",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"elastic",
+			"elastic stack",
+			"elasticsearch",
+			"elk",
+			"from elk",
+			"home",
+			"kibana",
+			"logstash",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-elk",
+			"migration",
+			"opentelemetry",
+			"otel",
+			"signoz"
+		],
+		"imgUrl": "/Logos/elk.svg",
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "/docs/migration/migrate-from-elk/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "/docs/migration/migrate-from-elk/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "/docs/migration/migrate-from-elk/logs/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "migrate-from-newrelic",
+		"label": "From New Relic",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"apm migration",
+			"from new relic",
+			"home",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-newrelic",
+			"migration",
+			"migration guide",
+			"new",
+			"new relic",
+			"newrelic",
+			"opentelemetry",
+			"otel",
+			"relic",
+			"signoz"
+		],
+		"imgUrl": "/Logos/newrelic.svg",
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/metrics.svg",
+					"link": "/docs/migration/migrate-from-newrelic/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/traces.svg",
+					"link": "/docs/migration/migrate-from-newrelic/traces/"
+				},
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "/docs/migration/migrate-from-newrelic/logs/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "migrate-from-honeycomb",
+		"label": "From Honeycomb",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"apm migration",
+			"from honeycomb",
+			"home",
+			"honeycomb",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-honeycomb",
+			"migration",
+			"migration guide",
+			"opentelemetry",
+			"otel",
+			"signoz"
+		],
+		"imgUrl": "/Logos/honeycomb.svg",
+		"link": "/docs/migration/migrate-from-honeycomb/data/"
+	},
+	{
+		"dataSource": "migrate-signoz-self-host-to-cloud",
+		"label": "From SigNoz Self-Host",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"cloud",
+			"data migration",
+			"from signoz self-host",
+			"home",
+			"host",
+			"migrate",
+			"migrate to signoz",
+			"migrate-signoz-self-host-to-cloud",
+			"migration",
+			"self",
+			"self-host",
+			"self-host to cloud",
+			"selfhosted signoz",
+			"signoz",
+			"signoz cloud",
+			"signoz self-hosted"
+		],
+		"imgUrl": "/Logos/signoz-brand-logo.svg",
+		"link": "/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/"
+	},
+	{
+		"dataSource": "migrate-from-existing-opentelemetry",
+		"label": "From Existing OpenTelemetry",
+		"tags": [
+			"migrate to SigNoz"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"apm migration",
+			"existing",
+			"from existing opentelemetry",
+			"home",
+			"migrate",
+			"migrate to signoz",
+			"migrate-from-existing-opentelemetry",
+			"migration",
+			"migration guide",
+			"opentelemetry",
+			"opentelemetry collector",
+			"otel",
+			"otel collector",
+			"otlp",
+			"signoz"
+		],
+		"imgUrl": "/Logos/opentelemetry.svg",
+		"link": "/docs/migration/migrate-from-opentelemetry-to-signoz/"
+	},
+	{
+		"dataSource": "java",
+		"entityID": "dataSource",
+		"label": "Java",
+		"id": "java",
+		"imgUrl": "/Logos/java.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"java",
+			"java agent",
+			"java-agent",
+			"java apm",
+			"java application",
+			"java instrumentation",
+			"java k8s",
+			"java logs",
+			"java metrics",
+			"java microservices",
+			"java monitoring",
+			"java observability",
+			"java sdk",
+			"java tracing",
+			"java vm",
+			"java windows",
+			"jboss",
+			"jdk 11",
+			"jdk 17",
+			"jdk 21",
+			"jdk 8",
+			"opentelemetry java",
+			"quarkus",
+			"spring boot",
+			"spring cloud",
+			"springboot",
+			"tomcat",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "Which Java framework do you use?",
+			"type": "select",
+			"entityID": "framework",
+			"options": [
+				{
+					"key": "springboot",
+					"label": "Spring Boot",
+					"imgUrl": "/Logos/springboot.svg",
+					"link": "/docs/instrumentation/opentelemetry-springboot/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
+							}
+						]
+					}
+				},
+				{
+					"key": "tomcat",
+					"label": "Tomcat",
+					"imgUrl": "/Logos/tomcat.svg",
+					"link": "/docs/instrumentation/opentelemetry-tomcat/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
+							}
+						]
+					}
+				},
+				{
+					"key": "jboss",
+					"label": "JBoss",
+					"imgUrl": "/Logos/jboss.svg",
+					"link": "/docs/instrumentation/opentelemetry-jboss/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
+							}
+						]
+					}
+				},
+				{
+					"key": "opentelemetry-quarkus",
+					"label": "Quarkus",
+					"imgUrl": "/Logos/quarkus.svg",
+					"link": "/docs/instrumentation/opentelemetry-quarkus/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
+							}
+						]
+					}
+				},
+				{
+					"key": "Others",
+					"label": "Others",
+					"imgUrl": "/Logos/java-others.svg",
+					"link": "/docs/instrumentation/opentelemetry-java/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-java/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-java/"
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "python",
+		"label": "Python",
+		"imgUrl": "/Logos/python.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"django",
+			"falcon",
+			"fastapi",
+			"flask",
+			"celery",
+			"gunicorn",
+			"monitor python application",
+			"monitor python backend",
+			"opentelemetry python",
+			"otel python sdk",
+			"python",
+			"python apm",
+			"python distributed tracing",
+			"python in containers",
+			"python instrumentation",
+			"python k8s",
+			"python metrics",
+			"python microservices",
+			"python observability",
+			"python on kubernetes",
+			"python on windows",
+			"python performance monitoring",
+			"python runtime monitoring",
+			"python tracing",
+			"python vm",
+			"traces",
+			"tracing"
+		],
+		"id": "python",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-python/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-python/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-python/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/instrumentation/opentelemetry-python/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "javascript",
+		"label": "JavaScript",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"angular",
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"express",
+			"javascript",
+			"js",
+			"nestjs",
+			"nextjs",
+			"nodejs",
+			"nuxtjs",
+			"reactjs",
+			"traces",
+			"tracing",
+			"ts",
+			"typescript",
+			"react native"
+		],
+		"id": "javascript",
+		"imgUrl": "/Logos/javascript.svg",
+		"question": {
+			"desc": "Which JavaScript framework do you use?",
+			"type": "select",
+			"entityID": "framework",
+			"options": [
+				{
+					"key": "nodejs",
+					"label": "NodeJs",
+					"imgUrl": "/Logos/nodejs.svg",
+					"link": "/docs/instrumentation/opentelemetry-javascript/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
+							}
+						]
+					}
+				},
+				{
+					"key": "express",
+					"label": "Express",
+					"imgUrl": "/Logos/express.svg",
+					"link": "/docs/instrumentation/opentelemetry-express/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-express/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-express/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-express/"
+							}
+						]
+					}
+				},
+				{
+					"key": "nestjs",
+					"label": "NestJS",
+					"imgUrl": "/Logos/nestjs.svg",
+					"link": "/docs/instrumentation/opentelemetry-nestjs/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-nestjs/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-nestjs/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-nestjs/"
+							}
+						]
+					}
+				},
+				{
+					"key": "angular",
+					"label": "Angular",
+					"imgUrl": "/Logos/angular.svg",
+					"link": "/docs/instrumentation/opentelemetry-angular/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-angular/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-angular/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-angular/"
+							}
+						]
+					}
+				},
+				{
+					"key": "nextjs",
+					"label": "NextJS",
+					"imgUrl": "/Logos/nextjs.svg",
+					"link": "/docs/instrumentation/opentelemetry-nextjs/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
+							}
+						]
+					}
+				},
+				{
+					"key": "reactjs",
+					"label": "ReactJS",
+					"imgUrl": "/Logos/reactjs.svg",
+					"link": "/docs/instrumentation/opentelemetry-reactjs/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-reactjs/"
+							}
+						]
+					}
+				},
+				{
+					"key": "nuxtjs",
+					"label": "NuxtJS",
+					"imgUrl": "/Logos/nuxtjs.svg",
+					"link": "/docs/instrumentation/opentelemetry-nuxtjs/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
+							}
+						]
+					}
+				},
+				{
+					"key": "react-native",
+					"label": "React Native",
+					"imgUrl": "/Logos/reactjs.svg",
+					"link": "/docs/instrumentation/opentelemetry-react-native/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-react-native/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-react-native/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-react-native/"
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "golang",
+		"label": "Golang",
+		"imgUrl": "/Logos/go.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"gin",
+			"go",
+			"go apm",
+			"go containers",
+			"go distributed tracing",
+			"go in kubernetes",
+			"go instrumentation",
+			"go metrics",
+			"go microservices monitoring",
+			"go observability",
+			"go on vm",
+			"go on windows",
+			"go performance monitoring",
+			"go tracing",
+			"golang",
+			"golang apm",
+			"golang instrumentation",
+			"golang metrics",
+			"golang observability",
+			"golang performance monitoring",
+			"golang tracing",
+			"monitor go applications",
+			"monitor golang backend",
+			"opentelemetry go",
+			"opentelemetry golang",
+			"otel go sdk",
+			"otel golang sdk",
+			"traces",
+			"tracing"
+		],
+		"id": "golang",
+		"link": "/docs/instrumentation/opentelemetry-golang/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-golang/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-golang/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-golang/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/instrumentation/opentelemetry-golang/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "php",
+		"label": "PHP",
+		"imgUrl": "/Logos/php.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"laravel",
+			"monitoring",
+			"observability",
+			"php",
+			"tracing",
+			"monitor php applications",
+			"monitor php backend",
+			"opentelemetry php",
+			"otel php",
+			"otel php exporter",
+			"otel sdk php",
+			"php",
+			"php apm",
+			"php distributed tracing",
+			"php http instrumentation",
+			"php in containers",
+			"php instrumentation",
+			"php jaeger tracing",
+			"php laravel",
+			"php metrics",
+			"php microservices monitoring",
+			"php observability",
+			"php on kubernetes",
+			"php on vm",
+			"php on windows",
+			"php opentelemetry sdk",
+			"php performance monitoring",
+			"php tracing",
+			"php zipkin tracing",
+			"php-fpm monitoring",
+			"slim php",
+			"traces",
+			"tracing"
+		],
+		"id": "php",
+		"question": {
+			"desc": "Which PHP framework do you use?",
+			"type": "select",
+			"entityID": "framework",
+			"options": [
+				{
+					"key": "laravel",
+					"label": "Laravel",
+					"imgUrl": "/Logos/laravel.svg",
+					"link": "/docs/instrumentation/laravel/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/laravel/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/laravel/"
+							}
+						]
+					}
+				},
+				{
+					"key": "Others",
+					"label": "Others",
+					"imgUrl": "/Logos/php-others.svg",
+					"link": "/docs/instrumentation/opentelemetry-php/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "/docs/instrumentation/opentelemetry-php/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-php/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "/docs/instrumentation/opentelemetry-php/"
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "dotnet",
+		"label": ".NET",
+		"imgUrl": "/Logos/dotnet.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			".net",
+			".net apm",
+			".net distributed tracing",
+			".net instrumentation",
+			".net kubernetes",
+			".net observability",
+			".net tracing",
+			".net windows monitoring",
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"asp.net core",
+			"asp.net core apm",
+			"asp.net performance monitoring",
+			"asp.net telemetry",
+			"asp.net tracing",
+			"c# opentelemetry",
+			"dotnet",
+			"dotnet 6 tracing",
+			"dotnet 7 observability",
+			"dotnet 8 telemetry",
+			"dotnet apm",
+			"dotnet in containers",
+			"dotnet instrumentation",
+			"dotnet observability",
+			"dotnet tracing",
+			"entity framework telemetry",
+			"grpc .net monitoring",
+			"iis application monitoring",
+			"monitor .net application",
+			"monitor c# app",
+			"monitor dotnet backend",
+			"mvc .net monitoring",
+			"net",
+			"opentelemetry dotnet",
+			"opentelemetry exporter .net",
+			"otel .net sdk",
+			"otel dotnet",
+			"traces",
+			"tracing",
+			"web api .net"
+		],
+		"id": "dotnet",
+		"link": "/docs/instrumentation/opentelemetry-dotnet/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "ruby-on-rails",
+		"label": "Ruby on Rails",
+		"imgUrl": "/Logos/ruby-on-rails.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"monitor rails apps",
+			"monitor ruby backend",
+			"opentelemetry ruby",
+			"otel exporter ruby",
+			"otel rails",
+			"otel ruby",
+			"rails",
+			"rails apm",
+			"rails distributed tracing",
+			"rails docker containers",
+			"rails http tracing",
+			"rails instrumentation",
+			"rails metrics",
+			"rails observability",
+			"rails on kubernetes",
+			"rails opentelemetry sdk",
+			"rails performance monitoring",
+			"rails telemetry data",
+			"rails tracing",
+			"rails vm monitoring",
+			"ror",
+			"ruby",
+			"ruby apm",
+			"ruby distributed tracing",
+			"ruby instrumentation",
+			"ruby observability",
+			"ruby on rails",
+			"ruby tracing",
+			"ruby-on-rails",
+			"traces",
+			"tracing"
+		],
+		"id": "ruby-on-rails",
+		"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "elixir",
+		"label": "Elixir",
+		"imgUrl": "/Logos/elixir.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"elixir",
+			"elixir apm",
+			"elixir distributed tracing",
+			"elixir instrumentation",
+			"elixir metrics",
+			"elixir observability",
+			"elixir on kubernetes",
+			"elixir open telemetry integration",
+			"elixir performance monitoring",
+			"elixir telemetry",
+			"elixir tracing",
+			"elixir vm monitoring",
+			"erlang tracing",
+			"monitor elixir app",
+			"opentelemetry elixir",
+			"opentelemetry phoenix",
+			"otel elixir",
+			"phoenix apm",
+			"phoenix framework",
+			"phoenix metrics",
+			"phoenix observability",
+			"phoenix tracing",
+			"traces",
+			"tracing"
+		],
+		"id": "elixir",
+		"link": "/docs/instrumentation/opentelemetry-elixir/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-elixir/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-elixir/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-elixir/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "rust",
+		"label": "Rust",
+		"imgUrl": "/Logos/rust.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"monitor rust application",
+			"opentelemetry rust",
+			"opentelemetry sdk rust",
+			"opentelemetry tonic rust",
+			"otel rust",
+			"otel tracing rust",
+			"rust",
+			"rust apm",
+			"rust distributed tracing",
+			"rust docker monitoring",
+			"rust instrumentation",
+			"rust observability",
+			"rust on kubernetes",
+			"rust performance monitoring",
+			"rust tracing",
+			"tokio tracing",
+			"traces",
+			"tracing"
+		],
+		"id": "rust",
+		"link": "/docs/instrumentation/opentelemetry-rust/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-rust/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-rust/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-rust/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "swift",
+		"label": "Swift",
+		"imgUrl": "/Logos/swift.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"apple ecosystem observability",
+			"application performance monitoring",
+			"ios",
+			"ios apm",
+			"ios distributed tracing",
+			"ios instrumentation",
+			"ios observability",
+			"ios otlp exporter",
+			"ios performance monitoring",
+			"ios sdk opentelemetry",
+			"ios telemetry sdk",
+			"ios tracing",
+			"mobile app monitoring",
+			"mobile performance monitoring",
+			"monitor ios apps",
+			"monitor swift apps",
+			"opentelemetry swift",
+			"opentelemetry swiftui",
+			"otel ios sdk",
+			"otel swift",
+			"swift",
+			"swift apm",
+			"swift distributed tracing",
+			"swift instrumentation",
+			"swift observability",
+			"swift performance monitoring",
+			"swift tracing",
+			"swiftui monitoring",
+			"swiftui tracing",
+			"traces",
+			"tracing",
+			"urlsession instrumentation"
+		],
+		"id": "swift",
+		"link": "/docs/instrumentation/opentelemetry-swift/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-swift/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-swift/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-swift/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "opentelemetry-cpp",
+		"label": "C++",
+		"imgUrl": "/Logos/cpp.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"c++",
+			"c++ apm",
+			"c++ application monitoring",
+			"c++ distributed tracing",
+			"c++ grpc tracing",
+			"c++ http server telemetry",
+			"c++ instrumentation",
+			"c++ metrics collection",
+			"c++ observability",
+			"c++ opentelemetry sdk",
+			"c++ otlp exporter",
+			"c++ performance monitoring",
+			"c++ telemetry",
+			"c++ tracing",
+			"cpp",
+			"cpp apm",
+			"cpp container monitoring",
+			"cpp instrumentation",
+			"cpp kubernetes instrumentation",
+			"cpp microservices monitoring",
+			"cpp observability",
+			"cpp performance monitoring",
+			"cpp tracing",
+			"monitor c++ application",
+			"opentelemetry",
+			"opentelemetry c++",
+			"opentelemetry-cpp",
+			"otel",
+			"otel c++",
+			"otel cpp",
+			"otel cpp observability setup",
+			"otel exporter c++",
+			"otel sdk cpp",
+			"traces",
+			"tracing"
+		],
+		"id": "opentelemetry-cpp",
+		"link": "/docs/instrumentation/opentelemetry-cpp/"
+	},
+	{
+		"dataSource": "nginx-tracing",
+		"label": "Nginx - Tracing",
+		"imgUrl": "/Logos/nginx.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"nginx",
+			"nginx - tracing",
+			"nginx proxy",
+			"nginx server",
+			"nginx-tracing",
+			"traces",
+			"tracing"
+		],
+		"id": "nginx-tracing",
+		"link": "/docs/instrumentation/opentelemetry-nginx/"
+	},
+	{
+		"dataSource": "opentelemetry-wordpress",
+		"label": "WordPress",
+		"imgUrl": "/Logos/wordpress.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"monitor wordpress site",
+			"opentelemetry",
+			"opentelemetry wordpress",
+			"opentelemetry-wordpress",
+			"otel",
+			"otel wordpress",
+			"traces",
+			"tracing",
+			"wordpress",
+			"wordpress apm",
+			"wordpress instrumentation",
+			"wordpress metrics",
+			"wordpress monitoring",
+			"wordpress observability",
+			"wordpress performance",
+			"wordpress php monitoring",
+			"wordpress plugin monitoring",
+			"wordpress to signoz",
+			"wordpress tracing"
+		],
+		"id": "opentelemetry-wordpress",
+		"link": "/docs/instrumentation/opentelemetry-wordpress/"
+	},
+	{
+		"dataSource": "opentelemetry-cloudflare",
+		"label": "Cloudflare Tracing",
+		"imgUrl": "/Logos/cloudflare.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"apm/traces",
+			"application performance monitoring",
+			"cloudflare",
+			"cloudflare apm",
+			"cloudflare instrumentation",
+			"cloudflare metrics",
+			"cloudflare monitoring",
+			"cloudflare observability",
+			"cloudflare to signoz",
+			"cloudflare tracing",
+			"cloudflare workers",
+			"edge computing monitoring",
+			"monitor cloudflare workers",
+			"opentelemetry",
+			"opentelemetry cloudflare",
+			"opentelemetry-cloudflare",
+			"otel",
+			"otel cloudflare",
+			"traces",
+			"tracing"
+		],
+		"id": "opentelemetry-cloudflare",
+		"link": "/docs/instrumentation/opentelemetry-cloudflare/"
+	},
+	{
+		"dataSource": "opentelemetry-cloudflare-logs",
+		"label": "Cloudflare Logs",
+		"imgUrl": "/Logos/cloudflare.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"cloudflare",
+			"cloudflare instrumentation",
+			"cloudflare logging",
+			"cloudflare logs",
+			"cloudflare monitoring",
+			"cloudflare observability",
+			"cloudflare to signoz",
+			"cloudflare workers",
+			"edge computing monitoring",
+			"logging",
+			"logs",
+			"monitor cloudflare workers",
+			"opentelemetry",
+			"opentelemetry cloudflare",
+			"opentelemetry-cloudflare-logs",
+			"otel",
+			"otel cloudflare"
+		],
+		"id": "opentelemetry-cloudflare-logs",
+		"link": "/docs/logs-management/send-logs/cloudflare-logs/"
+	},
+	{
+		"dataSource": "kubernetes-pod-logs",
+		"label": "Kubernetes Pod Logs",
+		"imgUrl": "/Logos/kubernetes.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect pod logs",
+			"k8s",
+			"k8s log aggregation",
+			"k8s log monitoring",
+			"k8s logs",
+			"kubernetes",
+			"kubernetes container logs",
+			"kubernetes log collection",
+			"kubernetes logging with otel",
+			"kubernetes logs opentelemetry",
+			"kubernetes pod logs",
+			"kubernetes-pod-logs",
+			"logging",
+			"logs",
+			"pod",
+			"pod stdout stderr logs"
+		],
+		"id": "kubernetes-pod-logs",
+		"link": "/docs/userguide/collect_kubernetes_pod_logs/"
+	},
+	{
+		"dataSource": "docker-container-logs",
+		"label": "Docker Container Logs",
+		"imgUrl": "/Logos/docker.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect docker logs",
+			"container",
+			"container logs with otel",
+			"docker",
+			"docker container logs",
+			"docker log aggregation",
+			"docker log collection setup",
+			"docker log monitoring",
+			"docker logging opentelemetry",
+			"docker logging to signoz",
+			"docker logs observability",
+			"docker stdout stderr logs",
+			"docker-container-logs",
+			"logging",
+			"logs"
+		],
+		"id": "docker-container-logs",
+		"link": "/docs/userguide/collect_docker_logs/"
+	},
+	{
+		"dataSource": "vercel-logs",
+		"label": "Vercel logs",
+		"imgUrl": "/Logos/vercel.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect vercel logs",
+			"logging",
+			"logs",
+			"vercel",
+			"vercel functions logs",
+			"vercel log forwarding",
+			"vercel log monitoring",
+			"vercel logging setup",
+			"vercel logs",
+			"vercel logs to signoz",
+			"vercel observability",
+			"vercel opentelemetry integration",
+			"vercel to otel",
+			"vercel-logs"
+		],
+		"id": "vercel-logs",
+		"link": "/docs/userguide/vercel_logs_to_signoz/"
+	},
+	{
+		"dataSource": "heroku-logs",
+		"label": "Heroku logs",
+		"imgUrl": "/Logos/heroku.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect heroku logs",
+			"heroku",
+			"heroku log forwarding",
+			"heroku log monitoring",
+			"heroku log shipper",
+			"heroku logging setup",
+			"heroku logs",
+			"heroku logs to signoz",
+			"heroku observability",
+			"heroku opentelemetry integration",
+			"heroku to otel",
+			"heroku-logs",
+			"logging",
+			"logs"
+		],
+		"id": "heroku-logs",
+		"link": "/docs/userguide/heroku_logs_to_signoz/"
+	},
+	{
+		"dataSource": "http-logs",
+		"label": "Send Logs using HTTP",
+		"imgUrl": "/Logos/http.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect logs over http",
+			"custom http log ingestion",
+			"http",
+			"http json logs",
+			"http log collector",
+			"http log forwarding",
+			"http logs",
+			"http logs to signoz",
+			"http-logs",
+			"logging",
+			"logs",
+			"opentelemetry http logs",
+			"otel http log export",
+			"send",
+			"send logs using http",
+			"send logs via http"
+		],
+		"id": "http-logs",
+		"link": "/docs/userguide/send-logs-http/"
+	},
+	{
+		"dataSource": "syslogs",
+		"label": "Syslogs",
+		"imgUrl": "/Logos/syslogs.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect syslogs",
+			"linux syslog monitoring",
+			"logging",
+			"logs",
+			"rsyslog to otel",
+			"send syslogs to signoz",
+			"syslog exporter",
+			"syslog forwarding",
+			"syslog monitoring",
+			"syslog opentelemetry",
+			"syslog to otel",
+			"syslogs"
+		],
+		"id": "syslogs",
+		"link": "/docs/userguide/collecting_syslogs/"
+	},
+	{
+		"dataSource": "systemd-logs",
+		"label": "Systemd Logs",
+		"imgUrl": "/Logos/systemd.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect systemd logs",
+			"journalctl logs",
+			"journald",
+			"journald logs",
+			"linux systemd monitoring",
+			"logging",
+			"logs",
+			"systemctl",
+			"systemd",
+			"systemd log collection",
+			"systemd log monitoring",
+			"systemd logs",
+			"systemd logs to signoz",
+			"systemd opentelemetry",
+			"systemd to otel",
+			"systemd-logs"
+		],
+		"id": "systemd-logs",
+		"link": "/docs/logs-management/send-logs/collect-systemd-logs/"
+	},
+	{
+		"dataSource": "fluentd",
+		"label": "FluentD",
+		"imgUrl": "/Logos/fluentd.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect logs with fluentd",
+			"fluentd",
+			"fluentd docker logs",
+			"fluentd kubernetes logging",
+			"fluentd log forwarding",
+			"fluentd log shipper",
+			"fluentd logs",
+			"fluentd observability",
+			"fluentd opentelemetry",
+			"fluentd to otel",
+			"fluentd to signoz",
+			"logging",
+			"logs"
+		],
+		"id": "fluentd",
+		"link": "/docs/userguide/fluentd_to_signoz/"
+	},
+	{
+		"dataSource": "fluentbit",
+		"label": "FluentBit",
+		"imgUrl": "/Logos/fluentbit.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"fluentbit",
+			"fluentbit docker logs",
+			"fluentbit kubernetes logs",
+			"fluentbit log forwarding",
+			"fluentbit log pipeline",
+			"fluentbit log shipper",
+			"fluentbit logs",
+			"fluentbit observability",
+			"fluentbit opentelemetry integration",
+			"fluentbit to otel",
+			"fluentbit to signoz",
+			"logging",
+			"logs"
+		],
+		"id": "fluentbit",
+		"link": "/docs/userguide/fluentbit_to_signoz/"
+	},
+	{
+		"dataSource": "logstash",
+		"label": "Logstash",
+		"imgUrl": "/Logos/logstash.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"logging",
+			"logs",
+			"logstash",
+			"logstash centralized logging",
+			"logstash log collection",
+			"logstash log forwarding",
+			"logstash log shipper",
+			"logstash logs",
+			"logstash observability",
+			"logstash opentelemetry integration",
+			"logstash pipeline monitoring",
+			"logstash to otel",
+			"logstash to signoz"
+		],
+		"id": "logstash",
+		"link": "/docs/userguide/logstash_to_signoz/"
+	},
+	{
+		"dataSource": "tomcat-logs",
+		"label": "Tomcat logs",
+		"imgUrl": "/Logos/tomcat-logs.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect tomcat logs",
+			"java gc logs tomcat",
+			"logging",
+			"logs",
+			"opentelemetry tomcat logs",
+			"otel tomcat log exporter",
+			"tomcat",
+			"tomcat access logs",
+			"tomcat gc logs",
+			"tomcat log monitoring",
+			"tomcat logs",
+			"tomcat logs to signoz",
+			"tomcat observability",
+			"tomcat-logs"
+		],
+		"id": "tomcat-logs",
+		"link": "/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/"
+	},
+	{
+		"dataSource": "vector-logs",
+		"label": "Vector Logs",
+		"imgUrl": "/Logos/vector.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"logging",
+			"logs",
+			"vector",
+			"vector log collection",
+			"vector log forwarding",
+			"vector log shipper",
+			"vector logs",
+			"vector observability",
+			"vector opentelemetry integration",
+			"vector structured logging",
+			"vector telemetry pipeline",
+			"vector to otel",
+			"vector to signoz",
+			"vector-logs"
+		],
+		"id": "vector-logs",
+		"link": "/docs/logs-management/send-logs/vector-logs-to-signoz/"
+	},
+	{
+		"dataSource": "windows-events-logs",
+		"label": "Windows Events logs",
+		"imgUrl": "/Logos/windows-events-logs.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect windows logs",
+			"event viewer logs collection",
+			"events",
+			"logging",
+			"logs",
+			"otel windows event logs",
+			"windows",
+			"windows event logs",
+			"windows events logs",
+			"windows log monitoring",
+			"windows logging setup",
+			"windows logs opentelemetry",
+			"windows logs to signoz",
+			"windows observability",
+			"windows server logs",
+			"windows-events-logs"
+		],
+		"link": "/docs/logs-management/send-logs/windows-events-log/"
+	},
+	{
+		"dataSource": "cloudwatch-logs",
+		"label": "Cloudwatch logs",
+		"imgUrl": "/Logos/cloudwatch-logs.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"aws cloudwatch logs",
+			"aws logs observability",
+			"cloudwatch",
+			"cloudwatch exporter",
+			"cloudwatch log collection",
+			"cloudwatch log ingestion",
+			"cloudwatch log monitoring",
+			"cloudwatch logs",
+			"cloudwatch logs integration",
+			"cloudwatch logs opentelemetry",
+			"cloudwatch to otel",
+			"cloudwatch-logs",
+			"logging",
+			"logs",
+			"send logs to signoz"
+		],
+		"link": "/docs/userguide/send-cloudwatch-logs-to-signoz/"
+	},
+	{
+		"dataSource": "from-log-file",
+		"label": "Collect Logs From Log File",
+		"imgUrl": "/Logos/from-log-file.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"application log file collection",
+			"collect",
+			"collect logs from file",
+			"collect logs from log file",
+			"custom log file monitoring",
+			"file",
+			"file based logging",
+			"filebeat alternative",
+			"from-log-file",
+			"log",
+			"log file ingestion",
+			"log file to signoz",
+			"log files opentelemetry",
+			"log tailing with otel",
+			"logging",
+			"logs",
+			"otel file logs"
+		],
+		"link": "/docs/userguide/collect_logs_from_file/"
+	},
+	{
+		"dataSource": "aws-lambda-nodejs-logs",
+		"label": "AWS Lambda NodeJS logs",
+		"imgUrl": "/Logos/lambda.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws lambda logs",
+			"aws lambda nodejs logs",
+			"aws-lambda-nodejs-logs",
+			"collect logs from lambda",
+			"lambda",
+			"lambda cloudwatch logs",
+			"lambda log monitoring",
+			"lambda logs opentelemetry",
+			"lambda logs to signoz",
+			"lambda nodejs logs",
+			"lambda observability",
+			"lambda structured logging",
+			"logging",
+			"logs",
+			"nodejs",
+			"otel lambda nodejs"
+		],
+		"link": "/docs/logs-management/send-logs/aws-lambda-nodejs/"
+	},
+	{
+		"dataSource": "python-logs",
+		"label": "Python Logs",
+		"imgUrl": "/Logos/python.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"auto collect python logs",
+			"collect python logs using sdk",
+			"docker python logs",
+			"kubernetes python logs",
+			"logging",
+			"logs",
+			"opentelemetry python logging",
+			"otel python logs",
+			"otel python sdk logs",
+			"python",
+			"python app logs",
+			"python application logs",
+			"python containers",
+			"python docker",
+			"python k8s",
+			"python log auto instrumentation",
+			"python logging opentelemetry",
+			"python logging sdk",
+			"python logs",
+			"python logs to signoz",
+			"python observability",
+			"python on kubernetes",
+			"python on windows",
+			"python structured logging",
+			"python-logs-auto-instrumentation"
+		],
+		"link": "/docs/userguide/python-logs-auto-instrumentation/"
+	},
+	{
+		"dataSource": "otel-java-sdk",
+		"label": "Java logs",
+		"imgUrl": "/Logos/java.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"collect java logs",
+			"java",
+			"java application logs",
+			"java log exporter",
+			"java logging opentelemetry",
+			"java logs",
+			"java logs to signoz",
+			"java observability",
+			"logging",
+			"java-agent",
+			"java agent",
+			"logs",
+			"opentelemetry",
+			"otel",
+			"otel java sdk logs",
+			"otel logs java",
+			"otel-java-sdk",
+			"sdk",
+			"structured logging java",
+			"Logback",
+			"log4j"
+		],
+		"link": "/docs/userguide/collecting_application_logs_otel_sdk_java/"
+	},
+	{
+		"dataSource": "nodejs-logs",
+		"label": "Node.js Logs",
+		"imgUrl": "/Logos/nodejs.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"bunyan",
+			"collect nodejs logs",
+			"default logger",
+			"log aggregation nodejs",
+			"log collection nodejs",
+			"logging",
+			"logs",
+			"node js logs",
+			"nodejs",
+			"nodejs bunyan logs",
+			"nodejs logging",
+			"nodejs logs to signoz",
+			"nodejs pino logs",
+			"nodejs winston logs",
+			"opentelemetry",
+			"otel",
+			"pino",
+			"winston"
+		],
+		"question": {
+			"desc": "Which logger are you using?",
+			"type": "select",
+			"options": [
+				{
+					"key": "nodejs-default-logger",
+					"label": "Default Logger",
+					"imgUrl": "/Logos/nodejs.svg",
+					"link": "/docs/logs-management/send-logs/nodejs-logs/"
+				},
+				{
+					"key": "nodejs-bunyan-logs",
+					"label": "Bunyan",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "/docs/logs-management/send-logs/opentelemetry-nodejs-bunyan-logs/"
+				},
+				{
+					"key": "nodejs-winston-logs",
+					"label": "Winston",
+					"imgUrl": "/Logos/winston.svg",
+					"link": "/docs/logs-management/send-logs/nodejs-winston-logs/"
+				},
+				{
+					"key": "nodejs-pino-logs",
+					"label": "Pino",
+					"imgUrl": "/Logos/pino.svg",
+					"link": "/docs/logs-management/send-logs/nodejs-pino-logs/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "golang-logs",
+		"label": "Golang Logs",
+		"imgUrl": "/Logos/go.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"go",
+			"golang",
+			"golang logs",
+			"go logging",
+			"go structured logs",
+			"go zerolog",
+			"go zap",
+			"go logrus",
+			"golang zerolog",
+			"golang zap",
+			"golang logrus",
+			"logrus",
+			"logs",
+			"opentelemetry",
+			"otel",
+			"zap",
+			"zerolog"
+		],
+		"question": {
+			"desc": "Which logger are you using?",
+			"type": "select",
+			"options": [
+				{
+					"key": "golang-zerolog-logs",
+					"label": "Zerolog",
+					"imgUrl": "/Logos/logs.svg",
+					"link": "/docs/logs-management/send-logs/zerolog-to-signoz/"
+				},
+				{
+					"key": "golang-logrus-logs",
+					"label": "Logrus",
+					"imgUrl": "/Logos/logrus.svg",
+					"link": "/docs/logs-management/send-logs/logrus-to-signoz/"
+				},
+				{
+					"key": "golang-zap-logs",
+					"label": "Zap",
+					"imgUrl": "/Logos/zap.svg",
+					"link": "/docs/logs-management/send-logs/zap-to-signoz/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "hostmetrics",
+		"label": "Host Monitoring",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "infra-monitoring-hosts",
+		"relatedSearchKeywords": [
+			"collect cpu memory disk",
+			"collect node metrics",
+			"host",
+			"host metrics",
+			"host metrics to signoz",
+			"host monitoring",
+			"host resource usage",
+			"hostmetrics",
+			"hosts",
+			"infra",
+			"infra-monitoring-hosts",
+			"infrastructure",
+			"infrastructure monitoring",
+			"linux host monitoring",
+			"monitoring",
+			"observability",
+			"otel hostmetrics receiver",
+			"system metrics monitoring",
+			"vm performance metrics"
+		],
+		"imgUrl": "/Logos/hostmetrics.svg",
+		"link": "/docs/userguide/hostmetrics/"
+	},
+	{
+		"dataSource": "k8s-metrics",
+		"label": "Kubernetes Monitoring",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "infra-monitoring-k8s",
+		"relatedSearchKeywords": [
+			"collect k8s metrics",
+			"infra",
+			"infra-monitoring-k8s",
+			"infrastructure",
+			"infrastructure monitoring",
+			"k8s",
+			"k8s performance metrics",
+			"k8s pod metrics",
+			"k8s-metrics",
+			"kubernetes",
+			"kubernetes cluster monitoring",
+			"kubernetes metrics",
+			"kubernetes metrics to signoz",
+			"kubernetes monitoring",
+			"kubernetes resource usage",
+			"metrics",
+			"monitoring",
+			"node metrics kubernetes",
+			"observability",
+			"opentelemetry k8s metrics",
+			"otel k8s metrics receiver",
+			"telemetry"
+		],
+		"imgUrl": "/Logos/kubernetes.svg",
+		"link": "/docs/userguide/k8s-metrics/"
+	},
+	{
+		"dataSource": "docker-container-metrics",
+		"label": "Docker Container Metrics",
+		"tags": [
+			"metrics"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"collect docker stats",
+			"container",
+			"container cpu memory usage",
+			"dashboards",
+			"docker",
+			"docker container metrics",
+			"docker container telemetry",
+			"docker metrics opentelemetry",
+			"docker metrics to signoz",
+			"docker performance monitoring",
+			"docker resource metrics",
+			"docker-container-metrics",
+			"metrics",
+			"monitor docker containers",
+			"otel docker receiver",
+			"telemetry"
+		],
+		"imgUrl": "/Logos/docker.svg",
+		"link": "/docs/metrics-management/docker-container-metrics/"
+	},
+	{
+		"dataSource": "aws-ec2",
+		"label": "AWS EC2",
+		"tags": [
+			"AWS"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws ec2",
+			"aws ec2 log collection",
+			"aws logs otel",
+			"collect ec2 logs",
+			"ec2",
+			"ec2 application logs",
+			"ec2 infra metrics",
+			"ec2 infrastructure metrics",
+			"ec2 log ingestion",
+			"ec2 metrics",
+			"ec2 monitoring",
+			"logging",
+			"logs",
+			"metrics",
+			"opentelemetry ec2",
+			"vm monitoring"
+		],
+		"imgUrl": "/Logos/ec2.svg",
+		"question": {
+			"desc": "What would you like to monitor for AWS EC2?",
+			"type": "select",
+			"helpText": "Choose the type of telemetry data you want to collect from your EC2 instances.",
+			"options": [
+				{
+					"key": "aws-ec2-logs",
+					"label": "Logs",
+					"imgUrl": "/Logos/ec2.svg",
+					"link": "/docs/userguide/collect_logs_from_file/"
+				},
+				{
+					"key": "aws-ec2-metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/ec2.svg",
+					"question": {
+						"desc": "How would you like to set up EC2 Metrics monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-ec2-metrics-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/ec2.svg",
+								"link": "/integrations?integration=aws-integration&service=ec2",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-ec2-metrics-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/ec2.svg",
+								"link": "/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/"
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-ecs",
+		"label": "AWS ECS",
+		"tags": [
+			"AWS"
+		],
+		"module": "infra-monitoring-hosts",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws container service",
+			"aws ecs",
+			"container",
+			"ec2",
+			"ecs",
+			"ecs ec2",
+			"ecs external",
+			"ecs fargate",
+			"ecs monitoring",
+			"external",
+			"fargate"
+		],
+		"imgUrl": "/Logos/ecs.svg",
+		"link": "/docs/aws-monitoring/ecs/",
+		"question": {
+			"desc": "What type of ECS deployment do you have?",
+			"type": "select",
+			"helpText": "Choose your ECS launch type to see the appropriate setup options.",
+			"options": [
+				{
+					"key": "aws-ecs-ec2-external",
+					"label": "EC2/External",
+					"imgUrl": "/Logos/ecs.svg",
+					"question": {
+						"desc": "How would you like to set up ECS EC2/External monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-ecs-ec2-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/ecs.svg",
+								"link": "/integrations?integration=aws-integration&service=ecs",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-ecs-ec2-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/ecs.svg",
+								"link": "/docs/opentelemetry-collection-agents/ecs/ec2/install/"
+							}
+						]
+					}
+				},
+				{
+					"key": "aws-ecs-fargate",
+					"label": "Fargate",
+					"imgUrl": "/Logos/ecs.svg",
+					"link": "/docs/opentelemetry-collection-agents/ecs/sidecar/install/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-eks",
+		"label": "AWS EKS",
+		"tags": [
+			"AWS"
+		],
+		"module": "infra-monitoring-k8s",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws eks",
+			"aws kubernetes",
+			"ec2 nodes",
+			"eks",
+			"eks fargate",
+			"eks logs",
+			"eks metrics",
+			"eks monitoring",
+			"fargate",
+			"kubernetes"
+		],
+		"imgUrl": "/Logos/eks.svg",
+		"link": "/docs/aws-monitoring/eks/",
+		"question": {
+			"desc": "What type of EKS deployment do you have?",
+			"type": "select",
+			"helpText": "Choose your EKS node type to see the appropriate setup options.",
+			"options": [
+				{
+					"key": "aws-eks-ec2-nodes",
+					"label": "EC2 Nodes",
+					"imgUrl": "/Logos/eks.svg",
+					"question": {
+						"desc": "How would you like to set up EKS EC2 Nodes monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-eks-ec2-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/eks.svg",
+								"link": "/integrations?integration=aws-integration&service=eks",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-eks-ec2-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/eks.svg",
+								"link": "/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/"
+							}
+						]
+					}
+				},
+				{
+					"key": "aws-eks-fargate",
+					"label": "Fargate",
+					"imgUrl": "/Logos/eks.svg",
+					"link": "/docs/opentelemetry-collection-agents/k8s/serverless/install/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-elb",
+		"label": "AWS ELB",
+		"tags": [
+			"AWS"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws elb",
+			"aws elb logs",
+			"collect elb logs",
+			"elb",
+			"elb access logs",
+			"elb log monitoring",
+			"elb logs",
+			"elb logs opentelemetry",
+			"elb metrics",
+			"elb monitoring",
+			"elb observability",
+			"elb-logs",
+			"elastic load balancer",
+			"load balancer",
+			"logging",
+			"logs",
+			"metrics"
+		],
+		"imgUrl": "/Logos/elb.svg",
+		"link": "/docs/aws-monitoring/elb/"
+	},
+	{
+		"dataSource": "vpc-logs",
+		"label": "VPC Logs",
+		"tags": [
+			"AWS",
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws vpc logs",
+			"collect vpc logs",
+			"logging",
+			"logs",
+			"otel vpc logs",
+			"vpc",
+			"vpc flow log observability",
+			"vpc flow logs",
+			"vpc flow logs analysis",
+			"vpc log monitoring",
+			"vpc logs",
+			"vpc logs opentelemetry",
+			"vpc logs to signoz",
+			"vpc network traffic logs",
+			"vpc-logs"
+		],
+		"imgUrl": "/Logos/vpc.svg",
+		"link": "/docs/aws-monitoring/vpc-logs/"
+	},
+	{
+		"dataSource": "aws-rds",
+		"label": "AWS RDS",
+		"imgUrl": "/Logos/rds.svg",
+		"tags": [
+			"AWS",
+			"database"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon rds",
+			"aws",
+			"aws database",
+			"aws rds",
+			"aws rds logs",
+			"aws rds metrics",
+			"aws rds mysql",
+			"aws rds one click",
+			"aws rds postgresql",
+			"aws-rds",
+			"collect rds logs",
+			"database",
+			"integrations",
+			"mysql",
+			"postgresql",
+			"rds",
+			"rds logs",
+			"rds logs to signoz",
+			"rds metrics",
+			"rds mysql logs",
+			"rds observability",
+			"rds performance monitoring",
+			"rds postgres logs",
+			"rds slow query logs"
+		],
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS RDS monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-rds-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/rds.svg",
+					"link": "/integrations?integration=aws-integration&service=rds",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-rds-mysql-manual",
+					"label": "MySQL Manual",
+					"imgUrl": "/Logos/rds.svg",
+					"link": "/integrations?integration=builtin-aws_rds_mysql",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-rds-postgresql-manual",
+					"label": "PostgreSQL Manual",
+					"imgUrl": "/Logos/rds.svg",
+					"link": "/integrations?integration=builtin-aws_rds_postgresql",
+					"internalRedirect": true
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-lambda",
+		"label": "AWS Lambda",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"aws",
+			"aws lambda",
+			"aws lambda insights",
+			"aws lambda logs",
+			"aws-lambda",
+			"collect lambda telemetry",
+			"function",
+			"lambda",
+			"lambda logs",
+			"lambda metrics",
+			"lambda monitoring otel",
+			"lambda observability",
+			"lambda to signoz",
+			"lambda tracing",
+			"logging",
+			"logs",
+			"metrics",
+			"opentelemetry aws lambda",
+			"serverless",
+			"serverless monitoring",
+			"traces",
+			"tracing"
+		],
+		"imgUrl": "/Logos/lambda.svg",
+		"link": "/docs/aws-monitoring/lambda/",
+		"question": {
+			"desc": "What would you like to monitor for AWS Lambda?",
+			"type": "select",
+			"helpText": "Choose the type of telemetry data you want to collect from your Lambda functions.",
+			"options": [
+				{
+					"key": "aws-lambda-logs",
+					"label": "Logs",
+					"imgUrl": "/Logos/lambda.svg",
+					"question": {
+						"desc": "How would you like to set up Lambda Logs monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-lambda-logs-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/integrations?integration=aws-integration&service=lambda",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-lambda-logs-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/docs/aws-monitoring/lambda/lambda-logs/"
+							}
+						]
+					}
+				},
+				{
+					"key": "aws-lambda-traces",
+					"label": "Traces",
+					"imgUrl": "/Logos/lambda.svg",
+					"link": "/docs/aws-monitoring/lambda/lambda-traces/"
+				},
+				{
+					"key": "aws-lambda-metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/lambda.svg",
+					"question": {
+						"desc": "How would you like to set up Lambda Metrics monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-lambda-metrics-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/integrations?integration=aws-integration&service=lambda",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-lambda-metrics-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/docs/aws-monitoring/lambda/lambda-metrics/"
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "vm-metrics-and-logging",
+		"label": "Azure VM",
+		"tags": [
+			"Azure"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"azure",
+			"azure infrastructure monitoring",
+			"azure virtual machine telemetry",
+			"azure vm",
+			"azure vm logs",
+			"azure vm metrics",
+			"azure vm observability",
+			"azure vm performance",
+			"azure vm to signoz",
+			"collect logs azure vm",
+			"logging",
+			"logs",
+			"metrics",
+			"monitor azure vm",
+			"otel azure vm",
+			"telemetry",
+			"traces",
+			"tracing",
+			"vm",
+			"vm-metrics-and-logging"
+		],
+		"imgUrl": "/Logos/azure-vm.svg",
+		"link": "/docs/azure-monitoring/virtual-machines/vm-metrics/"
+	},
+	{
+		"dataSource": "app-service",
+		"label": "App Service",
+		"imgUrl": "/Logos/azure-vm.svg",
+		"tags": [
+			"Azure"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"app",
+			"app service",
+			"app service observability",
+			"app service telemetry",
+			"app service to signoz",
+			"app service tracing",
+			"app-service",
+			"application performance monitoring",
+			"azure",
+			"azure app logs",
+			"azure app service logs",
+			"azure web app monitoring",
+			"collect app service metrics",
+			"monitor azure app service",
+			"otel azure app service",
+			"service",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/azure-vm.svg",
+					"link": "/docs/azure-monitoring/app-service/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/azure-vm.svg",
+					"link": "/docs/azure-monitoring/app-service/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/azure-vm.svg",
+					"link": "/docs/azure-monitoring/app-service/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aks",
+		"label": "Azure Kubernetes Service",
+		"tags": [
+			"Azure"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"aks",
+			"aks logs",
+			"aks metrics collection",
+			"aks observability",
+			"aks opentelemetry integration",
+			"aks telemetry",
+			"aks to signoz",
+			"apm",
+			"application performance monitoring",
+			"azure",
+			"azure k8s monitoring",
+			"azure kubernetes service",
+			"collect logs from aks",
+			"k8s",
+			"kubernetes",
+			"monitor aks cluster",
+			"service",
+			"traces",
+			"tracing"
+		],
+		"imgUrl": "/Logos/azure-app-service.svg",
+		"link": "/docs/azure-monitoring/aks/"
+	},
+	{
+		"dataSource": "azure-container-apps",
+		"label": "Container Apps",
+		"imgUrl": "/Logos/azure-container-apps.svg",
+		"tags": [
+			"Azure"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"apps",
+			"azure",
+			"azure container apps logs",
+			"azure container apps to signoz",
+			"azure microservice monitoring",
+			"azure-container-apps",
+			"container",
+			"container apps",
+			"container apps metrics",
+			"container apps observability",
+			"container apps telemetry",
+			"container apps tracing",
+			"monitor azure container apps",
+			"opentelemetry container apps",
+			"otel azure container apps",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/azure-container-apps.svg",
+					"link": "/docs/azure-monitoring/az-container-apps/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/azure-container-apps.svg",
+					"link": "/docs/azure-monitoring/az-container-apps/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/azure-container-apps.svg",
+					"link": "/docs/azure-monitoring/az-container-apps/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "azure-functions",
+		"label": "Azure Functions",
+		"imgUrl": "/Logos/azure-functions.svg",
+		"tags": [
+			"Azure"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"azure",
+			"azure functions",
+			"azure functions logs",
+			"azure functions observability",
+			"azure functions telemetry",
+			"azure functions to signoz",
+			"azure functions tracing",
+			"azure serverless logs",
+			"azure-functions",
+			"collect logs azure functions",
+			"functions",
+			"monitor azure functions",
+			"opentelemetry azure functions",
+			"otel azure functions",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/azure-functions.svg",
+					"link": "/docs/azure-monitoring/az-fns/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/azure-functions.svg",
+					"link": "/docs/azure-monitoring/az-fns/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/azure-functions.svg",
+					"link": "/docs/azure-monitoring/az-fns/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "sql-database-metrics",
+		"label": "Azure SQL Database Metrics",
+		"tags": [
+			"Azure",
+			"database"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"azure",
+			"azure db monitoring",
+			"azure sql database metrics",
+			"azure sql insights",
+			"azure sql observability",
+			"collect sql metrics azure",
+			"database",
+			"database performance azure",
+			"metrics",
+			"monitor azure sql",
+			"opentelemetry sql metrics",
+			"sql",
+			"sql metrics to signoz",
+			"sql telemetry azure",
+			"sql-database-metrics",
+			"telemetry"
+		],
+		"imgUrl": "/Logos/azure-sql-database-metrics.svg",
+		"link": "/docs/azure-monitoring/db-metrics/"
+	},
+	{
+		"dataSource": "azure-blob-storage",
+		"label": "Azure Blob storage",
+		"imgUrl": "/Logos/azure-blob-storage.svg",
+		"tags": [
+			"Azure"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"azure",
+			"azure blob access logs",
+			"azure blob metrics",
+			"azure blob storage",
+			"azure blob storage logs",
+			"azure-blob-storage",
+			"blob",
+			"blob storage monitoring",
+			"blob storage observability",
+			"blob storage telemetry",
+			"blob storage to signoz",
+			"monitor azure storage",
+			"opentelemetry azure blob",
+			"otel blob storage",
+			"storage",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/azure-blob-storage.svg",
+					"link": "/docs/azure-monitoring/az-blob-storage/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/azure-blob-storage.svg",
+					"link": "/docs/azure-monitoring/az-blob-storage/metrics/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "azure-mysql-flexible-server",
+		"label": "Azure MySQL Flexible Server",
+		"tags": [
+			"Azure"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"azure",
+			"azure mysql flexible server",
+			"azure mysql metrics",
+			"azure mysql observability",
+			"azure mysql telemetry",
+			"azure mysql to signoz",
+			"azure-mysql-flexible-server",
+			"flexible",
+			"metrics",
+			"mysql",
+			"mysql azure performance monitoring",
+			"mysql database monitoring azure",
+			"mysql flexible server logs",
+			"mysql flexible server monitoring",
+			"opentelemetry mysql azure",
+			"server",
+			"telemetry"
+		],
+		"imgUrl": "/Logos/azure-mysql.svg",
+		"link": "/docs/azure-monitoring/mysql-flexible-server/"
+	},
+	{
+		"dataSource": "cloud-functions",
+		"label": "Cloud functions",
+		"imgUrl": "/Logos/gcp-cloud-functions.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"cloud",
+			"cloud functions",
+			"cloud functions log export",
+			"cloud functions logs",
+			"cloud functions metrics",
+			"cloud functions to signoz",
+			"cloud functions tracing",
+			"cloud-functions",
+			"functions",
+			"gcp",
+			"gcp cloud functions monitoring",
+			"google cloud functions logs",
+			"opentelemetry gcp functions",
+			"otel cloud functions",
+			"serverless functions observability",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-cloud-functions.svg",
+					"link": "/docs/gcp-monitoring/gcp-fns/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Cloud Function Metrics",
+					"imgUrl": "/Logos/gcp-cloud-functions.svg",
+					"link": "/docs/gcp-monitoring/gcp-fns/fns-metrics/"
+				},
+				{
+					"key": "metrics",
+					"label": "Custom Metrics",
+					"imgUrl": "/Logos/gcp-cloud-functions.svg",
+					"link": "/docs/gcp-monitoring/gcp-fns/custom-metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/gcp-cloud-functions.svg",
+					"link": "/docs/gcp-monitoring/gcp-fns/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "app-engine",
+		"label": "App Engine",
+		"imgUrl": "/Logos/gcp-app-engine.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"app",
+			"app engine",
+			"app engine log exporter",
+			"app engine logs",
+			"app engine opentelemetry integration",
+			"app engine telemetry",
+			"app engine to signoz",
+			"app engine tracing",
+			"app-engine",
+			"application performance monitoring",
+			"collect app engine logs",
+			"engine",
+			"gcp",
+			"gcp app engine observability",
+			"google app engine monitoring",
+			"otel app engine",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-app-engine.svg",
+					"link": "/docs/gcp-monitoring/app-engine/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-app-engine.svg",
+					"link": "/docs/gcp-monitoring/app-engine/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/gcp-app-engine.svg",
+					"link": "/docs/gcp-monitoring/app-engine/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "compute-engine",
+		"label": "Compute Engine",
+		"imgUrl": "/Logos/gcp-compute-engine.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"collect compute engine logs",
+			"compute",
+			"compute engine",
+			"compute engine logging setup",
+			"compute engine logs",
+			"compute engine metrics",
+			"compute engine observability",
+			"compute engine to signoz",
+			"compute engine tracing",
+			"compute-engine",
+			"engine",
+			"gcp",
+			"gcp compute engine monitoring",
+			"google vm logs",
+			"otel compute engine",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-compute-engine.svg",
+					"link": "/docs/gcp-monitoring/compute-engine/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-compute-engine.svg",
+					"link": "/docs/gcp-monitoring/compute-engine/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/gcp-compute-engine.svg",
+					"link": "/docs/gcp-monitoring/compute-engine/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "cloud-storage",
+		"label": "Cloud Storage",
+		"imgUrl": "/Logos/gcp-cloud-storage.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"cloud",
+			"cloud storage",
+			"cloud storage metrics gcp",
+			"cloud-storage",
+			"gcp",
+			"gcp cloud storage logs",
+			"gcs access logs",
+			"gcs bucket monitoring",
+			"gcs logging opentelemetry",
+			"gcs observability",
+			"gcs performance metrics",
+			"gcs to signoz",
+			"google cloud storage telemetry",
+			"monitor cloud storage",
+			"storage",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-cloud-storage.svg",
+					"link": "/docs/gcp-monitoring/gcs/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-cloud-storage.svg",
+					"link": "/docs/gcp-monitoring/gcs/metrics/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "cloud-sql",
+		"label": "Cloud SQL",
+		"imgUrl": "/Logos/gcp-cloud-sql.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"cloud",
+			"cloud sql",
+			"cloud sql metrics gcp",
+			"cloud sql monitoring setup",
+			"cloud sql observability",
+			"cloud sql to signoz",
+			"cloud-sql",
+			"collect sql logs gcp",
+			"gcp",
+			"gcp cloud sql logs",
+			"gcp database logs",
+			"monitor cloud sql",
+			"opentelemetry cloud sql",
+			"otel cloud sql",
+			"sql",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-cloud-sql.svg",
+					"link": "/docs/gcp-monitoring/cloud-sql/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-cloud-sql.svg",
+					"link": "/docs/gcp-monitoring/cloud-sql/metrics/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "cloud-load-balancer",
+		"label": "Cloud Load Balancer",
+		"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"balancer",
+			"clb logs collection",
+			"clb observability",
+			"clb to signoz",
+			"clb tracing gcp",
+			"cloud",
+			"cloud load balancer",
+			"cloud load balancer telemetry",
+			"cloud-load-balancer",
+			"gcp",
+			"gcp clb metrics",
+			"gcp cloud load balancer logs",
+			"load",
+			"load balancer monitoring gcp",
+			"monitor gcp clb",
+			"otel cloud load balancer",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
+					"link": "/docs/gcp-monitoring/gcp-clb/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
+					"link": "/docs/gcp-monitoring/gcp-clb/metrics/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "vpc",
+		"label": "VPC",
+		"imgUrl": "/Logos/gcp-vpc.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"collect vpc flow logs",
+			"gcp",
+			"gcp network telemetry",
+			"gcp vpc logs",
+			"gcp vpc metrics",
+			"gcp vpc tracing",
+			"opentelemetry vpc logs",
+			"traces",
+			"tracing",
+			"vpc",
+			"vpc flow logs gcp",
+			"vpc monitoring gcp",
+			"vpc observability",
+			"vpc to signoz"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-vpc.svg",
+					"link": "/docs/gcp-monitoring/vpc/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-vpc.svg",
+					"link": "/docs/gcp-monitoring/vpc/metrics/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "gke",
+		"label": "Google Kubernetes Engine",
+		"imgUrl": "/Logos/gcp-gke.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"engine",
+			"gcp",
+			"gke",
+			"gke log shipping",
+			"gke logs",
+			"gke metrics collection",
+			"gke monitoring",
+			"gke observability",
+			"gke to signoz",
+			"gke tracing opentelemetry",
+			"gke workload monitoring",
+			"google",
+			"google kubernetes engine",
+			"google kubernetes engine logs",
+			"k8s",
+			"kubernetes",
+			"otel gke integration",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-gke.svg",
+					"link": "/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-gke.svg",
+					"link": "/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/gcp-gke.svg",
+					"link": "/docs/gcp-monitoring/gke/gke-tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "cloud-run",
+		"label": "Cloud Run",
+		"imgUrl": "/Logos/gcp-cloud-run.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"cloud",
+			"cloud run",
+			"cloud run log monitoring",
+			"cloud run logs",
+			"cloud run metrics",
+			"cloud run observability",
+			"cloud run to signoz",
+			"cloud run tracing",
+			"cloud-run",
+			"gcp",
+			"google cloud run logs",
+			"opentelemetry cloud run",
+			"otel cloud run",
+			"run",
+			"serverless gcp logs",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "logging",
+					"label": "Logs",
+					"imgUrl": "/Logos/gcp-cloud-run.svg",
+					"link": "/docs/gcp-monitoring/cloud-run/logging/"
+				},
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-cloud-run.svg",
+					"link": "/docs/gcp-monitoring/cloud-run/metrics/"
+				},
+				{
+					"key": "tracing",
+					"label": "Traces",
+					"imgUrl": "/Logos/gcp-cloud-run.svg",
+					"link": "/docs/gcp-monitoring/cloud-run/tracing/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "cloud-monitoring",
+		"label": "Cloud Monitoring",
+		"imgUrl": "/Logos/gcp-cloud-monitoring.svg",
+		"tags": [
+			"GCP"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"cloud",
+			"cloud monitoring",
+			"cloud monitoring exporter",
+			"cloud monitoring opentelemetry",
+			"cloud monitoring telemetry",
+			"cloud monitoring to signoz",
+			"cloud-monitoring",
+			"gcp",
+			"gcp cloud monitoring metrics",
+			"gcp metrics collection",
+			"gcp metrics dashboard",
+			"gcp observability",
+			"google cloud monitoring integration",
+			"monitoring",
+			"observability",
+			"otel cloud monitoring",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What telemetry data do you want to visualise ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/gcp-cloud-monitoring.svg",
+					"link": "/docs/gcp-monitoring/cloud-monitoring/metrics/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "openai-monitoring",
+		"label": "OpenAI Monitoring",
+		"imgUrl": "/Logos/openai.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"llm",
+			"llm monitoring",
+			"monitor openai api",
+			"monitoring",
+			"observability",
+			"open ai",
+			"openai",
+			"openai instrumentation",
+			"openai logs",
+			"openai metrics",
+			"openai monitoring",
+			"openai observability",
+			"openai performance monitoring",
+			"openai to signoz",
+			"openai tracing",
+			"openai-monitoring",
+			"opentelemetry openai",
+			"otel openai",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/llm/opentelemetry-openai-monitoring/"
+	},
+	{
+		"dataSource": "anthropic-api",
+		"label": "Anthropic API",
+		"imgUrl": "/Logos/anthropic-api-monitoring.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"anthropic",
+			"anthropic api",
+			"anthropic-api",
+			"api",
+			"large language model observability",
+			"llm",
+			"llm metrics",
+			"llm monitoring",
+			"llm performance tracking",
+			"llm response time tracing",
+			"logging",
+			"logs",
+			"metrics",
+			"monitor anthropic",
+			"monitoring",
+			"observability",
+			"otel llm integration",
+			"telemetry",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/anthropic-monitoring/"
+	},
+	{
+		"dataSource": "claude-code",
+		"label": "Claude Code",
+		"imgUrl": "/Logos/claude-code.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"claude",
+			"claude code",
+			"claude code debugging",
+			"claude code error tracking",
+			"claude code latency tracing",
+			"claude code logs",
+			"claude code metrics",
+			"claude code monitoring",
+			"claude code observability",
+			"claude code performance tracking",
+			"claude code response time",
+			"claude-code",
+			"code",
+			"llm",
+			"llm monitoring",
+			"logging",
+			"logs",
+			"metrics",
+			"monitoring",
+			"observability",
+			"otel claude integration",
+			"telemetry"
+		],
+		"link": "/docs/claude-code-monitoring/"
+	},
+	{
+		"dataSource": "deepseek-api",
+		"label": "DeepSeek API",
+		"imgUrl": "/Logos/deepseek.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"api",
+			"deepseek",
+			"deepseek api",
+			"deepseek api debugging",
+			"deepseek api error tracking",
+			"deepseek api latency tracing",
+			"deepseek api logs",
+			"deepseek api metrics",
+			"deepseek api monitoring",
+			"deepseek api observability",
+			"deepseek api performance tracking",
+			"deepseek api response time",
+			"deepseek-api",
+			"llm",
+			"llm monitoring",
+			"logging",
+			"logs",
+			"metrics",
+			"monitoring",
+			"observability",
+			"otel deepseek integration",
+			"telemetry"
+		],
+		"link": "/docs/deepseek-monitoring/"
+	},
+	{
+		"dataSource": "google-gemini-api",
+		"label": "Google Gemini",
+		"imgUrl": "/Logos/google-gemini.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"api",
+			"gemini",
+			"google",
+			"google gemini",
+			"google gemini api debugging",
+			"google gemini api error tracking",
+			"google gemini api latency tracing",
+			"google gemini api logs",
+			"google gemini api metrics",
+			"google gemini api monitoring",
+			"google gemini api observability",
+			"google gemini api performance tracking",
+			"google gemini api response time",
+			"google-gemini-api",
+			"llm",
+			"llm monitoring",
+			"logging",
+			"logs",
+			"metrics",
+			"monitoring",
+			"observability",
+			"otel google gemini integration",
+			"telemetry"
+		],
+		"link": "/docs/google-gemini-monitoring/"
+	},
+	{
+		"dataSource": "langchain",
+		"label": "LangChain",
+		"imgUrl": "/Logos/langchain.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"langchain",
+			"langchain debugging",
+			"langchain error tracking",
+			"langchain latency tracing",
+			"langchain logs",
+			"langchain metrics",
+			"langchain monitoring",
+			"langchain observability",
+			"langchain performance tracking",
+			"langchain response time",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel langchain integration",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/langchain-observability/"
+	},
+	{
+		"dataSource": "llamaindex",
+		"label": "LlamaIndex",
+		"imgUrl": "/Logos/llamaindex.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"llamaindex",
+			"llamaindex debugging",
+			"llamaindex error tracking",
+			"llamaindex latency tracing",
+			"llamaindex logs",
+			"llamaindex metrics",
+			"llamaindex monitoring",
+			"llamaindex observability",
+			"llamaindex performance tracking",
+			"llamaindex response time",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel llamaindex integration",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/llamaindex-observability/"
+	},
+	{
+		"dataSource": "vercel-ai-sdk",
+		"label": "Vercel AI SDK",
+		"imgUrl": "/Logos/vercel.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"ai",
+			"apm",
+			"application performance monitoring",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel vercel ai sdk integration",
+			"sdk",
+			"traces",
+			"tracing",
+			"vercel",
+			"vercel ai sdk",
+			"vercel ai sdk debugging",
+			"vercel ai sdk error tracking",
+			"vercel ai sdk latency tracing",
+			"vercel ai sdk logs",
+			"vercel ai sdk metrics",
+			"vercel ai sdk monitoring",
+			"vercel ai sdk observability",
+			"vercel ai sdk performance tracking",
+			"vercel ai sdk response time",
+			"vercel-ai-sdk"
+		],
+		"link": "/docs/vercel-ai-sdk-observability/"
+	},
+	{
+		"dataSource": "amazon-bedrock",
+		"label": "Amazon Bedrock",
+		"imgUrl": "/Logos/amazon-bedrock.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"amazon bedrock monitoring",
+			"amazon bedrock observability",
+			"amazon bedrock performance tracking",
+			"amazon bedrock latency tracing",
+			"amazon bedrock metrics",
+			"otel amazon bedrock integration",
+			"amazon bedrock response time",
+			"amazon bedrock logs",
+			"amazon bedrock error tracking",
+			"amazon bedrock debugging",
+			"traces"
+		],
+		"link": "/docs/amazon-bedrock-monitoring/"
+	},
+	{
+		"dataSource": "autogen",
+		"label": "AutoGen",
+		"imgUrl": "/Logos/autogen.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"autogen monitoring",
+			"autogen observability",
+			"autogen performance tracking",
+			"autogen latency tracing",
+			"autogen metrics",
+			"otel autogen integration",
+			"autogen response time",
+			"autogen logs",
+			"autogen error tracking",
+			"autogen debugging",
+			"traces"
+		],
+		"link": "/docs/autogen-observability/"
+	},
+	{
+		"dataSource": "azure-openai",
+		"label": "Azure OpenAI",
+		"imgUrl": "/Logos/azure-openai.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"azure open ai monitoring",
+			"azure open ai observability",
+			"azure open ai performance tracking",
+			"azure open ai latency tracing",
+			"azure open ai metrics",
+			"otel azure open ai integration",
+			"azure open ai response time",
+			"azure open ai logs",
+			"azure open ai error tracking",
+			"azure open ai debugging",
+			"traces"
+		],
+		"link": "/docs/azure-openai-monitoring/"
+	},
+	{
+		"dataSource": "crew-ai",
+		"label": "Crew AI",
+		"imgUrl": "/Logos/crew-ai.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"crew ai monitoring",
+			"crew ai observability",
+			"crew ai performance tracking",
+			"crew ai latency tracing",
+			"crew ai metrics",
+			"otel crew ai integration",
+			"crew ai response time",
+			"crew ai logs",
+			"crew ai error tracking",
+			"crew ai debugging",
+			"traces"
+		],
+		"link": "/docs/crewai-observability/"
+	},
+	{
+		"dataSource": "litellm",
+		"label": "LiteLLM",
+		"imgUrl": "/Logos/litellm.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"litellm monitoring",
+			"litellm observability",
+			"litellm performance tracking",
+			"litellm latency tracing",
+			"litellm metrics",
+			"otel litellm integration",
+			"litellm response time",
+			"litellm logs",
+			"litellm error tracking",
+			"litellm debugging",
+			"traces"
+		],
+		"link": "/docs/litellm-observability/"
+	},
+	{
+		"dataSource": "pydantic-ai",
+		"label": "Pydantic AI",
+		"imgUrl": "/Logos/pydantic-ai.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"pydantic ai monitoring",
+			"pydantic ai observability",
+			"pydantic ai performance tracking",
+			"pydantic ai latency tracing",
+			"pydantic ai metrics",
+			"otel pydantic ai integration",
+			"pydantic ai response time",
+			"pydantic ai logs",
+			"pydantic ai error tracking",
+			"pydantic ai debugging",
+			"traces"
+		],
+		"link": "/docs/pydantic-ai-observability/"
+	},
+	{
+		"dataSource": "mastra-monitoring",
+		"label": "Mastra",
+		"imgUrl": "/Logos/mastra.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"llm",
+			"llm monitoring",
+			"mastra",
+			"mastra agent",
+			"mastra monitoring",
+			"mastra observability",
+			"mastra-monitoring",
+			"monitoring",
+			"observability",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/mastra-observability/"
+	},
+	{
+		"dataSource": "http-endpoints-monitoring",
+		"label": "HTTP Endpoints Monitoring",
+		"imgUrl": "/Logos/http-monitoring.svg",
+		"tags": [
+			"Synthetic Monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"api monitoring",
+			"endpoint health checks",
+			"endpoint performance monitoring",
+			"endpoints",
+			"http",
+			"http endpoints monitoring",
+			"http response monitoring",
+			"http-endpoints-monitoring",
+			"metrics",
+			"monitor http endpoints",
+			"monitoring",
+			"observability",
+			"synthetic",
+			"synthetic monitoring",
+			"synthetic tests",
+			"telemetry",
+			"uptime monitoring",
+			"website monitoring"
+		],
+		"link": "/docs/monitor-http-endpoints/"
+	},
+	{
+		"dataSource": "external-api-monitoring-setup",
+		"label": "External API Monitoring Setup",
+		"imgUrl": "/Logos/external-api-monitoring.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "api-monitoring",
+		"relatedSearchKeywords": [
+			"api",
+			"api endpoint monitoring",
+			"api health monitoring",
+			"api latency monitoring",
+			"api metrics",
+			"api monitoring configuration",
+			"api monitoring setup",
+			"api observability",
+			"api performance monitoring",
+			"api telemetry",
+			"api uptime monitoring",
+			"api-monitoring",
+			"external",
+			"external api monitoring",
+			"external api monitoring setup",
+			"external-api-monitoring-setup",
+			"monitor api calls",
+			"monitor external apis",
+			"monitoring",
+			"observability",
+			"rest api monitoring",
+			"setup",
+			"third party api monitoring"
+		],
+		"link": "/docs/external-api-monitoring/setup/"
+	},
+	{
+		"dataSource": "github-metrics",
+		"label": "GitHub Metrics",
+		"imgUrl": "/Logos/github.svg",
+		"tags": [
+			"CICD"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"cicd",
+			"github",
+			"github actions metrics",
+			"github api metrics",
+			"github cicd monitoring",
+			"github metrics",
+			"github monitoring",
+			"github observability",
+			"github repository monitoring",
+			"github telemetry",
+			"github to signoz",
+			"github-metrics",
+			"metrics",
+			"monitor github repos",
+			"telemetry"
+		],
+		"link": "/docs/cicd/github/github-metrics/"
+	},
+	{
+		"dataSource": "github-actions-traces",
+		"label": "GitHub Actions Traces",
+		"imgUrl": "/Logos/github.svg",
+		"tags": [
+			"CICD"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"actions",
+			"apm",
+			"application performance monitoring",
+			"cicd",
+			"github",
+			"github actions monitoring",
+			"github actions observability",
+			"github actions telemetry",
+			"github actions to signoz",
+			"github actions traces",
+			"github actions tracing",
+			"github cicd tracing",
+			"github workflow monitoring",
+			"github workflow observability",
+			"github-actions-traces",
+			"monitor github actions",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/cicd/github/github-actions-traces/"
+	},
+	{
+		"dataSource": "jenkins-agent-node-monitoring",
+		"label": "Jenkins Agent Node Monitoring",
+		"imgUrl": "/Logos/jenkins.svg",
+		"tags": [
+			"CICD"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"agent",
+			"cicd",
+			"jenkins",
+			"jenkins agent metrics",
+			"jenkins agent monitoring",
+			"jenkins agent node monitoring",
+			"jenkins build agents",
+			"jenkins cicd monitoring",
+			"jenkins infrastructure monitoring",
+			"jenkins node monitoring",
+			"jenkins observability",
+			"jenkins telemetry",
+			"jenkins to signoz",
+			"jenkins-agent-node-monitoring",
+			"metrics",
+			"monitor jenkins agents",
+			"monitoring",
+			"node",
+			"observability",
+			"telemetry"
+		],
+		"link": "/docs/cicd/jenkins/agent-node-monitoring/"
+	},
+	{
+		"dataSource": "jenkins-tracing",
+		"label": "Jenkins Tracing",
+		"imgUrl": "/Logos/jenkins.svg",
+		"tags": [
+			"CICD"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"cicd",
+			"jenkins",
+			"jenkins cicd tracing",
+			"jenkins monitoring",
+			"jenkins observability",
+			"jenkins pipeline observability",
+			"jenkins pipeline tracing",
+			"jenkins telemetry",
+			"jenkins to signoz",
+			"jenkins tracing",
+			"jenkins workflow monitoring",
+			"jenkins-tracing",
+			"monitor jenkins builds",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/cicd/jenkins/jenkins-tracing/"
+	},
+	{
+		"dataSource": "argocd-metrics",
+		"label": "ArgoCD Metrics",
+		"imgUrl": "/Logos/argocd.svg",
+		"tags": [
+			"CICD"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"argocd",
+			"argocd cicd monitoring",
+			"argocd deployment monitoring",
+			"argocd gitops monitoring",
+			"argocd metrics",
+			"argocd monitoring",
+			"argocd observability",
+			"argocd telemetry",
+			"argocd to signoz",
+			"argocd-metrics",
+			"cicd",
+			"dashboards",
+			"gitops monitoring",
+			"metrics",
+			"monitor argocd",
+			"telemetry"
+		],
+		"link": "/docs/cicd/argocd/argocd-metrics/"
+	},
+	{
+		"dataSource": "self-hosted-kafka",
+		"label": "Self-Hosted Kafka",
+		"imgUrl": "/Logos/kafka.svg",
+		"tags": [
+			"Messaging Queues"
+		],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"hosted",
+			"kafka",
+			"kafka integration",
+			"kafka observability",
+			"kafka open source",
+			"kafka setup",
+			"messaging",
+			"messaging queues",
+			"messaging-queues-kafka",
+			"queues",
+			"self",
+			"self hosted kafka",
+			"self-hosted kafka",
+			"self-hosted-kafka"
+		],
+		"link": "/docs/messaging-queues/kafka/"
+	},
+	{
+		"dataSource": "confluent-kafka",
+		"label": "Confluent Kafka",
+		"imgUrl": "/Logos/confluent-kafka.svg",
+		"tags": [
+			"Messaging Queues"
+		],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"confluent",
+			"confluent cloud",
+			"confluent kafka",
+			"confluent-kafka",
+			"kafka",
+			"kafka cloud",
+			"kafka monitoring",
+			"kafka tracing",
+			"messaging",
+			"messaging queues",
+			"messaging-queues-kafka",
+			"queues"
+		],
+		"link": "/docs/messaging-queues/confluent-kafka/"
+	},
+	{
+		"dataSource": "strimzi-kafka",
+		"label": "Strimzi Kafka",
+		"imgUrl": "/Logos/strimzi.svg",
+		"tags": [
+			"Messaging Queues"
+		],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+			"kafka",
+			"kafka helm chart",
+			"kafka on kubernetes",
+			"messaging",
+			"messaging queues",
+			"messaging-queues-kafka",
+			"monitor kafka strimzi",
+			"queues",
+			"strimzi",
+			"strimzi kafka",
+			"strimzi operator",
+			"strimzi-kafka"
+		],
+		"link": "/docs/messaging-queues/strimzi/"
+	},
+	{
+		"dataSource": "celery",
+		"label": "Celery",
+		"imgUrl": "/Logos/celery.svg",
+		"tags": [
+			"Messaging Queues"
+		],
+		"module": "messaging-queues-celery",
+		"relatedSearchKeywords": [
+			"celery",
+			"celery monitoring",
+			"celery opentelemetry",
+			"celery python",
+			"celery tracing",
+			"messaging",
+			"messaging queues",
+			"messaging-queues-celery",
+			"queues",
+			"task queue tracing"
+		],
+		"link": "/docs/messaging-queues/celery-setup/"
+	},
+	{
+		"dataSource": "android-java",
+		"label": "Android Java",
+		"imgUrl": "/Logos/android-java-monitoring.svg",
+		"tags": [
+			"mobile app monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"android",
+			"android app tracing",
+			"android java",
+			"android java instrumentation",
+			"android java monitoring",
+			"android java to signoz",
+			"android logs",
+			"android observability",
+			"android performance monitoring",
+			"android-java",
+			"apm",
+			"app",
+			"application performance monitoring",
+			"java",
+			"mobile",
+			"mobile app monitoring",
+			"monitor android apps",
+			"monitoring",
+			"observability",
+			"opentelemetry android java",
+			"otel android sdk",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
+	},
+	{
+		"dataSource": "android-kotlin",
+		"label": "Android Kotlin",
+		"imgUrl": "/Logos/android-kotlin-monitoring.svg",
+		"tags": [
+			"mobile app monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"android",
+			"android app performance kotlin",
+			"android kotlin",
+			"android kotlin monitoring",
+			"android kotlin to signoz",
+			"android observability kotlin",
+			"android telemetry sdk",
+			"android-kotlin",
+			"apm",
+			"app",
+			"application performance monitoring",
+			"kotlin",
+			"kotlin app logs",
+			"kotlin mobile tracing",
+			"mobile",
+			"mobile app monitoring",
+			"monitor kotlin apps",
+			"monitoring",
+			"observability",
+			"opentelemetry android kotlin",
+			"otel kotlin sdk",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
+	},
+	{
+		"dataSource": "flutter",
+		"label": "Flutter",
+		"imgUrl": "/Logos/flutter-monitoring.svg",
+		"tags": [
+			"mobile app monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"app",
+			"application performance monitoring",
+			"flutter",
+			"flutter app performance",
+			"flutter app tracing",
+			"flutter logs",
+			"flutter mobile monitoring",
+			"flutter monitoring",
+			"flutter observability",
+			"flutter performance metrics",
+			"flutter to signoz",
+			"mobile",
+			"mobile app monitoring",
+			"monitoring",
+			"observability",
+			"opentelemetry flutter",
+			"otel flutter sdk",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
+	},
+	{
+		"dataSource": "swift",
+		"label": "iOS Swift",
+		"imgUrl": "/Logos/swift-monitoring.svg",
+		"tags": [
+			"mobile app monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"app",
+			"application performance monitoring",
+			"ios",
+			"ios app observability",
+			"ios logs and metrics",
+			"ios performance tracking",
+			"ios swift",
+			"ios swift monitoring",
+			"mobile",
+			"mobile app monitoring",
+			"monitor ios apps",
+			"monitoring",
+			"observability",
+			"opentelemetry swiftui",
+			"otel swift sdk",
+			"swift",
+			"swift app tracing",
+			"swift to signoz",
+			"swiftui tracing",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
+	},
+	{
+		"dataSource": "frontend-web-vitals-metrics",
+		"label": "Web Vitals (Metrics)",
+		"imgUrl": "/Logos/metrics.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"core web vitals metrics",
+			"frontend metrics",
+			"frontend monitoring",
+			"frontend performance metrics",
+			"lcp fcp fid cls",
+			"measure page load performance",
+			"metrics",
+			"opentelemetry web vitals metrics",
+			"user experience metrics",
+			"web metrics",
+			"web vitals metrics",
+			"web vitals monitoring",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"sveltekit",
+			"nextjs"
+		],
+		"link": "/docs/frontend-monitoring/web-vitals-with-metrics/"
+	},
+	{
+		"dataSource": "frontend-web-vitals-traces",
+		"label": "Web Vitals (Traces)",
+		"imgUrl": "/Logos/traces.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"browser performance tracing",
+			"core web vitals traces",
+			"frontend monitoring",
+			"frontend observability",
+			"frontend tracing",
+			"lcp fcp fid cls traces",
+			"measure page load performance",
+			"opentelemetry web vitals traces",
+			"traces",
+			"tracing",
+			"user experience tracing",
+			"web tracing",
+			"web vitals traces",
+			"web vitals to signoz",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"sveltekit",
+			"nextjs"
+		],
+		"link": "/docs/frontend-monitoring/web-vitals-with-traces/"
+	},
+	{
+		"dataSource": "document-load",
+		"label": "Document Load",
+		"imgUrl": "/Logos/document-load.svg",
+		"tags": [
+			"Frontend Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"browser load performance",
+			"document",
+			"document load",
+			"document load time",
+			"document load to signoz",
+			"document load trace",
+			"document-load",
+			"dom content loaded metrics",
+			"frontend",
+			"frontend load monitoring",
+			"frontend monitoring",
+			"frontend telemetry",
+			"load",
+			"measure page load",
+			"monitoring",
+			"observability",
+			"opentelemetry page load",
+			"otel document load time",
+			"traces",
+			"tracing",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"sveltekit",
+			"nextjs"
+		],
+		"link": "/docs/frontend-monitoring/document-load/"
+	},
+	{
+		"dataSource": "redis",
+		"label": "Redis",
+		"tags": [
+			"database"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"database",
+			"integrations",
+			"redis",
+			"redis logs",
+			"redis metrics"
+		],
+		"imgUrl": "/Logos/redis.svg",
+		"link": "/integrations?integration=builtin-redis",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "postgresql",
+		"label": "PostgreSQL",
+		"tags": [
+			"database"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"database",
+			"integrations",
+			"postgresql",
+			"postgresql logs",
+			"postgresql metrics"
+		],
+		"imgUrl": "/Logos/postgresql.svg",
+		"link": "/integrations?integration=builtin-postgres",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "nginx",
+		"label": "Nginx",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"integrations",
+			"nginx",
+			"nginx logs",
+			"nginx metrics",
+			"proxy"
+		],
+		"imgUrl": "/Logos/nginx.svg",
+		"link": "/integrations?integration=builtin-nginx",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "mongo",
+		"label": "MongoDB (Self-Hosted)",
+		"tags": [
+			"database"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"database",
+			"hosted",
+			"integrations",
+			"mongo",
+			"mongo logs",
+			"mongo metrics",
+			"mongodb",
+			"mongodb (self-hosted)",
+			"nosql database",
+			"self"
+		],
+		"imgUrl": "/Logos/mongo.svg",
+		"link": "/integrations?integration=builtin-mongo",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "clickhouse",
+		"label": "ClickHouse",
+		"tags": [
+			"database"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"clickhouse",
+			"clickhouse logs",
+			"clickhouse metrics",
+			"columnar database",
+			"database",
+			"integrations",
+			"olap database"
+		],
+		"imgUrl": "/Logos/clickhouse.svg",
+		"link": "/integrations?integration=builtin-clickhouse",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "snowflake",
+		"label": "Snowflake",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"data warehouse monitoring",
+			"integrations",
+			"metrics",
+			"snowflake",
+			"snowflake metrics",
+			"snowflake monitoring",
+			"snowflake observability",
+			"snowflake performance monitoring",
+			"snowflake telemetry",
+			"snowflake to signoz",
+			"telemetry"
+		],
+		"imgUrl": "/Logos/snowflake.svg",
+		"link": "/docs/integrations/snowflake/"
+	},
+	{
+		"dataSource": "aws-alb",
+		"label": "AWS ALB",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"alb",
+			"amazon",
+			"amazon alb",
+			"aws",
+			"aws alb",
+			"aws-alb",
+			"balancer",
+			"elastic load balancer",
+			"load",
+			"load balancer"
+		],
+		"imgUrl": "/Logos/aws-alb.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS ALB monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-alb-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/aws-alb.svg",
+					"link": "/integrations?integration=aws-integration&service=alb",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-alb-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/aws-alb.svg",
+					"link": "/docs/aws-monitoring/alb/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-api-gateway",
+		"label": "AWS API Gateway",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon api gateway",
+			"api",
+			"api gateway",
+			"api-gateway",
+			"aws",
+			"aws api gateway",
+			"gateway"
+		],
+		"imgUrl": "/Logos/api-gateway.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS API Gateway monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-api-gateway-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/api-gateway.svg",
+					"link": "/integrations?integration=aws-integration&service=api-gateway",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-api-gateway-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/api-gateway.svg",
+					"link": "/docs/aws-monitoring/api-gateway/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-dynamodb",
+		"label": "AWS DynamoDB",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon dynamo db",
+			"amazon dynamodb",
+			"aws",
+			"aws dynamo db",
+			"aws dynamodb",
+			"aws-dynamodb",
+			"database",
+			"dynamo",
+			"dynamo db",
+			"dynamodb",
+			"nosql"
+		],
+		"imgUrl": "/Logos/dynamodb.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS DynamoDB monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-dynamodb-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/dynamodb.svg",
+					"link": "/integrations?integration=aws-integration&service=dynamodb",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-dynamodb-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/dynamodb.svg",
+					"link": "/docs/aws-monitoring/dynamodb/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-elasticache",
+		"label": "AWS ElastiCache",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon elasticache",
+			"aws",
+			"aws elasticache",
+			"aws-elasticache",
+			"cache",
+			"elasticache",
+			"elasticache - one click",
+			"elasticache logs",
+			"elasticache metrics",
+			"elasticache monitoring",
+			"integrations",
+			"one click",
+			"redis"
+		],
+		"imgUrl": "/Logos/elasticache.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS ElastiCache monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-elasticache-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/elasticache.svg",
+					"link": "/integrations?integration=aws-integration&service=elasticache",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-elasticache-redis-manual",
+					"label": "Redis Manual",
+					"imgUrl": "/Logos/elasticache.svg",
+					"link": "/integrations?integration=builtin-aws_elasticache_redis",
+					"internalRedirect": true
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-msk",
+		"label": "AWS MSK",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon msk",
+			"amazon msk - one click",
+			"amazon-msk",
+			"aws",
+			"aws msk",
+			"click",
+			"integrations",
+			"msk",
+			"msk logs",
+			"msk metrics",
+			"one"
+		],
+		"imgUrl": "/Logos/amazon-msk.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS MSK monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-msk-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/amazon-msk.svg",
+					"link": "/integrations?integration=aws-integration&service=msk",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-msk-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/amazon-msk.svg",
+					"link": "/docs/messaging-queues/msk/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-s3-sync",
+		"label": "AWS S3",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon s3",
+			"aws",
+			"aws s3",
+			"aws-s3-sync",
+			"bucket",
+			"object storage",
+			"s3",
+			"simple storage service",
+			"storage"
+		],
+		"imgUrl": "/Logos/s3.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS S3 monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-s3-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/s3.svg",
+					"link": "/integrations?integration=aws-integration&service=s3sync",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-s3-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/s3.svg",
+					"link": "/docs/aws-monitoring/s3/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-sns",
+		"label": "AWS SNS",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon sns",
+			"aws",
+			"aws sns",
+			"aws-sns",
+			"messaging",
+			"notification",
+			"simple notification service",
+			"sns"
+		],
+		"imgUrl": "/Logos/sns.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS SNS monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-sns-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/sns.svg",
+					"link": "/integrations?integration=aws-integration&service=sns",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-sns-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/sns.svg",
+					"link": "/docs/aws-monitoring/sns/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "aws-sqs",
+		"label": "AWS SQS",
+		"tags": [
+			"AWS"
+		],
+		"module": "dashboards",
+		"relatedSearchKeywords": [
+			"amazon",
+			"amazon sqs",
+			"aws",
+			"aws sqs",
+			"aws-sqs",
+			"messaging",
+			"queue",
+			"simple queue service",
+			"sqs"
+		],
+		"imgUrl": "/Logos/sqs.svg",
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS SQS monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-sqs-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/sqs.svg",
+					"link": "/integrations?integration=aws-integration&service=sqs",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-sqs-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/sqs.svg",
+					"link": "/docs/aws-monitoring/sqs/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "temporal",
+		"label": "Temporal",
+		"imgUrl": "/Logos/temporal.svg",
+		"tags": [
+			"apm/traces"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"integrations",
+			"temporal",
+			"temporal cloud",
+			"temporal logs",
+			"temporal metrics",
+			"temporal traces",
+			"traces",
+			"tracing"
+		],
+		"question": {
+			"desc": "What are you using ?",
+			"type": "select",
+			"options": [
+				{
+					"key": "temporal-cloud",
+					"label": "Cloud Metrics",
+					"imgUrl": "/Logos/temporal.svg",
+					"link": "/docs/integrations/temporal-cloud-metrics/"
+				},
+				{
+					"key": "temporal-golang",
+					"label": "Go",
+					"imgUrl": "/Logos/go.svg",
+					"link": "/docs/integrations/temporal-golang-opentelemetry/"
+				},
+				{
+					"key": "temporal-typescript",
+					"label": "TypeScript",
+					"imgUrl": "/Logos/javascript.svg",
+					"link": "/docs/integrations/temporal-typescript-opentelemetry/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "microsoft-sql-server",
+		"label": "Microsoft SQL Server",
+		"imgUrl": "/Logos/microsoft-sql-server.svg",
+		"tags": [
+			"database"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"integrations",
+			"logging",
+			"logs",
+			"metrics",
+			"microsoft",
+			"microsoft sql server",
+			"microsoft-sql-server",
+			"mssql monitoring",
+			"server",
+			"sql",
+			"sql server logs",
+			"sql server metrics",
+			"sql server observability",
+			"sql server performance",
+			"telemetry"
+		],
+		"id": "microsoft-sql-server",
+		"link": "/docs/integrations/sql-server/"
+	},
+	{
+		"dataSource": "supabase",
+		"label": "Supabase",
+		"imgUrl": "/Logos/supabase.svg",
+		"tags": [
+			"database"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"integrations",
+			"metrics",
+			"supabase",
+			"supabase metrics",
+			"supabase monitoring",
+			"supabase observability",
+			"supabase performance",
+			"telemetry"
+		],
+		"id": "supabase",
+		"link": "/docs/integrations/supabase/"
+	},
+	{
+		"dataSource": "nomad",
+		"label": "Nomad",
+		"imgUrl": "/Logos/nomad.svg",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"integrations",
+			"metrics",
+			"nomad",
+			"nomad metrics",
+			"nomad monitoring",
+			"nomad observability",
+			"nomad performance",
+			"telemetry"
+		],
+		"id": "nomad",
+		"link": "/docs/integrations/nomad/"
+	},
+	{
+		"dataSource": "traefik",
+		"label": "Traefik",
+		"imgUrl": "/Logos/opentelemetry.svg",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "infrastructure",
+		"relatedSearchKeywords": [
+			"infrastructure",
+			"traefik",
+			"traefik metrics",
+			"traefik monitoring",
+			"traefik observability",
+			"traefik tracing"
+		],
+		"link": "/docs/tutorial/traefik-observability/"
+	},
+	{
+		"dataSource": "mongodb-atlas",
+		"label": "MongoDB (Atlas)",
+		"imgUrl": "/Logos/mongo.svg",
+		"tags": [
+			"database"
+		],
+		"module": "database",
+		"relatedSearchKeywords": [
+			"atlas",
+			"atlas metrics",
+			"atlas monitoring",
+			"database",
+			"mongodb",
+			"mongodb (atlas)",
+			"mongodb atlas",
+			"mongodb cloud",
+			"mongodb-atlas"
+		],
+		"link": "/docs/integrations/mongodb-atlas/"
+	},
+	{
+		"dataSource": "mysql",
+		"label": "MySQL",
+		"imgUrl": "/Logos/opentelemetry.svg",
+		"tags": [
+			"database"
+		],
+		"module": "database",
+		"relatedSearchKeywords": [
+			"database",
+			"mysql",
+			"mysql metrics",
+			"mysql monitoring",
+			"mysql observability"
+		],
+		"link": "/docs/metrics-management/mysql-metrics/"
+	},
+	{
+		"dataSource": "jvm",
+		"label": "JVM",
+		"imgUrl": "/Logos/java.svg",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"java virtual machine",
+			"jvm",
+			"jvm metrics",
+			"jvm monitoring",
+			"runtime"
+		],
+		"link": "/docs/tutorial/jvm-metrics/"
+	},
+	{
+		"dataSource": "jmx",
+		"label": "JMX",
+		"imgUrl": "/Logos/java.svg",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"java management extensions",
+			"jmx",
+			"jmx metrics",
+			"jmx monitoring",
+			"runtime"
+		],
+		"link": "/docs/tutorial/jmx-metrics/"
+	},
+	{
+		"dataSource": "prometheus-metrics",
+		"label": "Prometheus Metrics",
+		"imgUrl": "/Logos/other-metrics.svg",
+		"tags": [
+			"metrics",
+			"infrastructure monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"infrastructure",
+			"metrics",
+			"prometheus",
+			"prometheus metrics",
+			"prometheus receiver",
+			"prometheus-metrics",
+			"scrape prometheus",
+			"telemetry"
+		],
+		"link": "/docs/userguide/prometheus-metrics/"
+	},
+	{
+		"dataSource": "otel-receivers",
+		"label": "OTel Receivers",
+		"imgUrl": "/Logos/opentelemetry.svg",
+		"tags": [
+			"metrics",
+			"infrastructure monitoring"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"infrastructure",
+			"infrastructure metrics",
+			"metrics",
+			"metrics receivers",
+			"opentelemetry",
+			"opentelemetry receivers",
+			"otel",
+			"otel receivers",
+			"otel-receivers",
+			"receivers",
+			"telemetry"
+		],
+		"link": "/docs/userguide/otel-metrics-receivers/"
+	},
+	{
+		"dataSource": "semantic-kernel",
+		"label": "Semantic Kernel",
+		"imgUrl": "/Logos/dotnet.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"semantic kernel",
+			"semantic kernel debugging",
+			"semantic kernel error tracking",
+			"semantic kernel latency tracing",
+			"semantic kernel logs",
+			"semantic kernel metrics",
+			"semantic kernel monitoring",
+			"semantic kernel observability",
+			"semantic kernel performance tracking",
+			"semantic kernel response time",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel semantic kernel integration",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/semantic-kernel-observability"
+	},
+	{
+		"dataSource": "inkeep",
+		"label": "Inkeep",
+		"imgUrl": "/Logos/inkeep.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"inkeep",
+			"inkeep monitoring",
+			"inkeep observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/inkeep-monitoring/"
+	},
+	{
+		"dataSource": "agno",
+		"label": "Agno",
+		"imgUrl": "/Logos/agno.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"agno",
+			"agno monitoring",
+			"agentic ai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/agno-monitoring/"
+	},
+	{
+		"dataSource": "pipecat",
+		"label": "Pipecat",
+		"imgUrl": "/Logos/pipecat.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"pipecat",
+			"pipecat monitoring",
+			"real-time ai",
+			"voice ai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/pipecat-monitoring/"
+	},
+	{
+		"dataSource": "livekit",
+		"label": "Livekit",
+		"imgUrl": "/Logos/livekit.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"livekit",
+			"livekit observability",
+			"real-time video",
+			"webrtc",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/livekit-observability/"
+	},
+	{
+		"dataSource": "temporal-llm",
+		"label": "Temporal LLM",
+		"imgUrl": "/Logos/temporal.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"temporal",
+			"temporal llm",
+			"temporal observability",
+			"workflow",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/temporal-observability/"
+	},
+	{
+		"dataSource": "grok",
+		"label": "Grok",
+		"imgUrl": "/Logos/grok.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"grok",
+			"grok monitoring",
+			"xai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/grok-monitoring/"
+	},
+	{
+		"dataSource": "frontend-logs",
+		"label": "Frontend Logs",
+		"imgUrl": "/Logos/logs.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"browser logs",
+			"collect frontend logs",
+			"frontend",
+			"frontend logging",
+			"frontend logs",
+			"frontend monitoring",
+			"frontend observability",
+			"javascript logs",
+			"js logs",
+			"opentelemetry frontend logs",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"sveltekit",
+			"nextjs"
+		],
+		"link": "/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
+	},
+	{
+		"dataSource": "frontend-traces",
+		"label": "Frontend Traces",
+		"imgUrl": "/Logos/traces.svg",
+		"tags": [
+			"Frontend Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"browser traces",
+			"collect frontend traces",
+			"frontend",
+			"frontend monitoring",
+			"frontend observability",
+			"frontend telemetry",
+			"frontend tracing",
+			"javascript tracing",
+			"js tracing",
+			"opentelemetry frontend traces",
+			"spa tracing",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"sveltekit",
+			"nextjs"
+		],
+		"link": "/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
+	},
+	{
+		"dataSource": "frontend-metrics",
+		"label": "Frontend Metrics",
+		"imgUrl": "/Logos/metrics.svg",
+		"tags": [
+			"Frontend Monitoring",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"browser metrics",
+			"collect frontend metrics",
+			"frontend",
+			"frontend metrics",
+			"frontend monitoring",
+			"frontend observability",
+			"frontend performance metrics",
+			"javascript metrics",
+			"js metrics",
+			"opentelemetry frontend metrics",
+			"react",
+			"angular",
+			"vuejs",
+			"nuxtjs",
+			"svelte",
+			"sveltekit",
+			"nextjs"
+		],
+		"link": "/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"
+	},
+	{
+		"dataSource": "fly-io",
+		"label": "Fly.io",
+		"imgUrl": "/Logos/fly-io.svg",
+		"tags": [
+			"infrastructure monitoring",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"fly.io",
+			"fly",
+			"metrics",
+			"infrastructure",
+			"cloud",
+			"monitoring"
+		],
+		"link": "/docs/metrics-management/fly-metrics/"
+	},
+	{
+		"dataSource": "envoy",
+		"label": "Envoy",
+		"imgUrl": "/Logos/envoy.svg",
+		"tags": [
+			"infrastructure monitoring",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"envoy",
+			"proxy",
+			"metrics",
+			"infrastructure",
+			"service mesh",
+			"monitoring"
+		],
+		"link": "/docs/userguide/envoy-metrics/"
+	},
+	{
+		"dataSource": "golang-metrics",
+		"label": "Golang Metrics",
+		"imgUrl": "/Logos/go.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"go",
+			"go metrics",
+			"go monitoring",
+			"go observability",
+			"go opentelemetry",
+			"golang",
+			"golang metrics",
+			"golang monitoring",
+			"golang observability",
+			"golang opentelemetry",
+			"metrics",
+			"opentelemetry go",
+			"otel go",
+			"runtime metrics"
+		],
+		"id": "golang-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/golang/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				}
+			]
+		}
+	}
+]

@@ -7,22 +7,23 @@ export const filterAlerts = (
 	allAlertRules: GettableAlert[],
 	filter: string,
 ): GettableAlert[] => {
-	const value = filter.toLowerCase();
+	if (!filter.trim()) return allAlertRules;
+
+	const value = filter.trim().toLowerCase();
 	return allAlertRules.filter((alert) => {
-		const alertName = alert.alert.toLowerCase();
-		const severity = alert.labels?.severity.toLowerCase();
-		const labels = Object.keys(alert.labels || {})
-			.filter((e) => e !== 'severity')
+		const alertName = alert.alert?.toLowerCase();
+		const severity = alert.labels?.severity?.toLowerCase();
+
+		// Create a string of all label keys and values for searching
+		const labelSearchString = Object.entries(alert.labels || {})
+			.map(([key, val]) => `${key} ${val}`)
 			.join(' ')
 			.toLowerCase();
 
-		const labelValue = Object.values(alert.labels || {});
-
 		return (
-			alertName.includes(value) ||
+			alertName?.includes(value) ||
 			severity?.includes(value) ||
-			labels.includes(value) ||
-			labelValue.includes(value)
+			labelSearchString.includes(value)
 		);
 	});
 };

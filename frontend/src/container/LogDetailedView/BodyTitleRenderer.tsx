@@ -1,8 +1,15 @@
 import { orange } from '@ant-design/colors';
 import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	negateOperator,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useNotifications } from 'hooks/useNotifications';
+import { useCallback } from 'react';
+import { useCopyToClipboard } from 'react-use';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { DROPDOWN_KEY } from './constant';
@@ -20,6 +27,8 @@ function BodyTitleRenderer({
 	value,
 }: BodyTitleRendererProps): JSX.Element {
 	const { onAddToQuery } = useActiveLog();
+	const [, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	const filterHandler = (isFilterIn: boolean) => (): void => {
 		if (parentIsArray) {
@@ -29,8 +38,9 @@ function BodyTitleRenderer({
 					getDataTypes(value),
 				),
 				`${value}`,
-				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
-				true,
+				isFilterIn
+					? QUERY_BUILDER_FUNCTIONS.HAS
+					: negateOperator(QUERY_BUILDER_FUNCTIONS.HAS),
 				parentIsArray ? getDataTypes([value]) : getDataTypes(value),
 			);
 		} else {
@@ -38,7 +48,6 @@ function BodyTitleRenderer({
 				`body.${removeObjectFromString(nodeKey)}`,
 				`${value}`,
 				isFilterIn ? OPERATORS['='] : OPERATORS['!='],
-				true,
 				getDataTypes(value),
 			);
 		}
@@ -71,13 +80,53 @@ function BodyTitleRenderer({
 		onClick: onClickHandler,
 	};
 
+	const handleNodeClick = useCallback(
+		(e: React.MouseEvent): void => {
+			// Prevent tree node expansion/collapse
+			e.stopPropagation();
+			const cleanedKey = removeObjectFromString(nodeKey);
+			let copyText: string;
+
+			// Check if value is an object or array
+			const isObject = typeof value === 'object' && value !== null;
+
+			if (isObject) {
+				// For objects/arrays, stringify the entire structure
+				copyText = JSON.stringify(value, null, 2);
+			} else if (parentIsArray) {
+				// array elements
+				copyText = `${value}`;
+			} else {
+				// primitive values
+				const valueStr = typeof value === 'string' ? value : String(value);
+				copyText = valueStr;
+			}
+
+			setCopy(copyText);
+
+			if (copyText) {
+				const notificationMessage = isObject
+					? `${cleanedKey} object copied to clipboard`
+					: `${cleanedKey} copied to clipboard`;
+
+				notifications.success({
+					message: notificationMessage,
+					key: notificationMessage,
+				});
+			}
+		},
+		[nodeKey, parentIsArray, setCopy, value, notifications],
+	);
+
 	return (
-		<TitleWrapper>
-			<Dropdown menu={menu} trigger={['click']}>
-				<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
-			</Dropdown>
+		<TitleWrapper onClick={handleNodeClick}>
+			{typeof value !== 'object' && (
+				<Dropdown menu={menu} trigger={['click']}>
+					<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
+				</Dropdown>
+			)}
 			{title.toString()}{' '}
-			{!parentIsArray && (
+			{!parentIsArray && typeof value !== 'object' && (
 				<span>
 					: <span style={{ color: orange[6] }}>{`${value}`}</span>
 				</span>

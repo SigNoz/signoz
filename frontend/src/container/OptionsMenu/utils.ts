@@ -1,13 +1,13 @@
 import { SelectProps } from 'antd';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from 'api/v5/v5';
 
 export const getOptionsFromKeys = (
-	keys: BaseAutocompleteData[],
+	keys: TelemetryFieldKey[],
 	selectedKeys: (string | undefined)[],
 ): SelectProps['options'] => {
-	const options = keys.map(({ id, key }) => ({
-		label: key,
-		value: id,
+	const options = keys.map(({ name }) => ({
+		label: name,
+		value: name,
 	}));
 
 	return options.filter(

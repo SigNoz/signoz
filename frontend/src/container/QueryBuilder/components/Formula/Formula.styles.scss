@@ -2,3 +2,10 @@
 	padding: 0 24px;
 	width: 100%;
 }
+
+.formula-qbv2-container {
+	display: grid;
+	grid-template-columns: 60% 35%;
+	justify-content: space-between;
+	gap: 16px;
+}

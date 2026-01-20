@@ -1,6 +1,6 @@
 import { AutoComplete, Input, Typography } from 'antd';
 import { find } from 'lodash-es';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import { flattenedCategories } from './dataFormatCategories';
 
@@ -14,23 +14,57 @@ const findCategoryByName = (
 	find(flattenedCategories, (option) => option.name === searchValue);
 
 type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
+
+/**
+ * @deprecated Use DashboardYAxisUnitSelectorWrapper instead.
+ */
 function YAxisUnitSelector({
-	defaultValue,
+	value,
 	onSelect,
 	fieldLabel,
 	handleClear,
 }: {
-	defaultValue: string;
+	value: string;
 	onSelect: OnSelectType;
 	fieldLabel: string;
 	handleClear?: () => void;
 }): JSX.Element {
+	const [inputValue, setInputValue] = useState('');
+
+	// Sync input value with the actual value prop
+	useEffect(() => {
+		const category = findCategoryById(value);
+		setInputValue(category?.name || '');
+	}, [value]);
+
 	const onSelectHandler = (selectedValue: string): void => {
-		onSelect(findCategoryByName(selectedValue)?.id || '');
+		const category = findCategoryByName(selectedValue);
+		if (category) {
+			onSelect(category.id);
+			setInputValue(selectedValue);
+		}
 	};
+
+	const onChangeHandler = (inputValue: string): void => {
+		setInputValue(inputValue);
+		// Clear the yAxisUnit if input is empty or doesn't match any option
+		if (!inputValue) {
+			onSelect('');
+		}
+	};
+
+	const onClearHandler = (): void => {
+		setInputValue('');
+		onSelect('');
+		if (handleClear) {
+			handleClear();
+		}
+	};
+
 	const options = flattenedCategories.map((options) => ({
 		value: options.name,
 	}));
+
 	return (
 		<div className="y-axis-unit-selector">
 			<Typography.Text className="heading">{fieldLabel}</Typography.Text>
@@ -39,8 +73,9 @@ function YAxisUnitSelector({
 				rootClassName="y-axis-root-popover"
 				options={options}
 				allowClear
-				defaultValue={findCategoryById(defaultValue)?.name}
-				onClear={handleClear}
+				value={inputValue}
+				onChange={onChangeHandler}
+				onClear={onClearHandler}
 				onSelect={onSelectHandler}
 				filterOption={(inputValue, option): boolean => {
 					if (option) {

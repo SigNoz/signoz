@@ -1,0 +1,116 @@
+name: build-enterprise
+
+on:
+  push:
+    tags:
+      - v*
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PRIMUS_HOME: .primus
+  MAKE: make --no-print-directory --makefile=.primus/src/make/main.mk
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_providers: ${{ steps.set-docker-providers.outputs.providers }}
+      version: ${{ steps.build-info.outputs.version }}
+      hash: ${{ steps.build-info.outputs.hash }}
+      time: ${{ steps.build-info.outputs.time }}
+      branch: ${{ steps.build-info.outputs.branch }}
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - id: token
+        name: github-token-gen
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PRIMUS_APP_ID }}
+          private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: primus-checkout
+        uses: actions/checkout@v4
+        with:
+          repository: signoz/primus
+          ref: main
+          path: .primus
+          token: ${{ steps.token.outputs.token }}
+      - name: build-info
+        id: build-info
+        run: |
+          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
+          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
+          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
+          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
+      - name: set-docker-providers
+        id: set-docker-providers
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ || ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+            echo "providers=dockerhub gcp" >> $GITHUB_OUTPUT
+          else
+            echo "providers=gcp" >> $GITHUB_OUTPUT
+          fi
+      - name: create-dotenv
+        run: |
+          mkdir -p frontend
+          echo 'CI=1' > frontend/.env
+          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' >> frontend/.env
+          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
+          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
+          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
+          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
+          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
+          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
+          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
+          echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> frontend/.env
+          echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> frontend/.env
+          echo 'PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> frontend/.env
+      - name: cache-dotenv
+        uses: actions/cache@v4
+        with:
+          path: frontend/.env
+          key: enterprise-dotenv-${{ github.sha }}
+  js-build:
+    uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
+    needs: prepare
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      JS_SRC: frontend
+      JS_INPUT_ARTIFACT_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
+      JS_INPUT_ARTIFACT_PATH: frontend/.env
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      DOCKER_BUILD: false
+      DOCKER_MANIFEST: false
+  go-build:
+    uses: signoz/primus.workflows/.github/workflows/go-build.yaml@main
+    needs: [prepare, js-build]
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      GO_VERSION: 1.24
+      GO_INPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_PATH: frontend/build
+      GO_BUILD_CONTEXT: ./cmd/enterprise
+      GO_BUILD_FLAGS: >-
+        -tags timetzdata
+        -ldflags='-s -w
+        -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
+        -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
+        -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
+        -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
+        -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
+        -X github.com/SigNoz/signoz/ee/zeus.url=https://api.signoz.cloud
+        -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.signoz.io
+        -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1
+        -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
+      DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
+      DOCKER_DOCKERFILE_PATH: ./cmd/enterprise/Dockerfile.multi-arch
+      DOCKER_MANIFEST: true
+      DOCKER_PROVIDERS: ${{ needs.prepare.outputs.docker_providers }}

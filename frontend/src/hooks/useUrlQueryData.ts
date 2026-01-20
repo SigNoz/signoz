@@ -1,22 +1,30 @@
 import { useCallback, useMemo } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
+import { useSafeNavigate } from './useSafeNavigate';
 import useUrlQuery from './useUrlQuery';
 
 const useUrlQueryData = <T>(
 	queryKey: string,
 	defaultData?: T,
 ): UseUrlQueryData<T> => {
-	const history = useHistory();
 	const location = useLocation();
 	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
 	const query = useMemo(() => urlQuery.get(queryKey), [urlQuery, queryKey]);
 
-	const queryData: T = useMemo(() => (query ? JSON.parse(query) : defaultData), [
-		query,
-		defaultData,
-	]);
+	const queryData: T = useMemo(() => {
+		if (query) {
+			try {
+				return JSON.parse(query);
+			} catch (e) {
+				console.warn('Failed to parse query as JSON:', query, e);
+				return defaultData;
+			}
+		}
+		return defaultData;
+	}, [query, defaultData]);
 
 	const redirectWithQuery = useCallback(
 		(newQueryData: T): void => {
@@ -32,9 +40,9 @@ const useUrlQueryData = <T>(
 			// Construct the new URL by combining the current pathname with the updated query string
 			const generatedUrl = `${location.pathname}?${currentUrlQuery.toString()}`;
 
-			history.replace(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[history, location.pathname, queryKey],
+		[location.pathname, queryKey, safeNavigate],
 	);
 
 	return {

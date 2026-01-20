@@ -2,57 +2,92 @@ import './ColumnUnitSelector.styles.scss';
 
 import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Dispatch, SetStateAction } from 'react';
+import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
+import { isEmpty } from 'lodash-es';
+import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
-import { EQueryType } from 'types/common/dashboard';
 
-import YAxisUnitSelector from '../YAxisUnitSelector';
+import YAxisUnitSelectorV2 from '../DashboardYAxisUnitSelectorWrapper';
 
 interface ColumnUnitSelectorProps {
 	columnUnits: ColumnUnit;
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
+	isNewDashboard: boolean;
 }
 
 export function ColumnUnitSelector(
 	props: ColumnUnitSelectorProps,
 ): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
+	const { columnUnits, setColumnUnits, isNewDashboard } = props;
 
-	function getAggregateColumnsNamesAndLabels(): string[] {
-		if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-			const queries = currentQuery.builder.queryData.map((q) => q.queryName);
-			const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
-			return [...queries, ...formulas];
+	const aggregationQueries = useGetQueryLabels(currentQuery);
+
+	const handleColumnUnitSelect = useCallback(
+		(queryName: string, value: string): void => {
+			setColumnUnits((prev) => ({
+				...prev,
+				[queryName]: value,
+			}));
+		},
+		[setColumnUnits],
+	);
+
+	const getValues = (value: string): string => {
+		const currentValue = columnUnits[value];
+		if (currentValue) {
+			return currentValue;
 		}
-		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
-			return currentQuery.clickhouse_sql.map((q) => q.name);
+
+		// if base query has value, return it
+		const baseQuery = value.split('.')[0];
+
+		if (columnUnits[baseQuery]) {
+			return columnUnits[baseQuery];
 		}
-		return currentQuery.promql.map((q) => q.name);
-	}
 
-	const { columnUnits, setColumnUnits } = props;
-	const aggregationQueries = getAggregateColumnsNamesAndLabels();
+		// if we have value as base query i.e. value = B, but the columnUnit have let say B.count(): 'h' then we need to return B.count()
+		// get the queryName B.count() from the columnUnits keys based on the B that we have (first match - 0th aggregationIndex)
+		const newQueryWithExpression = Object.keys(columnUnits).find(
+			(key) =>
+				key.startsWith(baseQuery) &&
+				!isEmpty(aggregationQueries.find((query) => query.value === key)),
+		);
+		if (newQueryWithExpression) {
+			return columnUnits[newQueryWithExpression];
+		}
 
-	function handleColumnUnitSelect(queryName: string, value: string): void {
-		setColumnUnits((prev) => ({
-			...prev,
-			[queryName]: value,
-		}));
-	}
+		return '';
+	};
+
+	useEffect(() => {
+		const newColumnUnits = aggregationQueries.reduce((acc, query) => {
+			acc[query.value] = getValues(query.value);
+			return acc;
+		}, {} as Record<string, string>);
+		setColumnUnits(newColumnUnits);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [aggregationQueries]);
+
 	return (
 		<section className="column-unit-selector">
 			<Typography.Text className="heading">Column Units</Typography.Text>
-			{aggregationQueries.map((query) => (
-				<YAxisUnitSelector
-					defaultValue={columnUnits[query]}
-					onSelect={(value: string): void => handleColumnUnitSelect(query, value)}
-					fieldLabel={query}
-					key={query}
-					handleClear={(): void => {
-						handleColumnUnitSelect(query, '');
-					}}
-				/>
-			))}
+			{aggregationQueries.map(({ value, label }) => {
+				const baseQueryName = value.split('.')[0];
+				return (
+					<YAxisUnitSelectorV2
+						value={columnUnits[value] || ''}
+						onSelect={(unitValue: string): void =>
+							handleColumnUnitSelect(value, unitValue)
+						}
+						fieldLabel={label}
+						key={value}
+						selectedQueryName={baseQueryName}
+						// Update the column unit value automatically only in create mode
+						shouldUpdateYAxisUnit={isNewDashboard}
+					/>
+				);
+			})}
 		</section>
 	);
 }

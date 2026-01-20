@@ -1,23 +1,29 @@
-import getFeaturesFlags from 'api/features/getFeatureFlags';
+import list from 'api/v1/features/list';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
 import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 
-const useGetFeatureFlag = (
+export interface Props {
+	onSuccessHandler: (routes: FeatureFlagProps[]) => void;
+	isLoggedIn: boolean;
+}
+type UseGetFeatureFlag = UseQueryResult<
+	SuccessResponseV2<FeatureFlagProps[]>,
+	APIError
+>;
+
+export const useGetFeatureFlag = (
 	onSuccessHandler: (routes: FeatureFlagProps[]) => void,
-): UseQueryResult<FeatureFlagProps[], unknown> => {
-	const userId: string = useSelector<AppState, string>(
-		(state) => state.app.user?.userId || '',
-	);
-
-	return useQuery<FeatureFlagProps[]>({
-		queryFn: getFeaturesFlags,
-		queryKey: [REACT_QUERY_KEY.GET_FEATURES_FLAGS, userId],
-		onSuccess: onSuccessHandler,
+	isLoggedIn: boolean,
+): UseGetFeatureFlag =>
+	useQuery<SuccessResponseV2<FeatureFlagProps[]>, APIError>({
+		queryKey: [REACT_QUERY_KEY.GET_FEATURES_FLAGS],
+		queryFn: () => list(),
+		onSuccess: (data) => {
+			onSuccessHandler(data.data);
+		},
 		retryOnMount: false,
+		enabled: !!isLoggedIn,
 	});
-};
-
-export default useGetFeatureFlag;

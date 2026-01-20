@@ -2,19 +2,23 @@ package inframetrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -37,15 +41,15 @@ var (
 		"mode",
 		"mountpoint",
 		"type",
-		"os_type",
-		"process_cgroup",
-		"process_command",
-		"process_command_line",
-		"process_executable_name",
-		"process_executable_path",
-		"process_owner",
-		"process_parent_pid",
-		"process_pid",
+		GetDotMetrics("os_type"),
+		GetDotMetrics("process_cgroup"),
+		GetDotMetrics("process_command"),
+		GetDotMetrics("process_command_line"),
+		GetDotMetrics("process_executable_name"),
+		GetDotMetrics("process_executable_path"),
+		GetDotMetrics("process_owner"),
+		GetDotMetrics("process_parent_pid"),
+		GetDotMetrics("process_pid"),
 	}
 
 	queryNamesForTopHosts = map[string][]string{
@@ -56,17 +60,17 @@ var (
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
-	metricToUseForHostAttributes = "system_cpu_load_average_15m"
-	hostNameAttrKey              = "host_name"
+	metricToUseForHostAttributes = GetDotMetrics("system_cpu_load_average_15m")
+	hostNameAttrKey              = GetDotMetrics("host_name")
 	agentNameToIgnore            = "k8s-infra-otel-agent"
 	hostAttrsToEnrich            = []string{
-		"os_type",
+		GetDotMetrics("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"cpu":    "system_cpu_time",
-		"memory": "system_memory_usage",
-		"load15": "system_cpu_load_average_15m",
-		"wait":   "system_cpu_time",
+		"cpu":    GetDotMetrics("system_cpu_time"),
+		"memory": GetDotMetrics("system_memory_usage"),
+		"load15": GetDotMetrics("system_cpu_load_average_15m"),
+		"wait":   GetDotMetrics("system_cpu_time"),
 	}
 )
 
@@ -126,7 +130,7 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	return &v3.FilterAttributeValueResponse{StringAttributeValues: hostNames}, nil
 }
 
-func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListRequest) (map[string]bool, error) {
+func (h *HostsRepo) getActiveHosts(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (map[string]bool, error) {
 	activeStatus := map[string]bool{}
 	step := common.MinAllowedStepInterval(req.Start, req.End)
 
@@ -169,7 +173,7 @@ func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListReques
 		},
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, &params)
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +249,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 	return hostAttrs, nil
 }
 
-func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req model.HostListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopHosts(req)
 
 	queryNames := queryNamesForTopHosts[req.OrderBy.ColumnName]
@@ -273,7 +277,7 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequ
 		topHostGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, topHostGroupsQueryRangeParams)
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, topHostGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -332,26 +336,57 @@ func (h *HostsRepo) DidSendHostMetricsData(ctx context.Context, req model.HostLi
 	return count > 0, nil
 }
 
-func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) (bool, error) {
+func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) ([]string, []string, error) {
 	names := []string{}
 	for _, metricName := range metricNamesForHosts {
 		names = append(names, metricName)
 	}
 	namesStr := "'" + strings.Join(names, "','") + "'"
 
+	queryForRecentFingerprints := fmt.Sprintf(`
+	SELECT DISTINCT fingerprint
+	FROM %s.%s
+	WHERE metric_name IN (%s)
+		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 5 MINUTE) * 1000`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_SAMPLES_V4_TABLENAME, namesStr)
+
 	query := fmt.Sprintf(`
-	SELECT count()
+	SELECT DISTINCT JSONExtractString(labels, '%s') as k8s_cluster_name, JSONExtractString(labels, '%s') as k8s_node_name
 	FROM %s.%s
 	WHERE metric_name IN (%s)
 		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000
-		AND JSONExtractString(labels, 'host_name') LIKE '%%-otel-agent%%'`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr)
+		AND JSONExtractString(labels, '%s') LIKE '%%-otel-agent%%'
+		AND fingerprint GLOBAL IN (%s)`,
+		GetDotMetrics("k8s_cluster_name"), GetDotMetrics("k8s_node_name"),
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, GetDotMetrics("host_name"), queryForRecentFingerprints)
 
-	count, err := h.reader.GetCountOfThings(ctx, query)
-	return count > 0, err
+	result, err := h.reader.GetListResultV3(ctx, query)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	clusterNames := make(map[string]struct{})
+	nodeNames := make(map[string]struct{})
+
+	for _, row := range result {
+		switch v := row.Data[GetDotMetrics("k8s_cluster_name")].(type) {
+		case string:
+			clusterNames[v] = struct{}{}
+		case *string:
+			clusterNames[*v] = struct{}{}
+		}
+		switch v := row.Data[GetDotMetrics("k8s_node_name")].(type) {
+		case string:
+			nodeNames[v] = struct{}{}
+		case *string:
+			nodeNames[*v] = struct{}{}
+		}
+	}
+
+	return maps.Keys(clusterNames), maps.Keys(nodeNames), nil
 }
 
-func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
+func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (model.HostListResponse, error) {
 	resp := model.HostListResponse{}
 
 	if req.Limit == 0 {
@@ -372,14 +407,20 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 
 	// don't fail the request if we can't get these values
-	if sendingK8SAgentMetrics, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
-		resp.IsSendingK8SAgentMetrics = sendingK8SAgentMetrics
+	if clusterNames, nodeNames, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
+		resp.IsSendingK8SAgentMetrics = len(clusterNames) > 0 || len(nodeNames) > 0
+		resp.ClusterNames = clusterNames
+		resp.NodeNames = nodeNames
 	}
 	if sentAnyHostMetricsData, err := h.DidSendHostMetricsData(ctx, req); err == nil {
 		resp.SentAnyHostMetricsData = sentAnyHostMetricsData
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
+	if step <= 0 {
+		zap.L().Error("step is less than or equal to 0", zap.Int64("step", step))
+		return resp, errors.New("step is less than or equal to 0")
+	}
 
 	query := HostsTableListQuery.Clone()
 
@@ -400,12 +441,12 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		return resp, err
 	}
 
-	activeHosts, err := h.getActiveHosts(ctx, req)
+	activeHosts, err := h.getActiveHosts(ctx, orgID, req)
 	if err != nil {
 		return resp, err
 	}
 
-	topHostGroups, allHostGroups, err := h.getTopHostGroups(ctx, req, query)
+	topHostGroups, allHostGroups, err := h.getTopHostGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -438,7 +479,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		}
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
@@ -479,7 +520,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 			if _, ok := hostAttrs[record.HostName]; ok {
 				record.Meta = hostAttrs[record.HostName]
 			}
-			if osType, ok := record.Meta["os_type"]; ok {
+			if osType, ok := record.Meta[GetDotMetrics("os_type")]; ok {
 				record.OS = osType
 			}
 			record.Active = activeHosts[record.HostName]

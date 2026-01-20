@@ -51,11 +51,13 @@ export const shortcutColumns = [
 		dataIndex: 'shortcutKey',
 		key: 'shortcutKey',
 		width: '30%',
+		className: 'shortcut-key',
 	},
 	{
 		title: 'Description',
 		dataIndex: 'shortcutDescription',
 		key: 'shortcutDescription',
+		className: 'shortcut-description',
 	},
 ];
 

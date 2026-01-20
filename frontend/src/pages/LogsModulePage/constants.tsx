@@ -6,7 +6,7 @@ import Pipelines from 'pages/Pipelines';
 import SaveView from 'pages/SaveView';
 
 export const logsExplorer: TabRoutes = {
-	Component: LogsExplorer,
+	Component: (): JSX.Element => <LogsExplorer />,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
@@ -17,7 +17,7 @@ export const logsExplorer: TabRoutes = {
 };
 
 export const logsPipelines: TabRoutes = {
-	Component: Pipelines,
+	Component: (): JSX.Element => <Pipelines />,
 	name: (
 		<div className="tab-item">
 			<Workflow size={16} /> Pipelines

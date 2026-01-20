@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
@@ -8,10 +9,17 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import {
+	applyEnhancedLegendStyling,
+	calculateEnhancedLegendConfig,
+} from 'container/PanelWrapper/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
+import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
+import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
+import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
@@ -24,6 +32,13 @@ import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
+// Extended uPlot interface with custom properties
+interface ExtendedUPlot extends uPlot {
+	_legendScrollCleanup?: () => void;
+	_tooltipCleanup?: () => void;
+	_legendElementCleanup?: Array<() => void>;
+}
+
 export interface GetUPlotChartOptions {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
@@ -32,6 +47,7 @@ export interface GetUPlotChartOptions {
 	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
@@ -57,6 +73,21 @@ export interface GetUPlotChartOptions {
 	verticalLineTimestamp?: number;
 	tzDate?: (timestamp: number) => Date;
 	timezone?: string;
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	isLogScale?: boolean;
+	colorMapping?: Record<string, string>;
+	enhancedLegend?: boolean;
+	legendPosition?: LegendPosition;
+	enableZoom?: boolean;
+	query?: Query;
+	legendScrollPosition?: {
+		scrollTop: number;
+		scrollLeft: number;
+	};
+	setLegendScrollPosition?: (position: {
+		scrollTop: number;
+		scrollLeft: number;
+	}) => void;
 }
 
 /** the function converts series A , series B , series C to
@@ -138,6 +169,23 @@ function getBands(series): any[] {
 	return bands;
 }
 
+function getMinMaxValues(series: QueryData[]): [number, number] {
+	let min = Number.MAX_VALUE;
+	let max = Number.MIN_VALUE;
+
+	series.forEach((s) => {
+		s.values?.forEach(([, val]) => {
+			const num = Number(val);
+			if (Number.isFinite(num) && num > 0) {
+				min = Math.min(min, num);
+				max = Math.max(max, num);
+			}
+		});
+	});
+
+	return [min, max];
+}
+
 export const getUPlotChartOptions = ({
 	id,
 	dimensions,
@@ -145,6 +193,7 @@ export const getUPlotChartOptions = ({
 	apiResponse,
 	onDragSelect,
 	yAxisUnit,
+	decimalPrecision,
 	minTimeScale,
 	maxTimeScale,
 	onClickHandler = _noop,
@@ -162,6 +211,15 @@ export const getUPlotChartOptions = ({
 	verticalLineTimestamp,
 	tzDate,
 	timezone,
+	customSeries,
+	isLogScale,
+	colorMapping,
+	enhancedLegend = true,
+	legendPosition = LegendPosition.BOTTOM,
+	enableZoom,
+	query,
+	legendScrollPosition,
+	setLegendScrollPosition,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -174,10 +232,48 @@ export const getUPlotChartOptions = ({
 
 	const bands = stackBarChart ? getBands(series) : null;
 
+	// Calculate dynamic legend configuration based on panel dimensions and series count
+	const seriesCount = (apiResponse?.data?.result || []).length;
+
+	const seriesLabels = enhancedLegend
+		? (apiResponse?.data?.result || []).map((item) =>
+				getLegend(
+					item,
+					query || currentQuery,
+					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+				),
+		  )
+		: [];
+
+	const legendConfig = enhancedLegend
+		? calculateEnhancedLegendConfig(
+				dimensions,
+				seriesCount,
+				seriesLabels,
+				legendPosition,
+		  )
+		: {
+				calculatedHeight: 30,
+				minHeight: 30,
+				maxHeight: 30,
+				itemsPerRow: 3,
+				showScrollbar: false,
+		  };
+
+	// Calculate chart dimensions based on legend position
+	const chartWidth =
+		legendPosition === LegendPosition.RIGHT && legendConfig.calculatedWidth
+			? dimensions.width - legendConfig.calculatedWidth - 10
+			: dimensions.width;
+	const chartHeight =
+		legendPosition === LegendPosition.BOTTOM
+			? dimensions.height - legendConfig.calculatedHeight - 10
+			: dimensions.height;
+
 	return {
 		id,
-		width: dimensions.width,
-		height: dimensions.height - 30,
+		width: chartWidth,
+		height: chartHeight,
 		legend: {
 			show: true,
 			live: false,
@@ -189,17 +285,36 @@ export const getUPlotChartOptions = ({
 		cursor: {
 			lock: false,
 			focus: {
-				prox: 1e6,
+				prox: 25,
 				bias: 1,
 			},
 			points: {
+				one: true,
 				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 3,
 				width: (u, seriesIdx, size): number => size / 4,
 				stroke: (u, seriesIdx): string =>
 					`${u.series[seriesIdx].points.stroke(u, seriesIdx)}90`,
 				fill: (): string => '#fff',
 			},
+			...(enableZoom
+				? {
+						drag: {
+							x: true,
+							y: true,
+						},
+						focus: {
+							prox: 30,
+						},
+				  }
+				: {}),
 		},
+		...(enableZoom
+			? {
+					select: {
+						show: true,
+					},
+			  }
+			: {}),
 		tzDate,
 		padding: [16, 16, 8, 8],
 		bands,
@@ -209,25 +324,45 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale({
-					thresholds,
-					series: stackBarChart
-						? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
-						: apiResponse?.data?.newResult?.data?.result || [],
-					yAxisUnit,
-					softMax,
-					softMin,
-				}),
+				...(((): { auto?: boolean; range?: uPlot.Scale.Range; distr?: number } => {
+					const yAxisConfig = getYAxisScale({
+						thresholds,
+						series: stackBarChart
+							? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
+							: apiResponse?.data?.newResult?.data?.result || [],
+						yAxisUnit,
+						softMax,
+						softMin,
+					});
+
+					if (isLogScale) {
+						const [minVal, maxVal] = getMinMaxValues(apiResponse?.data?.result || []);
+						// Round down min to nearest power of 10 below the data
+						const minPow = Math.floor(Math.log10(minVal));
+						// Round up max to nearest power of 10 above the data
+						const maxPow = Math.ceil(Math.log10(maxVal));
+
+						return {
+							range: [10 ** minPow, 10 ** maxPow],
+							distr: 3, // log distribution
+						};
+					}
+
+					return yAxisConfig;
+				})() as { auto?: boolean; range?: uPlot.Scale.Range; distr?: number }),
 			},
 		},
 		plugins: [
 			tooltipPlugin({
 				apiResponse,
 				yAxisUnit,
-				stackBarChart,
 				isDarkMode,
-				customTooltipElement,
+				stackBarChart,
 				timezone,
+				colorMapping,
+				customTooltipElement,
+				query: query || currentQuery,
+				decimalPrecision,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler,
@@ -260,14 +395,25 @@ export const getUPlotChartOptions = ({
 		hooks: {
 			draw: [
 				(u): void => {
-					if (isAnomalyRule) {
+					if (isAnomalyRule || !thresholds?.length) {
 						return;
 					}
 
-					thresholds?.forEach((threshold) => {
+					const { ctx } = u;
+					const { left: plotLeft, width: plotWidth } = u.bbox;
+					const plotRight = plotLeft + plotWidth;
+					const canvasHeight = ctx.canvas.height;
+					const threshold90Percent = canvasHeight * 0.9;
+
+					// Single save/restore for all thresholds
+					ctx.save();
+					ctx.lineWidth = 2;
+					ctx.setLineDash([10, 5]);
+
+					for (let i = 0; i < thresholds.length; i++) {
+						const threshold = thresholds[i];
 						if (threshold.thresholdValue !== undefined) {
-							const { ctx } = u;
-							ctx.save();
+							const color = threshold.thresholdColor || 'red';
 							const yPos = u.valToPos(
 								convertValue(
 									threshold.thresholdValue,
@@ -277,41 +423,40 @@ export const getUPlotChartOptions = ({
 								'y',
 								true,
 							);
-							ctx.strokeStyle = threshold.thresholdColor || 'red';
-							ctx.lineWidth = 2;
-							ctx.setLineDash([10, 5]);
+
+							// Draw threshold line
+							ctx.strokeStyle = color;
 							ctx.beginPath();
-							const plotLeft = u.bbox.left; // left edge of the plot area
-							const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
 							ctx.moveTo(plotLeft, yPos);
 							ctx.lineTo(plotRight, yPos);
 							ctx.stroke();
-							// Text configuration
+
+							// Draw threshold label if present
 							if (threshold.thresholdLabel) {
-								const text = threshold.thresholdLabel;
-								const textX = plotRight - ctx.measureText(text).width - 20;
-								const canvasHeight = ctx.canvas.height;
+								const textWidth = ctx.measureText(threshold.thresholdLabel).width;
+								const textX = plotRight - textWidth - 20;
 								const yposHeight = canvasHeight - yPos;
-								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
-								// Adjust textY based on the condition
-								let textY;
-								if (isHeightGreaterThan90Percent) {
-									textY = yPos + 15; // Below the threshold line
-								} else {
-									textY = yPos - 15; // Above the threshold line
-								}
-								ctx.fillStyle = threshold.thresholdColor || 'red';
-								ctx.fillText(text, textX, textY);
+								const textY = yposHeight > threshold90Percent ? yPos + 15 : yPos - 15;
+
+								ctx.fillStyle = color;
+								ctx.fillText(threshold.thresholdLabel, textX, textY);
 							}
-							ctx.restore();
 						}
-					});
+					}
+
+					ctx.restore();
 				},
 			],
 			setSelect: [
 				(self): void => {
 					const selection = self.select;
 					if (selection) {
+						// Cleanup any visible "View Traces" buttons when drag selection occurs
+						const activeButtons = document.querySelectorAll(
+							'.view-onclick-show-button',
+						);
+						activeButtons.forEach((btn) => btn.remove());
+
 						const startTime = self.posToVal(selection.left, 'x');
 						const endTime = self.posToVal(selection.left + selection.width, 'x');
 
@@ -325,14 +470,214 @@ export const getUPlotChartOptions = ({
 			],
 			ready: [
 				(self): void => {
+					// Add CSS classes to the uPlot container based on legend position
+					const uplotContainer = self.root;
+					if (uplotContainer) {
+						uplotContainer.classList.remove(
+							'u-plot-right-legend',
+							'u-plot-bottom-legend',
+						);
+						if (legendPosition === LegendPosition.RIGHT) {
+							uplotContainer.classList.add('u-plot-right-legend');
+						} else {
+							uplotContainer.classList.add('u-plot-bottom-legend');
+						}
+					}
+
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
+						const legendElement = legend as HTMLElement;
+
+						// Initialize cleanup array for legend element listeners
+						(self as ExtendedUPlot)._legendElementCleanup = [];
+
+						// Apply enhanced legend styling
+						if (enhancedLegend) {
+							applyEnhancedLegendStyling(
+								legendElement,
+								legendConfig,
+								legendConfig.requiredRows,
+								legendPosition,
+							);
+						}
+
+						// Restore scroll position if available
+						if (legendScrollPosition && setLegendScrollPosition) {
+							requestAnimationFrame(() => {
+								legendElement.scrollTop = legendScrollPosition.scrollTop;
+								legendElement.scrollLeft = legendScrollPosition.scrollLeft;
+							});
+						}
+
+						// Set up scroll position tracking
+						if (setLegendScrollPosition) {
+							const handleScroll = (): void => {
+								setLegendScrollPosition({
+									scrollTop: legendElement.scrollTop,
+									scrollLeft: legendElement.scrollLeft,
+								});
+							};
+
+							legendElement.addEventListener('scroll', handleScroll);
+
+							// Store cleanup function
+							(self as ExtendedUPlot)._legendScrollCleanup = (): void => {
+								legendElement.removeEventListener('scroll', handleScroll);
+							};
+						}
+
+						// Global cleanup function for all legend tooltips
+						const cleanupAllTooltips = (): void => {
+							const existingTooltips = document.querySelectorAll('.legend-tooltip');
+							existingTooltips.forEach((tooltip) => tooltip.remove());
+						};
+
+						// Add single global cleanup listener for this chart
+						const globalCleanupHandler = (e: MouseEvent): void => {
+							const target = e.target as HTMLElement;
+							if (
+								target &&
+								!target?.closest?.('.u-legend') &&
+								!target?.classList?.contains?.('legend-tooltip')
+							) {
+								cleanupAllTooltips();
+							}
+						};
+						document?.addEventListener('mousemove', globalCleanupHandler);
+
+						// Store cleanup function for potential removal later
+						(self as ExtendedUPlot)._tooltipCleanup = (): void => {
+							cleanupAllTooltips();
+							document?.removeEventListener('mousemove', globalCleanupHandler);
+						};
+
 						const seriesEls = legend.querySelectorAll('.u-series');
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
-							seriesEl.addEventListener('click', () => {
-								if (stackChart) {
-									setHiddenGraph((prev) => {
+							// Add tooltip and proper text wrapping for legends
+							const thElement = seriesEl.querySelector('th');
+							if (thElement && seriesLabels[index]) {
+								// Store the original marker element before clearing
+								const markerElement = thElement.querySelector('.u-marker');
+								const markerClone = markerElement
+									? (markerElement.cloneNode(true) as HTMLElement)
+									: null;
+
+								// Get the current text content
+								const legendText = seriesLabels[index];
+
+								// Use DocumentFragment to batch DOM operations
+								const fragment = document.createDocumentFragment();
+
+								// Add back the marker
+								if (markerClone) {
+									fragment.appendChild(markerClone);
+								}
+
+								// Create text wrapper
+								const textSpan = document.createElement('span');
+								textSpan.className = 'legend-text';
+								textSpan.textContent = legendText;
+								fragment.appendChild(textSpan);
+
+								// Replace the children in a single operation
+								thElement.replaceChildren(fragment);
+
+								// Setup tooltip functionality - check truncation on hover
+								let tooltipElement: HTMLElement | null = null;
+								let isHovering = false;
+
+								const showTooltip = (e: MouseEvent): void => {
+									// Check if text is actually truncated at the time of hover
+									const isTextTruncated = (): boolean => {
+										// For right-side legends, check if text overflows the container
+										if (legendPosition === LegendPosition.RIGHT) {
+											return textSpan?.scrollWidth > textSpan?.clientWidth;
+										}
+										// For bottom legends, check if text is longer than reasonable display length
+										return legendText.length > 20;
+									};
+
+									// Only show tooltip if text is actually truncated
+									if (!isTextTruncated()) {
+										return;
+									}
+
+									isHovering = true;
+
+									// Clean up any existing tooltips first
+									cleanupAllTooltips();
+
+									// Small delay to ensure cleanup is complete and DOM is ready
+									setTimeout(() => {
+										if (!isHovering) return; // Don't show if mouse already left
+
+										// Double-check no tooltip exists
+										if (document.querySelector('.legend-tooltip')) {
+											return;
+										}
+
+										// Create tooltip element
+										tooltipElement = document.createElement('div');
+										tooltipElement.className = 'legend-tooltip';
+										tooltipElement.textContent = legendText;
+										tooltipElement.style.cssText = `
+											position: fixed;
+											padding: 8px 12px;
+											border-radius: 6px;
+											font-size: 12px;
+											z-index: 10000;
+											pointer-events: none;
+											white-space: nowrap;
+											box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+											border: 1px solid #374151;
+										`;
+
+										// Position tooltip near cursor
+										const rect = (e.target as HTMLElement)?.getBoundingClientRect?.();
+										if (rect) {
+											tooltipElement.style.left = `${e.clientX + 10}px`;
+											tooltipElement.style.top = `${rect.top - 35}px`;
+										}
+
+										document.body.appendChild(tooltipElement);
+									}, 15);
+								};
+
+								const hideTooltip = (): void => {
+									isHovering = false;
+
+									// Simple cleanup with a reasonable delay
+									setTimeout(() => {
+										if (!isHovering && tooltipElement) {
+											tooltipElement.remove();
+											tooltipElement = null;
+										}
+									}, 200);
+								};
+
+								// Simple tooltip events
+								thElement.addEventListener('mouseenter', showTooltip);
+								thElement.addEventListener('mouseleave', hideTooltip);
+
+								// Store cleanup function for tooltip listeners
+								(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+									thElement.removeEventListener('mouseenter', showTooltip);
+									thElement.removeEventListener('mouseleave', hideTooltip);
+									// Cleanup any lingering tooltip
+									if (tooltipElement) {
+										tooltipElement.remove();
+										tooltipElement = null;
+									}
+								});
+
+								// Add click handlers for marker and text separately
+								const currentMarker = thElement.querySelector('.u-marker');
+								const textElement = thElement.querySelector('.legend-text');
+
+								// Helper function to handle stack chart logic
+								const handleStackChart = (): void => {
+									setHiddenGraph?.((prev) => {
 										if (isUndefined(prev)) {
 											return { [index]: true };
 										}
@@ -341,48 +686,133 @@ export const getUPlotChartOptions = ({
 										}
 										return { [index]: true };
 									});
-								}
-								if (graphsVisibilityStates) {
-									setGraphsVisibilityStates?.((prev) => {
-										const newGraphVisibilityStates = [...prev];
-										if (
-											newGraphVisibilityStates[index + 1] &&
-											newGraphVisibilityStates.every((value, i) =>
-												i === index + 1 ? value : !value,
-											)
-										) {
-											newGraphVisibilityStates.fill(true);
-										} else {
-											newGraphVisibilityStates.fill(false);
-											newGraphVisibilityStates[index + 1] = true;
+								};
+
+								// Marker click handler - checkbox behavior (toggle individual series)
+								if (currentMarker) {
+									const markerClickHandler = (e: Event): void => {
+										e.stopPropagation?.(); // Prevent event bubbling to text handler
+
+										if (stackChart) {
+											handleStackChart();
 										}
-										saveLegendEntriesToLocalStorage({
-											options: self,
-											graphVisibilityState: newGraphVisibilityStates,
-											name: id || '',
-										});
-										return newGraphVisibilityStates;
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Toggle the specific series visibility (checkbox behavior)
+												newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+													index + 1
+												];
+
+												saveLegendEntriesToLocalStorage?.({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
+										}
+									};
+
+									currentMarker.addEventListener('click', markerClickHandler);
+
+									// Store cleanup function for marker click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										currentMarker.removeEventListener('click', markerClickHandler);
 									});
 								}
-							});
+
+								// Text click handler - show only/show all behavior (existing behavior)
+								if (textElement) {
+									const textClickHandler = (e: Event): void => {
+										e.stopPropagation?.(); // Prevent event bubbling
+
+										if (stackChart) {
+											handleStackChart();
+										}
+										if (graphsVisibilityStates) {
+											setGraphsVisibilityStates?.((prev) => {
+												const newGraphVisibilityStates = [...prev];
+												// Show only this series / show all behavior
+												if (
+													newGraphVisibilityStates[index + 1] &&
+													newGraphVisibilityStates.every((value, i) =>
+														i === index + 1 ? value : !value,
+													)
+												) {
+													// If only this series is visible, show all
+													newGraphVisibilityStates.fill(true);
+												} else {
+													// Otherwise, show only this series
+													newGraphVisibilityStates.fill(false);
+													newGraphVisibilityStates[index + 1] = true;
+												}
+												saveLegendEntriesToLocalStorage?.({
+													options: self,
+													graphVisibilityState: newGraphVisibilityStates,
+													name: id || '',
+												});
+												return newGraphVisibilityStates;
+											});
+										}
+									};
+
+									textElement.addEventListener('click', textClickHandler);
+
+									// Store cleanup function for text click listener
+									(self as ExtendedUPlot)._legendElementCleanup?.push(() => {
+										textElement.removeEventListener('click', textClickHandler);
+									});
+								}
+							}
 						});
 					}
 				},
 			],
+			destroy: [
+				(self): void => {
+					// Clean up legend scroll listener
+					if ((self as ExtendedUPlot)._legendScrollCleanup) {
+						(self as ExtendedUPlot)._legendScrollCleanup?.();
+						(self as ExtendedUPlot)._legendScrollCleanup = undefined;
+					}
+
+					// Clean up tooltip global listener
+					if ((self as ExtendedUPlot)._tooltipCleanup) {
+						(self as ExtendedUPlot)._tooltipCleanup?.();
+						(self as ExtendedUPlot)._tooltipCleanup = undefined;
+					}
+
+					// Clean up all legend element listeners
+					if ((self as ExtendedUPlot)._legendElementCleanup) {
+						(self as ExtendedUPlot)._legendElementCleanup?.forEach((cleanup) => {
+							cleanup();
+						});
+						(self as ExtendedUPlot)._legendElementCleanup = [];
+					}
+
+					// Clean up any remaining tooltips in DOM
+					const existingTooltips = document.querySelectorAll('.legend-tooltip');
+					existingTooltips.forEach((tooltip) => tooltip.remove());
+				},
+			],
 		},
-		series: getSeries({
-			series:
-				stackBarChart && isUndefined(hiddenGraph)
-					? series
-					: apiResponse?.data?.result,
-			widgetMetaData: apiResponse?.data.result,
-			graphsVisibilityStates,
-			panelType,
-			currentQuery,
-			stackBarChart,
-			hiddenGraph,
-			isDarkMode,
-		}),
-		axes: getAxes(isDarkMode, yAxisUnit),
+		series: customSeries
+			? customSeries(apiResponse?.data?.result || [])
+			: getSeries({
+					series:
+						stackBarChart && isUndefined(hiddenGraph)
+							? series || []
+							: apiResponse?.data?.result || [],
+					widgetMetaData: apiResponse?.data?.result || [],
+					graphsVisibilityStates,
+					panelType,
+					currentQuery: query || currentQuery,
+					stackBarChart,
+					hiddenGraph,
+					isDarkMode,
+					colorMapping,
+			  }),
+		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};
 };

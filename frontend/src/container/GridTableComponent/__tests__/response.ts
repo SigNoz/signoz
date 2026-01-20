@@ -1,19 +1,25 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
+/* eslint-disable sonarjs/no-duplicate-string */
 export const tableDataMultipleQueriesSuccessResponse = {
 	columns: [
 		{
 			name: 'service_name',
 			queryName: '',
 			isValueColumn: false,
+			id: 'service_name',
 		},
 		{
 			name: 'A',
 			queryName: 'A',
 			isValueColumn: true,
+			id: 'A',
 		},
 		{
 			name: 'B',
 			queryName: 'B',
 			isValueColumn: true,
+			id: 'B',
 		},
 	],
 	rows: [
@@ -102,8 +108,6 @@ export const widgetQueryWithLegend = {
 				aggregateAttribute: {
 					dataType: 'float64',
 					id: 'signoz_latency--float64--ExponentialHistogram--true',
-					isColumn: true,
-					isJSON: false,
 					key: 'signoz_latency',
 					type: 'ExponentialHistogram',
 				},
@@ -123,15 +127,13 @@ export const widgetQueryWithLegend = {
 				groupBy: [
 					{
 						dataType: 'string',
-						isColumn: false,
-						isJSON: false,
 						key: 'service_name',
 						type: 'tag',
 						id: 'service_name--string--tag--false',
 					},
 				],
 				legend: 'p99',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 			{
 				dataSource: 'metrics',
@@ -140,8 +142,6 @@ export const widgetQueryWithLegend = {
 				aggregateAttribute: {
 					dataType: 'float64',
 					id: 'system_disk_operations--float64--Sum--true',
-					isColumn: true,
-					isJSON: false,
 					key: 'system_disk_operations',
 					type: 'Sum',
 				},
@@ -160,10 +160,11 @@ export const widgetQueryWithLegend = {
 				orderBy: [],
 				groupBy: [],
 				legend: '',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	id: '48ad5a67-9a3c-49d4-a886-d7a34f8b875d',
 	queryType: 'builder',
@@ -210,6 +211,282 @@ export const expectedOutputWithLegends = {
 			A: 'n/a',
 			B: 112.27,
 			service_name: 'n/a',
+		},
+	],
+};
+
+// QB v5 Aggregations Mock Data
+export const tableDataQBv5MultiAggregations = {
+	columns: [
+		{
+			name: 'service.name',
+			queryName: 'A',
+			isValueColumn: false,
+			id: 'service.name',
+		},
+		{
+			name: 'host.name',
+			queryName: 'A',
+			isValueColumn: false,
+			id: 'host.name',
+		},
+		{
+			name: 'count()',
+			queryName: 'A',
+			isValueColumn: true,
+			id: 'A.count()',
+		},
+		{
+			name: 'count_distinct(app.ads.count)',
+			queryName: 'A',
+			isValueColumn: true,
+			id: 'A.count_distinct(app.ads.count)',
+		},
+		{
+			name: 'count()',
+			queryName: 'B',
+			isValueColumn: true,
+			id: 'B.count()',
+		},
+		{
+			name: 'count_distinct(app.ads.count)',
+			queryName: 'B',
+			isValueColumn: true,
+			id: 'B.count_distinct(app.ads.count)',
+		},
+		{
+			name: 'count()',
+			queryName: 'C',
+			isValueColumn: true,
+			id: 'C.count()',
+		},
+		{
+			name: 'count_distinct(app.ads.count)',
+			queryName: 'C',
+			isValueColumn: true,
+			id: 'C.count_distinct(app.ads.count)',
+		},
+	],
+	rows: [
+		{
+			data: {
+				'service.name': 'frontend-proxy',
+				'host.name': 'test-host.name',
+				'A.count()': 144679,
+				'A.count_distinct(app.ads.count)': 0,
+				'B.count()': 144679,
+				'B.count_distinct(app.ads.count)': 0,
+				'C.count()': 144679,
+				'C.count_distinct(app.ads.count)': 0,
+			},
+		},
+		{
+			data: {
+				'service.name': 'frontend',
+				'host.name': 'test-host.name',
+				'A.count()': 142311,
+				'A.count_distinct(app.ads.count)': 0,
+				'B.count()': 142311,
+				'B.count_distinct(app.ads.count)': 0,
+				'C.count()': 142311,
+				'C.count_distinct(app.ads.count)': 0,
+			},
+		},
+	],
+};
+
+export const widgetQueryQBv5MultiAggregations = {
+	clickhouse_sql: [
+		{
+			name: 'A',
+			legend: 'p99',
+			disabled: false,
+			query: '',
+		},
+		{
+			name: 'B',
+			legend: '',
+			disabled: false,
+			query: '',
+		},
+		{
+			name: 'C',
+			legend: 'max',
+			disabled: false,
+			query: '',
+		},
+	],
+	promql: [
+		{
+			name: 'A',
+			query: '',
+			legend: 'p99',
+			disabled: false,
+		},
+		{
+			name: 'B',
+			query: '',
+			legend: '',
+			disabled: false,
+		},
+		{
+			name: 'C',
+			query: '',
+			legend: 'max',
+			disabled: false,
+		},
+	],
+	builder: {
+		queryData: [
+			{
+				dataSource: 'metrics',
+				queryName: 'A',
+				aggregateOperator: 'count',
+				aggregateAttribute: {
+					dataType: 'float64',
+					id: 'signoz_latency--float64--ExponentialHistogram--true',
+					key: 'signoz_latency',
+					type: 'ExponentialHistogram',
+				},
+				timeAggregation: '',
+				spaceAggregation: 'p90',
+				functions: [],
+				filters: {
+					items: [],
+					op: 'AND',
+				},
+				expression: 'A',
+				disabled: false,
+				stepInterval: 60,
+				having: [],
+				limit: null,
+				orderBy: [],
+				groupBy: [
+					{
+						dataType: 'string',
+						key: 'service.name',
+						type: 'tag',
+						id: 'service.name--string--tag--false',
+					},
+					{
+						dataType: 'string',
+						key: 'host.name',
+						type: 'tag',
+						id: 'host.name--string--tag--false',
+					},
+				],
+				legend: 'p99',
+				reduceTo: ReduceOperators.AVG,
+			},
+			{
+				dataSource: 'metrics',
+				queryName: 'B',
+				aggregateOperator: 'rate',
+				aggregateAttribute: {
+					dataType: 'float64',
+					id: 'system_disk_operations--float64--Sum--true',
+					key: 'system_disk_operations',
+					type: 'Sum',
+				},
+				timeAggregation: 'rate',
+				spaceAggregation: 'sum',
+				functions: [],
+				filters: {
+					items: [],
+					op: 'AND',
+				},
+				expression: 'B',
+				disabled: false,
+				stepInterval: 60,
+				having: [],
+				limit: null,
+				orderBy: [],
+				groupBy: [
+					{
+						dataType: 'string',
+						key: 'service.name',
+						type: 'tag',
+						id: 'service.name--string--tag--false',
+					},
+					{
+						dataType: 'string',
+						key: 'host.name',
+						type: 'tag',
+						id: 'host.name--string--tag--false',
+					},
+				],
+				legend: '',
+				reduceTo: ReduceOperators.AVG,
+			},
+			{
+				dataSource: 'metrics',
+				queryName: 'C',
+				aggregateOperator: 'count',
+				aggregateAttribute: {
+					dataType: 'float64',
+					id: 'signoz_latency--float64--ExponentialHistogram--true',
+					key: 'signoz_latency',
+					type: 'ExponentialHistogram',
+				},
+				timeAggregation: '',
+				spaceAggregation: 'p90',
+				functions: [],
+				filters: {
+					items: [],
+					op: 'AND',
+				},
+				expression: 'C',
+				disabled: false,
+				stepInterval: 60,
+				having: [],
+				limit: null,
+				orderBy: [],
+				groupBy: [
+					{
+						dataType: 'string',
+						key: 'service.name',
+						type: 'tag',
+						id: 'service.name--string--tag--false',
+					},
+					{
+						dataType: 'string',
+						key: 'host.name',
+						type: 'tag',
+						id: 'host.name--string--tag--false',
+					},
+				],
+				legend: 'max',
+				reduceTo: ReduceOperators.AVG,
+			},
+		],
+		queryFormulas: [],
+		queryTraceOperator: [],
+	},
+	id: 'qb-v5-multi-aggregations-test',
+	queryType: 'builder',
+};
+
+export const expectedOutputQBv5MultiAggregations = {
+	dataSource: [
+		{
+			'service.name': 'frontend-proxy',
+			'host.name': 'test-host.name',
+			'A.count()': 144679,
+			'A.count_distinct(app.ads.count)': 0,
+			'B.count()': 144679,
+			'B.count_distinct(app.ads.count)': 0,
+			'C.count()': 144679,
+			'C.count_distinct(app.ads.count)': 0,
+		},
+		{
+			'service.name': 'frontend',
+			'host.name': 'test-host.name',
+			'A.count()': 142311,
+			'A.count_distinct(app.ads.count)': 0,
+			'B.count()': 142311,
+			'B.count_distinct(app.ads.count)': 0,
+			'C.count()': 142311,
+			'C.count_distinct(app.ads.count)': 0,
 		},
 	],
 };

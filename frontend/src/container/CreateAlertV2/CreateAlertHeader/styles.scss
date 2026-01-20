@@ -1,0 +1,220 @@
+.alert-header {
+	background-color: var(--bg-ink-500);
+	font-family: inherit;
+	color: var(--text-vanilla-100);
+
+	/* Tab block visuals */
+	&__tab {
+		display: flex;
+		align-items: center;
+		background-color: var(--bg-ink-500);
+		padding: 0 12px;
+		height: 32px;
+		font-size: 13px;
+		color: var(--text-vanilla-100);
+		margin-left: 12px;
+		margin-top: 12px;
+	}
+
+	&__tab::before {
+		content: '•';
+		margin-right: 6px;
+		font-size: 14px;
+		color: var(--bg-slate-100);
+	}
+
+	&__content {
+		padding: 16px;
+		background: var(--bg-ink-500);
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 300px;
+		flex: 1;
+	}
+
+	&__input.title {
+		font-size: 18px;
+		font-weight: 500;
+		background-color: transparent;
+		color: var(--text-vanilla-100);
+		width: 100%;
+		min-width: 300px;
+	}
+
+	&__input:focus,
+	&__input:active {
+		border: none;
+		outline: none;
+	}
+
+	&__input.description {
+		font-size: 14px;
+		background-color: transparent;
+		color: var(--text-vanilla-300);
+	}
+
+	.ant-btn {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+		color: var(--text-vanilla-100);
+		border: 1px solid var(--bg-slate-300);
+		margin-right: 16px;
+	}
+}
+
+.labels-input {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&__add-button {
+		width: fit-content;
+		font-size: 13px;
+		color: #ccc;
+		border: 1px solid #333;
+		background-color: transparent;
+		cursor: pointer;
+		padding: 4px 8px;
+		border-radius: 4px;
+
+		&:hover {
+			border-color: #555;
+			color: #fff;
+		}
+	}
+
+	&__existing-labels {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	&__label-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		background-color: #ad7f581a;
+		color: var(--bg-sienna-400);
+		padding: 4px 8px;
+		border-radius: 16px;
+		font-size: 12px;
+		border: 1px solid var(--bg-sienna-500);
+		font-family: 'Geist Mono';
+	}
+
+	&__remove-button {
+		background: none;
+		border: none;
+		color: var(--bg-sienna-400);
+		cursor: pointer;
+		padding: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+
+		&:hover {
+			color: var(--text-vanilla-100);
+		}
+	}
+
+	&__input-container {
+		display: flex;
+		align-items: center;
+		background-color: transparent;
+		border: none;
+	}
+
+	&__input {
+		flex: 1;
+		background-color: transparent;
+		border: none;
+		outline: none;
+		padding: 6px 8px;
+		color: #fff;
+		font-size: 13px;
+
+		&::placeholder {
+			color: var(--bg-vanilla-400);
+		}
+
+		&:focus,
+		&:active {
+			border: none;
+			outline: none;
+		}
+	}
+}
+
+.lightMode {
+	.alert-header {
+		background-color: var(--bg-vanilla-100);
+		color: var(--text-ink-100);
+
+		&__tab {
+			background-color: var(--bg-vanilla-100);
+			color: var(--text-ink-100);
+		}
+
+		&__tab::before {
+			color: var(--bg-ink-100);
+		}
+
+		&__content {
+			background: var(--bg-vanilla-100);
+		}
+
+		&__input.title {
+			color: var(--text-ink-100);
+		}
+
+		&__input.description {
+			color: var(--text-ink-300);
+		}
+	}
+
+	.edit-alert-header {
+		width: 100%;
+	}
+
+	.edit-alert-header .alert-header__content {
+		background: var(--bg-vanilla-200);
+	}
+
+	.labels-input {
+		&__add-button {
+			color: var(--bg-ink-400);
+			border: 1px solid var(--bg-vanilla-300);
+			background-color: var(--bg-vanilla-100);
+
+			&:hover {
+				border-color: var(--bg-ink-300);
+				color: var(--bg-ink-500);
+			}
+		}
+
+		&__label-pill {
+			background-color: #ad7f581a;
+			color: var(--bg-sienna-400);
+			border: 1px solid var(--bg-sienna-500);
+		}
+
+		&__remove-button {
+			color: var(--bg-sienna-400);
+
+			&:hover {
+				color: var(--text-ink-100);
+			}
+		}
+
+		&__input {
+			color: var(--bg-ink-500);
+
+			&::placeholder {
+				color: var(--bg-ink-300);
+			}
+		}
+	}
+}

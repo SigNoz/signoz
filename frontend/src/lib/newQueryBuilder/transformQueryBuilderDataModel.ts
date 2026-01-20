@@ -2,58 +2,49 @@ import {
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
-import { FORMULA_REGEXP } from 'constants/regExp';
-import { isUndefined } from 'lodash-es';
+import { FORMULA_REGEXP, TRACE_OPERATOR_REGEXP } from 'constants/regExp';
 import {
 	BuilderQueryDataResourse,
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 
 export const transformQueryBuilderDataModel = (
 	data: BuilderQueryDataResourse,
-	query?: QueryBuilderData,
+	queryTypes?: Record<
+		string,
+		'builder_query' | 'builder_formula' | 'builder_trace_operator'
+	>,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
+	const queryTraceOperator: QueryBuilderData['queryTraceOperator'] = [];
 
-	Object.entries(data).forEach(([, value]) => {
-		if (FORMULA_REGEXP.test(value.queryName)) {
+	Object.entries(data).forEach(([key, value]) => {
+		const isFormula = queryTypes
+			? queryTypes[key] === 'builder_formula'
+			: FORMULA_REGEXP.test(value.queryName);
+
+		const isTraceOperator = queryTypes
+			? queryTypes[key] === 'builder_trace_operator'
+			: TRACE_OPERATOR_REGEXP.test(value.queryName);
+
+		if (isFormula) {
 			const formula = value as IBuilderFormula;
-			const baseFormula = query?.queryFormulas?.find(
-				(f) => f.queryName === value.queryName,
-			);
-			if (!isUndefined(baseFormula)) {
-				// this is part of the flow where we create alerts from dashboard.
-				// we pass the formula as is from the widget query as we do not want anything to update in formula from the format api call
-				queryFormulas.push({ ...baseFormula });
-			} else {
-				queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
-			}
+			queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
+		} else if (isTraceOperator) {
+			const traceOperator = value as IBuilderTraceOperator;
+			queryTraceOperator.push({ ...traceOperator });
 		} else {
 			const queryFromData = value as IBuilderQuery;
-			const baseQuery = query?.queryData?.find(
-				(q) => q.queryName === queryFromData.queryName,
-			);
-
-			if (!isUndefined(baseQuery)) {
-				// this is part of the flow where we create alerts from dashboard.
-				// we pass the widget query as the base query and accept the filters from the format API response.
-				// which fills the variable values inside the same and is used to create alerts
-				// do not accept the full object as the stepInterval field is subject to changes
-				queryData.push({
-					...baseQuery,
-					filters: queryFromData.filters,
-				});
-			} else {
-				queryData.push({
-					...initialQueryBuilderFormValuesMap.metrics,
-					...queryFromData,
-				});
-			}
+			queryData.push({
+				...initialQueryBuilderFormValuesMap.metrics,
+				...queryFromData,
+			});
 		}
 	});
 
-	return { queryData, queryFormulas };
+	return { queryData, queryFormulas, queryTraceOperator };
 };

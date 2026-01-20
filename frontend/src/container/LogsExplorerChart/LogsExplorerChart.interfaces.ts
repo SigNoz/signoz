@@ -6,4 +6,5 @@ export type LogsExplorerChartProps = {
 	isLogsExplorerViews?: boolean;
 	isLabelEnabled?: boolean;
 	className?: string;
+	isShowingLiveLogs?: boolean;
 };

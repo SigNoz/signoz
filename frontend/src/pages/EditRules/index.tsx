@@ -8,11 +8,16 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import {
+	NEW_ALERT_SCHEMA_VERSION,
+	PostableAlertRuleV2,
+} from 'types/api/alerts/alertTypesV2';
 
 import {
 	errorMessageReceivedFromBackend,
@@ -21,6 +26,7 @@ import {
 } from './constants';
 
 function EditRules(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const params = useUrlQuery();
 	const ruleId = params.get(QueryParams.ruleId);
 	const { t } = useTranslation('common');
@@ -32,7 +38,7 @@ function EditRules(): JSX.Element {
 		{
 			queryFn: () =>
 				get({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 				}),
 			enabled: isValidRuleId,
 			refetchOnMount: false,
@@ -55,9 +61,9 @@ function EditRules(): JSX.Element {
 			notifications.error({
 				message: 'Rule Id is required',
 			});
-			history.replace(ROUTES.LIST_ALL_ALERT);
+			safeNavigate(ROUTES.LIST_ALL_ALERT);
 		}
-	}, [isValidRuleId, ruleId, notifications]);
+	}, [isValidRuleId, ruleId, notifications, safeNavigate]);
 
 	if (
 		(isError && !isValidRuleId) ||
@@ -86,11 +92,17 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
+	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
+	if (data.payload.data.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
+		initialV2AlertValue = data.payload.data as PostableAlertRuleV2;
+	}
+
 	return (
 		<div className="edit-rules-container">
 			<EditRulesContainer
-				ruleId={parseInt(ruleId, 10)}
+				ruleId={ruleId || ''}
 				initialValue={data.payload.data}
+				initialV2AlertValue={initialV2AlertValue}
 			/>
 		</div>
 	);

@@ -6,6 +6,8 @@ import { ColumnGroupType, ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -25,8 +27,12 @@ function DynamicColumnTable({
 	onDragColumn,
 	facingIssueBtn,
 	shouldSendAlertsLogEvent,
+	pagination,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
+
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
 		columns,
 	);
@@ -93,6 +99,28 @@ function DynamicColumnTable({
 			type: 'checkbox',
 		})) || [];
 
+	// Get current page from URL or default to 1
+	const currentPage = Number(urlQuery.get('page')) || 1;
+
+	const handlePaginationChange = (page: number, pageSize?: number): void => {
+		// Update URL with new page number while preserving other params
+		urlQuery.set('page', page.toString());
+
+		const newUrl = `${window.location.pathname}?${urlQuery.toString()}`;
+		safeNavigate(newUrl);
+
+		// Call original pagination handler if provided
+		if (pagination?.onChange && !!pageSize) {
+			pagination.onChange(page, pageSize);
+		}
+	};
+
+	const enhancedPagination = {
+		...pagination,
+		current: currentPage, // Ensure the pagination component shows the correct page
+		onChange: handlePaginationChange,
+	};
+
 	return (
 		<div className="DynamicColumnTable">
 			<Flex justify="flex-end" align="center" gap={8}>
@@ -116,6 +144,7 @@ function DynamicColumnTable({
 			<ResizeTable
 				columns={columnsData}
 				onDragColumn={onDragColumn}
+				pagination={enhancedPagination}
 				{...restProps}
 			/>
 		</div>

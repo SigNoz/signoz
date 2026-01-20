@@ -1,14 +1,9 @@
 import { Button, Form, Input } from 'antd';
-import apply from 'api/licenses/apply';
+import apply from 'api/v3/licenses/post';
 import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QueryObserverResult, RefetchOptions } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/licenses/getAll';
-import AppReducer from 'types/reducer/app';
+import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import {
@@ -24,9 +19,6 @@ function ApplyLicenseForm({
 	const { t } = useTranslation(['licenses']);
 	const [isLoading, setIsLoading] = useState(false);
 	const [form] = Form.useForm<FormValues>();
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 
 	const { notifications } = useNotifications();
 	const key = Form.useWatch('key', form);
@@ -45,27 +37,18 @@ function ApplyLicenseForm({
 
 		setIsLoading(true);
 		try {
-			const response = await apply({
+			await apply({
 				key: params.key,
 			});
-
-			if (response.statusCode === 200) {
-				await Promise.all([featureResponse?.refetch(), licenseRefetch()]);
-
-				notifications.success({
-					message: 'Success',
-					description: t('license_applied'),
-				});
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || t('unexpected_error'),
-				});
-			}
+			await Promise.all([licenseRefetch()]);
+			notifications.success({
+				message: 'Success',
+				description: t('license_applied'),
+			});
 		} catch (e) {
 			notifications.error({
-				message: 'Error',
-				description: t('unexpected_error'),
+				message: (e as APIError).getErrorCode(),
+				description: (e as APIError).getErrorMessage(),
 			});
 		}
 		setIsLoading(false);
@@ -102,11 +85,7 @@ function ApplyLicenseForm({
 }
 
 interface ApplyLicenseFormProps {
-	licenseRefetch: (
-		options?: RefetchOptions,
-	) => Promise<
-		QueryObserverResult<SuccessResponse<PayloadProps> | ErrorResponse, unknown>
-	>;
+	licenseRefetch: () => void;
 }
 
 interface FormValues {

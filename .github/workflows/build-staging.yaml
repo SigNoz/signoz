@@ -1,0 +1,127 @@
+name: build-staging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [labeled]
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PRIMUS_HOME: .primus
+  MAKE: make --no-print-directory --makefile=.primus/src/make/main.mk
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: ${{ contains(github.event.label.name, 'staging:') || github.event.ref == 'refs/heads/main' }}
+    outputs:
+      version: ${{ steps.build-info.outputs.version }}
+      hash: ${{ steps.build-info.outputs.hash }}
+      time: ${{ steps.build-info.outputs.time }}
+      branch: ${{ steps.build-info.outputs.branch }}
+      deployment: ${{ steps.build-info.outputs.deployment }}
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - id: token
+        name: github-token-gen
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PRIMUS_APP_ID }}
+          private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: primus-checkout
+        uses: actions/checkout@v4
+        with:
+          repository: signoz/primus
+          ref: main
+          path: .primus
+          token: ${{ steps.token.outputs.token }}
+      - name: build-info
+        id: build-info
+        run: |
+          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
+          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
+          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
+          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
+
+          staging_label="${{ github.event.label.name }}"
+          if [[ "${staging_label}" == "staging:"* ]]; then
+              deployment=${staging_label#"staging:"}
+          elif [[ "${{ github.event.ref }}" == "refs/heads/main" ]]; then
+              deployment="staging"
+          else
+              echo "error: not able to determine deployment - please verify the PR label or the branch"
+              exit 1
+          fi
+          echo "deployment=${deployment}" >> $GITHUB_OUTPUT
+      - name: create-dotenv
+        run: |
+          mkdir -p frontend
+          echo 'CI=1' > frontend/.env
+          echo 'TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
+          echo 'TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
+          echo 'APPCUES_APP_ID="${{ secrets.NP_APPCUES_APP_ID }}"' >> frontend/.env
+          echo 'PYLON_IDENTITY_SECRET="${{ secrets.NP_PYLON_IDENTITY_SECRET }}"' >> frontend/.env
+      - name: cache-dotenv
+        uses: actions/cache@v4
+        with:
+          path: frontend/.env
+          key: staging-dotenv-${{ github.sha }}
+  js-build:
+    uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
+    needs: prepare
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      JS_SRC: frontend
+      JS_INPUT_ARTIFACT_CACHE_KEY: staging-dotenv-${{ github.sha }}
+      JS_INPUT_ARTIFACT_PATH: frontend/.env
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: staging-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      DOCKER_BUILD: false
+      DOCKER_MANIFEST: false
+  go-build:
+    uses: signoz/primus.workflows/.github/workflows/go-build.yaml@main
+    needs: [prepare, js-build]
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      GO_VERSION: 1.24
+      GO_INPUT_ARTIFACT_CACHE_KEY: staging-jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_PATH: frontend/build
+      GO_BUILD_CONTEXT: ./cmd/enterprise
+      GO_BUILD_FLAGS: >-
+        -tags timetzdata
+        -ldflags='-s -w
+        -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
+        -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
+        -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
+        -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
+        -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
+        -X github.com/SigNoz/signoz/ee/zeus.url=https://api.staging.signoz.cloud
+        -X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=https://license.staging.signoz.cloud
+        -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.staging.signoz.cloud/api/v1
+        -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
+      DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
+      DOCKER_DOCKERFILE_PATH: ./cmd/enterprise/Dockerfile.multi-arch
+      DOCKER_MANIFEST: true
+      DOCKER_PROVIDERS: gcp
+  staging:
+    if: ${{ contains(github.event.label.name, 'staging:') || github.event.ref == 'refs/heads/main' }}
+    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@main
+    secrets: inherit
+    needs: [prepare, go-build]
+    with:
+      PRIMUS_REF: main
+      GITHUB_ENVIRONMENT: staging
+      GITHUB_SILENT: true
+      GITHUB_REPOSITORY_NAME: charts-saas-v3-staging
+      GITHUB_EVENT_NAME: releaser
+      GITHUB_EVENT_PAYLOAD: '{"deployment": "${{ needs.prepare.outputs.deployment }}", "signoz_version": "${{ needs.prepare.outputs.version }}"}'

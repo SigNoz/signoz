@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cespare/xxhash"
+	"github.com/cespare/xxhash/v2"
 )
 
 const sep = '\xff'
@@ -17,6 +17,8 @@ const (
 	MetricNameLabel  = "__name__"
 	TemporalityLabel = "__temporality__"
 	AlertNameLabel   = "alertname"
+	TestAlertLabel   = "testalert"
+	NoDataLabel      = "nodata"
 
 	// AlertStateLabel is the label name indicating the state of an alert.
 	AlertStateLabel = "alertstate"

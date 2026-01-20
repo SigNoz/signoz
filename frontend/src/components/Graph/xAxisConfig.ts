@@ -88,12 +88,16 @@ export const convertTimeRange = (
 /**
  * Accepts Chart.js data's data-structure and returns the relevant time unit for the axis based on the range of the data.
  */
-export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
+export const useXAxisTimeUnit = (
+	data: Chart['data'],
+	minTime?: number,
+	maxTime?: number,
+): IAxisTimeConfig => {
 	// Local time is the time range inferred from the input chart data.
 	let localTime: ITimeRange | null;
 	try {
-		let minTime = Number.POSITIVE_INFINITY;
-		let maxTime = Number.NEGATIVE_INFINITY;
+		let minTimeLocal = Number.POSITIVE_INFINITY;
+		let maxTimeLocal = Number.NEGATIVE_INFINITY;
 		data?.labels?.forEach((timeStamp: unknown): void => {
 			const getTimeStamp = (time: Date | number): Date | number | string => {
 				if (time instanceof Date) {
@@ -104,13 +108,13 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 			};
 			const time = getTimeStamp(timeStamp as Date | number);
 
-			minTime = Math.min(parseInt(time.toString(), 10), minTime);
-			maxTime = Math.max(parseInt(time.toString(), 10), maxTime);
+			minTimeLocal = Math.min(parseInt(time.toString(), 10), minTimeLocal);
+			maxTimeLocal = Math.max(parseInt(time.toString(), 10), maxTimeLocal);
 		});
 
 		localTime = {
-			minTime: minTime === Number.POSITIVE_INFINITY ? null : minTime,
-			maxTime: maxTime === Number.NEGATIVE_INFINITY ? null : maxTime,
+			minTime: minTimeLocal === Number.POSITIVE_INFINITY ? null : minTimeLocal,
+			maxTime: maxTimeLocal === Number.NEGATIVE_INFINITY ? null : maxTimeLocal,
 		};
 	} catch (error) {
 		localTime = null;
@@ -122,19 +126,27 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 		(state) => state.globalTime,
 	);
 
-	// Use local time if valid else use the global time range
-	const { maxTime, minTime } = useMemo(() => {
+	// Use explicit minTime/maxTime if provided and valid, otherwise use local time if valid, else use global time range
+	const { maxTime: finalMaxTime, minTime: finalMinTime } = useMemo(() => {
+		// If both minTime and maxTime are explicitly provided and valid, use them
+		if (minTime !== undefined && maxTime !== undefined && minTime <= maxTime) {
+			return { minTime, maxTime };
+		}
+
+		// Otherwise, use local time if valid
 		if (localTime && localTime.maxTime && localTime.minTime) {
 			return {
 				minTime: localTime.minTime,
 				maxTime: localTime.maxTime,
 			};
 		}
+
+		// Fall back to global time range
 		return {
 			minTime: globalTime.minTime / 1e6,
 			maxTime: globalTime.maxTime / 1e6,
 		};
-	}, [globalTime, localTime]);
+	}, [globalTime, localTime, minTime, maxTime]);
 
-	return convertTimeRange(minTime, maxTime);
+	return convertTimeRange(finalMinTime, finalMaxTime);
 };

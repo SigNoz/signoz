@@ -8,6 +8,27 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
+type SetupPaginationQueryDataParamsV2 = {
+	page: number;
+	pageSize: number;
+};
+
+type SetupPaginationQueryDataV2 = (
+	params: SetupPaginationQueryDataParamsV2,
+) => Partial<IBuilderQuery>;
+
+export const getPaginationQueryDataV2: SetupPaginationQueryDataV2 = ({
+	page,
+	pageSize,
+}) => {
+	const offset = (page - 1) * pageSize;
+
+	return {
+		offset,
+		pageSize,
+	};
+};
+
 type SetupPaginationQueryDataParams = {
 	filters: IBuilderQuery['filters'];
 	listItemId: string | null;
@@ -36,7 +57,8 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 
 	const updatedFilters: TagFilter = {
 		...filters,
-		items: filters?.items?.filter((item) => item.key?.key !== 'id'),
+		items: filters?.items?.filter((item) => item.key?.key !== 'id') || [],
+		op: filters?.op || 'AND',
 	};
 
 	const tagFilters: TagFilter = {
@@ -50,7 +72,6 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 								key: 'id',
 								type: '',
 								dataType: DataTypes.String,
-								isColumn: true,
 							},
 							op:
 								orderByTimestamp.order === ORDERBY_FILTERS.ASC
@@ -61,6 +82,7 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 						...updatedFilters.items,
 				  ]
 				: updatedFilters.items,
+		op: filters?.op || 'AND',
 	};
 
 	const chunkOfQueryData: Partial<IBuilderQuery> = {

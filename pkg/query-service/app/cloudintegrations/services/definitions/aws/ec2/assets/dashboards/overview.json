@@ -1,0 +1,1446 @@
+{
+  "description": "Overview of EC2 instances",
+  "image": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsPSJub25lIj4KICA8cGF0aCBmaWxsPSIjOUQ1MDI1IiBkPSJNMS43MDIgMi45OEwxIDMuMzEydjkuMzc2bC43MDIuMzMyIDIuODQyLTQuNzc3TDEuNzAyIDIuOTh6IiAvPgogIDxwYXRoIGZpbGw9IiNGNTg1MzYiIGQ9Ik0zLjMzOSAxMi42NTdsLTEuNjM3LjM2M1YyLjk4bDEuNjM3LjM1M3Y5LjMyNHoiIC8+CiAgPHBhdGggZmlsbD0iIzlENTAyNSIgZD0iTTIuNDc2IDIuNjEybC44NjMtLjQwNiA0LjA5NiA2LjIxNi00LjA5NiA1LjM3Mi0uODYzLS40MDZWMi42MTJ6IiAvPgogIDxwYXRoIGZpbGw9IiNGNTg1MzYiIGQ9Ik01LjM4IDEzLjI0OGwtMi4wNDEuNTQ2VjIuMjA2bDIuMDQuNTQ4djEwLjQ5NHoiIC8+CiAgPHBhdGggZmlsbD0iIzlENTAyNSIgZD0iTTQuMyAxLjc1bDEuMDgtLjUxMiA2LjA0MyA3Ljg2NC02LjA0MyA1LjY2LTEuMDgtLjUxMVYxLjc0OXoiIC8+CiAgPHBhdGggZmlsbD0iI0Y1ODUzNiIgZD0iTTcuOTk4IDEzLjg1NmwtMi42MTguOTA2VjEuMjM4bDIuNjE4LjkwOHYxMS43MXoiIC8+CiAgPHBhdGggZmlsbD0iIzlENTAyNSIgZD0iTTYuNjAyLjY2TDcuOTk4IDBsNi41MzggOC40NTNMNy45OTggMTZsLTEuMzk2LS42NlYuNjZ6IiAvPgogIDxwYXRoIGZpbGw9IiNGNTg1MzYiIGQ9Ik0xNSAxMi42ODZMNy45OTggMTZWMEwxNSAzLjMxNHY5LjM3MnoiIC8+Cjwvc3ZnPg==",
+  "layout": [
+    {
+      "h": 5,
+      "i": "b8a20569-7e4f-40d0-ada6-7736cfadae06",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 5,
+      "i": "b668ba49-d126-4f2d-9eb5-b4cfbfaf94d1",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 5,
+      "i": "6fced7be-8a73-4b9b-8440-f2142230268c",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 5
+    },
+    {
+      "h": 5,
+      "i": "20dbaec7-9a16-47ad-af3b-f56375db8e69",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 5
+    },
+    {
+      "h": 5,
+      "i": "827a354b-1fff-400b-8172-c41e4c830eb5",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 10
+    },
+    {
+      "h": 5,
+      "i": "05de543a-73a2-4221-b784-263749d39b1e",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 10
+    }
+  ],
+  "panelMap": {},
+  "tags": [],
+  "title": "EC2 Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "11b96105-b752-47ef-88bc-832f248cf855": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Account",
+      "id": "11b96105-b752-47ef-88bc-832f248cf855",
+      "key": "11b96105-b752-47ef-88bc-832f248cf855",
+      "modificationUUID": "23866855-0966-45ae-99cd-53fab002a1fa",
+      "multiSelect": false,
+      "name": "Account",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_account_id') as cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_EC2_CPUUtilization_sum'\nGROUP BY cloud_account_id",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "63a394bf-4acd-4f14-bf0a-f9dc5e4f00c2": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Region",
+      "id": "63a394bf-4acd-4f14-bf0a-f9dc5e4f00c2",
+      "modificationUUID": "d3060c9c-fa76-4fc3-bcfa-e417c90717fa",
+      "multiSelect": false,
+      "name": "Region",
+      "order": 0,
+      "queryValue": "\nSELECT JSONExtractString(labels, 'cloud_region') as cloud_region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_EC2_CPUUtilization_sum'\n    and JSONExtractString(labels, 'cloud_account_id') IN {{.Account}}\nGROUP BY cloud_region",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "b8a20569-7e4f-40d0-ada6-7736cfadae06",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_CPUUtilization_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_CPUUtilization_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "d302d50d",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "e6c54e87",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "7907211a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "170f1610-b7d0-4628-aca4-207c122b3709",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPU Utilization",
+      "yAxisUnit": "percent"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "Percentage of available CPU credits that were utilizaed",
+      "fillSpans": false,
+      "id": "b668ba49-d126-4f2d-9eb5-b4cfbfaf94d1",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_CPUCreditUsage_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_CPUCreditUsage_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "30ded0dc",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "c935f6ec",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "d092fef8",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "0643cc76-eedd-4101-bd7a-ec810a3e9b8a",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "CPU Credits Utilization",
+      "yAxisUnit": "percentunit"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "6fced7be-8a73-4b9b-8440-f2142230268c",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_EBSReadBytes_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_EBSReadBytes_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "a5fbfa4a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "87071f13",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "c84a88c4",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}} - Reads",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            },
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_EBSWriteBytes_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_EBSWriteBytes_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "B",
+              "filters": {
+                "items": [
+                  {
+                    "id": "4d10ca4b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "fc2db932",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "a3fd74c0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}} - Writes",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "43627952-52aa-40fd-9c04-cb0e3c123f98",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "EBS Read/Write Bytes",
+      "yAxisUnit": "binBps"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "20dbaec7-9a16-47ad-af3b-f56375db8e69",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_EBSReadOps_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_EBSReadOps_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "85d84806",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "f2074606",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "134c7ca9",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}} - Reads",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            },
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_EBSWriteOps_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_EBSWriteOps_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "B",
+              "filters": {
+                "items": [
+                  {
+                    "id": "47e0c00f",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "0a157dfe",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "a7d1e8df",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}} - Writes",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "B",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "a70e41d1-27dc-4e91-bf13-23d8bd2f3c49",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "EBS Read/Write Ops",
+      "yAxisUnit": "cps"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "827a354b-1fff-400b-8172-c41e4c830eb5",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_NetworkIn_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_NetworkIn_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "12d6748d",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "df3a8da1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "81ec53f4",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ac2ce4a6-f595-4d2a-bc22-ddc51c2d59ff",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Network Incoming",
+      "yAxisUnit": "binBps"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "",
+      "fillSpans": false,
+      "id": "05de543a-73a2-4221-b784-263749d39b1e",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_EC2_NetworkOut_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_EC2_NetworkOut_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "d301aaa7",
+                    "key": {
+                      "dataType": "string",
+                      "id": "service_instance_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service_instance_id",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "e8afaa3b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "d67487ab",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "service_instance_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "service_instance_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{service_instance_id}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "94027537-0da8-4ac5-a880-532b975a818c",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Network Outgoing",
+      "yAxisUnit": "binBps"
+    }
+  ]
+}

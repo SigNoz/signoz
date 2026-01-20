@@ -1,11 +1,12 @@
-import { Dashboard, DashboardData } from './getAll';
+import { Dashboard } from './getAll';
 
-export type Props =
-	| {
-			title: Dashboard['data']['title'];
-			uploadedGrafana: boolean;
-			version?: string;
-	  }
-	| { DashboardData: DashboardData; uploadedGrafana: boolean };
+export type Props = {
+	title: Dashboard['data']['title'];
+	uploadedGrafana: boolean;
+	version?: string;
+};
 
-export type PayloadProps = Dashboard;
+export interface PayloadProps {
+	data: Dashboard;
+	status: string;
+}

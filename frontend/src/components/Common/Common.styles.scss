@@ -1,0 +1,33 @@
+.error-state-container {
+	height: 240px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+
+	border-radius: 3px;
+
+	.error-state-container-content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		.error-state-text {
+			font-size: 14px;
+			font-weight: 500;
+		}
+
+		.error-state-additional-messages {
+			margin-top: 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+
+			.error-state-additional-text {
+				font-size: 12px;
+				font-weight: 400;
+				margin-left: 8px;
+			}
+		}
+	}
+}

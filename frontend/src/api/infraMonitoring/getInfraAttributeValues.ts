@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import createQueryParams from 'lib/createQueryParams';
@@ -14,15 +14,17 @@ export const getInfraAttributesValues = async ({
 	filterAttributeKeyDataType,
 	tagType,
 	searchText,
+	aggregateAttribute,
 }: IGetAttributeValuesPayload): Promise<
 	SuccessResponse<IAttributeValuesResponse> | ErrorResponse
 > => {
 	try {
-		const response = await ApiBaseInstance.get(
+		const response = await axios.get(
 			`/hosts/attribute_values?${createQueryParams({
 				dataSource,
 				attributeKey,
 				searchText,
+				aggregateAttribute,
 			})}&filterAttributeKeyDataType=${filterAttributeKeyDataType}&tagType=${tagType}`,
 		);
 

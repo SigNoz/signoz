@@ -1,4 +1,7 @@
 import ROUTES from 'constants/routes';
+import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
+import MessagingQueues from 'pages/MessagingQueues';
+import MeterExplorer from 'pages/MeterExplorer';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -6,17 +9,16 @@ import {
 	AlertOverview,
 	AllAlertChannels,
 	AllErrors,
-	APIKeys,
-	BillingPage,
+	ApiMonitoring,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardsListPage,
 	DashboardWidget,
-	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
+	Home,
 	InfrastructureMonitoring,
-	IngestionSettings,
 	InstalledIntegrations,
 	LicensePage,
 	ListAllALertsPage,
@@ -26,22 +28,19 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
-	MessagingQueues,
-	MQDetailPage,
-	MySettings,
-	NewDashboardPage,
+	MetricsExplorer,
 	OldLogsExplorer,
 	Onboarding,
-	OrganizationSettings,
+	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
+	PublicDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
 	ServiceTopLevelOperationsPage,
 	SettingsPage,
-	ShortcutsPage,
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
@@ -49,9 +48,12 @@ import {
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
+	TracesFunnelDetails,
+	TracesFunnels,
 	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
+	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
 } from './pageComponents';
@@ -70,6 +72,20 @@ const routes: AppRoutes[] = [
 		component: Onboarding,
 		isPrivate: true,
 		key: 'GET_STARTED',
+	},
+	{
+		path: ROUTES.GET_STARTED_WITH_CLOUD,
+		exact: false,
+		component: OnboardingV2,
+		isPrivate: true,
+		key: 'GET_STARTED_WITH_CLOUD',
+	},
+	{
+		path: ROUTES.HOME,
+		exact: true,
+		component: Home,
+		isPrivate: true,
+		key: 'HOME',
 	},
 	{
 		path: ROUTES.ONBOARDING,
@@ -129,7 +145,7 @@ const routes: AppRoutes[] = [
 	},
 	{
 		path: ROUTES.SETTINGS,
-		exact: true,
+		exact: false,
 		component: SettingsPage,
 		isPrivate: true,
 		key: 'SETTINGS',
@@ -144,16 +160,23 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.ALL_DASHBOARD,
 		exact: true,
-		component: DashboardPage,
+		component: DashboardsListPage,
 		isPrivate: true,
 		key: 'ALL_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD,
 		exact: true,
-		component: NewDashboardPage,
+		component: DashboardPage,
 		isPrivate: true,
 		key: 'DASHBOARD',
+	},
+	{
+		path: ROUTES.PUBLIC_DASHBOARD,
+		exact: false,
+		component: PublicDashboardPage,
+		isPrivate: false,
+		key: 'PUBLIC_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD_WIDGET,
@@ -175,6 +198,13 @@ const routes: AppRoutes[] = [
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
+	},
+	{
+		path: ROUTES.ALERT_TYPE_SELECTION,
+		exact: true,
+		component: AlertTypeSelectionPage,
+		isPrivate: true,
+		key: 'ALERT_TYPE_SELECTION',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
@@ -219,18 +249,25 @@ const routes: AppRoutes[] = [
 		key: 'TRACES_SAVE_VIEWS',
 	},
 	{
+		path: ROUTES.TRACES_FUNNELS,
+		exact: true,
+		component: TracesFunnels,
+		isPrivate: true,
+		key: 'TRACES_FUNNELS',
+	},
+	{
+		path: ROUTES.TRACES_FUNNELS_DETAIL,
+		exact: true,
+		component: TracesFunnelDetails,
+		isPrivate: true,
+		key: 'TRACES_FUNNELS_DETAIL',
+	},
+	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
 		component: CreateAlertChannelAlerts,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
-	},
-	{
-		path: ROUTES.CHANNELS_EDIT,
-		exact: true,
-		component: EditAlertChannelsAlerts,
-		isPrivate: true,
-		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_CHANNELS,
@@ -259,34 +296,6 @@ const routes: AppRoutes[] = [
 		component: StatusPage,
 		isPrivate: true,
 		key: 'VERSION',
-	},
-	{
-		path: ROUTES.ORG_SETTINGS,
-		exact: true,
-		component: OrganizationSettings,
-		isPrivate: true,
-		key: 'ORG_SETTINGS',
-	},
-	{
-		path: ROUTES.INGESTION_SETTINGS,
-		exact: true,
-		component: IngestionSettings,
-		isPrivate: true,
-		key: 'INGESTION_SETTINGS',
-	},
-	{
-		path: ROUTES.API_KEYS,
-		exact: true,
-		component: APIKeys,
-		isPrivate: true,
-		key: 'API_KEYS',
-	},
-	{
-		path: ROUTES.MY_SETTINGS,
-		exact: true,
-		component: MySettings,
-		isPrivate: true,
-		key: 'MY_SETTINGS',
 	},
 	{
 		path: ROUTES.LOGS,
@@ -352,13 +361,6 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.BILLING,
-		exact: true,
-		component: BillingPage,
-		key: 'BILLING',
-		isPrivate: true,
-	},
-	{
 		path: ROUTES.WORKSPACE_LOCKED,
 		exact: true,
 		component: WorkspaceBlocked,
@@ -373,11 +375,11 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_SUSPENDED',
 	},
 	{
-		path: ROUTES.SHORTCUTS,
+		path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
 		exact: true,
-		component: ShortcutsPage,
+		component: WorkspaceAccessRestricted,
 		isPrivate: true,
-		key: 'SHORTCUTS',
+		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
 		path: ROUTES.INTEGRATIONS,
@@ -387,17 +389,31 @@ const routes: AppRoutes[] = [
 		key: 'INTEGRATIONS',
 	},
 	{
-		path: ROUTES.MESSAGING_QUEUES,
+		path: ROUTES.MESSAGING_QUEUES_KAFKA,
 		exact: true,
 		component: MessagingQueues,
-		key: 'MESSAGING_QUEUES',
+		key: 'MESSAGING_QUEUES_KAFKA',
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.MESSAGING_QUEUES_DETAIL,
+		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 		exact: true,
-		component: MQDetailPage,
-		key: 'MESSAGING_QUEUES_DETAIL',
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_CELERY_TASK',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_OVERVIEW',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_KAFKA_DETAIL',
 		isPrivate: true,
 	},
 	{
@@ -405,6 +421,63 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: InfrastructureMonitoring,
 		key: 'INFRASTRUCTURE_MONITORING_HOSTS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
+		exact: true,
+		component: InfrastructureMonitoring,
+		key: 'INFRASTRUCTURE_MONITORING_KUBERNETES',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER_EXPLORER,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER_VIEWS,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_VIEWS',
+		isPrivate: true,
+	},
+
+	{
+		path: ROUTES.METER,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METER_EXPLORER,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METER_EXPLORER_VIEWS,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER_VIEWS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.API_MONITORING,
+		exact: true,
+		component: ApiMonitoring,
+		key: 'API_MONITORING',
 		isPrivate: true,
 	},
 ];
@@ -427,23 +500,30 @@ export const LIST_LICENSES: AppRoutes = {
 
 export const oldRoutes = [
 	'/pipelines',
-	'/logs/old-logs-explorer',
 	'/logs-explorer',
 	'/logs-explorer/live',
 	'/logs-save-views',
 	'/traces-save-views',
-	'/settings/api-keys',
+	'/settings/access-tokens',
+	'/messaging-queues',
+	'/alerts/edit',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
-	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
 	'/logs-explorer': '/logs/logs-explorer',
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/api-keys': '/settings/access-tokens',
+	'/settings/access-tokens': '/settings/api-keys',
+	'/messaging-queues': '/messaging-queues/overview',
+	'/alerts/edit': '/alerts/overview',
 };
+
+export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
+	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.WORKSPACE_SUSPENDED,
+];
 
 export interface AppRoutes {
 	component: RouteProps['component'];

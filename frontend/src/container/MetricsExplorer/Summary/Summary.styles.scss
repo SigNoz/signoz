@@ -1,0 +1,318 @@
+.metrics-explorer-summary-tab {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px 0;
+
+	.metrics-table-title,
+	.metrics-treemap-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 16px;
+
+		.ant-typography {
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+
+		.lucide-info {
+			cursor: pointer;
+		}
+	}
+
+	.metrics-treemap-title {
+		justify-content: space-between;
+
+		.metrics-treemap-title-left {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.ant-select {
+			width: 140px;
+		}
+	}
+
+	.metrics-search-container {
+		display: flex;
+		gap: 16px;
+
+		.metrics-search-options {
+			display: flex;
+			justify-content: space-between;
+		}
+
+		.qb-search-container {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex: 1;
+
+			.lucide-info {
+				cursor: pointer;
+			}
+
+			.query-builder-search-container {
+				width: 100%;
+			}
+		}
+	}
+
+	.metrics-table-container {
+		.ant-table {
+			margin-left: -16px;
+			margin-right: -16px;
+
+			max-height: 500px;
+			overflow-y: auto;
+			.ant-table-thead > tr > th {
+				padding: 12px;
+				font-weight: 500;
+				font-size: 12px;
+				line-height: 18px;
+
+				background: var(--bg-ink-500);
+				border-bottom: none;
+
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 18px; /* 163.636% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+
+				&::before {
+					background-color: transparent;
+				}
+			}
+
+			.ant-table-thead > tr > th:has(.metric-name-column-header) {
+				background: var(--bg-ink-400);
+			}
+
+			.metric-name-column-header,
+			.metric-type-column-header {
+				display: flex;
+				justify-content: space-between;
+
+				.metric-name-column-header-text,
+				.metric-type-column-header-text {
+					line-height: 32px;
+				}
+
+				.ant-btn {
+					margin-left: 4px;
+					padding: 0;
+				}
+			}
+
+			.ant-table-cell {
+				padding: 12px;
+				font-size: 13px;
+				line-height: 20px;
+				color: var(--bg-vanilla-100);
+				background: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.metric-name-column-value) {
+				background: var(--bg-ink-400);
+			}
+
+			.metric-description-column-value {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.metric-name-column-value {
+				color: var(--bg-vanilla-100);
+				font-family: 'Geist Mono';
+				font-style: normal;
+				font-weight: 600;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+
+			.status-cell {
+				.active-tag {
+					color: var(--bg-forest-500);
+					padding: 4px 8px;
+					border-radius: 4px;
+					font-size: 12px;
+					font-weight: 500;
+				}
+			}
+
+			.progress-container {
+				.ant-progress-bg {
+					height: 8px !important;
+					border-radius: 4px;
+				}
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.ant-table-cell:first-child {
+				text-align: justify;
+			}
+
+			.ant-table-cell:nth-child(2) {
+				padding-left: 16px;
+				padding-right: 16px;
+			}
+
+			.ant-table-cell:nth-child(n + 3) {
+				padding-right: 24px;
+			}
+			.column-header-right {
+				text-align: right;
+			}
+			.column-header-left {
+				text-align: left;
+			}
+			.ant-table-tbody > tr > td {
+				border-bottom: none;
+			}
+
+			.ant-table-thead
+				> tr
+				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				background-color: transparent;
+			}
+
+			.ant-empty-normal {
+				visibility: hidden;
+			}
+		}
+
+		.ant-pagination {
+			position: fixed;
+			bottom: 0;
+			width: calc(100% - 64px);
+			background: var(--bg-ink-500);
+			padding: 16px;
+			margin: 0;
+
+			// this is to offset chat support icon till we improve the design
+			right: 20px;
+
+			.ant-pagination-item {
+				border-radius: 4px;
+
+				&-active {
+					background: var(--bg-robin-500);
+					border-color: var(--bg-robin-500);
+
+					a {
+						color: var(--bg-ink-500) !important;
+					}
+				}
+			}
+		}
+	}
+
+	.metrics-treemap {
+		margin-left: -12px;
+		margin-right: -12px;
+	}
+
+	.no-metrics-message-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		align-items: center;
+		min-height: 400px;
+		gap: 16px;
+		padding-top: 32px;
+	}
+}
+
+.lightMode {
+	.metrics-table-container {
+		.ant-table {
+			.ant-table-thead > tr > th {
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-thead > tr > th:has(.metric-name-column-header) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.metric-name-column-value) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.metric-name-column-value {
+				color: var(--bg-ink-300);
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(0, 0, 0, 0.04);
+			}
+		}
+
+		.ant-pagination {
+			background: var(--bg-vanilla-100);
+
+			.ant-pagination-item {
+				&-active {
+					background: var(--bg-robin-500);
+					border-color: var(--bg-robin-500);
+
+					a {
+						color: var(--bg-vanilla-100) !important;
+					}
+				}
+			}
+		}
+	}
+}
+
+.metric-type-renderer {
+	border-radius: 50px;
+	max-height: 24px;
+	width: fit-content;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 4px;
+	text-transform: uppercase;
+	font-size: 12px;
+	padding: 5px 10px;
+	align-self: flex-end;
+}
+
+.ant-popover-inner {
+	padding: 0 !important;
+}
+
+.metric-name-search-popover {
+	.metric-name-search-popover-menu {
+		height: 200px;
+		width: 300px;
+		overflow-y: scroll;
+	}
+
+	.ant-menu {
+		.ant-spin,
+		.ant-empty {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			margin-top: 16px;
+		}
+	}
+}

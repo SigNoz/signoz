@@ -15,7 +15,7 @@ export const getRandomColor = (): string => {
 };
 
 export const DATASOURCE_VS_ROUTES: Record<DataSource, string> = {
-	[DataSource.METRICS]: '',
+	[DataSource.METRICS]: ROUTES.METRICS_EXPLORER,
 	[DataSource.TRACES]: ROUTES.TRACES_EXPLORER,
 	[DataSource.LOGS]: ROUTES.LOGS_EXPLORER,
 };
@@ -37,7 +37,7 @@ export const saveNewViewHandler = ({
 		{
 			viewName,
 			compositeQuery,
-			sourcePage,
+			sourcePage: sourcePage as DataSource,
 			extraData,
 		},
 		{

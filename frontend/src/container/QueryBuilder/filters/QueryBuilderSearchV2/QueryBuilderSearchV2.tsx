@@ -4,12 +4,13 @@ import './QueryBuilderSearchV2.styles.scss';
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	OperatorConfigKeys,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
-import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
@@ -30,6 +31,7 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -40,7 +42,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -63,14 +65,16 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
+import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
+import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
 export interface ITag {
 	id?: string;
 	key: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number | boolean;
+	value: (string | number | boolean)[] | string | number | boolean;
 }
 
 interface CustomTagProps {
@@ -88,6 +92,15 @@ interface QueryBuilderSearchV2Props {
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
+	hardcodedAttributeKeys?: BaseAutocompleteData[];
+	hasPopupContainer?: boolean;
+	rootClassName?: string;
+	maxTagCount?: number | 'responsive';
+	operatorConfigKey?: OperatorConfigKeys;
+	hideSpanScopeSelector?: boolean;
+	// Determines whether to call onChange when a tag is closed
+	triggerOnChangeOnClose?: boolean;
+	skipQueryBuilderRedirect?: boolean;
 }
 
 export interface Option {
@@ -102,12 +115,14 @@ export enum DropdownState {
 }
 
 function getInitTags(query: IBuilderQuery): ITag[] {
-	return query.filters.items.map((item) => ({
-		id: item.id,
-		key: item.key as BaseAutocompleteData,
-		op: getOperatorFromValue(item.op),
-		value: item.value,
-	}));
+	return (
+		query.filters?.items?.map((item) => ({
+			id: item.id,
+			key: item.key as BaseAutocompleteData,
+			op: getOperatorFromValue(item.op),
+			value: item.value,
+		})) || []
+	);
 }
 
 function QueryBuilderSearchV2(
@@ -120,6 +135,14 @@ function QueryBuilderSearchV2(
 		className,
 		suffixIcon,
 		whereClauseConfig,
+		hardcodedAttributeKeys,
+		hasPopupContainer,
+		rootClassName,
+		maxTagCount,
+		operatorConfigKey,
+		hideSpanScopeSelector,
+		triggerOnChangeOnClose,
+		skipQueryBuilderRedirect,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -147,9 +170,8 @@ function QueryBuilderSearchV2(
 
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
-	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
+	const isLogsDataSource = useMemo(() => query.dataSource === DataSource.LOGS, [
+		query.dataSource,
 	]);
 
 	const memoizedSearchParams = useMemo(
@@ -157,20 +179,20 @@ function QueryBuilderSearchV2(
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 		[
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 		],
 	);
 
 	const queryFiltersWithoutId = useMemo(
 		() => ({
 			...query.filters,
-			items: query.filters.items.map((item) => {
+			items: query.filters?.items.map((item) => {
 				const filterWithoutId = cloneDeep(item);
 				unset(filterWithoutId, 'id');
 				return filterWithoutId;
@@ -188,7 +210,7 @@ function QueryBuilderSearchV2(
 		() => [
 			query.aggregateOperator,
 			query.dataSource,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 			currentFilterItem?.key?.key || '',
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type ?? '',
@@ -199,7 +221,7 @@ function QueryBuilderSearchV2(
 		[
 			query.aggregateOperator,
 			query.dataSource,
-			query.aggregateAttribute.key,
+			query.aggregateAttribute?.key,
 			currentFilterItem?.key?.key,
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type,
@@ -219,23 +241,34 @@ function QueryBuilderSearchV2(
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			return query.dataSource === DataSource.METRICS
-				? !!query.dataSource && !!query.aggregateAttribute.dataType
+				? !!query.dataSource && !!query.aggregateAttribute?.dataType
 				: true;
 		}
+
 		return false;
-	}, [currentState, query.aggregateAttribute.dataType, query.dataSource]);
+	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
+
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			searchText: searchValue,
+			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
-			aggregateAttribute: query.aggregateAttribute.key,
-			tagType: query.aggregateAttribute.type ?? null,
+			aggregateOperator: query.aggregateOperator || '',
+			aggregateAttribute: query.aggregateAttribute?.key || '',
+			tagType: query.aggregateAttribute?.type ?? null,
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsExplorerPage,
+			enabled: isQueryEnabled && !isLogsDataSource && !hardcodedAttributeKeys,
 		},
 	);
 
@@ -246,11 +279,11 @@ function QueryBuilderSearchV2(
 		{
 			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
-			filters: query.filters,
+			filters: query.filters || { items: [], op: 'AND' },
 		},
 		{
 			queryKey: [suggestionsParams],
-			enabled: isQueryEnabled && isLogsExplorerPage,
+			enabled: isQueryEnabled && isLogsDataSource,
 		},
 	);
 
@@ -259,15 +292,16 @@ function QueryBuilderSearchV2(
 		isFetching: isFetchingAttributeValues,
 	} = useGetAggregateValues(
 		{
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			attributeKey: currentFilterItem?.key?.key || '',
 			filterAttributeKeyDataType:
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
 			searchText: isArray(currentFilterItem?.value)
-				? currentFilterItem?.value?.[currentFilterItem.value.length - 1] || ''
+				? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
+				  ''
 				: currentFilterItem?.value?.toString() || '',
 		},
 		{
@@ -290,7 +324,8 @@ function QueryBuilderSearchV2(
 				if (
 					isObject(parsedValue) &&
 					parsedValue?.key &&
-					parsedValue?.key?.split(' ').length > 1
+					parsedValue?.key?.split(' ').length > 1 &&
+					isLogsDataSource
 				) {
 					setTags((prev) => [
 						...prev,
@@ -299,8 +334,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 								// eslint-disable-next-line sonarjs/no-duplicate-string
 								id: 'body--string----true',
 							},
@@ -330,8 +363,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 								id: 'body--string----true',
 							},
 							op: OPERATORS.CONTAINS,
@@ -405,7 +436,13 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[currentFilterItem?.key, currentFilterItem?.op, currentState, searchValue],
+		[
+			currentFilterItem?.key,
+			currentFilterItem?.op,
+			currentState,
+			isLogsDataSource,
+			searchValue,
+		],
 	);
 
 	const handleSearch = useCallback((value: string) => {
@@ -453,8 +490,6 @@ function QueryBuilderSearchV2(
 							key: 'body',
 							dataType: DataTypes.String,
 							type: '',
-							isColumn: true,
-							isJSON: false,
 							id: 'body--string----true',
 						},
 						op: OPERATORS.CONTAINS,
@@ -568,8 +603,6 @@ function QueryBuilderSearchV2(
 						key: tagKey,
 						dataType: DataTypes.EMPTY,
 						type: '',
-						isColumn: false,
-						isJSON: false,
 					},
 					op: tagOperator,
 					value: '',
@@ -651,7 +684,7 @@ function QueryBuilderSearchV2(
 	useEffect(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
 			const { tagKey } = getTagToken(searchValue);
-			if (isLogsExplorerPage) {
+			if (isLogsDataSource) {
 				// add the user typed option in the dropdown to select that and move ahead irrespective of the matches and all
 				setDropdownOptions([
 					...(!isEmpty(tagKey) &&
@@ -665,8 +698,6 @@ function QueryBuilderSearchV2(
 										key: tagKey,
 										dataType: DataTypes.EMPTY,
 										type: '',
-										isColumn: false,
-										isJSON: false,
 									},
 								},
 						  ]
@@ -676,13 +707,40 @@ function QueryBuilderSearchV2(
 						value: key,
 					})) || []),
 				]);
-			} else {
+			} else if (hardcodedAttributeKeys) {
+				const filteredKeys = hardcodedAttributeKeys.filter((key) =>
+					key.key
+						.toLowerCase()
+						.includes((searchValue?.split(' ')[0] || '').toLowerCase()),
+				);
 				setDropdownOptions(
-					data?.payload?.attributeKeys?.map((key) => ({
+					filteredKeys.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
+					})),
 				);
+			} else {
+				setDropdownOptions([
+					// Add user typed option if it doesn't exist in the payload
+					...(tagKey.trim().length > 0 &&
+					!data?.payload?.attributeKeys?.some((val) => val.key === tagKey)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+									},
+								},
+						  ]
+						: []),
+					// Map existing attribute keys from payload
+					...(data?.payload?.attributeKeys?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || []),
+				]);
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
@@ -705,15 +763,11 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
 					(operator) => ({
@@ -727,9 +781,12 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			}
+			const filterOperatorOptions = filterByOperatorConfig(
+				operatorOptions,
+				operatorConfigKey,
+			);
+			setDropdownOptions([{ label: '', value: '' }, ...filterOperatorOptions]);
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -740,9 +797,24 @@ function QueryBuilderSearchV2(
 					values.push(tagValue[tagValue.length - 1]);
 			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			values.push(
-				...(Object.values(attributeValues?.payload || {}).find((el) => !!el) || []),
-			);
+			if (attributeValues?.payload) {
+				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
+				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+				values.push(...(attributeValues?.payload?.[key] || []));
+
+				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
+				const variableName = dynamicVariables?.find(
+					(variable) =>
+						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
+				)?.name;
+
+				if (variableName) {
+					const variableValue = `$${variableName}`;
+					if (!values.includes(variableValue)) {
+						values.unshift(variableValue);
+					}
+				}
+			}
 
 			setDropdownOptions(
 				values.map((val) => ({
@@ -752,13 +824,17 @@ function QueryBuilderSearchV2(
 			);
 		}
 	}, [
+		hardcodedAttributeKeys,
 		attributeValues?.payload,
 		currentFilterItem?.key?.dataType,
 		currentState,
 		data?.payload?.attributeKeys,
-		isLogsExplorerPage,
+		isLogsDataSource,
 		searchValue,
 		suggestionsData?.payload?.attributes,
+		operatorConfigKey,
+		currentFilterItem?.key?.key,
+		dynamicVariables,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page
@@ -856,6 +932,9 @@ function QueryBuilderSearchV2(
 			onClose();
 			setSearchValue('');
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
+			if (triggerOnChangeOnClose) {
+				onChange(query.filters || { items: [], op: 'AND' });
+			}
 		};
 
 		const tagEditHandler = (value: string): void => {
@@ -896,7 +975,10 @@ function QueryBuilderSearchV2(
 		<div className="query-builder-search-v2">
 			<Select
 				ref={selectRef}
-				getPopupContainer={popupContainer}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
@@ -928,8 +1010,8 @@ function QueryBuilderSearchV2(
 						: '',
 					className,
 				)}
-				rootClassName="query-builder-search"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				rootClassName={cx('query-builder-search', rootClassName)}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onSelect={handleDropdownSelect}
@@ -949,6 +1031,7 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
+						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
@@ -975,6 +1058,13 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
+			{!hideSpanScopeSelector && (
+				<SpanScopeSelector
+					query={query}
+					onChange={onChange}
+					skipQueryBuilderRedirect={skipQueryBuilderRedirect}
+				/>
+			)}
 		</div>
 	);
 }
@@ -984,6 +1074,14 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hasPopupContainer: true,
+	rootClassName: '',
+	hardcodedAttributeKeys: undefined,
+	maxTagCount: undefined,
+	operatorConfigKey: undefined,
+	hideSpanScopeSelector: true,
+	triggerOnChangeOnClose: false,
+	skipQueryBuilderRedirect: false,
 };
 
 export default QueryBuilderSearchV2;

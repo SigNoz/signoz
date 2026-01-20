@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/alerts/save';
 
@@ -7,7 +8,7 @@ import put from './put';
 const save = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
-	if (props.id && props.id > 0) {
+	if (props.id && !isEmpty(props.id)) {
 		return put({ ...props });
 	}
 

@@ -23,6 +23,12 @@ jest.mock('providers/Dashboard/Dashboard', () => ({
 	}),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 describe('QueryTable -', () => {
 	it('should render correctly with all the data rows', () => {
 		const { container } = render(<QueryTable {...QueryTableProps} />);

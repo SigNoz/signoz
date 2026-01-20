@@ -2,30 +2,36 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
+import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
+import { useAppContext } from 'providers/App/App';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useInterval } from 'react-use';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import {
+	ErrorResponse,
+	ErrorResponseV2,
+	SuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
 import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
 } from 'types/api/disks/getDisks';
+import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';
 import {
 	PayloadPropsLogs as GetRetentionPeriodLogsPayload,
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
@@ -68,11 +74,11 @@ function GeneralSettings({
 		logsTtlValuesPayload,
 	);
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
-		role,
+		user.role,
 	);
 
 	const [
@@ -129,10 +135,10 @@ function GeneralSettings({
 
 	useEffect(() => {
 		if (logsCurrentTTLValues) {
-			setLogsTotalRetentionPeriod(logsCurrentTTLValues.logs_ttl_duration_hrs);
+			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
-				logsCurrentTTLValues.logs_move_ttl_duration_hrs
-					? logsCurrentTTLValues.logs_move_ttl_duration_hrs
+				logsCurrentTTLValues.cold_storage_ttl_days
+					? logsCurrentTTLValues.cold_storage_ttl_days * 24
 					: null,
 			);
 		}
@@ -192,7 +198,12 @@ function GeneralSettings({
 	);
 
 	const s3Enabled = useMemo(
-		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
+		() =>
+			!!find(
+				availableDisks,
+				(disks: IDiskType) =>
+					disks?.type === 's3' || disks?.type === 'ObjectStorage',
+			),
 		[availableDisks],
 	);
 
@@ -283,8 +294,9 @@ function GeneralSettings({
 			isTracesSaveDisabled = true;
 
 		if (
-			logsCurrentTTLValues.logs_ttl_duration_hrs === logsTotalRetentionPeriod &&
-			logsCurrentTTLValues.logs_move_ttl_duration_hrs === logsS3RetentionPeriod
+			logsCurrentTTLValues.default_ttl_days * 24 === logsTotalRetentionPeriod &&
+			logsCurrentTTLValues.cold_storage_ttl_days &&
+			logsCurrentTTLValues.cold_storage_ttl_days * 24 === logsS3RetentionPeriod
 		)
 			isLogsSaveDisabled = true;
 
@@ -295,8 +307,8 @@ function GeneralSettings({
 			errorText,
 		];
 	}, [
-		logsCurrentTTLValues.logs_move_ttl_duration_hrs,
-		logsCurrentTTLValues.logs_ttl_duration_hrs,
+		logsCurrentTTLValues.cold_storage_ttl_days,
+		logsCurrentTTLValues.default_ttl_days,
 		logsS3RetentionPeriod,
 		logsTotalRetentionPeriod,
 		metricsCurrentTTLValues.metrics_move_ttl_duration_hrs,
@@ -338,20 +350,46 @@ function GeneralSettings({
 		}
 		try {
 			onPostApiLoadingHandler(type);
-			const setTTLResponse = await setRetentionApi({
-				type,
-				totalDuration: `${apiCallTotalRetention || -1}h`,
-				coldStorage: s3Enabled ? 's3' : null,
-				toColdDuration: `${apiCallS3Retention || -1}h`,
-			});
 			let hasSetTTLFailed = false;
-			if (setTTLResponse.statusCode === 409) {
+
+			try {
+				if (type === 'logs') {
+					// Only send S3 values if user has specified a duration
+					const s3RetentionDays =
+						apiCallS3Retention && apiCallS3Retention > 0
+							? apiCallS3Retention / 24
+							: 0;
+
+					await setRetentionApiV2({
+						type,
+						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
+						coldStorageVolume: s3RetentionDays > 0 ? 's3' : '',
+						coldStorageDurationDays: s3RetentionDays,
+						ttlConditions: [],
+					});
+				} else {
+					await setRetentionApi({
+						type,
+						totalDuration: `${apiCallTotalRetention || -1}h`,
+						coldStorage: s3Enabled ? 's3' : null,
+						toColdDuration: `${apiCallS3Retention || -1}h`,
+					});
+				}
+			} catch (error) {
 				hasSetTTLFailed = true;
-				notifications.error({
-					message: 'Error',
-					description: t('retention_request_race_condition'),
-					placement: 'topRight',
-				});
+				if ((error as APIError).getHttpStatusCode() === StatusCodes.CONFLICT) {
+					notifications.error({
+						message: 'Error',
+						description: t('retention_request_race_condition'),
+						placement: 'topRight',
+					});
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: (error as APIError).getErrorMessage(),
+						placement: 'topRight',
+					});
+				}
 			}
 
 			if (type === 'metrics') {
@@ -378,11 +416,15 @@ function GeneralSettings({
 				logsTtlValuesRefetch();
 				if (!hasSetTTLFailed)
 					// Updates the currentTTL Values in order to avoid pushing the same values.
-					setLogsCurrentTTLValues({
-						logs_ttl_duration_hrs: logsTotalRetentionPeriod || -1,
-						logs_move_ttl_duration_hrs: logsS3RetentionPeriod || -1,
-						status: '',
-					});
+					setLogsCurrentTTLValues((prev) => ({
+						...prev,
+						cold_storage_ttl_days: logsS3RetentionPeriod
+							? logsS3RetentionPeriod / 24
+							: -1,
+						default_ttl_days: logsTotalRetentionPeriod
+							? logsTotalRetentionPeriod / 24 // convert Hours to days
+							: -1,
+					}));
 			}
 		} catch (error) {
 			notifications.error({
@@ -396,11 +438,12 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const renderConfig = [
 		{
 			name: 'Metrics',
+			type: 'metrics',
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -442,6 +485,7 @@ function GeneralSettings({
 		},
 		{
 			name: 'Traces',
+			type: 'traces',
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -481,6 +525,7 @@ function GeneralSettings({
 		},
 		{
 			name: 'Logs',
+			type: 'logs',
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -492,6 +537,7 @@ function GeneralSettings({
 					value: logsS3RetentionPeriod,
 					setValue: setLogsS3RetentionPeriod,
 					hide: !s3Enabled,
+					isS3Field: true,
 				},
 			],
 			save: {
@@ -539,11 +585,13 @@ function GeneralSettings({
 							/>
 							{category.retentionFields.map((retentionField) => (
 								<Retention
+									type={category.type as TTTLType}
 									key={retentionField.name}
 									text={retentionField.name}
 									retentionValue={retentionField.value}
 									setRetentionValue={retentionField.setValue}
 									hide={!!retentionField.hide}
+									isS3Field={'isS3Field' in retentionField && retentionField.isS3Field}
 								/>
 							))}
 
@@ -627,7 +675,7 @@ interface GeneralSettingsProps {
 		ErrorResponse | SuccessResponse<GetRetentionPeriodTracesPayload>
 	>['refetch'];
 	logsTtlValuesRefetch: UseQueryResult<
-		ErrorResponse | SuccessResponse<GetRetentionPeriodLogsPayload>
+		ErrorResponseV2 | SuccessResponseV2<GetRetentionPeriodLogsPayload>
 	>['refetch'];
 }
 

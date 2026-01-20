@@ -3,16 +3,22 @@ package rules
 import (
 	"context"
 	"fmt"
-	"math"
+	"log/slog"
 	"net/url"
 	"sync"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/converter"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
@@ -20,13 +26,16 @@ import (
 type BaseRule struct {
 	id             string
 	name           string
+	orgID          valuer.UUID
 	source         string
 	handledRestart bool
 
 	// Type of the rule
-	typ AlertType
+	typ ruletypes.AlertType
 
-	ruleCondition *RuleCondition
+	ruleCondition *ruletypes.RuleCondition
+
+	Threshold ruletypes.RuleThreshold
 	// evalWindow is the time window used for evaluating the rule
 	// i.e each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
@@ -51,9 +60,9 @@ type BaseRule struct {
 	// the timestamp of the last evaluation
 	evaluationTimestamp time.Time
 
-	health    RuleHealth
+	health    ruletypes.RuleHealth
 	lastError error
-	Active    map[uint64]*Alert
+	Active    map[uint64]*ruletypes.Alert
 
 	// lastTimestampWithDatapoints is the timestamp of the last datapoint we observed
 	// for this rule
@@ -62,7 +71,7 @@ type BaseRule struct {
 
 	reader interfaces.Reader
 
-	logger *zap.Logger
+	logger *slog.Logger
 
 	// sendUnmatched sends observed metric values
 	// even if they dont match the rule condition. this is
@@ -78,6 +87,17 @@ type BaseRule struct {
 	// querying the v4 table on low cardinal temporality column
 	// should be fast but we can still avoid the query if we have the data in memory
 	TemporalityMap map[string]map[v3.Temporality]bool
+
+	sqlstore sqlstore.SQLStore
+
+	metadataStore telemetrytypes.MetadataStore
+
+	evaluation ruletypes.Evaluation
+
+	// newGroupEvalDelay is the grace period for new alert groups
+	newGroupEvalDelay *time.Duration
+
+	queryParser queryparser.QueryParser
 }
 
 type RuleOption func(*BaseRule)
@@ -100,19 +120,46 @@ func WithEvalDelay(dur time.Duration) RuleOption {
 	}
 }
 
-func WithLogger(logger *zap.Logger) RuleOption {
+func WithLogger(logger *slog.Logger) RuleOption {
 	return func(r *BaseRule) {
 		r.logger = logger
 	}
 }
 
-func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
+func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
+	return func(r *BaseRule) {
+		r.sqlstore = sqlstore
+	}
+}
+
+func WithQueryParser(queryParser queryparser.QueryParser) RuleOption {
+	return func(r *BaseRule) {
+		r.queryParser = queryParser
+	}
+}
+
+func WithMetadataStore(metadataStore telemetrytypes.MetadataStore) RuleOption {
+	return func(r *BaseRule) {
+		r.metadataStore = metadataStore
+	}
+}
+
+func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
 	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
+	}
+	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil, err
+	}
+	evaluation, err := p.Evaluation.GetEvaluation()
+	if err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)
 	}
 
 	baseRule := &BaseRule{
 		id:                id,
+		orgID:             orgID,
 		name:              p.AlertName,
 		source:            p.Source,
 		typ:               p.AlertType,
@@ -121,10 +168,18 @@ func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...R
 		labels:            qslabels.FromMap(p.Labels),
 		annotations:       qslabels.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
-		health:            HealthUnknown,
-		Active:            map[uint64]*Alert{},
+		health:            ruletypes.HealthUnknown,
+		Active:            map[uint64]*ruletypes.Alert{},
 		reader:            reader,
 		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
+		Threshold:         threshold,
+		evaluation:        evaluation,
+	}
+
+	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
+	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
+		newGroupEvalDelay := time.Duration(*p.NotificationSettings.NewGroupEvalDelay)
+		baseRule.newGroupEvalDelay = &newGroupEvalDelay
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -138,46 +193,57 @@ func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...R
 	return baseRule, nil
 }
 
-func (r *BaseRule) targetVal() float64 {
-	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
-		return 0
-	}
-
-	// get the converter for the target unit
-	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-	// convert the target value to the y-axis unit
-	value := unitConverter.Convert(converter.Value{
-		F: *r.ruleCondition.Target,
-		U: converter.Unit(r.ruleCondition.TargetUnit),
-	}, converter.Unit(r.Unit()))
-
-	return value.F
-}
-
-func (r *BaseRule) matchType() MatchType {
+func (r *BaseRule) matchType() ruletypes.MatchType {
 	if r.ruleCondition == nil {
-		return AtleastOnce
+		return ruletypes.AtleastOnce
 	}
 	return r.ruleCondition.MatchType
 }
 
-func (r *BaseRule) compareOp() CompareOp {
+func (r *BaseRule) compareOp() ruletypes.CompareOp {
 	if r.ruleCondition == nil {
-		return ValueIsEq
+		return ruletypes.ValueIsEq
 	}
 	return r.ruleCondition.CompareOp
 }
 
-func (r *BaseRule) currentAlerts() []*Alert {
+func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	alerts := make([]*Alert, 0, len(r.Active))
+	alerts := make([]*ruletypes.Alert, 0, len(r.Active))
 	for _, a := range r.Active {
 		anew := *a
 		alerts = append(alerts, &anew)
 	}
 	return alerts
+}
+
+// ShouldSendUnmatched returns true if the rule should send unmatched samples
+// during alert evaluation, even if they don't match the rule condition.
+// This is useful in testing the rule.
+func (r *BaseRule) ShouldSendUnmatched() bool {
+	return r.sendUnmatched
+}
+
+// ActiveAlertsLabelFP returns a map of active alert labels fingerprint and
+// the fingerprint is computed using the QueryResultLables.Hash() method.
+// We use the QueryResultLables instead of labels as these labels are raw labels
+// that we get from the sample.
+// This is useful in cases where we want to check if an alert is still active
+// based on the labels we have.
+func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	activeAlerts := make(map[uint64]struct{}, len(r.Active))
+	for _, alert := range r.Active {
+		if alert == nil || alert.QueryResultLables == nil {
+			continue
+		}
+		activeAlerts[alert.QueryResultLables.Hash()] = struct{}{}
+	}
+	return activeAlerts
 }
 
 func (r *BaseRule) EvalDelay() time.Duration {
@@ -192,10 +258,6 @@ func (r *BaseRule) HoldDuration() time.Duration {
 	return r.holdDuration
 }
 
-func (r *BaseRule) TargetVal() float64 {
-	return r.targetVal()
-}
-
 func (r *ThresholdRule) hostFromSource() string {
 	parsedUrl, err := url.Parse(r.source)
 	if err != nil {
@@ -207,15 +269,16 @@ func (r *ThresholdRule) hostFromSource() string {
 	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
 }
 
-func (r *BaseRule) ID() string                       { return r.id }
-func (r *BaseRule) Name() string                     { return r.name }
-func (r *BaseRule) Condition() *RuleCondition        { return r.ruleCondition }
-func (r *BaseRule) Labels() qslabels.BaseLabels      { return r.labels }
-func (r *BaseRule) Annotations() qslabels.BaseLabels { return r.annotations }
-func (r *BaseRule) PreferredChannels() []string      { return r.preferredChannels }
+func (r *BaseRule) ID() string                          { return r.id }
+func (r *BaseRule) OrgID() valuer.UUID                  { return r.orgID }
+func (r *BaseRule) Name() string                        { return r.name }
+func (r *BaseRule) Condition() *ruletypes.RuleCondition { return r.ruleCondition }
+func (r *BaseRule) Labels() qslabels.BaseLabels         { return r.labels }
+func (r *BaseRule) Annotations() qslabels.BaseLabels    { return r.annotations }
+func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
-	return prepareRuleGeneratorURL(r.ID(), r.source)
+	return ruletypes.PrepareRuleGeneratorURL(r.ID(), r.source)
 }
 
 func (r *BaseRule) Unit() string {
@@ -226,8 +289,10 @@ func (r *BaseRule) Unit() string {
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli()
-	end := ts.UnixMilli()
+
+	st, en := r.evaluation.NextWindowFor(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	if r.evalDelay > 0 {
 		start = start - int64(r.evalDelay.Milliseconds())
@@ -252,13 +317,13 @@ func (r *BaseRule) LastError() error {
 	return r.lastError
 }
 
-func (r *BaseRule) SetHealth(health RuleHealth) {
+func (r *BaseRule) SetHealth(health ruletypes.RuleHealth) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.health = health
 }
 
-func (r *BaseRule) Health() RuleHealth {
+func (r *BaseRule) Health() ruletypes.RuleHealth {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	return r.health
@@ -298,8 +363,8 @@ func (r *BaseRule) State() model.AlertState {
 	return maxState
 }
 
-func (r *BaseRule) ActiveAlerts() []*Alert {
-	var res []*Alert
+func (r *BaseRule) ActiveAlerts() []*ruletypes.Alert {
+	var res []*ruletypes.Alert
 	for _, a := range r.currentAlerts() {
 		if a.ResolvedAt.IsZero() {
 			res = append(res, a)
@@ -309,9 +374,23 @@ func (r *BaseRule) ActiveAlerts() []*Alert {
 }
 
 func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	alerts := []*Alert{}
-	r.ForEachActiveAlert(func(alert *Alert) {
-		if alert.needsSending(ts, resendDelay) {
+	var orgID string
+	err := r.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Table("organizations").
+		ColumnExpr("id").
+		Limit(1).
+		Scan(ctx, &orgID)
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to get org ids", "error", err)
+		return
+	}
+
+	alerts := []*ruletypes.Alert{}
+	r.ForEachActiveAlert(func(alert *ruletypes.Alert) {
+		if alert.NeedsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			delta := resendDelay
 			if interval > resendDelay {
@@ -322,242 +401,16 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 			alerts = append(alerts, &anew)
 		}
 	})
-	notifyFunc(ctx, "", alerts...)
+	notifyFunc(ctx, orgID, "", alerts...)
 }
 
-func (r *BaseRule) ForEachActiveAlert(f func(*Alert)) {
+func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	for _, a := range r.Active {
 		f(a)
 	}
-}
-
-func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
-	var alertSmpl Sample
-	var shouldAlert bool
-	var lbls qslabels.Labels
-
-	for name, value := range series.Labels {
-		lbls = append(lbls, qslabels.Label{Name: name, Value: value})
-	}
-
-	series.Points = removeGroupinSetPoints(series)
-
-	// nothing to evaluate
-	if len(series.Points) == 0 {
-		return alertSmpl, false
-	}
-
-	if r.ruleCondition.RequireMinPoints {
-		if len(series.Points) < r.ruleCondition.RequiredNumPoints {
-			zap.L().Info("not enough data points to evaluate series, skipping", zap.String("ruleid", r.ID()), zap.Int("numPoints", len(series.Points)), zap.Int("requiredPoints", r.ruleCondition.RequiredNumPoints))
-			return alertSmpl, false
-		}
-	}
-
-	switch r.matchType() {
-	case AtleastOnce:
-		// If any sample matches the condition, the rule is firing.
-		if r.compareOp() == ValueIsAbove {
-			for _, smpl := range series.Points {
-				if smpl.Value > r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			for _, smpl := range series.Points {
-				if smpl.Value < r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsEq {
-			for _, smpl := range series.Points {
-				if smpl.Value == r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			for _, smpl := range series.Points {
-				if smpl.Value != r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if r.compareOp() == ValueOutsideBounds {
-			for _, smpl := range series.Points {
-				if math.Abs(smpl.Value) >= r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		}
-	case AllTheTimes:
-		// If all samples match the condition, the rule is firing.
-		shouldAlert = true
-		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lbls}
-		if r.compareOp() == ValueIsAbove {
-			for _, smpl := range series.Points {
-				if smpl.Value <= r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			// use min value from the series
-			if shouldAlert {
-				var minValue float64 = math.Inf(1)
-				for _, smpl := range series.Points {
-					if smpl.Value < minValue {
-						minValue = smpl.Value
-					}
-				}
-				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lbls}
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			for _, smpl := range series.Points {
-				if smpl.Value >= r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			if shouldAlert {
-				var maxValue float64 = math.Inf(-1)
-				for _, smpl := range series.Points {
-					if smpl.Value > maxValue {
-						maxValue = smpl.Value
-					}
-				}
-				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lbls}
-			}
-		} else if r.compareOp() == ValueIsEq {
-			for _, smpl := range series.Points {
-				if smpl.Value != r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			for _, smpl := range series.Points {
-				if smpl.Value == r.targetVal() {
-					shouldAlert = false
-					break
-				}
-			}
-			// use any non-inf or nan value from the series
-			if shouldAlert {
-				for _, smpl := range series.Points {
-					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
-						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-						break
-					}
-				}
-			}
-		} else if r.compareOp() == ValueOutsideBounds {
-			for _, smpl := range series.Points {
-				if math.Abs(smpl.Value) < r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = false
-					break
-				}
-			}
-		}
-	case OnAverage:
-		// If the average of all samples matches the condition, the rule is firing.
-		var sum, count float64
-		for _, smpl := range series.Points {
-			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
-				continue
-			}
-			sum += smpl.Value
-			count++
-		}
-		avg := sum / count
-		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls}
-		if r.compareOp() == ValueIsAbove {
-			if avg > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			if avg < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsEq {
-			if avg == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			if avg != r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueOutsideBounds {
-			if math.Abs(avg) >= r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	case InTotal:
-		// If the sum of all samples matches the condition, the rule is firing.
-		var sum float64
-
-		for _, smpl := range series.Points {
-			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
-				continue
-			}
-			sum += smpl.Value
-		}
-		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls}
-		if r.compareOp() == ValueIsAbove {
-			if sum > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			if sum < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsEq {
-			if sum == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			if sum != r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueOutsideBounds {
-			if math.Abs(sum) >= r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	case Last:
-		// If the last sample matches the condition, the rule is firing.
-		shouldAlert = false
-		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
-		if r.compareOp() == ValueIsAbove {
-			if series.Points[len(series.Points)-1].Value > r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsBelow {
-			if series.Points[len(series.Points)-1].Value < r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsEq {
-			if series.Points[len(series.Points)-1].Value == r.targetVal() {
-				shouldAlert = true
-			}
-		} else if r.compareOp() == ValueIsNotEq {
-			if series.Points[len(series.Points)-1].Value != r.targetVal() {
-				shouldAlert = true
-			}
-		}
-	}
-	return alertSmpl, shouldAlert
 }
 
 func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {
@@ -655,7 +508,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	return nil
 }
 
-func (r *BaseRule) PopulateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {
 
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
@@ -687,7 +540,7 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, qp *v3.QueryRangePar
 	var err error
 
 	if len(missingTemporality) > 0 {
-		nameToTemporality, err = r.reader.FetchTemporality(ctx, missingTemporality)
+		nameToTemporality, err = r.reader.FetchTemporality(ctx, orgID, missingTemporality)
 		if err != nil {
 			return err
 		}
@@ -709,4 +562,198 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, qp *v3.QueryRangePar
 		}
 	}
 	return nil
+}
+
+// ShouldSkipNewGroups returns true if new group filtering should be applied
+func (r *BaseRule) ShouldSkipNewGroups() bool {
+	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
+}
+
+// isFilterNewSeriesSupported checks if the query is supported for new series filtering
+func (r *BaseRule) isFilterNewSeriesSupported() bool {
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range r.ruleCondition.CompositeQuery.Queries {
+			if query.Type != qbtypes.QueryTypeBuilder {
+				continue
+			}
+			switch query.Spec.(type) {
+			// query spec is for Logs or Traces, return with blank metric names and group by fields
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// extractMetricAndGroupBys extracts metric names and groupBy keys from the rule's query.
+// Returns a map where key is the metric name and value is the list of groupBy keys associated with it.
+// TODO: implement caching for query parsing results to avoid re-parsing the query + cache invalidation
+func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) (map[string][]string, error) {
+	metricToGroupedFields := make(map[string][]string)
+
+	// check to avoid processing the query for Logs and Traces
+	// as excluding new series is not supported for Logs and Traces for now
+	if !r.isFilterNewSeriesSupported() {
+		return metricToGroupedFields, nil
+	}
+
+	results, err := r.queryParser.AnalyzeQueryEnvelopes(ctx, r.ruleCondition.CompositeQuery.Queries)
+	if err != nil {
+		return nil, err
+	}
+
+	// temp map to avoid duplicates group by fields for the same metric
+	// map[metricName]map[groupKey]struct{}
+	tempMap := make(map[string]map[string]struct{})
+
+	// Aggregate results from all queries
+	for _, result := range results {
+		if len(result.MetricNames) == 0 {
+			continue
+		}
+		// Collect unique groupBy columns for this query result
+		uniqueGroups := make(map[string]struct{})
+		for _, col := range result.GroupByColumns {
+			uniqueGroups[col.GroupName()] = struct{}{}
+		}
+		// walk through the metric names and group by fields for this query result and add them to the temp map
+		for _, metricName := range result.MetricNames {
+			if _, ok := tempMap[metricName]; !ok {
+				tempMap[metricName] = make(map[string]struct{})
+			}
+			for groupKey := range uniqueGroups {
+				tempMap[metricName][groupKey] = struct{}{}
+			}
+		}
+	}
+
+	// Convert to final map
+	for metricName, groups := range tempMap {
+		for groupKey := range groups {
+			metricToGroupedFields[metricName] = append(metricToGroupedFields[metricName], groupKey)
+		}
+	}
+
+	return metricToGroupedFields, nil
+}
+
+// FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
+// Returns the filtered series (old ones) excluding new series that are still within the grace period.
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
+	// Extract metric names and groupBy keys
+	metricToGroupedFields, err := r.extractMetricAndGroupBys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(metricToGroupedFields) == 0 {
+		// No metrics or groupBy keys, nothing to filter (non-ideal case, return all series)
+		return series, nil
+	}
+
+	// Build lookup keys from series which will be used to query metadata from CH
+	lookupKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
+	seriesIdxToLookupKeys := make(map[int][]telemetrytypes.MetricMetadataLookupKey) // series index -> lookup keys
+
+	for i := 0; i < len(series); i++ {
+		metricLabelMap := series[i].Labels
+
+		// Collect groupBy attribute-value pairs for this series
+		seriesKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
+
+		for metricName, groupedFields := range metricToGroupedFields {
+			for _, groupByKey := range groupedFields {
+				if attrValue, ok := metricLabelMap[groupByKey]; ok {
+					lookupKey := telemetrytypes.MetricMetadataLookupKey{
+						MetricName:     metricName,
+						AttributeName:  groupByKey,
+						AttributeValue: attrValue,
+					}
+					lookupKeys = append(lookupKeys, lookupKey)
+					seriesKeys = append(seriesKeys, lookupKey)
+				}
+			}
+		}
+
+		if len(seriesKeys) > 0 {
+			seriesIdxToLookupKeys[i] = seriesKeys
+		}
+	}
+
+	if len(lookupKeys) == 0 {
+		// No lookup keys to query, return all series
+		// this can happen when the series has no labels at all
+		// in that case, we include all series as we don't know if it is new or old series
+		return series, nil
+	}
+
+	// unique lookup keys
+	uniqueLookupKeysMap := make(map[telemetrytypes.MetricMetadataLookupKey]struct{})
+	uniqueLookupKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
+	for _, key := range lookupKeys {
+		if _, ok := uniqueLookupKeysMap[key]; !ok {
+			uniqueLookupKeysMap[key] = struct{}{}
+			uniqueLookupKeys = append(uniqueLookupKeys, key)
+		}
+	}
+	// Query metadata for first_seen timestamps
+	firstSeenMap, err := r.metadataStore.GetFirstSeenFromMetricMetadata(ctx, uniqueLookupKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter series based on first_seen + delay
+	filteredSeries := make([]*v3.Series, 0, len(series))
+	evalTimeMs := ts.UnixMilli()
+	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
+
+	for i := 0; i < len(series); i++ {
+		seriesKeys, ok := seriesIdxToLookupKeys[i]
+		if !ok {
+			// No matching labels used in groupBy from this series, include it
+			// as we can't decide if it is new or old series
+			filteredSeries = append(filteredSeries, series[i])
+			continue
+		}
+
+		// Find the maximum first_seen across all groupBy attributes for this series
+		// if the latest is old enough we're good, if latest is new we need to skip it
+		maxFirstSeen := int64(0)
+		// metadataFound tracks if we have metadata for any of the lookup keys
+		metadataFound := false
+
+		for _, lookupKey := range seriesKeys {
+			if firstSeen, exists := firstSeenMap[lookupKey]; exists {
+				metadataFound = true
+				if firstSeen > maxFirstSeen {
+					maxFirstSeen = firstSeen
+				}
+			}
+		}
+
+		// if we don't have metadata for any of the lookup keys, we can't decide if it is new or old series
+		// in that case, we include it
+		if !metadataFound {
+			filteredSeries = append(filteredSeries, series[i])
+			continue
+		}
+
+		// Check if first_seen + delay has passed
+		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
+			// Still within grace period, skip this series
+			r.logger.InfoContext(ctx, "Skipping new series", "rule_name", r.Name(), "series_idx", i, "max_first_seen", maxFirstSeen, "eval_time_ms", evalTimeMs, "delay_ms", newGroupEvalDelayMs, "labels", series[i].Labels)
+			continue
+		}
+
+		// Old enough, include this series
+		filteredSeries = append(filteredSeries, series[i])
+	}
+
+	skippedCount := len(series) - len(filteredSeries)
+	if skippedCount > 0 {
+		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(series), "delay_ms", newGroupEvalDelayMs)
+	}
+
+	return filteredSeries, nil
 }

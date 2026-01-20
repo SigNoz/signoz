@@ -4,13 +4,15 @@ import {
 	Alert,
 	Button,
 	Col,
+	Flex,
 	Modal,
 	Row,
 	Skeleton,
 	Space,
 	Typography,
 } from 'antd';
-import manageCreditCardApi from 'api/billing/manage';
+import manageCreditCardApi from 'api/v1/portal/create';
+import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
@@ -19,17 +21,15 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
-import AppReducer from 'types/reducer/app';
+import APIError from 'types/api/error';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 function WorkspaceSuspended(): JSX.Element {
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isAdmin = role === 'ADMIN';
+	const { user } = useAppContext();
+	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	const { t } = useTranslation(['failedPayment']);
 
@@ -37,40 +37,41 @@ function WorkspaceSuspended(): JSX.Element {
 		manageCreditCardApi,
 		{
 			onSuccess: (data) => {
-				if (data.payload?.redirectURL) {
+				if (data.data?.redirectURL) {
 					const newTab = document.createElement('a');
-					newTab.href = data.payload.redirectURL;
+					newTab.href = data.data.redirectURL;
 					newTab.target = '_blank';
 					newTab.rel = 'noopener noreferrer';
 					newTab.click();
 				}
 			},
-			onError: () =>
+			onError: (error: APIError) =>
 				notifications.error({
-					message: t('somethingWentWrong'),
+					message: error.getErrorCode(),
+					description: error.getErrorMessage(),
 				}),
 		},
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
 		manageCreditCard({
-			licenseKey: activeLicenseV3?.key || '',
-			successURL: window.location.origin,
-			cancelURL: window.location.origin,
+			url: window.location.origin,
 		});
-	}, [activeLicenseV3?.key, manageCreditCard]);
+	}, [manageCreditCard]);
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+		if (!isFetchingActiveLicense) {
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicense?.state === LicenseState.DEFAULTED;
 
-			if (!shouldSuspendWorkspace) {
-				history.push(ROUTES.APPLICATION);
+			if (
+				!shouldSuspendWorkspace ||
+				activeLicense?.platform === LicensePlatform.SELF_HOSTED
+			) {
+				history.push(ROUTES.HOME);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+	}, [isFetchingActiveLicense, activeLicense]);
 	return (
 		<div>
 			<Modal
@@ -102,7 +103,7 @@ function WorkspaceSuspended(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-suspended__container">
-					{isFetchingActiveLicenseV3 || !activeLicenseV3 ? (
+					{isFetchingActiveLicense || !activeLicense ? (
 						<Skeleton />
 					) : (
 						<>
@@ -118,7 +119,7 @@ function WorkspaceSuspended(): JSX.Element {
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-suspended__details__highlight">
 												{getFormattedDateWithMinutes(
-													dayjs(activeLicenseV3?.event_queue?.scheduled_at).unix() ||
+													dayjs(activeLicense?.event_queue?.scheduled_at).unix() ||
 														Date.now(),
 												)}
 											</span>{' '}
@@ -147,9 +148,9 @@ function WorkspaceSuspended(): JSX.Element {
 									justify="center"
 									align="middle"
 									className="workspace-suspended__modal__cta"
-									gutter={[16, 16]}
+									gutter={[8, 8]}
 								>
-									<Col>
+									<Flex gap={8} justify="center" align="center">
 										<Button
 											type="primary"
 											shape="round"
@@ -159,7 +160,8 @@ function WorkspaceSuspended(): JSX.Element {
 										>
 											{t('continueMyJourney')}
 										</Button>
-									</Col>
+										<RefreshPaymentStatus btnShape="round" />
+									</Flex>
 								</Row>
 							)}
 							<div className="workspace-suspended__creative">

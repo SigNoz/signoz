@@ -1,6 +1,6 @@
 package inframetrics
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 
 var ProcessesTableListQuery = v3.QueryRangeParamsV3{
 	CompositeQuery: &v3.CompositeQuery{

@@ -15,19 +15,18 @@ import {
 } from './types';
 
 export function getSeriesValue(
-	queryArray: QueryDataV3[],
+	queryArray: QueryDataV3[] | undefined,
 	queryName: string,
 ): string {
-	const queryObject = queryArray.find((item) => item.queryName === queryName);
+	const queryObject = queryArray?.find((item) => item?.queryName === queryName);
 	const series = queryObject ? queryObject.series : 0;
 	return series ? series[0].values[0].value : '0';
 }
 
 export const getQueryRangeRequestData = ({
 	topLevelOperations,
-	maxTime,
-	minTime,
 	globalSelectedInterval,
+	dotMetricsEnabled,
 }: GetQueryRangeRequestDataProps): GetQueryResultsProps[] => {
 	const requestData: GetQueryResultsProps[] = [];
 	topLevelOperations.forEach((operation) => {
@@ -35,18 +34,14 @@ export const getQueryRangeRequestData = ({
 			query: {
 				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				builder: serviceMetricsQuery(operation),
+				builder: serviceMetricsQuery(operation, dotMetricsEnabled),
 				clickhouse_sql: [],
 				id: uuid(),
 			},
 			panelTypes: PANEL_TYPES.TABLE,
 		});
 
-		const updatedQuery = updateStepInterval(
-			serviceMetricsWidget.query,
-			maxTime,
-			minTime,
-		);
+		const updatedQuery = updateStepInterval(serviceMetricsWidget.query);
 
 		requestData.push({
 			selectedTime: serviceMetricsWidget?.timePreferance,

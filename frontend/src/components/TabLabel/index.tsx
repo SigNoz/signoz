@@ -8,7 +8,7 @@ function TabLabel({
 	isDisabled,
 	tooltipText,
 }: TabLabelProps): JSX.Element {
-	const currentLabel = <span>{label}</span>;
+	const currentLabel = <span data-testid={`${label}`}>{label}</span>;
 
 	if (isDisabled) {
 		return (

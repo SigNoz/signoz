@@ -1,0 +1,169 @@
+name: gor-signoz
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: get-sha
+        shell: bash
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: dotenv-frontend
+        working-directory: frontend
+        run: |
+          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
+          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> .env
+          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> .env
+          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> .env
+          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> .env
+          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> .env
+          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> .env
+          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> .env
+          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> .env
+          echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> .env
+          echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
+          echo 'PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> .env
+      - name: build-frontend
+        run:  make js-build
+      - name: upload-frontend-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ env.sha_short }}
+          path: frontend/build
+  build:
+    needs: prepare
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    env:
+      CONFIG_PATH: cmd/enterprise/.goreleaser.yaml
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: setup-qemu
+        uses: docker/setup-qemu-action@v3
+        if: matrix.os == 'ubuntu-latest'
+      - name: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        if: matrix.os == 'ubuntu-latest'
+      - name: ghcr-login
+        uses: docker/login-action@v3
+        if: matrix.os != 'macos-latest'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: setup-go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: cross-compilation-tools
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
+      - name: get-sha
+        shell: bash
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: download-frontend-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ env.sha_short }}
+          path: frontend/build
+      - name: cache-linux
+        uses: actions/cache@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          path: dist/linux
+          key: signoz-linux-${{ env.sha_short }}
+      - name: cache-darwin
+        uses: actions/cache@v4
+        if: matrix.os == 'macos-latest'
+        with:
+          path: dist/darwin
+          key: signoz-darwin-${{ env.sha_short }}
+      - name: release
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser-pro
+          version: '~> v2'
+          args: release --config ${{ env.CONFIG_PATH }} --clean --split
+          workdir: .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: setup-qemu
+        uses: docker/setup-qemu-action@v3
+      - name: setup-buildx
+        uses: docker/setup-buildx-action@v3
+      - name: cosign-installer
+        uses: sigstore/cosign-installer@v3.8.1
+      - name: download-syft
+        uses: anchore/sbom-action/download-syft@v0.18.0
+      - name: ghcr-login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: setup-go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      # copy the caches from build
+      - name: get-sha
+        shell: bash
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: cache-linux
+        id: cache-linux
+        uses: actions/cache@v4
+        with:
+          path: dist/linux
+          key: signoz-linux-${{ env.sha_short }}
+      - name: cache-darwin
+        id: cache-darwin
+        uses: actions/cache@v4
+        with:
+          path: dist/darwin
+          key: signoz-darwin-${{ env.sha_short }}
+
+      # release
+      - uses: goreleaser/goreleaser-action@v6
+        if: steps.cache-linux.outputs.cache-hit == 'true' && steps.cache-darwin.outputs.cache-hit == 'true' # only run if caches hit
+        with:
+          distribution: goreleaser-pro
+          version: '~> v2'
+          args: continue --merge
+          workdir: .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}

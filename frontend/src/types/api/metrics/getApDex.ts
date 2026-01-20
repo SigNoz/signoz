@@ -12,3 +12,8 @@ export interface MetricMetaProps {
 	delta: boolean;
 	le: number[] | null;
 }
+
+export interface PayloadProps {
+	data: ApDexPayloadAndSettingsProps[];
+	status: string;
+}

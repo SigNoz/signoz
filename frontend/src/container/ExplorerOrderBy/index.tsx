@@ -20,9 +20,9 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedSearchText,
 		},
 		{
@@ -34,7 +34,7 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 		const keysOptions = createOptions(data?.payload?.attributeKeys || []);
 
 		const customOptions = createOptions([
-			{ key: 'timestamp', isColumn: true, type: '', dataType: DataTypes.EMPTY },
+			{ key: 'timestamp', type: '', dataType: DataTypes.EMPTY },
 		]);
 
 		const baseOptions = [

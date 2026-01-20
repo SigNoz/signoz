@@ -1,7 +1,7 @@
 import {
 	FiltersType,
 	IQuickFiltersConfig,
-} from 'components/QuickFilters/QuickFilters';
+} from 'components/QuickFilters/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -17,9 +17,11 @@ export const prepareQueryWithDefaultTimestamp = (query: Query): Query => ({
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export enum SELECTED_VIEWS {
-	SEARCH = 'search',
-	QUERY_BUILDER = 'query-builder',
+export enum ExplorerViews {
+	LIST = 'list',
+	TIMESERIES = 'timeseries',
+	TRACE = 'trace',
+	TABLE = 'table',
 	CLICKHOUSE = 'clickhouse',
 }
 
@@ -31,8 +33,6 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'severity_text',
 			dataType: DataTypes.String,
 			type: '',
-			isColumn: false,
-			isJSON: false,
 			id: 'severity_text--string----true',
 		},
 		defaultOpen: true,
@@ -44,8 +44,6 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'deployment.environment',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		defaultOpen: false,
 	},
@@ -56,8 +54,6 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'service.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 			id: 'service.name--string--resource--true',
 		},
 		defaultOpen: false,
@@ -69,8 +65,6 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'host.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		defaultOpen: false,
 	},
@@ -81,8 +75,6 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'k8s.cluster.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		defaultOpen: false,
 	},
@@ -93,8 +85,6 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'k8s.deployment.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		defaultOpen: false,
 	},
@@ -105,8 +95,16 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'k8s.namespace.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'K8s Pod Name',
+		attributeKey: {
+			key: 'k8s.pod.name',
+			dataType: DataTypes.String,
+			type: 'resource',
 		},
 		defaultOpen: false,
 	},

@@ -18,6 +18,7 @@ import {
 	Tooltip,
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -67,13 +68,14 @@ Tooltip.positioners.custom = TooltipPositionHandler;
 
 // Map of Chart.js time formats to dayjs format strings
 const formatMap = {
-	'HH:mm:ss': 'HH:mm:ss',
-	'HH:mm': 'HH:mm',
-	'MM/DD HH:mm': 'MM/DD HH:mm',
-	'MM/dd HH:mm': 'MM/DD HH:mm',
-	'MM/DD': 'MM/DD',
-	'YY-MM': 'YY-MM',
-	YY: 'YY',
+	'HH:mm:ss': DATE_TIME_FORMATS.TIME_SECONDS,
+	'HH:mm': DATE_TIME_FORMATS.TIME,
+	'MM/DD HH:mm': DATE_TIME_FORMATS.SLASH_SHORT,
+	'MM/dd HH:mm': DATE_TIME_FORMATS.SLASH_SHORT,
+	'MM/DD': DATE_TIME_FORMATS.DATE_SHORT,
+	'YY-MM': DATE_TIME_FORMATS.YEAR_MONTH,
+	'MMM d, yyyy, h:mm:ss aaaa': DATE_TIME_FORMATS.DASH_DATETIME,
+	YY: DATE_TIME_FORMATS.YEAR_SHORT,
 };
 
 const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
@@ -92,6 +94,8 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			containerHeight,
 			onDragSelect,
 			dragSelectColor,
+			minTime,
+			maxTime,
 		},
 		ref,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -103,7 +107,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 		const { timezone } = useTimezone();
 
 		const currentTheme = isDarkMode ? 'dark' : 'light';
-		const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
+		const xAxisTimeUnit = useXAxisTimeUnit(data, minTime, maxTime); // Computes the relevant time unit for x axis based on data or provided time range
 
 		const lineChartRef = useRef<Chart>();
 
@@ -136,7 +140,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 					const format = formatMap[fmt as keyof typeof formatMap];
 					if (!format) {
 						console.warn(`Missing datetime format for ${fmt}`);
-						return dayjsTime.format('YYYY-MM-DD HH:mm:ss'); // fallback format
+						return dayjsTime.format(DATE_TIME_FORMATS.ISO_DATETIME_SECONDS); // fallback format
 					}
 
 					return dayjsTime.format(format);
@@ -165,6 +169,8 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 					onClickHandler,
 					data,
 					timezone,
+					minTime,
+					maxTime,
 				);
 
 				const chartHasData = hasData(data);
@@ -200,6 +206,8 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			onClickHandler,
 			data,
 			timezone,
+			minTime,
+			maxTime,
 			name,
 			type,
 		]);
@@ -234,6 +242,8 @@ Graph.defaultProps = {
 	containerHeight: '90%',
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
+	minTime: undefined,
+	maxTime: undefined,
 };
 
 Graph.displayName = 'Graph';

@@ -1,0 +1,17 @@
+.new-explorer-cta {
+	display: flex;
+	align-items: center;
+	color: var(--bg-vanilla-400);
+
+	/* Bifrost (Ancient)/Content/sm */
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 142.857% */
+	letter-spacing: -0.07px;
+
+	.ant-btn-icon {
+		margin-inline-end: 0px;
+	}
+}

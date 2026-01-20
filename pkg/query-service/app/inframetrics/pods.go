@@ -2,35 +2,39 @@ package inframetrics
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
+	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
 var (
-	metricToUseForPods = "k8s_pod_cpu_utilization"
+	metricToUseForPods = GetDotMetrics("k8s_pod_cpu_usage")
 
 	podAttrsToEnrich = []string{
-		"k8s_pod_uid",
-		"k8s_pod_name",
-		"k8s_namespace_name",
-		"k8s_node_name",
-		"k8s_deployment_name",
-		"k8s_statefulset_name",
-		"k8s_daemonset_name",
-		"k8s_job_name",
-		"k8s_cronjob_name",
-		"k8s_cluster_name",
+		GetDotMetrics("k8s_pod_uid"),
+		GetDotMetrics("k8s_pod_name"),
+		GetDotMetrics("k8s_namespace_name"),
+		GetDotMetrics("k8s_node_name"),
+		GetDotMetrics("k8s_deployment_name"),
+		GetDotMetrics("k8s_statefulset_name"),
+		GetDotMetrics("k8s_daemonset_name"),
+		GetDotMetrics("k8s_job_name"),
+		GetDotMetrics("k8s_cronjob_name"),
+		GetDotMetrics("k8s_cluster_name"),
 	}
 
-	k8sPodUIDAttrKey = "k8s_pod_uid"
+	k8sPodUIDAttrKey = GetDotMetrics("k8s_pod_uid")
 
 	queryNamesForPods = map[string][]string{
 		"cpu":            {"A"},
@@ -45,14 +49,14 @@ var (
 	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
 
 	metricNamesForPods = map[string]string{
-		"cpu":            "k8s_pod_cpu_utilization",
-		"cpu_request":    "k8s_pod_cpu_request_utilization",
-		"cpu_limit":      "k8s_pod_cpu_limit_utilization",
-		"memory":         "k8s_pod_memory_usage",
-		"memory_request": "k8s_pod_memory_request_utilization",
-		"memory_limit":   "k8s_pod_memory_limit_utilization",
-		"restarts":       "k8s_container_restarts",
-		"pod_phase":      "k8s_pod_phase",
+		"cpu":            GetDotMetrics("k8s_pod_cpu_usage"),
+		"cpu_request":    GetDotMetrics("k8s_pod_cpu_request_utilization"),
+		"cpu_limit":      GetDotMetrics("k8s_pod_cpu_limit_utilization"),
+		"memory":         GetDotMetrics("k8s_pod_memory_working_set"),
+		"memory_request": GetDotMetrics("k8s_pod_memory_request_utilization"),
+		"memory_limit":   GetDotMetrics("k8s_pod_memory_limit_utilization"),
+		"restarts":       GetDotMetrics("k8s_container_restarts"),
+		"pod_phase":      GetDotMetrics("k8s_pod_phase"),
 	}
 )
 
@@ -103,6 +107,137 @@ func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, req v3.FilterAttri
 		return nil, err
 	}
 	return attributeValuesResponse, nil
+}
+
+func (p *PodsRepo) DidSendPodMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(podMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(didSendPodMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := p.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (p *PodsRepo) DidSendClusterMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(clusterMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(didSendClusterMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := p.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (p *PodsRepo) IsSendingOptionalPodMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(optionalPodMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(isSendingOptionalPodMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := p.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (p *PodsRepo) SendingRequiredMetadata(ctx context.Context) ([]model.PodOnboardingStatus, error) {
+	namesStr := "'" + strings.Join(podMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(isSendingRequiredMetadataQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr)
+
+	result, err := p.reader.GetListResultV3(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	statuses := []model.PodOnboardingStatus{}
+
+	// for each pod, check if we have all the required metadata
+	for _, row := range result {
+		status := model.PodOnboardingStatus{}
+		switch v := row.Data[GetDotMetrics("k8s_cluster_name")].(type) {
+		case string:
+			status.HasClusterName = true
+			status.ClusterName = v
+		case *string:
+			status.HasClusterName = *v != ""
+			status.ClusterName = *v
+		}
+		switch v := row.Data[GetDotMetrics("k8s_node_name")].(type) {
+		case string:
+			status.HasNodeName = true
+			status.NodeName = v
+		case *string:
+			status.HasNodeName = *v != ""
+			status.NodeName = *v
+		}
+		switch v := row.Data[GetDotMetrics("k8s_namespace_name")].(type) {
+		case string:
+			status.HasNamespaceName = true
+			status.NamespaceName = v
+		case *string:
+			status.HasNamespaceName = *v != ""
+			status.NamespaceName = *v
+		}
+		switch v := row.Data[GetDotMetrics("k8s_deployment_name")].(type) {
+		case string:
+			status.HasDeploymentName = true
+		case *string:
+			status.HasDeploymentName = *v != ""
+		}
+		switch v := row.Data[GetDotMetrics("k8s_statefulset_name")].(type) {
+		case string:
+			status.HasStatefulsetName = true
+		case *string:
+			status.HasStatefulsetName = *v != ""
+		}
+		switch v := row.Data[GetDotMetrics("k8s_daemonset_name")].(type) {
+		case string:
+			status.HasDaemonsetName = true
+		case *string:
+			status.HasDaemonsetName = *v != ""
+		}
+		switch v := row.Data[GetDotMetrics("k8s_cronjob_name")].(type) {
+		case string:
+			status.HasCronjobName = true
+		case *string:
+			status.HasCronjobName = *v != ""
+		}
+		switch v := row.Data[GetDotMetrics("k8s_job_name")].(type) {
+		case string:
+			status.HasJobName = true
+		case *string:
+			status.HasJobName = *v != ""
+		}
+
+		switch v := row.Data[GetDotMetrics("k8s_pod_name")].(type) {
+		case string:
+			status.PodName = v
+		case *string:
+			status.PodName = *v
+		}
+
+		if !status.HasClusterName ||
+			!status.HasNodeName ||
+			!status.HasNamespaceName ||
+			(!status.HasDeploymentName && !status.HasStatefulsetName && !status.HasDaemonsetName && !status.HasCronjobName && !status.HasJobName) {
+			statuses = append(statuses, status)
+		}
+	}
+
+	return statuses, nil
 }
 
 func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListRequest) (map[string]map[string]string, error) {
@@ -166,7 +301,7 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 	return podAttrs, nil
 }
 
-func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *PodsRepo) getTopPodGroups(ctx context.Context, orgID valuer.UUID, req model.PodListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopPods(req)
 
 	queryNames := queryNamesForPods[req.OrderBy.ColumnName]
@@ -197,7 +332,7 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 		topPodGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topPodGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topPodGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -236,7 +371,7 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, req model.PodListRequest
 	return topPodGroups, allPodGroups, nil
 }
 
-func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (model.PodListResponse, error) {
+func (p *PodsRepo) GetPodList(ctx context.Context, orgID valuer.UUID, req model.PodListRequest) (model.PodListResponse, error) {
 	resp := model.PodListResponse{}
 
 	if req.Limit == 0 {
@@ -278,7 +413,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		return resp, err
 	}
 
-	topPodGroups, allPodGroups, err := p.getTopPodGroups(ctx, req, query)
+	topPodGroups, allPodGroups, err := p.getTopPodGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -312,7 +447,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
@@ -385,7 +520,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := podAttrs[record.PodUID]; ok {
+			if _, ok := podAttrs[record.PodUID]; ok && record.PodUID != "" {
 				record.Meta = podAttrs[record.PodUID]
 			}
 
@@ -403,6 +538,8 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 	}
 	resp.Total = len(allPodGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

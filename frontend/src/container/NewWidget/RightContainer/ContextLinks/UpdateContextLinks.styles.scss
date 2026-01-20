@@ -1,0 +1,92 @@
+.context-link-form-container {
+	margin-top: 16px;
+	min-height: 500px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+
+	.form-label {
+		margin-left: 4px;
+	}
+
+	.add-url-parameter-btn {
+		display: flex;
+		align-items: center;
+		width: fit-content;
+		margin-top: 16px;
+		margin-left: 16px;
+	}
+
+	.url-parameters-section {
+		margin-top: 16px;
+		margin-bottom: 16px;
+
+		.parameter-header {
+			margin-bottom: 8px;
+
+			strong {
+				color: #666;
+				font-size: 14px;
+			}
+		}
+
+		.parameter-row {
+			margin-bottom: 8px;
+			align-items: center;
+
+			.ant-input {
+				border-radius: 4px;
+			}
+
+			.delete-parameter-btn {
+				color: var(--bg-vanilla-400);
+				padding: 4px;
+				height: 32px;
+				width: 32px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				&:hover {
+					color: var(--bg-cherry-400) !important;
+					border-color: var(--bg-cherry-400) !important;
+				}
+			}
+		}
+	}
+
+	.params-container {
+		margin-left: 16px;
+	}
+
+	.context-link-footer {
+		display: flex;
+		justify-content: flex-end;
+		gap: 8px;
+		margin-top: 24px;
+		padding-top: 16px;
+		border-top: 1px solid var(--bg-slate-400);
+	}
+}
+
+.lightMode {
+	.context-link-form-container {
+		.url-parameters-section {
+			.parameter-row {
+				.delete-parameter-btn {
+					color: var(--bg-slate-400);
+
+					&:hover {
+						color: var(--bg-cherry-500) !important;
+						border-color: var(--bg-cherry-500) !important;
+						background-color: var(--bg-cherry-100);
+					}
+				}
+			}
+		}
+
+		.context-link-footer {
+			border-top-color: var(--bg-vanilla-200);
+		}
+	}
+}

@@ -1,0 +1,89 @@
+.periscope-card {
+	border-radius: 4px;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	background: var(--bg-ink-400, #121317);
+	color: var(--bg-vanilla-100);
+
+	.periscope-card-header {
+		padding: 12px;
+		width: 100%;
+		border-bottom: 1px solid var(--bg-slate-400, #1d212d);
+
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+		gap: 1rem;
+	}
+
+	.periscope-card-content {
+		padding: 12px;
+		width: 100%;
+	}
+
+	.periscope-card-footer {
+		border-top: 1px solid var(--bg-slate-400, #1d212d);
+		padding: 12px;
+		width: 100%;
+	}
+
+	&.small {
+		.periscope-card-header {
+			padding: 8px;
+		}
+
+		.periscope-card-content {
+			padding: 8px;
+		}
+
+		.periscope-card-footer {
+			padding: 8px;
+		}
+	}
+
+	&.medium {
+		.periscope-card-header {
+			padding: 12px;
+		}
+
+		.periscope-card-content {
+			padding: 12px;
+		}
+
+		.periscope-card-footer {
+			padding: 12px;
+		}
+	}
+
+	&.large {
+		.periscope-card-header {
+			padding: 16px;
+		}
+
+		.periscope-card-content {
+			padding: 16px;
+		}
+
+		.periscope-card-footer {
+			padding: 16px;
+		}
+	}
+}
+
+.lightMode {
+	.periscope-card {
+		border: 1px solid var(--bg-vanilla-300);
+
+		border-radius: 4px;
+
+		background: var(--bg-vanilla-100);
+		color: var(--bg-ink-300);
+
+		.periscope-card-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+
+		.periscope-card-footer {
+			border-top: 1px solid var(--bg-vanilla-300);
+		}
+	}
+}

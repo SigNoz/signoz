@@ -20,13 +20,12 @@ import {
 } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { CollapseProps } from 'antd/lib';
-import createAPIKeyApi from 'api/APIKeys/createAPIKey';
-import deleteAPIKeyApi from 'api/APIKeys/deleteAPIKey';
-import updateAPIKeyApi from 'api/APIKeys/updateAPIKey';
-import axios, { AxiosError } from 'axios';
+import createAPIKeyApi from 'api/v1/pats/create';
+import deleteAPIKeyApi from 'api/v1/pats/delete';
+import updateAPIKeyApi from 'api/v1/pats/update';
 import cx from 'classnames';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -44,22 +43,24 @@ import {
 	View,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
+import APIError from 'types/api/error';
 import { APIKeyProps } from 'types/api/pat/types';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+
+dayjs.extend(relativeTime);
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
-	err: Error,
+	err: APIError,
 ): void => {
 	notifications.error({
-		message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+		message: err.getErrorCode(),
+		description: err.getErrorMessage(),
 	});
 };
 
@@ -99,7 +100,7 @@ export const getDateDifference = (
 };
 
 function APIKeys(): JSX.Element {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const { notifications } = useNotifications();
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -176,22 +177,22 @@ function APIKeys(): JSX.Element {
 	} = useGetAllAPIKeys();
 
 	useEffect(() => {
-		setActiveAPIKey(APIKeys?.data.data[0]);
+		setActiveAPIKey(APIKeys?.data?.[0]);
 	}, [APIKeys]);
 
 	useEffect(() => {
-		setDataSource(APIKeys?.data.data || []);
-	}, [APIKeys?.data.data]);
+		setDataSource(APIKeys?.data || []);
+	}, [APIKeys?.data]);
 
 	useEffect(() => {
 		if (isError) {
-			showErrorNotification(notifications, error as AxiosError);
+			showErrorNotification(notifications, error as APIError);
 		}
 	}, [error, isError, notifications]);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
-		const filteredData = APIKeys?.data?.data?.filter(
+		const filteredData = APIKeys?.data?.filter(
 			(key: APIKeyProps) =>
 				key &&
 				key.name &&
@@ -209,12 +210,12 @@ function APIKeys(): JSX.Element {
 		{
 			onSuccess: (data) => {
 				setShowNewAPIKeyDetails(true);
-				setActiveAPIKey(data.payload);
+				setActiveAPIKey(data.data);
 
 				refetchAPIKeys();
 			},
 			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
+				showErrorNotification(notifications, error as APIError);
 			},
 		},
 	);
@@ -227,7 +228,7 @@ function APIKeys(): JSX.Element {
 				setIsEditModalOpen(false);
 			},
 			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
+				showErrorNotification(notifications, error as APIError);
 			},
 		},
 	);
@@ -240,7 +241,7 @@ function APIKeys(): JSX.Element {
 				setIsDeleteModalOpen(false);
 			},
 			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
+				showErrorNotification(notifications, error as APIError);
 			},
 		},
 	);
@@ -341,12 +342,15 @@ function APIKeys(): JSX.Element {
 						? getFormattedTime(APIKey?.lastUsed)
 						: 'Never';
 
-				const createdOn = getFormattedTime(APIKey.createdAt);
+				const createdOn = new Date(APIKey.createdAt).toLocaleString();
 
 				const expiresIn =
 					APIKey.expiresAt === 0
 						? Number.POSITIVE_INFINITY
-						: getDateDifference(APIKey?.createdAt, APIKey?.expiresAt);
+						: getDateDifference(
+								new Date(APIKey?.createdAt).getTime() / 1000,
+								APIKey?.expiresAt,
+						  );
 
 				const isExpired = isExpiredToken(APIKey.expiresAt);
 
@@ -356,9 +360,9 @@ function APIKeys(): JSX.Element {
 						: getFormattedTime(APIKey.expiresAt);
 
 				const updatedOn =
-					!APIKey.updatedAt || APIKey.updatedAt === 0
+					!APIKey.updatedAt || APIKey.updatedAt === ''
 						? null
-						: getFormattedTime(APIKey?.updatedAt);
+						: new Date(APIKey.updatedAt).toLocaleString();
 
 				const items: CollapseProps['items'] = [
 					{
@@ -441,10 +445,12 @@ function APIKeys(): JSX.Element {
 										<Col span={6}> Creator </Col>
 										<Col span={12} className="user-info">
 											<Avatar className="user-avatar" size="small">
-												{APIKey?.createdByUser?.name?.substring(0, 1)}
+												{APIKey?.createdByUser?.displayName?.substring(0, 1)}
 											</Avatar>
 
-											<Typography.Text>{APIKey.createdByUser?.name}</Typography.Text>
+											<Typography.Text>
+												{APIKey.createdByUser?.displayName}
+											</Typography.Text>
 
 											<div className="user-email">{APIKey.createdByUser?.email}</div>
 										</Col>
@@ -494,7 +500,7 @@ function APIKeys(): JSX.Element {
 										expiresIn <= 3 ? 'danger' : 'warning',
 									)}
 								>
-									<span className="dot" /> Expires in {expiresIn} Days
+									<span className="dot" /> Expires {dayjs().to(expiresOn)}
 								</div>
 							)}
 
@@ -514,15 +520,15 @@ function APIKeys(): JSX.Element {
 		<div className="api-key-container">
 			<div className="api-key-content">
 				<header>
-					<Typography.Title className="title">Access Tokens </Typography.Title>
+					<Typography.Title className="title">API Keys</Typography.Title>
 					<Typography.Text className="subtitle">
-						Create and manage access tokens for the SigNoz API
+						Create and manage API keys for the SigNoz API
 					</Typography.Text>
 				</header>
 
 				<div className="api-keys-search-add-new">
 					<Input
-						placeholder="Search for token..."
+						placeholder="Search for keys..."
 						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 						value={searchValue}
 						onChange={handleSearch}
@@ -533,7 +539,7 @@ function APIKeys(): JSX.Element {
 						type="primary"
 						onClick={showAddModal}
 					>
-						<Plus size={14} /> New Token
+						<Plus size={14} /> New Key
 					</Button>
 				</div>
 
@@ -546,7 +552,7 @@ function APIKeys(): JSX.Element {
 						pageSize: 5,
 						hideOnSinglePage: true,
 						showTotal: (total: number, range: number[]): string =>
-							`${range[0]}-${range[1]} of ${total} tokens`,
+							`${range[0]}-${range[1]} of ${total} keys`,
 					}}
 				/>
 			</div>
@@ -554,7 +560,7 @@ function APIKeys(): JSX.Element {
 			{/* Delete Key Modal */}
 			<Modal
 				className="delete-api-key-modal"
-				title={<span className="title">Delete Token</span>}
+				title={<span className="title">Delete Key</span>}
 				open={isDeleteModalOpen}
 				closable
 				afterClose={handleModalClose}
@@ -576,7 +582,7 @@ function APIKeys(): JSX.Element {
 						onClick={onDeleteHandler}
 						className="delete-btn"
 					>
-						Delete Token
+						Delete key
 					</Button>,
 				]}
 			>
@@ -590,7 +596,7 @@ function APIKeys(): JSX.Element {
 			{/* Edit Key Modal */}
 			<Modal
 				className="api-key-modal"
-				title="Edit token"
+				title="Edit key"
 				open={isEditModalOpen}
 				key="edit-api-key-modal"
 				afterClose={handleModalClose}
@@ -614,7 +620,7 @@ function APIKeys(): JSX.Element {
 						icon={<Check size={14} />}
 						onClick={onUpdateApiKey}
 					>
-						Update Token
+						Update key
 					</Button>,
 				]}
 			>
@@ -634,7 +640,7 @@ function APIKeys(): JSX.Element {
 						label="Name"
 						rules={[{ required: true }, { type: 'string', min: 6 }]}
 					>
-						<Input placeholder="Enter Token Name" autoFocus />
+						<Input placeholder="Enter Key Name" autoFocus />
 					</Form.Item>
 
 					<Form.Item name="role" label="Role">
@@ -668,7 +674,7 @@ function APIKeys(): JSX.Element {
 			{/* Create New Key Modal */}
 			<Modal
 				className="api-key-modal"
-				title="Create new token"
+				title="Create new key"
 				open={isAddModalOpen}
 				key="create-api-key-modal"
 				closable
@@ -685,7 +691,7 @@ function APIKeys(): JSX.Element {
 									onClick={handleCopyClose}
 									icon={<Check size={12} />}
 								>
-									Copy token and close
+									Copy key and close
 								</Button>,
 						  ]
 						: [
@@ -706,7 +712,7 @@ function APIKeys(): JSX.Element {
 									loading={isLoadingCreateAPIKey}
 									onClick={onCreateAPIKey}
 								>
-									Create new token
+									Create new key
 								</Button>,
 						  ]
 				}
@@ -730,7 +736,7 @@ function APIKeys(): JSX.Element {
 							rules={[{ required: true }, { type: 'string', min: 6 }]}
 							validateTrigger="onFinish"
 						>
-							<Input placeholder="Enter Token Name" autoFocus />
+							<Input placeholder="Enter Key Name" autoFocus />
 						</Form.Item>
 
 						<Form.Item name="role" label="Role">
@@ -771,7 +777,7 @@ function APIKeys(): JSX.Element {
 				{showNewAPIKeyDetails && (
 					<div className="api-key-info-container">
 						<Row>
-							<Col span={8}>Token</Col>
+							<Col span={8}>Key</Col>
 							<Col span={16}>
 								<span className="copyable-text">
 									<Typography.Text>
@@ -825,10 +831,12 @@ function APIKeys(): JSX.Element {
 
 							<Col span={16} className="user-info">
 								<Avatar className="user-avatar" size="small">
-									{activeAPIKey?.createdByUser?.name?.substring(0, 1)}
+									{activeAPIKey?.createdByUser?.displayName?.substring(0, 1)}
 								</Avatar>
 
-								<Typography.Text>{activeAPIKey?.createdByUser?.name}</Typography.Text>
+								<Typography.Text>
+									{activeAPIKey?.createdByUser?.displayName}
+								</Typography.Text>
 
 								<div className="user-email">{activeAPIKey?.createdByUser?.email}</div>
 							</Col>
@@ -837,7 +845,9 @@ function APIKeys(): JSX.Element {
 						{activeAPIKey?.createdAt && (
 							<Row>
 								<Col span={8}>Created on</Col>
-								<Col span={16}>{getFormattedTime(activeAPIKey?.createdAt)}</Col>
+								<Col span={16}>
+									{new Date(activeAPIKey?.createdAt).toLocaleString()}
+								</Col>
 							</Row>
 						)}
 

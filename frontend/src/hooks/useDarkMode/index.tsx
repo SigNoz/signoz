@@ -5,9 +5,12 @@ import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	createContext,
+	Dispatch,
 	ReactNode,
+	SetStateAction,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useState,
 } from 'react';
@@ -16,29 +19,86 @@ import { THEME_MODE } from './constant';
 
 export const ThemeContext = createContext({
 	theme: THEME_MODE.DARK,
-	toggleTheme: () => {},
+	toggleTheme: (): void => {},
+	autoSwitch: false,
+	setAutoSwitch: ((): void => {}) as Dispatch<SetStateAction<boolean>>,
+	setTheme: ((): void => {}) as Dispatch<SetStateAction<string>>,
 });
 
-export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
-	const [theme, setTheme] = useState(get(LOCALSTORAGE.THEME) || THEME_MODE.DARK);
+// Hook to detect system theme preference
+export const useSystemTheme = (): 'light' | 'dark' => {
+	const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('dark');
 
-	const toggleTheme = useCallback(() => {
+	useEffect(() => {
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+		setSystemTheme(mediaQuery.matches ? 'dark' : 'light');
+
+		const handler = (e: MediaQueryListEvent): void => {
+			setSystemTheme(e.matches ? 'dark' : 'light');
+		};
+
+		mediaQuery.addEventListener('change', handler);
+		return (): void => mediaQuery.removeEventListener('change', handler);
+	}, []);
+
+	return systemTheme;
+};
+
+export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
+	const [theme, setThemeState] = useState(
+		get(LOCALSTORAGE.THEME) || THEME_MODE.DARK,
+	);
+	const [autoSwitch, setAutoSwitch] = useState(
+		get(LOCALSTORAGE.THEME_AUTO_SWITCH) === 'true',
+	);
+	const systemTheme = useSystemTheme();
+
+	// Handle auto-switch functionality
+	useEffect(() => {
+		if (autoSwitch) {
+			const newTheme = systemTheme === 'dark' ? THEME_MODE.DARK : THEME_MODE.LIGHT;
+			if (newTheme !== theme) {
+				setThemeState(newTheme);
+				set(LOCALSTORAGE.THEME, newTheme);
+			}
+		}
+	}, [systemTheme, autoSwitch, theme]);
+
+	// Save auto-switch preference
+	useEffect(() => {
+		set(LOCALSTORAGE.THEME_AUTO_SWITCH, autoSwitch.toString());
+	}, [autoSwitch]);
+
+	const toggleTheme = useCallback((): void => {
 		if (theme === THEME_MODE.LIGHT) {
-			setTheme(THEME_MODE.DARK);
+			setThemeState(THEME_MODE.DARK);
 			set(LOCALSTORAGE.THEME, THEME_MODE.DARK);
 		} else {
-			setTheme(THEME_MODE.LIGHT);
+			setThemeState(THEME_MODE.LIGHT);
 			set(LOCALSTORAGE.THEME, THEME_MODE.LIGHT);
 		}
 		set(LOCALSTORAGE.THEME_ANALYTICS_V1, '');
 	}, [theme]);
 
+	const setTheme = useCallback(
+		(newTheme: SetStateAction<string>): void => {
+			const themeValue =
+				typeof newTheme === 'function' ? newTheme(theme) : newTheme;
+			setThemeState(themeValue);
+			set(LOCALSTORAGE.THEME, themeValue);
+		},
+		[theme],
+	);
+
 	const value = useMemo(
 		() => ({
 			theme,
 			toggleTheme,
+			autoSwitch,
+			setAutoSwitch,
+			setTheme,
 		}),
-		[theme, toggleTheme],
+		[theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme],
 	);
 
 	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -51,12 +111,17 @@ interface ThemeProviderProps {
 interface ThemeMode {
 	theme: string;
 	toggleTheme: () => void;
+	autoSwitch: boolean;
+	setAutoSwitch: Dispatch<SetStateAction<boolean>>;
+	setTheme: (newTheme: string) => void;
 }
 
 export const useThemeMode = (): ThemeMode => {
-	const { theme, toggleTheme } = useContext(ThemeContext);
+	const { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme } = useContext(
+		ThemeContext,
+	);
 
-	return { theme, toggleTheme };
+	return { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme };
 };
 
 export const useIsDarkMode = (): boolean => {
@@ -105,6 +170,9 @@ export const useThemeConfig = (): ThemeConfig => {
 			},
 			Input: {
 				colorBorder: isDarkMode ? '#1D212D' : '#E9E9E9',
+			},
+			Breadcrumb: {
+				separatorMargin: 4,
 			},
 		},
 	};

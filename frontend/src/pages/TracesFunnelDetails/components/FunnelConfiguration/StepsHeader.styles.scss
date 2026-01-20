@@ -1,0 +1,51 @@
+.steps-header {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	&__label {
+		color: var(--bg-slate-50);
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 18px;
+		letter-spacing: 0.48px;
+		text-transform: uppercase;
+		flex-shrink: 0;
+	}
+	&__divider {
+		width: 100%;
+		.ant-divider {
+			margin: 0;
+			border-color: var(--bg-slate-400);
+		}
+	}
+	&__time-range {
+		min-width: 192px;
+		height: 32px;
+		flex-shrink: 0;
+		.timeSelection-input {
+			.ant-input-prefix > svg {
+				height: 12px;
+			}
+			&,
+			input {
+				background: var(--bg-ink-300);
+				font-size: 12px;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.steps-header {
+		&__label {
+			color: var(--bg-ink-400);
+		}
+		.timeSelection-input {
+			&,
+			input {
+				background: unset;
+			}
+		}
+	}
+}

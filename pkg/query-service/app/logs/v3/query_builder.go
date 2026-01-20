@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var AggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
@@ -26,6 +26,7 @@ var AggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorMax:     "max",
 	v3.AggregateOperatorMin:     "min",
 	v3.AggregateOperatorSum:     "sum",
+	v3.AggregateOperatorRate:    "count",
 	v3.AggregateOperatorRateSum: "sum",
 	v3.AggregateOperatorRateAvg: "avg",
 	v3.AggregateOperatorRateMax: "max",
@@ -246,7 +247,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	return queryString, nil
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
 	if err != nil {
@@ -315,9 +316,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		rate := float64(step)
-		if preferRPM {
-			rate = rate / 60.0
-		}
 
 		op := fmt.Sprintf("count(%s)/%f", aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
@@ -328,9 +326,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		rate := float64(step)
-		if preferRPM {
-			rate = rate / 60.0
-		}
 
 		op := fmt.Sprintf("%s(%s)/%f", AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
@@ -513,7 +508,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		return query, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the groupby names
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
@@ -521,14 +516,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 	if err != nil {
 		return "", err
 	}

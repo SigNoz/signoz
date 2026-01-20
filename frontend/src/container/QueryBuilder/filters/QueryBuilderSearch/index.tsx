@@ -6,6 +6,7 @@ import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
@@ -50,6 +51,8 @@ import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
@@ -73,12 +76,22 @@ function QueryBuilderSearch({
 	placeholder,
 	suffixIcon,
 	isInfraMonitoring,
+	isMetricsExplorer,
 	disableNavigationShortcuts,
+	entity,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
+
+	const [isEditingTag, setIsEditingTag] = useState(false);
+
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const {
 		updateTag,
 		handleClearTag,
@@ -92,32 +105,51 @@ function QueryBuilderSearch({
 		isMulti,
 		isFetching,
 		setSearchKey,
+		setSearchValue,
 		searchKey,
 		key,
 		exampleQueries,
 	} = useAutoComplete(
 		query,
+		dotMetricsEnabled,
 		whereClauseConfig,
 		isLogsExplorerPage,
 		isInfraMonitoring,
+		entity,
+		isMetricsExplorer,
 	);
+
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 	const [dynamicPlacholder, setDynamicPlaceholder] = useState<string>(
 		placeholder || '',
 	);
 	const selectRef = useRef<BaseSelectRef>(null);
+
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
+		dotMetricsEnabled,
 		searchKey,
 		isLogsExplorerPage,
 		isInfraMonitoring,
+		entity,
+		isMetricsExplorer,
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
+
+	const toggleEditMode = useCallback(
+		(value: boolean) => {
+			// Editing mode is required only in infra monitoring or metrics explorer
+			if (isInfraMonitoring || isMetricsExplorer) {
+				setIsEditingTag(value);
+			}
+		},
+		[isInfraMonitoring, isMetricsExplorer],
+	);
 
 	const onTagRender = ({
 		value,
@@ -132,13 +164,21 @@ function QueryBuilderSearch({
 
 		const onCloseHandler = (): void => {
 			onClose();
+			// Editing is done after closing a tag
+			toggleEditMode(false);
 			handleSearch('');
 			setSearchKey('');
 		};
 
 		const tagEditHandler = (value: string): void => {
 			updateTag(value);
-			handleSearch(value);
+			// Editing starts
+			toggleEditMode(true);
+			if (isInfraMonitoring || isMetricsExplorer) {
+				setSearchValue(value);
+			} else {
+				handleSearch(value);
+			}
 		};
 
 		const isDisabled = !!searchValue;
@@ -169,6 +209,11 @@ function QueryBuilderSearch({
 	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
+
+		// Editing is done after enter key press
+		if (event.key === 'Enter') {
+			toggleEditMode(false);
+		}
 
 		if (
 			!disableNavigationShortcuts &&
@@ -201,8 +246,11 @@ function QueryBuilderSearch({
 	);
 
 	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS && !isInfraMonitoring,
-		[query.dataSource, isInfraMonitoring],
+		() =>
+			query.dataSource === DataSource.METRICS &&
+			!isInfraMonitoring &&
+			!isMetricsExplorer,
+		[query.dataSource, isInfraMonitoring, isMetricsExplorer],
 	);
 
 	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
@@ -214,24 +262,23 @@ function QueryBuilderSearch({
 	};
 
 	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute.key && isMetricsDataSource) return [];
+		if (!query.aggregateAttribute?.key && isMetricsDataSource) return [];
 		return tags;
-	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
+	}, [isMetricsDataSource, query.aggregateAttribute?.key, tags]);
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		const initialSourceKeys = query.filters.items?.map(
+		const initialSourceKeys = query.filters?.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
 
-		initialTagFilters.items = tags.map((tag, index) => {
-			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
-
+		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
-			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
-				(key) => key?.key === getRemovePrefixFromKey(tagKey),
-			);
+			const filterAttribute = [
+				...(initialSourceKeys || []),
+				...(sourceKeys || []),
+			].find((key) => key?.key === getRemovePrefixFromKey(tagKey));
 
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
@@ -244,15 +291,20 @@ function QueryBuilderSearch({
 					key: tagKey,
 					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
-					isColumn: false,
-					isJSON: isJsonTrue,
 				},
 				op: getOperatorValue(tagOperator),
 				value: computedTagValue,
 			};
 		});
 
-		onChange(initialTagFilters);
+		// If in infra monitoring or metrics explorer, only run the onChange query when editing is finsished.
+		if (isInfraMonitoring || isMetricsExplorer) {
+			if (!isEditingTag) {
+				onChange(initialTagFilters);
+			}
+		} else {
+			onChange(initialTagFilters);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sourceKeys]);
 
@@ -307,11 +359,7 @@ function QueryBuilderSearch({
 	));
 
 	return (
-		<div
-			style={{
-				position: 'relative',
-			}}
-		>
+		<div className="query-builder-search-container">
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
@@ -334,7 +382,7 @@ function QueryBuilderSearch({
 					!showAllFilters && options.length > 3 && !key ? 'hide-scroll' : '',
 				)}
 				rootClassName="query-builder-search"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onChange={onChangeHandler}
@@ -353,7 +401,11 @@ function QueryBuilderSearch({
 					)
 				}
 				showAction={['focus']}
-				onBlur={handleOnBlur}
+				onBlur={(e: React.FocusEvent<HTMLInputElement>): void => {
+					handleOnBlur(e);
+					// Editing is done after tapping out of the input
+					toggleEditMode(false);
+				}}
 				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
 				dropdownRender={(menu): ReactElement => (
 					<div>
@@ -450,6 +502,8 @@ interface QueryBuilderSearchProps {
 	suffixIcon?: React.ReactNode;
 	isInfraMonitoring?: boolean;
 	disableNavigationShortcuts?: boolean;
+	entity?: K8sCategory | null;
+	isMetricsExplorer?: boolean;
 }
 
 QueryBuilderSearch.defaultProps = {
@@ -459,6 +513,8 @@ QueryBuilderSearch.defaultProps = {
 	suffixIcon: undefined,
 	isInfraMonitoring: false,
 	disableNavigationShortcuts: false,
+	entity: null,
+	isMetricsExplorer: false,
 };
 
 export interface CustomTagProps {

@@ -1,0 +1,108 @@
+@import './components/Header/Header.styles.scss';
+@import './components/SearchBar/SearchBar.styles.scss';
+
+.traces-funnels {
+	margin-top: 113px;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	.ant-btn-icon {
+		margin: 0 !important;
+	}
+
+	&__content {
+		width: calc(100% - 30px);
+		max-width: 736px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	&__list {
+		margin-top: 16px;
+	}
+	&__loading {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		.ant-skeleton-button {
+			height: 82px !important;
+		}
+	}
+}
+
+// Sort popover styles
+.sort-funnels {
+	.ant-popover-content {
+		.ant-popover-inner {
+			padding: 0;
+			background: var(--bg-ink-400);
+			border: 1px solid var(--bg-slate-500);
+			border-radius: 4px;
+
+			.sort-content {
+				padding: 8px;
+				min-width: 160px;
+
+				.sort-heading {
+					color: var(--bg-vanilla-400);
+					font-size: 14px;
+					padding: 6px 8px;
+				}
+
+				.sort-btns {
+					width: 100%;
+					text-align: left;
+					color: var(--bg-vanilla-400);
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					padding: 6px 8px;
+
+					&:hover {
+						background: var(--bg-slate-500);
+						border-radius: 4px;
+					}
+				}
+			}
+		}
+	}
+}
+
+// Light mode styles
+.lightMode {
+	.traces-funnels {
+		&__content {
+			.title {
+				color: var(--bg-ink-500);
+			}
+
+			.subtitle {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+
+	.sort-funnels {
+		.ant-popover-content {
+			.ant-popover-inner {
+				background: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-vanilla-300);
+
+				.sort-content {
+					.sort-heading {
+						color: var(--bg-ink-400);
+					}
+
+					.sort-btns {
+						color: var(--bg-ink-500);
+
+						&:hover {
+							background: var(--bg-vanilla-200);
+						}
+					}
+				}
+			}
+		}
+	}
+}

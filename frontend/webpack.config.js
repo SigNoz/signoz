@@ -20,8 +20,8 @@ const styleLoader = 'style-loader';
 const plugins = [
 	new HtmlWebpackPlugin({
 		template: 'src/index.html.ejs',
-		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-		SEGMENT_ID: process.env.SEGMENT_ID,
+		PYLON_APP_ID: process.env.PYLON_APP_ID,
+		APPCUES_APP_ID: process.env.APPCUES_APP_ID,
 		POSTHOG_KEY: process.env.POSTHOG_KEY,
 		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 		SENTRY_ORG: process.env.SENTRY_ORG,
@@ -38,8 +38,9 @@ const plugins = [
 			NODE_ENV: process.env.NODE_ENV,
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			WEBSOCKET_API_ENDPOINT: process.env.WEBSOCKET_API_ENDPOINT,
-			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-			SEGMENT_ID: process.env.SEGMENT_ID,
+			PYLON_APP_ID: process.env.PYLON_APP_ID,
+			PYLON_IDENTITY_SECRET: process.env.PYLON_IDENTITY_SECRET,
+			APPCUES_APP_ID: process.env.APPCUES_APP_ID,
 			POSTHOG_KEY: process.env.POSTHOG_KEY,
 			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 			SENTRY_ORG: process.env.SENTRY_ORG,
@@ -47,6 +48,7 @@ const plugins = [
 			SENTRY_DSN: process.env.SENTRY_DSN,
 			TUNNEL_URL: process.env.TUNNEL_URL,
 			TUNNEL_DOMAIN: process.env.TUNNEL_DOMAIN,
+			DOCS_BASE_URL: process.env.DOCS_BASE_URL,
 		}),
 	}),
 	sentryWebpackPlugin({
@@ -118,10 +120,7 @@ const config = {
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
-				use: [
-					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
-					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
-				],
+				type: 'asset',
 			},
 			{
 				test: /\.(ttf|eot|woff|woff2)$/,

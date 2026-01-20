@@ -8,12 +8,25 @@ export type SidebarMenu = MenuItem & {
 };
 
 export interface SidebarItem {
+	key: string | number;
 	icon?: ReactNode;
 	text?: ReactNode;
-	key: string | number;
 	label?: ReactNode;
 	isBeta?: boolean;
 	isNew?: boolean;
+	isPinned?: boolean;
+	children?: SidebarItem[];
+	isExternal?: boolean;
+	url?: string;
+	isEnabled?: boolean;
+	itemKey?: string;
+}
+
+export const CHANGELOG_LABEL = 'Full Changelog';
+
+export interface DropdownSeparator {
+	type: 'divider' | 'group';
+	label?: ReactNode;
 }
 
 export enum SecondaryMenuItemKey {

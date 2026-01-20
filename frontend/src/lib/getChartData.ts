@@ -17,9 +17,9 @@ const getChartData = ({
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 } => {
 	const uniqueTimeLabels = new Set<number>();
-	queryData.forEach((data) => {
-		data.queryData.forEach((query) => {
-			query.values.forEach((value) => {
+	queryData?.forEach((data) => {
+		data.queryData?.forEach((query) => {
+			query.values?.forEach((value) => {
 				uniqueTimeLabels.add(value[0]);
 			});
 		});
@@ -27,8 +27,8 @@ const getChartData = ({
 
 	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
 
-	const response = queryData.map(
-		({ queryData, query: queryG, legend: legendG }) =>
+	const response =
+		queryData?.map(({ queryData, query: queryG, legend: legendG }) =>
 			queryData.map((e) => {
 				const { values = [], metric, legend, queryName } = e || {};
 				const labelNames = getLabelName(
@@ -61,7 +61,7 @@ const getChartData = ({
 					second: filledDataValues.map((e) => e.second || 0),
 				};
 			}),
-	);
+		) || [];
 
 	const modifiedData = response
 		.flat()

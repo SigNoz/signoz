@@ -1,6 +1,15 @@
 # Ignore artifacts:
 build
 coverage
+public/
 
 # Ignore all MD files:
 **/*.md
+
+# Ignore all JSON files:
+**/*.json
+
+# Ignore all files in parser folder:
+src/parser/**
+
+src/TraceOperator/parser/**

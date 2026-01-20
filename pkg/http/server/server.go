@@ -2,35 +2,30 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/pkg/registry"
-	"go.uber.org/zap"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
-var _ registry.NamedService = (*Server)(nil)
+var _ factory.Service = (*Server)(nil)
 
 type Server struct {
 	srv     *http.Server
-	logger  *zap.Logger
+	logger  *slog.Logger
 	handler http.Handler
 	cfg     Config
-	name    string
 }
 
-func New(logger *zap.Logger, name string, cfg Config, handler http.Handler) (*Server, error) {
+func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error) {
 	if handler == nil {
-		return nil, fmt.Errorf("cannot build http server, handler is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot build http server, handler is required")
 	}
 
 	if logger == nil {
-		return nil, fmt.Errorf("cannot build http server, logger is required")
-	}
-
-	if name == "" {
-		return nil, fmt.Errorf("cannot build http server, name is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot build http server, logger is required")
 	}
 
 	srv := &http.Server{
@@ -43,22 +38,17 @@ func New(logger *zap.Logger, name string, cfg Config, handler http.Handler) (*Se
 
 	return &Server{
 		srv:     srv,
-		logger:  logger.Named("go.signoz.io/pkg/http/server"),
+		logger:  logger.With("pkg", "go.signoz.io/pkg/http/server"),
 		handler: handler,
 		cfg:     cfg,
-		name:    name,
 	}, nil
 }
 
-func (server *Server) Name() string {
-	return server.name
-}
-
 func (server *Server) Start(ctx context.Context) error {
-	server.logger.Info("starting http server", zap.String("address", server.srv.Addr))
+	server.logger.InfoContext(ctx, "starting http server", "address", server.srv.Addr)
 	if err := server.srv.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
-			server.logger.Error("failed to start server", zap.Error(err), zap.Any("context", ctx))
+			server.logger.ErrorContext(ctx, "failed to start server", "error", err)
 			return err
 		}
 	}
@@ -70,10 +60,10 @@ func (server *Server) Stop(ctx context.Context) error {
 	defer cancel()
 
 	if err := server.srv.Shutdown(ctx); err != nil {
-		server.logger.Error("failed to stop server", zap.Error(err), zap.Any("context", ctx))
+		server.logger.ErrorContext(ctx, "failed to stop server", "error", err)
 		return err
 	}
 
-	server.logger.Info("server stopped gracefully", zap.Any("context", ctx))
+	server.logger.InfoContext(ctx, "server stopped gracefully")
 	return nil
 }

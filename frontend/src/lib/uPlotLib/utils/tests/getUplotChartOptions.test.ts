@@ -25,9 +25,42 @@ describe('getUPlotChartOptions', () => {
 		const options = getUPlotChartOptions(inputPropsTimeSeries);
 		expect(options.legend?.isolate).toBe(true);
 		expect(options.width).toBe(inputPropsTimeSeries.dimensions.width);
-		expect(options.height).toBe(inputPropsTimeSeries.dimensions.height - 30);
 		expect(options.axes?.length).toBe(2);
 		expect(options.series[1].label).toBe('A');
+	});
+
+	test('should return enhanced legend options when enabled', () => {
+		const options = getUPlotChartOptions({
+			...inputPropsTimeSeries,
+			enhancedLegend: true,
+			legendPosition: 'bottom' as any,
+		});
+		expect(options.legend?.isolate).toBe(true);
+		expect(options.legend?.show).toBe(true);
+		expect(options.hooks?.ready).toBeDefined();
+		expect(Array.isArray(options.hooks?.ready)).toBe(true);
+	});
+
+	test('should adjust chart dimensions for right legend position', () => {
+		const options = getUPlotChartOptions({
+			...inputPropsTimeSeries,
+			enhancedLegend: true,
+			legendPosition: 'right' as any,
+		});
+		expect(options.legend?.isolate).toBe(true);
+		expect(options.width).toBeLessThan(inputPropsTimeSeries.dimensions.width);
+		expect(options.height).toBe(inputPropsTimeSeries.dimensions.height);
+	});
+
+	test('should adjust chart dimensions for bottom legend position', () => {
+		const options = getUPlotChartOptions({
+			...inputPropsTimeSeries,
+			enhancedLegend: true,
+			legendPosition: 'bottom' as any,
+		});
+		expect(options.legend?.isolate).toBe(true);
+		expect(options.width).toBe(inputPropsTimeSeries.dimensions.width);
+		expect(options.height).toBeLessThan(inputPropsTimeSeries.dimensions.height);
 	});
 
 	test('Should return line chart as drawStyle for time series', () => {

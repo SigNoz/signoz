@@ -2,13 +2,32 @@ import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
 import APIKeys from 'container/APIKeys/APIKeys';
+import BillingContainer from 'container/BillingContainer/BillingContainer';
+import CreateAlertChannels from 'container/CreateAlertChannels';
+import { ChannelType } from 'container/CreateAlertChannels/config';
+import CustomDomainSettings from 'container/CustomDomainSettings';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
+import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import { TFunction } from 'i18next';
-import { Backpack, BellDot, Building, Cpu, KeySquare } from 'lucide-react';
+import {
+	Backpack,
+	BellDot,
+	Building,
+	Cpu,
+	CreditCard,
+	Globe,
+	Keyboard,
+	KeySquare,
+	Pencil,
+	Plus,
+	User,
+} from 'lucide-react';
+import ChannelsEdit from 'pages/ChannelsEdit';
+import Shortcuts from 'pages/Shortcuts';
 
 export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
@@ -100,5 +119,85 @@ export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.API_KEYS,
 		key: ROUTES.API_KEYS,
+	},
+];
+
+export const customDomainSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: CustomDomainSettings,
+		name: (
+			<div className="periscope-tab">
+				<Globe size={16} /> {t('routes:custom_domain_settings').toString()}
+			</div>
+		),
+		route: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+	},
+];
+
+export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: BillingContainer,
+		name: (
+			<div className="periscope-tab">
+				<CreditCard size={16} /> {t('routes:billing').toString()}
+			</div>
+		),
+		route: ROUTES.BILLING,
+		key: ROUTES.BILLING,
+	},
+];
+
+export const keyboardShortcuts = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: Shortcuts,
+		name: (
+			<div className="periscope-tab">
+				<Keyboard size={16} /> {t('routes:shortcuts').toString()}
+			</div>
+		),
+		route: ROUTES.SHORTCUTS,
+		key: ROUTES.SHORTCUTS,
+	},
+];
+
+export const mySettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: MySettings,
+		name: (
+			<div className="periscope-tab">
+				<User size={16} /> {t('routes:my_settings').toString()}
+			</div>
+		),
+		route: ROUTES.MY_SETTINGS,
+		key: ROUTES.MY_SETTINGS,
+	},
+];
+
+export const createAlertChannels = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: (): JSX.Element => (
+			<CreateAlertChannels preType={ChannelType.Slack} />
+		),
+		name: (
+			<div className="periscope-tab">
+				<Plus size={16} /> {t('routes:create_alert_channels').toString()}
+			</div>
+		),
+		route: ROUTES.CHANNELS_NEW,
+		key: ROUTES.CHANNELS_NEW,
+	},
+];
+
+export const editAlertChannels = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: ChannelsEdit,
+		name: (
+			<div className="periscope-tab">
+				<Pencil size={16} /> {t('routes:edit_alert_channels').toString()}
+			</div>
+		),
+		route: ROUTES.CHANNELS_EDIT,
+		key: ROUTES.CHANNELS_EDIT,
 	},
 ];

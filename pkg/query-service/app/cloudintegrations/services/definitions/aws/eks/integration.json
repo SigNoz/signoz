@@ -1,0 +1,2744 @@
+{
+  "id": "eks",
+  "title": "EKS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_ADMIT_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_ADMIT_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_ADMIT_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_ADMIT_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_VALIDATING_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_VALIDATING_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_VALIDATING_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_rejection_count_VALIDATING_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_ADMIT_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_VALIDATING_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_admission_webhook_request_total_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_MUTATING_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_READONLY_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_READONLY_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_READONLY_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_current_inflight_requests_READONLY_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_DELETE_P99_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_GET_P99_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_LIST_P99_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PATCH_P99_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_POST_P99_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_duration_seconds_PUT_P99_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_429_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_429_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_429_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_429_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_4XX_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_4XX_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_4XX_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_4XX_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_5XX_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_5XX_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_5XX_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_5XX_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_LIST_PODS_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_LIST_PODS_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_LIST_PODS_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_LIST_PODS_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_request_total_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_storage_size_bytes_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_storage_size_bytes_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_storage_size_bytes_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_apiserver_storage_size_bytes_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_ACTIVEQ_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_BACKOFF_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_BACKOFF_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_BACKOFF_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_BACKOFF_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_GATED_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_GATED_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_GATED_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_GATED_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_UNSCHEDULABLE_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_pending_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_ERROR_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_ERROR_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_ERROR_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_ERROR_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_SCHEDULED_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_UNSCHEDULABLE_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_total_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_total_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_total_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_EKS_scheduler_schedule_attempts_total_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		}  ,
+    {
+			"name": "aws_ContainerInsights_apiserver_admission_controller_admission_duration_seconds_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_controller_admission_duration_seconds_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_controller_admission_duration_seconds_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_controller_admission_duration_seconds_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_step_admission_duration_seconds_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_step_admission_duration_seconds_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_step_admission_duration_seconds_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_admission_step_admission_duration_seconds_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inflight_requests_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inflight_requests_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inflight_requests_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inflight_requests_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inqueue_requests_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inqueue_requests_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inqueue_requests_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_current_inqueue_requests_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_longrunning_requests_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_longrunning_requests_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_longrunning_requests_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_longrunning_requests_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_duration_seconds_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_duration_seconds_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_duration_seconds_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_duration_seconds_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_5xx_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_5xx_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_5xx_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_5xx_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_request_total_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_list_duration_seconds_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_list_duration_seconds_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_list_duration_seconds_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_list_duration_seconds_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_objects_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_objects_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_objects_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_objects_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_size_bytes_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_size_bytes_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_size_bytes_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_apiserver_storage_size_bytes_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_failed_node_count_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_failed_node_count_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_failed_node_count_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_failed_node_count_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_node_count_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_node_count_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_node_count_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_node_count_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_number_of_running_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_number_of_running_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_number_of_running_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_cluster_number_of_running_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_limit_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_limit_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_limit_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_limit_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_request_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_request_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_request_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_request_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_over_container_limit_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_over_container_limit_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_over_container_limit_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_over_container_limit_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_cpu_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_failures_total_count",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_failures_total_max",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_failures_total_min",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_failures_total_sum",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_limit_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_limit_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_limit_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_limit_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_request_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_request_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_request_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_request_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_over_container_limit_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_over_container_limit_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_over_container_limit_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_over_container_limit_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_container_memory_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_etcd_request_duration_seconds_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_etcd_request_duration_seconds_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_etcd_request_duration_seconds_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_etcd_request_duration_seconds_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_namespace_number_of_running_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_namespace_number_of_running_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_namespace_number_of_running_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_namespace_number_of_running_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_limit_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_limit_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_limit_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_limit_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_reserved_capacity_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_reserved_capacity_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_reserved_capacity_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_reserved_capacity_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_usage_total_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_usage_total_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_usage_total_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_usage_total_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_cpu_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_free_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_free_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_free_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_free_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_inodes_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_filesystem_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_rx_dropped_count",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_rx_dropped_max",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_rx_dropped_min",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_rx_dropped_sum",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_tx_dropped_count",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_tx_dropped_max",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_tx_dropped_min",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_interface_network_tx_dropped_sum",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_limit_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_limit_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_limit_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_limit_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_reserved_capacity_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_reserved_capacity_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_reserved_capacity_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_reserved_capacity_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_working_set_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_working_set_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_working_set_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_memory_working_set_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_network_total_bytes_count",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_network_total_bytes_max",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_network_total_bytes_min",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_network_total_bytes_sum",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_containers_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_containers_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_containers_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_containers_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_number_of_running_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_allocatable_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_allocatable_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_allocatable_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_allocatable_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_capacity_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_capacity_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_capacity_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_capacity_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_disk_pressure_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_disk_pressure_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_disk_pressure_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_disk_pressure_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_memory_pressure_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_memory_pressure_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_memory_pressure_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_memory_pressure_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_pid_pressure_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_pid_pressure_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_pid_pressure_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_pid_pressure_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_ready_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_ready_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_ready_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_ready_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_unknown_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_unknown_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_unknown_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_node_status_condition_unknown_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_running_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_running_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_running_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_running_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_terminated_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_terminated_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_terminated_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_terminated_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_waiting_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_waiting_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_waiting_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_container_status_waiting_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_limit_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_limit_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_limit_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_limit_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_request_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_request_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_request_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_request_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_reserved_capacity_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_reserved_capacity_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_reserved_capacity_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_reserved_capacity_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_usage_total_count",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_usage_total_max",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_usage_total_min",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_usage_total_sum",
+			"unit": "None",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_over_pod_limit_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_over_pod_limit_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_over_pod_limit_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_over_pod_limit_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_cpu_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_rx_dropped_count",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_rx_dropped_max",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_rx_dropped_min",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_rx_dropped_sum",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_tx_dropped_count",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_tx_dropped_max",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_tx_dropped_min",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_interface_network_tx_dropped_sum",
+			"unit": "Count\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_limit_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_limit_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_limit_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_limit_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_request_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_request_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_request_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_request_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_reserved_capacity_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_reserved_capacity_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_reserved_capacity_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_reserved_capacity_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_over_pod_limit_count",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_over_pod_limit_max",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_over_pod_limit_min",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_over_pod_limit_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_utilization_sum",
+			"unit": "Percent",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_working_set_count",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_working_set_max",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_working_set_min",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_memory_working_set_sum",
+			"unit": "Bytes",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_rx_bytes_count",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_rx_bytes_max",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_rx_bytes_min",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_rx_bytes_sum",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_tx_bytes_count",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_tx_bytes_max",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_tx_bytes_min",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_network_tx_bytes_sum",
+			"unit": "Bytes\/Second",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_container_restarts_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_container_restarts_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_container_restarts_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_container_restarts_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_containers_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_containers_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_containers_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_containers_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_running_containers_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_running_containers_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_running_containers_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_number_of_running_containers_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_failed_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_failed_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_failed_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_failed_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_pending_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_pending_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_pending_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_pending_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_ready_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_ready_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_ready_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_ready_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_running_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_running_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_running_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_running_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_scheduled_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_scheduled_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_scheduled_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_scheduled_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_succeeded_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_succeeded_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_succeeded_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_succeeded_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_unknown_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_unknown_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_unknown_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_pod_status_unknown_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_desired_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_desired_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_desired_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_desired_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_ready_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_ready_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_ready_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_replicas_ready_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_request_duration_seconds_count",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_request_duration_seconds_max",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_request_duration_seconds_min",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_request_duration_seconds_sum",
+			"unit": "Seconds",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_requests_total_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_requests_total_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_requests_total_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_rest_client_requests_total_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_service_number_of_running_pods_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_service_number_of_running_pods_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_service_number_of_running_pods_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_service_number_of_running_pods_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_available_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_available_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_available_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_available_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_unavailable_count",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_unavailable_max",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_unavailable_min",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		},
+		{
+			"name": "aws_ContainerInsights_status_replicas_unavailable_sum",
+			"unit": "Count",
+			"type": "Gauge",
+			"description": ""
+		}                                                                                                                                                                                                                                                                                                                                            
+	]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/EKS"
+        },
+        {
+          "Namespace": "ContainerInsights"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/aws/containerinsights",
+          "filter_pattern": ""
+        },
+        {
+          "log_group_name_prefix": "/aws/eks",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview.json",
+        "title": "EKS Control Plane Overview",
+        "description": "Overview of EKS Control Plane",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      },
+      {
+        "id": "containerinsights.json",
+        "title": "EKS ContainerInsights Overview",
+        "description": "Overview of EKS ContainerInsights",
+        "image": "file://assets/dashboards/containerinsights.png",
+        "definition": "file://assets/dashboards/containerinsights.json"
+      }
+    ]
+  }
+}

@@ -1,0 +1,293 @@
+##################### SigNoz Configuration Example #####################
+#
+# Do not modify this file
+#
+
+##################### Global #####################
+global:
+  # the url under which the signoz apiserver is externally reachable.
+  external_url: <unset>
+  # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
+  ingestion_url: <unset>
+
+##################### Version #####################
+version:
+  banner:
+    # Whether to enable the version banner on startup.
+    enabled: true
+
+##################### Instrumentation #####################
+instrumentation:
+  logs:
+    # The log level to use.
+    level: info
+  traces:
+    # Whether to enable tracing.
+    enabled: false
+    processors:
+      batch:
+        exporter:
+          otlp:
+            endpoint: localhost:4317
+  metrics:
+    # Whether to enable metrics.
+    enabled: true
+    readers:
+      pull:
+        exporter:
+          prometheus:
+            host: "0.0.0.0"
+            port: 9090
+
+##################### Web #####################
+web:
+  # Whether to enable the web frontend
+  enabled: true
+  # The prefix to serve web on
+  prefix: /
+  # The directory containing the static build files.
+  directory: /etc/signoz/web
+
+##################### Cache #####################
+cache:
+  # specifies the caching provider to use.
+  provider: memory
+  # memory: Uses in-memory caching.
+  memory:
+    # Max items for the in-memory cache (10x the entries)
+    num_counters: 100000
+    # Total cost in bytes allocated bounded cache
+    max_cost: 67108864
+  # redis: Uses Redis as the caching backend.
+  redis:
+    # The hostname or IP address of the Redis server.
+    host: localhost
+    # The port on which the Redis server is running. Default is usually 6379.
+    port: 6379
+    # The password for authenticating with the Redis server, if required.
+    password:
+    # The Redis database number to use
+    db: 0
+
+##################### SQLStore #####################
+sqlstore:
+  # specifies the SQLStore provider to use.
+  provider: sqlite
+  # The maximum number of open connections to the database.
+  max_open_conns: 100
+  sqlite:
+    # The path to the SQLite database file.
+    path: /var/lib/signoz/signoz.db
+    # Mode is the mode to use for the sqlite database.
+    mode: delete
+    # BusyTimeout is the timeout for the sqlite database to wait for a lock.
+    busy_timeout: 10s
+
+##################### APIServer #####################
+apiserver:
+  timeout:
+    # Default request timeout.
+    default: 60s
+    # Maximum request timeout.
+    max: 600s
+    # List of routes to exclude from request timeout.
+    excluded_routes:
+      - /api/v1/logs/tail
+      - /api/v3/logs/livetail
+  logging:
+    # List of routes to exclude from request responselogging.
+    excluded_routes:
+      - /api/v1/health
+      - /api/v1/version
+      - /
+
+##################### Querier #####################
+querier:
+  # The TTL for cached query results.
+  cache_ttl: 168h
+  # The interval for recent data that should not be cached.
+  flux_interval: 5m
+  # The maximum number of concurrent queries for missing ranges.
+  max_concurrent_queries: 4
+
+##################### TelemetryStore #####################
+telemetrystore:
+  # Maximum number of idle connections in the connection pool.
+  max_idle_conns: 50
+  # Maximum number of open connections to the database.
+  max_open_conns: 100
+  # Maximum time to wait for a connection to be established.
+  dial_timeout: 5s
+  # Specifies the telemetrystore provider to use.
+  provider: clickhouse
+  clickhouse:
+    # The DSN to use for clickhouse.
+    dsn: tcp://localhost:9000
+    # The cluster name to use for clickhouse.
+    cluster: cluster
+    # The query settings for clickhouse.
+    settings:
+      max_execution_time: 0
+      max_execution_time_leaf: 0
+      timeout_before_checking_execution_speed: 0
+      max_bytes_to_read: 0
+      max_result_rows: 0
+      ignore_data_skipping_indices: ""
+      secondary_indices_enable_bulk_filtering: false
+
+##################### Prometheus #####################
+prometheus:
+  active_query_tracker:
+    # Whether to enable the active query tracker.
+    enabled: true
+    # The path to use for the active query tracker.
+    path: ""
+    # The maximum number of concurrent queries.
+    max_concurrent: 20
+
+##################### Alertmanager #####################
+alertmanager:
+  # Specifies the alertmanager provider to use.
+  provider: signoz
+  signoz:
+    # The poll interval for periodically syncing the alertmanager with the config in the store.
+    poll_interval: 1m
+    # The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
+    external_url: http://localhost:8080
+    # The global configuration for the alertmanager. All the exahustive fields can be found in the upstream: https://github.com/prometheus/alertmanager/blob/efa05feffd644ba4accb526e98a8c6545d26a783/config/config.go#L833
+    global:
+      # ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
+      resolve_timeout: 5m
+    route:
+      # GroupByStr is the list of labels to group alerts by.
+      group_by:
+        - alertname
+      # GroupInterval is the interval at which alerts are grouped.
+      group_interval: 1m
+      # GroupWait is the time to wait before sending alerts to receivers.
+      group_wait: 1m
+      # RepeatInterval is the interval at which alerts are repeated.
+      repeat_interval: 1h
+    alerts:
+      # Interval between garbage collection of alerts.
+      gc_interval: 30m
+    silences:
+      # Maximum number of silences, including expired silences. If negative or zero, no limit is set.
+      max: 0
+      # Maximum size of the silences in bytes. If negative or zero, no limit is set.
+      max_size_bytes: 0
+      # Interval between garbage collection and snapshotting of the silences. The snapshot will be stored in the state store.
+      maintenance_interval: 15m
+      # Retention of the silences.
+      retention: 120h
+    nflog:
+      # Interval between garbage collection and snapshotting of the notification logs. The snapshot will be stored in the state store.
+      maintenance_interval: 15m
+      # Retention of the notification logs.
+      retention: 120h
+
+##################### Emailing #####################
+emailing:
+  # Whether to enable emailing.
+  enabled: false
+  templates:
+    # The directory containing the email templates. This directory should contain a list of files defined at pkg/types/emailtypes/template.go.
+    directory: /opt/signoz/conf/templates/email
+  smtp:
+    # The SMTP server address.
+    address: localhost:25
+    # The email address to use for the SMTP server.
+    from:
+    # The hello message to use for the SMTP server.
+    hello:
+    # The static headers to send with the email.
+    headers: {}
+    auth:
+      # The username to use for the SMTP server.
+      username:
+      # The password to use for the SMTP server.
+      password:
+      # The secret to use for the SMTP server.
+      secret:
+      # The identity to use for the SMTP server.
+      identity:
+    tls:
+      # Whether to enable TLS. It should be false in most cases since the authentication mechanism should use the STARTTLS extension instead.
+      enabled: false
+      # Whether to skip TLS verification.
+      insecure_skip_verify: false
+      # The path to the CA file.
+      ca_file_path:
+      # The path to the key file.
+      key_file_path:
+      # The path to the certificate file.
+      cert_file_path:
+
+##################### Sharder (experimental) #####################
+sharder:
+  # Specifies the sharder provider to use.
+  provider: noop
+  single:
+    # The org id to which this instance belongs to.
+    org_id: org_id
+
+##################### Analytics #####################
+analytics:
+  # Whether to enable analytics.
+  enabled: false
+  segment:
+    # The key to use for segment.
+    key: ""
+
+##################### StatsReporter #####################
+statsreporter:
+  # Whether to enable stats reporter. This is used to provide valuable insights to the SigNoz team. It does not collect any sensitive/PII data.
+  enabled: true
+  # The interval at which the stats are collected.
+  interval: 6h
+  collect:
+    # Whether to collect identities and traits (emails).
+    identities: true
+
+##################### Gateway (License only) #####################
+gateway:
+  # The URL of the gateway's api.
+  url: http://localhost:8080
+
+##################### Tokenizer #####################
+tokenizer:
+  # Specifies the tokenizer provider to use.
+  provider: jwt
+  lifetime:
+    # The duration for which a user can be idle before being required to authenticate.
+    idle: 168h
+    # The duration for which a user can remain logged in before being asked to login.
+    max: 720h
+  rotation:
+    # The interval to rotate tokens in.
+    interval: 30m
+    # The duration for which the previous token pair remains valid after a token pair is rotated.
+    duration: 60s
+  jwt:
+    # The secret to sign the JWT tokens.
+    secret: secret
+  opaque:
+    gc:
+      # The interval to perform garbage collection.
+      interval: 1h
+    token:
+      # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
+      max_per_user: 5
+
+##################### Flagger #####################
+flagger:
+  # Config are the overrides for the feature flags which come directly from the config file.
+  config:
+    boolean:
+      use_span_metrics: true
+      interpolation_enabled: false
+      kafka_span_eval: false
+    string:
+    float:
+    integer:
+    object:

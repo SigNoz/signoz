@@ -42,10 +42,10 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 				</SearchIconWrapper>
 			</Input.Group>
 
-			{config.value?.map(({ key, id }) => (
-				<AddColumnItem direction="horizontal" key={id}>
-					<Typography>{key}</Typography>
-					<DeleteOutlinedIcon onClick={(): void => config.onRemove(id as string)} />
+			{config.value?.map(({ name }) => (
+				<AddColumnItem direction="horizontal" key={name}>
+					<Typography>{name}</Typography>
+					<DeleteOutlinedIcon onClick={(): void => config.onRemove(name)} />
 				</AddColumnItem>
 			))}
 		</AddColumnWrapper>

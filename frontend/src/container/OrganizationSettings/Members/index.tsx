@@ -1,18 +1,18 @@
 import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteUser from 'api/user/deleteUser';
-import editUserApi from 'api/user/editUser';
-import getOrgUser from 'api/user/getOrgUser';
-import updateRole from 'api/user/updateRole';
+import getAll from 'api/v1/user/get';
+import deleteUser from 'api/v1/user/id/delete';
+import update from 'api/v1/user/id/update';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
@@ -85,79 +85,55 @@ function UserFunction({
 	const onDeleteHandler = async (): Promise<void> => {
 		try {
 			setIsDeleteLoading(true);
-			const response = await deleteUser({
+			await deleteUser({
 				userId: id,
 			});
-
-			if (response.statusCode === 200) {
-				onDelete();
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-				setIsDeleteModalVisible(false);
-			} else {
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			onDelete();
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+			setIsDeleteModalVisible(false);
 			setIsDeleteLoading(false);
 		} catch (error) {
 			setIsDeleteLoading(false);
-
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};
 
-	const onInviteMemberHandler = async (): Promise<void> => {
+	const onEditMemberDetails = async (): Promise<void> => {
 		try {
 			setIsUpdateLoading(true);
-			const [editUserResponse, updateRoleResponse] = await Promise.all([
-				editUserApi({
-					userId: id,
-					name: updatedName,
-				}),
-				updateRole({
-					group_name: role,
-					userId: id,
-				}),
-			]);
+			await update({
+				userId: id,
+				displayName: updatedName,
+				role,
+			});
+			onUpdateDetailsHandler();
 
-			if (
-				editUserResponse.statusCode === 200 &&
-				updateRoleResponse.statusCode === 200
-			) {
-				onUpdateDetailsHandler();
+			if (role !== accessLevel) {
+				notifications.success({
+					message: 'User details updated successfully',
+					description: 'The user details have been updated successfully.',
+				});
+			} else {
 				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
-			} else {
-				notifications.error({
-					message:
-						editUserResponse.error ||
-						updateRoleResponse.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
 			}
+
 			setIsUpdateLoading(false);
+			setIsModalVisible(false);
 		} catch (error) {
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 			setIsUpdateLoading(false);
 		}
@@ -179,6 +155,7 @@ function UserFunction({
 			</Space>
 			<Modal
 				title="Edit member details"
+				className="edit-member-details-modal"
 				open={isModalVisible}
 				onOk={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				onCancel={(): void => onModalToggleHandler(setIsModalVisible, false)}
@@ -194,7 +171,7 @@ function UserFunction({
 					</Button>,
 					<Button
 						key="Invite_team_members"
-						onClick={onInviteMemberHandler}
+						onClick={onEditMemberDetails}
 						type="primary"
 						disabled={isUpdateLoading}
 						loading={isUpdateLoading}
@@ -230,29 +207,27 @@ function UserFunction({
 }
 
 function Members(): JSX.Element {
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { status, data, isLoading } = useQuery({
-		queryFn: () =>
-			getOrgUser({
-				orgId: (org || [])[0].id,
-			}),
+	const { org } = useAppContext();
+
+	const { data, isLoading, error } = useQuery({
+		queryFn: () => getAll(),
 		queryKey: ['getOrgUser', org?.[0].id],
 	});
 
 	const [dataSource, setDataSource] = useState<DataType[]>([]);
 
 	useEffect(() => {
-		if (status === 'success' && data?.payload && Array.isArray(data.payload)) {
-			const updatedData: DataType[] = data?.payload?.map((e) => ({
+		if (data?.data && Array.isArray(data.data)) {
+			const updatedData: DataType[] = data?.data?.map((e) => ({
 				accessLevel: e.role,
 				email: e.email,
 				id: String(e.id),
 				joinedOn: String(e.createdAt),
-				name: e.name,
+				name: e.displayName,
 			}));
 			setDataSource(updatedData);
 		}
-	}, [data?.payload, status]);
+	}, [data]);
 
 	const columns: ColumnsType<DataType> = [
 		{
@@ -282,7 +257,7 @@ function Members(): JSX.Element {
 				const { joinedOn } = record;
 				return (
 					<Typography>
-						{dayjs.unix(Number(joinedOn)).format('MMMM DD,YYYY')}
+						{dayjs(joinedOn).format(DATE_TIME_FORMATS.MONTH_DATE_FULL)}
 					</Typography>
 				);
 			},
@@ -307,22 +282,25 @@ function Members(): JSX.Element {
 	];
 
 	return (
-		<Space direction="vertical" size="middle">
+		<div className="members-container">
 			<Typography.Title level={3}>
 				Members{' '}
 				{!isLoading && dataSource && (
 					<div className="members-count"> ({dataSource.length}) </div>
 				)}
 			</Typography.Title>
-			<ResizeTable
-				columns={columns}
-				tableLayout="fixed"
-				dataSource={dataSource}
-				pagination={false}
-				loading={status === 'loading'}
-				bordered
-			/>
-		</Space>
+			{!(error as APIError) && (
+				<ResizeTable
+					columns={columns}
+					tableLayout="fixed"
+					dataSource={dataSource}
+					pagination={false}
+					loading={isLoading}
+					bordered
+				/>
+			)}
+			{(error as APIError) && <ErrorContent error={error as APIError} />}
+		</div>
 	);
 }
 

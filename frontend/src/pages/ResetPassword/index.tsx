@@ -1,49 +1,33 @@
-import { Typography } from 'antd';
-import getUserVersion from 'api/user/getVersion';
+import getUserVersion from 'api/v1/version/get';
 import Spinner from 'components/Spinner';
 import ResetPasswordContainer from 'container/ResetPassword';
-import { useTranslation } from 'react-i18next';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import { useEffect } from 'react';
+import { useQuery } from 'react-query';
+import APIError from 'types/api/error';
 
 function ResetPassword(): JSX.Element {
-	const { t } = useTranslation('common');
-	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user, isLoggedIn } = useAppContext();
+	const { showErrorModal } = useErrorModal();
 
-	const [versionResponse] = useQueries([
-		{
-			queryFn: getUserVersion,
-			queryKey: ['getUserVersion', user?.accessJwt],
-			enabled: !isLoggedIn,
-		},
-	]);
+	const { data, isLoading, error } = useQuery({
+		queryFn: getUserVersion,
+		queryKey: ['getUserVersion', user?.accessJwt],
+		enabled: !isLoggedIn,
+	});
 
-	if (
-		versionResponse.status === 'error' ||
-		(versionResponse.status === 'success' &&
-			versionResponse.data?.statusCode !== 200)
-	) {
-		return (
-			<Typography>
-				{versionResponse.data?.error || t('something_went_wrong')}
-			</Typography>
-		);
-	}
+	useEffect(() => {
+		if (error) {
+			showErrorModal(error as APIError);
+		}
+	}, [error, showErrorModal]);
 
-	if (
-		versionResponse.status === 'loading' ||
-		!(versionResponse.data && versionResponse.data.payload)
-	) {
+	if (isLoading) {
 		return <Spinner tip="Loading..." />;
 	}
 
-	const { version } = versionResponse.data.payload;
-
-	return <ResetPasswordContainer version={version} />;
+	return <ResetPasswordContainer version={data?.data.version || ''} />;
 }
 
 export default ResetPassword;

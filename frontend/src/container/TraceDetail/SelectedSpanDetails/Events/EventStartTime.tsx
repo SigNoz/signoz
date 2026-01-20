@@ -1,4 +1,5 @@
 import { Popover } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -8,7 +9,7 @@ function EventStartTime({ timeUnixNano }: EventStartTimeProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const humanReadableTimeInDayJs = dayjs(timeUnixNano / 1e6).format(
-		'YYYY-MM-DD hh:mm:ss.SSS A',
+		DATE_TIME_FORMATS.ISO_DATETIME_MS,
 	);
 
 	return (

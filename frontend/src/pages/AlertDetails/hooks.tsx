@@ -20,6 +20,7 @@ import { urlKey } from 'container/AllError/utils';
 import { RelativeTimeMap } from 'container/TopNav/DateTimeSelection/config';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
@@ -152,7 +153,7 @@ type Props = {
 export const useGetAlertRuleDetails = (): Props => {
 	const { ruleId } = useAlertHistoryQueryParams();
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && ruleId !== '';
 
 	const {
 		isLoading,
@@ -162,7 +163,7 @@ export const useGetAlertRuleDetails = (): Props => {
 	} = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
 		queryFn: () =>
 			get({
-				id: parseInt(ruleId || '', 10),
+				id: ruleId || '',
 			}),
 		enabled: isValidRuleId,
 		refetchOnWindowFocus: false,
@@ -203,7 +204,7 @@ export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => 
 		{
 			queryFn: () =>
 				ruleStats({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),
@@ -233,7 +234,7 @@ export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopC
 		{
 			queryFn: () =>
 				topContributors({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),
@@ -286,7 +287,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 		{
 			queryFn: () =>
 				timelineTable({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 					limit: TIMELINE_TABLE_PAGE_SIZE,
@@ -321,6 +322,8 @@ export const useTimelineTable = ({
 		extra: any,
 	) => void;
 } => {
+	const { safeNavigate } = useSafeNavigate();
+
 	const { pathname } = useLocation();
 
 	const { search } = useLocation();
@@ -343,7 +346,7 @@ export const useTimelineTable = ({
 				const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
 				const params = new URLSearchParams(window.location.search);
 
-				history.replace(
+				safeNavigate(
 					`${pathname}?${createQueryParams({
 						...Object.fromEntries(params),
 						order: updatedOrder,
@@ -353,7 +356,7 @@ export const useTimelineTable = ({
 				);
 			}
 		},
-		[pathname],
+		[pathname, safeNavigate],
 	);
 
 	const offsetInt = parseInt(offset, 10);
@@ -391,7 +394,7 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data?.payload?.state);
-
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
 						data?.payload?.state === 'disabled' ? 'disabled' : 'enabled'
@@ -407,7 +410,7 @@ export const useAlertRuleStatusToggle = ({
 
 	const handleAlertStateToggle = (): void => {
 		const args = {
-			id: parseInt(ruleId, 10),
+			id: ruleId,
 			data: { disabled: alertRuleState !== 'disabled' },
 		};
 		toggleAlertState(args);
@@ -509,7 +512,7 @@ export const useAlertRuleUpdate = ({
 export const useAlertRuleDelete = ({
 	ruleId,
 }: {
-	ruleId: number;
+	ruleId: string;
 }): {
 	handleAlertDelete: () => void;
 } => {
@@ -557,7 +560,7 @@ export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTi
 		{
 			queryFn: () =>
 				timelineGraph({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),

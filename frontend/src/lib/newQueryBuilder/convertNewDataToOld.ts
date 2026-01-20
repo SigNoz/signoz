@@ -29,6 +29,7 @@ export const convertNewDataToOld = (
 					metric: series.labels,
 					values,
 					queryName: `${item.queryName}`,
+					metaData: series.metaData,
 				};
 
 				oldResult.push(result);
@@ -52,6 +53,7 @@ export const convertNewDataToOld = (
 					metric: series.labels,
 					values,
 					queryName: `${item.queryName}`,
+					metaData: series?.metaData,
 				};
 
 				oldResult.push(result);
@@ -75,6 +77,7 @@ export const convertNewDataToOld = (
 					metric: series.labels,
 					values,
 					queryName: `${item.queryName}`,
+					metaData: series?.metaData,
 				};
 
 				oldResult.push(result);
@@ -98,6 +101,7 @@ export const convertNewDataToOld = (
 					metric: series.labels,
 					values,
 					queryName: `${item.queryName}`,
+					metaData: series?.metaData,
 				};
 
 				oldResult.push(result);

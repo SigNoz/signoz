@@ -2,9 +2,7 @@ export interface User {
 	createdAt?: number;
 	email?: string;
 	id: string;
-	name?: string;
-	notFound?: boolean;
-	profilePictureURL?: string;
+	displayName?: string;
 }
 
 export interface APIKeyProps {
@@ -13,11 +11,16 @@ export interface APIKeyProps {
 	role: string;
 	token: string;
 	id: string;
-	createdAt: number;
+	createdAt: string;
 	createdByUser?: User;
-	updatedAt?: number;
+	updatedAt?: string;
 	updatedByUser?: User;
 	lastUsed?: number;
+}
+
+export interface CreatePayloadProps {
+	data: APIKeyProps;
+	status: string;
 }
 
 export interface CreateAPIKeyProps {

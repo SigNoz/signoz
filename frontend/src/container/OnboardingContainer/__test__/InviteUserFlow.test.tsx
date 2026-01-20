@@ -19,10 +19,6 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
-window.analytics = {
-	track: jest.fn(),
-};
-
 describe('Onboarding invite team member flow', () => {
 	it('initial render and get started page', async () => {
 		const { findByText } = render(

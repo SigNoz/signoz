@@ -14,33 +14,34 @@ import {
 	UploadProps,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import history from 'lib/history';
-import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
+import { ExternalLink, Github, MonitorDot, MoveRight } from 'lucide-react';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 // #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
 // See more: https://github.com/lucide-icons/lucide/issues/94
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { DashboardData } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 
 function ImportJSON({
 	isImportJSONModalVisible,
 	uploadedGrafana,
 	onModalHandler,
 }: ImportJSONProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [isUploadJSONError, setIsUploadJSONError] = useState<boolean>(false);
 	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
 		false,
 	);
-	const [isFeatureAlert, setIsFeatureAlert] = useState<boolean>(false);
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
@@ -75,17 +76,14 @@ function ImportJSON({
 		}
 	};
 
+	const { showErrorModal } = useErrorModal();
+
 	const onClickLoadJsonHandler = async (): Promise<void> => {
 		try {
 			setDashboardCreating(true);
 			logEvent('Dashboard List: Import and next clicked', {});
 
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
-
-			// Remove uuid from the dashboard data, in all cases - empty, duplicate or any valid not duplicate uuid
-			if (dashboardData.uuid !== undefined) {
-				delete dashboardData.uuid;
-			}
 
 			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
@@ -98,40 +96,20 @@ function ImportJSON({
 				uploadedGrafana,
 			});
 
-			if (response.statusCode === 200) {
-				history.push(
-					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: response.payload.uuid,
-					}),
-				);
-				logEvent('Dashboard List: New dashboard imported successfully', {
-					dashboardId: response.payload?.uuid,
-					dashboardName: response.payload?.data?.title,
-				});
-			} else if (response.error === 'feature usage exceeded') {
-				setIsFeatureAlert(true);
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			} else {
-				setIsCreateDashboardError(true);
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, {
+					dashboardId: response.data.id,
+				}),
+			);
+			logEvent('Dashboard List: New dashboard imported successfully', {
+				dashboardId: response.data?.id,
+				dashboardName: response.data?.data?.title,
+			});
+
 			setDashboardCreating(false);
 		} catch (error) {
+			showErrorModal(error as APIError);
 			setDashboardCreating(false);
-			setIsFeatureAlert(false);
-
 			setIsCreateDashboardError(true);
 			notifications.error({
 				message: error instanceof Error ? error.message : t('error_loading_json'),
@@ -149,7 +127,6 @@ function ImportJSON({
 	const onCancelHandler = (): void => {
 		setIsUploadJSONError(false);
 		setIsCreateDashboardError(false);
-		setIsFeatureAlert(false);
 		onModalHandler();
 	};
 
@@ -174,7 +151,10 @@ function ImportJSON({
 			wrapClassName="import-json-modal"
 			open={isImportJSONModalVisible}
 			centered
-			closable={false}
+			closable
+			keyboard
+			maskClosable
+			onCancel={onCancelHandler}
 			destroyOnClose
 			width="60vw"
 			footer={
@@ -215,7 +195,7 @@ function ImportJSON({
 								</Button>
 							</Upload>
 							<a
-								href="https://github.com/SigNoz/dashboards"
+								href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -239,12 +219,6 @@ function ImportJSON({
 						>
 							{t('import_and_next')} &nbsp; <MoveRight size={14} />
 						</Button>
-
-						{isFeatureAlert && (
-							<Typography.Text type="danger">
-								{MESSAGE.CREATE_DASHBOARD}
-							</Typography.Text>
-						)}
 					</div>
 				</div>
 			}
@@ -252,8 +226,6 @@ function ImportJSON({
 			<div className="import-json-content-container">
 				<div className="import-json-content-header">
 					<Typography.Text>{t('import_json')}</Typography.Text>
-
-					<X size={14} className="periscope-btn ghost" onClick={onCancelHandler} />
 				</div>
 
 				<MEditor

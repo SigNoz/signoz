@@ -9,7 +9,7 @@ export default function GeneralSettingsCloud(): JSX.Element {
 			<Info size={16} />
 			<Typography.Text>
 				Please <a href="mailto:cloud-support@signoz.io"> email us </a> or connect
-				with us via intercom support to change the retention period.
+				with us via chat support to change the retention period.
 			</Typography.Text>
 		</Card>
 	);

@@ -1,62 +1,54 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import getOrgUser from 'api/user/getOrgUser';
-import loginApi from 'api/user/login';
-import { Logout } from 'api/utils';
-import Spinner from 'components/Spinner';
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import getAll from 'api/v1/user/get';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
-import useLicense from 'hooks/useLicense';
-import { useNotifications } from 'hooks/useNotifications';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { isEmpty, isNull } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { ReactChild, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { matchPath, Redirect, useLocation } from 'react-router-dom';
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import { getInitialUserTokenRefreshToken } from 'store/utils';
-import AppActions from 'types/actions';
-import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
-import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
+import { matchPath, useLocation } from 'react-router-dom';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import { UserResponse } from 'types/api/user/getUser';
+import { USER_ROLES } from 'types/roles';
 import { routePermission } from 'utils/permission';
 
 import routes, {
 	LIST_LICENSES,
 	oldNewRoutesMapping,
 	oldRoutes,
+	ROUTES_NOT_TO_BE_OVERRIDEN,
+	SUPPORT_ROUTE,
 } from './routes';
-import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
 	const { pathname } = location;
-
-	const [isLoading, setIsLoading] = useState<boolean>(true);
-
 	const {
 		org,
 		orgPreferences,
 		user,
-		role,
-		isUserFetching,
-		isUserFetchingError,
 		isLoggedIn: isLoggedInState,
 		isFetchingOrgPreferences,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+		activeLicense,
+		isFetchingActiveLicense,
+		trialInfo,
+		featureFlags,
+	} = useAppContext();
 
-	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
-
+	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
-				[...routes, LIST_LICENSES].map((e) => {
+				[...routes, LIST_LICENSES, SUPPORT_ROUTE].map((e) => {
 					const currentPath = matchPath(pathname, {
 						path: e.path,
 					});
@@ -65,220 +57,164 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			),
 		[pathname],
 	);
-
-	const isOnboardingComplete = useMemo(
-		() =>
-			orgPreferences?.find(
-				(preference: Record<string, any>) => preference.key === 'ORG_ONBOARDING',
-			)?.value,
-		[orgPreferences],
-	);
-
-	const {
-		data: licensesData,
-		isFetching: isFetchingLicensesData,
-	} = useLicense();
-
-	const { t } = useTranslation(['common']);
-
-	const isCloudUserVal = isCloudUser();
-
-	const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
-
-	const { notifications } = useNotifications();
-
-	const currentRoute = mapRoutes.get('current');
-
 	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
+	const currentRoute = mapRoutes.get('current');
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
-	const isLocalStorageLoggedIn =
-		getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
-
-	const navigateToLoginIfNotLoggedIn = (isLoggedIn = isLoggedInState): void => {
-		dispatch({
-			type: UPDATE_USER_IS_FETCH,
-			payload: {
-				isUserFetching: false,
-			},
-		});
-		if (!isLoggedIn) {
-			history.push(ROUTES.LOGIN, { from: pathname });
-		}
-	};
-
-	const { data: orgUsers, isLoading: isLoadingOrgUsers } = useQuery({
+	const { data: usersData, isFetching: isFetchingUsers } = useQuery<
+		SuccessResponseV2<UserResponse[]> | undefined,
+		APIError
+	>({
 		queryFn: () => {
 			if (orgData && orgData.id !== undefined) {
-				return getOrgUser({
-					orgId: orgData.id,
-				});
+				return getAll();
 			}
 			return undefined;
 		},
 		queryKey: ['getOrgUser'],
-		enabled: !isEmpty(orgData),
+		enabled: !isEmpty(orgData) && user.role === 'ADMIN',
 	});
 
-	const checkFirstTimeUser = (): boolean => {
-		const users = orgUsers?.payload || [];
+	const checkFirstTimeUser = useCallback((): boolean => {
+		const users = usersData?.data || [];
 
-		const remainingUsers = users.filter(
+		const remainingUsers = (Array.isArray(users) ? users : []).filter(
 			(user) => user.email !== 'admin@signoz.cloud',
 		);
 
 		return remainingUsers.length === 1;
-	};
+	}, [usersData?.data]);
 
-	// Check if the onboarding should be shown based on the org users and onboarding completion status, wait for org users and preferences to load
-	const shouldShowOnboarding = (): boolean => {
-		// Only run this effect if the org users and preferences are loaded
-
-		if (!isLoadingOrgUsers && !isFetchingOrgPreferences) {
-			const isFirstUser = checkFirstTimeUser();
-
-			// Redirect to get started if it's not the first user or if the onboarding is complete
-			return isFirstUser && !isOnboardingComplete;
-		}
-
-		return false;
-	};
-
-	const handleRedirectForOrgOnboarding = (key: string): void => {
+	useEffect(() => {
 		if (
-			isLoggedInState &&
 			isCloudUserVal &&
 			!isFetchingOrgPreferences &&
-			!isLoadingOrgUsers &&
-			!isEmpty(orgUsers?.payload) &&
-			!isNull(orgPreferences)
+			orgPreferences &&
+			!isFetchingUsers &&
+			usersData &&
+			usersData.data
 		) {
-			if (key === 'ONBOARDING' && isOnboardingComplete) {
-				history.push(ROUTES.APPLICATION);
-			}
+			const isOnboardingComplete = orgPreferences?.find(
+				(preference: OrgPreference) =>
+					preference.name === ORG_PREFERENCES.ORG_ONBOARDING,
+			)?.value;
 
-			const isFirstTimeUser = checkFirstTimeUser();
-
-			if (isFirstTimeUser && !isOnboardingComplete) {
+			const isFirstUser = checkFirstTimeUser();
+			if (
+				isFirstUser &&
+				!isOnboardingComplete &&
+				// if the current route is allowed to be overriden by org onboarding then only do the same
+				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname)
+			) {
 				history.push(ROUTES.ONBOARDING);
 			}
 		}
-
-		if (!isCloudUserVal && key === 'ONBOARDING') {
-			history.push(ROUTES.APPLICATION);
-		}
-	};
-
-	const handleUserLoginIfTokenPresent = async (
-		key: keyof typeof ROUTES,
-	): Promise<void> => {
-		if (localStorageUserAuthToken?.refreshJwt) {
-			// localstorage token is present
-
-			// renew web access token
-			const response = await loginApi({
-				refreshToken: localStorageUserAuthToken?.refreshJwt,
-			});
-
-			if (response.statusCode === 200) {
-				const route = routePermission[key];
-
-				// get all resource and put it over redux
-				const userResponse = await afterLogin(
-					response.payload.userId,
-					response.payload.accessJwt,
-					response.payload.refreshJwt,
-				);
-
-				handleRedirectForOrgOnboarding(key);
-
-				if (
-					userResponse &&
-					route &&
-					route.find((e) => e === userResponse.payload.role) === undefined
-				) {
-					history.push(ROUTES.UN_AUTHORIZED);
-				}
-			} else {
-				Logout();
-
-				notifications.error({
-					message: response.error || t('something_went_wrong'),
-				});
-			}
-		}
-	};
-
-	const handlePrivateRoutes = async (
-		key: keyof typeof ROUTES,
-	): Promise<void> => {
-		if (
-			localStorageUserAuthToken &&
-			localStorageUserAuthToken.refreshJwt &&
-			isUserFetching
-		) {
-			handleUserLoginIfTokenPresent(key);
-		} else {
-			handleRedirectForOrgOnboarding(key);
-
-			navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
-		}
-	};
+	}, [
+		checkFirstTimeUser,
+		isCloudUserVal,
+		isFetchingOrgPreferences,
+		isFetchingUsers,
+		orgPreferences,
+		usersData,
+		pathname,
+	]);
 
 	const navigateToWorkSpaceBlocked = (route: any): void => {
 		const { path } = route;
 
-		if (path && path !== ROUTES.WORKSPACE_LOCKED) {
-			history.push(ROUTES.WORKSPACE_LOCKED);
+		const isRouteEnabledForWorkspaceBlockedState =
+			isAdmin &&
+			(path === ROUTES.SETTINGS ||
+				path === ROUTES.ORG_SETTINGS ||
+				path === ROUTES.BILLING ||
+				path === ROUTES.MY_SETTINGS);
 
-			dispatch({
-				type: UPDATE_USER_IS_FETCH,
-				payload: {
-					isUserFetching: false,
-				},
-			});
+		if (
+			path &&
+			path !== ROUTES.WORKSPACE_LOCKED &&
+			!isRouteEnabledForWorkspaceBlockedState
+		) {
+			history.push(ROUTES.WORKSPACE_LOCKED);
+		}
+	};
+
+	const navigateToWorkSpaceAccessRestricted = (route: any): void => {
+		const { path } = route;
+
+		if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
+			history.push(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
 		}
 	};
 
 	useEffect(() => {
-		if (!isFetchingLicensesData) {
-			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
+		if (!isFetchingActiveLicense && activeLicense) {
+			const currentRoute = mapRoutes.get('current');
 
-			if (shouldBlockWorkspace) {
+			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+			const isExpired = activeLicense.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
+
+			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
+
+			const { platform } = activeLicense;
+
+			if (
+				isWorkspaceAccessRestricted &&
+				platform === LicensePlatform.CLOUD &&
+				currentRoute
+			) {
+				navigateToWorkSpaceAccessRestricted(currentRoute);
+			}
+		}
+	}, [isFetchingActiveLicense, activeLicense, mapRoutes, pathname]);
+
+	useEffect(() => {
+		if (!isFetchingActiveLicense) {
+			const currentRoute = mapRoutes.get('current');
+			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
+
+			if (
+				shouldBlockWorkspace &&
+				currentRoute &&
+				activeLicense?.platform === LicensePlatform.CLOUD
+			) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
-	}, [isFetchingLicensesData]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		isFetchingActiveLicense,
+		trialInfo?.workSpaceBlock,
+		activeLicense?.platform,
+		mapRoutes,
+		pathname,
+	]);
 
 	const navigateToWorkSpaceSuspended = (route: any): void => {
 		const { path } = route;
 
 		if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
 			history.push(ROUTES.WORKSPACE_SUSPENDED);
-
-			dispatch({
-				type: UPDATE_USER_IS_FETCH,
-				payload: {
-					isUserFetching: false,
-				},
-			});
 		}
 	};
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+		if (!isFetchingActiveLicense && activeLicense) {
+			const currentRoute = mapRoutes.get('current');
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicense.state === LicenseState.DEFAULTED;
 
-			if (shouldSuspendWorkspace) {
+			if (
+				shouldSuspendWorkspace &&
+				currentRoute &&
+				activeLicense.platform === LicensePlatform.CLOUD
+			) {
 				navigateToWorkSpaceSuspended(currentRoute);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
+	}, [isFetchingActiveLicense, activeLicense, mapRoutes, pathname]);
 
 	useEffect(() => {
 		if (org && org.length > 0 && org[0].id !== undefined) {
@@ -286,102 +222,79 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	}, [org]);
 
-	const handleRouting = (): void => {
-		const showOrgOnboarding = shouldShowOnboarding();
-
-		if (showOrgOnboarding && !isOnboardingComplete && isCloudUserVal) {
-			history.push(ROUTES.ONBOARDING);
-		} else {
-			history.push(ROUTES.APPLICATION);
-		}
-	};
-
+	// if the feature flag is enabled and the current route is /get-started then redirect to /get-started-with-signoz-cloud
 	useEffect(() => {
-		const { isPrivate } = currentRoute || {
-			isPrivate: false,
-		};
-
-		if (isLoggedInState && role && role !== 'ADMIN') {
-			setIsLoading(false);
-		}
-
-		if (!isPrivate) {
-			setIsLoading(false);
-		}
-
 		if (
-			!isEmpty(user) &&
-			!isFetchingOrgPreferences &&
-			!isEmpty(orgUsers?.payload) &&
-			!isNull(orgPreferences)
+			currentRoute?.path === ROUTES.GET_STARTED &&
+			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
 		) {
-			setIsLoading(false);
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
-	}, [currentRoute, user, role, orgUsers, orgPreferences]);
+	}, [currentRoute, featureFlags]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
-		(async (): Promise<void> => {
-			try {
-				if (isOldRoute) {
-					const redirectUrl = oldNewRoutesMapping[pathname];
+		// if it is an old route navigate to the new route
+		if (isOldRoute) {
+			const redirectUrl = oldNewRoutesMapping[pathname];
 
-					const newLocation = {
-						...location,
-						pathname: redirectUrl,
-					};
-					history.replace(newLocation);
-				}
+			const newLocation = {
+				...location,
+				pathname: redirectUrl,
+			};
+			history.replace(newLocation);
+			return;
+		}
 
-				if (currentRoute) {
-					const { isPrivate, key } = currentRoute;
+		// if the current route is public dashboard then don't redirect to login
+		const isPublicDashboard = currentRoute?.path === ROUTES.PUBLIC_DASHBOARD;
 
-					if (isPrivate && key !== String(ROUTES.WORKSPACE_LOCKED)) {
-						handlePrivateRoutes(key);
-					} else {
-						// no need to fetch the user and make user fetching false
-						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true') {
-							handleRouting();
-						}
-						dispatch({
-							type: UPDATE_USER_IS_FETCH,
-							payload: {
-								isUserFetching: false,
-							},
-						});
-					}
-				} else if (pathname === ROUTES.HOME_PAGE) {
-					// routing to application page over root page
-					if (isLoggedInState) {
-						handleRouting();
-					} else {
-						navigateToLoginIfNotLoggedIn();
+		if (isPublicDashboard) {
+			return;
+		}
+
+		// if the current route
+		if (currentRoute) {
+			const { isPrivate, key } = currentRoute;
+			if (isPrivate) {
+				if (isLoggedInState) {
+					const route = routePermission[key];
+					if (route && route.find((e) => e === user.role) === undefined) {
+						history.push(ROUTES.UN_AUTHORIZED);
 					}
 				} else {
-					// not found
-					navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
+					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
+					history.push(ROUTES.LOGIN);
 				}
-			} catch (error) {
-				// something went wrong
-				history.push(ROUTES.SOMETHING_WENT_WRONG);
+			} else if (isLoggedInState) {
+				const fromPathname = getLocalStorageApi(
+					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+				);
+				if (fromPathname) {
+					history.push(fromPathname);
+					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
+					history.push(ROUTES.HOME);
+				}
+			} else {
+				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
+				// setup is not completed
 			}
-		})();
-	}, [
-		dispatch,
-		isLoggedInState,
-		currentRoute,
-		licensesData,
-		orgUsers,
-		orgPreferences,
-	]);
-
-	if (isUserFetchingError) {
-		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
-	}
-
-	if (isUserFetching || isLoading) {
-		return <Spinner tip="Loading..." />;
-	}
+		} else if (isLoggedInState) {
+			const fromPathname = getLocalStorageApi(
+				LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+			);
+			if (fromPathname) {
+				history.push(fromPathname);
+				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+			} else {
+				history.push(ROUTES.HOME);
+			}
+		} else {
+			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
+			history.push(ROUTES.LOGIN);
+		}
+	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

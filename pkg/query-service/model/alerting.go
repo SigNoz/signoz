@@ -5,16 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/pkg/errors"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 // AlertState denotes the state of an active alert.
 type AlertState int
 
+// The enum values are ordered by priority (lowest to highest).
+// When determining overall rule state, higher numeric values take precedence.
 const (
 	StateInactive AlertState = iota
 	StatePending
+	StateRecovering
 	StateFiring
 	StateNoData
 	StateDisabled
@@ -32,6 +35,8 @@ func (s AlertState) String() string {
 		return "nodata"
 	case StateDisabled:
 		return "disabled"
+	case StateRecovering:
+		return "recovering"
 	}
 	panic(errors.Errorf("unknown alert state: %d", s))
 }
@@ -58,6 +63,8 @@ func (s *AlertState) UnmarshalJSON(b []byte) error {
 			*s = StateNoData
 		case "disabled":
 			*s = StateDisabled
+		case "recovering":
+			*s = StateRecovering
 		default:
 			*s = StateInactive
 		}
@@ -83,6 +90,8 @@ func (s *AlertState) Scan(value interface{}) error {
 		*s = StateNoData
 	case "disabled":
 		*s = StateDisabled
+	case "recovering":
+		*s = StateRecovering
 	}
 	return nil
 }

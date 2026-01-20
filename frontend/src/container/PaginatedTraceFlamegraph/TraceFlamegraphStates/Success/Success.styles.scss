@@ -1,0 +1,49 @@
+.trace-flamegraph {
+	height: 90%;
+	overflow-x: hidden;
+	overflow-y: auto;
+
+	.trace-flamegraph-virtuoso {
+		overflow-x: hidden;
+
+		.flamegraph-row {
+			display: flex;
+			align-items: center;
+			height: 18px;
+			padding-bottom: 6px;
+
+			.span-item {
+				position: absolute;
+				height: 12px;
+				background-color: yellow;
+				border-radius: 6px;
+				cursor: pointer;
+
+				.event-dot {
+					position: absolute;
+					top: 50%;
+					transform: translate(-50%, -50%) rotate(45deg);
+					width: 6px;
+					height: 6px;
+					background-color: var(--bg-robin-500);
+					border: 1px solid var(--bg-robin-600);
+					cursor: pointer;
+					z-index: 1;
+
+					&.error {
+						background-color: var(--bg-cherry-500);
+						border-color: var(--bg-cherry-600);
+					}
+
+					&:hover {
+						transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
+					}
+				}
+			}
+		}
+
+		&::-webkit-scrollbar {
+			width: 0rem;
+		}
+	}
+}

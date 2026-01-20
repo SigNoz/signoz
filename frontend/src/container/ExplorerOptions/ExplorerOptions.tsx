@@ -15,6 +15,7 @@ import {
 	Typography,
 } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import axios from 'axios';
 import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
@@ -24,8 +25,15 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
+import {
+	MetricsExplorerEventKeys,
+	MetricsExplorerEvents,
+} from 'container/MetricsExplorer/events';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -37,7 +45,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { cloneDeep, isEqual, omit } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -46,6 +54,8 @@ import {
 	Plus,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
+import { FormattingOptions } from 'providers/preferences/types';
 import {
 	CSSProperties,
 	Dispatch,
@@ -56,20 +66,17 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { panelTypeToExplorerView } from 'utils/explorerUtils';
 
 import { PreservedViewsTypes } from './constants';
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
-import { PreservedViewsInLocalStorage } from './types';
+import { ChangeViewFunctionType, PreservedViewsInLocalStorage } from './types';
 import {
 	DATASOURCE_VS_ROUTES,
 	generateRGBAFromHex,
@@ -87,8 +94,12 @@ function ExplorerOptions({
 	onExport,
 	query,
 	sourcepage,
+	signalSource,
 	isExplorerOptionHidden = false,
 	setIsExplorerOptionHidden,
+	isOneChartPerQuery = false,
+	splitedQueries = [],
+	handleChangeSelectedView,
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -98,12 +109,26 @@ function ExplorerOptions({
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
+	const [queryToExport, setQueryToExport] = useState<Query | null>(null);
+
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
+	const isMetricsExplorer = sourcepage === DataSource.METRICS;
+	const isMeterExplorer = signalSource === 'meter';
 
 	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = LOCALSTORAGE.LAST_USED_SAVED_VIEWS;
-	const PRESERVED_VIEW_TYPE = isLogsExplorer
-		? PreservedViewsTypes.LOGS
-		: PreservedViewsTypes.TRACES;
+
+	const PRESERVED_VIEW_TYPE = useMemo(() => {
+		if (isLogsExplorer) {
+			return PreservedViewsTypes.LOGS;
+		}
+		if (isMetricsExplorer) {
+			return PreservedViewsTypes.METRICS;
+		}
+		if (isMeterExplorer) {
+			return PreservedViewsTypes.METER;
+		}
+		return PreservedViewsTypes.TRACES;
+	}, [isLogsExplorer, isMetricsExplorer, isMeterExplorer]);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -114,6 +139,7 @@ function ExplorerOptions({
 		panelType,
 		isStagedQueryUpdated,
 		redirectWithQueryBuilderData,
+		isDefaultQuery,
 	} = useQueryBuilder();
 
 	const handleSaveViewModalToggle = (): void => {
@@ -125,6 +151,16 @@ function ExplorerOptions({
 			logEvent('Logs Explorer: Save view clicked', {
 				panelType,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent(MetricsExplorerEvents.SaveViewClicked, {
+				[MetricsExplorerEventKeys.Tab]: 'explorer',
+				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
+				panelType,
+			});
+		} else if (isMeterExplorer) {
+			logEvent('Meter Explorer: Save view clicked', {
+				panelType,
+			});
 		}
 		setIsSaveModalOpen(!isSaveModalOpen);
 	};
@@ -133,49 +169,66 @@ function ExplorerOptions({
 		setIsSaveModalOpen(false);
 	};
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
-	const handleConditionalQueryModification = useCallback((): string => {
-		if (
-			query?.builder?.queryData?.[0]?.aggregateOperator !== StringOperators.NOOP
-		) {
-			return JSON.stringify(query);
-		}
+	const handleConditionalQueryModification = useCallback(
+		(defaultQuery: Query | null): string => {
+			const queryToUse = defaultQuery || query;
+			if (
+				queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
+				StringOperators.NOOP
+			) {
+				return JSON.stringify(queryToUse);
+			}
 
-		// Modify aggregateOperator to count, as noop is not supported in alerts
-		const modifiedQuery = cloneDeep(query);
+			// Modify aggregateOperator to count, as noop is not supported in alerts
+			const modifiedQuery = cloneDeep(queryToUse);
 
-		modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
+			modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
 
-		return JSON.stringify(modifiedQuery);
-	}, [query]);
+			return JSON.stringify(modifiedQuery);
+		},
+		[query],
+	);
 
-	const onCreateAlertsHandler = useCallback(() => {
-		if (sourcepage === DataSource.TRACES) {
-			logEvent('Traces Explorer: Create alert', {
-				panelType,
-			});
-		} else if (isLogsExplorer) {
-			logEvent('Logs Explorer: Create alert', {
-				panelType,
-			});
-		}
+	const onCreateAlertsHandler = useCallback(
+		(defaultQuery: Query | null) => {
+			if (sourcepage === DataSource.TRACES) {
+				logEvent('Traces Explorer: Create alert', {
+					panelType,
+				});
+			} else if (isLogsExplorer) {
+				logEvent('Logs Explorer: Create alert', {
+					panelType,
+				});
+			} else if (isMetricsExplorer) {
+				logEvent(MetricsExplorerEvents.AddToAlertClicked, {
+					panelType,
+					[MetricsExplorerEventKeys.Tab]: 'explorer',
+					[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
+				});
+			}
 
-		const stringifiedQuery = handleConditionalQueryModification();
+			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
 
-		history.push(
-			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				stringifiedQuery,
-			)}`,
-		);
+			history.push(
+				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+					stringifiedQuery,
+				)}`,
+			);
+		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleConditionalQueryModification, history]);
+		[handleConditionalQueryModification, history],
+	);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
+		if (isOneChartPerQuery) {
+			setQueryToExport(null);
+		}
 	};
 
-	const onAddToDashboard = (): void => {
+	const onAddToDashboard = useCallback((): void => {
 		if (sourcepage === DataSource.TRACES) {
 			logEvent('Traces Explorer: Add to dashboard clicked', {
 				panelType,
@@ -184,9 +237,16 @@ function ExplorerOptions({
 			logEvent('Logs Explorer: Add to dashboard clicked', {
 				panelType,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent(MetricsExplorerEvents.AddToDashboardClicked, {
+				panelType,
+				[MetricsExplorerEventKeys.Tab]: 'explorer',
+				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
+			});
 		}
 		setIsExport(true);
-	};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isLogsExplorer, isMetricsExplorer, panelType, setIsExport, sourcepage]);
 
 	const {
 		data: viewsData,
@@ -194,14 +254,14 @@ function ExplorerOptions({
 		error,
 		isRefetching,
 		refetch: refetchAllView,
-	} = useGetAllViews(sourcepage);
+	} = useGetAllViews(isMeterExplorer ? 'meter' : sourcepage);
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
+	const extraData = viewsData?.data?.data?.find((view) => view.id === viewKey)
 		?.extraData;
 
 	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
@@ -210,14 +270,64 @@ function ExplorerOptions({
 		0.08,
 	);
 
+	const { options, handleOptionsChange } = useOptionsMenu({
+		storageKey:
+			sourcepage === DataSource.TRACES
+				? LOCALSTORAGE.TRACES_LIST_OPTIONS
+				: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: sourcepage,
+		aggregateOperator: StringOperators.NOOP,
+	});
+
+	const getUpdatedExtraData = (
+		extraData: string | undefined,
+		newSelectedColumns: TelemetryFieldKey[],
+		formattingOptions?: FormattingOptions,
+	): string => {
+		let updatedExtraData;
+
+		if (extraData) {
+			const parsedExtraData = JSON.parse(extraData);
+			parsedExtraData.selectColumns = newSelectedColumns;
+			if (formattingOptions) {
+				parsedExtraData.format = formattingOptions.format;
+				parsedExtraData.maxLines = formattingOptions.maxLines;
+				parsedExtraData.fontSize = formattingOptions.fontSize;
+			}
+			updatedExtraData = JSON.stringify(parsedExtraData);
+		} else {
+			updatedExtraData = JSON.stringify({
+				color: Color.BG_SIENNA_500,
+				selectColumns: newSelectedColumns,
+				format: formattingOptions?.format,
+				maxLines: formattingOptions?.maxLines,
+				fontSize: formattingOptions?.fontSize,
+			});
+		}
+		return updatedExtraData;
+	};
+
+	const updatedExtraData = getUpdatedExtraData(
+		extraData,
+		options?.selectColumns,
+		// pass this only for logs
+		sourcepage === DataSource.LOGS
+			? {
+					format: options?.format,
+					maxLines: options?.maxLines,
+					fontSize: options?.fontSize,
+			  }
+			: undefined,
+	);
+
 	const {
 		mutateAsync: updateViewAsync,
 		isLoading: isViewUpdating,
 	} = useUpdateView({
 		compositeQuery,
 		viewKey,
-		extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
-		sourcePage: sourcepage,
+		extraData: updatedExtraData,
+		sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 		viewName,
 	});
 
@@ -228,14 +338,12 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
-		const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
-			?.extraData;
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
-				extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
-				sourcePage: sourcepage,
+				extraData: updatedExtraData,
+				sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 				viewName,
 			},
 			{
@@ -256,14 +364,9 @@ function ExplorerOptions({
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
-	const { options, handleOptionsChange } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
-		aggregateOperator: StringOperators.NOOP,
-	});
-
 	type ExtraData = {
-		selectColumns?: BaseAutocompleteData[];
+		selectColumns?: TelemetryFieldKey[];
+		version?: number;
 	};
 
 	const updateOrRestoreSelectColumns = (
@@ -284,15 +387,27 @@ function ExplorerOptions({
 			console.error('Error parsing extraData:', error);
 		}
 
+		let backwardCompatibleOptions = options;
+
+		if (!extraData?.version) {
+			backwardCompatibleOptions = omit(options, 'version');
+		}
+
+		// Use the correct default columns based on the current data source
+		const defaultColumns =
+			sourcepage === DataSource.TRACES
+				? defaultTraceSelectedColumns
+				: defaultLogsSelectedColumns;
+
 		if (extraData.selectColumns?.length) {
 			handleOptionsChange({
-				...options,
+				...backwardCompatibleOptions,
 				selectColumns: extraData.selectColumns,
 			});
-		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
+		} else if (!isEqual(defaultColumns, options.selectColumns)) {
 			handleOptionsChange({
-				...options,
-				selectColumns: defaultTraceSelectedColumns,
+				...backwardCompatibleOptions,
+				selectColumns: defaultColumns,
 			});
 		}
 	};
@@ -303,20 +418,24 @@ function ExplorerOptions({
 				viewsData?.data?.data,
 			);
 			if (!currentViewDetails) return;
-			const {
-				query,
-				name,
-				uuid,
-				panelType: currentPanelType,
-			} = currentViewDetails;
+			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
-			handleExplorerTabChange(currentPanelType, {
-				query,
-				name,
-				uuid,
-			});
+			if (handleChangeSelectedView) {
+				handleChangeSelectedView(panelTypeToExplorerView[currentPanelType], {
+					query,
+					name,
+					id,
+				});
+			} else {
+				// to remove this after traces cleanup
+				handleExplorerTabChange(currentPanelType, {
+					query,
+					name,
+					id,
+				});
+			}
 		},
-		[viewsData, handleExplorerTabChange],
+		[viewsData, handleExplorerTabChange, handleChangeSelectedView],
 	);
 
 	const updatePreservedViewInLocalStorage = (option: {
@@ -361,6 +480,16 @@ function ExplorerOptions({
 				panelType,
 				viewName: option?.value,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Select view', {
+				panelType,
+				viewName: option?.value,
+			});
+		} else if (isMeterExplorer) {
+			logEvent('Meter Explorer: Select view', {
+				panelType,
+				viewName: option?.value,
+			});
 		}
 
 		updatePreservedViewInLocalStorage(option);
@@ -399,10 +528,31 @@ function ExplorerOptions({
 	const handleClearSelect = (): void => {
 		removeCurrentViewFromLocalStorage();
 
+		handleOptionsChange({
+			...options,
+			selectColumns:
+				sourcepage === DataSource.TRACES
+					? defaultTraceSelectedColumns
+					: defaultLogsSelectedColumns,
+		});
+
+		if (signalSource === 'meter') {
+			history.replace(ROUTES.METER_EXPLORER);
+			return;
+		}
+
+		if (handleChangeSelectedView) {
+			handleChangeSelectedView(panelTypeToExplorerView[PANEL_TYPES.LIST]);
+		}
+
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
-	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
+	const isQueryUpdated = isStagedQueryUpdated(
+		viewsData?.data?.data,
+		viewKey,
+		options,
+	);
 
 	const {
 		isLoading: isSaveViewLoading,
@@ -424,13 +574,22 @@ function ExplorerOptions({
 			extraData: JSON.stringify({
 				color,
 				selectColumns: options.selectColumns,
+				version: 1,
+				...// pass this only for logs
+				(sourcepage === DataSource.LOGS
+					? {
+							format: options?.format,
+							maxLines: options?.maxLines,
+							fontSize: options?.fontSize,
+					  }
+					: {}),
 			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,
 			redirectWithQueryBuilderData,
 			refetchAllView,
 			saveViewAsync,
-			sourcePage: sourcepage,
+			sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 			viewName: newViewName,
 			setNewViewName,
 		});
@@ -441,6 +600,11 @@ function ExplorerOptions({
 			});
 		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Save view successful', {
+				panelType,
+				viewName: newViewName,
+			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Save view successful', {
 				panelType,
 				viewName: newViewName,
 			});
@@ -465,14 +629,7 @@ function ExplorerOptions({
 		[isDarkMode],
 	);
 
-	const hideToolbar = (): void => {
-		setExplorerToolBarVisibility(false, sourcepage);
-		if (setIsExplorerOptionHidden) {
-			setIsExplorerOptionHidden(true);
-		}
-	};
-
-	const isEditDeleteSupported = allowedRoles.includes(role as string);
+	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 	const [
 		isRecentlyUsedSavedViewSelected,
@@ -480,6 +637,11 @@ function ExplorerOptions({
 	] = useState(false);
 
 	useEffect(() => {
+		// If the query is not the default query, don't set the recently used saved view
+		if (!isDefaultQuery({ currentQuery, sourcePage: sourcepage })) {
+			return;
+		}
+
 		const parsedPreservedView = JSON.parse(
 			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
 		);
@@ -501,16 +663,164 @@ function ExplorerOptions({
 			setIsRecentlyUsedSavedViewSelected(false);
 		}
 
-		return (): void => clearTimeout(timeoutId);
+		// eslint-disable-next-line consistent-return
+		return (): void => {
+			clearTimeout(timeoutId);
+		};
 	}, [
 		PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 		PRESERVED_VIEW_TYPE,
+		currentQuery,
+		isDefaultQuery,
 		isRecentlyUsedSavedViewSelected,
 		onMenuItemSelectHandler,
+		sourcepage,
 		viewKey,
 		viewName,
 		viewsData?.data?.data,
 	]);
+
+	const infoIconText = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'Learn more about Logs explorer';
+		}
+		if (isMetricsExplorer) {
+			return 'Learn more about Metrics explorer';
+		}
+		return 'Learn more about Traces explorer';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
+	const infoIconLink = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar';
+		}
+		// TODO: Add metrics explorer info icon link
+		if (isMetricsExplorer) {
+			return '';
+		}
+		return 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
+	const getQueryName = (query: Query): string => {
+		if (query.builder.queryFormulas.length > 0) {
+			return `Formula ${query.builder.queryFormulas[0].queryName}`;
+		}
+		return `Query ${query.builder.queryData[0].queryName}`;
+	};
+
+	const CreateAlertButton = useMemo(() => {
+		if (isOneChartPerQuery) {
+			const selectLabel = (
+				<Button
+					disabled={disabled}
+					shape="round"
+					icon={<ConciergeBell size={16} />}
+				>
+					Create an Alert
+				</Button>
+			);
+			return (
+				<Select
+					disabled={disabled}
+					className="multi-alert-button"
+					placeholder={selectLabel}
+					value={selectLabel}
+					suffixIcon={null}
+					onSelect={(e): void => {
+						const selectedQuery = splitedQueries.find(
+							(query) => query.id === ((e as unknown) as string),
+						);
+						if (selectedQuery) {
+							onCreateAlertsHandler(selectedQuery);
+						}
+					}}
+				>
+					{splitedQueries.map((splittedQuery) => (
+						<Select.Option key={splittedQuery.id} value={splittedQuery.id}>
+							{getQueryName(splittedQuery)}
+						</Select.Option>
+					))}
+				</Select>
+			);
+		}
+		return (
+			<Button
+				disabled={disabled}
+				shape="round"
+				onClick={(): void => onCreateAlertsHandler(query)}
+				icon={<ConciergeBell size={16} />}
+			>
+				Create an Alert
+			</Button>
+		);
+	}, [
+		disabled,
+		isOneChartPerQuery,
+		onCreateAlertsHandler,
+		query,
+		splitedQueries,
+	]);
+
+	const AddToDashboardButton = useMemo(() => {
+		if (isOneChartPerQuery) {
+			const selectLabel = (
+				<Button
+					type="primary"
+					disabled={disabled}
+					shape="round"
+					onClick={onAddToDashboard}
+					icon={<Plus size={16} />}
+				>
+					Add to Dashboard
+				</Button>
+			);
+			return (
+				<Select
+					disabled={disabled}
+					className="multi-dashboard-button"
+					placeholder={selectLabel}
+					value={selectLabel}
+					suffixIcon={null}
+					onSelect={(e): void => {
+						const selectedQuery = splitedQueries.find(
+							(query) => query.id === ((e as unknown) as string),
+						);
+						if (selectedQuery) {
+							setQueryToExport(() => {
+								onAddToDashboard();
+								return selectedQuery;
+							});
+						}
+					}}
+				>
+					{/* eslint-disable-next-line sonarjs/no-identical-functions */}
+					{splitedQueries.map((splittedQuery) => (
+						<Select.Option key={splittedQuery.id} value={splittedQuery.id}>
+							{getQueryName(splittedQuery)}
+						</Select.Option>
+					))}
+				</Select>
+			);
+		}
+		return (
+			<Button
+				type="primary"
+				disabled={disabled}
+				shape="round"
+				onClick={onAddToDashboard}
+				icon={<Plus size={16} />}
+			>
+				Add to Dashboard
+			</Button>
+		);
+	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
+
+	const hideToolbar = (): void => {
+		setExplorerToolBarVisibility(false, sourcepage);
+		if (setIsExplorerOptionHidden) {
+			setIsExplorerOptionHidden(true);
+		}
+	};
 
 	return (
 		<div className="explorer-options-container">
@@ -559,7 +869,7 @@ function ExplorerOptions({
 					style={{
 						background: extraData
 							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
-							: 'transparent',
+							: 'initial',
 					}}
 				>
 					<div className="view-options">
@@ -585,7 +895,7 @@ function ExplorerOptions({
 									bgColor = extraData.color;
 								}
 								return (
-									<Select.Option key={view.uuid} value={view.name}>
+									<Select.Option key={view.id} value={view.name}>
 										<div className="render-options">
 											<span
 												className="dot"
@@ -614,49 +924,30 @@ function ExplorerOptions({
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
-					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Button
-							disabled={disabled}
-							shape="round"
-							onClick={onCreateAlertsHandler}
-							icon={<ConciergeBell size={16} />}
-						>
-							Create an Alert
-						</Button>
+					{signalSource !== 'meter' && (
+						<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
+							{CreateAlertButton}
+							{AddToDashboardButton}
+						</div>
+					)}
 
-						<Button
-							type="primary"
-							disabled={disabled}
-							shape="round"
-							onClick={onAddToDashboard}
-							icon={<Plus size={16} />}
-						>
-							Add to Dashboard
-						</Button>
-					</div>
 					<div className="actions">
-						<Tooltip
-							title={
-								<div>
-									{isLogsExplorer
-										? 'Learn more about Logs explorer '
-										: 'Learn more about Traces explorer '}
-									<Typography.Link
-										href={
-											isLogsExplorer
-												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
-												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
-										}
-										target="_blank"
-									>
-										{' '}
-										here
-									</Typography.Link>{' '}
-								</div>
-							}
-						>
-							<InfoCircleOutlined className="info-icon" />
-						</Tooltip>
+						{/* Hide the info icon for metrics explorer until we get the docs link */}
+						{!isMetricsExplorer && (
+							<Tooltip
+								title={
+									<div>
+										{infoIconText}
+										<Typography.Link href={infoIconLink} target="_blank">
+											{' '}
+											here
+										</Typography.Link>{' '}
+									</div>
+								}
+							>
+								<InfoCircleOutlined className="info-icon" />
+							</Tooltip>
+						)}
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
@@ -720,9 +1011,15 @@ function ExplorerOptions({
 				destroyOnClose
 			>
 				<ExportPanelContainer
-					query={query}
+					query={isOneChartPerQuery ? queryToExport : query}
 					isLoading={isLoading}
-					onExport={onExport}
+					onExport={(dashboard, isNewDashboard): void => {
+						if (isOneChartPerQuery && queryToExport) {
+							onExport(dashboard, isNewDashboard, queryToExport);
+						} else {
+							onExport(dashboard, isNewDashboard);
+						}
+					}}
 				/>
 			</Modal>
 		</div>
@@ -731,18 +1028,30 @@ function ExplorerOptions({
 
 export interface ExplorerOptionsProps {
 	isLoading?: boolean;
-	onExport: (dashboard: Dashboard | null, isNewDashboard?: boolean) => void;
+	onExport: (
+		dashboard: Dashboard | null,
+		isNewDashboard?: boolean,
+		queryToExport?: Query,
+	) => void;
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
+	signalSource?: string;
 	isExplorerOptionHidden?: boolean;
 	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
+	isOneChartPerQuery?: boolean;
+	splitedQueries?: Query[];
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 ExplorerOptions.defaultProps = {
 	isLoading: false,
 	isExplorerOptionHidden: false,
 	setIsExplorerOptionHidden: undefined,
+	isOneChartPerQuery: false,
+	splitedQueries: [],
+	signalSource: '',
+	handleChangeSelectedView: undefined,
 };
 
 export default ExplorerOptions;

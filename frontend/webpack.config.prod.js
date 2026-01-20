@@ -13,8 +13,8 @@ const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const Critters = require('critters-webpack-plugin');
 const { RetryChunkLoadPlugin } = require('webpack-retry-chunk-load-plugin');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 dotenv.config();
 
@@ -25,8 +25,8 @@ const styleLoader = 'style-loader';
 const plugins = [
 	new HtmlWebpackPlugin({
 		template: 'src/index.html.ejs',
-		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-		SEGMENT_ID: process.env.SEGMENT_ID,
+		PYLON_APP_ID: process.env.PYLON_APP_ID,
+		APPCUES_APP_ID: process.env.APPCUES_APP_ID,
 		POSTHOG_KEY: process.env.POSTHOG_KEY,
 		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 		SENTRY_ORG: process.env.SENTRY_ORG,
@@ -48,8 +48,9 @@ const plugins = [
 		'process.env': JSON.stringify({
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			WEBSOCKET_API_ENDPOINT: process.env.WEBSOCKET_API_ENDPOINT,
-			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-			SEGMENT_ID: process.env.SEGMENT_ID,
+			PYLON_APP_ID: process.env.PYLON_APP_ID,
+			PYLON_IDENTITY_SECRET: process.env.PYLON_IDENTITY_SECRET,
+			APPCUES_APP_ID: process.env.APPCUES_APP_ID,
 			POSTHOG_KEY: process.env.POSTHOG_KEY,
 			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 			SENTRY_ORG: process.env.SENTRY_ORG,
@@ -57,17 +58,10 @@ const plugins = [
 			SENTRY_DSN: process.env.SENTRY_DSN,
 			TUNNEL_URL: process.env.TUNNEL_URL,
 			TUNNEL_DOMAIN: process.env.TUNNEL_DOMAIN,
+			DOCS_BASE_URL: process.env.DOCS_BASE_URL,
 		}),
 	}),
 	new MiniCssExtractPlugin(),
-	new Critters({
-		preload: 'swap',
-		// Base path location of the CSS files
-		path: resolve(__dirname, './build/css'),
-		// Public path of the CSS resources. This prefix is removed from the href
-		publicPath: resolve(__dirname, './public/css'),
-		fonts: true,
-	}),
 	sentryWebpackPlugin({
 		authToken: process.env.SENTRY_AUTH_TOKEN,
 		org: process.env.SENTRY_ORG,
@@ -143,11 +137,9 @@ const config = {
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
-				use: [
-					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
-					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
-				],
+				type: 'asset',
 			},
+
 			{
 				test: /\.(ttf|eot|woff|woff2)$/,
 				use: ['file-loader'],
@@ -205,6 +197,55 @@ const config = {
 				},
 			}),
 			new CssMinimizerPlugin(),
+			new ImageMinimizerPlugin({
+				minimizer: [
+					{
+						implementation: ImageMinimizerPlugin.sharpMinify,
+						options: {
+							encodeOptions: {
+								jpeg: {
+									quality: 80,
+								},
+								webp: {
+									lossless: true,
+								},
+								avif: {
+									lossless: true,
+								},
+								png: {},
+								gif: {},
+							},
+						},
+					},
+					{
+						implementation: ImageMinimizerPlugin.imageminMinify,
+						options: {
+							plugins: [
+								[
+									'svgo',
+									{
+										plugins: [
+											{
+												name: 'preset-default',
+												params: {
+													overrides: {
+														removeViewBox: false,
+														addAttributesToSVGElement: {
+															params: {
+																attributes: [{ xmlns: 'http://www.w3.org/2000/svg' }],
+															},
+														},
+													},
+												},
+											},
+										],
+									},
+								],
+							],
+						},
+					},
+				],
+			}),
 		],
 	},
 	performance: {

@@ -28,9 +28,12 @@
 		border-radius: 2px;
 
 		.periscope-btn {
-			border: 1px solid var(--bg-slate-200);
-			background: var(--bg-ink-200);
 			min-width: 32px;
+
+			border-radius: 2px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			background: var(--Ink-300, #16181d);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		}
 
 		.query-name {
@@ -43,12 +46,6 @@
 
 			border: 1px solid rgba(242, 71, 105, 0.2) !important;
 			background: rgba(242, 71, 105, 0.1) !important;
-
-			&.sync-btn {
-				border: 1px solid rgba(78, 116, 248, 0.2) !important;
-				background: rgba(78, 116, 248, 0.1) !important;
-				color: var(--bg-robin-500) !important;
-			}
 
 			&:hover {
 				border: 1px solid rgba(242, 71, 105, 0.4) !important;

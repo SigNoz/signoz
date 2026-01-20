@@ -9,4 +9,364 @@
 	letter-spacing: -0.005em;
 	text-align: left;
 	min-height: 500px;
+
+	.logs-list-table-view-container {
+		.data-table-container {
+			border: none !important;
+		}
+
+		table {
+			thead {
+				tr {
+					th {
+						font-family: 'Space Mono', monospace;
+						font-size: 12px;
+						color: white !important;
+
+						.cursor-col-resize {
+							width: 3px !important;
+							cursor: col-resize !important;
+							opacity: 0.5 !important;
+							background-color: var(--bg-ink-500) !important;
+							border: 1px solid var(--bg-ink-500) !important;
+
+							&:hover {
+								opacity: 1 !important;
+							}
+						}
+					}
+
+					td {
+						font-family: 'Space Mono', monospace;
+						font-size: 12px;
+					}
+
+					border-bottom: 1px solid var(--bg-slate-400) !important;
+				}
+
+				border-bottom: 1px solid var(--bg-slate-400) !important;
+				background-color: var(--bg-ink-400) !important;
+
+				tr {
+					&:hover {
+						background-color: var(--bg-ink-400) !important;
+					}
+				}
+			}
+
+			tbody {
+				tr {
+					td {
+						font-family: 'Space Mono', monospace;
+						font-size: 12px;
+						padding: 4px !important;
+
+						white-space: pre-wrap !important;
+						overflow: hidden !important;
+						text-overflow: ellipsis !important;
+					}
+
+					&:hover {
+						background-color: var(--bg-slate-500) !important;
+					}
+
+					border-bottom: 1px solid var(--bg-slate-400) !important;
+				}
+
+				tr:has(.active-log) {
+					background-color: rgba(
+						78,
+						116,
+						248,
+						0.5
+					) !important; // same as bg-robin-500
+					color: var(--text-vanilla-100) !important;
+				}
+			}
+
+			thead {
+				z-index: 0 !important;
+			}
+
+			.log-state-indicator {
+				padding-left: 0 !important;
+
+				.line {
+					margin: 0 0 !important;
+				}
+			}
+		}
+
+		.sticky-header-table-container {
+			&::-webkit-scrollbar {
+				width: 0.4rem;
+				height: 0.4rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-slate-300);
+			}
+
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--bg-slate-200);
+			}
+		}
+
+		&.small {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							font-size: 12px !important;
+						}
+					}
+				}
+			}
+		}
+
+		&.medium {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							font-size: 14px !important;
+						}
+					}
+				}
+			}
+		}
+
+		&.large {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							font-size: 16px !important;
+						}
+					}
+				}
+			}
+		}
+
+		&.max-lines-1 {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							font-size: 12px !important;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='1'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 1;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='2'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 2;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='3'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 3;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='4'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 4;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='5'] {
+			tbody {
+				tr {
+					td {
+						display: -webkit-box;
+						-webkit-box-orient: vertical;
+						-webkit-line-clamp: 5;
+						overflow: hidden;
+						text-overflow: ellipsis;
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='6'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 6;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='7'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 7;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='8'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 8;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='9'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 9;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+
+		&[data-max-lines-per-row='10'] {
+			tbody {
+				tr {
+					td {
+						.table-cell-content {
+							display: -webkit-box;
+							-webkit-box-orient: vertical;
+							-webkit-line-clamp: 10;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+.lightMode {
+	.logs-list-view-container {
+		.logs-list-table-view-container {
+			table {
+				thead {
+					tr {
+						th {
+							color: var(--text-ink-500) !important;
+						}
+
+						border-bottom: 1px solid var(--bg-vanilla-300) !important;
+					}
+
+					border-bottom: 1px solid var(--bg-vanilla-300) !important;
+					background-color: var(--bg-vanilla-100) !important;
+
+					tr {
+						&:hover {
+							background-color: var(--bg-vanilla-300) !important;
+						}
+					}
+				}
+
+				tbody {
+					tr {
+						&:hover {
+							background-color: var(--bg-vanilla-300) !important;
+						}
+
+						border-bottom: 1px solid var(--bg-vanilla-300) !important;
+					}
+				}
+			}
+
+			.sticky-header-table-container {
+				&::-webkit-scrollbar-thumb {
+					background: var(--bg-vanilla-300);
+				}
+
+				&::-webkit-scrollbar-thumb:hover {
+					background: var(--bg-vanilla-100);
+				}
+			}
+		}
+	}
 }

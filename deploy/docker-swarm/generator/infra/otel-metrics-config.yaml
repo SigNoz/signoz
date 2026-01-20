@@ -1,0 +1,103 @@
+receivers:
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        - job_name: otel-metrics
+          static_configs:
+          - targets:
+              - localhost:8888
+            labels:
+              job_name: otel-metrics
+        # For Docker daemon metrics to be scraped, it must be configured to expose
+        # Prometheus metrics, as documented here: https://docs.docker.com/config/daemon/prometheus/
+        # - job_name: docker-daemon
+        #   dockerswarm_sd_configs:
+        #     - host: unix:///var/run/docker.sock
+        #       role: nodes
+        #   relabel_configs:
+        #     - source_labels: [__meta_dockerswarm_node_address]
+        #       target_label: __address__
+        #       replacement: $1:9323
+        - job_name: "dockerswarm"
+          dockerswarm_sd_configs:
+            - host: unix:///var/run/docker.sock
+              role: tasks
+          relabel_configs:
+            - action: keep
+              regex: running
+              source_labels:
+                - __meta_dockerswarm_task_desired_state
+            - action: keep
+              regex: true
+              source_labels:
+                - __meta_dockerswarm_service_label_signoz_io_scrape
+            - regex: ([^:]+)(?::\d+)?
+              replacement: $1
+              source_labels:
+                - __address__
+              target_label: swarm_container_ip
+            - separator: .
+              source_labels:
+                - __meta_dockerswarm_service_name
+                - __meta_dockerswarm_task_slot
+                - __meta_dockerswarm_task_id
+              target_label: swarm_container_name
+            - target_label: __address__
+              source_labels:
+                - swarm_container_ip
+                - __meta_dockerswarm_service_label_signoz_io_port
+              separator: ":"
+            - source_labels:
+                - __meta_dockerswarm_service_label_signoz_io_path
+              target_label: __metrics_path__
+            - source_labels:
+              - __meta_dockerswarm_service_label_com_docker_stack_namespace
+              target_label: namespace
+            - source_labels:
+                - __meta_dockerswarm_service_name
+              target_label: service_name
+            - source_labels:
+                - __meta_dockerswarm_task_id
+              target_label: service_instance_id
+            - source_labels:
+                - __meta_dockerswarm_node_hostname
+              target_label: host_name
+processors:
+  batch:
+    send_batch_size: 10000
+    send_batch_max_size: 11000
+    timeout: 10s
+  resourcedetection:
+    detectors:
+      - env
+      - system
+    timeout: 2s
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+exporters:
+  otlp:
+    endpoint: ${env:SIGNOZ_COLLECTOR_ENDPOINT}
+    tls:
+      insecure: true
+    headers:
+      signoz-access-token: ${env:SIGNOZ_ACCESS_TOKEN}
+  # debug: {}
+service:
+  telemetry:
+    logs:
+      encoding: json
+    metrics:
+      address: 0.0.0.0:8888
+  extensions:
+    - health_check
+    - pprof
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [resourcedetection, batch]
+      exporters: [otlp]

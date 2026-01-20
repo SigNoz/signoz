@@ -17,8 +17,9 @@ export type QueryBuilderConfig =
 	| {
 			queryVariant: 'static';
 			initialDataSource: DataSource;
+			signalSource?: string;
 	  }
-	| { queryVariant: 'dropdown' };
+	| { queryVariant: 'dropdown'; signalSource?: string };
 
 export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
@@ -28,5 +29,17 @@ export type QueryBuilderProps = {
 	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };
 	isListViewPanel?: boolean;
 	showFunctions?: boolean;
+	showOnlyWhereClause?: boolean;
+	showOnlyTraceOperator?: boolean;
+	showTraceViewSelector?: boolean;
+	showTraceOperator?: boolean;
 	version: string;
+	onChangeTraceView?: (view: TraceView) => void;
+	onSignalSourceChange?: (value: string) => void;
+	signalSourceChangeEnabled?: boolean;
 };
+
+export enum TraceView {
+	SPANS = 'spans',
+	TRACES = 'traces',
+}

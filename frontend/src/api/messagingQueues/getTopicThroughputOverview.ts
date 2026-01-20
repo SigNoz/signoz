@@ -1,9 +1,10 @@
 import axios from 'api';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+
 import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
-} from 'pages/MessagingQueues/MQDetails/MQTables/getConsumerLagDetails';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+} from './getConsumerLagDetails';
 
 export const getTopicThroughputOverview = async (
 	props: Omit<MessagingQueueServicePayload, 'variables'>,

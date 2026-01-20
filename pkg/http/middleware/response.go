@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 const (
@@ -78,6 +79,12 @@ func (writer *nonFlushingBadResponseLoggingWriter) Write(data []byte) (int, erro
 		// https://godoc.org/net/http#ResponseWriter
 		writer.WriteHeader(http.StatusOK)
 	}
+
+	// 204 No Content is a success response that indicates that the request has been successfully processed and that the response body is intentionally empty.
+	if writer.statusCode == 204 {
+		return 0, nil
+	}
+
 	n, err := writer.rw.Write(data)
 	if writer.logBody {
 		writer.captureResponseBody(data)
@@ -94,7 +101,7 @@ func (writer *nonFlushingBadResponseLoggingWriter) Hijack() (net.Conn, *bufio.Re
 	if ok {
 		return hj.Hijack()
 	}
-	return nil, nil, fmt.Errorf("cannot cast underlying response writer to Hijacker")
+	return nil, nil, errors.NewInternalf(errors.CodeInternal, "cannot cast underlying response writer to Hijacker")
 }
 
 func (writer *nonFlushingBadResponseLoggingWriter) StatusCode() int {

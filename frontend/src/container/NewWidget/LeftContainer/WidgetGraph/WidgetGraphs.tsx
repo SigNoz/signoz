@@ -1,19 +1,26 @@
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
+import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
+import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
 import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
 	useEffect,
 	useRef,
+	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';
@@ -22,17 +29,46 @@ import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 function WidgetGraph({
 	selectedWidget,
 	queryResponse,
 	setRequestData,
 	selectedGraph,
+	enableDrillDown = false,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
+	const lineChartRef = useRef<ToggleGraphProps>();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+
+	// Add legend state management similar to dashboard components
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array((queryResponse.data?.payload?.data?.result?.length || 0) + 1).fill(
+			true,
+		),
+	);
+
+	// Initialize graph visibility when data changes
+	useEffect(() => {
+		if (queryResponse.data?.payload?.data?.result) {
+			setGraphVisibility(
+				Array(queryResponse.data.payload.data.result.length + 1).fill(true),
+			);
+		}
+	}, [queryResponse.data?.payload?.data?.result]);
+
+	// Apply graph visibility when lineChartRef is available
+	useEffect(() => {
+		if (!lineChartRef.current) return;
+
+		graphVisibility.forEach((state, index) => {
+			lineChartRef.current?.toggleGraph(index, state);
+		});
+	}, [graphVisibility]);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -71,9 +107,9 @@ function WidgetGraph({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery],
 	);
 
 	useEffect(() => {
@@ -86,6 +122,47 @@ function WidgetGraph({
 	}, []);
 
 	const isDarkMode = useIsDarkMode();
+
+	// context redirection to explorer pages
+	const graphClick = useGraphClickToShowButton({
+		graphRef,
+		isButtonEnabled: (selectedWidget?.query?.builder?.queryData &&
+		Array.isArray(selectedWidget.query.builder.queryData)
+			? selectedWidget.query.builder.queryData
+			: []
+		).some(
+			(q) =>
+				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+		),
+		buttonClassName: 'view-onclick-show-button',
+	});
+
+	const navigateToExplorer = useNavigateToExplorer();
+	const navigateToExplorerPages = useNavigateToExplorerPages();
+	const { notifications } = useNotifications();
+
+	const graphClickHandler = (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		metric?: { [key: string]: string },
+		queryData?: { queryName: string; inFocusOrNot: boolean },
+	): void => {
+		handleGraphClick({
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+			metric,
+			queryData,
+			widget: selectedWidget,
+			navigateToExplorerPages,
+			navigateToExplorer,
+			notifications,
+			graphClick,
+		});
+	};
 
 	return (
 		<div
@@ -109,6 +186,10 @@ function WidgetGraph({
 				setRequestData={setRequestData}
 				onDragSelect={onDragSelect}
 				selectedGraph={selectedGraph}
+				onClickHandler={graphClickHandler}
+				graphVisibility={graphVisibility}
+				setGraphVisibility={setGraphVisibility}
+				enableDrillDown={enableDrillDown}
 			/>
 		</div>
 	);
@@ -122,6 +203,11 @@ interface WidgetGraphProps {
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
+	enableDrillDown?: boolean;
 }
 
 export default WidgetGraph;
+
+WidgetGraph.defaultProps = {
+	enableDrillDown: false,
+};

@@ -1,53 +1,58 @@
 import './ErrorBoundaryFallback.styles.scss';
 
-import { BugOutlined, UndoOutlined } from '@ant-design/icons';
-import { Button, Card, Typography } from 'antd';
-import Slack from 'container/SideNav/Slack';
-import { useTranslation } from 'react-i18next';
+import { Button } from 'antd';
+import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { Home, LifeBuoy } from 'lucide-react';
+import { handleContactSupport } from 'pages/Integrations/utils';
+import { useCallback } from 'react';
 
 function ErrorBoundaryFallback(): JSX.Element {
-	const { t } = useTranslation(['errorDetails']);
-
-	const onClickSlackHandler = (): void => {
-		window.open('https://signoz.io/slack', '_blank');
-	};
-
 	const handleReload = (): void => {
-		window.location.reload();
+		// Go to home page
+		window.location.href = ROUTES.HOME;
 	};
-	return (
-		<Card size="small" className="error-boundary-fallback-container">
-			<div className="title">
-				<BugOutlined />
-				<Typography.Title type="danger" level={4} style={{ margin: 0 }}>
-					{t('something_went_wrong')}
-				</Typography.Title>
-			</div>
 
-			<>
-				<p>{t('contact_if_issue_exists')}</p>
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
+	const handleSupport = useCallback(() => {
+		handleContactSupport(isCloudUserVal);
+	}, [isCloudUserVal]);
+
+	return (
+		<div className="error-boundary-fallback-container">
+			<div className="error-boundary-fallback-content">
+				<div className="error-icon">
+					<img src="/Images/cloud.svg" alt="error-cloud-icon" />
+				</div>
+				<div className="title">Something went wrong :/</div>
+
+				<div className="description">
+					Our team is getting on top to resolve this. Please reach out to support if
+					the issue persists.
+				</div>
 
 				<div className="actions">
 					<Button
-						className="actionBtn"
-						type="default"
+						type="primary"
 						onClick={handleReload}
-						icon={<UndoOutlined />}
+						icon={<Home size={16} />}
+						className="periscope-btn primary"
 					>
-						Reload
+						Go to Home
 					</Button>
 
 					<Button
-						className="actionBtn"
+						className="periscope-btn secondary"
 						type="default"
-						onClick={onClickSlackHandler}
-						icon={<Slack />}
+						onClick={handleSupport}
+						icon={<LifeBuoy size={16} />}
 					>
-						&nbsp; Support
+						Contact Support
 					</Button>
 				</div>
-			</>
-		</Card>
+			</div>
+		</div>
 	);
 }
 

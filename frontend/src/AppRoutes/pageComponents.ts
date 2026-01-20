@@ -1,5 +1,9 @@
 import Loadable from 'components/Loadable';
 
+export const Home = Loadable(
+	() => import(/* webpackChunkName: "Home" */ 'pages/HomePage/HomePage'),
+);
+
 export const ServicesTablePage = Loadable(
 	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
@@ -38,12 +42,27 @@ export const TracesSaveViews = Loadable(
 		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
+export const TracesFunnels = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
+);
+export const TracesFunnelDetails = Loadable(
+	// eslint-disable-next-line sonarjs/no-identical-functions
+	() =>
+		import(
+			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
+		),
+);
+
 export const TraceFilter = Loadable(
 	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
 );
 
 export const TraceDetail = Loadable(
-	() => import(/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetail'),
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
+		),
 );
 
 export const UsageExplorerPage = Loadable(
@@ -70,13 +89,19 @@ export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
 );
 
-export const DashboardPage = Loadable(
-	() =>
-		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
+export const OnboardingV2 = Loadable(
+	() => import(/* webpackChunkName: "Onboarding V2" */ 'pages/OnboardingPageV2'),
 );
 
-export const NewDashboardPage = Loadable(
-	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
+export const DashboardsListPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPage'
+		),
+);
+
+export const DashboardPage = Loadable(
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
 export const DashboardWidget = Loadable(
@@ -105,12 +130,7 @@ export const AlertOverview = Loadable(
 );
 
 export const CreateAlertChannelAlerts = Loadable(
-	() =>
-		import(/* webpackChunkName: "Create Channels" */ 'pages/AlertChannelCreate'),
-);
-
-export const EditAlertChannelsAlerts = Loadable(
-	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/ChannelsEdit'),
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
 );
 
 export const AllAlertChannels = Loadable(
@@ -142,7 +162,12 @@ export const APIKeys = Loadable(
 );
 
 export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
+);
+
+export const CustomDomainSettings = Loadable(
+	() =>
+		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
 );
 
 export const Logs = Loadable(
@@ -180,7 +205,7 @@ export const PasswordReset = Loadable(
 export const SomethingWentWrong = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
+			/* webpackChunkName: "ErrorBoundaryFallback" */ 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback'
 		),
 );
 
@@ -194,7 +219,7 @@ export const LogsIndexToFields = Loadable(
 );
 
 export const BillingPage = Loadable(
-	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
+	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Settings'),
 );
 
 export const SupportPage = Loadable(
@@ -213,8 +238,15 @@ export const WorkspaceSuspended = Loadable(
 		),
 );
 
+export const WorkspaceAccessRestricted = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "WorkspaceAccessRestricted" */ 'pages/WorkspaceAccessRestricted'
+		),
+);
+
 export const ShortcutsPage = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
 export const InstalledIntegrations = Loadable(
@@ -224,7 +256,7 @@ export const InstalledIntegrations = Loadable(
 		),
 );
 
-export const MessagingQueues = Loadable(
+export const MessagingQueuesMainPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
 );
@@ -240,5 +272,35 @@ export const InfrastructureMonitoring = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
+		),
+);
+
+export const CeleryTask = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryTask" */ 'pages/Celery/CeleryTask/CeleryTask'
+		),
+);
+
+export const CeleryOverview = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryOverview" */ 'pages/Celery/CeleryOverview/CeleryOverview'
+		),
+);
+
+export const MetricsExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "MetricsExplorer" */ 'pages/MetricsExplorer'),
+);
+
+export const ApiMonitoring = Loadable(
+	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
+);
+
+export const PublicDashboardPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
 		),
 );

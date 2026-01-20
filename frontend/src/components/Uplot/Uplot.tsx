@@ -26,6 +26,18 @@ export interface UplotProps {
 	resetScales?: boolean;
 }
 
+function isAlignedData(data: unknown): data is uPlot.AlignedData {
+	return Array.isArray(data) && data.length > 0;
+}
+
+function isUplotOptions(options: unknown): options is uPlot.Options {
+	return options !== null && typeof options === 'object';
+}
+
+function isHTMLElement(el: unknown): el is HTMLElement {
+	return el instanceof HTMLElement;
+}
+
 const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 	(
 		{ options, data, onDelete, onCreate, resetScales = true },
@@ -50,7 +62,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		useEffect(() => {
 			onCreateRef.current = onCreate;
 			onDeleteRef.current = onDelete;
-		});
+		}, [onCreate, onDelete]);
 
 		const destroy = useCallback((chart: uPlot | null) => {
 			if (chart) {
@@ -59,12 +71,25 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 				chartRef.current = null;
 			}
 
-			// remove chart tooltip on cleanup
+			// Clean up tooltip overlay that might be detached
 			const overlay = document.getElementById('overlay');
-
 			if (overlay) {
+				// Remove all child elements from overlay
+				while (overlay.firstChild) {
+					overlay.removeChild(overlay.firstChild);
+				}
 				overlay.style.display = 'none';
 			}
+
+			// Clean up any remaining tooltips that might be detached
+			const tooltips = document.querySelectorAll(
+				'.uplot-tooltip, .tooltip-container',
+			);
+			tooltips.forEach((tooltip) => {
+				if (tooltip && tooltip.parentNode) {
+					tooltip.parentNode.removeChild(tooltip);
+				}
+			});
 		}, []);
 
 		const create = useCallback(() => {
@@ -76,6 +101,19 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 					...propOptionsRef.current,
 					cursor: { show: false },
 				};
+			}
+
+			if (
+				!isUplotOptions(propOptionsRef.current) ||
+				!isAlignedData(propDataRef.current) ||
+				!isHTMLElement(targetRef.current)
+			) {
+				console.error('Uplot: Invalid options, data, or target element', {
+					options: propOptionsRef.current,
+					data: propDataRef.current,
+					target: targetRef.current,
+				});
+				return;
 			}
 
 			const newChart = new UPlot(

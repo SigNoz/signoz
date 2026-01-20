@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 )
@@ -19,7 +19,7 @@ type inMemoryQueryProgressTracker struct {
 
 func (tracker *inMemoryQueryProgressTracker) ReportQueryStarted(
 	queryId string,
-) (postQueryCleanup func(), err *model.ApiError) {
+) (postQueryCleanup func(), apiErr *model.ApiError) {
 	tracker.lock.Lock()
 	defer tracker.lock.Unlock()
 

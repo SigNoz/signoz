@@ -12,12 +12,15 @@ import {
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getFiltersFromParams } from 'container/InfraMonitoringK8s/commonUtils';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -34,8 +37,9 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -56,7 +60,6 @@ import HostMetricLogsDetailedView from './HostMetricsLogs/HostMetricLogsDetailed
 import HostMetricTraces from './HostMetricTraces/HostMetricTraces';
 import Metrics from './Metrics/Metrics';
 import Processes from './Processes/Processes';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function HostMetricsDetails({
 	host,
@@ -67,6 +70,7 @@ function HostMetricsDetails({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
@@ -82,15 +86,31 @@ function HostMetricsDetails({
 		endTime: endMs,
 	}));
 
+	const lastSelectedInterval = useRef<Time | null>(null);
+
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		selectedTime as Time,
+		lastSelectedInterval.current
+			? lastSelectedInterval.current
+			: (selectedTime as Time),
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.METRICS);
+	const [selectedView, setSelectedView] = useState<VIEWS>(
+		(searchParams.get('view') as VIEWS) || VIEWS.METRICS,
+	);
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(
-		() => ({
+	const initialFilters = useMemo(() => {
+		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
+		const queryKey =
+			urlView === VIEW_TYPES.LOGS
+				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
+				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
+		const filters = getFiltersFromParams(searchParams, queryKey);
+		if (filters) {
+			return filters;
+		}
+
+		return {
 			op: 'AND',
 			items: [
 				{
@@ -99,17 +119,14 @@ function HostMetricsDetails({
 						key: 'host.name',
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'host.name--string--resource--false',
 					},
 					op: '=',
 					value: host?.hostName || '',
 				},
 			],
-		}),
-		[host?.hostName],
-	);
+		};
+	}, [host?.hostName, searchParams]);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
 		initialFilters,
@@ -120,11 +137,14 @@ function HostMetricsDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Hosts list details page visited', {
-			host: host?.hostName,
-		});
+		if (host) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.HostEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [host]);
 
 	useEffect(() => {
 		setLogFilters(initialFilters);
@@ -132,10 +152,11 @@ function HostMetricsDetails({
 	}, [initialFilters]);
 
 	useEffect(() => {
-		setSelectedInterval(selectedTime as Time);
+		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
+		setSelectedInterval(currentSelectedInterval as Time);
 
-		if (selectedTime !== 'custom') {
-			const { maxTime, minTime } = GetMinMax(selectedTime);
+		if (currentSelectedInterval !== 'custom') {
+			const { maxTime, minTime } = GetMinMax(currentSelectedInterval);
 
 			setModalTimeRange({
 				startTime: Math.floor(minTime / 1000000000),
@@ -146,10 +167,24 @@ function HostMetricsDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		if (host?.hostName) {
+			setSelectedView(e.target.value);
+			setSearchParams({
+				...Object.fromEntries(searchParams.entries()),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(null),
+				[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
+			});
+		}
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.HostEntity,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
+			lastSelectedInterval.current = interval as Time;
 			setSelectedInterval(interval as Time);
 
 			if (interval === 'custom' && dateTimeRange) {
@@ -166,9 +201,10 @@ function HostMetricsDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Hosts list details time updated', {
-				host: host?.hostName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.HostEntity,
 				interval,
+				page: InfraMonitoringEvents.DetailedPage,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,28 +212,43 @@ function HostMetricsDetails({
 	);
 
 	const handleChangeLogFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
+				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
 				);
-				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
-				const newFilters = value.items.filter(
+				const paginationFilter = value?.items?.find(
+					(item) => item.key?.key === 'id',
+				);
+				const newFilters = value?.items?.filter(
 					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
 				);
 
-				logEvent('Infra Monitoring: Hosts list details logs filters applied', {
-					host: host?.hostName,
-				});
+				if (newFilters && newFilters?.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.HostEntity,
+						view: InfraMonitoringEvents.LogsView,
+						page: InfraMonitoringEvents.DetailedPage,
+					});
+				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...newFilters,
+						...(newFilters || []),
 						...(paginationFilter ? [paginationFilter] : []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,23 +256,37 @@ function HostMetricsDetails({
 	);
 
 	const handleChangeTracesFilters = useCallback(
-		(value: IBuilderQuery['filters']) => {
+		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setTracesFilters((prevFilters) => {
-				const hostNameFilter = prevFilters.items.find(
+				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
 				);
 
-				logEvent('Infra Monitoring: Hosts list details traces filters applied', {
-					host: host?.hostName,
-				});
+				if (value?.items && value?.items?.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.HostEntity,
+						view: InfraMonitoringEvents.TracesView,
+						page: InfraMonitoringEvents.DetailedPage,
+					});
+				}
 
-				return {
+				const updatedFilters = {
 					op: 'AND',
 					items: [
 						hostNameFilter,
-						...value.items.filter((item) => item.key?.key !== 'host.name'),
+						...(value?.items?.filter((item) => item.key?.key !== 'host.name') || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
+
+				setSearchParams({
+					...Object.fromEntries(searchParams.entries()),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
+						updatedFilters,
+					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
+				});
+
+				return updatedFilters;
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -237,15 +302,16 @@ function HostMetricsDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Hosts list details explore clicked', {
-			host: host?.hostName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
 			view: selectedView,
+			entity: InfraMonitoringEvents.HostEntity,
+			page: InfraMonitoringEvents.DetailedPage,
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
 				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				items: logFilters?.items?.filter((item) => item.key?.key !== 'id') || [],
 			};
 
 			const compositeQuery = {
@@ -296,6 +362,8 @@ function HostMetricsDetails({
 
 	const handleClose = (): void => {
 		setSelectedInterval(selectedTime as Time);
+		lastSelectedInterval.current = null;
+		setSearchParams({});
 
 		if (selectedTime !== 'custom') {
 			const { maxTime, minTime } = GetMinMax(selectedTime);
@@ -369,9 +437,13 @@ function HostMetricsDetails({
 								>
 									{host.active ? 'ACTIVE' : 'INACTIVE'}
 								</Tag>
-								<Tag className="infra-monitoring-tags" bordered>
-									{host.os}
-								</Tag>
+								{host.os ? (
+									<Tag className="infra-monitoring-tags" bordered>
+										{host.os}
+									</Tag>
+								) : (
+									<Typography.Text>-</Typography.Text>
+								)}
 								<div className="progress-container">
 									<Progress
 										percent={Number((host.cpu * 100).toFixed(1))}

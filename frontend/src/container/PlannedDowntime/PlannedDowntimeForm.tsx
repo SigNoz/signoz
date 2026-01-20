@@ -23,6 +23,7 @@ import {
 	Recurrence,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import { DowntimeScheduleUpdatePayload } from 'api/plannedDowntime/updateDowntimeSchedule';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import {
 	ModalButtonWrapper,
 	ModalTitle,
@@ -52,9 +53,9 @@ dayjs.locale('en');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const TIME_FORMAT = 'HH:mm';
-const DATE_FORMAT = 'Do MMM YYYY';
-const ORDINAL_FORMAT = 'Do';
+const TIME_FORMAT = DATE_TIME_FORMATS.TIME;
+const DATE_FORMAT = DATE_TIME_FORMATS.ORDINAL_DATE;
+const ORDINAL_FORMAT = DATE_TIME_FORMATS.ORDINAL_ONLY;
 
 interface PlannedDowntimeFormData {
 	name: string;
@@ -66,7 +67,7 @@ interface PlannedDowntimeFormData {
 	timezone?: string;
 }
 
-const customFormat = 'Do MMMM, YYYY ⎯ HH:mm:ss';
+const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<

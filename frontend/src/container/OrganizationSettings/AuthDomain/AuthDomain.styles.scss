@@ -1,0 +1,19 @@
+.auth-domain {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	.auth-domain-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+}
+
+.auth-domain-list {
+	.auth-domain-list-column-action {
+		display: flex;
+		flex-direction: row;
+		gap: 24px;
+	}
+}

@@ -3,11 +3,13 @@ import { useEffect } from 'react';
 type UseClickOutsideProps = {
 	ref: React.RefObject<HTMLElement>;
 	onClickOutside: () => void;
+	eventType?: 'mousedown' | 'mouseup' | 'click' | 'dblclick';
 };
 
 const useClickOutside = ({
 	ref,
 	onClickOutside,
+	eventType,
 }: UseClickOutsideProps): void => {
 	const handleClickOutside = (event: MouseEvent): void => {
 		if (ref.current && !ref.current.contains(event.target as Node)) {
@@ -16,10 +18,10 @@ const useClickOutside = ({
 	};
 
 	useEffect(() => {
-		document.addEventListener('click', handleClickOutside);
+		document.addEventListener(eventType ?? 'click', handleClickOutside);
 
 		return (): void => {
-			document.removeEventListener('click', handleClickOutside);
+			document.removeEventListener(eventType ?? 'click', handleClickOutside);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ref, onClickOutside]);

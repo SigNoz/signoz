@@ -1,6 +1,6 @@
 package inframetrics
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 
 var NodesTableListQuery = v3.QueryRangeParamsV3{
 	CompositeQuery: &v3.CompositeQuery{
@@ -20,7 +20,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -46,7 +46,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -72,7 +72,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -98,7 +98,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -132,7 +132,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -166,7 +166,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},

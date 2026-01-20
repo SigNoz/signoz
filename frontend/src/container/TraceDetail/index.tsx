@@ -12,6 +12,7 @@ import {
 	StyledTypography,
 } from 'components/Styled';
 import { Flex, Spacing } from 'components/Styled/styles';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -23,7 +24,6 @@ import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { map } from 'lodash-es';
 import { PanelRight } from 'lucide-react';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useState } from 'react';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
@@ -41,6 +41,7 @@ import {
 	getTreeLevelsCount,
 	IIntervalUnit,
 	INTERVAL_UNITS,
+	SPAN_DETAILS_LEFT_COL_WIDTH,
 } from './utils';
 
 const { Sider } = Layout;
@@ -200,7 +201,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							<Typography>
 								{dayjs(traceMetaData.globalStart)
 									.tz(timezone.value)
-									.format('hh:mm:ss a (UTC Z) MM/DD')}
+									.format(DATE_TIME_FORMATS.UTC_TIME_DATE)}
 							</Typography>
 						</styles.TimeStampContainer>
 					)}

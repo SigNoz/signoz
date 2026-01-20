@@ -5,9 +5,11 @@ import { AllViewsProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const useGetAllViews = (
-	sourcepage: DataSource,
+	sourcepage: DataSource | 'meter',
+	enabled?: boolean,
 ): UseQueryResult<AxiosResponse<AllViewsProps>, AxiosError> =>
 	useQuery<AxiosResponse<AllViewsProps>, AxiosError>({
 		queryKey: [{ sourcepage }],
-		queryFn: () => getAllViews(sourcepage),
+		queryFn: () => getAllViews(sourcepage as DataSource),
+		...(enabled !== undefined ? { enabled } : {}),
 	});

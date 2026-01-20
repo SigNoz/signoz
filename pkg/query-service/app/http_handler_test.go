@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 func TestPrepareQuery(t *testing.T) {

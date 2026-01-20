@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var resourceLogOperators = map[v3.FilterOperator]string{
@@ -25,6 +25,8 @@ var resourceLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "mapContains(%s_%s, '%s')",
 	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
+	v3.FilterOperatorILike:           "ILIKE",
+	v3.FilterOperatorNotILike:        "NOT ILIKE",
 }
 
 // buildResourceFilter builds a clickhouse filter string for resource labels
@@ -51,7 +53,7 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 		// we also want to treat %, _ as literals for contains
 		escapedStringValue := utils.QuoteEscapedStringForContains(lowerValue, false)
 		return fmt.Sprintf("%s %s '%%%s%%'", lowerSearchKey, logsOp, escapedStringValue)
-	case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
+	case v3.FilterOperatorLike, v3.FilterOperatorNotLike, v3.FilterOperatorILike, v3.FilterOperatorNotILike:
 		// this is required as clickhouseFormattedValue add's quotes to the string
 		escapedStringValue := utils.QuoteEscapedString(lowerValue)
 		return fmt.Sprintf("%s %s '%s'", lowerSearchKey, logsOp, escapedStringValue)
@@ -116,18 +118,24 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 
 	// add index filters
 	switch op {
+	case v3.FilterOperatorEqual:
+		return fmt.Sprintf("labels like '%%%s\":\"%s%%'", key, fmtValEscapedForContains)
+	case v3.FilterOperatorNotEqual:
+		return fmt.Sprintf("labels not like '%%%s\":\"%s%%'", key, fmtValEscapedForContains)
+	case v3.FilterOperatorLike, v3.FilterOperatorILike:
+		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedLower)
+	case v3.FilterOperatorNotLike, v3.FilterOperatorNotILike:
+		// cannot apply not contains x%y as y can be somewhere else
+		return ""
 	case v3.FilterOperatorContains:
 		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedForContainsLower)
 	case v3.FilterOperatorNotContains:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, fmtValEscapedForContainsLower)
-	case v3.FilterOperatorLike:
-		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedLower)
-	case v3.FilterOperatorNotLike:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%%s%%'", key, fmtValEscapedLower)
-	case v3.FilterOperatorEqual:
-		return fmt.Sprintf("labels like '%%%s%%%s%%'", key, fmtValEscapedForContains)
-	case v3.FilterOperatorNotEqual:
-		return fmt.Sprintf("labels not like '%%%s%%%s%%'", key, fmtValEscapedForContains)
+		// cannot apply not contains x%y as y can be somewhere else
+		return ""
+	case v3.FilterOperatorExists:
+		return fmt.Sprintf("lower(labels) like '%%%s%%'", key)
+	case v3.FilterOperatorNotExists:
+		return fmt.Sprintf("lower(labels) not like '%%%s%%'", key)
 	case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 		// don't try to do anything for regex.
 		return ""

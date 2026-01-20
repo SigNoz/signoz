@@ -1,31 +1,34 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps, Props } from 'types/api/channels/editWebhook';
 
 const editWebhook = async (
 	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponseV2<PayloadProps>> => {
 	try {
 		let httpConfig = {};
-		if (props.username !== '' && props.password !== '') {
+		const username = props.username ? props.username.trim() : '';
+		const password = props.password ? props.password.trim() : '';
+
+		if (username !== '' && password !== '') {
 			httpConfig = {
 				basic_auth: {
-					username: props.username,
-					password: props.password,
+					username,
+					password,
 				},
 			};
-		} else if (props.username === '' && props.password !== '') {
+		} else if (username === '' && password !== '') {
 			httpConfig = {
 				authorization: {
-					type: 'bearer',
-					credentials: props.password,
+					type: 'Bearer',
+					credentials: password,
 				},
 			};
 		}
 
-		const response = await axios.put(`/channels/${props.id}`, {
+		const response = await axios.put<PayloadProps>(`/channels/${props.id}`, {
 			name: props.name,
 			webhook_configs: [
 				{
@@ -37,13 +40,12 @@ const editWebhook = async (
 		});
 
 		return {
-			statusCode: 200,
-			error: null,
-			message: 'Success',
-			payload: response.data.data,
+			httpStatusCode: response.status,
+			data: response.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		throw error;
 	}
 };
 

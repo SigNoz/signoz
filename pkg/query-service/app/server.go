@@ -1,224 +1,156 @@
 package app
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"net/url"
-	"os"
-	"strings"
-	"time"
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/querier"
+	querierAPI "github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
 	"go.uber.org/zap"
 )
 
-type ServerOptions struct {
-	PromConfigPath    string
-	SkipTopLvlOpsPath string
-	HTTPHostPort      string
-	PrivateHostPort   string
-	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-}
-
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
-	serverOptions *ServerOptions
-	ruleManager   *rules.Manager
+	config      signoz.Config
+	signoz      *signoz.SigNoz
+	ruleManager *rules.Manager
 
 	// public http router
-	httpConn   net.Listener
-	httpServer *http.Server
-
-	// private http
-	privateConn net.Listener
-	privateHTTP *http.Server
+	httpConn     net.Listener
+	httpServer   *http.Server
+	httpHostPort string
 
 	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
 
-// HealthCheckStatus returns health check status channel a client can subscribe to
-func (s Server) HealthCheckStatus() chan healthcheck.Status {
-	return s.unavailableChannel
-}
-
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
-		return nil, err
-	}
-
-	if err := preferences.InitDB(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
-		return nil, err
-	}
-
-	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
-	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
-
+func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
+	integrationsController, err := integrations.NewController(signoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
 
-	localDB.SetMaxOpenConns(10)
-
-	// initiate feature manager
-	fm := featureManager.StartManager()
-
-	readerReady := make(chan bool)
-
-	var reader interfaces.Reader
-	storage := os.Getenv("STORAGE")
-	if storage == "clickhouse" {
-		zap.L().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(
-			localDB,
-			serverOptions.PromConfigPath,
-			fm,
-			serverOptions.MaxIdleConns,
-			serverOptions.MaxOpenConns,
-			serverOptions.DialTimeout,
-			serverOptions.Cluster,
-			serverOptions.UseLogsNewSchema,
-			serverOptions.UseTraceNewSchema,
-		)
-		go clickhouseReader.Start(readerReady)
-		reader = clickhouseReader
-	} else {
-		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
-	}
-	skipConfig := &model.SkipConfig{}
-	if serverOptions.SkipTopLvlOpsPath != "" {
-		// read skip config
-		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
+	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
+	if err != nil {
+		return nil, err
 	}
 
-	<-readerReady
+	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 10000,
+			MaxCost:     1 << 27, // 128 MB
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	reader := clickhouseReader.NewReader(
+		signoz.SQLStore,
+		signoz.TelemetryStore,
+		signoz.Prometheus,
+		signoz.TelemetryStore.Cluster(),
+		config.Querier.FluxInterval,
+		cacheForTraceDetail,
+		signoz.Cache,
+		nil,
+	)
+
 	rm, err := makeRulesManager(
-		serverOptions.PromConfigPath,
-		constants.GetAlertManagerApiPrefix(),
-		serverOptions.RuleRepoURL, localDB, reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
-		if err != nil {
-			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
-		}
-	}()
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-	if err != nil {
-		return nil, err
-	}
-
-	integrationsController, err := integrations.NewController(localDB)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
-	}
-
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		reader,
+		signoz.Cache,
+		signoz.Alertmanager,
+		signoz.SQLStore,
+		signoz.TelemetryStore,
+		signoz.TelemetryMetadataStore,
+		signoz.Prometheus,
+		signoz.Modules.OrgGetter,
+		signoz.Querier,
+		signoz.Instrumentation.ToProviderSettings(),
+		signoz.QueryParser,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	telemetry.GetInstance().SetReader(reader)
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
+		signoz.SQLStore,
+		integrationsController.GetPipelinesForInstalledIntegrations,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
-		SkipConfig:                    skipConfig,
-		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		MaxIdleConns:                  serverOptions.MaxIdleConns,
-		MaxOpenConns:                  serverOptions.MaxOpenConns,
-		DialTimeout:                   serverOptions.DialTimeout,
-		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
-		FeatureFlags:                  fm,
 		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
-		Cache:                         c,
-		FluxInterval:                  fluxInterval,
-		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
-		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		FluxInterval:                  config.Querier.FluxInterval,
+		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
+		FieldsAPI:                     fields.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.TelemetryStore),
+		Signoz:                        signoz,
+		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
+		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
-		// logger: logger,
-		// tracer: tracer,
+		config:             config,
+		signoz:             signoz,
 		ruleManager:        rm,
-		serverOptions:      serverOptions,
+		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler)
+	httpServer, err := s.createPublicServer(apiHandler, signoz.Web)
 
 	if err != nil {
 		return nil, err
@@ -226,95 +158,78 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.httpServer = httpServer
 
-	privateServer, err := s.createPrivateServer(apiHandler)
-	if err != nil {
-		return nil, err
-	}
+	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	s.privateHTTP = privateServer
-
-	_, err = opAmpModel.InitDB(localDB)
-	if err != nil {
-		return nil, err
-	}
-
-	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       localDB,
-		DBEngine: "sqlite",
-		AgentFeatures: []agentConf.AgentFeature{
-			logParsingPipelineController,
+	agentConfMgr, err := agentConf.Initiate(
+		&agentConf.ManagerOptions{
+			Store: signoz.SQLStore,
+			AgentFeatures: []agentConf.AgentFeature{
+				logParsingPipelineController,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	s.opampServer = opamp.InitializeServer(
-		&opAmpModel.AllAgents, agentConfMgr,
+		&opAmpModel.AllAgents,
+		agentConfMgr,
+		signoz.Instrumentation,
 	)
 
 	return s, nil
 }
 
-func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
-
-	r := NewRouter()
-
-	r.Use(setTimeoutMiddleware)
-	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddlewarePrivate)
-
-	api.RegisterPrivateRoutes(r)
-
-	c := cors.New(cors.Options{
-		//todo(amol): find out a way to add exact domain or
-		// ip here for alert manager
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
-	})
-
-	handler := c.Handler(r)
-	handler = handlers.CompressHandler(handler)
-
-	return &http.Server{
-		Handler: handler,
-	}, nil
+// HealthCheckStatus returns health check status channel a client can subscribe to
+func (s Server) HealthCheckStatus() chan healthcheck.Status {
+	return s.unavailableChannel
 }
 
-func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
-
+func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
-	r.Use(setTimeoutMiddleware)
-	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddleware)
-	r.Use(LogCommentEnricher)
+	r.Use(otelmux.Middleware(
+		"apiserver",
+		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
+		otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()),
+		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
+		otelmux.WithFilter(func(r *http.Request) bool {
+			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
+		}),
+		otelmux.WithPublicEndpoint(),
+	))
+	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
+		s.config.APIServer.Timeout.ExcludedRoutes,
+		s.config.APIServer.Timeout.Default,
+		s.config.APIServer.Timeout.Max,
+	).Wrap)
+	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewComment().Wrap)
 
-	// add auth middleware
-	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
-		user, err := auth.GetUserFromRequest(r)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if user.User.OrgId == "" {
-			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
-		}
-
-		return user, nil
-	}
-	am := NewAuthMiddleware(getUserFromRequest)
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
+	api.RegisterCloudIntegrationsRoutes(r, am)
+	api.RegisterFieldsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
+	api.RegisterQueryRangeV5Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
+	api.RegisterThirdPartyApiRoutes(r, am)
+	api.MetricExplorerRoutes(r, am)
+	api.RegisterTraceFunnelsRoutes(r, am)
+
+	err := s.signoz.APIServer.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -326,276 +241,21 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	handler = handlers.CompressHandler(handler)
 
+	err = web.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
+
 	return &http.Server{
 		Handler: handler,
 	}, nil
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// loggingMiddleware is used for logging public api calls
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path))
-	})
-}
-
-func LogCommentEnricher(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		referrer := r.Header.Get("Referer")
-
-		var path, dashboardID, alertID, page, client, viewName, tab string
-
-		if referrer != "" {
-			referrerURL, _ := url.Parse(referrer)
-			client = "browser"
-			path = referrerURL.Path
-
-			if strings.Contains(path, "/dashboard") {
-				// Split the path into segments
-				pathSegments := strings.Split(referrerURL.Path, "/")
-				// The dashboard ID should be the segment after "/dashboard/"
-				// Loop through pathSegments to find "dashboard" and then take the next segment as the ID
-				for i, segment := range pathSegments {
-					if segment == "dashboard" && i < len(pathSegments)-1 {
-						// Return the next segment, which should be the dashboard ID
-						dashboardID = pathSegments[i+1]
-					}
-				}
-				page = "dashboards"
-			} else if strings.Contains(path, "/alerts") {
-				urlParams := referrerURL.Query()
-				alertID = urlParams.Get("ruleId")
-				page = "alerts"
-			} else if strings.Contains(path, "logs") && strings.Contains(path, "explorer") {
-				page = "logs-explorer"
-				viewName = referrerURL.Query().Get("viewName")
-			} else if strings.Contains(path, "/trace") || strings.Contains(path, "traces-explorer") {
-				page = "traces-explorer"
-				viewName = referrerURL.Query().Get("viewName")
-			} else if strings.Contains(path, "/services") {
-				page = "services"
-				tab = referrerURL.Query().Get("tab")
-				if tab == "" {
-					tab = "OVER_METRICS"
-				}
-			}
-		} else {
-			client = "api"
-		}
-
-		email, _ := auth.GetEmailFromJwt(r.Context())
-
-		kvs := map[string]string{
-			"path":        path,
-			"dashboardID": dashboardID,
-			"alertID":     alertID,
-			"source":      page,
-			"client":      client,
-			"viewName":    viewName,
-			"servicesTab": tab,
-			"email":       email,
-		}
-
-		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
-		next.ServeHTTP(w, r)
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// loggingMiddlewarePrivate is used for logging private api calls
-// from internal services like alert manager
-func loggingMiddlewarePrivate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path), zap.Bool("privatePort", true))
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-type loggingResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
-	// we default to that status code.
-	return &loggingResponseWriter{w, http.StatusOK}
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// Flush implements the http.Flush interface.
-func (lrw *loggingResponseWriter) Flush() {
-	lrw.ResponseWriter.(http.Flusher).Flush()
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// Support websockets
-func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := lrw.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("hijack not supported")
-	}
-	return h.Hijack()
-}
-
-func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v3/query_range"
-
-	data := map[string]interface{}{}
-	var postData *v3.QueryRangeParamsV3
-
-	if path == pathToExtractBodyFrom && (r.Method == "POST") {
-		if r.Body != nil {
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				return nil, false
-			}
-			r.Body.Close() //  must close
-			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &postData)
-
-		} else {
-			return nil, false
-		}
-
-	} else {
-		return nil, false
-	}
-
-	signozMetricsUsed := false
-	signozLogsUsed := false
-	signozTracesUsed := false
-	if postData != nil {
-
-		if postData.CompositeQuery != nil {
-			data["queryType"] = postData.CompositeQuery.QueryType
-			data["panelType"] = postData.CompositeQuery.PanelType
-
-			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
-		}
-	}
-
-	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
-		if signozMetricsUsed {
-			telemetry.GetInstance().AddActiveMetricsUser()
-		}
-		if signozLogsUsed {
-			telemetry.GetInstance().AddActiveLogsUser()
-		}
-		if signozTracesUsed {
-			telemetry.GetInstance().AddActiveTracesUser()
-		}
-		data["metricsUsed"] = signozMetricsUsed
-		data["logsUsed"] = signozLogsUsed
-		data["tracesUsed"] = signozTracesUsed
-		userEmail, err := auth.GetEmailFromJwt(r.Context())
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
-		}
-	}
-	return data, true
-}
-
-func getActiveLogs(path string, r *http.Request) {
-	// if path == "/api/v1/dashboards/{uuid}" {
-	// 	telemetry.GetInstance().AddActiveMetricsUser()
-	// }
-	if path == "/api/v1/logs" {
-		hasFilters := len(r.URL.Query().Get("q"))
-		if hasFilters > 0 {
-			telemetry.GetInstance().AddActiveLogsUser()
-		}
-
-	}
-
-}
-
-func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := auth.AttachJwtToContext(r.Context(), r)
-		r = r.WithContext(ctx)
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-
-		queryRangeV3data, metadataExists := extractQueryRangeV3Data(path, r)
-		getActiveLogs(path, r)
-
-		lrw := NewLoggingResponseWriter(w)
-		next.ServeHTTP(lrw, r)
-
-		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-		if metadataExists {
-			for key, value := range queryRangeV3data {
-				data[key] = value
-			}
-		}
-
-		// if telemetry.GetInstance().IsSampled() {
-		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
-			}
-		}
-		// }
-
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/timeout.go
-func getRouteContextTimeout(overrideTimeout string) time.Duration {
-	var timeout time.Duration
-	var err error
-	if overrideTimeout != "" {
-		timeout, err = time.ParseDuration(overrideTimeout + "s")
-		if err != nil {
-			timeout = constants.ContextTimeout
-		}
-		if timeout > constants.ContextTimeoutMaxAllowed {
-			timeout = constants.ContextTimeoutMaxAllowed
-		}
-		return timeout
-	}
-	return constants.ContextTimeout
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/timeout.go
-func setTimeoutMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		var cancel context.CancelFunc
-		// check if route is not excluded
-		url := r.URL.Path
-		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), getRouteContextTimeout(r.Header.Get("timeout")))
-			defer cancel()
-		}
-
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
 }
 
 // initListeners initialises listeners of the server
 func (s *Server) initListeners() error {
 	// listen on public port
 	var err error
-	publicHostPort := s.serverOptions.HTTPHostPort
+	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
 		return fmt.Errorf("constants.HTTPHostPort is required")
 	}
@@ -605,33 +265,14 @@ func (s *Server) initListeners() error {
 		return err
 	}
 
-	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.serverOptions.HTTPHostPort))
-
-	// listen on private port to support internal services
-	privateHostPort := s.serverOptions.PrivateHostPort
-
-	if privateHostPort == "" {
-		return fmt.Errorf("constants.PrivateHostPort is required")
-	}
-
-	s.privateConn, err = net.Listen("tcp", privateHostPort)
-	if err != nil {
-		return err
-	}
-	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.serverOptions.PrivateHostPort))
+	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
 	return nil
 }
 
 // Start listening on http and private http port concurrently
-func (s *Server) Start() error {
-
-	// initiate rule manager first
-	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start()
-	} else {
-		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
-	}
+func (s *Server) Start(ctx context.Context) error {
+	s.ruleManager.Start(ctx)
 
 	err := s.initListeners()
 	if err != nil {
@@ -644,7 +285,7 @@ func (s *Server) Start() error {
 	}
 
 	go func() {
-		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.serverOptions.HTTPHostPort))
+		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.httpHostPort))
 
 		switch err := s.httpServer.Serve(s.httpConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
@@ -664,26 +305,6 @@ func (s *Server) Start() error {
 		}
 	}()
 
-	var privatePort int
-	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
-		privatePort = port
-	}
-	fmt.Println("starting private http")
-	go func() {
-		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
-
-		switch err := s.privateHTTP.Serve(s.privateConn); err {
-		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
-			// normal exit, nothing to do
-			zap.L().Info("private http server closed")
-		default:
-			zap.L().Error("Could not start private HTTP server", zap.Error(err))
-		}
-
-		s.unavailableChannel <- healthcheck.Unavailable
-
-	}()
-
 	go func() {
 		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
 		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
@@ -696,15 +317,9 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
 	if s.httpServer != nil {
 		if err := s.httpServer.Shutdown(context.Background()); err != nil {
-			return err
-		}
-	}
-
-	if s.privateHTTP != nil {
-		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
 			return err
 		}
 	}
@@ -712,52 +327,45 @@ func (s *Server) Stop() error {
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
-		s.ruleManager.Stop()
+		s.ruleManager.Stop(ctx)
 	}
 
 	return nil
 }
 
 func makeRulesManager(
-	_,
-	alertManagerURL string,
-	ruleRepoURL string,
-	db *sqlx.DB,
 	ch interfaces.Reader,
 	cache cache.Cache,
-	disableRules bool,
-	fm interfaces.FeatureLookup,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool) (*rules.Manager, error) {
-
-	// create engine
-	pqle, err := pqle.FromReader(ch)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pql engine : %v", err)
-	}
-
-	// notifier opts
-	notifierOpts := am.NotifierOptions{
-		QueueCapacity:    10000,
-		Timeout:          1 * time.Second,
-		AlertManagerURLs: []string{alertManagerURL},
-	}
-
+	alertmanager alertmanager.Alertmanager,
+	sqlstore sqlstore.SQLStore,
+	telemetryStore telemetrystore.TelemetryStore,
+	metadataStore telemetrytypes.MetadataStore,
+	prometheus prometheus.Prometheus,
+	orgGetter organization.Getter,
+	querier querier.Querier,
+	providerSettings factory.ProviderSettings,
+	queryParser queryparser.QueryParser,
+) (*rules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		NotifierOpts:      notifierOpts,
-		PqlEngine:         pqle,
-		RepoURL:           ruleRepoURL,
-		DBConn:            db,
-		Context:           context.Background(),
-		Logger:            zap.L(),
-		DisableRules:      disableRules,
-		FeatureFlags:      fm,
-		Reader:            ch,
-		Cache:             cache,
-		EvalDelay:         constants.GetEvalDelay(),
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		TelemetryStore:   telemetryStore,
+		MetadataStore:    metadataStore,
+		Prometheus:       prometheus,
+		Context:          context.Background(),
+		Logger:           zap.L(),
+		Reader:           ch,
+		Querier:          querier,
+		SLogger:          providerSettings.Logger,
+		Cache:            cache,
+		EvalDelay:        constants.GetEvalDelay(),
+		OrgGetter:        orgGetter,
+		Alertmanager:     alertmanager,
+		RuleStore:        ruleStore,
+		MaintenanceStore: maintenanceStore,
+		SqlStore:         sqlstore,
+		QueryParser:      queryParser,
 	}
 
 	// create Manager

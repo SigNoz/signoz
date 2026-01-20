@@ -2,34 +2,73 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import loginApi from 'api/user/login';
+import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
-import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+	AxiosError,
+	AxiosResponse,
+	InternalAxiosRequestConfig,
+} from 'axios';
 import { ENVIRONMENT } from 'constants/env';
+import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import store from 'store';
+import { QueryClient } from 'react-query';
+import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, {
 	apiAlertManager,
 	apiV2,
 	apiV3,
 	apiV4,
+	apiV5,
 	gatewayApiV1,
 	gatewayApiV2,
 } from './apiV1';
 import { Logout } from './utils';
 
+const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+			retry: false,
+		},
+	},
+});
+
 const interceptorsResponse = (
 	value: AxiosResponse<any>,
-): Promise<AxiosResponse<any>> => Promise.resolve(value);
+): Promise<AxiosResponse<any>> => {
+	if ((value.config as any)?.metadata) {
+		const duration =
+			new Date().getTime() - (value.config as any).metadata.startTime;
+
+		if (duration > RESPONSE_TIMEOUT_THRESHOLD && value.config.url !== '/event') {
+			eventEmitter.emit(Events.SLOW_API_WARNING, true, {
+				duration,
+				url: value.config.url,
+				threshold: RESPONSE_TIMEOUT_THRESHOLD,
+			});
+
+			console.warn(
+				`[API Warning] Request to ${value.config.url} took ${duration}ms`,
+			);
+		}
+	}
+
+	return Promise.resolve(value);
+};
 
 const interceptorsRequestResponse = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
-	const token =
-		store.getState().app.user?.accessJwt ||
-		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
-		'';
+	// Attach metadata safely (not sent with the request)
+	Object.defineProperty(value, 'metadata', {
+		value: { startTime: new Date().getTime() },
+		enumerable: false, // Prevents it from being included in the request
+	});
+
+	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
 
 	if (value && value.headers) {
 		value.headers.Authorization = token ? `Bearer ${token}` : '';
@@ -44,27 +83,34 @@ const interceptorRejected = async (
 	try {
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
-			// reject the refresh token error
-			if (response.status === 401 && response.config.url !== '/login') {
-				const response = await loginApi({
-					refreshToken: store.getState().app.user?.refreshJwt,
-				});
 
-				if (response.statusCode === 200) {
-					const user = await afterLogin(
-						response.payload.userId,
-						response.payload.accessJwt,
-						response.payload.refreshJwt,
-					);
+			if (
+				response.status === 401 &&
+				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
+				response.config.url !== '/sessions/rotate' &&
+				response.config.url !== '/sessions/email_password' &&
+				!(
+					response.config.url === '/sessions' && response.config.method === 'delete'
+				)
+			) {
+				try {
+					const accessToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN);
+					const refreshToken = getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
+					const response = await queryClient.fetchQuery({
+						queryFn: () => post({ refreshToken: refreshToken || '' }),
+						queryKey: ['/api/v2/sessions/rotate', accessToken, refreshToken],
+					});
 
-					if (user) {
+					afterLogin(response.data.accessToken, response.data.refreshToken, true);
+
+					try {
 						const reResponse = await axios(
 							`${value.config.baseURL}${value.config.url?.substring(1)}`,
 							{
 								method: value.config.method,
 								headers: {
 									...value.config.headers,
-									Authorization: `Bearer ${response.payload.accessJwt}`,
+									Authorization: `Bearer ${response.data.accessToken}`,
 								},
 								data: {
 									...JSON.parse(value.config.data || '{}'),
@@ -72,22 +118,18 @@ const interceptorRejected = async (
 							},
 						);
 
-						if (reResponse.status === 200) {
-							return await Promise.resolve(reResponse);
+						return await Promise.resolve(reResponse);
+					} catch (error) {
+						if ((error as AxiosError)?.response?.status === 401) {
+							Logout();
 						}
-						Logout();
-
-						return await Promise.reject(reResponse);
 					}
+				} catch (error) {
 					Logout();
-
-					return await Promise.reject(value);
 				}
-				Logout();
 			}
 
-			// when refresh token is expired
-			if (response.status === 401 && response.config.url === '/login') {
+			if (response.status === 401 && response.config.url === '/sessions/rotate') {
 				Logout();
 			}
 		}
@@ -145,16 +187,28 @@ ApiV4Instance.interceptors.response.use(
 ApiV4Instance.interceptors.request.use(interceptorsRequestResponse);
 //
 
+// axios V5
+export const ApiV5Instance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV5}`,
+});
+
+ApiV5Instance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejected,
+);
+ApiV5Instance.interceptors.request.use(interceptorsRequestResponse);
+//
+
 // axios Base
-export const ApiBaseInstance = axios.create({
+export const LogEventAxiosInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 });
 
-ApiBaseInstance.interceptors.response.use(
+LogEventAxiosInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejectedBase,
 );
-ApiBaseInstance.interceptors.request.use(interceptorsRequestResponse);
+LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
 //
 
 // gateway Api V1

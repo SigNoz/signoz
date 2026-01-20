@@ -21,6 +21,7 @@ interface UseDashboardVariablesFromLocalStorageReturn {
 		id: string,
 		selectedValue: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		isDynamic?: boolean,
 	) => void;
 }
 
@@ -88,10 +89,17 @@ export const useDashboardVariablesFromLocalStorage = (
 		id: string,
 		selectedValue: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		isDynamic?: boolean,
 	): void => {
 		setCurrentDashboard((prev) => ({
 			...prev,
-			[id]: { selectedValue, allSelected },
+			[id]:
+				isDynamic && allSelected
+					? {
+							selectedValue: (undefined as unknown) as IDashboardVariable['selectedValue'],
+							allSelected: true,
+					  }
+					: { selectedValue, allSelected },
 		}));
 	};
 

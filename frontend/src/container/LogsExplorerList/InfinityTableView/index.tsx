@@ -58,7 +58,7 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{ isLoading, tableViewProps, infitiyTableProps },
+		{ isLoading, tableViewProps, infitiyTableProps, handleChangeSelectedView },
 		ref,
 	): JSX.Element | null {
 		const {
@@ -72,7 +72,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onSetActiveLog,
 			onClearActiveLog,
 			onAddToQuery,
-			onGroupByAttribute,
 		} = useActiveLog();
 
 		const { dataSource, columns } = useTableView({
@@ -108,6 +107,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					logs={tableViewProps.logs}
 					hasActions
 					fontSize={tableViewProps.fontSize}
+					onShowLogDetails={onSetActiveLog}
 				/>
 			),
 			[
@@ -115,39 +115,37 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				tableColumns,
 				tableViewProps.fontSize,
 				tableViewProps.logs,
+				onSetActiveLog,
 			],
 		);
 
 		const tableHeader = useCallback(
 			() => (
 				<tr>
-					{tableColumns.map((column) => {
-						const isDragColumn = column.key !== 'expand';
+					{tableColumns
+						.filter((column) => column.key)
+						.map((column) => {
+							const isDragColumn = column.key !== 'expand';
 
-						return (
-							<TableHeaderCellStyled
-								$isTimestamp={column.key === 'timestamp'}
-								$isDarkMode={isDarkMode}
-								$isDragColumn={isDragColumn}
-								key={column.key}
-								fontSize={tableViewProps?.fontSize}
-								// eslint-disable-next-line react/jsx-props-no-spreading
-								{...(isDragColumn && { className: 'dragHandler' })}
-							>
-								{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
-							</TableHeaderCellStyled>
-						);
-					})}
+							return (
+								<TableHeaderCellStyled
+									$isLogIndicator={column.key === 'state-indicator'}
+									$isDarkMode={isDarkMode}
+									$isDragColumn={isDragColumn}
+									key={column.key}
+									fontSize={tableViewProps?.fontSize}
+									// eslint-disable-next-line react/jsx-props-no-spreading
+									{...(isDragColumn && { className: `dragHandler ${column.key}` })}
+									columnKey={column.key as string}
+								>
+									{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
+								</TableHeaderCellStyled>
+							);
+						})}
 				</tr>
 			),
 			[tableColumns, isDarkMode, tableViewProps?.fontSize],
 		);
-
-		const handleClickExpand = (index: number): void => {
-			if (!onSetActiveLog) return;
-
-			onSetActiveLog(tableViewProps.logs[index]);
-		};
 
 		return (
 			<>
@@ -180,9 +178,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
-					onClick={(event: any): void => {
-						handleClickExpand(event.target.parentElement.parentElement.dataset.index);
-					}}
 				/>
 
 				{activeContextLog && (
@@ -191,7 +186,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						onClose={handleClearActiveContextLog}
 						onAddToQuery={handleAddToQuery}
 						selectedTab={VIEW_TYPES.CONTEXT}
-						onGroupByAttribute={onGroupByAttribute}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
 				<LogDetail
@@ -200,7 +195,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			</>
 		);

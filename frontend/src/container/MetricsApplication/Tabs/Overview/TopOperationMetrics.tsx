@@ -5,7 +5,7 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -18,6 +18,8 @@ import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../../constants/features';
+import { useAppContext } from '../../../../providers/App/App';
 import { IServiceName } from '../types';
 import { title } from './config';
 import ColumnWithLink from './TableRenderer/ColumnWithLink';
@@ -40,6 +42,11 @@ function TopOperationMetrics(): JSX.Element {
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const keyOperationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -48,16 +55,17 @@ function TopOperationMetrics(): JSX.Element {
 					promql: [],
 					builder: topOperationQueries({
 						servicename,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				panelTypes: PANEL_TYPES.TABLE,
 			}),
-		[servicename],
+		[servicename, dotMetricsEnabled],
 	);
 
-	const updatedQuery = useStepInterval(keyOperationWidget.query);
+	const updatedQuery = updateStepInterval(keyOperationWidget.query);
 
 	const isEmptyWidget = keyOperationWidget.id === PANEL_TYPES.EMPTY_WIDGET;
 

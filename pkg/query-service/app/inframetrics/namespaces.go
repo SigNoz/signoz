@@ -5,21 +5,22 @@ import (
 	"math"
 	"sort"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
 
 var (
-	metricToUseForNamespaces = "k8s_pod_cpu_utilization"
+	metricToUseForNamespaces = GetDotMetrics("k8s_pod_cpu_usage")
 
 	namespaceAttrsToEnrich = []string{
-		"k8s_namespace_name",
-		"k8s_cluster_name",
+		GetDotMetrics("k8s_namespace_name"),
+		GetDotMetrics("k8s_cluster_name"),
 	}
 
 	queryNamesForNamespaces = map[string][]string{
@@ -30,11 +31,11 @@ var (
 	namespaceQueryNames = []string{"A", "D", "H", "I", "J", "K"}
 
 	attributesKeysForNamespaces = []v3.AttributeKey{
-		{Key: "k8s_namespace_name"},
-		{Key: "k8s_cluster_name"},
+		{Key: GetDotMetrics("k8s_namespace_name")},
+		{Key: GetDotMetrics("k8s_cluster_name")},
 	}
 
-	k8sNamespaceNameAttrKey = "k8s_namespace_name"
+	k8sNamespaceNameAttrKey = GetDotMetrics("k8s_namespace_name")
 )
 
 type NamespacesRepo struct {
@@ -125,7 +126,7 @@ func (p *NamespacesRepo) getMetadataAttributes(ctx context.Context, req model.Na
 	return namespaceAttrs, nil
 }
 
-func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, req model.NamespaceListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, orgID valuer.UUID, req model.NamespaceListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopNamespaces(req)
 
 	queryNames := queryNamesForNamespaces[req.OrderBy.ColumnName]
@@ -156,7 +157,7 @@ func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, req model.Na
 		topNamespaceGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, topNamespaceGroupsQueryRangeParams)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topNamespaceGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -195,7 +196,7 @@ func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, req model.Na
 	return topNamespaceGroups, allNamespaceGroups, nil
 }
 
-func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.NamespaceListRequest) (model.NamespaceListResponse, error) {
+func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, orgID valuer.UUID, req model.NamespaceListRequest) (model.NamespaceListResponse, error) {
 	resp := model.NamespaceListResponse{}
 
 	if req.Limit == 0 {
@@ -242,7 +243,7 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.Namespa
 		return resp, err
 	}
 
-	topNamespaceGroups, allNamespaceGroups, err := p.getTopNamespaceGroups(ctx, req, query)
+	topNamespaceGroups, allNamespaceGroups, err := p.getTopNamespaceGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -276,7 +277,7 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.Namespa
 		}
 	}
 
-	queryResponse, _, err := p.querierV2.QueryRange(ctx, query)
+	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
@@ -322,7 +323,7 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.Namespa
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := namespaceAttrs[record.NamespaceName]; ok {
+			if _, ok := namespaceAttrs[record.NamespaceName]; ok && record.NamespaceName != "" {
 				record.Meta = namespaceAttrs[record.NamespaceName]
 			}
 
@@ -340,6 +341,8 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.Namespa
 	}
 	resp.Total = len(allNamespaceGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

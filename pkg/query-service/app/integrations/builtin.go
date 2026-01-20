@@ -7,14 +7,16 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	koanfJson "github.com/knadh/koanf/parsers/json"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -105,7 +107,7 @@ func readBuiltInIntegration(dirpath string) (
 		)
 	}
 
-	hydrated, err := hydrateFileUris(integrationSpec, dirpath)
+	hydrated, err := HydrateFileUris(integrationSpec, integrationFiles, dirpath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't hydrate files referenced in integration %s: %w", integrationJsonPath, err,
@@ -172,11 +174,32 @@ func validateIntegration(i IntegrationDetails) error {
 	return nil
 }
 
-func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
+func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}, error) {
 	if specMap, ok := spec.(map[string]interface{}); ok {
 		result := map[string]interface{}{}
 		for k, v := range specMap {
-			hydrated, err := hydrateFileUris(v, basedir)
+			// Check if this is a dashboards slice and if dot metrics are enabled
+			if k == "dashboards" && constants.IsDotMetricsEnabled {
+				if dashboards, ok := v.([]interface{}); ok {
+					for i, dashboard := range dashboards {
+						if dashboardUri, ok := dashboard.(string); ok {
+							if strings.HasPrefix(dashboardUri, "file://") {
+								dashboards[i] = strings.Replace(dashboardUri, ".json", "_dot.json", 1)
+							}
+						} else if dashBoardMap, ok := dashboard.(map[string]interface{}); ok {
+							if dashboardUri, ok := dashBoardMap["definition"].(string); ok {
+								if strings.HasPrefix(dashboardUri, "file://") {
+									dashboardUri = strings.Replace(dashboardUri, ".json", "_dot.json", 1)
+								}
+								dashBoardMap["definition"] = dashboardUri
+							}
+							dashboards[i] = dashBoardMap
+						}
+					}
+					v = dashboards
+				}
+			}
+			hydrated, err := HydrateFileUris(v, fs, basedir)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +210,7 @@ func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
 	} else if specSlice, ok := spec.([]interface{}); ok {
 		result := []interface{}{}
 		for _, v := range specSlice {
-			hydrated, err := hydrateFileUris(v, basedir)
+			hydrated, err := HydrateFileUris(v, fs, basedir)
 			if err != nil {
 				return nil, err
 			}
@@ -196,14 +219,13 @@ func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
 		return result, nil
 
 	} else if maybeFileUri, ok := spec.(string); ok {
-		return readFileIfUri(maybeFileUri, basedir)
+		return readFileIfUri(fs, maybeFileUri, basedir)
 	}
 
 	return spec, nil
-
 }
 
-func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
+func readFileIfUri(fs embed.FS, maybeFileUri string, basedir string) (interface{}, error) {
 	fileUriPrefix := "file://"
 	if !strings.HasPrefix(maybeFileUri, fileUriPrefix) {
 		return maybeFileUri, nil
@@ -212,7 +234,7 @@ func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
 	relativePath := maybeFileUri[len(fileUriPrefix):]
 	fullPath := path.Join(basedir, relativePath)
 
-	fileContents, err := integrationFiles.ReadFile(fullPath)
+	fileContents, err := fs.ReadFile(fullPath)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read referenced file: %w", err)
 	}
@@ -229,6 +251,16 @@ func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
 	} else if strings.HasSuffix(maybeFileUri, ".svg") {
 		base64Svg := base64.StdEncoding.EncodeToString(fileContents)
 		dataUri := fmt.Sprintf("data:image/svg+xml;base64,%s", base64Svg)
+		return dataUri, nil
+
+	} else if strings.HasSuffix(maybeFileUri, ".jpeg") || strings.HasSuffix(maybeFileUri, ".jpg") {
+		base64Contents := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/jpeg;base64,%s", base64Contents)
+		return dataUri, nil
+
+	} else if strings.HasSuffix(maybeFileUri, ".png") {
+		base64Contents := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/png;base64,%s", base64Contents)
 		return dataUri, nil
 
 	}

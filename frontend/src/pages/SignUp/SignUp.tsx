@@ -1,38 +1,29 @@
-import { Button, Form, Input, Space, Switch, Typography } from 'antd';
+import './SignUp.styles.scss';
+
+import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
+import { Input } from '@signozhq/input';
+import { Form, Input as AntdInput, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/user/editOrg';
-import getInviteDetails from 'api/user/getInviteDetails';
-import loginApi from 'api/user/login';
-import signUpApi from 'api/user/signup';
+import accept from 'api/v1/invite/id/accept';
+import getInviteDetails from 'api/v1/invite/id/get';
+import signUpApi from 'api/v1/register/post';
+import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
-import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
-import { FeatureKeys } from 'constants/features';
-import ROUTES from 'constants/routes';
-import useFeatureFlag from 'hooks/useFeatureFlag';
+import AuthError from 'components/AuthError/AuthError';
+import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { ArrowRight, CircleAlert } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/user/getUser';
-import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
-import { isCloudUser } from 'utils/app';
+import { SuccessResponseV2 } from 'types/api';
+import APIError from 'types/api/error';
+import { InviteDetails } from 'types/api/user/getInviteDetails';
 
-import {
-	ButtonContainer,
-	FormContainer,
-	FormWrapper,
-	Label,
-	MarginTop,
-} from './styles';
-import { isPasswordNotValidMessage, isPasswordValid } from './utils';
-
-const { Title } = Typography;
+import { FormContainer, Label } from './styles';
 
 type FormValues = {
-	firstName: string;
 	email: string;
 	organizationName: string;
 	password: string;
@@ -41,29 +32,22 @@ type FormValues = {
 	isAnonymous: boolean;
 };
 
-function SignUp({ version }: SignUpProps): JSX.Element {
-	const { t } = useTranslation(['signup']);
+function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
-
-	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
-		sso: false,
-		isUser: false,
-	});
 
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
-	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
-		false,
-	);
+	const [formError, setFormError] = useState<APIError | null>();
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
-	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
-
-	const getInviteDetailsResponse = useQuery({
+	const getInviteDetailsResponse = useQuery<
+		SuccessResponseV2<InviteDetails>,
+		APIError
+	>({
 		queryFn: () =>
 			getInviteDetails({
 				inviteId: token || '',
@@ -75,14 +59,17 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
 
+	// Watch form values for reactive validation
+	const email = Form.useWatch('email', form);
+	const password = Form.useWatch('password', form);
+	const confirmPassword = Form.useWatch('confirmPassword', form);
+
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data.payload
+			getInviteDetailsResponse.data.data
 		) {
-			const responseDetails = getInviteDetailsResponse.data.payload;
-			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
-			form.setFieldValue('firstName', responseDetails.name);
+			const responseDetails = getInviteDetailsResponse.data.data;
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
@@ -96,7 +83,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		getInviteDetailsResponse.data?.payload,
+		getInviteDetailsResponse.data?.data,
 		form,
 		getInviteDetailsResponse.status,
 	]);
@@ -104,359 +91,248 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data?.error
+			getInviteDetailsResponse?.error
 		) {
-			const { error } = getInviteDetailsResponse.data;
+			const { error } = getInviteDetailsResponse;
 			notifications.error({
-				message: error,
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	}, [
+		getInviteDetailsResponse,
 		getInviteDetailsResponse.data,
 		getInviteDetailsResponse.status,
 		notifications,
 	]);
 
-	const isPreferenceVisible = token === null;
+	const isSignUp = token === null;
 
-	const commonHandler = async (
-		values: FormValues,
-		callback: (
-			e: SuccessResponse<PayloadProps>,
-			values: FormValues,
-		) => Promise<void> | VoidFunction,
-	): Promise<void> => {
+	const signUp = async (values: FormValues): Promise<void> => {
 		try {
-			const { organizationName, password, firstName, email } = values;
-			const response = await signUpApi({
+			const { organizationName, password, email } = values;
+			const user = await signUpApi({
 				email,
-				name: firstName,
-				orgName: organizationName,
+				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
 
-			if (response.statusCode === 200) {
-				const loginResponse = await loginApi({
-					email,
-					password,
-				});
+			const token = await passwordAuthNContext({
+				email,
+				password,
+				orgId: user.data.orgId,
+			});
 
-				if (loginResponse.statusCode === 200) {
-					const { payload } = loginResponse;
-					const userResponse = await afterLogin(
-						payload.userId,
-						payload.accessJwt,
-						payload.refreshJwt,
-					);
-					if (userResponse) {
-						callback(userResponse, values);
-					}
-				} else {
-					notifications.error({
-						message: loginResponse.error || t('unexpected_error'),
-					});
-				}
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
-			}
+			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
-			notifications.error({
-				message: t('unexpected_error'),
-			});
+			setFormError(error as APIError);
 		}
 	};
 
-	const onAdminAfterLogin = async (
-		userResponse: SuccessResponse<PayloadProps>,
-		values: FormValues,
-	): Promise<void> => {
-		const editResponse = await editOrg({
-			isAnonymous: values.isAnonymous,
-			name: values.organizationName,
-			hasOptedUpdates: values.hasOptedUpdates,
-			orgId: userResponse.payload.orgId,
-		});
-		if (editResponse.statusCode === 200) {
-			history.push(ROUTES.APPLICATION);
-		} else {
-			notifications.error({
-				message: editResponse.error || t('unexpected_error'),
-			});
-		}
-	};
-	const handleSubmitSSO = async (): Promise<void> => {
-		if (!params.get('token')) {
-			notifications.error({
-				message: t('token_required'),
-			});
-			return;
-		}
-		setLoading(true);
-
+	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
-			const values = form.getFieldsValue();
-			const response = await signUpApi({
-				email: values.email,
-				name: values.firstName,
-				orgName: values.organizationName,
-				password: values.password,
-				token: params.get('token') || undefined,
-				sourceUrl: encodeURIComponent(window.location.href),
+			const { password, email } = values;
+			const user = await accept({
+				password,
+				token: params.get('token') || '',
+			});
+			const token = await passwordAuthNContext({
+				email,
+				password,
+				orgId: user.data.orgId,
 			});
 
-			if (response.statusCode === 200) {
-				if (response.payload?.sso) {
-					if (response.payload?.ssoUrl) {
-						window.location.href = response.payload?.ssoUrl;
-					} else {
-						notifications.error({
-							message: t('failed_to_initiate_login'),
-						});
-						// take user to login page as there is nothing to do here
-						history.push(ROUTES.LOGIN);
-					}
-				}
-			} else {
-				notifications.error({
-					message: response.error || t('unexpected_error'),
-				});
-			}
+			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
-			notifications.error({
-				message: t('unexpected_error'),
-			});
+			setFormError(error as APIError);
 		}
-
-		setLoading(false);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
+				setFormError(null);
 
-				if (!isPasswordValid(values.password)) {
-					logEvent('Account Creation Page - Invalid Password', {
-						email: values.email,
-						name: values.firstName,
-					});
-					setIsPasswordPolicyError(true);
-					setLoading(false);
-					return;
-				}
-
-				if (isPreferenceVisible) {
-					await commonHandler(values, onAdminAfterLogin);
-				} else {
+				if (isSignUp) {
+					await signUp(values);
 					logEvent('Account Created Successfully', {
 						email: values.email,
-						name: values.firstName,
 					});
-
-					await commonHandler(
-						values,
-						async (): Promise<void> => {
-							if (isOnboardingEnabled && isCloudUser()) {
-								history.push(ROUTES.GET_STARTED);
-							} else {
-								history.push(ROUTES.APPLICATION);
-							}
-						},
-					);
+				} else {
+					await acceptInvite(values);
 				}
 
 				setLoading(false);
 			} catch (error) {
 				notifications.error({
-					message: t('unexpected_error'),
+					message: 'Something went wrong',
 				});
 				setLoading(false);
 			}
 		})();
 	};
 
-	const getIsNameVisible = (): boolean =>
-		!(form.getFieldValue('firstName') === 0 && !isPreferenceVisible);
-
-	const isNameVisible = getIsNameVisible();
-
 	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
 		changedValues,
 	) => {
+		// Clear error if passwords match while typing (but don't set error until blur)
 		if ('password' in changedValues || 'confirmPassword' in changedValues) {
 			const { password, confirmPassword } = form.getFieldsValue();
 
-			const isInvalidPassword = !isPasswordValid(password) && password.length > 0;
-			setIsPasswordPolicyError(isInvalidPassword);
+			if (password && confirmPassword && password === confirmPassword) {
+				setConfirmPasswordError(false);
+			}
+		}
+	};
 
+	const handlePasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		// Only validate if confirm password has a value
+		if (confirmPassword) {
 			const isSamePassword = password === confirmPassword;
 			setConfirmPasswordError(!isSamePassword);
 		}
 	};
 
-	const isValidForm: () => boolean = () => {
-		const values = form.getFieldsValue();
-		return (
-			loading ||
-			!values.email ||
-			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
-			(!isDetailsDisable && !values.firstName) ||
-			confirmPasswordError ||
-			isPasswordPolicyError
-		);
+	const handleConfirmPasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		if (password && confirmPassword) {
+			const isSamePassword = password === confirmPassword;
+			setConfirmPasswordError(!isSamePassword);
+		}
 	};
 
-	return (
-		<WelcomeLeftContainer version={version}>
-			<FormWrapper>
-				<FormContainer
-					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
-					onValuesChange={handleValuesChange}
-					initialValues={{ hasOptedUpdates: true, isAnonymous: false }}
-					form={form}
-				>
-					<Title level={4}>Create your account</Title>
-					<div>
-						<Label htmlFor="signupEmail">{t('label_email')}</Label>
-						<FormContainer.Item noStyle name="email">
-							<Input
-								placeholder={t('placeholder_email')}
-								type="email"
-								autoFocus
-								required
-								id="signupEmail"
-								disabled={isDetailsDisable}
-							/>
-						</FormContainer.Item>
-					</div>
-
-					{isNameVisible && (
-						<div>
-							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>{' '}
-							<FormContainer.Item noStyle name="firstName">
-								<Input
-									placeholder={t('placeholder_firstname')}
-									required
-									id="signupFirstName"
-									disabled={isDetailsDisable && form.getFieldValue('firstName')}
-								/>
-							</FormContainer.Item>
-						</div>
-					)}
-
-					<div>
-						<Label htmlFor="organizationName">{t('label_orgname')}</Label>{' '}
-						<FormContainer.Item noStyle name="organizationName">
-							<Input
-								placeholder={t('placeholder_orgname')}
-								id="organizationName"
-								disabled={isDetailsDisable}
-							/>
-						</FormContainer.Item>
-					</div>
-					{!precheck.sso && (
-						<div>
-							<Label htmlFor="Password">{t('label_password')}</Label>{' '}
-							<FormContainer.Item noStyle name="password">
-								<Input.Password required id="currentPassword" />
-							</FormContainer.Item>
-						</div>
-					)}
-					{!precheck.sso && (
-						<div>
-							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>{' '}
-							<FormContainer.Item noStyle name="confirmPassword">
-								<Input.Password required id="confirmPassword" />
-							</FormContainer.Item>
-							{confirmPasswordError && (
-								<Typography.Paragraph
-									italic
-									id="password-confirm-error"
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									{t('failed_confirm_password')}
-								</Typography.Paragraph>
-							)}
-							{isPasswordPolicyError && (
-								<Typography.Paragraph
-									italic
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									{isPasswordNotValidMessage}
-								</Typography.Paragraph>
-							)}
-						</div>
-					)}
-
-					{isPreferenceVisible && (
-						<>
-							<MarginTop marginTop="2.4375rem">
-								<Space>
-									<FormContainer.Item
-										noStyle
-										name="hasOptedUpdates"
-										valuePropName="checked"
-									>
-										<Switch />
-									</FormContainer.Item>
-
-									<Typography>{t('prompt_keepme_posted')} </Typography>
-								</Space>
-							</MarginTop>
-
-							<MarginTop marginTop="0.5rem">
-								<Space>
-									<FormContainer.Item noStyle name="isAnonymous" valuePropName="checked">
-										<Switch />
-									</FormContainer.Item>
-									<Typography>{t('prompt_anonymise')}</Typography>
-								</Space>
-							</MarginTop>
-						</>
-					)}
-
-					{isPreferenceVisible && (
-						<Typography.Paragraph
-							italic
-							style={{
-								color: '#D89614',
-								marginTop: '0.50rem',
-							}}
-						>
-							This will create an admin account. If you are not an admin, please ask
-							your admin for an invite link
-						</Typography.Paragraph>
-					)}
-
-					<ButtonContainer>
-						<Button
-							type="primary"
-							htmlType="submit"
-							data-attr="signup"
-							loading={loading}
-							disabled={isValidForm()}
-						>
-							{t('button_get_started')}
-						</Button>
-					</ButtonContainer>
-				</FormContainer>
-			</FormWrapper>
-		</WelcomeLeftContainer>
+	const isValidForm = useMemo(
+		(): boolean =>
+			!loading &&
+			Boolean(email?.trim()) &&
+			Boolean(password?.trim()) &&
+			Boolean(confirmPassword?.trim()) &&
+			!confirmPasswordError,
+		[loading, email, password, confirmPassword, confirmPasswordError],
 	);
-}
 
-interface SignUpProps {
-	version: string;
+	return (
+		<AuthPageContainer>
+			<div className="signup-card">
+				<div className="signup-form-header">
+					<div className="signup-header-icon">
+						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+					</div>
+					<Typography.Title level={4} className="signup-header-title">
+						Create your account
+					</Typography.Title>
+					<Typography.Paragraph className="signup-header-subtitle">
+						You&apos;re almost in. Create a password to start monitoring your
+						applications with SigNoz.
+					</Typography.Paragraph>
+				</div>
+
+				<FormContainer
+					onFinish={handleSubmit}
+					onValuesChange={handleValuesChange}
+					form={form}
+					className="signup-form"
+				>
+					<div className="signup-form-container">
+						<div className="signup-form-fields">
+							<div className="signup-field-container">
+								<Label htmlFor="signupEmail">Email address</Label>
+								<FormContainer.Item noStyle name="email">
+									<Input
+										placeholder="e.g. john@signoz.io"
+										type="email"
+										autoFocus
+										required
+										id="signupEmail"
+										disabled={isDetailsDisable}
+										className="signup-form-input"
+									/>
+								</FormContainer.Item>
+							</div>
+
+							<div className="signup-field-container">
+								<Label htmlFor="currentPassword">Set your password</Label>
+								<FormContainer.Item
+									name="password"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter password!' }]}
+								>
+									<AntdInput.Password
+										required
+										id="currentPassword"
+										placeholder="Enter new password"
+										disabled={loading}
+										className="signup-antd-input"
+										onBlur={handlePasswordBlur}
+									/>
+								</FormContainer.Item>
+							</div>
+
+							<div className="signup-field-container">
+								<Label htmlFor="confirmPassword">Confirm your new password</Label>
+								<FormContainer.Item
+									name="confirmPassword"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter confirm password!' }]}
+								>
+									<AntdInput.Password
+										required
+										id="confirmPassword"
+										placeholder="Confirm your new password"
+										disabled={loading}
+										className="signup-antd-input"
+										onBlur={handleConfirmPasswordBlur}
+									/>
+								</FormContainer.Item>
+							</div>
+						</div>
+					</div>
+
+					{isSignUp && (
+						<Callout
+							type="info"
+							size="small"
+							showIcon
+							className="signup-info-callout"
+							description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
+						/>
+					)}
+
+					{confirmPasswordError && (
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							icon={<CircleAlert size={12} />}
+							className="signup-error-callout"
+							description="Passwords don't match. Please try again."
+						/>
+					)}
+
+					{formError && !confirmPasswordError && <AuthError error={formError} />}
+
+					<div className="signup-form-actions">
+						<Button
+							variant="solid"
+							color="primary"
+							type="submit"
+							data-attr="signup"
+							disabled={!isValidForm}
+							className="signup-submit-button"
+							suffixIcon={<ArrowRight size={16} />}
+						>
+							Access My Workspace
+						</Button>
+					</div>
+				</FormContainer>
+			</div>
+		</AuthPageContainer>
+	);
 }
 
 export default SignUp;

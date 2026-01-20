@@ -9,6 +9,12 @@ import { DataSource } from 'types/common/queryBuilder';
 import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
+export interface ICurrentQueryData {
+	name: string;
+	id: string;
+	query: Query;
+}
+
 export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
 		type: string,
@@ -70,7 +76,7 @@ export const useHandleExplorerTabChange = (): {
 					{
 						[QueryParams.panelTypes]: newPanelType,
 						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
 					},
 					redirectToUrl,
 				);
@@ -78,7 +84,7 @@ export const useHandleExplorerTabChange = (): {
 				redirectWithQueryBuilderData(query, {
 					[QueryParams.panelTypes]: newPanelType,
 					[QueryParams.viewName]: currentQueryData?.name || viewName,
-					[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+					[QueryParams.viewKey]: currentQueryData?.id || viewKey,
 				});
 			}
 		},
@@ -87,9 +93,3 @@ export const useHandleExplorerTabChange = (): {
 
 	return { handleExplorerTabChange };
 };
-
-interface ICurrentQueryData {
-	name: string;
-	uuid: string;
-	query: Query;
-}

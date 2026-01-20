@@ -5,8 +5,9 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
-import useLicense from 'hooks/useLicense';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -14,7 +15,6 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -33,8 +33,8 @@ function ServiceMetricTable({
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
 
-	const { data: licenseData, isFetching } = useLicense();
-	const isCloudUserVal = isCloudUser();
+	const { isFetchingActiveLicense, trialInfo } = useAppContext();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
 		queryKey: [
@@ -70,9 +70,9 @@ function ServiceMetricTable({
 
 	useEffect(() => {
 		if (
-			!isFetching &&
-			licenseData?.payload?.onTrial &&
-			!licenseData?.payload?.trialConvertedToSubscription &&
+			!isFetchingActiveLicense &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -82,7 +82,13 @@ function ServiceMetricTable({
 				setRPS(0);
 			}
 		}
-	}, [services, licenseData, isFetching, isCloudUserVal]);
+	}, [
+		services,
+		isCloudUserVal,
+		isFetchingActiveLicense,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
+	]);
 
 	const paginationConfig = {
 		defaultPageSize: 10,
@@ -90,7 +96,7 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<>
+		<div className="service-metric-table-container">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
@@ -108,8 +114,9 @@ function ServiceMetricTable({
 				loading={isLoading}
 				dataSource={services}
 				rowKey="serviceName"
+				className="service-metrics-table"
 			/>
-		</>
+		</div>
 	);
 }
 
