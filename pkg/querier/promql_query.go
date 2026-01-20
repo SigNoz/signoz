@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -18,6 +19,50 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 )
+
+// unquotedDottedNamePattern matches unquoted identifiers containing dots
+// that appear in metric or label name positions. This helps detect queries
+// using the old syntax that needs migration to UTF-8 quoted syntax.
+// Examples it matches: k8s.pod.name, deployment.environment, http.status_code
+var unquotedDottedNamePattern = regexp.MustCompile(`(?:^|[{,(\s])([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)(?:[}\s,=!~)\[]|$)`)
+
+// quotedMetricOutsideBracesPattern matches the incorrect syntax where a quoted
+// metric name appears outside of braces followed by a selector block.
+// Example: "kube_pod_status_ready_time"{"condition"="true"}
+// This is a common mistake when migrating to UTF-8 syntax.
+var quotedMetricOutsideBracesPattern = regexp.MustCompile(`"([^"]+)"\s*\{`)
+
+// enhancePromQLError adds helpful context to PromQL parse errors,
+// particularly for UTF-8 syntax migration issues where metric and label
+// names containing dots need to be quoted.
+func enhancePromQLError(query string, parseErr error) error {
+	errMsg := parseErr.Error()
+
+	if matches := quotedMetricOutsideBracesPattern.FindStringSubmatch(query); len(matches) > 1 {
+		metricName := matches[1]
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid promql query: %s. Hint: The metric name should be inside the braces. Use {\"__name__\"=\"%s\", ...} or {\"%s\", ...} instead of \"%s\"{...}",
+			errMsg,
+			metricName,
+			metricName,
+			metricName,
+		)
+	}
+
+	if matches := unquotedDottedNamePattern.FindStringSubmatch(query); len(matches) > 1 {
+		dottedName := matches[1]
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid promql query: %s. Hint: Metric and label names containing dots require quoted notation in the new UTF-8 syntax, e.g., use \"%s\" instead of %s",
+			errMsg,
+			dottedName,
+			dottedName,
+		)
+	}
+
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query: %s", errMsg)
+}
 
 type promqlQuery struct {
 	logger      *slog.Logger
@@ -81,7 +126,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 
 	expr, err := parser.ParseExpr(query)
 	if err != nil {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
+		return "", enhancePromQLError(query, err)
 	}
 
 	// Create visitor and walk the AST
@@ -161,7 +206,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	)
 
 	if err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
+		return nil, enhancePromQLError(query, err)
 	}
 
 	res := qry.Exec(ctx)
