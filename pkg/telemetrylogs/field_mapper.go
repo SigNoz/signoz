@@ -246,10 +246,6 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern
 func (m *fieldMapper) buildFieldForJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	if !key.JSONDataType.IsArray {
-		return "", errors.NewInternalf(errors.CodeInvalidInput, "field %s is not an array", key.Name)
-	}
-
 	plan, err := PlanJSON(ctx, key, qbtypes.FilterOperatorExists, nil, m.metadataStore)
 	if err != nil {
 		return "", err
