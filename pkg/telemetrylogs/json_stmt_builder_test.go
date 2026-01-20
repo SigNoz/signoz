@@ -159,7 +159,6 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 	}
 }
 
-
 func TestStatementBuilderListQueryBodyHas(t *testing.T) {
 	enableBodyJSONQuery(t)
 	defer func() {
@@ -183,12 +182,42 @@ func TestStatementBuilderListQueryBodyHas(t *testing.T) {
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (dynamicElement(body_json.`user.name`, 'String') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "x", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (has(arrayFlatten(arrayConcat(arrayMap(`body_json.education`->dynamicElement(`body_json.education`.`parameters`, 'Array(Nullable(Float64))'), dynamicElement(body_json.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?) OR has(arrayFlatten(arrayConcat(arrayMap(`body_json.education`->dynamicElement(`body_json.education`.`parameters`, 'Array(Dynamic)'), dynamicElement(body_json.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args: []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{
+					"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic].",
+				},
 			},
 			expectedErr: nil,
 		},
-		
+		{
+			name:        "Flat path hasAll filter",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "hasAll(body.user.permissions, ['read', 'write'])"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND hasAll(dynamicElement(body_json.`user.permissions`, 'Array(Nullable(String))'), ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), []any{[]any{"read", "write"}}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Nested path hasAny filter",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "hasAny(education[].awards[].participated[].members, ['Piyush', 'Tushar'])"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, body_json, body_json_promoted, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND hasAny(arrayFlatten(arrayConcat(arrayMap(`body_json.education`->arrayConcat(arrayMap(`body_json.education[].awards`->arrayConcat(arrayMap(`body_json.education[].awards[].participated`->dynamicElement(`body_json.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_json.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), arrayMap(`body_json.education[].awards[].participated`->dynamicElement(`body_json.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_json.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_json.education[].awards`->arrayConcat(arrayMap(`body_json.education[].awards[].participated`->dynamicElement(`body_json.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_json.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(`body_json.education[].awards[].participated`->dynamicElement(`body_json.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_json.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_json.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), []any{[]any{"Piyush", "Tushar"}}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, c := range cases {
@@ -207,7 +236,6 @@ func TestStatementBuilderListQueryBodyHas(t *testing.T) {
 		})
 	}
 }
-
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
 	enableBodyJSONQuery(t)
