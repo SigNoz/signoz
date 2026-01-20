@@ -191,7 +191,8 @@
 			text-transform: uppercase;
 		}
 
-		.y-axis-unit-selector {
+		.y-axis-unit-selector,
+		.y-axis-unit-selector-v2 {
 			margin-top: 16px;
 			display: flex;
 			flex-direction: column;
@@ -224,6 +225,21 @@
 				}
 			}
 		}
+
+		.y-axis-unit-selector-v2 {
+			.y-axis-unit-selector-component {
+				.ant-select {
+					width: 100%;
+					border-radius: 2px;
+
+					.ant-select-selector {
+						border: 1px solid var(--bg-slate-400);
+						background: var(--bg-ink-300);
+					}
+				}
+			}
+		}
+
 		.soft-min-max {
 			display: flex;
 			align-items: center;
@@ -444,6 +460,17 @@
 				}
 			}
 
+			.y-axis-unit-selector-v2 {
+				.y-axis-unit-selector-component {
+					.ant-select {
+						.ant-select-selector {
+							border: 1px solid var(--bg-vanilla-300);
+							background: var(--bg-vanilla-300);
+						}
+					}
+				}
+			}
+
 			.fill-gaps {
 				border: 1px solid var(--bg-vanilla-300);
 				background: var(--bg-vanilla-300);
@@ -472,7 +499,8 @@
 				color: var(--bg-ink-400);
 			}
 
-			.y-axis-unit-selector {
+			.y-axis-unit-selector,
+			.y-axis-unit-selector-v2 {
 				.heading {
 					color: var(--bg-ink-400);
 				}

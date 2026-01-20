@@ -54,7 +54,7 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.10.1
-	github.com/srikanthccv/ClickHouse-go-mock v0.12.0
+	github.com/srikanthccv/ClickHouse-go-mock v0.13.0
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggest/jsonschema-go v0.3.78
 	github.com/swaggest/rest v0.2.75
@@ -343,7 +343,7 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
-	google.golang.org/api v0.236.0 // indirect
+	google.golang.org/api v0.236.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
 	google.golang.org/grpc v1.75.1 // indirect

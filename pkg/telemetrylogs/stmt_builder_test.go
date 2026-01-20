@@ -195,9 +195,9 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper(mockMetadataStore)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -315,9 +315,9 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper(mockMetadataStore)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -423,9 +423,9 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper(mockMetadataStore)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -499,9 +499,9 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper(mockMetadataStore)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -594,9 +594,9 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	fm := NewFieldMapper(mockMetadataStore)
 	cb := NewConditionBuilder(fm, mockMetadataStore)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)

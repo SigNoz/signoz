@@ -39,6 +39,10 @@ type TelemetryFieldKey struct {
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
 }
 
+func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
+	return strings.Contains(f.Name, ArraySep) || strings.Contains(f.Name, ArrayAnyIndex)
+}
+
 func (f TelemetryFieldKey) String() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("name=%s", f.Name))

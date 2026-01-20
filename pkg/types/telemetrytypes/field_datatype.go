@@ -110,6 +110,10 @@ func (f FieldDataType) CHDataType() string {
 	return "String"
 }
 
+func (f FieldDataType) IsArray() bool {
+	return strings.HasPrefix(f.StringValue(), "[]") || strings.HasSuffix(f.StringValue(), "[]")
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface
 func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 	var str string

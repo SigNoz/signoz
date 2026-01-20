@@ -104,7 +104,7 @@ func newProvider(
 	)
 
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper()
+	logFieldMapper := telemetrylogs.NewFieldMapper(telemetryMetadataStore)
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, telemetryMetadataStore)
 	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,

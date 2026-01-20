@@ -811,6 +811,7 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.MetadataStore) {
 	types := map[string][]telemetrytypes.JSONDataType{
 		"user.name":                                           {telemetrytypes.String},
+		"user.permissions":                                    {telemetrytypes.ArrayString},
 		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
 		"user.height":                                         {telemetrytypes.Float64},
 		"tags":                                                {telemetrytypes.ArrayString},
@@ -839,6 +840,7 @@ func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.Met
 		"education[].awards[].participated[].team_based":      {telemetrytypes.Bool},
 		"education[].awards[].participated[].team_name":       {telemetrytypes.String},
 		"education[].awards[].participated[].team":            {telemetrytypes.ArrayJSON},
+		"education[].awards[].participated[].members":         {telemetrytypes.ArrayString},
 		"education[].awards[].participated[].team[].name":     {telemetrytypes.String},
 		"education[].awards[].participated[].team[].branch":   {telemetrytypes.String},
 		"education[].awards[].participated[].team[].semester": {telemetrytypes.Int64},

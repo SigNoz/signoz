@@ -12,7 +12,6 @@ frontend/coverage
 
 # production
 frontend/build
-frontend/.vscode
 frontend/.yarnclean
 frontend/.temp_cache
 frontend/test-results
@@ -31,7 +30,6 @@ frontend/src/constants/env.ts
 
 .idea
 
-**/.vscode
 **/build
 **/storage
 **/locust-scripts/__pycache__/
@@ -56,7 +54,7 @@ bin/
 .local/
 */query-service/queries.active
 ee/query-service/db
-
+.vscode/
 # e2e
 
 e2e/node_modules/
@@ -222,8 +220,6 @@ cython_debug/
 #.idea/
 
 ### Python Patch ###
-# Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
-poetry.toml
 
 # ruff
 .ruff_cache/

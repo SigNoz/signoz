@@ -36,7 +36,6 @@
 }
 
 .time-selection-dropdown-content {
-	min-width: 172px;
 	width: 100%;
 }
 
@@ -48,18 +47,16 @@
 	padding: 4px 8px;
 	padding-left: 0px !important;
 
-	&.custom-time {
-		input:not(:focus) {
-			min-width: 280px;
+	input {
+		width: 280px;
+
+		&::placeholder {
+			color: white;
 		}
-	}
 
-	input::placeholder {
-		color: white;
-	}
-
-	input:focus::placeholder {
-		color: rgba($color: #ffffff, $alpha: 0.4);
+		&:focus::placeholder {
+			color: rgba($color: #ffffff, $alpha: 0.4);
+		}
 	}
 }
 
@@ -175,9 +172,26 @@
 }
 
 .time-input-prefix {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: 3px;
+
+	width: 36px;
+
+	font-size: 11px;
+	color: var(--bg-vanilla-400);
+	background-color: var(--bg-ink-200);
+
+	&.is-live {
+		background-color: transparent;
+		color: var(--bg-forest-500);
+	}
+
 	.live-dot-icon {
-		width: 6px;
-		height: 6px;
+		width: 8px;
+		height: 8px;
 		border-radius: 50%;
 		background-color: var(--bg-forest-500);
 		animation: ripple 1s infinite;
@@ -191,7 +205,7 @@
 	0% {
 		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
 	}
-	70% {
+	60% {
 		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
 	}
 	100% {
@@ -249,6 +263,11 @@
 	.timezone-badge {
 		color: var(--bg-ink-100);
 		background: rgb(179 179 179 / 15%);
+	}
+
+	.time-input-prefix {
+		background-color: var(--bg-vanilla-300);
+		color: var(--bg-ink-400);
 	}
 
 	.time-input-suffix-icon-badge {
