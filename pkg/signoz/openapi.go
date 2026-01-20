@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -47,6 +48,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ dashboard.Module }{},
 		struct{ dashboard.Handler }{},
 		struct{ metricsexplorer.Handler }{},
+		struct{ rawdataexport.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

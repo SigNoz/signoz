@@ -607,6 +607,34 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    get:
+      deprecated: false
+      description: This endpoints allows exporting raw data for traces and logs
+      operationId: HandleExportRawData
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false
