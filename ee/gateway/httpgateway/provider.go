@@ -58,15 +58,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) (*gatewaytypes.GettableIngestionKeys, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
-
-	if perPage > gateway.MaxPageSize {
-		perPage = gateway.MaxPageSize
-	}
-
-	if perPage < 1 {
-		perPage = gateway.DefaultPageSize
-	}
-
 	qParams.Add("per_page", strconv.Itoa(perPage))
 
 	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys", qParams, nil)
@@ -94,15 +85,6 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 	qParams := url.Values{}
 	qParams.Add("name", name)
 	qParams.Add("page", strconv.Itoa(page))
-
-	if perPage > gateway.MaxPageSize {
-		perPage = gateway.MaxPageSize
-	}
-
-	if perPage < 1 {
-		perPage = gateway.DefaultPageSize
-	}
-	
 	qParams.Add("per_page", strconv.Itoa(perPage))
 
 	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/search", qParams, nil)
