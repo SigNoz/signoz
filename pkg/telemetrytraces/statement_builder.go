@@ -163,6 +163,42 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation] {
 
 	/*
+		Adjust keys for alias expressions in aggregations
+		For example, if user is using `span.count` as an alias for aggregation and
+		Uses it in orderBy or group by, upstream code will convert it to just `count` with fieldContext as span
+		But we need to adjust it back to `span.count` with fieldContext as unspecified
+
+		NOTE": One ambiguity here is that if user specified alias `span.count` is also a valid field then we're not sure
+		what user meant. Here we take a call that we chose alias over fieldName because if user sepcifically wants to order or group by
+		a that field, a different alias can be chosen.
+	*/
+
+	aliasExpressions := map[string]bool{}
+	for _, agg := range query.Aggregations {
+		if agg.Alias != "" {
+			aliasExpressions[agg.Alias] = true
+		}
+	}
+
+	if len(aliasExpressions) > 0 {
+		for _, key := range query.GroupBy {
+			contextPrefixedKeyName := fmt.Sprintf("%s.%s", key.FieldContext.StringValue(), key.Name)
+			if aliasExpressions[contextPrefixedKeyName] {
+				key.FieldContext = telemetrytypes.FieldContextUnspecified
+				key.Name = contextPrefixedKeyName
+			}
+		}
+
+		for _, orderBy := range query.Order {
+			contextPrefixedKeyName := fmt.Sprintf("%s.%s", orderBy.Key.FieldContext.StringValue(), orderBy.Key.Name)
+			if aliasExpressions[contextPrefixedKeyName] {
+				orderBy.Key.FieldContext = telemetrytypes.FieldContextUnspecified
+				orderBy.Key.Name = contextPrefixedKeyName
+			}
+		}
+	}
+
+	/*
 		Check if user is using multiple contexts or data types for same field name
 		Idea is to use a super set of keys that can satisfy all the usages
 

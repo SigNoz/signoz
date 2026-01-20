@@ -20,63 +20,18 @@ func AdjustDuplicateKeys[T any](query *qbtypes.QueryBuilderQuery[T]) []string {
 	actions := []string{}
 
 	// SelectFields
-	for idx := range query.SelectFields {
-		if existingKey, ok := globalUniqueKeysMap[query.SelectFields[idx].Name]; !ok {
-			globalUniqueKeysMap[query.SelectFields[idx].Name] = query.SelectFields[idx]
-		} else {
-			if existingKey.FieldContext != query.SelectFields[idx].FieldContext && existingKey.FieldContext != telemetrytypes.FieldContextUnspecified {
-				// remove field context in the map to make it generic
-				actions = append(actions, fmt.Sprintf("Removed field context from %s for duplicate key %s", existingKey, query.SelectFields[idx]))
-				existingKey.FieldContext = telemetrytypes.FieldContextUnspecified
-			}
-			if existingKey.FieldDataType != query.SelectFields[idx].FieldDataType && existingKey.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				// remove field data type in the map to make it generic
-				actions = append(actions, fmt.Sprintf("Removed field data type from %s for duplicate key %s", existingKey, query.SelectFields[idx]))
-				existingKey.FieldDataType = telemetrytypes.FieldDataTypeUnspecified
-			}
-			// Update the map with the modified key
-			globalUniqueKeysMap[query.SelectFields[idx].Name] = existingKey
-		}
+	for _, key := range query.SelectFields {
+		deduplicateKeys(key, globalUniqueKeysMap, &actions)
 	}
 
 	// GroupBy
-	for idx := range query.GroupBy {
-		if existingKey, ok := globalUniqueKeysMap[query.GroupBy[idx].Name]; !ok {
-			globalUniqueKeysMap[query.GroupBy[idx].Name] = query.GroupBy[idx].TelemetryFieldKey
-		} else {
-			if existingKey.FieldContext != query.GroupBy[idx].FieldContext && existingKey.FieldContext != telemetrytypes.FieldContextUnspecified {
-				// remove field context in the map to make it generic
-				actions = append(actions, fmt.Sprintf("Removed field context from %s for duplicate key %s", existingKey, query.GroupBy[idx].TelemetryFieldKey))
-				existingKey.FieldContext = telemetrytypes.FieldContextUnspecified
-			}
-			if existingKey.FieldDataType != query.GroupBy[idx].FieldDataType && existingKey.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				// remove field data type in the map to make it generic
-				actions = append(actions, fmt.Sprintf("Removed field data type from %s for duplicate key %s", existingKey, query.GroupBy[idx].TelemetryFieldKey))
-				existingKey.FieldDataType = telemetrytypes.FieldDataTypeUnspecified
-			}
-			// Update the map with the modified key
-			globalUniqueKeysMap[query.GroupBy[idx].Name] = existingKey
-		}
+	for _, key := range query.GroupBy {
+		deduplicateKeys(key.TelemetryFieldKey, globalUniqueKeysMap, &actions)
 	}
 
 	// OrderBy
-	for idx := range query.Order {
-		if existingKey, ok := globalUniqueKeysMap[query.Order[idx].Key.Name]; !ok {
-			globalUniqueKeysMap[query.Order[idx].Key.Name] = query.Order[idx].Key.TelemetryFieldKey
-		} else {
-			if existingKey.FieldContext != query.Order[idx].Key.FieldContext && existingKey.FieldContext != telemetrytypes.FieldContextUnspecified {
-				// remove field context in the map to make it generic
-				actions = append(actions, fmt.Sprintf("Removed field context from %s for duplicate key %s", existingKey, query.Order[idx].Key.TelemetryFieldKey))
-				existingKey.FieldContext = telemetrytypes.FieldContextUnspecified
-			}
-			if existingKey.FieldDataType != query.Order[idx].Key.FieldDataType && existingKey.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				// remove field data type in the map to make it generic
-				actions = append(actions, fmt.Sprintf("Removed field data type from %s for duplicate key %s", existingKey, query.Order[idx].Key.TelemetryFieldKey))
-				existingKey.FieldDataType = telemetrytypes.FieldDataTypeUnspecified
-			}
-			// Update the map with the modified key
-			globalUniqueKeysMap[query.Order[idx].Key.Name] = existingKey
-		}
+	for _, key := range query.Order {
+		deduplicateKeys(key.Key.TelemetryFieldKey, globalUniqueKeysMap, &actions)
 	}
 
 	// Reconstruct SelectFields slice
@@ -125,6 +80,26 @@ func AdjustDuplicateKeys[T any](query *qbtypes.QueryBuilderQuery[T]) []string {
 
 	return actions
 }
+
+func deduplicateKeys(key telemetrytypes.TelemetryFieldKey, keysMap map[string]telemetrytypes.TelemetryFieldKey, actions *[]string) {
+	if existingKey, ok := keysMap[key.Name]; !ok {
+		keysMap[key.Name] = key
+	} else {
+		if existingKey.FieldContext != key.FieldContext && existingKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+			// remove field context in the map to make it generic
+			*actions = append(*actions, fmt.Sprintf("Removed field context from %s for duplicate key %s", existingKey, key))
+			existingKey.FieldContext = telemetrytypes.FieldContextUnspecified
+		}
+		if existingKey.FieldDataType != key.FieldDataType && existingKey.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+			// remove field data type in the map to make it generic
+			*actions = append(*actions, fmt.Sprintf("Removed field data type from %s for duplicate key %s", existingKey, key))
+			existingKey.FieldDataType = telemetrytypes.FieldDataTypeUnspecified
+		}
+		// Update the map with the modified key
+		keysMap[key.Name] = existingKey
+	}
+}
+
 
 func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, intrinsicOrCalculatedField *telemetrytypes.TelemetryFieldKey) []string {
 
