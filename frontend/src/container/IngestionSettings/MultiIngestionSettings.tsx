@@ -271,14 +271,14 @@ function MultiIngestionSettings(): JSX.Element {
 	});
 
 	useEffect(() => {
-		setActiveAPIKey(IngestionKeys?.data.keys[0]);
+		setActiveAPIKey(IngestionKeys?.data?.data?.keys[0]);
 	}, [IngestionKeys]);
 
 	useEffect(() => {
-		setDataSource(IngestionKeys?.data.keys || []);
-		setTotalIngestionKeys(IngestionKeys?.data?._pagination?.total || 0);
+		setDataSource(IngestionKeys?.data?.data?.keys || []);
+		setTotalIngestionKeys(IngestionKeys?.data?.data?._pagination?.total || 0);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [IngestionKeys?.data?.keys]);
+	}, [IngestionKeys?.data?.data?.keys]);
 
 	useEffect(() => {
 		if (isError) {
