@@ -17,10 +17,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - name: install
         run: cd frontend && yarn install
       - name: tsc
