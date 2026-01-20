@@ -61,33 +61,11 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 
 	stats := make(map[string]any)
 
-	var oidcCount, samlCount, googleAuthCount int64
-
 	for _, domain := range domains {
-		if !domain.AuthDomainConfig().SSOEnabled {
-			// no need to count since SSO is not enabled
-			continue
-		}
-
-		switch domain.AuthDomainConfig().AuthNProvider {
-		case authtypes.AuthNProviderOIDC:
-			oidcCount++
-		case authtypes.AuthNProviderSAML:
-			samlCount++
-		case authtypes.AuthNProviderGoogleAuth:
-			googleAuthCount++
-		}
+		statKey := "authdomain." + domain.AuthDomainConfig().AuthNProvider.StringValue() + ".count"
+		stats[statKey] = (stats[statKey].(int64)) + 1
 	}
 
-	// count of domains with sso enabled for oidc, saml and google_auth
-	stats["authdomain.oidc.count"] = oidcCount
-	stats["authdomain.saml.count"] = samlCount
-	stats["authdomain.google_auth.count"] = googleAuthCount
-
-	// total number of sso enabled domains
-	stats["authdomain.sso.total.count"] = oidcCount + samlCount + googleAuthCount
-
-	// total number of domains
 	stats["authdomain.count"] = len(domains)
 
 	return stats, nil
