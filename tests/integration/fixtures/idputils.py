@@ -378,20 +378,6 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
         login_button.click()
 
-        # Input email. The following element is present in the idp login page.
-        # <input id="username" name="username" value="" type="text" autocomplete="username" autofocus aria-invalid=""/>
-        # driver.find_element(By.ID, "username").send_keys(email)
-
-        # Input password. The following element is present in the idp login page.
-        # <input id="password" name="password" value="" type="password" autocomplete="current-password" aria-invalid=""/>
-        # driver.find_element(By.ID, "password").send_keys(password)
-
-        # Click login button. The following element is present in the idp login page.
-        # <button class="pf-v5-c-button pf-m-primary pf-m-block " name="login" id="kc-login" type="submit" >Sign In</button>
-        # driver.find_element(By.ID, "kc-login").click()
-
-        # wait = WebDriverWait(driver, 10)
-
         # Wait till kc-login element has vanished from the page, which means that a redirection is taking place.
         wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
 
