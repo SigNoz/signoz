@@ -1379,8 +1379,6 @@ function QuerySearch({
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
 											onRun(getCurrentExpression());
-										} else {
-											handleRunQuery();
 										}
 										return true;
 									},

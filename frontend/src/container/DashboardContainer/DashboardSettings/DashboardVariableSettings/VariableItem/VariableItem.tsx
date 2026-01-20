@@ -320,6 +320,10 @@ function VariableItem({
 	]);
 
 	const variableValue = useMemo(() => {
+		if (queryType === 'TEXTBOX') {
+			return variableTextboxValue;
+		}
+
 		if (variableMultiSelect) {
 			let value = variableData.selectedValue;
 			if (isEmpty(value)) {
@@ -352,6 +356,8 @@ function VariableItem({
 		variableData.selectedValue,
 		variableData.showALLOption,
 		variableDefaultValue,
+		variableTextboxValue,
+		queryType,
 		previewValues,
 	]);
 
@@ -367,13 +373,10 @@ function VariableItem({
 			multiSelect: variableMultiSelect,
 			showALLOption: queryType === 'DYNAMIC' ? true : variableShowALLOption,
 			sort: variableSortType,
-			...(queryType === 'TEXTBOX' && {
-				selectedValue: (variableData.selectedValue ||
-					variableTextboxValue) as never,
-			}),
-			...(queryType !== 'TEXTBOX' && {
-				defaultValue: variableDefaultValue as never,
-			}),
+			// the reason we need to do this is because defaultValues are treated differently in case of textbox type
+			// They are the exact same and not like the other types where defaultValue is a separate field
+			defaultValue:
+				queryType === 'TEXTBOX' ? variableTextboxValue : variableDefaultValue,
 			modificationUUID: generateUUID(),
 			id: variableData.id || generateUUID(),
 			order: variableData.order,
