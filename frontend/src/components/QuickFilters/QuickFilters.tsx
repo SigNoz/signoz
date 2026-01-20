@@ -155,7 +155,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// In ListView, always show the 0th query's name; otherwise use the active query's name
 	const displayedQueryName = isListView
-		? currentQuery.builder.queryData?.[0]?.queryName
+		? showQueryName && currentQuery.builder.queryData?.[0]?.queryName
 		: lastQueryName;
 
 	const handleQueryChange = (value: number): void => {

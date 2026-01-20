@@ -167,8 +167,8 @@ export default function TableViewActions(
 			stagedQuery,
 			'queryData',
 			(item, index) => {
-				// Only add groupBy for index 0 and queryName 'A'
-				if (index === 0 && item.queryName === 'A') {
+				// Only add groupBy for index 0
+				if (index === 0) {
 					const newGroupByItem: BaseAutocompleteData = {
 						key: fieldFilterKey,
 						type: fieldType || '',

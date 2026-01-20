@@ -24,7 +24,7 @@ import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQue
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -108,11 +108,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		filter.defaultOpen,
 	]);
 
-	const {
-		data,
-		isLoading,
-		refetch: refetchAggregateValues,
-	} = useGetAggregateValues(
+	const { data, isLoading } = useGetAggregateValues(
 		{
 			aggregateOperator: filter.aggregateOperator || 'noop',
 			dataSource: filter.dataSource || DataSource.LOGS,
@@ -131,7 +127,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const {
 		data: keyValueSuggestions,
 		isLoading: isLoadingKeyValueSuggestions,
-		refetch: refetchKeyValueSuggestions,
 	} = useGetQueryKeyValueSuggestions({
 		key: filter.attributeKey.key,
 		signal: filter.dataSource || DataSource.LOGS,
@@ -141,24 +136,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			keepPreviousData: true,
 		},
 	});
-
-	// Refetch when the active query changes (lastUsedQuery)
-	// This ensures we get fresh filter values for the newly selected query
-	const handleQueryChange = (): void => {
-		if (isOpen) {
-			if (source === QuickFiltersSource.METER_EXPLORER) {
-				refetchKeyValueSuggestions();
-			} else {
-				refetchAggregateValues();
-			}
-		}
-	};
-
-	// Watch for query changes and refetch filter values
-	useEffect(() => {
-		handleQueryChange();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [lastUsedQuery]);
 
 	const attributeValues: string[] = useMemo(() => {
 		const dataType = filter.attributeKey.dataType || DataTypes.String;
