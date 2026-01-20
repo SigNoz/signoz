@@ -15,8 +15,8 @@
 	max-width: 54px;
 	min-width: 54px;
 	width: 54px;
-	border-right: 1px solid var(--Slate-500, #161922);
-	background: var(--Ink-500, #0b0c0e);
+	border-right: 1px solid var(--bg-slate-500, #161922);
+	background: var(--bg-ink-500, #0b0c0e);
 
 	padding-bottom: 48px;
 	transition: all 0.08s ease, background 0s, border 0s;
@@ -97,7 +97,7 @@
 
 				color: var(--bg-vanilla-100);
 				border-radius: 4px 0px 0px 4px;
-				background: var(--Slate-400, #1d212d);
+				background: var(--bg-slate-400, #1d212d);
 
 				text-align: center;
 				font-family: Inter;
@@ -119,11 +119,11 @@
 				gap: 6px;
 
 				border-radius: 0px 4px 4px 0px;
-				background: var(--Slate-300, #242834);
+				background: var(--bg-slate-300, #242834);
 			}
 
 			.version {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400, #c0c1c3);
 				text-align: center;
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
 				font-feature-settings: 'salt' on;
@@ -190,8 +190,8 @@
 			height: 32px;
 
 			border-radius: 3px;
-			border: 1px solid var(--Slate-400, #1d212d);
-			background: var(--Slate-500, #161922);
+			border: 1px solid var(--bg-slate-400, #1d212d);
+			background: var(--bg-slate-500, #161922);
 
 			box-shadow: none !important;
 
@@ -276,7 +276,7 @@
 				}
 
 				.nav-section-title {
-					color: var(--Slate-50, #62687c);
+					color: var(--bg-slate-50, #62687c);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -290,7 +290,7 @@
 					align-items: center;
 					gap: 8px;
 
-					padding: 0 17px !important;
+					padding: 0 17px;
 
 					.nav-section-title-text {
 						display: none;
@@ -323,7 +323,7 @@
 				}
 
 				.nav-section-subtitle {
-					color: var(--Vanilla-400, #c0c1c3);
+					color: var(--bg-vanilla-400, #c0c1c3);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -489,7 +489,7 @@
 
 		&.scroll-available {
 			.nav-bottom-section {
-				border-top: 1px solid var(--Slate-500, #161922);
+				border-top: 1px solid var(--bg-slate-500, #161922);
 			}
 		}
 	}
@@ -571,7 +571,7 @@
 		border-radius: 12px;
 		background: var(--Robin-500, #4e74f8);
 
-		color: var(--Vanilla-100, #fff);
+		color: var(--bg-vanilla-100, #fff);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
 		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
 		font-family: Inter;
@@ -584,7 +584,7 @@
 	}
 
 	.sidenav-beta-tag {
-		color: var(--Vanilla-100, #fff);
+		color: var(--bg-vanilla-100, #fff);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
 		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
 		font-family: Inter;
@@ -609,7 +609,7 @@
 		.shortcut-nav-items,
 		.more-nav-items {
 			.nav-section-title {
-				padding: 0 17px !important;
+				padding: 0 17px;
 
 				.nav-section-title-icon {
 					display: none;
@@ -628,7 +628,7 @@
 			.shortcut-nav-items,
 			.more-nav-items {
 				.nav-section-title {
-					padding: 0 17px !important;
+					padding: 0 17px;
 
 					.nav-section-title-icon {
 						display: flex;
@@ -733,7 +733,7 @@
 						flex-direction: row;
 						gap: 3px;
 						border-radius: 20px;
-						background: var(--Slate-400, #1d212d);
+						background: var(--bg-slate-400, #1d212d);
 
 						/* Drop Shadow */
 						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
@@ -749,7 +749,7 @@
 						width: 140px;
 
 						.scroll-for-more-label {
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--bg-vanilla-400, #c0c1c3);
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -913,7 +913,7 @@
 						flex-direction: row;
 						gap: 3px;
 						border-radius: 20px;
-						background: var(--Slate-400, #1d212d);
+						background: var(--bg-slate-400, #1d212d);
 
 						/* Drop Shadow */
 						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
@@ -931,7 +931,7 @@
 						.scroll-for-more-label {
 							display: block;
 
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--bg-vanilla-400, #c0c1c3);
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -1036,7 +1036,7 @@
 
 		.ant-dropdown-menu-item {
 			.ant-dropdown-menu-title-content {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400, #c0c1c3);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -1061,7 +1061,7 @@
 		gap: 8px;
 
 		.user-settings-dropdown-label-text {
-			color: var(--Slate-50, #62687c);
+			color: var(--bg-slate-50, #62687c);
 			font-family: Inter;
 			font-size: 10px;
 			font-family: Inter;
@@ -1073,7 +1073,7 @@
 		}
 
 		.user-settings-dropdown-label-email {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400, #c0c1c3);
 			font-family: Inter;
 			font-size: 12px;
 			font-style: normal;
@@ -1083,7 +1083,7 @@
 	}
 
 	.ant-dropdown-menu-item-divider {
-		background-color: var(--Slate-500, #161922) !important;
+		background-color: var(--bg-slate-500, #161922) !important;
 	}
 
 	.ant-dropdown-menu-item-disabled {
@@ -1091,7 +1091,7 @@
 	}
 
 	.ant-dropdown-menu {
-		width: 100% !important; // todo:sagar check with shuvam once
+		width: 100% !important;
 	}
 }
 
@@ -1248,10 +1248,10 @@
 				line-height: 24px;
 
 				&.secondary-btn {
-					background-color: var(--Slate-500, #161922) !important;
+					background-color: var(--bg-slate-500, #161922) !important;
 					border: 1px solid var(--bg-slate-500) !important;
 
-					color: var(--Vanilla-400, #c0c1c3) !important;
+					color: var(--bg-vanilla-400, #c0c1c3) !important;
 
 					/* button/ small  */
 					font-family: Inter;
@@ -1275,7 +1275,7 @@
 }
 
 .help-support-dropdown li.ant-dropdown-menu-item-divider {
-	background-color: var(--Slate-500, #161922) !important;
+	background-color: var(--bg-slate-500, #161922) !important;
 }
 
 .lightMode {
@@ -1531,7 +1531,7 @@
 		border-radius: 2px;
 		border: 1px solid var(--bg-slate-500);
 
-		color: var(--Vanilla-100, #fff);
+		color: var(--bg-vanilla-100, #fff);
 		font-family: Inter;
 		font-size: 11px;
 		font-style: normal;
@@ -1546,7 +1546,7 @@
 		gap: 4px;
 
 		.version-update-notification-tooltip-title {
-			color: var(--Vanilla-100, #fff);
+			color: var(--bg-vanilla-100, #fff);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -1556,7 +1556,7 @@
 		}
 
 		.version-update-notification-tooltip-content {
-			color: var(--Vanilla-100, #fff);
+			color: var(--bg-vanilla-100, #fff);
 			font-family: Inter;
 			font-size: 10px;
 			font-style: normal;

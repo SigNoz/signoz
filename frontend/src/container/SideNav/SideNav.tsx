@@ -169,6 +169,32 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const userManuallyCollapsedRef = useRef<boolean>(false);
 	const hasInitializedDefaultsRef = useRef<boolean>(false);
 
+	const [isHovered, setIsHovered] = useState(false);
+	const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	const handleMouseEnter = useCallback(() => {
+		if (hoverTimeoutRef.current) {
+			clearTimeout(hoverTimeoutRef.current);
+			hoverTimeoutRef.current = null;
+		}
+		setIsHovered(true);
+	}, []);
+
+	const handleMouseLeave = useCallback(() => {
+		hoverTimeoutRef.current = setTimeout(() => {
+			setIsHovered(false);
+		}, 100); // 100ms Intent Delay
+	}, []);
+
+	useEffect(
+		() => (): void => {
+			if (hoverTimeoutRef.current) {
+				clearTimeout(hoverTimeoutRef.current);
+			}
+		},
+		[],
+	);
+
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
 			const { scrollHeight, clientHeight, scrollTop } = navTopSectionRef.current;
@@ -311,7 +337,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	] = useState(false);
 
 	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(!isPinned);
-	const [isHovered, setIsHovered] = useState(false);
 
 	const [
 		isReorderShortcutNavItemsModalOpen,
@@ -988,8 +1013,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					isPinned && 'pinned',
 					isDropdownOpen && 'dropdown-open',
 				)}
-				onMouseEnter={(): void => setIsHovered(true)}
-				onMouseLeave={(): void => setIsHovered(false)}
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
 			>
 				<div className={cx('brand-container', isScrolled && 'scrolled')}>
 					<div className="brand">

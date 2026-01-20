@@ -16,7 +16,7 @@
 
 		.nav-item-data {
 			.nav-item-label {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100, #fff);
 			}
 		}
 	}
@@ -33,14 +33,14 @@
 
 		.nav-item-data {
 			color: white;
-			background: var(--Slate-500, #161922);
+			background: var(--bg-slate-500, #161922);
 		}
 	}
 
 	&.active {
 		.nav-item-data {
 			color: white;
-			background: var(--Slate-500, #161922);
+			background: var(--bg-slate-500, #161922);
 			// color: #3f5ecc;
 		}
 	}
@@ -106,7 +106,7 @@
 
 		&:hover {
 			.nav-item-label {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100, #fff);
 			}
 
 			.nav-item-pin-icon {
