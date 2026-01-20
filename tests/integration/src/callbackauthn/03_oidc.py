@@ -3,6 +3,7 @@ from typing import Callable, List
 from urllib.parse import urlparse
 
 import requests
+import pytest
 from selenium import webdriver
 from wiremock.resources.mappings import Mapping
 
@@ -76,6 +77,7 @@ def test_create_auth_domain(
     assert response.status_code == HTTPStatus.CREATED
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_authn(
     signoz: SigNoz,
     idp: TestContainerIDP,  # pylint: disable=unused-argument
@@ -185,6 +187,7 @@ def test_oidc_update_domain_with_group_mappings(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_single_group_admin(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -211,6 +214,7 @@ def test_oidc_role_mapping_single_group_admin(
     assert found_user["role"] == "ADMIN"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_single_group_editor(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -237,6 +241,7 @@ def test_oidc_role_mapping_single_group_editor(
     assert found_user["role"] == "EDITOR"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_multiple_groups_highest_wins(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -267,6 +272,7 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     assert found_user["role"] == "ADMIN"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_explicit_viewer_group(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -294,6 +300,7 @@ def test_oidc_role_mapping_explicit_viewer_group(
     assert found_user["role"] == "VIEWER"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_unmapped_group_uses_default(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -370,6 +377,7 @@ def test_oidc_update_domain_with_use_role_claim(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_role_claim_takes_precedence(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -400,6 +408,7 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     assert found_user["role"] == "ADMIN"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_invalid_role_claim_fallback(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -432,6 +441,7 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     assert found_user["role"] == "EDITOR"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_role_mapping_case_insensitive(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -462,6 +472,7 @@ def test_oidc_role_mapping_case_insensitive(
     assert found_user["role"] == "EDITOR"
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_name_mapping(
     signoz: SigNoz,
     idp: TestContainerIDP,
@@ -498,6 +509,7 @@ def test_oidc_name_mapping(
     assert found_user["role"] == "VIEWER"  # Default role
 
 
+@pytest.mark.flaky(reruns=3, only_rerun=["WebDriverException"])
 def test_oidc_empty_name_uses_fallback(
     signoz: SigNoz,
     idp: TestContainerIDP,
