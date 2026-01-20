@@ -1,10 +1,11 @@
+import AuthPageContainer from 'components/AuthPageContainer';
 import OnboardingQuestionaire from 'container/OnboardingQuestionaire';
 
 function OrgOnboarding(): JSX.Element {
 	return (
-		<div className="onboarding-v2">
+		<AuthPageContainer isOnboarding>
 			<OnboardingQuestionaire />
-		</div>
+		</AuthPageContainer>
 	);
 }
 
