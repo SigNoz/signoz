@@ -7,6 +7,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { RotateCcw } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Labels } from 'types/api/alerts/def';
@@ -19,6 +20,7 @@ function CreateAlertHeader(): JSX.Element {
 
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
 
 	const groupByLabels = useMemo(() => {
 		const labels = new Array<string>();
@@ -44,15 +46,10 @@ function CreateAlertHeader(): JSX.Element {
 	const handleSwitchToClassicExperience = useCallback(() => {
 		logEvent('Alert: Switch to classic experience button clicked', {});
 
-		const params = new URLSearchParams();
-		params.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(currentQuery)),
-		);
-		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
-		const url = `${ROUTES.ALERTS_NEW}?${params.toString()}`;
+		urlQuery.set(QueryParams.showClassicCreateAlertsPage, 'true');
+		const url = `${ROUTES.ALERTS_NEW}?${urlQuery.toString()}`;
 		safeNavigate(url, { replace: true });
-	}, [currentQuery, safeNavigate]);
+	}, [safeNavigate, urlQuery]);
 
 	return (
 		<div

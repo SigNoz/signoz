@@ -119,10 +119,6 @@ describe('CreateAlertHeader', () => {
 		fireEvent.click(switchToClassicExperienceButton);
 
 		const params = new URLSearchParams();
-		params.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(initialQueriesMap.metrics)),
-		);
 		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
 		expect(mockSafeNavigate).toHaveBeenCalledWith(
 			`${ROUTES.ALERTS_NEW}?${params.toString()}`,
