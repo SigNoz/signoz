@@ -2,7 +2,11 @@
 import './Duration.styles.scss';
 
 import { Button, Collapse } from 'antd';
-import { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import {
+	IQuickFiltersConfig,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -27,9 +31,11 @@ export type FilterType = Record<
 function Duration({
 	filter,
 	onFilterChange,
+	source,
 }: {
 	filter: IQuickFiltersConfig;
 	onFilterChange?: (query: Query) => void;
+	source?: QuickFiltersSource;
 }): JSX.Element {
 	const [selectedFilters, setSelectedFilters] = useState<
 		Record<
@@ -41,13 +47,31 @@ function Duration({
 		filter.defaultOpen ? 'durationNano' : '',
 	]);
 
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		currentQuery,
+		redirectWithQueryBuilderData,
+		lastUsedQuery,
+		panelType,
+	} = useQueryBuilder();
 
 	const compositeQuery = useGetCompositeQueryParam();
 
+	const isListView = panelType === PANEL_TYPES.LIST;
+	// In ListView mode, use index 0 for most sources; for TRACES_EXPLORER, use lastUsedQuery
+	// Otherwise use lastUsedQuery for non-ListView modes
+	const activeQueryIndex = useMemo(() => {
+		if (isListView) {
+			return source === QuickFiltersSource.TRACES_EXPLORER
+				? lastUsedQuery || 0
+				: 0;
+		}
+		return lastUsedQuery || 0;
+	}, [isListView, source, lastUsedQuery]);
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const syncSelectedFilters = useMemo((): FilterType => {
-		const filters = compositeQuery?.builder.queryData?.[0].filters;
+		const filters =
+			compositeQuery?.builder.queryData?.[activeQueryIndex]?.filters;
 		if (!filters) {
 			return {} as FilterType;
 		}
@@ -95,7 +119,7 @@ function Duration({
 
 				return acc;
 			}, {} as FilterType);
-	}, [compositeQuery]);
+	}, [compositeQuery, activeQueryIndex]);
 
 	useEffect(() => {
 		if (!isEqual(syncSelectedFilters, selectedFilters)) {
@@ -195,20 +219,25 @@ function Duration({
 				...currentQuery,
 				builder: {
 					...currentQuery.builder,
-					queryData: currentQuery.builder.queryData.map((item) => ({
-						...item,
-						filters: {
-							...item.filters,
-							items: props?.resetAll
-								? []
-								: (unionTagFilterItems(item.filters?.items || [], preparePostData())
-										.map((item) =>
-											item.key?.key === props?.clearByType ? undefined : item,
-										)
-										.filter((i) => i) as TagFilterItem[]),
-							op: item.filters?.op || 'AND',
-						},
-					})),
+					queryData: currentQuery.builder.queryData.map((item, idx) => {
+						if (idx !== activeQueryIndex) {
+							return item;
+						}
+						return {
+							...item,
+							filters: {
+								...item.filters,
+								items: props?.resetAll
+									? []
+									: (unionTagFilterItems(item.filters?.items || [], preparePostData())
+											.map((item) =>
+												item.key?.key === props?.clearByType ? undefined : item,
+											)
+											.filter((i) => i) as TagFilterItem[]),
+								op: item.filters?.op || 'AND',
+							},
+						};
+					}),
 				},
 			};
 
@@ -221,14 +250,18 @@ function Duration({
 			) {
 				return;
 			}
-
 			if (onFilterChange && isFunction(onFilterChange)) {
 				onFilterChange(preparedQuery);
 			} else {
 				redirectWithQueryBuilderData(preparedQuery);
 			}
 		},
-		[currentQuery, redirectWithQueryBuilderData, selectedFilters],
+		[
+			currentQuery,
+			redirectWithQueryBuilderData,
+			selectedFilters,
+			activeQueryIndex,
+		],
 	);
 
 	useEffect(() => {
