@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/cmd"
-	_ "github.com/SigNoz/signoz/ee/authz/openfgaauthz"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
