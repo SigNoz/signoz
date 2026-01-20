@@ -16,13 +16,13 @@ type provider struct {
 	hooks          []telemetrystore.TelemetryStoreHook
 }
 
-func NewFactory(hookFactories ...telemetrystore.TelemetryStoreHookFactoryFunc) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
+func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("clickhouse"), func(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStore, error) {
 		return New(ctx, providerSettings, config, hookFactories...)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hookFactories ...telemetrystore.TelemetryStoreHookFactoryFunc) (telemetrystore.TelemetryStore, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) (telemetrystore.TelemetryStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
 	options, err := clickhouse.ParseDSN(config.Clickhouse.DSN)
@@ -40,14 +40,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	var version string
-	if err := chConn.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
-		return nil, err
-	}
 
 	hooks := make([]telemetrystore.TelemetryStoreHook, len(hookFactories))
 	for i, hookFactory := range hookFactories {
-		hook, err := hookFactory(version).New(ctx, providerSettings, config)
+		hook, err := hookFactory.New(ctx, providerSettings, config)
 		if err != nil {
 			return nil, err
 		}
