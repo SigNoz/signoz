@@ -47,6 +47,10 @@
 
 	.api-monitoring-domain-list-table {
 		.ant-table {
+			.expanded-clickable-row {
+				cursor: pointer;
+			}
+
 			.ant-table-thead > tr > th {
 				padding: 12px;
 				font-weight: 500;
