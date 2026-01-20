@@ -1,25 +1,25 @@
-import { GatewayApiV1Instance } from 'api';
+import { GatewayApiV2Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
+	CreatedIngestionKeyProps,
 	CreateIngestionKeyProps,
-	IngestionKeyProps,
 } from 'types/api/ingestionKeys/types';
 
 const createIngestionKey = async (
 	props: CreateIngestionKeyProps,
-): Promise<SuccessResponse<IngestionKeyProps> | ErrorResponse> => {
+): Promise<SuccessResponse<CreatedIngestionKeyProps> | ErrorResponse> => {
 	try {
-		const response = await GatewayApiV1Instance.post('/workspaces/me/keys', {
+		const response = await GatewayApiV2Instance.post('/ingestion_keys', {
 			...props,
 		});
 
 		return {
 			statusCode: 200,
 			error: null,
-			message: response.data.status,
-			payload: response.data.data,
+			message: 'success',
+			payload: response.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);

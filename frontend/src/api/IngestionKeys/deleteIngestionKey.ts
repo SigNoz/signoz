@@ -1,22 +1,19 @@
-import { GatewayApiV1Instance } from 'api';
+import { GatewayApiV2Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { AllIngestionKeyProps } from 'types/api/ingestionKeys/types';
 
 const deleteIngestionKey = async (
 	id: string,
-): Promise<SuccessResponse<AllIngestionKeyProps> | ErrorResponse> => {
+): Promise<SuccessResponse<void> | ErrorResponse> => {
 	try {
-		const response = await GatewayApiV1Instance.delete(
-			`/workspaces/me/keys/${id}`,
-		);
+		await GatewayApiV2Instance.delete(`/ingestion_keys/${id}`);
 
 		return {
 			statusCode: 200,
 			error: null,
-			message: response.data.status,
-			payload: response.data.data,
+			message: 'success',
+			payload: undefined,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);

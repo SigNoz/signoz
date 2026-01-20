@@ -271,14 +271,14 @@ function MultiIngestionSettings(): JSX.Element {
 	});
 
 	useEffect(() => {
-		setActiveAPIKey(IngestionKeys?.data.data[0]);
+		setActiveAPIKey(IngestionKeys?.data.keys[0]);
 	}, [IngestionKeys]);
 
 	useEffect(() => {
-		setDataSource(IngestionKeys?.data.data || []);
+		setDataSource(IngestionKeys?.data.keys || []);
 		setTotalIngestionKeys(IngestionKeys?.data?._pagination?.total || 0);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [IngestionKeys?.data?.data]);
+	}, [IngestionKeys?.data?.keys]);
 
 	useEffect(() => {
 		if (isError) {
@@ -310,8 +310,7 @@ function MultiIngestionSettings(): JSX.Element {
 		mutate: createIngestionKey,
 		isLoading: isLoadingCreateAPIKey,
 	} = useMutation(createIngestionKeyApi, {
-		onSuccess: (data) => {
-			setActiveAPIKey(data.payload);
+		onSuccess: () => {
 			setUpdatedTags([]);
 			hideAddViewModal();
 			refetchAPIKeys();
@@ -592,7 +591,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 		const payload: UpdateLimitProps = {
 			limitID: signal.id,
-			signal: signal.signal,
+			tags: [],
 			config: {},
 		};
 

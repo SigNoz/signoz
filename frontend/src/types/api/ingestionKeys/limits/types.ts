@@ -24,15 +24,20 @@ export interface AddLimitProps {
 	keyID: string;
 	signal: string;
 	config: LimitSettings;
+	tags?: string[];
 }
 
 export interface UpdateLimitProps {
 	limitID: string;
-	signal: string;
 	config: LimitSettings;
+	tags?: string[];
 }
 
 export interface LimitSuccessProps {
 	status: string;
 	response: unknown;
+}
+
+export interface CreateLimitProps {
+	id: string;
 }

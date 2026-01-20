@@ -53,13 +53,13 @@ export interface PaginationProps {
 }
 
 export interface AllIngestionKeyProps {
-	status: string;
-	data: IngestionKeyProps[];
+	keys: IngestionKeyProps[];
 	_pagination: PaginationProps;
 }
 
-export interface CreateIngestionKeyProp {
-	data: IngestionKeyProps;
+export interface CreatedIngestionKeyProps {
+	id: string;
+	value: string;
 }
 
 export interface DeleteIngestionKeyPayloadProps {
