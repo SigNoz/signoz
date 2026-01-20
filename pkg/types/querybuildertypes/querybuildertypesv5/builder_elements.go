@@ -433,6 +433,13 @@ func (g GroupByKey) Copy() GroupByKey {
 	return g
 }
 
+func (g *GroupByKey) GetTelemetryFieldKey() *telemetrytypes.TelemetryFieldKey {
+	return g.TelemetryFieldKey.GetTelemetryFieldKey()
+}
+
+// To ensure GroupByKey implements Keyed
+var _ = telemetrytypes.Keyed(&GroupByKey{})
+
 type Having struct {
 	// expression to filter by following the filter syntax
 	Expression string `json:"expression"`
@@ -457,6 +464,14 @@ func (o OrderByKey) Copy() OrderByKey {
 	return o
 }
 
+// GetTelemetryFieldKey returns the TelemetryFieldKey of the OrderBy
+func (o *OrderByKey) GetTelemetryFieldKey() *telemetrytypes.TelemetryFieldKey {
+	return o.TelemetryFieldKey.GetTelemetryFieldKey()
+}
+
+// To ensure OrderByKey implements Keyed
+var _ = telemetrytypes.Keyed(&OrderByKey{})
+
 // key to order by
 type OrderBy struct {
 	// key to order by
@@ -472,6 +487,14 @@ func (o OrderBy) Copy() OrderBy {
 		Direction: o.Direction,
 	}
 }
+
+// GetTelemetryFieldKey returns the TelemetryFieldKey of the OrderBy
+func (o *OrderBy) GetTelemetryFieldKey() *telemetrytypes.TelemetryFieldKey {
+	return o.Key.GetTelemetryFieldKey()
+}
+
+// To ensure OrderBy implements Keyed
+var _ = telemetrytypes.Keyed(&OrderBy{})
 
 // secondary aggregation to apply to the query
 type SecondaryAggregation struct {

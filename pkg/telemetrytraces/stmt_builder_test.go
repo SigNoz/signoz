@@ -202,6 +202,7 @@ func TestStatementBuilder(t *testing.T) {
 				Aggregations: []qbtypes.TraceAggregation{
 					{
 						Expression: "sum(metric.max_count)",
+						Alias:      "metric.max_count",
 					},
 				},
 				Filter: &qbtypes.Filter{
@@ -215,9 +216,20 @@ func TestStatementBuilder(t *testing.T) {
 						},
 					},
 				},
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:         "max_count",
+								FieldContext: telemetrytypes.FieldContextMetric,
+							},
+						},
+						Direction: qbtypes.OrderDirectionDesc,
+					},
+				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count') = ?, toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count') = ?, toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count') = ?, toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY __result_0 desc LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, sum(multiIf(mapContains(attributes_number, 'metric.max_count') = ?, toFloat64(attributes_number['metric.max_count']), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name` ORDER BY ts desc",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, true, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -1256,6 +1268,128 @@ func TestAdjustKeys(t *testing.T) {
 						},
 					},
 					Direction: qbtypes.OrderDirectionDesc,
+				},
+			},
+			expectDeprecatedFieldsAdd: true,
+		},
+		{
+			name: "adjust keys for alias expressions in aggregations - group by",
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "sum(metric.max_count)",
+						Alias:      "metric.max_count",
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "max_count",
+							FieldContext: telemetrytypes.FieldContextMetric,
+						},
+					},
+				},
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			// After alias adjustment, name becomes "metric.max_count" with FieldContextUnspecified
+			// Then adjustKey looks up "metric.max_count" in keysMap and finds it as an attribute field
+			expectedGroupBy: []qbtypes.GroupByKey{
+				{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name:          "metric.max_count",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					},
+				},
+			},
+			expectDeprecatedFieldsAdd: true,
+		},
+		{
+			name: "adjust keys for alias expressions in aggregations - order by",
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "sum(span.duration)",
+						Alias:      "span.duration",
+					},
+				},
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:         "duration",
+								FieldContext: telemetrytypes.FieldContextSpan,
+							},
+						},
+						Direction: qbtypes.OrderDirectionDesc,
+					},
+				},
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			// After alias adjustment, name becomes "span.duration" with FieldContextUnspecified
+			// "span.duration" is not in keysMap, so context stays unspecified
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "span.duration",
+							FieldContext: telemetrytypes.FieldContextUnspecified,
+						},
+					},
+					Direction: qbtypes.OrderDirectionDesc,
+				},
+			},
+			expectDeprecatedFieldsAdd: true,
+		},
+		{
+			name: "adjust keys for alias expressions - both group by and order by",
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "count()",
+						Alias:      "resource.count",
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "count",
+							FieldContext: telemetrytypes.FieldContextResource,
+						},
+					},
+				},
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:         "count",
+								FieldContext: telemetrytypes.FieldContextResource,
+							},
+						},
+						Direction: qbtypes.OrderDirectionAsc,
+					},
+				},
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			// After alias adjustment, name becomes "resource.count" with FieldContextUnspecified
+			// "resource.count" is not in keysMap, so context stays unspecified
+			expectedGroupBy: []qbtypes.GroupByKey{
+				{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name:         "resource.count",
+						FieldContext: telemetrytypes.FieldContextUnspecified,
+					},
+				},
+			},
+			expectedOrder: []qbtypes.OrderBy{
+				{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:         "resource.count",
+							FieldContext: telemetrytypes.FieldContextUnspecified,
+						},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
 				},
 			},
 			expectDeprecatedFieldsAdd: true,
