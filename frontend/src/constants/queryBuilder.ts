@@ -301,6 +301,7 @@ export const initialQueryState: QueryState = {
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
+	unit: '',
 };
 
 const initialQueryWithType: Query = {

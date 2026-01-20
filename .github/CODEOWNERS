@@ -16,13 +16,13 @@
 
 # Scaffold Owners
 
-/pkg/config/ @therealpandey
-/pkg/errors/ @therealpandey
-/pkg/factory/ @therealpandey
-/pkg/types/ @therealpandey
-/pkg/valuer/ @therealpandey
-/cmd/ @therealpandey
-.golangci.yml @therealpandey
+/pkg/config/ @vikrantgupta25
+/pkg/errors/ @vikrantgupta25
+/pkg/factory/ @vikrantgupta25
+/pkg/types/ @vikrantgupta25
+/pkg/valuer/ @vikrantgupta25
+/cmd/ @vikrantgupta25
+.golangci.yml @vikrantgupta25
 
 # Zeus Owners
 
@@ -48,19 +48,53 @@
 /pkg/querier/ @srikanthccv
 /pkg/variables/ @srikanthccv
 /pkg/types/querybuildertypes/ @srikanthccv
+/pkg/types/telemetrytypes/ @srikanthccv
 /pkg/querybuilder/ @srikanthccv
 /pkg/telemetrylogs/ @srikanthccv
 /pkg/telemetrymetadata/ @srikanthccv
 /pkg/telemetrymetrics/ @srikanthccv
 /pkg/telemetrytraces/ @srikanthccv
 
+
+# Metrics
+
+/pkg/types/metrictypes/ @srikanthccv
+/pkg/types/metricsexplorertypes/ @srikanthccv
+/pkg/modules/metricsexplorer/ @srikanthccv
+/pkg/prometheus/ @srikanthccv
+
+# APM
+
+/pkg/types/servicetypes/ @srikanthccv
+/pkg/types/apdextypes/ @srikanthccv
+/pkg/modules/apdex/ @srikanthccv
+/pkg/modules/services/ @srikanthccv
+
+# Dashboard
+
+/pkg/types/dashboardtypes/ @srikanthccv
+/pkg/modules/dashboard/ @srikanthccv
+
+# Rule/Alertmanager
+
+/pkg/types/ruletypes/ @srikanthccv
+/pkg/types/alertmanagertypes @srikanthccv
+/pkg/alertmanager/ @srikanthccv
+/pkg/ruler/ @srikanthccv
+
+# Correlation-adjacent
+
+/pkg/contextlinks/ @srikanthccv
+/pkg/types/parsertypes/ @srikanthccv
+/pkg/queryparser/ @srikanthccv
+
 # AuthN / AuthZ Owners
 
-/pkg/authz/ @vikrantgupta25 @therealpandey
+/pkg/authz/ @vikrantgupta25
 
 # Integration tests
 
-/tests/integration/ @therealpandey
+/tests/integration/ @vikrantgupta25
 
 # Dashboard Owners
 
