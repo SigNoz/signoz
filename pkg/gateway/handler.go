@@ -117,7 +117,7 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req gatewaytypes.IngestionKeyRequest
+	var req gatewaytypes.PostableIngestionKey
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -153,7 +153,7 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req gatewaytypes.IngestionKeyRequest
+	var req gatewaytypes.PostableIngestionKey
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -219,7 +219,7 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	var req gatewaytypes.IngestionKeyLimitRequest
+	var req gatewaytypes.PostableIngestionKeyLimit
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -255,7 +255,7 @@ func (handler *handler) UpdateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	var req gatewaytypes.UpdateIngestionKeyLimitRequest
+	var req gatewaytypes.UpdatableIngestionKeyLimit
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return

@@ -28,21 +28,21 @@ type Limit struct {
 }
 
 type LimitConfig struct {
-	Day    *LimitThreshold `json:"day,omitempty"`
-	Second *LimitThreshold `json:"second,omitempty"`
+	Day    *LimitValue `json:"day,omitempty"`
+	Second *LimitValue `json:"second,omitempty"`
 }
 
-type LimitThreshold struct {
+type LimitValue struct {
 	Size  int64 `json:"size,omitempty"`
 	Count int64 `json:"count,omitempty"`
 }
 
 type LimitMetric struct {
-	Day    *UsageMetric `json:"day,omitempty"`
-	Second *UsageMetric `json:"second,omitempty"`
+	Day    *LimitMetricValue `json:"day,omitempty"`
+	Second *LimitMetricValue `json:"second,omitempty"`
 }
 
-type UsageMetric struct {
+type LimitMetricValue struct {
 	Count int64 `json:"count"`
 	Size  int64 `json:"size"`
 }
@@ -54,33 +54,33 @@ type Pagination struct {
 	Total   int `json:"total"`
 }
 
-type IngestionKeysResponse struct {
+type GettableIngestionKeys struct {
 	Keys       []IngestionKey `json:"keys"`
 	Pagination Pagination     `json:"_pagination"`
 }
 
-type IngestionKeyRequest struct {
+type PostableIngestionKey struct {
 	Name      string    `json:"name"`
 	Tags      []string  `json:"tags"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type CreatedIngestionKeyResponse struct {
+type GettableCreatedIngestionKey struct {
 	ID    string `json:"id"`
 	Value string `json:"value"`
 }
 
-type IngestionKeyLimitRequest struct {
+type PostableIngestionKeyLimit struct {
 	Signal string      `json:"signal"`
 	Config LimitConfig `json:"config"`
 	Tags   []string    `json:"tags"`
 }
 
-type CreatedIngestionKeyLimitResponse struct {
+type GettableCreatedIngestionKeyLimit struct {
 	ID string `json:"id"`
 }
 
-type UpdateIngestionKeyLimitRequest struct {
+type UpdatableIngestionKeyLimit struct {
 	Config LimitConfig `json:"config"`
 	Tags   []string    `json:"tags"`
 }

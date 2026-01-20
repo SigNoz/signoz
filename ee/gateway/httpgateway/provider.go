@@ -55,7 +55,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) (*gatewaytypes.IngestionKeysResponse, error) {
+func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) (*gatewaytypes.GettableIngestionKeys, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
 	qParams.Add("per_page", strconv.Itoa(perPage))
@@ -75,13 +75,13 @@ func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUI
 		return nil, err
 	}
 
-	return &gatewaytypes.IngestionKeysResponse{
+	return &gatewaytypes.GettableIngestionKeys{
 		Keys:       ingestionKeys,
 		Pagination: pagination,
 	}, nil
 }
 
-func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) (*gatewaytypes.IngestionKeysResponse, error) {
+func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) (*gatewaytypes.GettableIngestionKeys, error) {
 	qParams := url.Values{}
 	qParams.Add("name", name)
 	qParams.Add("page", strconv.Itoa(page))
@@ -102,14 +102,14 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 		return nil, err
 	}
 
-	return &gatewaytypes.IngestionKeysResponse{
+	return &gatewaytypes.GettableIngestionKeys{
 		Keys:       ingestionKeys,
 		Pagination: pagination,
 	}, nil
 }
 
-func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.CreatedIngestionKeyResponse, error) {
-	requestBody := gatewaytypes.IngestionKeyRequest{
+func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.GettableCreatedIngestionKey, error) {
+	requestBody := gatewaytypes.PostableIngestionKey{
 		Name:      name,
 		Tags:      tags,
 		ExpiresAt: expiresAt,
@@ -124,7 +124,7 @@ func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.U
 		return nil, err
 	}
 
-	var createdKeyResponse gatewaytypes.CreatedIngestionKeyResponse
+	var createdKeyResponse gatewaytypes.GettableCreatedIngestionKey
 	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &createdKeyResponse); err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.U
 }
 
 func (provider *Provider) UpdateIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string, name string, tags []string, expiresAt time.Time) error {
-	requestBody := gatewaytypes.IngestionKeyRequest{
+	requestBody := gatewaytypes.PostableIngestionKey{
 		Name:      name,
 		Tags:      tags,
 		ExpiresAt: expiresAt,
@@ -160,8 +160,8 @@ func (provider *Provider) DeleteIngestionKey(ctx context.Context, orgID valuer.U
 	return nil
 }
 
-func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig, tags []string) (*gatewaytypes.CreatedIngestionKeyLimitResponse, error) {
-	requestBody := gatewaytypes.IngestionKeyLimitRequest{
+func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig, tags []string) (*gatewaytypes.GettableCreatedIngestionKeyLimit, error) {
+	requestBody := gatewaytypes.PostableIngestionKeyLimit{
 		Signal: signal,
 		Config: limitConfig,
 		Tags:   tags,
@@ -176,7 +176,7 @@ func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID val
 		return nil, err
 	}
 
-	var createdIngestionKeyLimitResponse gatewaytypes.CreatedIngestionKeyLimitResponse
+	var createdIngestionKeyLimitResponse gatewaytypes.GettableCreatedIngestionKeyLimit
 	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &createdIngestionKeyLimitResponse); err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID val
 }
 
 func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, limitConfig gatewaytypes.LimitConfig, tags []string) error {
-	requestBody := gatewaytypes.UpdateIngestionKeyLimitRequest{
+	requestBody := gatewaytypes.UpdatableIngestionKeyLimit{
 		Config: limitConfig,
 		Tags:   tags,
 	}
