@@ -51,7 +51,7 @@ function CreateAlertHeader(): JSX.Element {
 		);
 		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
 		const url = `${ROUTES.ALERTS_NEW}?${params.toString()}`;
-		safeNavigate(url);
+		safeNavigate(url, { replace: true });
 	}, [currentQuery, safeNavigate]);
 
 	return (

@@ -1,13 +1,11 @@
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -18,9 +16,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
+	source: YAxisSource;
 }
 
-function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
+function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
 	const {
 		alertType,
@@ -34,13 +33,8 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 	const [, setQueryStatus] = useState<string>('');
-	const urlQuery = useUrlQuery();
 
 	const yAxisUnit = alertState.yAxisUnit || '';
-
-	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
-		urlQuery,
-	]);
 
 	// Only update automatically when creating a new metrics-based alert rule
 	const shouldUpdateYAxisUnit = useMemo(() => {
