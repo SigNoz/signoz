@@ -54,7 +54,7 @@ bin/
 .local/
 */query-service/queries.active
 ee/query-service/db
-
+.vscode/
 # e2e
 
 e2e/node_modules/
