@@ -1,3 +1,4 @@
+// TODO: clean this package and move to modules structure
 package cloudintegrations
 
 import (
@@ -58,10 +59,6 @@ type ConnectedAccountsListResponse struct {
 func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cloudProvider string) (
 	*ConnectedAccountsListResponse, *model.ApiError,
 ) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgId, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
@@ -77,13 +74,24 @@ func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cl
 	}, nil
 }
 
-type GenerateConnectionUrlRequest struct {
+type GenerateConnectionCommandRequest struct {
+	AWSConnectionUrlRequest       *AWSConnectionUrlRequest
+	AzureConnectionCommandRequest *AzureConnectionCommandRequest
+}
+
+type AWSConnectionUrlRequest struct {
 	// Optional. To be specified for updates.
+	// TODO: evaluate and remove if not needed.
 	AccountId *string `json:"account_id,omitempty"`
 
 	AccountConfig types.AccountConfig `json:"account_config"`
 
 	AgentConfig SigNozAgentConfig `json:"agent_config"`
+}
+
+type AzureConnectionCommandRequest struct {
+	AgentConfig   SigNozAzureAgentConfig `json:"agent_config"`
+	AccountConfig types.AccountConfig    `json:"account_config"`
 }
 
 type SigNozAgentConfig struct {
@@ -98,19 +106,61 @@ type SigNozAgentConfig struct {
 	Version string `json:"version,omitempty"`
 }
 
-type GenerateConnectionUrlResponse struct {
+type SigNozAzureAgentConfig struct {
+	IngestionUrl string `json:"ingestion_url"`
+	IngestionKey string `json:"ingestion_key"`
+	SigNozAPIUrl string `json:"signoz_api_url"`
+	SigNozAPIKey string `json:"signoz_api_key"`
+
+	Version string `json:"version,omitempty"`
+}
+
+type GenerateConnectionResponse struct {
+	AWSConnectionUrl       *AWSConnectionUrlResponse
+	AzureConnectionCommand *AzureConnectionCommandResponse
+}
+
+type AWSConnectionUrlResponse struct {
 	AccountId     string `json:"account_id"`
 	ConnectionUrl string `json:"connection_url"`
 }
 
-func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionUrlRequest) (*GenerateConnectionUrlResponse, *model.ApiError) {
-	// Account connection with a simple connection URL may not be available for all providers.
-	if cloudProvider != "aws" {
+type AzureConnectionCommandResponse struct {
+	AccountId                   string `json:"account_id"`
+	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
+	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
+}
+
+func (c *Controller) GenerateConnectionCommand(ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionCommandRequest) (*GenerateConnectionResponse, *model.ApiError) {
+	switch cloudProvider {
+	case types.CloudProviderAWS:
+		resp, err := c.getConnectionUrlForAWS(ctx, orgId, req.AWSConnectionUrlRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		return &GenerateConnectionResponse{
+			AWSConnectionUrl: resp,
+		}, nil
+	case types.CloudProviderAzure:
+		resp, err := c.getConnectionUrlForAzure(ctx, orgId, req.AzureConnectionCommandRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		return &GenerateConnectionResponse{
+			AzureConnectionCommand: resp,
+		}, nil
+	default:
 		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
 	}
+}
 
+func (c *Controller) getConnectionUrlForAWS(ctx context.Context, orgId string,
+	req *AWSConnectionUrlRequest) (*AWSConnectionUrlResponse, *model.ApiError) {
 	account, apiErr := c.accountsRepo.upsert(
-		ctx, orgId, cloudProvider, req.AccountId, &req.AccountConfig, nil, nil, nil,
+		ctx, orgId, types.CloudProviderAWS, nil, &req.AccountConfig,
+		nil, nil, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
@@ -142,9 +192,38 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 		connectionUrl += fmt.Sprintf("&%s=%s", qp, url.QueryEscape(value))
 	}
 
-	return &GenerateConnectionUrlResponse{
+	return &AWSConnectionUrlResponse{
 		AccountId:     account.ID.StringValue(),
 		ConnectionUrl: connectionUrl,
+	}, nil
+}
+
+func (c *Controller) getConnectionUrlForAzure(ctx context.Context, orgId string,
+	req *AzureConnectionCommandRequest) (*AzureConnectionCommandResponse, *model.ApiError) {
+	account, apiErr := c.accountsRepo.upsert(
+		ctx, orgId, types.CloudProviderAzure, nil, &req.AccountConfig,
+		nil, nil, nil,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
+	}
+
+	//agentVersion := "v0.0.1"
+	//
+	//if req.AgentConfig.Version != "" {
+	//	agentVersion = req.AgentConfig.Version
+	//}
+
+	// TODO: improve cli command generation
+	cliCommand := []string{"az", "stack", "sub", "create", "--name", "SigNozIntegration", "--location",
+		req.AccountConfig.PrimaryRegion, "--template-uri", "https://raw.githubusercontent.com/swagftw/signoz-pocs/refs/heads/main/template.json",
+		"--action-on-unmanage", "deleteAll", "--deny-settings-mode", "denyDelete", "--parameters", fmt.Sprintf("rgName=%s", "signoz-integration-rg"),
+		fmt.Sprintf("rgLocation=%s", req.AccountConfig.PrimaryRegion)}
+
+	return &AzureConnectionCommandResponse{
+		AccountId:                   account.ID.String(),
+		AzureShellConnectionCommand: "az create",
+		AzureCliConnectionCommand:   strings.Join(cliCommand, " "),
 	}, nil
 }
 
@@ -157,10 +236,6 @@ type AccountStatusResponse struct {
 func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider string, accountId string) (
 	*AccountStatusResponse, *model.ApiError,
 ) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
 	if apiErr != nil {
 		return nil, apiErr
@@ -197,10 +272,6 @@ type IntegrationConfigForAgent struct {
 }
 
 func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest) (*AgentCheckInResponse, error) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	existingAccount, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, req.ID)
 	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
 		return nil, model.BadRequest(fmt.Errorf(
@@ -290,10 +361,6 @@ type UpdateAccountConfigRequest struct {
 }
 
 func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	accountRecord, apiErr := c.accountsRepo.upsert(
 		ctx, orgId, cloudProvider, &accountId, &req.Config, nil, nil, nil,
 	)
@@ -307,10 +374,6 @@ func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, clou
 }
 
 func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider string, accountId string) (*types.CloudIntegration, *model.ApiError) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't disconnect account")
@@ -337,10 +400,6 @@ func (c *Controller) ListServices(
 	cloudProvider string,
 	cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	definitions, apiErr := services.List(cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
@@ -386,10 +445,6 @@ func (c *Controller) GetServiceDetails(
 	serviceId string,
 	cloudAccountId *string,
 ) (*ServiceDetails, error) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	definition, err := services.GetServiceDefinition(cloudProvider, serviceId)
 	if err != nil {
 		return nil, err
@@ -471,10 +526,6 @@ func (c *Controller) UpdateServiceConfig(
 	serviceType string,
 	req *UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, error) {
-	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
-		return nil, apiErr
-	}
-
 	// can only update config for a valid service.
 	definition, err := services.GetServiceDefinition(cloudProvider, serviceType)
 	if err != nil {

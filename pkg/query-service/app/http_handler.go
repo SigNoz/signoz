@@ -3501,7 +3501,7 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
 
 	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionUrl),
+		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionCommand),
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
@@ -3560,15 +3560,44 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
+func (aH *APIHandler) CloudIntegrationsGenerateConnectionCommand(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 
-	req := cloudintegrations.GenerateConnectionUrlRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(fmt.Errorf("invalid cloud provider: %s", cloudProvider)), nil)
+	}
+
+	req := cloudintegrations.GenerateConnectionCommandRequest{}
+
+	switch cloudProvider {
+	case types.CloudProviderAWS:
+		awsReq := new(cloudintegrations.AWSConnectionUrlRequest)
+		if err := json.NewDecoder(r.Body).Decode(awsReq); err != nil {
+			RespondError(w, model.BadRequest(err), nil)
+			return
+		}
+
+		req.AWSConnectionUrlRequest = awsReq
+	case types.CloudProviderAzure:
+		azureReq := new(cloudintegrations.AzureConnectionCommandRequest)
+		if err := json.NewDecoder(r.Body).Decode(azureReq); err != nil {
+			RespondError(w, model.BadRequest(err), nil)
+			return
+		}
+
+		if _, ok := cloudintegrations.ValidAzureRegions[azureReq.AccountConfig.PrimaryRegion]; !ok {
+			RespondError(w, model.BadRequest(fmt.Errorf("invalid azure region: %s", azureReq.AccountConfig.PrimaryRegion)), nil)
+			return
+		}
+
+		if len(azureReq.AccountConfig.EnabledResourceGroups) < 1 {
+			RespondError(w, model.BadRequest(fmt.Errorf("at least one resource group must be enabled")), nil)
+			return
+		}
+
+		req.AzureConnectionCommandRequest = azureReq
 	}
 
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
@@ -3577,7 +3606,7 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
+	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionCommand(
 		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
@@ -3586,13 +3615,22 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
 		return
 	}
 
-	aH.Respond(w, result)
+	switch cloudProvider {
+	case types.CloudProviderAWS:
+		aH.Respond(w, result.AWSConnectionUrl)
+	case types.CloudProviderAzure:
+		aH.Respond(w, result.AzureConnectionCommand)
+	}
 }
 
 func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
+
 	accountId := mux.Vars(r)["accountId"]
 
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
@@ -3616,6 +3654,9 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
 
 	req := cloudintegrations.AgentCheckInRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -3645,6 +3686,10 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
+
 	accountId := mux.Vars(r)["accountId"]
 
 	req := cloudintegrations.UpdateAccountConfigRequest{}
@@ -3675,6 +3720,10 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
+
 	accountId := mux.Vars(r)["accountId"]
 
 	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
@@ -3699,6 +3748,9 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
 
 	var cloudAccountId *string
 
@@ -3739,6 +3791,10 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	}
 
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
+
 	serviceId := mux.Vars(r)["serviceId"]
 
 	var cloudAccountId *string
@@ -3784,11 +3840,8 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	cloudAccountId string,
 	svcDetails *cloudintegrations.ServiceDetails,
 ) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
-	if cloudProvider != "aws" {
-		// TODO(Raj): Make connection check generic for all providers in a follow up change
-		return nil, model.BadRequest(
-			fmt.Errorf("unsupported cloud provider: %s", cloudProvider),
-		)
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		return nil, model.BadRequest(err)
 	}
 
 	telemetryCollectionStrategy := svcDetails.Strategy
@@ -3988,6 +4041,10 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
+	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+	}
+
 	serviceId := mux.Vars(r)["serviceId"]
 
 	req := cloudintegrations.UpdateServiceConfigRequest{}

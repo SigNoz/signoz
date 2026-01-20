@@ -9,14 +9,32 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type IntegrationUserEmail string
+const (
+	CloudProviderAWS   = "aws"
+	CloudProviderAzure = "azure"
+)
+
+func ValidateCloudProvider(provider string) error {
+	switch provider {
+	case CloudProviderAWS, CloudProviderAzure:
+		return nil
+	default:
+		return errors.NewInternalf(errors.CodeInternal, "invalid cloud provider: %s", provider)
+	}
+}
+
+type (
+	IntegrationUserEmail string
+)
 
 const (
-	AWSIntegrationUserEmail IntegrationUserEmail = "aws-integration@signoz.io"
+	AWSIntegrationUserEmail   IntegrationUserEmail = "aws-integration@signoz.io"
+	AzureIntegrationUserEmail IntegrationUserEmail = "azure-integration@signoz.io"
 )
 
 var AllIntegrationUserEmails = []IntegrationUserEmail{
 	AWSIntegrationUserEmail,
+	AzureIntegrationUserEmail,
 }
 
 // --------------------------------------------------------------------------
@@ -123,7 +141,12 @@ func DefaultAccountConfig() AccountConfig {
 }
 
 type AccountConfig struct {
-	EnabledRegions []string `json:"regions"`
+	// AWS Config
+	EnabledRegions []string `json:"regions,omitempty"`
+
+	// Azure Config
+	PrimaryRegion         string   `json:"primary_region,omitempty"`
+	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
 }
 
 // For serializing from db
