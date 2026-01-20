@@ -58,6 +58,15 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 func (provider *Provider) GetIngestionKeys(ctx context.Context, orgID valuer.UUID, page, perPage int) (*gatewaytypes.GettableIngestionKeys, error) {
 	qParams := url.Values{}
 	qParams.Add("page", strconv.Itoa(page))
+
+	if perPage > gateway.MaxPageSize {
+		perPage = gateway.MaxPageSize
+	}
+
+	if perPage < 1 {
+		perPage = gateway.DefaultPageSize
+	}
+
 	qParams.Add("per_page", strconv.Itoa(perPage))
 
 	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys", qParams, nil)
@@ -85,6 +94,15 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 	qParams := url.Values{}
 	qParams.Add("name", name)
 	qParams.Add("page", strconv.Itoa(page))
+
+	if perPage > gateway.MaxPageSize {
+		perPage = gateway.MaxPageSize
+	}
+
+	if perPage < 1 {
+		perPage = gateway.DefaultPageSize
+	}
+	
 	qParams.Add("per_page", strconv.Itoa(perPage))
 
 	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/search", qParams, nil)
@@ -217,28 +235,23 @@ func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method stri
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "no valid license found").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	var licenseKey string
-	if license != nil {
-		licenseKey = license.Key
-	}
-
 	// build url
-	reqestURL := provider.config.URL.JoinPath(path)
+	requestURL := provider.config.URL.JoinPath(path)
 
 	// add query params to the url
 	if queryParams != nil {
-		reqestURL.RawQuery = queryParams.Encode()
+		requestURL.RawQuery = queryParams.Encode()
 	}
 
 	// build request
-	request, err := http.NewRequestWithContext(ctx, method, reqestURL.String(), bytes.NewBuffer(body))
+	request, err := http.NewRequestWithContext(ctx, method, requestURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
 	// add headers needed to call gateway
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
+	request.Header.Set("X-Signoz-Cloud-Api-Key", license.Key)
 	request.Header.Set("X-Consumer-Username", "lid:00000000-0000-0000-0000-000000000000")
 	request.Header.Set("X-Consumer-Groups", "ns:default")
 
@@ -262,7 +275,7 @@ func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method stri
 
 	errorMessage := gjson.GetBytes(responseBody, "error").String()
 	if errorMessage == "" {
-		errorMessage = "unknown error"
+		errorMessage = "an unknown error occurred"
 	}
 
 	// return error for non 2XX
@@ -271,19 +284,14 @@ func (provider *Provider) do(ctx context.Context, orgID valuer.UUID, method stri
 
 func (provider *Provider) errFromStatusCode(code int, errorMessage string) error {
 	switch code {
-
 	case http.StatusBadRequest:
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, errorMessage)
-
 	case http.StatusUnauthorized:
 		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, errorMessage)
-
 	case http.StatusForbidden:
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, errorMessage)
-
 	case http.StatusNotFound:
 		return errors.New(errors.TypeNotFound, errors.CodeNotFound, errorMessage)
-	
 	case http.StatusConflict:
 		return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, errorMessage)
 	}

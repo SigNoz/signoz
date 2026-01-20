@@ -13,6 +13,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	DefaultPage     = 1
+	DefaultPageSize = 10
+	MaxPageSize     = 100
+)
+
 type handler struct {
 	gateway Gateway
 }
@@ -32,11 +38,7 @@ func (handler *handler) GetIngestionKeys(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	pageString := r.URL.Query().Get("page")
 	perPageString := r.URL.Query().Get("per_page")
@@ -71,11 +73,7 @@ func (handler *handler) SearchIngestionKeys(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	pageString := r.URL.Query().Get("page")
 	perPageString := r.URL.Query().Get("per_page")
@@ -111,11 +109,7 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var req gatewaytypes.PostableIngestionKey
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -141,11 +135,7 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	keyID := mux.Vars(r)["keyId"]
 	if keyID == "" {
@@ -177,11 +167,7 @@ func (handler *handler) DeleteIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	keyID := mux.Vars(r)["keyId"]
 	if keyID == "" {
@@ -207,11 +193,7 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	keyID := mux.Vars(r)["keyId"]
 	if keyID == "" {
@@ -243,11 +225,7 @@ func (handler *handler) UpdateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	limitID := mux.Vars(r)["limitId"]
 	if limitID == "" {
@@ -279,11 +257,7 @@ func (handler *handler) DeleteIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	limitID := mux.Vars(r)["limitId"]
 	if limitID == "" {
