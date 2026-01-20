@@ -1,7 +1,9 @@
 import './Providers.styles.scss';
 
 import { Callout } from '@signozhq/callout';
-import { Checkbox, Form, Input, Typography } from 'antd';
+import { Checkbox, Collapse, Form, Input, Typography } from 'antd';
+
+import RoleMappingSection from './RoleMappingSection';
 
 function ConfigureOIDCAuthnProvider({
 	isCreate,
@@ -65,16 +67,6 @@ function ConfigureOIDCAuthnProvider({
 			</Form.Item>
 
 			<Form.Item
-				label="Email Claim Mapping"
-				name={['oidcConfig', 'claimMapping', 'email']}
-				tooltip={{
-					title: `Mapping of email claims to the corresponding email field in the token.`,
-				}}
-			>
-				<Input />
-			</Form.Item>
-
-			<Form.Item
 				label="Skip Email Verification"
 				name={['oidcConfig', 'insecureSkipEmailVerified']}
 				valuePropName="checked"
@@ -98,11 +90,71 @@ function ConfigureOIDCAuthnProvider({
 				<Checkbox />
 			</Form.Item>
 
+			<Collapse
+				ghost
+				items={[
+					{
+						key: 'claimMapping',
+						label: <Typography.Text strong>Claim Mapping (Advanced)</Typography.Text>,
+						children: (
+							<>
+								<Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
+									Configure how claims from your Identity Provider map to SigNoz user
+									attributes. Leave empty to use default values.
+								</Typography.Paragraph>
+
+								<Form.Item
+									label="Email Claim"
+									name={['oidcConfig', 'claimMapping', 'email']}
+									tooltip={{
+										title: `The claim key that contains the user's email address. Default: "email"`,
+									}}
+								>
+									<Input placeholder="email" />
+								</Form.Item>
+
+								<Form.Item
+									label="Name Claim"
+									name={['oidcConfig', 'claimMapping', 'name']}
+									tooltip={{
+										title: `The claim key that contains the user's display name. Default: "name"`,
+									}}
+								>
+									<Input placeholder="name" />
+								</Form.Item>
+
+								<Form.Item
+									label="Groups Claim"
+									name={['oidcConfig', 'claimMapping', 'groups']}
+									tooltip={{
+										title: `The claim key that contains the user's group memberships. Used for role mapping. Default: "groups"`,
+									}}
+								>
+									<Input placeholder="groups" />
+								</Form.Item>
+
+								<Form.Item
+									label="Role Claim"
+									name={['oidcConfig', 'claimMapping', 'role']}
+									tooltip={{
+										title: `The claim key that contains the user's role directly from the IDP. Default: "role"`,
+									}}
+								>
+									<Input placeholder="role" />
+								</Form.Item>
+							</>
+						),
+					},
+				]}
+			/>
+
+			<RoleMappingSection />
+
 			<Callout
 				type="warning"
 				size="small"
 				showIcon
-				description="OIDC won’t be enabled unless you enter all the attributes above"
+				description="OIDC won't be enabled unless you enter all the required attributes above"
 				className="callout"
 			/>
 		</div>

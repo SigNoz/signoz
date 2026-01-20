@@ -1,7 +1,9 @@
 import './Providers.styles.scss';
 
 import { Callout } from '@signozhq/callout';
-import { Checkbox, Form, Input, Typography } from 'antd';
+import { Checkbox, Collapse, Form, Input, Typography } from 'antd';
+
+import RoleMappingSection from './RoleMappingSection';
 
 function ConfigureSAMLAuthnProvider({
 	isCreate,
@@ -70,11 +72,64 @@ function ConfigureSAMLAuthnProvider({
 				<Checkbox />
 			</Form.Item>
 
+			<Collapse
+				ghost
+				items={[
+					{
+						key: 'attributeMapping',
+						label: (
+							<Typography.Text strong>Attribute Mapping (Advanced)</Typography.Text>
+						),
+						children: (
+							<>
+								<Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
+									Configure how SAML assertion attributes from your Identity Provider map
+									to SigNoz user attributes. Leave empty to use default values. Note:
+									Email is always extracted from the NameID assertion.
+								</Typography.Paragraph>
+
+								<Form.Item
+									label="Name Attribute"
+									name={['samlConfig', 'attributeMapping', 'name']}
+									tooltip={{
+										title: `The SAML attribute key that contains the user's display name. Default: "name"`,
+									}}
+								>
+									<Input placeholder="name" />
+								</Form.Item>
+
+								<Form.Item
+									label="Groups Attribute"
+									name={['samlConfig', 'attributeMapping', 'groups']}
+									tooltip={{
+										title: `The SAML attribute key that contains the user's group memberships. Used for role mapping. Default: "groups"`,
+									}}
+								>
+									<Input placeholder="groups" />
+								</Form.Item>
+
+								<Form.Item
+									label="Role Attribute"
+									name={['samlConfig', 'attributeMapping', 'role']}
+									tooltip={{
+										title: `The SAML attribute key that contains the user's role directly from the IDP. Default: "role"`,
+									}}
+								>
+									<Input placeholder="role" />
+								</Form.Item>
+							</>
+						),
+					},
+				]}
+			/>
+
+			<RoleMappingSection />
+
 			<Callout
 				type="warning"
 				size="small"
 				showIcon
-				description="SAML won’t be enabled unless you enter all the attributes above"
+				description="SAML won't be enabled unless you enter all the required attributes above"
 				className="callout"
 			/>
 		</div>
