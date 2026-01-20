@@ -1,0 +1,115 @@
+@import '@signozhq/design-tokens/dist/style.css';
+
+.auth-footer {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px 0;
+	position: relative;
+	z-index: 10;
+}
+
+.auth-footer-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	padding: 12px;
+	background: var(--bg-ink-400, #121317);
+	border: 1px solid var(--bg-ink-200, #23262e);
+	border-radius: 4px;
+}
+
+.auth-footer-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 12px;
+}
+
+.auth-footer-status-indicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: #25e192;
+	flex-shrink: 0;
+}
+
+.auth-footer-icon {
+	aspect-ratio: 1.93;
+	width: 29px;
+	flex-shrink: 0;
+	object-fit: contain;
+	opacity: 1;
+}
+
+.auth-footer-text {
+	font-family: var(--font-family-inter, Inter, sans-serif);
+	font-size: 11px;
+	font-weight: 400;
+	line-height: 1;
+	color: var(--text-neutral-dark-100, #adb4c2);
+	text-align: center;
+}
+
+.auth-footer-link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	text-decoration: none;
+	transition: opacity 0.2s ease;
+
+	&:hover {
+		opacity: 0.8;
+	}
+}
+
+.auth-footer-link-icon {
+	flex-shrink: 0;
+	color: var(--text-neutral-dark-50, #eceef2);
+}
+
+.auth-footer-link-status {
+	.auth-footer-text {
+		color: #25e192;
+	}
+
+	.auth-footer-link-icon {
+		color: #25e192;
+	}
+}
+
+.auth-footer-separator {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: var(--bg-ink-200, #23262e);
+	flex-shrink: 0;
+}
+
+.lightMode {
+	.auth-footer-content {
+		background: var(--bg-base-white, #ffffff);
+		border-color: var(--bg-vanilla-300, #e9e9e9);
+		box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
+	}
+
+	.auth-footer-icon {
+		filter: brightness(0) saturate(100%) invert(25%) sepia(8%) saturate(518%)
+			hue-rotate(192deg) brightness(80%) contrast(95%);
+		opacity: 0.9;
+	}
+
+	.auth-footer-text {
+		color: var(--text-neutral-light-200, #80828d);
+	}
+
+	.auth-footer-link-icon {
+		color: var(--text-neutral-light-100, #62636c);
+	}
+
+	.auth-footer-separator {
+		background: var(--bg-vanilla-300, #e9e9e9);
+	}
+}

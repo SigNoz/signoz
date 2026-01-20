@@ -31,7 +31,7 @@ type Module interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Get the IDP info of the domain provided.
-	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) (*authtypes.AuthNProviderInfo)
+	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) *authtypes.AuthNProviderInfo
 }
 
 type Handler interface {
