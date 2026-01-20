@@ -52,3 +52,43 @@ func (module *module) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*au
 func (module *module) Update(ctx context.Context, domain *authtypes.AuthDomain) error {
 	return module.store.Update(ctx, domain)
 }
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	domains, err := module.store.ListByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]any)
+
+	var oidcCount, samlCount, gauthCount int64
+
+	for _, domain := range domains {
+		if !domain.AuthDomainConfig().SSOEnabled {
+			// no need to count since SSO is not enabled
+			continue
+		}
+
+		switch domain.AuthDomainConfig().AuthNProvider {
+		case authtypes.AuthNProviderOIDC:
+			oidcCount++
+		case authtypes.AuthNProviderSAML:
+			samlCount++
+		case authtypes.AuthNProviderGoogleAuth:
+			gauthCount++
+		}
+	}
+
+	// count of domains with sso enabled for oidc, saml and gauth
+	stats["authdomain.oidc.count"] = oidcCount
+	stats["authdomain.saml.count"] = samlCount
+	stats["authdomain.gauth.count"] = gauthCount
+
+	// total number of sso enabled domains
+	stats["authdomain.sso.total.count"] = oidcCount + samlCount + gauthCount
+
+	// total number of domains
+	stats["authdomain.count"] = len(domains)
+
+	return stats, nil
+}
