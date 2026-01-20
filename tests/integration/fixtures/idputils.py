@@ -393,7 +393,7 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         # wait = WebDriverWait(driver, 10)
 
         # Wait till kc-login element has vanished from the page, which means that a redirection is taking place.
-        # wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
+        wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
 
     return _idp_login
 
