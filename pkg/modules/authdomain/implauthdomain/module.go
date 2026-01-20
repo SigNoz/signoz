@@ -62,8 +62,12 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	stats := make(map[string]any)
 
 	for _, domain := range domains {
-		statKey := "authdomain." + domain.AuthDomainConfig().AuthNProvider.StringValue() + ".count"
-		stats[statKey] = (stats[statKey].(int64)) + 1
+		key := "authdomain." + domain.AuthDomainConfig().AuthNProvider.StringValue() + ".count"
+		if value, ok := stats[key]; ok {
+			stats[key] = value.(int64) + 1
+		} else {
+			stats[key] = int64(1)
+		}
 	}
 
 	stats["authdomain.count"] = len(domains)
