@@ -7,6 +7,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
@@ -22,6 +23,7 @@ import { buildAlertDefForChartPreview } from './utils';
 function QuerySection(): JSX.Element {
 	const {
 		currentQuery,
+		stagedQuery,
 		handleRunQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
@@ -39,17 +41,44 @@ function QuerySection(): JSX.Element {
 		urlQuery,
 	]);
 
+	const didQueryChange = useMemo(() => {
+		if (alertType !== AlertTypes.METRICS_BASED_ALERT) {
+			return false;
+		}
+
+		const selectedQueryName = thresholdState.selectedQuery;
+		const currentQueryData = currentQuery.builder.queryData.find(
+			(query) => query.queryName === selectedQueryName,
+		);
+		const stagedQueryData = stagedQuery?.builder.queryData.find(
+			(query) => query.queryName === selectedQueryName,
+		);
+		if (!currentQueryData || !stagedQueryData) {
+			return false;
+		}
+
+		const currentQueryKey = getMetricNameFromQueryData(currentQueryData);
+		const stagedQueryKey = getMetricNameFromQueryData(stagedQueryData);
+		return currentQueryKey !== stagedQueryKey;
+	}, [currentQuery, alertType, thresholdState, stagedQuery]);
+
 	const runQueryHandler = useCallback(() => {
 		// Reset the source param when the query is changed
 		// Then manually run the query
-		if (source === YAxisSource.DASHBOARDS) {
+		if (source === YAxisSource.DASHBOARDS && didQueryChange) {
 			redirectWithQueryBuilderData(currentQuery, {
 				[QueryParams.source]: null,
 			});
 		} else {
 			handleRunQuery();
 		}
-	}, [currentQuery, handleRunQuery, redirectWithQueryBuilderData, source]);
+	}, [
+		currentQuery,
+		didQueryChange,
+		handleRunQuery,
+		redirectWithQueryBuilderData,
+		source,
+	]);
 
 	const tabs = [
 		{

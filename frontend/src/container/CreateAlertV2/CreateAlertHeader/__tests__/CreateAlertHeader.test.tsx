@@ -126,6 +126,7 @@ describe('CreateAlertHeader', () => {
 		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
 		expect(mockSafeNavigate).toHaveBeenCalledWith(
 			`${ROUTES.ALERTS_NEW}?${params.toString()}`,
+			{ replace: true },
 		);
 	});
 
