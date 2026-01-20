@@ -11,7 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
 import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -171,6 +171,9 @@ function QueryAddOns({
 
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
+	const initializedRef = useRef(false);
+	const prevAvailableKeysRef = useRef<Set<string> | null>(null);
+
 	const { handleChangeQueryData } = useQueryOperations({
 		index,
 		query,
@@ -213,23 +216,41 @@ function QueryAddOns({
 		}
 		setAddOns(filteredAddOns);
 
-		const activeAddOnKeys = new Set(
-			Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
-				.filter(([, path]) => hasValue(get(query, path)))
-				.map(([key]) => key),
-		);
+		const availableAddOnKeys = new Set(filteredAddOns.map((a) => a.key));
+		const previousKeys = prevAvailableKeysRef.current;
+		const hasAvailabilityItemsChanged =
+			previousKeys !== null &&
+			(previousKeys.size !== availableAddOnKeys.size ||
+				[...availableAddOnKeys].some((key) => !previousKeys.has(key)));
+		prevAvailableKeysRef.current = availableAddOnKeys;
 
-		const availableAddOnKeys = new Set(filteredAddOns.map((addOn) => addOn.key));
-		// Filter and set selected views: add-ons that are both active and available
-		setSelectedViews(
-			filteredAddOns.filter(
-				(addOn) =>
-					activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
+		if (!initializedRef.current || hasAvailabilityItemsChanged) {
+			initializedRef.current = true;
+
+			const activeAddOnKeys = new Set(
+				Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
+					.filter(([, path]) => hasValue(get(query, path)))
+					.map(([key]) => key),
+			);
+
+			// Initial seeding from query values on mount
+			setSelectedViews(
+				filteredAddOns.filter(
+					(addOn) =>
+						activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
+				),
+			);
+			return;
+		}
+
+		setSelectedViews((prev) =>
+			prev.filter((view) =>
+				filteredAddOns.some((addOn) => addOn.key === view.key),
 			),
 		);
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [panelType, isListViewPanel, query]);
+	}, [panelType, isListViewPanel, query, showReduceTo]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
 		if (selectedViews.find((view) => view.key === e.target.value.key)) {

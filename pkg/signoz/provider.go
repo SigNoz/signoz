@@ -167,15 +167,9 @@ func NewSQLMigrationProviderFactories(
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
 		clickhousetelemetrystore.NewFactory(
-			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
-				return telemetrystorehook.NewSettingsFactory(s)
-			}),
-			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
-				return telemetrystorehook.NewLoggingFactory()
-			}),
-			telemetrystore.TelemetryStoreHookFactoryFunc(func(s string) factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
-				return telemetrystorehook.NewInstrumentationFactory(s)
-			}),
+			telemetrystorehook.NewSettingsFactory(),
+			telemetrystorehook.NewLoggingFactory(),
+			telemetrystorehook.NewInstrumentationFactory(),
 		),
 	)
 }
