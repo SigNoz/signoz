@@ -1,6 +1,6 @@
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 export const BASE_FILTER_QUERY: IBuilderQuery = {
 	queryName: 'A',
@@ -32,7 +32,7 @@ export const BASE_FILTER_QUERY: IBuilderQuery = {
 	],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'avg',
+	reduceTo: ReduceOperators.AVG,
 	offset: 0,
 	selectColumns: [],
 };

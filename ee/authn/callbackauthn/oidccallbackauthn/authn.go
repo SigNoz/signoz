@@ -2,6 +2,7 @@ package oidccallbackauthn
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/authn"
@@ -19,25 +20,27 @@ const (
 	redirectPath string = "/api/v1/complete/oidc"
 )
 
-var (
-	scopes []string = []string{"email", oidc.ScopeOpenID}
-)
+var defaultScopes []string = []string{"email", "profile", oidc.ScopeOpenID}
 
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
+	settings   factory.ScopedProviderSettings
 	store      authtypes.AuthNStore
 	licensing  licensing.Licensing
 	httpClient *client.Client
 }
 
 func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSettings factory.ProviderSettings) (*AuthN, error) {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn")
+
 	httpClient, err := client.New(providerSettings.Logger, providerSettings.TracerProvider, providerSettings.MeterProvider)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AuthN{
+		settings:   settings,
 		store:      store,
 		licensing:  licensing,
 		httpClient: httpClient,
@@ -126,7 +129,40 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		}
 	}
 
-	return authtypes.NewCallbackIdentity("", email, authDomain.StorableAuthDomain().OrgID, state), nil
+	name := ""
+	if nameClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Name; nameClaim != "" {
+		if n, ok := claims[nameClaim].(string); ok {
+			name = n
+		}
+	}
+
+	var groups []string
+	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
+		if claimValue, exists := claims[groupsClaim]; exists {
+			switch g := claimValue.(type) {
+			case []any:
+				for _, group := range g {
+					if gs, ok := group.(string); ok {
+						groups = append(groups, gs)
+					}
+				}
+			case string:
+				// Some IDPs return a single group as a string instead of an array
+				groups = append(groups, g)
+			default:
+				a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type", "type", fmt.Sprintf("%T", claimValue))
+			}
+		}
+	}
+
+	role := ""
+	if roleClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Role; roleClaim != "" {
+		if r, ok := claims[roleClaim].(string); ok {
+			role = r
+		}
+	}
+
+	return authtypes.NewCallbackIdentity(name, email, authDomain.StorableAuthDomain().OrgID, state, groups, role), nil
 }
 
 func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
@@ -143,6 +179,13 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 	oidcProvider, err := oidc.NewProvider(ctx, authDomain.AuthDomainConfig().OIDC.Issuer)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	scopes := make([]string, len(defaultScopes))
+	copy(scopes, defaultScopes)
+
+	if authDomain.AuthDomainConfig().RoleMapping != nil && len(authDomain.AuthDomainConfig().RoleMapping.GroupMappings) > 0 {
+		scopes = append(scopes, "groups")
 	}
 
 	return oidcProvider, &oauth2.Config{

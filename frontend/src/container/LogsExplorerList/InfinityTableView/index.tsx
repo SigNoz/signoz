@@ -58,7 +58,7 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{ isLoading, tableViewProps, infitiyTableProps },
+		{ isLoading, tableViewProps, infitiyTableProps, handleChangeSelectedView },
 		ref,
 	): JSX.Element | null {
 		const {
@@ -72,7 +72,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onSetActiveLog,
 			onClearActiveLog,
 			onAddToQuery,
-			onGroupByAttribute,
 		} = useActiveLog();
 
 		const { dataSource, columns } = useTableView({
@@ -187,7 +186,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						onClose={handleClearActiveContextLog}
 						onAddToQuery={handleAddToQuery}
 						selectedTab={VIEW_TYPES.CONTEXT}
-						onGroupByAttribute={onGroupByAttribute}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
 				<LogDetail
@@ -196,7 +195,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			</>
 		);

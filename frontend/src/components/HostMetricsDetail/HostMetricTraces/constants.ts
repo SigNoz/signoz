@@ -6,7 +6,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { nanoToMilli } from 'utils/timeUtils';
 
 export const columns = [
@@ -121,7 +121,7 @@ export const getHostTracesQueryPayload = (
 					],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 			],
 			queryFormulas: [],
