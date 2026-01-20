@@ -16,6 +16,7 @@ type OpenAPIDef struct {
 	Summary             string
 	Description         string
 	Request             any
+	RequestParams       any
 	RequestContentType  string
 	Response            any
 	ResponseContentType string

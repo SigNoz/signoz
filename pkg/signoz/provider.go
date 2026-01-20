@@ -237,10 +237,11 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			implpreference.NewHandler(modules.Preference),
 			signozglobal.NewHandler(global),
 			implpromote.NewHandler(modules.Promote),
-			handlers.FlaggerHandler,
+			handlers.Flagger,
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.Fields,
 		),
 	)
 }
