@@ -240,7 +240,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 						errs = append(errs, err)
 					}
 					for _, w := range warnings {
-						a.set.Logger.Warn(w)
+						a.set.Logger.WarnContext(req.Context(), w)
 					}
 					spec.Filter.Expression = replaced
 				}
@@ -252,7 +252,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 						errs = append(errs, err)
 					}
 					for _, w := range warnings {
-						a.set.Logger.Warn(w)
+						a.set.Logger.WarnContext(req.Context(), w)
 					}
 					spec.Filter.Expression = replaced
 				}
@@ -264,7 +264,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 						errs = append(errs, err)
 					}
 					for _, w := range warnings {
-						a.set.Logger.Warn(w)
+						a.set.Logger.WarnContext(req.Context(), w)
 					}
 					spec.Filter.Expression = replaced
 				}

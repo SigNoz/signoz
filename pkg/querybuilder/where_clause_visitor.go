@@ -510,7 +510,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		// Check if the value is a skip marker (embedded variable with __all__ value)
 		if strVal, ok := value.(string); ok && strVal == specialSkipConditionMarker {
-			v.logger.Info("skipping condition due to __all__ variable", "keys", keys, "value", value)
+			v.logger.Info("skipping condition due to __all__ variable", "keys", keys, "value", value) //nolint:sloglint
 			return ""
 		}
 
