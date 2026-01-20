@@ -382,7 +382,7 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboardModule)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, telemetryMetadataStore, telemetrystore)
 
 	// Initialize the API server
 	apiserver, err := factory.NewProviderFromNamedMap(
