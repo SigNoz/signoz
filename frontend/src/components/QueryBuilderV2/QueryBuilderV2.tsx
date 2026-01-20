@@ -164,9 +164,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 			const tagName = target?.tagName || '';
 
 			const isInputElement =
-				tagName === 'INPUT' ||
-				tagName === 'TEXTAREA' ||
-				tagName === 'SELECT' ||
+				['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) ||
 				(target?.getAttribute('contenteditable') || '').toLowerCase() === 'true';
 
 			// Allow input elements in qb to run the query when Cmd/Ctrl + Enter is pressed
