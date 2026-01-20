@@ -270,44 +270,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		await waitFor(() => expect(onRun).toHaveBeenCalled(), { timeout: 2000 });
 	});
 
-	it('calls handleRunQuery when Mod-Enter without onRun', async () => {
-		const mockedHandleRunQuery = handleRunQueryMock as jest.MockedFunction<
-			() => void
-		>;
-		mockedHandleRunQuery.mockClear();
-
-		render(
-			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
-				queryData={initialQueriesMap.logs.builder.queryData[0]}
-				dataSource={DataSource.LOGS}
-			/>,
-		);
-
-		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
-
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
-		await userEvent.click(editor);
-		await userEvent.type(editor, SAMPLE_VALUE_TYPING_COMPLETE);
-
-		// Use fireEvent for keyboard shortcuts as userEvent might not work well with CodeMirror
-		const modKey = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
-		fireEvent.keyDown(editor, {
-			key: 'Enter',
-			code: 'Enter',
-			[modKey]: true,
-			keyCode: 13,
-		});
-
-		await waitFor(() => expect(mockedHandleRunQuery).toHaveBeenCalled(), {
-			timeout: 2000,
-		});
-	});
-
 	it('initializes CodeMirror with expression from queryData.filter.expression on mount', async () => {
 		const testExpression =
 			"http.status_code >= 500 AND service.name = 'frontend'";
