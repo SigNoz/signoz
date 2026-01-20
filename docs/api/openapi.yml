@@ -2067,7 +2067,7 @@ paths:
       summary: Get features
       tags:
       - features
-  /api/v2/gateway/ingestion-keys:
+  /api/v2/gateway/ingestion_keys:
     get:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
@@ -2157,7 +2157,7 @@ paths:
       summary: Create ingestion key for workspace
       tags:
       - gateway
-  /api/v2/gateway/ingestion-keys/{keyId}:
+  /api/v2/gateway/ingestion_keys/{keyId}:
     delete:
       deprecated: false
       description: This endpoint deletes an ingestion key for the workspace
@@ -2241,7 +2241,7 @@ paths:
       summary: Update ingestion key for workspace
       tags:
       - gateway
-  /api/v2/gateway/ingestion-keys/{keyId}/limits:
+  /api/v2/gateway/ingestion_keys/{keyId}/limits:
     post:
       deprecated: false
       description: This endpoint creates an ingestion key limit
@@ -2295,7 +2295,7 @@ paths:
       summary: Create limit for the ingestion key
       tags:
       - gateway
-  /api/v2/gateway/ingestion-keys/limits/{limitId}:
+  /api/v2/gateway/ingestion_keys/limits/{limitId}:
     delete:
       deprecated: false
       description: This endpoint deletes an ingestion key limit
@@ -2379,7 +2379,7 @@ paths:
       summary: Update limit for the ingestion key
       tags:
       - gateway
-  /api/v2/gateway/ingestion-keys/search:
+  /api/v2/gateway/ingestion_keys/search:
     get:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
