@@ -488,7 +488,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})
@@ -580,7 +580,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 				continue
 			}
 		}
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})

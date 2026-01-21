@@ -270,7 +270,7 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			thresholds := BasicRuleThresholds{tt.threshold}
-			vector, err := thresholds.Eval(tt.series, tt.ruleUnit, EvalData{})
+			vector, err := thresholds.Eval(&tt.series, tt.ruleUnit, EvalData{})
 			assert.NoError(t, err)
 
 			alert := len(vector) > 0

@@ -158,7 +158,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	var resultVector ruletypes.Vector
 	for _, series := range matrixToProcess {
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
       SendUnmatched: r.ShouldSendUnmatched(),
 		})

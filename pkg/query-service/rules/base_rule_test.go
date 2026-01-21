@@ -92,7 +92,7 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.rule.Threshold.Eval(*test.series, "", ruletypes.EvalData{})
+			_, err := test.rule.Threshold.Eval(test.series, "", ruletypes.EvalData{})
 			require.NoError(t, err)
 			require.Equal(t, len(test.series.Points) >= test.rule.ruleCondition.RequiredNumPoints, test.shouldAlert)
 		})
