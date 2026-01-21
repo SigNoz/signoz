@@ -104,6 +104,14 @@
 			}
 		}
 
+		.metrics-metadata-skeleton-container {
+			height: 330px;
+		}
+
+		.all-attributes-skeleton-container {
+			height: 600px;
+		}
+
 		.metrics-accordion {
 			.ant-table-body {
 				&::-webkit-scrollbar {
@@ -270,32 +278,9 @@
 			}
 		}
 
-		.metrics-metadata-accordion {
-			.ant-collapse-item {
-				.ant-collapse-content {
-					height: 268px;
+		
 
-					.ant-collapse-content-box {
-						.metrics-metadata-skeleton-container {
-							margin: 12px;
-						}
-					}
-				}
-			}
-		}
-
-		.metrics-all-attributes-accordion {
-			.ant-collapse-item {
-				.ant-collapse-content {
-					height: 600px;
-					.ant-collapse-content-box {
-						.all-attributes-skeleton-container {
-							margin: 12px;
-						}
-					}
-				}
-			}
-		}
+		
 	}
 
 	.ant-select {
