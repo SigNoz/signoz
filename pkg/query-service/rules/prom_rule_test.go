@@ -1350,13 +1350,16 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 	baseTime := time.Unix(1700000000, 0)
 	evalTime := baseTime.Add(5 * time.Minute)
 
+	evalWindow := 5 * time.Minute
+	lookBackDelta := time.Minute
+
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Unit test",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: ruletypes.Duration(evalWindow),
+			Frequency:  ruletypes.Duration(time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,
@@ -1370,13 +1373,13 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		},
 	}
 
-	// time_series_v4 cols of interest
 	fingerprintCols := []cmock.ColumnType{
 		{Name: "fingerprint", Type: "UInt64"},
 		{Name: "any(labels)", Type: "String"},
 	}
+	fingerprint := uint64(12345)
+	fingerprintData := [][]any{{fingerprint, `{"__name__":"test_metric"}`}}
 
-	// samples_v4 columns
 	samplesCols := []cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
 		{Name: "fingerprint", Type: "UInt64"},
@@ -1384,131 +1387,78 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		{Name: "value", Type: "Float64"},
 		{Name: "flags", Type: "UInt32"},
 	}
+	samplesData := [][]any{
+		{"test_metric", fingerprint, baseTime.UnixMilli(), 100.0, 0},
+		{"test_metric", fingerprint, baseTime.Add(time.Minute).UnixMilli(), 150.0, 0},
+		{"test_metric", fingerprint, baseTime.Add(2 * time.Minute).UnixMilli(), 250.0, 0},
+	}
+	targetForAlert := 200.0
+	targetForNoAlert := 500.0
 
 	// see Timestamps on base_rule
-	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
-	lookBackDeltaMs := int64(60 * 1000)  // 1 minute in ms
 	evalTimeMs := evalTime.UnixMilli()
-	queryStart := ((evalTimeMs-evalWindowMs-lookBackDeltaMs)/60000)*60000 + 1 // truncate to minute + 1ms
-	queryEnd := (evalTimeMs / 60000) * 60000                                  // truncate to minute
+	queryStart := ((evalTimeMs-evalWindow.Milliseconds()-lookBackDelta.Milliseconds())/60000)*60000 + 1 // truncate to minute + 1ms
+	queryEnd := (evalTimeMs / 60000) * 60000                                                            // truncate to minute
 
-	type sample struct {
-		timestamp time.Time
-		value     float64
-	}
 	cases := []struct {
 		description       string
+		alertCondition    bool
 		requireMinPoints  bool
 		requiredNumPoints int
-		values            []sample
-		target            float64
 		expectAlerts      int
 	}{
 		{
 			description:      "AlertCondition=false, RequireMinPoints=false",
+			alertCondition:   false,
 			requireMinPoints: false,
-			values: []sample{
-				{baseTime, 100.0},
-				{baseTime.Add(1 * time.Minute), 150.0},
-			},
-			target:       200,
-			expectAlerts: 0,
+			expectAlerts:     0,
 		},
 		{
 			description:      "AlertCondition=true, RequireMinPoints=false",
+			alertCondition:   true,
 			requireMinPoints: false,
-			values: []sample{
-				{baseTime, 100.0},
-				{baseTime.Add(1 * time.Minute), 150.0},
-				{baseTime.Add(2 * time.Minute), 250.0},
-			},
-			target:       200,
-			expectAlerts: 1,
+			expectAlerts:     1,
 		},
 		{
 			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=more_than_required",
+			alertCondition:    true,
 			requireMinPoints:  true,
 			requiredNumPoints: 2,
-			values: []sample{
-				{baseTime, 100.0},
-				{baseTime.Add(1 * time.Minute), 150.0},
-				{baseTime.Add(2 * time.Minute), 250.0},
-			},
-			target:       200,
-			expectAlerts: 1,
+			expectAlerts:      1,
 		},
 		{
 			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=same_as_required",
+			alertCondition:    true,
 			requireMinPoints:  true,
 			requiredNumPoints: 3,
-			values: []sample{
-				{baseTime, 100.0},
-				{baseTime.Add(1 * time.Minute), 150.0},
-				{baseTime.Add(2 * time.Minute), 250.0},
-			},
-			target:       200,
-			expectAlerts: 1,
+			expectAlerts:      1,
 		},
 		{
 			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=insufficient",
-			requireMinPoints:  true,
-			requiredNumPoints: 2,
-			values: []sample{
-				{baseTime.Add(-10 * time.Minute), 100.0},
-				{baseTime.Add(-7 * time.Minute), 150.0},
-				{baseTime.Add(-6 * time.Minute), 250.0},
-			},
-			target:       200,
-			expectAlerts: 0,
-		},
-		{
-			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=zero",
+			alertCondition:    true,
 			requireMinPoints:  true,
 			requiredNumPoints: 4,
-			values:            []sample{},
-			target:            200,
 			expectAlerts:      0,
 		},
 	}
 
 	logger := instrumentationtest.New().Logger()
 
-	for idx, c := range cases {
-		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
-
-		// single fingerprint with labels JSON
-		fingerprint := uint64(12345)
-		labelsJSON := `{"__name__":"test_metric"}`
-		fingerprintData := [][]any{
-			{fingerprint, labelsJSON},
-		}
-		//// args: $1=metric_name, $2=label_name, $3=label_value
-		telemetryStore.Mock().
-			ExpectQuery("SELECT fingerprint, any").
-			WithArgs("test_metric", "__name__", "test_metric").
-			WillReturnRows(cmock.NewRows(fingerprintCols, fingerprintData))
-
-		// create samples data from test case values
-		samplesData := make([][]any, len(c.values))
-		for i, v := range c.values {
-			samplesData[i] = []any{"test_metric", fingerprint, v.timestamp.UnixMilli(), v.value, 0}
-		}
-		// args: $1=metric_name (outer), $2=metric_name (subquery), $3=label_name, $4=label_value, $5=start, $6=end
-		telemetryStore.Mock().
-			ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-			WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
-			WillReturnRows(cmock.NewRows(samplesCols, samplesData))
-
+	for _, c := range cases {
 		rc := postableRule.RuleCondition
+
+		rc.Target = &targetForNoAlert
+		if c.alertCondition {
+			rc.Target = &targetForAlert
+		}
 		rc.RequireMinPoints = c.requireMinPoints
 		rc.RequiredNumPoints = c.requiredNumPoints
-		rc.Target = &c.target
 		rc.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
 					Name:        postableRule.AlertName,
-					TargetValue: &c.target,
+					TargetValue: rc.Target,
 					MatchType:   rc.MatchType,
 					CompareOp:   rc.CompareOp,
 				},
@@ -1516,10 +1466,19 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		}
 
 		t.Run(c.description, func(t *testing.T) {
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+			telemetryStore.Mock().
+				ExpectQuery("SELECT fingerprint, any").
+				WithArgs("test_metric", "__name__", "test_metric").
+				WillReturnRows(cmock.NewRows(fingerprintCols, fingerprintData))
+			telemetryStore.Mock().
+				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
+				WillReturnRows(cmock.NewRows(samplesCols, samplesData))
 			promProvider := prometheustest.New(
 				context.Background(),
 				instrumentationtest.New().ToProviderSettings(),
-				prometheus.Config{LookbackDelta: time.Minute},
+				prometheus.Config{LookbackDelta: lookBackDelta},
 				telemetryStore,
 			)
 			defer func() {
@@ -1534,7 +1493,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
 			require.NoError(t, err)
 
-			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
+			assert.Equal(t, c.expectAlerts, alertsFound)
 		})
 	}
 }
