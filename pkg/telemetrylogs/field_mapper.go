@@ -266,12 +266,27 @@ func (m *fieldMapper) buildFieldForJSON(ctx context.Context, key *telemetrytypes
 					"plan length is less than 2 for promoted path: %s", key.Name)
 			}
 
-			// promoted column first then body_json column
-			// TODO(Piyush): Change this in future for better performance
-			expr = fmt.Sprintf("coalesce(%s, %s)",
-				fmt.Sprintf("dynamicElement(%s, '%s')", plan[1].FieldPath(), plan[1].TerminalConfig.ElemType.StringValue()),
-				expr,
+			node := plan[1]
+			promotedExpr := fmt.Sprintf(
+				"dynamicElement(%s, '%s')",
+				node.FieldPath(),
+				node.TerminalConfig.ElemType.StringValue(),
 			)
+
+			// dynamicElement returns NULL for scalar types or an empty array for array types.
+			if node.TerminalConfig.ElemType.IsArray {
+				expr = fmt.Sprintf(
+					"if(length(%s) > 0, %s, %s)",
+					promotedExpr,
+					promotedExpr,
+					expr,
+				)
+			} else {
+				// promoted column first then body_json column
+				// TODO(Piyush): Change this in future for better performance
+				expr = fmt.Sprintf("coalesce(%s, %s)", promotedExpr, expr)
+			}
+
 		}
 
 		return expr, nil

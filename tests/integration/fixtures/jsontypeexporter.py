@@ -368,3 +368,41 @@ def export_json_types(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_metadata.json_path_types ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="export_promoted_paths", scope="function")
+def export_promoted_paths(
+    clickhouse: types.TestContainerClickhouse,
+    request: pytest.FixtureRequest,  # To access migrator fixture
+) -> Generator[Callable[[List[str]], None], Any, None]:
+    """
+    Fixture for exporting promoted JSON paths to the promoted paths table.
+    """
+    # Ensure migrator has run to create the table
+    try:
+        request.getfixturevalue("migrator")
+    except Exception:
+        # If migrator fixture is not available, that's okay - table might already exist
+        pass
+
+    def _export_promoted_paths(paths: List[str]) -> None:
+        if len(paths) == 0:
+            return
+
+        now_ms = int(datetime.datetime.now().timestamp() * 1000)
+        rows = [(path, now_ms) for path in paths]
+        clickhouse.conn.insert(
+            database="signoz_metadata",
+            table="distributed_json_promoted_paths",
+            data=rows,
+            column_names=[
+                "path",
+                "created_at",
+            ],
+        )
+
+    yield _export_promoted_paths
+
+    clickhouse.conn.query(
+        f"TRUNCATE TABLE signoz_metadata.json_promoted_paths ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
+    )

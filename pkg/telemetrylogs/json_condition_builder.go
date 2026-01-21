@@ -189,13 +189,14 @@ func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JS
 		arrayExpr = typedArrayExpr()
 	}
 
-	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, "x", operator)
+	key := "x"
+	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, key, operator)
 	op, err := c.applyOperator(sb, fieldExpr, operator, value)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("arrayExists(%s -> %s, %s)", fieldExpr, op, arrayExpr), nil
+	return fmt.Sprintf("arrayExists(%s -> %s, %s)", key, op, arrayExpr), nil
 }
 
 // recurseArrayHops recursively builds array traversal conditions
