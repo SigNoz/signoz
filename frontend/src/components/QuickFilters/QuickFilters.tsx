@@ -1,5 +1,4 @@
-import './QuickFilters.styles.scss';
-
+import { useMemo, useState } from 'react';
 import {
 	FilterOutlined,
 	SyncOutlined,
@@ -26,7 +25,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
 import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
 
@@ -37,6 +35,8 @@ import useFilterConfig from './hooks/useFilterConfig';
 import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
+
+import './QuickFilters.styles.scss';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const {
