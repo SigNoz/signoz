@@ -6,6 +6,15 @@
 > Why does this change exist?  
 > What problem does it solve, and why is this the right approach?
 
+
+
+#### Screenshots / Screen Recordings (if applicable)
+> Include screenshots or screen recordings that clearly show the behavior before the change and the result after the change. This helps reviewers quickly understand the impact and verify the update.
+
+
+#### Issues closed by this PR
+> Reference issues using `Closes #issue-number` to enable automatic closure on merge.
+
 ---
 
 ### ✅ Change Type

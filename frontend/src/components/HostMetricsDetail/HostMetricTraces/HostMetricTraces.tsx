@@ -13,7 +13,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
