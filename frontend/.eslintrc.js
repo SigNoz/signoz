@@ -59,9 +59,9 @@ module.exports = {
 		'no-cond-assign': 'error', // Prevents accidental assignment in conditions (if (x = 1) instead of if (x === 1))
 		'no-debugger': 'error', // Disallows debugger statements in production code
 		curly: 'error', // Requires curly braces for all control statements
+		'no-debugger': 'error', // Disallows debugger statements in production code
 		eqeqeq: ['error', 'always', { null: 'ignore' }], // Enforces === and !== (allows == null for null/undefined check)
-		// TODO: Enable after fixing ~15 console.log statements
-		// 'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
+		'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
 
 		// TypeScript rules
 		'@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions
