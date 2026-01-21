@@ -42,9 +42,6 @@ export default function UPlotChart({
 	const plotInstanceRef = useRef<uPlot | null>(null);
 	const prevPropsRef = useRef<PlotProps | null>(null);
 
-	console.log('width', width);
-	console.log('height', height);
-
 	/**
 	 * Initialize or reinitialize the plot
 	 */
