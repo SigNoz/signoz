@@ -118,21 +118,20 @@ module.exports = {
 		'import/no-extraneous-dependencies': ['error', { devDependencies: true }], // Prevents importing packages not in package.json
 		// 'import/no-cycle': 'warn', // TODO: Enable later to detect circular dependencies
 
-		// TODO: Enable in separate PR with auto fixes
-		// // Import sorting rules
-		// 'simple-import-sort/imports': [
-		// 	'error',
-		// 	{
-		// 		groups: [
-		// 			['^react', '^@?\\w'], // React first, then external packages
-		// 			['^@/'], // Absolute imports with @ alias
-		// 			['^\\u0000'], // Side effect imports (import './file')
-		// 			['^\\.'], // Relative imports
-		// 			['^.+\\.s?css$'], // Style imports
-		// 		],
-		// 	},
-		// ],
-		// 'simple-import-sort/exports': 'error', // Auto-sorts exports
+		// Import sorting rules
+		'simple-import-sort/imports': [
+			'error',
+			{
+				groups: [
+					['^react', '^@?\\w'], // React first, then external packages
+					['^@/'], // Absolute imports with @ alias
+					['^\\u0000'], // Side effect imports (import './file')
+					['^\\.'], // Relative imports
+					['^.+\\.s?css$'], // Style imports
+				],
+			},
+		],
+		'simple-import-sort/exports': 'error', // Auto-sorts exports
 
 		// Prettier - code formatting
 		'prettier/prettier': [
@@ -146,16 +145,4 @@ module.exports = {
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
 	},
-	overrides: [
-		{
-			files: ['src/api/generated/**/*.ts'],
-			rules: {
-				'@typescript-eslint/explicit-function-return-type': 'off',
-				'@typescript-eslint/explicit-module-boundary-types': 'off',
-				'no-nested-ternary': 'off',
-				'@typescript-eslint/no-unused-vars': 'warn',
-				'sonarjs/no-duplicate-string': 'off',
-			},
-		},
-	],
 };
