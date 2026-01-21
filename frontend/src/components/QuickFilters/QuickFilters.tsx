@@ -26,7 +26,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
 import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
 
@@ -72,6 +72,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	} = useQueryBuilder();
 	const [value, setValue] = useState(lastUsedQuery || 0);
 	const [open, setOpen] = useState(false);
+
+	// Sync value with lastUsedQuery when queries change (e.g., after deletion)
+	useEffect(() => {
+		const maxIndex = (currentQuery?.builder?.queryData?.length || 1) - 1;
+		const validIndex = Math.min(lastUsedQuery || 0, maxIndex);
+		setValue(validIndex);
+	}, [lastUsedQuery, currentQuery?.builder?.queryData?.length]);
 
 	// Determine if we're in ListView mode
 	const isListView = panelType === PANEL_TYPES.LIST;
