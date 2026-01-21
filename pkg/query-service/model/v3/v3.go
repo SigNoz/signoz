@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -601,43 +602,166 @@ func (c *CompositeQuery) Sanitize() {
 
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
-		return fmt.Errorf("composite query is required")
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"composite query is required",
+		)
 	}
 
-	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil && len(c.Queries) == 0 {
-		return fmt.Errorf("composite query must contain at least one query type")
+	if len(c.Queries) == 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"at least one query is required",
+		)
 	}
 
-	if c.QueryType == QueryTypeBuilder {
-		for name, query := range c.BuilderQueries {
-			if err := query.Validate(c.PanelType); err != nil {
-				return fmt.Errorf("builder query %s is invalid: %w", name, err)
-			}
+	// Validate unit if supplied
+	if c.Unit != "" {
+		unit := converter.Unit(c.Unit)
+		err := unit.Validate()
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid unit: %s",
+				err.Error(),
+			)
 		}
 	}
 
-	if c.QueryType == QueryTypeClickHouseSQL {
-		for name, query := range c.ClickHouseQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+	// Validate each query
+	for i, envelope := range c.Queries {
+		queryId := qbtypes.GetQueryIdentifier(envelope, i)
+
+		switch envelope.Type {
+		case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeSubQuery:
+			switch spec := envelope.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if err := spec.Validate(qbtypes.RequestTypeTimeSeries); err != nil {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"invalid %s: %s",
+						queryId,
+						err.Error(),
+					)
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if err := spec.Validate(qbtypes.RequestTypeTimeSeries); err != nil {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"invalid %s: %s",
+						queryId,
+						err.Error(),
+					)
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if err := spec.Validate(qbtypes.RequestTypeTimeSeries); err != nil {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"invalid %s: %s",
+						queryId,
+						err.Error(),
+					)
+				}
+			default:
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"unknown query spec type for %s",
+					queryId,
+				)
 			}
+		case qbtypes.QueryTypePromQL:
+			spec, ok := envelope.Spec.(qbtypes.PromQuery)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Query == "" {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"query expression is required for %s",
+					queryId,
+				)
+			}
+			if err := validatePromQLQuery(spec.Query); err != nil {
+				return err
+			}
+		case qbtypes.QueryTypeClickHouseSQL:
+			spec, ok := envelope.Spec.(qbtypes.ClickHouseQuery)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if spec.Query == "" {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"query expression is required for %s",
+					queryId,
+				)
+			}
+			if err := validateClickHouseQuery(spec.Query); err != nil {
+				return err
+			}
+		case qbtypes.QueryTypeFormula:
+			spec, ok := envelope.Spec.(qbtypes.QueryBuilderFormula)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if err := spec.Validate(); err != nil {
+				return err
+			}
+		case qbtypes.QueryTypeJoin:
+			spec, ok := envelope.Spec.(qbtypes.QueryBuilderJoin)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			if err := spec.Validate(); err != nil {
+				return err
+			}
+		case qbtypes.QueryTypeTraceOperator:
+			spec, ok := envelope.Spec.(qbtypes.QueryBuilderTraceOperator)
+			if !ok {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid spec for %s",
+					queryId,
+				)
+			}
+			err := spec.ValidateTraceOperator(c.Queries)
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"unknown query type '%s' for %s",
+				envelope.Type,
+				queryId,
+			).WithAdditional(
+				"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
+			)
 		}
 	}
 
-	if c.QueryType == QueryTypePromQL {
-		for name, query := range c.PromQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("prom query %s is invalid: %w", name, err)
-			}
-		}
-	}
-
-	if err := c.PanelType.Validate(); err != nil {
-		return fmt.Errorf("panel type is invalid: %w", err)
-	}
-
-	if err := c.QueryType.Validate(); err != nil {
-		return fmt.Errorf("query type is invalid: %w", err)
+	// Check if all queries are disabled
+	if allDisabled := checkQueriesDisabled(c); allDisabled {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"all queries are disabled - at least one query must be enabled",
+		)
 	}
 
 	return nil
@@ -1203,7 +1327,7 @@ func (f *FilterSet) Scan(src interface{}) error {
 func (f *FilterSet) Value() (driver.Value, error) {
 	filterSetJson, err := json.Marshal(f)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not serialize FilterSet to JSON")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "could not serialize FilterSet to JSON")
 	}
 	return filterSetJson, nil
 }

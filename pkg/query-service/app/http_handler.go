@@ -1407,6 +1407,10 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
 			return
 		}
+		if apiErr, ok := err.(*model.ApiError); ok {
+			RespondError(w, apiErr, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
@@ -1437,6 +1441,10 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
 			return
 		}
+		if apiErr, ok := err.(*model.ApiError); ok {
+			RespondError(w, apiErr, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
@@ -1457,6 +1465,10 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
+		if apiErr, ok := err.(*model.ApiError); ok {
+			RespondError(w, apiErr, nil)
+			return
+		}
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}

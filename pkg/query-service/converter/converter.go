@@ -1,7 +1,16 @@
 package converter
 
+import "github.com/SigNoz/signoz/pkg/errors"
+
 // Unit represents a unit of measurement
 type Unit string
+
+func (u Unit) Validate() error {
+	if !IsValidUnit(u) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid unit: %s", u)
+	}
+	return nil
+}
 
 // Value represents a value with a unit of measurement
 type Value struct {
@@ -57,6 +66,27 @@ func FromUnit(u Unit) Converter {
 		return ThroughputConverter
 	default:
 		return NoneConverter
+	}
+}
+
+// IsValidUnit returns true if the given unit is valid
+func IsValidUnit(u Unit) bool {
+	switch u {
+	// Duration unit
+	case "ns", "us", "µs", "ms", "s", "m", "h", "d", "min",
+		// Data unit
+		"bytes", "decbytes", "bits", "decbits", "kbytes", "decKbytes", "deckbytes", "mbytes", "decMbytes", "decmbytes", "gbytes", "decGbytes", "decgbytes", "tbytes", "decTbytes", "dectbytes", "pbytes", "decPbytes", "decpbytes", "By", "kBy", "MBy", "GBy", "TBy", "PBy",
+		// Data rate unit
+		"binBps", "Bps", "binbps", "bps", "KiBs", "Kibits", "KBs", "Kbits", "MiBs", "Mibits", "MBs", "Mbits", "GiBs", "Gibits", "GBs", "Gbits", "TiBs", "Tibits", "TBs", "Tbits", "PiBs", "Pibits", "PBs", "Pbits", "By/s", "kBy/s", "MBy/s", "GBy/s", "TBy/s", "PBy/s", "bit/s", "kbit/s", "Mbit/s", "Gbit/s", "Tbit/s", "Pbit/s",
+		// Percent unit
+		"percent", "percentunit", "%",
+		// Bool unit
+		"bool", "bool_yes_no", "bool_true_false", "bool_1_0",
+		// Throughput unit
+		"cps", "ops", "reqps", "rps", "wps", "iops", "cpm", "opm", "rpm", "wpm", "{count}/s", "{ops}/s", "{req}/s", "{read}/s", "{write}/s", "{iops}/s", "{count}/min", "{ops}/min", "{read}/min", "{write}/min":
+		return true
+	default:
+		return false
 	}
 }
 
