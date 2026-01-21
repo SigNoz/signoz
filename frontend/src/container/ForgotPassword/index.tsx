@@ -3,7 +3,7 @@ import './ForgotPassword.styles.scss';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { Form, Input, Typography } from 'antd';
-import forgotPasswordApi from 'api/v1/factor_password/forgotPassword';
+import forgotPasswordApi from 'api/v2/factor_password/forgotPassword';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';

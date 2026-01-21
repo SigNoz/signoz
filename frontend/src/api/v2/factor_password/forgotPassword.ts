@@ -1,4 +1,4 @@
-import axios from 'api';
+import { ApiV2Instance } from 'api';
 
 interface ForgotPasswordPayload {
 	orgId: string;
@@ -9,7 +9,7 @@ interface ForgotPasswordPayload {
 const forgotPassword = async (
 	payload: ForgotPasswordPayload,
 ): Promise<void> => {
-	await axios.post('/forgotPassword', payload);
+	await ApiV2Instance.post('/factor_password/forgot', payload);
 };
 
 export default forgotPassword;
