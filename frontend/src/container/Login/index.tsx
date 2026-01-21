@@ -1,7 +1,7 @@
 import './Login.styles.scss';
 
 import { Button } from '@signozhq/button';
-import { Form, Input, Select, Tooltip, Typography } from 'antd';
+import { Form, Input, Select, Typography } from 'antd';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
@@ -345,11 +345,19 @@ function Login(): JSX.Element {
 						<ParentContainer>
 							<div className="password-label-container">
 								<Label htmlFor="Password">Password</Label>
-								<Tooltip title="Ask your admin to reset your password and send you a new invite link">
-									<Typography.Link className="forgot-password-link">
-										Forgot password?
-									</Typography.Link>
-								</Tooltip>
+								<Typography.Link
+									className="forgot-password-link"
+									onClick={(): void => {
+										const email = form.getFieldValue('email');
+										history.push(
+											`${ROUTES.FORGOT_PASSWORD}?email=${encodeURIComponent(
+												email,
+											)}&orgId=${encodeURIComponent(sessionsOrgId)}`,
+										);
+									}}
+								>
+									Forgot password?
+								</Typography.Link>
 							</div>
 							<FormContainer.Item name="password">
 								<Input.Password

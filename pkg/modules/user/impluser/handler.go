@@ -332,6 +332,27 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
+func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	req := new(types.PostableForgotPassword)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	email, err := valuer.NewEmail(req.Email)
+	if err != nil {
+		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email address"))
+		return
+	}
+
+	_ = h.module.ForgotPassword(ctx, valuer.MustNewUUID(req.OrgID), email, req.FrontendBaseURL)
+
+	render.Success(w, http.StatusNoContent, nil)
+}
+
 func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

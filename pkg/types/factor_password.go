@@ -35,6 +35,12 @@ type ChangePasswordRequest struct {
 	NewPassword string      `json:"newPassword"`
 }
 
+type PostableForgotPassword struct {
+	OrgID           string `json:"orgId"`
+	Email           string `json:"email"`
+	FrontendBaseURL string `json:"frontendBaseURL"`
+}
+
 type ResetPasswordToken struct {
 	bun.BaseModel `bun:"table:reset_password_token"`
 

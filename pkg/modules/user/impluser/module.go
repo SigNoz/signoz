@@ -323,6 +323,41 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	return resetPasswordToken, nil
 }
 
+func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
+	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		return nil // for security reasons
+	}
+
+	if user == nil {
+		return nil // for security reasons
+	}
+
+	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	if err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
+		return nil
+	}
+
+	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
+
+	if err := module.emailing.SendHTML(
+		ctx,
+		user.Email.String(),
+		"Reset your SigNoz password",
+		emailtypes.TemplateNameResetPassword,
+		map[string]any{
+			"Name": user.DisplayName,
+			"Link": resetLink,
+		},
+	); err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
+		return nil
+	}
+
+	return nil
+}
+
 func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
 	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
