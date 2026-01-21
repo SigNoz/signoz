@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
@@ -40,6 +41,7 @@ type provider struct {
 	dashboardModule        dashboard.Module
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
+	gatewayHandler         gateway.Handler
 	roleGetter             role.Getter
 	roleHandler            role.Handler
 }
@@ -58,11 +60,12 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	gatewayHandler gateway.Handler,
 	roleGetter role.Getter,
 	roleHandler role.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, roleGetter, roleHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, gatewayHandler, roleGetter, roleHandler)
 	})
 }
 
@@ -83,6 +86,7 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	gatewayHandler gateway.Handler,
 	roleGetter role.Getter,
 	roleHandler role.Handler,
 ) (apiserver.APIServer, error) {
@@ -104,6 +108,7 @@ func newProvider(
 		dashboardModule:        dashboardModule,
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
+		gatewayHandler:         gatewayHandler,
 		roleGetter:             roleGetter,
 		roleHandler:            roleHandler,
 	}
@@ -159,6 +164,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addMetricsExplorerV2Routes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addGatewayRoutes(router); err != nil {
 		return err
 	}
 

@@ -3,6 +3,7 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -41,10 +42,11 @@ type Handlers struct {
 	MetricsExplorer metricsexplorer.Handler
 	Global          global.Handler
 	FlaggerHandler  flagger.Handler
+	GatewayHandler  gateway.Handler
 	Role            role.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger, gatewayService gateway.Gateway) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
@@ -57,6 +59,7 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:          signozglobal.NewHandler(global),
 		FlaggerHandler:  flagger.NewHandler(flaggerService),
+		GatewayHandler:  gateway.NewHandler(gatewayService),
 		Role:            implrole.NewHandler(modules.RoleSetter, modules.RoleGetter),
 	}
 }

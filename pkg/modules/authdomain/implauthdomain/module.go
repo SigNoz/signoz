@@ -52,3 +52,25 @@ func (module *module) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*au
 func (module *module) Update(ctx context.Context, domain *authtypes.AuthDomain) error {
 	return module.store.Update(ctx, domain)
 }
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	domains, err := module.store.ListByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]any)
+
+	for _, domain := range domains {
+		key := "authdomain." + domain.AuthDomainConfig().AuthNProvider.StringValue() + ".count"
+		if value, ok := stats[key]; ok {
+			stats[key] = value.(int64) + 1
+		} else {
+			stats[key] = int64(1)
+		}
+	}
+
+	stats["authdomain.count"] = len(domains)
+
+	return stats, nil
+}

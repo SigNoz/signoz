@@ -46,7 +46,7 @@ func TestNewHandlers(t *testing.T) {
 	grantModule := implrole.NewGrant(implrole.NewStore(sqlstore), nil)
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, roleSetter, roleGetter, grantModule)
 
-	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil)
+	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil, nil)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {
