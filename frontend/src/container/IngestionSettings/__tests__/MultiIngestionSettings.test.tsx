@@ -14,8 +14,12 @@ interface TestIngestionKeyProps extends Omit<IngestionKeyProps, 'limits'> {
 	limits?: LimitProps[];
 }
 
-interface TestAllIngestionKeyProps extends Omit<AllIngestionKeyProps, 'data'> {
-	data: TestIngestionKeyProps[];
+interface TestAllIngestionKeyProps {
+	status: string;
+	data: {
+		keys: TestIngestionKeyProps[];
+		_pagination: { page: number; per_page: number; pages: number; total: number };
+	};
 }
 
 // Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
@@ -88,26 +92,28 @@ describe('MultiIngestionSettings Page', () => {
 		// Arrange API response with a metrics daily count limit so the alert button is visible
 		const response: TestAllIngestionKeyProps = {
 			status: 'success',
-			data: [
-				{
-					name: 'Key One',
-					expires_at: TEST_EXPIRES_AT,
-					value: 'secret',
-					workspace_id: TEST_WORKSPACE_ID,
-					id: 'k1',
-					created_at: TEST_CREATED_UPDATED,
-					updated_at: TEST_CREATED_UPDATED,
-					tags: [],
-					limits: [
-						{
-							id: 'l1',
-							signal: 'metrics',
-							config: { day: { count: 1000 } },
-						},
-					],
-				},
-			],
-			_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			data: {
+				keys: [
+					{
+						name: 'Key One',
+						expires_at: TEST_EXPIRES_AT,
+						value: 'secret',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k1',
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
+						tags: [],
+						limits: [
+							{
+								id: 'l1',
+								signal: 'metrics',
+								config: { day: { count: 1000 } },
+							},
+						],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
 		};
 
 		server.use(
@@ -177,26 +183,28 @@ describe('MultiIngestionSettings Page', () => {
 		// Arrange API response with a logs daily size limit so the alert button is visible
 		const response: TestAllIngestionKeyProps = {
 			status: 'success',
-			data: [
-				{
-					name: 'Key Two',
-					expires_at: TEST_EXPIRES_AT,
-					value: 'secret',
-					workspace_id: TEST_WORKSPACE_ID,
-					id: 'k2',
-					created_at: TEST_CREATED_UPDATED,
-					updated_at: TEST_CREATED_UPDATED,
-					tags: [],
-					limits: [
-						{
-							id: 'l2',
-							signal: 'logs',
-							config: { day: { size: 2048 } },
-						},
-					],
-				},
-			],
-			_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			data: {
+				keys: [
+					{
+						name: 'Key Two',
+						expires_at: TEST_EXPIRES_AT,
+						value: 'secret',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k2',
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
+						tags: [],
+						limits: [
+							{
+								id: 'l2',
+								signal: 'logs',
+								config: { day: { size: 2048 } },
+							},
+						],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
 		};
 
 		server.use(

@@ -69,8 +69,11 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (ingestionKeys?.data.data && ingestionKeys?.data.data.length > 0) {
-			setFirstIngestionKey(ingestionKeys?.data.data[0]);
+		if (
+			ingestionKeys?.data.data?.keys &&
+			ingestionKeys?.data.data.keys.length > 0
+		) {
+			setFirstIngestionKey(ingestionKeys?.data.data.keys[0]);
 		}
 	}, [ingestionKeys]);
 
