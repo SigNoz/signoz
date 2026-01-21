@@ -26,7 +26,9 @@ function YAxisUnitSelector({
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
 	const incompatibleUnitMessage = useMemo(() => {
-		if (!initialValue || !value || loading) return '';
+		if (!initialValue || !value || loading) {
+			return '';
+		}
 		const initialUniversalUnit = mapMetricUnitToUniversalUnit(initialValue);
 		const currentUniversalUnit = mapMetricUnitToUniversalUnit(value);
 		if (initialUniversalUnit !== currentUniversalUnit) {
@@ -43,14 +45,18 @@ function YAxisUnitSelector({
 		searchTerm: string,
 		currentOption: DefaultOptionType | undefined,
 	): boolean => {
-		if (!currentOption?.value) return false;
+		if (!currentOption?.value) {
+			return false;
+		}
 
 		const search = searchTerm.toLowerCase();
 		const unitId = currentOption.value.toString().toLowerCase();
 		const unitLabel = currentOption.children?.toString().toLowerCase() || '';
 
 		// Check label and id
-		if (unitId.includes(search) || unitLabel.includes(search)) return true;
+		if (unitId.includes(search) || unitLabel.includes(search)) {
+			return true;
+		}
 
 		// Check aliases (from the mapping) using array iteration
 		const aliases = Array.from(

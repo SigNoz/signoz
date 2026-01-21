@@ -610,7 +610,9 @@ export const getUPlotChartOptions = ({
 
 									// Small delay to ensure cleanup is complete and DOM is ready
 									setTimeout(() => {
-										if (!isHovering) return; // Don't show if mouse already left
+										if (!isHovering) {
+											return;
+										} // Don't show if mouse already left
 
 										// Double-check no tooltip exists
 										if (document.querySelector('.legend-tooltip')) {

@@ -137,7 +137,9 @@ export const useHandleLogsPagination = ({
 	}, [shouldResetPage, timeRange]);
 
 	const loadMoreLogs = useCallback(() => {
-		if (!logs.length) return;
+		if (!logs.length) {
+			return;
+		}
 		setPage((prev) => prev + 1);
 		setIsPaginating(true);
 	}, [logs]);

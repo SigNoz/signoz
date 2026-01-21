@@ -7,7 +7,9 @@ export const filterAlerts = (
 	allAlertRules: GettableAlert[],
 	filter: string,
 ): GettableAlert[] => {
-	if (!filter.trim()) return allAlertRules;
+	if (!filter.trim()) {
+		return allAlertRules;
+	}
 
 	const value = filter.trim().toLowerCase();
 	return allAlertRules.filter((alert) => {
