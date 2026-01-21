@@ -17,8 +17,7 @@ import type {
 } from 'react-query';
 import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../mutator/custom-instance';
-import { customInstance } from '../../mutator/custom-instance';
+import { GeneratedAPIInstance } from '../../../index';
 import type {
 	ListPromotedAndIndexedPaths200,
 	PromotetypesPromotePathDTO,
@@ -34,7 +33,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary Promote and index paths
  */
 export const listPromotedAndIndexedPaths = (signal?: AbortSignal) =>
-	customInstance<ListPromotedAndIndexedPaths200>({
+	GeneratedAPIInstance<ListPromotedAndIndexedPaths200>({
 		url: `/api/v1/logs/promote_paths`,
 		method: 'GET',
 		signal,
@@ -45,7 +44,7 @@ export const getListPromotedAndIndexedPathsQueryKey = () =>
 
 export const getListPromotedAndIndexedPathsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
@@ -72,7 +71,7 @@ export const getListPromotedAndIndexedPathsQueryOptions = <
 export type ListPromotedAndIndexedPathsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>
 >;
-export type ListPromotedAndIndexedPathsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListPromotedAndIndexedPathsQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Promote and index paths
@@ -80,7 +79,7 @@ export type ListPromotedAndIndexedPathsQueryError = ErrorType<RenderErrorRespons
 
 export function useListPromotedAndIndexedPaths<
 	TData = Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
@@ -119,12 +118,10 @@ export const invalidateListPromotedAndIndexedPaths = async (
  * @summary Promote and index paths
  */
 export const handlePromoteAndIndexPaths = (
-	promotetypesPromotePathDTONull: BodyType<
-		PromotetypesPromotePathDTO[] | null
-	> | null,
+	promotetypesPromotePathDTONull: PromotetypesPromotePathDTO[] | null,
 	signal?: AbortSignal,
 ) =>
-	customInstance<void>({
+	GeneratedAPIInstance<void>({
 		url: `/api/v1/logs/promote_paths`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -133,19 +130,19 @@ export const handlePromoteAndIndexPaths = (
 	});
 
 export const getHandlePromoteAndIndexPathsMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 		TError,
-		{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+		{ data: PromotetypesPromotePathDTO[] | null },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 	TError,
-	{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+	{ data: PromotetypesPromotePathDTO[] | null },
 	TContext
 > => {
 	const mutationKey = ['handlePromoteAndIndexPaths'];
@@ -159,7 +156,7 @@ export const getHandlePromoteAndIndexPathsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
-		{ data: BodyType<PromotetypesPromotePathDTO[] | null> }
+		{ data: PromotetypesPromotePathDTO[] | null }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -172,28 +169,28 @@ export const getHandlePromoteAndIndexPathsMutationOptions = <
 export type HandlePromoteAndIndexPathsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>
 >;
-export type HandlePromoteAndIndexPathsMutationBody = BodyType<
-	PromotetypesPromotePathDTO[] | null
->;
-export type HandlePromoteAndIndexPathsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type HandlePromoteAndIndexPathsMutationBody =
+	| PromotetypesPromotePathDTO[]
+	| null;
+export type HandlePromoteAndIndexPathsMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Promote and index paths
  */
 export const useHandlePromoteAndIndexPaths = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 		TError,
-		{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+		{ data: PromotetypesPromotePathDTO[] | null },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 	TError,
-	{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+	{ data: PromotetypesPromotePathDTO[] | null },
 	TContext
 > => {
 	const mutationOptions = getHandlePromoteAndIndexPathsMutationOptions(options);

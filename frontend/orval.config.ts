@@ -1,3 +1,9 @@
+/**
+ * When making changes to this file, remove this the file name from .eslintignore and tsconfig.json
+ * The reason this is required because of the moduleResolution being "node". Changing this is a more detailed effort.
+ * So, until then, we will keep this file ignored for eslint and typescript.
+ */
+
 import { defineConfig } from 'orval';
 
 export default defineConfig({
@@ -25,8 +31,8 @@ export default defineConfig({
 				useNamedParameters: true,
 				enumGenerationType: 'enum',
 				mutator: {
-					path: './src/api/generated/mutator/custom-instance.ts',
-					name: 'customInstance',
+					path: './src/api/index.ts',
+					name: 'GeneratedAPIInstance',
 				},
 
 				jsDoc: {

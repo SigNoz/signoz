@@ -17,8 +17,7 @@ import type {
 } from 'react-query';
 import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../mutator/custom-instance';
-import { customInstance } from '../../mutator/custom-instance';
+import { GeneratedAPIInstance } from '../../../index';
 import type {
 	AuthtypesPostableAuthDomainDTO,
 	AuthtypesUpdateableAuthDomainDTO,
@@ -38,7 +37,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary List all auth domains
  */
 export const listAuthDomains = (signal?: AbortSignal) =>
-	customInstance<ListAuthDomains200>({
+	GeneratedAPIInstance<ListAuthDomains200>({
 		url: `/api/v1/domains`,
 		method: 'GET',
 		signal,
@@ -48,7 +47,7 @@ export const getListAuthDomainsQueryKey = () => ['listAuthDomains'] as const;
 
 export const getListAuthDomainsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAuthDomains>>,
@@ -74,7 +73,7 @@ export const getListAuthDomainsQueryOptions = <
 export type ListAuthDomainsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listAuthDomains>>
 >;
-export type ListAuthDomainsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListAuthDomainsQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary List all auth domains
@@ -82,7 +81,7 @@ export type ListAuthDomainsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListAuthDomains<
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAuthDomains>>,
@@ -121,10 +120,10 @@ export const invalidateListAuthDomains = async (
  * @summary Create auth domain
  */
 export const createAuthDomain = (
-	authtypesPostableAuthDomainDTO: BodyType<AuthtypesPostableAuthDomainDTO>,
+	authtypesPostableAuthDomainDTO: AuthtypesPostableAuthDomainDTO,
 	signal?: AbortSignal,
 ) =>
-	customInstance<CreateAuthDomain200>({
+	GeneratedAPIInstance<CreateAuthDomain200>({
 		url: `/api/v1/domains`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -133,19 +132,19 @@ export const createAuthDomain = (
 	});
 
 export const getCreateAuthDomainMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+		{ data: AuthtypesPostableAuthDomainDTO },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+	{ data: AuthtypesPostableAuthDomainDTO },
 	TContext
 > => {
 	const mutationKey = ['createAuthDomain'];
@@ -159,7 +158,7 @@ export const getCreateAuthDomainMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createAuthDomain>>,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> }
+		{ data: AuthtypesPostableAuthDomainDTO }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -172,26 +171,26 @@ export const getCreateAuthDomainMutationOptions = <
 export type CreateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAuthDomain>>
 >;
-export type CreateAuthDomainMutationBody = BodyType<AuthtypesPostableAuthDomainDTO>;
-export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateAuthDomainMutationBody = AuthtypesPostableAuthDomainDTO;
+export type CreateAuthDomainMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Create auth domain
  */
 export const useCreateAuthDomain = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+		{ data: AuthtypesPostableAuthDomainDTO },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+	{ data: AuthtypesPostableAuthDomainDTO },
 	TContext
 > => {
 	const mutationOptions = getCreateAuthDomainMutationOptions(options);
@@ -203,13 +202,13 @@ export const useCreateAuthDomain = <
  * @summary Delete auth domain
  */
 export const deleteAuthDomain = ({ id }: DeleteAuthDomainPathParameters) =>
-	customInstance<void>({
+	GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'DELETE',
 	});
 
 export const getDeleteAuthDomainMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -249,13 +248,13 @@ export type DeleteAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteAuthDomain>>
 >;
 
-export type DeleteAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteAuthDomainMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Delete auth domain
  */
 export const useDeleteAuthDomain = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -280,9 +279,9 @@ export const useDeleteAuthDomain = <
  */
 export const updateAuthDomain = (
 	{ id }: UpdateAuthDomainPathParameters,
-	authtypesUpdateableAuthDomainDTO: BodyType<AuthtypesUpdateableAuthDomainDTO>,
+	authtypesUpdateableAuthDomainDTO: AuthtypesUpdateableAuthDomainDTO,
 ) =>
-	customInstance<void>({
+	GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -290,7 +289,7 @@ export const updateAuthDomain = (
 	});
 
 export const getUpdateAuthDomainMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -298,7 +297,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data: AuthtypesUpdateableAuthDomainDTO;
 		},
 		TContext
 	>;
@@ -307,7 +306,7 @@ export const getUpdateAuthDomainMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+		data: AuthtypesUpdateableAuthDomainDTO;
 	},
 	TContext
 > => {
@@ -324,7 +323,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data: AuthtypesUpdateableAuthDomainDTO;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -338,14 +337,14 @@ export const getUpdateAuthDomainMutationOptions = <
 export type UpdateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAuthDomain>>
 >;
-export type UpdateAuthDomainMutationBody = BodyType<AuthtypesUpdateableAuthDomainDTO>;
-export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateAuthDomainMutationBody = AuthtypesUpdateableAuthDomainDTO;
+export type UpdateAuthDomainMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Update auth domain
  */
 export const useUpdateAuthDomain = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -353,7 +352,7 @@ export const useUpdateAuthDomain = <
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data: AuthtypesUpdateableAuthDomainDTO;
 		},
 		TContext
 	>;
@@ -362,7 +361,7 @@ export const useUpdateAuthDomain = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+		data: AuthtypesUpdateableAuthDomainDTO;
 	},
 	TContext
 > => {

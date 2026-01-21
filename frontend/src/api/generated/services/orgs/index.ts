@@ -17,8 +17,7 @@ import type {
 } from 'react-query';
 import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../mutator/custom-instance';
-import { customInstance } from '../../mutator/custom-instance';
+import { GeneratedAPIInstance } from '../../../index';
 import type {
 	GetMyOrganization200,
 	RenderErrorResponseDTO,
@@ -34,7 +33,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary Get my organization
  */
 export const getMyOrganization = (signal?: AbortSignal) =>
-	customInstance<GetMyOrganization200>({
+	GeneratedAPIInstance<GetMyOrganization200>({
 		url: `/api/v2/orgs/me`,
 		method: 'GET',
 		signal,
@@ -45,7 +44,7 @@ export const getGetMyOrganizationQueryKey = () =>
 
 export const getGetMyOrganizationQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMyOrganization>>,
@@ -71,7 +70,7 @@ export const getGetMyOrganizationQueryOptions = <
 export type GetMyOrganizationQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMyOrganization>>
 >;
-export type GetMyOrganizationQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMyOrganizationQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Get my organization
@@ -79,7 +78,7 @@ export type GetMyOrganizationQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMyOrganization<
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMyOrganization>>,
@@ -118,9 +117,9 @@ export const invalidateGetMyOrganization = async (
  * @summary Update my organization
  */
 export const updateMyOrganization = (
-	typesOrganizationDTO: BodyType<TypesOrganizationDTO>,
+	typesOrganizationDTO: TypesOrganizationDTO,
 ) =>
-	customInstance<void>({
+	GeneratedAPIInstance<void>({
 		url: `/api/v2/orgs/me`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -128,19 +127,19 @@ export const updateMyOrganization = (
 	});
 
 export const getUpdateMyOrganizationMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
 		TError,
-		{ data: BodyType<TypesOrganizationDTO> },
+		{ data: TypesOrganizationDTO },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMyOrganization>>,
 	TError,
-	{ data: BodyType<TypesOrganizationDTO> },
+	{ data: TypesOrganizationDTO },
 	TContext
 > => {
 	const mutationKey = ['updateMyOrganization'];
@@ -154,7 +153,7 @@ export const getUpdateMyOrganizationMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
-		{ data: BodyType<TypesOrganizationDTO> }
+		{ data: TypesOrganizationDTO }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -167,26 +166,26 @@ export const getUpdateMyOrganizationMutationOptions = <
 export type UpdateMyOrganizationMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMyOrganization>>
 >;
-export type UpdateMyOrganizationMutationBody = BodyType<TypesOrganizationDTO>;
-export type UpdateMyOrganizationMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyOrganizationMutationBody = TypesOrganizationDTO;
+export type UpdateMyOrganizationMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Update my organization
  */
 export const useUpdateMyOrganization = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
 		TError,
-		{ data: BodyType<TypesOrganizationDTO> },
+		{ data: TypesOrganizationDTO },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMyOrganization>>,
 	TError,
-	{ data: BodyType<TypesOrganizationDTO> },
+	{ data: TypesOrganizationDTO },
 	TContext
 > => {
 	const mutationOptions = getUpdateMyOrganizationMutationOptions(options);

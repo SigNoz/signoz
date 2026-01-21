@@ -471,6 +471,203 @@ export interface FeaturetypesGettableFeatureDTO {
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
 
+export interface GatewaytypesGettableCreatedIngestionKeyDTO {
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface GatewaytypesGettableCreatedIngestionKeyLimitDTO {
+	/**
+	 * @type string
+	 */
+	id?: string;
+}
+
+export interface GatewaytypesGettableIngestionKeysDTO {
+	_pagination?: GatewaytypesPaginationDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	keys?: GatewaytypesIngestionKeyDTO[] | null;
+}
+
+export interface GatewaytypesIngestionKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: Date;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	expires_at?: Date;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	limits?: GatewaytypesLimitDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	tags?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: Date;
+	/**
+	 * @type string
+	 */
+	value?: string;
+	/**
+	 * @type string
+	 */
+	workspace_id?: string;
+}
+
+export interface GatewaytypesLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: Date;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	key_id?: string;
+	metric?: GatewaytypesLimitMetricDTO;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	tags?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: Date;
+}
+
+export interface GatewaytypesLimitConfigDTO {
+	day?: GatewaytypesLimitValueDTO;
+	second?: GatewaytypesLimitValueDTO;
+}
+
+export interface GatewaytypesLimitMetricDTO {
+	day?: GatewaytypesLimitMetricValueDTO;
+	second?: GatewaytypesLimitMetricValueDTO;
+}
+
+export interface GatewaytypesLimitMetricValueDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	count?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	size?: number;
+}
+
+export interface GatewaytypesLimitValueDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	count?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	size?: number;
+}
+
+export interface GatewaytypesPaginationDTO {
+	/**
+	 * @type integer
+	 */
+	page?: number;
+	/**
+	 * @type integer
+	 */
+	pages?: number;
+	/**
+	 * @type integer
+	 */
+	per_page?: number;
+	/**
+	 * @type integer
+	 */
+	total?: number;
+}
+
+export interface GatewaytypesPostableIngestionKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	expires_at?: Date;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	tags?: string[] | null;
+}
+
+export interface GatewaytypesPostableIngestionKeyLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	tags?: string[] | null;
+}
+
+export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	tags?: string[] | null;
+}
+
 export interface MetricsexplorertypesMetricAlertDTO {
 	/**
 	 * @type string
@@ -1589,6 +1786,53 @@ export type GetFeatures200 = {
 	 * @type array
 	 */
 	data?: FeaturetypesGettableFeatureDTO[];
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetIngestionKeys200 = {
+	data?: GatewaytypesGettableIngestionKeysDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type CreateIngestionKey200 = {
+	data?: GatewaytypesGettableCreatedIngestionKeyDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type DeleteIngestionKeyPathParameters = {
+	keyId: string;
+};
+export type UpdateIngestionKeyPathParameters = {
+	keyId: string;
+};
+export type CreateIngestionKeyLimitPathParameters = {
+	keyId: string;
+};
+export type CreateIngestionKeyLimit201 = {
+	data?: GatewaytypesGettableCreatedIngestionKeyLimitDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type DeleteIngestionKeyLimitPathParameters = {
+	limitId: string;
+};
+export type UpdateIngestionKeyLimitPathParameters = {
+	limitId: string;
+};
+export type SearchIngestionKeys200 = {
+	data?: GatewaytypesGettableIngestionKeysDTO;
 	/**
 	 * @type string
 	 */

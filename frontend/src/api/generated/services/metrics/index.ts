@@ -17,8 +17,7 @@ import type {
 } from 'react-query';
 import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../mutator/custom-instance';
-import { customInstance } from '../../mutator/custom-instance';
+import { GeneratedAPIInstance } from '../../../index';
 import type {
 	GetMetricAlerts200,
 	GetMetricAttributes200,
@@ -44,7 +43,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary Get metric alerts
  */
 export const getMetricAlerts = (signal?: AbortSignal) =>
-	customInstance<GetMetricAlerts200>({
+	GeneratedAPIInstance<GetMetricAlerts200>({
 		url: `/api/v2/metric/alerts`,
 		method: 'GET',
 		signal,
@@ -54,7 +53,7 @@ export const getGetMetricAlertsQueryKey = () => ['getMetricAlerts'] as const;
 
 export const getGetMetricAlertsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricAlerts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricAlerts>>,
@@ -80,7 +79,7 @@ export const getGetMetricAlertsQueryOptions = <
 export type GetMetricAlertsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricAlerts>>
 >;
-export type GetMetricAlertsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricAlertsQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metric alerts
@@ -88,7 +87,7 @@ export type GetMetricAlertsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricAlerts<
 	TData = Awaited<ReturnType<typeof getMetricAlerts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricAlerts>>,
@@ -127,7 +126,7 @@ export const invalidateGetMetricAlerts = async (
  * @summary Get metric dashboards
  */
 export const getMetricDashboards = (signal?: AbortSignal) =>
-	customInstance<GetMetricDashboards200>({
+	GeneratedAPIInstance<GetMetricDashboards200>({
 		url: `/api/v2/metric/dashboards`,
 		method: 'GET',
 		signal,
@@ -138,7 +137,7 @@ export const getGetMetricDashboardsQueryKey = () =>
 
 export const getGetMetricDashboardsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricDashboards>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricDashboards>>,
@@ -164,7 +163,7 @@ export const getGetMetricDashboardsQueryOptions = <
 export type GetMetricDashboardsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricDashboards>>
 >;
-export type GetMetricDashboardsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricDashboardsQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metric dashboards
@@ -172,7 +171,7 @@ export type GetMetricDashboardsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricDashboards<
 	TData = Awaited<ReturnType<typeof getMetricDashboards>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricDashboards>>,
@@ -211,7 +210,7 @@ export const invalidateGetMetricDashboards = async (
  * @summary Get metric highlights
  */
 export const getMetricHighlights = (signal?: AbortSignal) =>
-	customInstance<GetMetricHighlights200>({
+	GeneratedAPIInstance<GetMetricHighlights200>({
 		url: `/api/v2/metric/highlights`,
 		method: 'GET',
 		signal,
@@ -222,7 +221,7 @@ export const getGetMetricHighlightsQueryKey = () =>
 
 export const getGetMetricHighlightsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricHighlights>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricHighlights>>,
@@ -248,7 +247,7 @@ export const getGetMetricHighlightsQueryOptions = <
 export type GetMetricHighlightsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricHighlights>>
 >;
-export type GetMetricHighlightsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricHighlightsQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metric highlights
@@ -256,7 +255,7 @@ export type GetMetricHighlightsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricHighlights<
 	TData = Awaited<ReturnType<typeof getMetricHighlights>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricHighlights>>,
@@ -296,10 +295,10 @@ export const invalidateGetMetricHighlights = async (
  */
 export const updateMetricMetadata = (
 	{ metricName }: UpdateMetricMetadataPathParameters,
-	metricsexplorertypesUpdateMetricMetadataRequestDTO: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>,
+	metricsexplorertypesUpdateMetricMetadataRequestDTO: MetricsexplorertypesUpdateMetricMetadataRequestDTO,
 	signal?: AbortSignal,
 ) =>
-	customInstance<string>({
+	GeneratedAPIInstance<string>({
 		url: `/api/v2/metrics/${metricName}/metadata`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -308,7 +307,7 @@ export const updateMetricMetadata = (
 	});
 
 export const getUpdateMetricMetadataMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -316,7 +315,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data: MetricsexplorertypesUpdateMetricMetadataRequestDTO;
 		},
 		TContext
 	>;
@@ -325,7 +324,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateMetricMetadataPathParameters;
-		data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+		data: MetricsexplorertypesUpdateMetricMetadataRequestDTO;
 	},
 	TContext
 > => {
@@ -342,7 +341,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data: MetricsexplorertypesUpdateMetricMetadataRequestDTO;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -356,14 +355,14 @@ export const getUpdateMetricMetadataMutationOptions = <
 export type UpdateMetricMetadataMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMetricMetadata>>
 >;
-export type UpdateMetricMetadataMutationBody = BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
-export type UpdateMetricMetadataMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMetricMetadataMutationBody = MetricsexplorertypesUpdateMetricMetadataRequestDTO;
+export type UpdateMetricMetadataMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Update metric metadata
  */
 export const useUpdateMetricMetadata = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -371,7 +370,7 @@ export const useUpdateMetricMetadata = <
 		TError,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data: MetricsexplorertypesUpdateMetricMetadataRequestDTO;
 		},
 		TContext
 	>;
@@ -380,7 +379,7 @@ export const useUpdateMetricMetadata = <
 	TError,
 	{
 		pathParams: UpdateMetricMetadataPathParameters;
-		data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+		data: MetricsexplorertypesUpdateMetricMetadataRequestDTO;
 	},
 	TContext
 > => {
@@ -393,10 +392,10 @@ export const useUpdateMetricMetadata = <
  * @summary Get metric attributes
  */
 export const getMetricAttributes = (
-	metricsexplorertypesMetricAttributesRequestDTO: BodyType<MetricsexplorertypesMetricAttributesRequestDTO>,
+	metricsexplorertypesMetricAttributesRequestDTO: MetricsexplorertypesMetricAttributesRequestDTO,
 	signal?: AbortSignal,
 ) =>
-	customInstance<GetMetricAttributes200>({
+	GeneratedAPIInstance<GetMetricAttributes200>({
 		url: `/api/v2/metrics/attributes`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -405,19 +404,19 @@ export const getMetricAttributes = (
 	});
 
 export const getGetMetricAttributesMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricAttributes>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesMetricAttributesRequestDTO> },
+		{ data: MetricsexplorertypesMetricAttributesRequestDTO },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricAttributes>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesMetricAttributesRequestDTO> },
+	{ data: MetricsexplorertypesMetricAttributesRequestDTO },
 	TContext
 > => {
 	const mutationKey = ['getMetricAttributes'];
@@ -431,7 +430,7 @@ export const getGetMetricAttributesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricAttributes>>,
-		{ data: BodyType<MetricsexplorertypesMetricAttributesRequestDTO> }
+		{ data: MetricsexplorertypesMetricAttributesRequestDTO }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -444,26 +443,26 @@ export const getGetMetricAttributesMutationOptions = <
 export type GetMetricAttributesMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricAttributes>>
 >;
-export type GetMetricAttributesMutationBody = BodyType<MetricsexplorertypesMetricAttributesRequestDTO>;
-export type GetMetricAttributesMutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricAttributesMutationBody = MetricsexplorertypesMetricAttributesRequestDTO;
+export type GetMetricAttributesMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metric attributes
  */
 export const useGetMetricAttributes = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricAttributes>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesMetricAttributesRequestDTO> },
+		{ data: MetricsexplorertypesMetricAttributesRequestDTO },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricAttributes>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesMetricAttributesRequestDTO> },
+	{ data: MetricsexplorertypesMetricAttributesRequestDTO },
 	TContext
 > => {
 	const mutationOptions = getGetMetricAttributesMutationOptions(options);
@@ -475,7 +474,7 @@ export const useGetMetricAttributes = <
  * @summary Get metric metadata
  */
 export const getMetricMetadata = (signal?: AbortSignal) =>
-	customInstance<GetMetricMetadata200>({
+	GeneratedAPIInstance<GetMetricMetadata200>({
 		url: `/api/v2/metrics/metadata`,
 		method: 'GET',
 		signal,
@@ -486,7 +485,7 @@ export const getGetMetricMetadataQueryKey = () =>
 
 export const getGetMetricMetadataQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricMetadata>>,
@@ -512,7 +511,7 @@ export const getGetMetricMetadataQueryOptions = <
 export type GetMetricMetadataQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricMetadata>>
 >;
-export type GetMetricMetadataQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricMetadataQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metric metadata
@@ -520,7 +519,7 @@ export type GetMetricMetadataQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricMetadata<
 	TData = Awaited<ReturnType<typeof getMetricMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricMetadata>>,
@@ -559,10 +558,10 @@ export const invalidateGetMetricMetadata = async (
  * @summary Get metrics statistics
  */
 export const getMetricsStats = (
-	metricsexplorertypesStatsRequestDTO: BodyType<MetricsexplorertypesStatsRequestDTO>,
+	metricsexplorertypesStatsRequestDTO: MetricsexplorertypesStatsRequestDTO,
 	signal?: AbortSignal,
 ) =>
-	customInstance<GetMetricsStats200>({
+	GeneratedAPIInstance<GetMetricsStats200>({
 		url: `/api/v2/metrics/stats`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -571,19 +570,19 @@ export const getMetricsStats = (
 	});
 
 export const getGetMetricsStatsMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		{ data: MetricsexplorertypesStatsRequestDTO },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	{ data: MetricsexplorertypesStatsRequestDTO },
 	TContext
 > => {
 	const mutationKey = ['getMetricsStats'];
@@ -597,7 +596,7 @@ export const getGetMetricsStatsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsStats>>,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> }
+		{ data: MetricsexplorertypesStatsRequestDTO }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -610,26 +609,26 @@ export const getGetMetricsStatsMutationOptions = <
 export type GetMetricsStatsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsStats>>
 >;
-export type GetMetricsStatsMutationBody = BodyType<MetricsexplorertypesStatsRequestDTO>;
-export type GetMetricsStatsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricsStatsMutationBody = MetricsexplorertypesStatsRequestDTO;
+export type GetMetricsStatsMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metrics statistics
  */
 export const useGetMetricsStats = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		{ data: MetricsexplorertypesStatsRequestDTO },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	{ data: MetricsexplorertypesStatsRequestDTO },
 	TContext
 > => {
 	const mutationOptions = getGetMetricsStatsMutationOptions(options);
@@ -641,10 +640,10 @@ export const useGetMetricsStats = <
  * @summary Get metrics treemap
  */
 export const getMetricsTreemap = (
-	metricsexplorertypesTreemapRequestDTO: BodyType<MetricsexplorertypesTreemapRequestDTO>,
+	metricsexplorertypesTreemapRequestDTO: MetricsexplorertypesTreemapRequestDTO,
 	signal?: AbortSignal,
 ) =>
-	customInstance<GetMetricsTreemap200>({
+	GeneratedAPIInstance<GetMetricsTreemap200>({
 		url: `/api/v2/metrics/treemap`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -653,19 +652,19 @@ export const getMetricsTreemap = (
 	});
 
 export const getGetMetricsTreemapMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		{ data: MetricsexplorertypesTreemapRequestDTO },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	{ data: MetricsexplorertypesTreemapRequestDTO },
 	TContext
 > => {
 	const mutationKey = ['getMetricsTreemap'];
@@ -679,7 +678,7 @@ export const getGetMetricsTreemapMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> }
+		{ data: MetricsexplorertypesTreemapRequestDTO }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -692,26 +691,26 @@ export const getGetMetricsTreemapMutationOptions = <
 export type GetMetricsTreemapMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsTreemap>>
 >;
-export type GetMetricsTreemapMutationBody = BodyType<MetricsexplorertypesTreemapRequestDTO>;
-export type GetMetricsTreemapMutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricsTreemapMutationBody = MetricsexplorertypesTreemapRequestDTO;
+export type GetMetricsTreemapMutationError = RenderErrorResponseDTO;
 
 /**
  * @summary Get metrics treemap
  */
 export const useGetMetricsTreemap = <
-	TError = ErrorType<RenderErrorResponseDTO>,
+	TError = RenderErrorResponseDTO,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		{ data: MetricsexplorertypesTreemapRequestDTO },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	{ data: MetricsexplorertypesTreemapRequestDTO },
 	TContext
 > => {
 	const mutationOptions = getGetMetricsTreemapMutationOptions(options);

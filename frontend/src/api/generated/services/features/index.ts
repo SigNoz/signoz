@@ -14,8 +14,7 @@ import type {
 } from 'react-query';
 import { useQuery } from 'react-query';
 
-import type { ErrorType } from '../../mutator/custom-instance';
-import { customInstance } from '../../mutator/custom-instance';
+import { GeneratedAPIInstance } from '../../../index';
 import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -27,7 +26,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary Get features
  */
 export const getFeatures = (signal?: AbortSignal) =>
-	customInstance<GetFeatures200>({
+	GeneratedAPIInstance<GetFeatures200>({
 		url: `/api/v2/features`,
 		method: 'GET',
 		signal,
@@ -37,7 +36,7 @@ export const getGetFeaturesQueryKey = () => ['getFeatures'] as const;
 
 export const getGetFeaturesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
@@ -63,7 +62,7 @@ export const getGetFeaturesQueryOptions = <
 export type GetFeaturesQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getFeatures>>
 >;
-export type GetFeaturesQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetFeaturesQueryError = RenderErrorResponseDTO;
 
 /**
  * @summary Get features
@@ -71,7 +70,7 @@ export type GetFeaturesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFeatures<
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = RenderErrorResponseDTO
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
