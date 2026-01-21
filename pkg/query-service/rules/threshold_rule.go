@@ -463,13 +463,13 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	}
 
 	if queryResult != nil && len(queryResult.Series) > 0 {
-		r.lastTimestampWithDatapoints = time.Now()
+		r.lastTimestampWithDatapoints = ts
 	}
 
 	var resultVector ruletypes.Vector
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(ts) {
 		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
@@ -539,13 +539,13 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	if queryResult != nil && len(queryResult.Series) > 0 {
-		r.lastTimestampWithDatapoints = time.Now()
+		r.lastTimestampWithDatapoints = ts
 	}
 
 	var resultVector ruletypes.Vector
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(ts) {
 		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
