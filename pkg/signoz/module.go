@@ -69,7 +69,7 @@ type Modules struct {
 	Promote         promote.Module
 	RoleSetter      role.Setter
 	RoleGetter      role.Getter
-	Grant           role.Grant
+	Granter         role.Granter
 }
 
 func NewModules(
@@ -91,11 +91,11 @@ func NewModules(
 	dashboard dashboard.Module,
 	roleSetter role.Setter,
 	roleGetter role.Getter,
-	grant role.Grant,
+	granter role.Granter,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, grant)
+	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, analytics, granter)
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
@@ -119,6 +119,6 @@ func NewModules(
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		RoleSetter:      roleSetter,
 		RoleGetter:      roleGetter,
-		Grant:           grant,
+		Granter:         granter,
 	}
 }

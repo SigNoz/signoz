@@ -45,7 +45,7 @@ type Getter interface {
 	List(context.Context, valuer.UUID) ([]*roletypes.Role, error)
 }
 
-type Grant interface {
+type Granter interface {
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, string, string) error
 

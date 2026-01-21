@@ -10,17 +10,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type grant struct {
+type granter struct {
 	store roletypes.Store
 	authz authz.AuthZ
 }
 
-func NewGrant(store roletypes.Store, authz authz.AuthZ) role.Grant {
-	return &grant{store: store, authz: authz}
+func NewGranter(store roletypes.Store, authz authz.AuthZ) role.Granter {
+	return &granter{store: store, authz: authz}
 }
 
-func (grant *grant) Grant(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := grant.store.GetByOrgIDAndName(ctx, name, orgID)
+func (granter *granter) Grant(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+	role, err := granter.store.GetByOrgIDAndName(ctx, name, orgID)
 	if err != nil {
 		return err
 	}
@@ -36,10 +36,10 @@ func (grant *grant) Grant(ctx context.Context, orgID valuer.UUID, name string, s
 	if err != nil {
 		return err
 	}
-	return grant.authz.Write(ctx, tuples, nil)
+	return granter.authz.Write(ctx, tuples, nil)
 }
 
-func (grant *grant) GrantByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID, subject string) error {
+func (granter *granter) GrantByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID, subject string) error {
 	tuples, err := authtypes.TypeableRole.Tuples(
 		subject,
 		authtypes.RelationAssignee,
@@ -51,16 +51,16 @@ func (grant *grant) GrantByID(ctx context.Context, orgID valuer.UUID, id valuer.
 	if err != nil {
 		return err
 	}
-	return grant.authz.Write(ctx, tuples, nil)
+	return granter.authz.Write(ctx, tuples, nil)
 }
 
-func (grant *grant) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRoleName string, subject string) error {
-	err := grant.Revoke(ctx, orgID, existingRoleName, subject)
+func (granter *granter) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRoleName string, subject string) error {
+	err := granter.Revoke(ctx, orgID, existingRoleName, subject)
 	if err != nil {
 		return err
 	}
 
-	err = grant.Grant(ctx, orgID, updatedRoleName, subject)
+	err = granter.Grant(ctx, orgID, updatedRoleName, subject)
 	if err != nil {
 		return err
 	}
@@ -68,8 +68,8 @@ func (grant *grant) ModifyGrant(ctx context.Context, orgID valuer.UUID, existing
 	return nil
 }
 
-func (grant *grant) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := grant.store.GetByOrgIDAndName(ctx, name, orgID)
+func (granter *granter) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+	role, err := granter.store.GetByOrgIDAndName(ctx, name, orgID)
 	if err != nil {
 		return err
 	}
@@ -85,13 +85,13 @@ func (grant *grant) Revoke(ctx context.Context, orgID valuer.UUID, name string, 
 	if err != nil {
 		return err
 	}
-	return grant.authz.Write(ctx, nil, tuples)
+	return granter.authz.Write(ctx, nil, tuples)
 }
 
-func (module *grant) SetManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*roletypes.Role) error {
-	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+func (granter *granter) SetManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*roletypes.Role) error {
+	err := granter.store.RunInTx(ctx, func(ctx context.Context) error {
 		for _, role := range managedRoles {
-			err := module.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
+			err := granter.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
 			if err != nil {
 				return err
 			}

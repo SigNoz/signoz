@@ -27,12 +27,12 @@ type module struct {
 	store              dashboardtypes.Store
 	settings           factory.ScopedProviderSettings
 	roleSetter         role.Setter
-	grant              role.Grant
+	granter            role.Granter
 	querier            querier.Querier
 	licensing          licensing.Licensing
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, roleSetter role.Setter, grant role.Grant, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, roleSetter role.Setter, granter role.Granter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
 	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser)
 
@@ -41,7 +41,7 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		store:              store,
 		settings:           scopedProviderSettings,
 		roleSetter:         roleSetter,
-		grant:              grant,
+		granter:            granter,
 		querier:            querier,
 		licensing:          licensing,
 	}
@@ -66,7 +66,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return err
 	}
 
-	err = module.grant.Grant(ctx, orgID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
+	err = module.granter.Grant(ctx, orgID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}
