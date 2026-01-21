@@ -262,7 +262,7 @@ def test_forgot_password_returns_204_for_nonexistent_email(
 
     # Call forgot password with a non-existent email
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/forgotPassword"),
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
         json={
             "email": "nonexistent@integration.test",
             "orgId": org_id,
@@ -282,7 +282,7 @@ def test_forgot_password_returns_204_for_invalid_email_format(
     Test that forgotPassword returns 400 for invalid email format.
     """
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/forgotPassword"),
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
         json={
             "email": "not-an-email",
             "orgId": "some-org-id",
@@ -358,7 +358,7 @@ def test_forgot_password_creates_reset_token(
 
     # Call forgot password endpoint
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/forgotPassword"),
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
         json={
             "email": "forgot@integration.test",
             "orgId": org_id,

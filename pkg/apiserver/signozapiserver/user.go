@@ -315,7 +315,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/forgotPassword", handler.New(provider.authZ.OpenAccess(provider.userHandler.ForgotPassword), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(provider.authZ.OpenAccess(provider.userHandler.ForgotPassword), handler.OpenAPIDef{
 		ID:                  "ForgotPassword",
 		Tags:                []string{"users"},
 		Summary:             "Forgot password",
