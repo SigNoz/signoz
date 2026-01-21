@@ -1,0 +1,126 @@
+import { getFallbackMinMaxTimeStamp } from 'lib/uPlotLib/utils/getXAxisScale';
+import { Scale } from 'uplot';
+
+import {
+	adjustSoftLimitsWithThresholds,
+	createRangeFunction,
+	getDistributionConfig,
+	getRangeConfig,
+	normalizeLogScaleLimits,
+} from '../utils/scale';
+import { ConfigBuilder, ScaleProps } from './types';
+
+/**
+ * Builder for uPlot scale configuration
+ * Handles creation and merging of scale settings
+ */
+export class UPlotScaleBuilder extends ConfigBuilder<
+	ScaleProps,
+	Record<string, Scale>
+> {
+	getConfig(): Record<string, Scale> {
+		const {
+			scaleKey,
+			time,
+			range,
+			thresholds,
+			logBase = 10,
+			padMinBy = 0.05,
+			padMaxBy = 0.05,
+		} = this.props;
+
+		// Special handling for time scales (X axis)
+		if (time) {
+			let minTime = this.props.min ?? 0;
+			let maxTime = this.props.max ?? 0;
+
+			// Fallback when min/max are not provided
+			if (!minTime || !maxTime) {
+				const { fallbackMin, fallbackMax } = getFallbackMinMaxTimeStamp();
+				minTime = fallbackMin;
+				maxTime = fallbackMax;
+			}
+
+			// Align max time to "endTime - 1 minute", rounded down to minute precision
+			// This matches legacy getXAxisScale behavior and avoids empty space at the right edge
+			const oneMinuteAgoTimestamp = (maxTime - 60) * 1000;
+			const currentDate = new Date(oneMinuteAgoTimestamp);
+
+			currentDate.setSeconds(0);
+			currentDate.setMilliseconds(0);
+
+			const unixTimestampSeconds = Math.floor(currentDate.getTime() / 1000);
+			maxTime = unixTimestampSeconds;
+
+			return {
+				[scaleKey]: {
+					time: true,
+					auto: false,
+					range: [minTime, maxTime],
+				},
+			};
+		}
+
+		const distr = this.props.distribution;
+
+		// Adjust softMin/softMax to include threshold values
+		// This ensures threshold lines are visible within the scale range
+		const thresholdList = thresholds?.thresholds;
+		const {
+			softMin: adjustedSoftMin,
+			softMax: adjustedSoftMax,
+		} = adjustSoftLimitsWithThresholds(
+			this.props.softMin,
+			this.props.softMax,
+			thresholdList,
+			thresholds?.yAxisUnit,
+		);
+
+		const { min, max, softMin, softMax } = normalizeLogScaleLimits(
+			distr,
+			logBase,
+			{
+				min: this.props.min,
+				max: this.props.max,
+				softMin: adjustedSoftMin,
+				softMax: adjustedSoftMax,
+			},
+		);
+
+		const distribution = getDistributionConfig(time, distr, logBase);
+
+		const {
+			rangeConfig,
+			hardMinOnly,
+			hardMaxOnly,
+			hasFixedRange,
+		} = getRangeConfig(min, max, softMin, softMax, padMinBy, padMaxBy);
+
+		const rangeFn = createRangeFunction({
+			rangeConfig,
+			hardMinOnly,
+			hardMaxOnly,
+			hasFixedRange,
+			min,
+			max,
+		});
+
+		let auto = this.props.auto;
+		auto ??= !time && !hasFixedRange;
+
+		return {
+			[scaleKey]: {
+				time,
+				auto,
+				range: range ?? rangeFn,
+				...distribution,
+			},
+		};
+	}
+
+	merge(props: Partial<ScaleProps>): void {
+		this.props = { ...this.props, ...props };
+	}
+}
+
+export type { ScaleProps };
