@@ -17,7 +17,9 @@ type Config struct {
 
 	// LookbackDelta determines the time since the last sample after which a time
 	// series is considered stale.
-	LookbackDelta time.Duration
+	//
+	// If not set, the prometheus default is used (currently 5m).
+	LookbackDelta time.Duration `mapstructure:"lookback_delta"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
