@@ -50,6 +50,7 @@ const ROUTES = {
 	LIVE_LOGS: '/logs/logs-explorer/live',
 	LOGS_PIPELINES: '/logs/pipelines',
 	PASSWORD_RESET: '/password-reset',
+	FORGOT_PASSWORD: '/forgot-password',
 	LIST_LICENSES: '/licenses',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
 	TRACE_EXPLORER: '/trace-explorer',
