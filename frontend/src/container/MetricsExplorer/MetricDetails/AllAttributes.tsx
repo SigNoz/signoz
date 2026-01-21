@@ -276,32 +276,8 @@ function AllAttributes({
 		[isErrorAttributes],
 	);
 
-	const items = useMemo(() => {
-		let children;
-		if (isLoadingAttributes) {
-			children = (
-				<div className="all-attributes-skeleton-container">
-					<Skeleton active title={false} paragraph={{ rows: 8 }} />
-				</div>
-			);
-		} else {
-			children = (
-				<ResizeTable
-					columns={columns}
-					loading={isLoadingAttributes}
-					tableLayout="fixed"
-					dataSource={tableData}
-					pagination={false}
-					showHeader={false}
-					className="metrics-accordion-content all-attributes-content"
-					scroll={{ y: 600 }}
-					locale={{
-						emptyText,
-					}}
-				/>
-			);
-		}
-		return [
+	const items = useMemo(
+		() => [
 			{
 				label: (
 					<div className="metrics-accordion-header">
@@ -323,10 +299,33 @@ function AllAttributes({
 					</div>
 				),
 				key: 'all-attributes',
-				children,
+				children: (
+					<ResizeTable
+						columns={columns}
+						loading={isLoadingAttributes}
+						tableLayout="fixed"
+						dataSource={tableData}
+						pagination={false}
+						showHeader={false}
+						className="metrics-accordion-content all-attributes-content"
+						scroll={{ y: 600 }}
+						locale={{
+							emptyText,
+						}}
+					/>
+				),
 			},
-		];
-	}, [searchString, columns, isLoadingAttributes, tableData, emptyText]);
+		],
+		[searchString, columns, isLoadingAttributes, tableData, emptyText],
+	);
+
+	if (isLoadingAttributes) {
+		return (
+			<div className="all-attributes-skeleton-container">
+				<Skeleton active paragraph={{ rows: 8 }} />
+			</div>
+		);
+	}
 
 	return (
 		<Collapse
