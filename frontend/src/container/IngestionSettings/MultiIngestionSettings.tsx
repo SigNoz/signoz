@@ -107,11 +107,14 @@ export const disabledDate = (current: any): boolean =>
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
-	err: Error,
+	err: Error | ErrorResponse,
 ): void => {
-	notifications.error({
-		message: err.message || SOMETHING_WENT_WRONG,
-	});
+	const message =
+		(err as ErrorResponse)?.error ||
+		(err as Error)?.message ||
+		SOMETHING_WENT_WRONG;
+
+	notifications.error({ message });
 };
 
 type ExpiryOption = {

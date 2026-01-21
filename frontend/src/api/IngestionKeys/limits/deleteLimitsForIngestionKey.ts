@@ -1,8 +1,7 @@
 import { GatewayApiV2Instance } from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import axios from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { AllIngestionKeyProps } from 'types/api/ingestionKeys/types';
+import { ErrorStatusCode } from 'types/common';
 
 const deleteLimitsForIngestionKey = async (
 	id: string,
@@ -17,7 +16,22 @@ const deleteLimitsForIngestionKey = async (
 			payload: undefined,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		if (axios.isAxiosError(error)) {
+			const errResponse: ErrorResponse = {
+				statusCode:
+					(error.response?.status as ErrorStatusCode) || (500 as ErrorStatusCode),
+				error: error.response?.data?.error?.message || 'Something went wrong',
+				message: error.response?.data?.error?.message || 'An error occurred',
+				payload: null,
+			};
+			throw errResponse;
+		}
+		throw {
+			statusCode: 500,
+			error: 'Unknown error',
+			message: 'An unknown error occurred',
+			payload: null,
+		};
 	}
 };
 
