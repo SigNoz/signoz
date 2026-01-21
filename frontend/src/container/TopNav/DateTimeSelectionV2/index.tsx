@@ -35,19 +35,21 @@ import { v4 as uuid } from 'uuid';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
-import { RelativeTimeMap } from '../DateTimeSelection/config';
 import {
 	convertOldTimeToNewValidCustomTimeFormat,
-	CustomTimeType,
 	getDefaultOption,
 	getOptions,
-	LocalStorageTimeRange,
 	OLD_RELATIVE_TIME_VALUES,
-	Time,
-	TimeRange,
-} from './config';
+	RelativeTimeMap,
+} from './constants';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
+import {
+	CustomTimeType,
+	LocalStorageTimeRange,
+	Time,
+	TimeRange,
+} from './types';
 
 function DateTimeSelection({
 	showAutoRefresh,
