@@ -1,10 +1,9 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import store from 'store';
 
 import getMaxMinTime from './getMaxMinTime';
@@ -41,7 +40,7 @@ const getStartEndRangeTime = ({
 interface GetStartEndRangeTimesProps {
 	type?: timePreferenceType;
 	graphType?: PANEL_TYPES | null;
-	interval?: Time | TimeV2 | CustomTimeType;
+	interval?: Time | CustomTimeType;
 }
 
 interface GetStartEndRangeTimesPayload {
