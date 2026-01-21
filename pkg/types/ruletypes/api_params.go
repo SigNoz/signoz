@@ -31,6 +31,9 @@ const (
 
 const (
 	DefaultSchemaVersion = "v1"
+	// No schema version means the rule is not schema versioned
+	// and the rule is in the old format
+	NoSchemaVersion = ""
 )
 
 type RuleDataKind string
@@ -415,6 +418,11 @@ func (r *PostableRule) validate() error {
 	if !isValidVersion(r.Version) {
 		// errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid version: %s, must be one of: v3, v4, v5", r.Version))
 		zap.L().Warn("expected validation error in PostableRule.validate: invalid version", zap.Any("version", r.Version))
+	}
+
+	// Notification channel should be provided for older schema versions where there was no schema
+	if r.SchemaVersion == NoSchemaVersion && len(r.PreferredChannels) == 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "at least one notification channel is required"))
 	}
 
 	for k, v := range r.Labels {
