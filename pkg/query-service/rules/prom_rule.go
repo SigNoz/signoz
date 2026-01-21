@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -17,7 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 )
@@ -142,6 +143,27 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	}
 
 	matrixToProcess := r.matrixToV3Series(res)
+
+	if len(matrixToProcess) > 0 {
+		r.lastTimestampWithDatapoints = time.Now()
+	}
+
+	var resultVector ruletypes.Vector
+
+	// if the data is missing for `For` duration then we should send alert
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
+		lbls := qslabels.NewBuilder(qslabels.Labels{})
+		if !r.lastTimestampWithDatapoints.IsZero() {
+			lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+		}
+		resultVector = append(resultVector, ruletypes.Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		})
+		return resultVector, nil
+	}
+
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
@@ -153,7 +175,6 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		}
 	}
 
-	var resultVector ruletypes.Vector
 	for _, series := range matrixToProcess {
 		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
@@ -243,6 +264,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		for name, value := range r.annotations.Map() {
 			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
 		}
+		if result.IsMissing {
+			lb.Set(qslabels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(qslabels.NoDataLabel, "true")
+		}
 
 		lbs := lb.Labels()
 		h := lbs.Hash()
@@ -265,6 +290,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			Value:             result.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+			Missing:           result.IsMissing,
 			IsRecovering:      result.IsRecovering,
 		}
 	}

@@ -1345,6 +1345,121 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 	}
 }
 
+func TestPromRule_NoData(t *testing.T) {
+	evalTime := time.Now()
+
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Test no data",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeProm,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompareOp: ruletypes.ValueIsAbove,
+			MatchType: ruletypes.AtleastOnce,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {Query: "test_metric"},
+				},
+			},
+			Thresholds: &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: ruletypes.BasicRuleThresholds{{Name: "Test no data"}},
+			},
+		},
+	}
+
+	// time_series_v4 cols of interest
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+
+	// samples_v4 columns
+	samplesCols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+
+	// see Timestamps on base_rule
+	evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
+	evalTimeMs := evalTime.UnixMilli()
+	queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
+	queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
+
+	cases := []struct {
+		description   string
+		alertOnAbsent bool
+		values        []any
+		target        float64
+		expectAlerts  int
+	}{
+		{
+			description:   "AlertOnAbsent=false",
+			alertOnAbsent: false,
+			values:        []any{},
+			target:        200,
+			expectAlerts:  0,
+		},
+		{
+			description:   "AlertOnAbsent=true",
+			alertOnAbsent: true,
+			values:        []any{},
+			target:        200,
+			expectAlerts:  1,
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			postableRule.RuleCondition.AlertOnAbsent = c.alertOnAbsent
+
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+
+			// single fingerprint with labels JSON
+			fingerprint := uint64(12345)
+			labelsJSON := `{"__name__":"test_metric"}`
+			telemetryStore.Mock().
+				ExpectQuery("SELECT fingerprint, any").
+				WithArgs("test_metric", "__name__", "test_metric").
+				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
+
+			telemetryStore.Mock().
+				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
+				WillReturnRows(cmock.NewRows(samplesCols, [][]any{}))
+
+			promProvider := prometheustest.New(
+				context.Background(),
+				instrumentationtest.New().ToProviderSettings(),
+				prometheus.Config{},
+				telemetryStore,
+			)
+			defer func() {
+				_ = promProvider.Close()
+			}()
+
+			options := clickhouseReader.NewOptions("primaryNamespace")
+			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			require.NoError(t, err)
+
+			alertsFound, err := rule.Eval(context.Background(), evalTime)
+			require.NoError(t, err)
+
+			assert.Equal(t, c.expectAlerts, alertsFound)
+		})
+	}
+}
+
 func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 	// fixed base time for deterministic tests
 	baseTime := time.Unix(1700000000, 0)
