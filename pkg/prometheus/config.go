@@ -1,6 +1,10 @@
 package prometheus
 
-import "github.com/SigNoz/signoz/pkg/factory"
+import (
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/factory"
+)
 
 type ActiveQueryTrackerConfig struct {
 	Enabled       bool   `mapstructure:"enabled"`
@@ -10,6 +14,12 @@ type ActiveQueryTrackerConfig struct {
 
 type Config struct {
 	ActiveQueryTrackerConfig ActiveQueryTrackerConfig `mapstructure:"active_query_tracker"`
+
+	// LookbackDelta determines the time since the last sample after which a time
+	// series is considered stale.
+	//
+	// If not set, the prometheus default is used (currently 5m).
+	LookbackDelta time.Duration `mapstructure:"lookback_delta"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
