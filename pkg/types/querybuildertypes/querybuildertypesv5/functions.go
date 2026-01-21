@@ -1,9 +1,11 @@
 package querybuildertypesv5
 
 import (
+	"fmt"
 	"math"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -36,8 +38,8 @@ var (
 
 // Validate checks if the FunctionName is valid and one of the known types
 func (fn FunctionName) Validate() error {
-	switch fn {
-	case FunctionNameCutOffMin,
+	validFunctions := []FunctionName{
+		FunctionNameCutOffMin,
 		FunctionNameCutOffMax,
 		FunctionNameClampMin,
 		FunctionNameClampMax,
@@ -54,15 +56,24 @@ func (fn FunctionName) Validate() error {
 		FunctionNameMedian7,
 		FunctionNameTimeShift,
 		FunctionNameAnomaly,
-		FunctionNameFillZero:
-		return nil
-	default:
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid function name: %s",
-			fn.StringValue(),
-		)
+		FunctionNameFillZero,
 	}
+
+	if slices.Contains(validFunctions, fn) {
+		return nil
+	}
+
+	// Format valid functions as comma-separated string
+	var validFunctionNames []string
+	for _, fn := range validFunctions {
+		validFunctionNames = append(validFunctionNames, fn.StringValue())
+	}
+
+	return errors.NewInvalidInputf(
+		errors.CodeInvalidInput,
+		"invalid function name: %s",
+		fn.StringValue(),
+	).WithAdditional(fmt.Sprintf("valid functions are: %s", strings.Join(validFunctionNames, ", ")))
 }
 
 // ApplyFunction applies the given function to the result data
@@ -142,6 +153,97 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		return funcFillZero(result, int64(start), int64(end), int64(step))
 	}
 	return result
+}
+
+// ValidateArgs validates the arguments for the given function
+func (fn Function) ValidateArgs() error {
+	// Extract the function name and arguments
+	name := fn.Name
+	args := fn.Args
+
+	switch name {
+	case FunctionNameCutOffMin, FunctionNameCutOffMax, FunctionNameClampMin, FunctionNameClampMax:
+		if len(args) == 0 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"threshold value is required for function %s",
+				name.StringValue(),
+			)
+		}
+		_, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"threshold value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	case FunctionNameEWMA3, FunctionNameEWMA5, FunctionNameEWMA7:
+		if len(args) == 0 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"alpha value is required for function %s",
+				name.StringValue(),
+			)
+		}
+		_, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"alpha value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	case FunctionNameTimeShift:
+		if len(args) == 0 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"time shift value is required for function %s",
+				name.StringValue(),
+			)
+		}
+		_, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"time shift value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	case FunctionNameFillZero:
+		if len(args) < 3 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"start, end, and step values are required for function %s",
+				name.StringValue(),
+			)
+		}
+		_, startErr := parseFloat64Arg(args[0].Value)
+		if startErr != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"start value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+		_, endErr := parseFloat64Arg(args[1].Value)
+		if endErr != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"end value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+		_, stepErr := parseFloat64Arg(args[2].Value)
+		if stepErr != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"step value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	}
+	return nil
 }
 
 // parseFloat64Arg parses an argument to float64
