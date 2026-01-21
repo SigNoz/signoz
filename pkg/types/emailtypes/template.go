@@ -18,7 +18,7 @@ var (
 var (
 	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation_email")}
 	TemplateNameUpdateRole      = TemplateName{valuer.NewString("update_role")}
-	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password")}
+	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password_email")}
 )
 
 type TemplateName struct{ valuer.String }
