@@ -1,0 +1,30 @@
+// Styles scoped for RunQueryBtn usage
+.run-query-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.kbd-hint {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 6px;
+	border-radius: 6px;
+	border: 0.25px solid var(--bg-vanilla-200);
+	color: var(--bg-vanilla-200);
+	line-height: 1;
+	font-size: 10px;
+}
+
+.kbd-plus {
+	opacity: 0.8;
+}
+
+.lightMode {
+	.kbd-hint {
+		background: var(--bg-vanilla-100) !important;
+		border-color: var(--bg-vanilla-300) !important;
+		color: var(--bg-ink-200) !important;
+	}
+}
