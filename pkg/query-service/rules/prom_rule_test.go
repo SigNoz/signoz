@@ -1460,6 +1460,160 @@ func TestPromRule_NoData(t *testing.T) {
 	}
 }
 
+func TestPromRule_NoData_AbsentFor(t *testing.T) {
+	// 1. Call Eval with data at time t1, to populate lastTimestampWithDatapoints
+	// 2. Call Eval without data at time t2
+	// 3. Alert fires only if t2 - t1 > AbsentFor
+
+	baseTime := time.Unix(1700000000, 0)
+	evalWindow := 5 * time.Minute
+
+	// Set target higher than test data (100.0) so regular threshold alerts don't fire
+	target := 500.0
+
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Test no data with AbsentFor",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeProm,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(evalWindow),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompareOp:     ruletypes.ValueIsAbove,
+			MatchType:     ruletypes.AtleastOnce,
+			AlertOnAbsent: true,
+			Target:        &target,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {Query: "test_metric"},
+				},
+			},
+			Thresholds: &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: ruletypes.BasicRuleThresholds{{
+					Name:        "Test no data with AbsentFor",
+					TargetValue: &target,
+					MatchType:   ruletypes.AtleastOnce,
+					CompareOp:   ruletypes.ValueIsAbove,
+				}},
+			},
+		},
+	}
+
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+
+	samplesCols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+
+	cases := []struct {
+		description        string
+		absentFor          uint64        // grace period in minutes
+		timeBetweenEvals   time.Duration // time between first eval (with data) and second eval (no data)
+		expectAlertOnEval2 int
+	}{
+		{
+			description:        "WithinGracePeriod",
+			absentFor:          5,
+			timeBetweenEvals:   4 * time.Minute,
+			expectAlertOnEval2: 0,
+		},
+		{
+			description:        "AfterGracePeriod",
+			absentFor:          5,
+			timeBetweenEvals:   6 * time.Minute,
+			expectAlertOnEval2: 1,
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			postableRule.RuleCondition.AbsentFor = c.absentFor
+
+			// Timestamps for two evaluations
+			// t1 is the eval time for first eval, data points are in the past
+			t1 := baseTime.Add(5 * time.Minute) // first eval with data
+			t2 := t1.Add(c.timeBetweenEvals)    // second eval without data
+
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+
+			fingerprint := uint64(12345)
+			labelsJSON := `{"__name__":"test_metric"}`
+
+			// Helper to calculate query time range for an eval time
+			calcQueryRange := func(evalTime time.Time) (int64, int64) {
+				evalTimeMs := evalTime.UnixMilli()
+				queryStart := ((evalTimeMs-2*evalWindow.Milliseconds())/60000)*60000 + 1
+				queryEnd := (evalTimeMs / 60000) * 60000
+				return queryStart, queryEnd
+			}
+
+			// First eval (t1) - with data
+			queryStart1, queryEnd1 := calcQueryRange(t1)
+			telemetryStore.Mock().
+				ExpectQuery("SELECT fingerprint, any").
+				WithArgs("test_metric", "__name__", "test_metric").
+				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
+			telemetryStore.Mock().
+				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart1, queryEnd1).
+				WillReturnRows(cmock.NewRows(samplesCols, [][]any{
+					// Data points in the past relative to t1
+					{"test_metric", fingerprint, baseTime.UnixMilli(), 100.0, uint32(0)},
+					{"test_metric", fingerprint, baseTime.Add(1 * time.Minute).UnixMilli(), 100.0, uint32(0)},
+					{"test_metric", fingerprint, baseTime.Add(2 * time.Minute).UnixMilli(), 100.0, uint32(0)},
+				}))
+
+			// Second eval (t2) - no data
+			queryStart2, queryEnd2 := calcQueryRange(t2)
+			telemetryStore.Mock().
+				ExpectQuery("SELECT fingerprint, any").
+				WithArgs("test_metric", "__name__", "test_metric").
+				WillReturnRows(cmock.NewRows(fingerprintCols, [][]any{{fingerprint, labelsJSON}}))
+			telemetryStore.Mock().
+				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart2, queryEnd2).
+				WillReturnRows(cmock.NewRows(samplesCols, [][]any{})) // empty - no data
+
+			promProvider := prometheustest.New(
+				context.Background(),
+				instrumentationtest.New().ToProviderSettings(),
+				prometheus.Config{},
+				telemetryStore,
+			)
+			defer func() {
+				_ = promProvider.Close()
+			}()
+
+			options := clickhouseReader.NewOptions("primaryNamespace")
+			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			require.NoError(t, err)
+
+			// First eval with data - should NOT alert, but populates lastTimestampWithDatapoints
+			alertsFound1, err := rule.Eval(context.Background(), t1)
+			require.NoError(t, err)
+			assert.Equal(t, 0, alertsFound1, "First eval with data should not alert")
+
+			// Second eval without data - should alert based on AbsentFor
+			alertsFound2, err := rule.Eval(context.Background(), t2)
+			require.NoError(t, err)
+			assert.Equal(t, c.expectAlertOnEval2, alertsFound2)
+		})
+	}
+}
+
 func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 	// fixed base time for deterministic tests
 	baseTime := time.Unix(1700000000, 0)

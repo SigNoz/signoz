@@ -145,13 +145,13 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	matrixToProcess := r.matrixToV3Series(res)
 
 	if len(matrixToProcess) > 0 {
-		r.lastTimestampWithDatapoints = time.Now()
+		r.lastTimestampWithDatapoints = ts
 	}
 
 	var resultVector ruletypes.Vector
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(ts) {
 		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
 		lbls := qslabels.NewBuilder(qslabels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
