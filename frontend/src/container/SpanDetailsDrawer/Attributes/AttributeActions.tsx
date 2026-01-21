@@ -20,13 +20,17 @@ interface AttributeRecord {
 interface AttributeActionsProps {
 	record: AttributeRecord;
 	isPinned?: boolean;
-	onTogglePin: (fieldKey: string) => void;
+	onTogglePin?: (fieldKey: string) => void;
+	showPinned?: boolean;
+	showCopyOptions?: boolean;
 }
 
 export default function AttributeActions({
 	record,
 	isPinned,
 	onTogglePin,
+	showPinned = true,
+	showCopyOptions = true,
 }: AttributeActionsProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [isFilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -91,7 +95,7 @@ export default function AttributeActions({
 	}, [onCopyFieldValue, textToCopy]);
 
 	const handleTogglePin = useCallback((): void => {
-		onTogglePin(record.field);
+		onTogglePin?.(record.field);
 	}, [onTogglePin, record.field]);
 
 	const moreActionsContent = (
@@ -105,35 +109,41 @@ export default function AttributeActions({
 			>
 				Group By Attribute
 			</Button>
-			<Button
-				type="text"
-				icon={<Copy size={14} />}
-				onClick={handleCopyFieldName}
-				block
-			>
-				Copy Field Name
-			</Button>
-			<Button
-				type="text"
-				icon={<Copy size={14} />}
-				onClick={handleCopyFieldValue}
-				block
-			>
-				Copy Field Value
-			</Button>
+			{showCopyOptions && (
+				<>
+					<Button
+						type="text"
+						icon={<Copy size={14} />}
+						onClick={handleCopyFieldName}
+						block
+					>
+						Copy Field Name
+					</Button>
+					<Button
+						type="text"
+						icon={<Copy size={14} />}
+						onClick={handleCopyFieldValue}
+						block
+					>
+						Copy Field Value
+					</Button>
+				</>
+			)}
 		</div>
 	);
 
 	return (
 		<div className={cx('action-btn', { 'action-btn--is-open': isOpen })}>
-			<Tooltip title={isPinned ? 'Unpin attribute' : 'Pin attribute'}>
-				<Button
-					className={`filter-btn periscope-btn ${isPinned ? 'pinned' : ''}`}
-					aria-label={isPinned ? 'Unpin attribute' : 'Pin attribute'}
-					icon={<Pin size={14} fill={isPinned ? 'currentColor' : 'none'} />}
-					onClick={handleTogglePin}
-				/>
-			</Tooltip>
+			{showPinned && (
+				<Tooltip title={isPinned ? 'Unpin attribute' : 'Pin attribute'}>
+					<Button
+						className={`filter-btn periscope-btn ${isPinned ? 'pinned' : ''}`}
+						aria-label={isPinned ? 'Unpin attribute' : 'Pin attribute'}
+						icon={<Pin size={14} fill={isPinned ? 'currentColor' : 'none'} />}
+						onClick={handleTogglePin}
+					/>
+				</Tooltip>
+			)}
 			<Tooltip title="Filter for value">
 				<Button
 					className="filter-btn periscope-btn"
@@ -184,4 +194,7 @@ export default function AttributeActions({
 
 AttributeActions.defaultProps = {
 	isPinned: false,
+	showPinned: true,
+	showCopyOptions: true,
+	onTogglePin: undefined,
 };

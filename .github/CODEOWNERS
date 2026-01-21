@@ -55,7 +55,6 @@
 /pkg/telemetrymetrics/ @srikanthccv
 /pkg/telemetrytraces/ @srikanthccv
 
-
 # Metrics
 
 /pkg/types/metrictypes/ @srikanthccv
@@ -91,6 +90,14 @@
 # AuthN / AuthZ Owners
 
 /pkg/authz/ @vikrantgupta25
+/ee/authz/ @vikrantgupta25
+/pkg/authn/ @vikrantgupta25
+/ee/authn/ @vikrantgupta25
+/pkg/modules/user/ @vikrantgupta25
+/pkg/modules/session/ @vikrantgupta25
+/pkg/modules/organization/ @vikrantgupta25
+/pkg/modules/authdomain/ @vikrantgupta25
+/pkg/modules/role/ @vikrantgupta25
 
 # Integration tests
 

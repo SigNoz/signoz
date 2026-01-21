@@ -12,7 +12,7 @@ import {
 	FixedDurationSuggestionOptions,
 	Options,
 	RelativeDurationSuggestionOptions,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/constants';
 import dayjs from 'dayjs';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
