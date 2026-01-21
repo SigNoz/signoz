@@ -17,7 +17,6 @@ import {
 	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
-	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
 	InstalledIntegrations,
@@ -352,13 +351,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: PasswordReset,
 		key: 'PASSWORD_RESET',
-		isPrivate: false,
-	},
-	{
-		path: ROUTES.FORGOT_PASSWORD,
-		exact: true,
-		component: ForgotPassword,
-		key: 'FORGOT_PASSWORD',
 		isPrivate: false,
 	},
 	{
