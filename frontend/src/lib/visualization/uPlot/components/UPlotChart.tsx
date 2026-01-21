@@ -60,8 +60,6 @@ export default function UPlotChart({
 		// Build configuration from builder
 		const configOptions = config.getConfig();
 
-		console.log('configOptions', configOptions);
-
 		// Merge with dimensions
 		const plotConfig: Options = {
 			width: Math.floor(width),
