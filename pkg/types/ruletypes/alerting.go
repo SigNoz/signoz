@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -96,6 +97,30 @@ const (
 	ValueOutsideBounds CompareOp = "7"
 )
 
+func (co CompareOp) Validate() error {
+	validCompareOps := []CompareOp{
+		CompareOpNone,
+		ValueIsAbove,
+		ValueIsBelow,
+		ValueIsEq,
+		ValueIsNotEq,
+		ValueAboveOrEq,
+		ValueBelowOrEq,
+		ValueOutsideBounds,
+	}
+
+	if slices.Contains(validCompareOps, co) {
+		return nil
+	}
+
+	validCompareOpValues := []string{}
+	for _, co := range validCompareOps {
+		validCompareOpValues = append(validCompareOpValues, string(co))
+	}
+
+	return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid compare operator: %s", string(co)).WithAdditional(fmt.Sprintf("valid compare operations are: %s", strings.Join(validCompareOpValues, ", ")))
+}
+
 type MatchType string
 
 const (
@@ -106,6 +131,26 @@ const (
 	InTotal       MatchType = "4"
 	Last          MatchType = "5"
 )
+
+func (mt MatchType) Validate() error {
+	validMatchTypes := []MatchType{
+		MatchTypeNone,
+		AtleastOnce,
+		AllTheTimes,
+		OnAverage,
+		InTotal,
+		Last,
+	}
+	if slices.Contains(validMatchTypes, mt) {
+		return nil
+	}
+
+	validMatchTypeValues := []string{}
+	for _, mt := range validMatchTypes {
+		validMatchTypeValues = append(validMatchTypeValues, string(mt))
+	}
+	return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid match type: %s", string(mt)).WithAdditional(fmt.Sprintf("valid match types are: %s", strings.Join(validMatchTypeValues, ", ")))
+}
 
 type RuleCondition struct {
 	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty"`
@@ -145,6 +190,19 @@ func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
 	// Validate Seasonality - must be one of the allowed values when provided
 	if !isValidSeasonality(rc.Seasonality) {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid seasonality: %s, supported values: hourly, daily, weekly", rc.Seasonality))
+	}
+
+	// Only validate CompareOp and MatchType if they are provided
+	// as in new rule condition, these are not present in rule condition
+	if rc.CompareOp != "" {
+		if err := rc.CompareOp.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if rc.MatchType != "" {
+		if err := rc.MatchType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	// Validate SelectedQueryName - must match one of the query names from CompositeQuery
