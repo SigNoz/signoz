@@ -1,4 +1,4 @@
-import { GatewayApiV1Instance } from 'api';
+import { ApiV2Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -11,8 +11,8 @@ const updateIngestionKey = async (
 	props: UpdateIngestionKeyProps,
 ): Promise<SuccessResponse<IngestionKeysPayloadProps> | ErrorResponse> => {
 	try {
-		const response = await GatewayApiV1Instance.patch(
-			`/workspaces/me/keys/${props.id}`,
+		const response = await ApiV2Instance.patch(
+			`/gateway/ingestion_keys/${props.id}`,
 			{
 				...props.data,
 			},

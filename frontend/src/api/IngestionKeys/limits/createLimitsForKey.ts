@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-throw-literal */
-import { GatewayApiV1Instance } from 'api';
+import { ApiV2Instance } from 'api';
 import axios from 'axios';
 import {
 	AddLimitProps,
@@ -24,8 +24,8 @@ const createLimitForIngestionKey = async (
 	props: AddLimitProps,
 ): Promise<SuccessResponse<LimitSuccessProps> | ErrorResponse> => {
 	try {
-		const response = await GatewayApiV1Instance.post(
-			`/workspaces/me/keys/${props.keyID}/limits`,
+		const response = await ApiV2Instance.post(
+			`/gateway/ingestion_keys/${props.keyID}/limits`,
 			{
 				...props,
 			},

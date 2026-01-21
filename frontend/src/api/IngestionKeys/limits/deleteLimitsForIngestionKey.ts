@@ -1,4 +1,4 @@
-import { GatewayApiV1Instance } from 'api';
+import { ApiV2Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -8,8 +8,8 @@ const deleteLimitsForIngestionKey = async (
 	id: string,
 ): Promise<SuccessResponse<AllIngestionKeyProps> | ErrorResponse> => {
 	try {
-		const response = await GatewayApiV1Instance.delete(
-			`/workspaces/me/limits/${id}`,
+		const response = await ApiV2Instance.delete(
+			`/gateway/ingestion_keys/limits/${id}`,
 		);
 
 		return {

@@ -1,17 +1,17 @@
-import { GatewayApiV1Instance } from 'api';
+import { ApiV2Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
+	CreatedIngestionKey,
 	CreateIngestionKeyProps,
-	IngestionKeyProps,
 } from 'types/api/ingestionKeys/types';
 
 const createIngestionKey = async (
 	props: CreateIngestionKeyProps,
-): Promise<SuccessResponse<IngestionKeyProps> | ErrorResponse> => {
+): Promise<SuccessResponse<CreatedIngestionKey> | ErrorResponse> => {
 	try {
-		const response = await GatewayApiV1Instance.post('/workspaces/me/keys', {
+		const response = await ApiV2Instance.post('/gateway/ingestion_keys', {
 			...props,
 		});
 
