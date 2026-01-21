@@ -3,7 +3,7 @@ import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -318,7 +318,9 @@ function GridCardGraph({
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
-					isFetchingResponse={queryResponse.isFetching}
+					isFetchingResponse={
+						queryResponse.isFetching || variablesToGetUpdated.length > 0
+					}
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}

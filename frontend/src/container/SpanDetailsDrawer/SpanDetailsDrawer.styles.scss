@@ -47,15 +47,56 @@
 	.description {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
-		padding: 10px 12px;
+		padding: 10px 0px;
 
 		.item {
+			padding: 8px 12px;
 			&,
 			.attribute-container {
 				display: flex;
 				flex-direction: column;
 				gap: 8px;
+				position: relative; // ensure absolutely-positioned children anchor to the row
+			}
+
+			// Show attribute actions on hover for hardcoded rows
+			.attribute-actions-wrapper {
+				display: none;
+				gap: 8px;
+				position: absolute;
+				right: 8px;
+				top: 50%;
+				transform: translateY(-50%);
+				border-radius: 4px;
+				padding: 2px;
+
+				// style the action button group
+				.action-btn {
+					display: flex;
+					gap: 4px;
+				}
+				.filter-btn {
+					display: flex;
+					align-items: center;
+					border: none;
+					box-shadow: none;
+					border-radius: 2px;
+					background: var(--bg-slate-400);
+					padding: 4px;
+					gap: 3px;
+					height: 24px;
+					width: 24px;
+
+					&:hover {
+						background: var(--bg-slate-300);
+					}
+				}
+			}
+			&:hover {
+				background-color: var(--bg-slate-500);
+				.attribute-actions-wrapper {
+					display: flex;
+				}
 			}
 
 			.span-name-wrapper {
@@ -646,6 +687,29 @@
 
 		.description {
 			.item {
+				.attribute-actions-wrapper {
+					display: none;
+					gap: 8px;
+					position: absolute;
+					right: 8px;
+					top: 50%;
+					transform: translateY(-50%);
+					border-radius: 4px;
+					padding: 2px;
+
+					.filter-btn {
+						background: var(--bg-vanilla-200);
+						&:hover {
+							background: var(--bg-vanilla-100);
+						}
+					}
+				}
+				&:hover {
+					background-color: var(--bg-vanilla-300);
+					.attribute-actions-wrapper {
+						display: flex;
+					}
+				}
 				.span-name-wrapper {
 					.span-percentile-value-container {
 						&.span-percentile-value-container-open {

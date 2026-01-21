@@ -35,14 +35,14 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
 	require.NoError(t, err)
-	tokenizer := tokenizertest.New()
+	tokenizer := tokenizertest.NewMockTokenizer(t)
 	emailing := emailingtest.New()
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
 	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule)
 
-	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil)
+	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil, nil)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {
