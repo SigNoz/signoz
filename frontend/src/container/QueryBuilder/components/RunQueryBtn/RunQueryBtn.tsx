@@ -48,3 +48,4 @@ export default RunQueryBtn;
 // should i use cmd instead of icon
 // fix size of run query btn
 // other style suggestion
+// light mode style fix
