@@ -133,7 +133,7 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v
 			Variables: make(map[string]interface{}, 0),
 			NoCache:   true,
 		}
-		querytemplate.AssignReservedVarsV3(params)
+		querytemplate.AssignReservedVars(params.Variables, start, end)
 		for name, chQuery := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
 			if chQuery.Disabled {
 				continue
