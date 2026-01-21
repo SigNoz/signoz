@@ -162,13 +162,15 @@
 	justify-content: center;
 	padding: 0 4px;
 	border-radius: 2px;
-	background: rgba(171, 189, 255, 0.04);
+	background: var(--bg-ink-200);
 	color: var(--bg-vanilla-100);
-	font-size: 12px;
+	font-size: 9px;
 	font-weight: 400;
-	line-height: 16px;
-	letter-spacing: -0.06px;
-	cursor: pointer;
+	line-height: 12px;
+	letter-spacing: -0.045px;	
+	margin-right: 4px;
+	width: 70px;
+	
 }
 
 .time-input-prefix {

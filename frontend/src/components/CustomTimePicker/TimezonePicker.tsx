@@ -121,12 +121,14 @@ interface TimezonePickerProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	isOpenedFromFooter: boolean;
+	onTimezoneSelect: (timezone: Timezone) => void;
 }
 
 function TimezonePicker({
 	setActiveView,
 	setIsOpen,
 	isOpenedFromFooter,
+	onTimezoneSelect,
 }: TimezonePickerProps): JSX.Element {
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
@@ -153,11 +155,12 @@ function TimezonePicker({
 	}, [isOpenedFromFooter, setActiveView, setIsOpen]);
 
 	const handleTimezoneSelect = useCallback(
-		(timezone: Timezone) => {
+		(timezone: Timezone): void => {
 			setSelectedTimezone(timezone.name);
 			updateTimezone(timezone);
-			handleCloseTimezonePicker();
 			setIsOpen(false);
+			onTimezoneSelect(timezone);
+			handleCloseTimezonePicker();
 			logEvent('DateTimePicker: New Timezone Selected', {
 				timezone: {
 					name: timezone.name,
@@ -165,7 +168,7 @@ function TimezonePicker({
 				},
 			});
 		},
-		[handleCloseTimezonePicker, setIsOpen, updateTimezone],
+		[handleCloseTimezonePicker, setIsOpen, updateTimezone, onTimezoneSelect],
 	);
 
 	// Register keyboard shortcuts
@@ -194,7 +197,7 @@ function TimezonePicker({
 			<div className="timezone-picker__list">
 				{getFilteredTimezones(searchTerm).map((timezone) => (
 					<TimezoneItem
-						key={timezone.value}
+						key={`${timezone.value}-${timezone.name}`}
 						timezone={timezone}
 						isSelected={timezone.name === selectedTimezone}
 						onClick={(): void => handleTimezoneSelect(timezone)}

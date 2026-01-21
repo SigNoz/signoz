@@ -31,6 +31,7 @@ import { TimeRangeValidationResult } from 'utils/timeUtils';
 import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
+import { Timezone } from './timezoneUtils';
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
@@ -52,6 +53,7 @@ interface CustomTimePickerPopoverContentProps {
 		lexicalContext?: LexicalContext,
 	) => void;
 	onSelectHandler: (label: string, value: string) => void;
+	onTimezoneChange: (timezone: Timezone) => void;
 	onGoLive: () => void;
 	selectedTime: string;
 	activeView: 'datetime' | 'timezone';
@@ -101,6 +103,7 @@ function CustomTimePickerPopoverContent({
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
 	onSelectHandler,
+	onTimezoneChange,
 	onGoLive,
 	selectedTime,
 	activeView,
@@ -208,6 +211,7 @@ function CustomTimePickerPopoverContent({
 					setActiveView={setActiveView}
 					setIsOpen={setIsOpen}
 					isOpenedFromFooter={isOpenedFromFooter}
+					onTimezoneSelect={onTimezoneChange}
 				/>
 			</div>
 		);
