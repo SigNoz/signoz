@@ -274,9 +274,6 @@ function Metadata({
 	);
 
 	const actionButton = useMemo(() => {
-		if (isLoadingMetricMetadata) {
-			return null;
-		}
 		if (isEditing) {
 			return (
 				<div className="action-menu">
@@ -320,35 +317,10 @@ function Metadata({
 				</Button>
 			</div>
 		);
-	}, [
-		isLoadingMetricMetadata,
-		isEditing,
-		isUpdatingMetricsMetadata,
-		cancelEdit,
-		handleSave,
-	]);
+	}, [isEditing, isUpdatingMetricsMetadata, cancelEdit, handleSave]);
 
-	const items = useMemo(() => {
-		let children;
-		if (isLoadingMetricMetadata) {
-			children = (
-				<div className="metrics-metadata-skeleton-container">
-					<Skeleton active title={false} paragraph={{ rows: 8 }} />
-				</div>
-			);
-		} else {
-			children = (
-				<ResizeTable
-					columns={columns}
-					tableLayout="fixed"
-					dataSource={tableData}
-					pagination={false}
-					showHeader={false}
-					className="metrics-accordion-content metrics-metadata-container"
-				/>
-			);
-		}
-		return [
+	const items = useMemo(
+		() => [
 			{
 				label: (
 					<div className="metrics-accordion-header metrics-metadata-header">
@@ -357,10 +329,28 @@ function Metadata({
 					</div>
 				),
 				key: 'metric-metadata',
-				children,
+				children: (
+					<ResizeTable
+						columns={columns}
+						tableLayout="fixed"
+						dataSource={tableData}
+						pagination={false}
+						showHeader={false}
+						className="metrics-accordion-content metrics-metadata-container"
+					/>
+				),
 			},
-		];
-	}, [actionButton, columns, isLoadingMetricMetadata, tableData]);
+		],
+		[actionButton, columns, tableData],
+	);
+
+	if (isLoadingMetricMetadata) {
+		return (
+			<div className="metrics-metadata-skeleton-container">
+				<Skeleton active paragraph={{ rows: 8 }} />
+			</div>
+		);
+	}
 
 	return (
 		<Collapse
