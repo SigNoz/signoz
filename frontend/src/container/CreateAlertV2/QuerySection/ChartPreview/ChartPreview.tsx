@@ -1,12 +1,15 @@
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
-import { YAxisSource } from 'components/YAxisUnitSelector/types';
+import {
+	UniversalYAxisUnit,
+	YAxisSource,
+} from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -26,6 +29,7 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 		alertState,
 		setAlertState,
 		isEditMode,
+		setThresholdState,
 	} = useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -51,6 +55,18 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 		}
 	}, [initialYAxisUnit, setAlertState, shouldUpdateYAxisUnit]);
 
+	const handleYAxisUnitChange = useCallback(
+		(value: UniversalYAxisUnit): void => {
+			setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
+			// Reset all threshold units when the y-axis unit changes
+			setThresholdState({
+				type: 'SET_THRESHOLDS',
+				payload: thresholdState.thresholds.map((t) => ({ ...t, unit: '' })),
+			});
+		},
+		[setAlertState, setThresholdState, thresholdState.thresholds],
+	);
+
 	const headline = (
 		<div className="chart-preview-headline">
 			<PlotTag
@@ -60,9 +76,7 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 			<YAxisUnitSelector
 				value={yAxisUnit}
 				initialValue={initialYAxisUnit}
-				onChange={(value): void => {
-					setAlertState({ type: 'SET_Y_AXIS_UNIT', payload: value });
-				}}
+				onChange={handleYAxisUnitChange}
 				source={YAxisSource.ALERTS}
 				loading={isLoading}
 			/>
