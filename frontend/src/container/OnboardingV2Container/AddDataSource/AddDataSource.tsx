@@ -16,6 +16,8 @@ import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
@@ -148,6 +150,14 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const { org } = useAppContext();
 
+	const { data: ingestionKeys } = useGetAllIngestionsKeys({
+		search: '',
+		page: 1,
+		per_page: 10,
+	});
+
+	const { data: globalConfig } = useGetGlobalConfig();
+
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
 	const [searchQuery, setSearchQuery] = useState<string>('');
@@ -231,6 +241,17 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (selectedEnvironment) {
 			urlObj.searchParams.set('environment', selectedEnvironment);
+		}
+
+		const ingestionKey = ingestionKeys?.data?.data?.[0]?.value;
+		const region = globalConfig?.data?.ingestion_url;
+
+		if (ingestionKey) {
+			urlObj.searchParams.set('ingestion_key', ingestionKey);
+		}
+
+		if (region) {
+			urlObj.searchParams.set('region', region);
 		}
 
 		// Step 3: Return the updated URL as a string
