@@ -12,7 +12,7 @@ const (
 	ErrMessageInvalidField string = "request body contains invalid field value"
 )
 
-var _ Binding = (*jsonBinding)(nil)
+var _ BindingBody = (*jsonBinding)(nil)
 
 type jsonBinding struct{}
 
