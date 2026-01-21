@@ -180,11 +180,7 @@ func (fn Function) ValidateArgs() error {
 		}
 	case FunctionNameEWMA3, FunctionNameEWMA5, FunctionNameEWMA7:
 		if len(args) == 0 {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"alpha value is required for function %s",
-				name.StringValue(),
-			)
+			return nil // alpha is optional for EWMA functions
 		}
 		_, err := parseFloat64Arg(args[0].Value)
 		if err != nil {
