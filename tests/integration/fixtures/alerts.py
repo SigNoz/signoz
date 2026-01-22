@@ -23,7 +23,9 @@ def create_alert_rule(
             json=rule_data,
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        assert response.status_code == HTTPStatus.OK
+        assert response.status_code == HTTPStatus.OK, (
+            f"Failed to create rule, api returned {response.status_code} with response: {response.text}"
+        )
         rule_id = response.json()["data"]["id"]
         rule_ids.append(rule_id)
         return rule_id
@@ -34,10 +36,14 @@ def create_alert_rule(
             signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        assert response.status_code == HTTPStatus.OK
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"Failed to delete rule, api returned {response.status_code} with response: {response.text}")
 
     yield _create_alert_rule
     # delete the rule on cleanup
     for rule_id in rule_ids:
-        _delete_alert_rule(rule_id)
+        try:
+            _delete_alert_rule(rule_id)
+        except Exception as e:
+            logger.error("Error deleting rule: %s", {"rule_id": rule_id, "error": e})
 
