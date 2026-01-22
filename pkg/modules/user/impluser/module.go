@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -28,10 +29,11 @@ type Module struct {
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
 	analytics analytics.Analytics
+	config    user.Config
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -40,6 +42,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		config:    config,
 	}
 }
 
@@ -324,6 +327,10 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 }
 
 func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
+	if !module.config.AllowUserSelfPasswordReset {
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "users are not allowed to reset their password themselves")
+	}
+
 	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
