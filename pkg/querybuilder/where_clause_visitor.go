@@ -833,8 +833,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		contextPrefixedFieldName := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
 		for _, item := range v.fieldKeys[contextPrefixedFieldName] {
 
-			// Either FieldDataType matches or unspecified
-			// Since we already used context as part of name, we don't need to check it here
+			// Match items where: user didn't specify data type OR data type matches. Context filtering not needed here since context was used to construct the lookup key.
 			if fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == fieldKey.FieldDataType {
 				fieldKeysForName = append(fieldKeysForName, item)
 			}
