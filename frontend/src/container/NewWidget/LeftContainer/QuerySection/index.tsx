@@ -12,6 +12,7 @@ import {
 	getDefaultWidgetData,
 	PANEL_TYPE_TO_QUERY_TYPES,
 } from 'container/NewWidget/utils';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 // import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -242,15 +243,7 @@ function QuerySection({
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-						<Button
-							loading={queryResponse.isFetching}
-							type="primary"
-							onClick={handleRunQuery}
-							className="stage-run-query"
-							icon={<Play size={14} />}
-						>
-							Stage & Run Query
-						</Button>
+						<RunQueryBtn label="Stage & Run Query" onStageRunQuery={handleRunQuery} />
 					</span>
 				}
 				items={items}

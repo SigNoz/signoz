@@ -11,12 +11,14 @@ import {
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 interface RunQueryBtnProps {
+	label?: string;
 	isLoadingQueries?: boolean;
 	handleCancelQuery?: () => void;
 	onStageRunQuery?: () => void;
 }
 
 function RunQueryBtn({
+	label,
 	isLoadingQueries,
 	handleCancelQuery,
 	onStageRunQuery,
@@ -39,7 +41,7 @@ function RunQueryBtn({
 			onClick={onStageRunQuery}
 			icon={<Play size={14} />}
 		>
-			Run Query
+			{label || 'Run Query'}
 			<div className="cmd-hint">
 				{isMac ? <Command size={12} /> : <ChevronUp size={12} />}
 				<CornerDownLeft size={12} />

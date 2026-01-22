@@ -68,4 +68,15 @@ describe('RunQueryBtn', () => {
 			container.querySelector('.lucide-corner-down-left'),
 		).toBeInTheDocument();
 	});
+
+	test('renders custom label when provided', () => {
+		(getUserOperatingSystem as jest.Mock).mockReturnValue(
+			UserOperatingSystem.MACOS,
+		);
+		const onRun = jest.fn();
+		render(<RunQueryBtn onStageRunQuery={onRun} label="Stage & Run Query" />);
+		expect(
+			screen.getByRole('button', { name: /stage & run query/i }),
+		).toBeInTheDocument();
+	});
 });

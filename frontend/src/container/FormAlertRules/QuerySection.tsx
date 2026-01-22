@@ -195,14 +195,7 @@ function QuerySection({
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-									<Button
-										type="primary"
-										onClick={runQuery}
-										className="stage-run-query"
-										icon={<Play size={14} />}
-									>
-										Stage & Run Query
-									</Button>
+									<RunQueryBtn onStageRunQuery={runQuery} />
 								</span>
 							}
 							items={items}
