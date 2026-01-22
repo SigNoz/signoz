@@ -24,6 +24,7 @@ def create_alert_rule(
             signoz.self.host_configs["8080"].get("/api/v1/rules"),
             json=rule_data,
             headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
         )
         assert (
             response.status_code == HTTPStatus.OK
@@ -37,6 +38,7 @@ def create_alert_rule(
         response = requests.delete(
             signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
             headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
         )
         if response.status_code != HTTPStatus.OK:
             raise Exception(
