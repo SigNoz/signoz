@@ -444,7 +444,7 @@ func TestVisitKey(t *testing.T) {
 			expectedMainWrnURL: "",
 		},
 		{
-			name:    "attribute.custom_field where entire string is the name",
+			name:    "attribute.custom_field matches both full name and stripped name when both exist",
 			keyText: "attribute.custom_field",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"attribute.custom_field": {
