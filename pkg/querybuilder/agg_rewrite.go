@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultHeatmapBuckets = "20"
+	defaultBuckets = "20"
 	// Histogram max buckets limit is 250
 	maxBuckets = 250
 )
@@ -235,7 +235,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	} else {
 		// Non-If functions: map every argument as a column/value
 		if name == AggrFuncHeatmap.Name.StringValue() || name == qbtypes.RequestTypeDistribution.StringValue() {
-			buckets := defaultHeatmapBuckets
+			buckets := defaultBuckets
 			if len(args) == 2 {
 				buckets = args[1].String()
 				val, err := strconv.Atoi(buckets)

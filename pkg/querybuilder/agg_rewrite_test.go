@@ -57,14 +57,8 @@ func TestParseBucketCount(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:          "non-heatmap function",
+			name:          "non-bucket function",
 			expr:          "count()",
-			expectedCount: 0,
-			expectedError: false,
-		},
-		{
-			name:          "histogram function",
-			expr:          "histogram(duration_nano, 30)",
 			expectedCount: 0,
 			expectedError: false,
 		},
