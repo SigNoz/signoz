@@ -82,7 +82,9 @@ function MySettings(): JSX.Element {
 	];
 
 	const [theme, setTheme] = useState(() => {
-		if (autoSwitch) return 'auto';
+		if (autoSwitch) {
+			return 'auto';
+		}
 		return isDarkMode ? 'dark' : 'light';
 	});
 

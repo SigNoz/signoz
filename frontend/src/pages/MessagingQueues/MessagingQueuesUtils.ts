@@ -94,8 +94,10 @@ export function getFiltersFromConfigOptions(
 
 export function getWidgetQuery({
 	filterItems,
+	dotMetricsEnabled,
 }: {
 	filterItems: TagFilterItem[];
+	dotMetricsEnabled: boolean;
 }): GetWidgetQueryBuilderProps {
 	return {
 		title: 'Consumer Lag',
@@ -110,8 +112,14 @@ export function getWidgetQuery({
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'kafka_consumer_group_lag--float64--Gauge--true',
-							key: 'kafka_consumer_group_lag',
+							id: `${
+								dotMetricsEnabled
+									? 'kafka.consumer_group.lag'
+									: 'kafka_consumer_group_lag'
+							}--float64--Gauge--true`,
+							key: dotMetricsEnabled
+								? 'kafka.consumer_group.lag'
+								: 'kafka_consumer_group_lag',
 							type: 'Gauge',
 						},
 						aggregateOperator: 'max',

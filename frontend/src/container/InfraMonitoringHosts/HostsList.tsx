@@ -184,7 +184,9 @@ function HostsList(): JSX.Element {
 	}, [data?.payload?.data?.total]);
 
 	const selectedHostData = useMemo(() => {
-		if (!selectedHostName) return null;
+		if (!selectedHostName) {
+			return null;
+		}
 		return (
 			hostMetricsData.find((host) => host.hostName === selectedHostName) || null
 		);

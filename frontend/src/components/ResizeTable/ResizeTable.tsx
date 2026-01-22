@@ -43,7 +43,9 @@ function ResizeTable({
 
 	const updateAllColumnWidths = useRef(
 		debounce((widthsConfig: Record<string, number>) => {
-			if (!widgetId || !shouldPersistColumnWidths) return;
+			if (!widgetId || !shouldPersistColumnWidths) {
+				return;
+			}
 			setColumnWidths?.((prev) => ({
 				...prev,
 				[widgetId]: widthsConfig,
@@ -127,7 +129,9 @@ function ResizeTable({
 	}, [columns, columnWidths]);
 
 	useEffect(() => {
-		if (!shouldPersistColumnWidths) return;
+		if (!shouldPersistColumnWidths) {
+			return;
+		}
 		// Collect all column widths in a single object
 		const newColumnWidths: Record<string, number> = {};
 
