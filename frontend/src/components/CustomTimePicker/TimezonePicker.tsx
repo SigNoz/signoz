@@ -158,7 +158,6 @@ function TimezonePicker({
 		(timezone: Timezone): void => {
 			setSelectedTimezone(timezone.name);
 			updateTimezone(timezone);
-			setIsOpen(false);
 			onTimezoneSelect(timezone);
 			handleCloseTimezonePicker();
 			logEvent('DateTimePicker: New Timezone Selected', {
@@ -168,7 +167,7 @@ function TimezonePicker({
 				},
 			});
 		},
-		[handleCloseTimezonePicker, setIsOpen, updateTimezone, onTimezoneSelect],
+		[handleCloseTimezonePicker, updateTimezone, onTimezoneSelect],
 	);
 
 	// Register keyboard shortcuts
