@@ -642,7 +642,7 @@ func TestAdjustKey(t *testing.T) {
 		expectedKey telemetrytypes.TelemetryFieldKey
 	}{
 		{
-			name: "intrinsic field with no metadata match - use intrinsic",
+			name: "intrinsic field with no other key match - use intrinsic",
 			inputKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "severity_text",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
@@ -652,13 +652,26 @@ func TestAdjustKey(t *testing.T) {
 			expectedKey: IntrinsicFields["severity_text"],
 		},
 		{
-			name: "intrinsic field with metadata match - no override",
+			name: "intrinsic field with other key match - no override",
 			inputKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "body",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"body": {
+					{
+						Name:          "body",
+						FieldContext:  telemetrytypes.FieldContextBody,
+						FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+					},
+					{
+						Name:          "body",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+					},
+				},
+			},
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "body",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
@@ -807,7 +820,6 @@ func TestAdjustKey(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
 	cb := NewConditionBuilder(fm, mockMetadataStore)
-
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
