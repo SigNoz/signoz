@@ -327,7 +327,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 }
 
 func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
-	if !module.config.AllowUserSelfPasswordReset {
+	if !module.config.AllowSelfPasswordReset {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "users are not allowed to reset their password themselves")
 	}
 

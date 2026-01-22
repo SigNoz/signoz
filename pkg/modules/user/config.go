@@ -3,7 +3,7 @@ package user
 import "github.com/SigNoz/signoz/pkg/factory"
 
 type Config struct {
-	AllowUserSelfPasswordReset bool `mapstructure:"allow_user_self_password_reset"`
+	AllowSelfPasswordReset bool `mapstructure:"allow_self_password_reset"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -12,7 +12,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		AllowUserSelfPasswordReset: false,
+		AllowSelfPasswordReset: false,
 	}
 }
 
