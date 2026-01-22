@@ -1,6 +1,6 @@
 import './styles.scss';
 
-import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelection/config';
+import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useState } from 'react';
 import { PipelineData } from 'types/api/pipeline/def';
 

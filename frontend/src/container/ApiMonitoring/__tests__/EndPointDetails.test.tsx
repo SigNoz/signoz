@@ -9,7 +9,7 @@ import {
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueries } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
