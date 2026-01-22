@@ -13,7 +13,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { GraphClickProps } from '../useGraphClickToShowButton';
 import { NavigateToExplorerPagesProps } from '../useNavigateToExplorerPages';
-import { LegendEntryProps } from './FullView/types';
+import { LegendEntryProps, SavedLegendGraph } from './FullView/types';
 import {
 	showAllDataSet,
 	showAllDataSetFromApiResponse,
@@ -44,14 +44,12 @@ export const getLocalStorageGraphVisibilityState = ({
 		],
 	};
 
-	if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
-		const legendGraphFromLocalStore = localStorage.getItem(
-			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
-		);
-		let legendFromLocalStore: {
-			name: string;
-			dataIndex: LegendEntryProps[];
-		}[] = [];
+	const legendGraphFromLocalStore = localStorage.getItem(
+		LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
+	);
+
+	if (legendGraphFromLocalStore !== null) {
+		let legendFromLocalStore: SavedLegendGraph[] = [];
 
 		try {
 			legendFromLocalStore = JSON.parse(legendGraphFromLocalStore || '[]');
@@ -62,7 +60,6 @@ export const getLocalStorageGraphVisibilityState = ({
 			);
 		}
 
-		const newGraphVisibilityStates = Array(apiResponse.length + 1).fill(true);
 		legendFromLocalStore.forEach((item) => {
 			const newName = name;
 			if (item.name === newName) {
@@ -73,11 +70,10 @@ export const getLocalStorageGraphVisibilityState = ({
 							dataKey.label ===
 							getLabelName(datasets.metric, datasets.queryName, datasets.legend || ''),
 					);
-					if (index !== -1) {
-						newGraphVisibilityStates[i + 1] = item.dataIndex[index].show;
-					}
+					visibilityStateAndLegendEntry.graphVisibilityStates[i + 1] = item.inverted
+						? index === -1
+						: index !== -1;
 				});
-				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;
 			}
 		});
 	}

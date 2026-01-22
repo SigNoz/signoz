@@ -1,5 +1,51 @@
 import { SeriesItem } from 'types/api/widgets/getQuery';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function getLabelNameFromMetric(
+	metric: SeriesItem['labels'],
+	query: string,
+): string {
+	let metricName = '';
+	let pre = '';
+	let post = '';
+	let foundName = false;
+	let hasPreLabels = false;
+	let hasPostLabels = false;
+
+	// eslint-disable-next-line no-restricted-syntax
+	for (const [key, value] of Object.entries(metric)) {
+		if (key === '__name__') {
+			metricName = value || '';
+			foundName = true;
+		} else if (foundName) {
+			if (hasPostLabels) {
+				post += ',';
+			}
+			post += `${key}="${value}"`;
+			hasPostLabels = true;
+		} else {
+			if (hasPreLabels) {
+				pre += ',';
+			}
+			pre += `${key}="${value}"`;
+			hasPreLabels = true;
+		}
+	}
+
+	const result = metricName;
+
+	if (!foundName && !hasPreLabels && hasPostLabels) {
+		return query;
+	}
+
+	if (post.length === 0 && pre.length === 0) {
+		if (result) return result;
+		if (query) return query;
+		return result;
+	}
+	return `${result}{${pre}${post}}`;
+}
+
 const getLabelName = (
 	metric: SeriesItem['labels'],
 	query: string,
@@ -9,46 +55,27 @@ const getLabelName = (
 		return '';
 	}
 
-	const keysArray = Object.keys(metric);
 	if (legends.length !== 0) {
-		const variables = legends
-			.split('{{')
-			.filter((e) => e)
-			.map((e) => e.split('}}')[0]);
-
-		const results = variables.map((variable) => metric[variable]);
-
 		let endResult = legends;
 
-		variables.forEach((e, index) => {
-			endResult = endResult.replace(`{{${e}}}`, results[index]);
-		});
+		const startingVariables = legends.split('{{');
+
+		// eslint-disable-next-line no-restricted-syntax
+		for (const variable of startingVariables) {
+			if (variable) {
+				const variableName = variable.split('}}')[0];
+				const variableValue = metric[variableName] || '';
+
+				if (variableValue) {
+					endResult = endResult.replace(`{{${variableName}}}`, variableValue);
+				}
+			}
+		}
 
 		return endResult;
 	}
 
-	const index = keysArray.findIndex((e) => e === '__name__');
-
-	const preArray = index !== -1 ? keysArray.slice(0, index) : [];
-	const postArray = keysArray.slice(index + 1, keysArray.length);
-
-	if (index === undefined && preArray.length === 0 && postArray.length) {
-		return query;
-	}
-
-	const post = postArray.map((e) => `${e}="${metric[e]}"`).join(',');
-	const pre = preArray.map((e) => `${e}="${metric[e]}"`).join(',');
-
-	const value = metric[keysArray[index]];
-
-	const result = `${value === undefined ? '' : value}`;
-
-	if (post.length === 0 && pre.length === 0) {
-		if (result) return result;
-		if (query) return query;
-		return result;
-	}
-	return `${result}{${pre}${post}}`;
+	return getLabelNameFromMetric(metric, query);
 };
 
 export default getLabelName;

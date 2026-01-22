@@ -6,6 +6,7 @@ import uPlot from 'uplot';
 import {
 	ExtendedChartDataset,
 	LegendEntryProps,
+	SavedLegendGraph,
 	SaveLegendEntriesToLocalStoreProps,
 } from './types';
 
@@ -86,17 +87,26 @@ export const saveLegendEntriesToLocalStorage = ({
 	graphVisibilityState,
 	name,
 }: SaveLegendEntriesToLocalStoreProps): void => {
-	const newLegendEntry = {
+	let amountOfFalse = 0;
+	graphVisibilityState.forEach((state) => {
+		if (!state) {
+			amountOfFalse++;
+		}
+	});
+	const storeInverted = amountOfFalse > options.series.length / 2;
+	const newLegendEntry: SavedLegendGraph = {
 		name,
-		dataIndex: options.series.map(
-			(item, index): LegendEntryProps => ({
+		inverted: storeInverted,
+		dataIndex: options.series
+			.filter((_, index) =>
+				storeInverted ? graphVisibilityState[index] : !graphVisibilityState[index],
+			)
+			.map((item) => ({
 				label: item.label || '',
-				show: graphVisibilityState[index],
-			}),
-		),
+			})),
 	};
 
-	let existingEntries: { name: string; dataIndex: LegendEntryProps[] }[] = [];
+	let existingEntries: SavedLegendGraph[] = [];
 
 	try {
 		existingEntries = JSON.parse(
@@ -111,7 +121,7 @@ export const saveLegendEntriesToLocalStorage = ({
 	if (entryIndex >= 0) {
 		existingEntries[entryIndex] = newLegendEntry;
 	} else {
-		existingEntries = [...existingEntries, newLegendEntry];
+		existingEntries.push(newLegendEntry);
 	}
 
 	try {
