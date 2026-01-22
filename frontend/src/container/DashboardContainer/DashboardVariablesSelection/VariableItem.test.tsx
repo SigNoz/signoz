@@ -80,10 +80,12 @@ describe('VariableItem', () => {
 				/>
 			</MockQueryClientProvider>,
 		);
-		expect(screen.getByPlaceholderText('Enter value')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('variable-textbox-test_variable'),
+		).toBeInTheDocument();
 	});
 
-	test('calls onChange event handler when Input value changes', async () => {
+	test('calls onValueUpdate when Input value changes and blurs', async () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -102,13 +104,19 @@ describe('VariableItem', () => {
 			</MockQueryClientProvider>,
 		);
 
+		const inputElement = screen.getByTestId('variable-textbox-test_variable');
+
+		// Change the value
 		act(() => {
-			const inputElement = screen.getByPlaceholderText('Enter value');
 			fireEvent.change(inputElement, { target: { value: 'newValue' } });
 		});
 
+		// Blur the input to trigger the update
+		act(() => {
+			fireEvent.blur(inputElement);
+		});
+
 		await waitFor(() => {
-			// expect(mockOnValueUpdate).toHaveBeenCalledTimes(1);
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
 				'testVariable',
 				'test_variable',

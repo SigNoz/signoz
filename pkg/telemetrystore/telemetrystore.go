@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 type TelemetryStore interface {
@@ -20,7 +19,6 @@ type TelemetryStoreHook interface {
 	AfterQuery(ctx context.Context, event *QueryEvent)
 }
 
-type TelemetryStoreHookFactoryFunc func(string) factory.ProviderFactory[TelemetryStoreHook, Config]
 
 func WrapBeforeQuery(hooks []TelemetryStoreHook, ctx context.Context, event *QueryEvent) context.Context {
 	for _, hook := range hooks {

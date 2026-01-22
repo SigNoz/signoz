@@ -14,7 +14,7 @@ dependencies = [
     "svix-ksuid>=0.6.2",
     "requests>=2.32.4",
     "sqlalchemy>=2.0.43",
-    "selenium>=4.35.0",
+    "selenium>=4.40.0",
 ]
 
 [dependency-groups]

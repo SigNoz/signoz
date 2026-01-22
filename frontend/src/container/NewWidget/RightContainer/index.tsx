@@ -179,7 +179,9 @@ function RightContainer({
 
 	// Get dashboard variables
 	const dashboardVariables = useMemo<VariableOption[]>(() => {
-		if (!selectedDashboard?.data?.variables) return [];
+		if (!selectedDashboard?.data?.variables) {
+			return [];
+		}
 		return Object.entries(selectedDashboard.data.variables).map(([, value]) => ({
 			value: value.name || '',
 			label: value.name || '',
@@ -232,7 +234,9 @@ function RightContainer({
 		const pos = cursorPos;
 		const value = inputValue;
 		const lastDollar = value.lastIndexOf('$', pos - 1);
-		if (lastDollar === -1) return false;
+		if (lastDollar === -1) {
+			return false;
+		}
 		const afterDollar = value.substring(lastDollar + 1, pos).toLowerCase();
 		return option?.value.toLowerCase().startsWith(afterDollar) || false;
 	};

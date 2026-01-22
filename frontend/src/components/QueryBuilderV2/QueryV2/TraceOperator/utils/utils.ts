@@ -7,8 +7,9 @@ export const getInvolvedQueriesInTraceOperator = (
 		!traceOperators ||
 		traceOperators.length === 0 ||
 		traceOperators.length > 1
-	)
+	) {
 		return [];
+	}
 
 	const currentTraceOperator = traceOperators[0];
 

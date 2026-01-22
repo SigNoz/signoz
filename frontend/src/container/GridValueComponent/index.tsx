@@ -83,7 +83,9 @@ function GridValueComponent({
 					const queryName = (queryResponse?.data?.params as any)?.compositeQuery
 						?.queries[0]?.spec?.name;
 
-					if (!enableDrillDown || !queryName || !isQueryTypeBuilder) return;
+					if (!enableDrillDown || !queryName || !isQueryTypeBuilder) {
+						return;
+					}
 
 					// when multiple queries are present, we need to get the query name from the queryResponse
 					// since value panel shows result for the first query

@@ -37,7 +37,9 @@ function GeneralDashboardSettings(): JSX.Element {
 	const { t } = useTranslation('common');
 
 	const onSaveHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		updateDashboardMutation.mutate(
 			{

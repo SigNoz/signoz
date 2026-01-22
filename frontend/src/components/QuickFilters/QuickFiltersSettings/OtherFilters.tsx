@@ -141,9 +141,12 @@ function OtherFilters({
 	const renderFilters = (): React.ReactNode => {
 		const isLoading =
 			isFetchingSuggestions || isFetchingAggregateKeys || isLoadingFieldKeys;
-		if (isLoading) return <OtherFiltersSkeleton />;
-		if (!otherFilters?.length)
+		if (isLoading) {
+			return <OtherFiltersSkeleton />;
+		}
+		if (!otherFilters?.length) {
 			return <div className="no-values-found">No values found</div>;
+		}
 
 		return otherFilters.map((filter) => (
 			<div key={filter.key} className="qf-filter-item other-filters-item">

@@ -70,8 +70,12 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
  * Gets signal type from data source
  */
 function getSignalType(dataSource: string): 'traces' | 'logs' | 'metrics' {
-	if (dataSource === 'traces') return 'traces';
-	if (dataSource === 'logs') return 'logs';
+	if (dataSource === 'traces') {
+		return 'traces';
+	}
+	if (dataSource === 'logs') {
+		return 'logs';
+	}
 	return 'metrics';
 }
 
@@ -517,7 +521,9 @@ function reduceQueriesToObject(
 	// eslint-disable-line @typescript-eslint/no-explicit-any
 	const legends: Record<string, string> = {};
 	const queries = queryArray.reduce((acc, queryItem) => {
-		if (!queryItem.query) return acc;
+		if (!queryItem.query) {
+			return acc;
+		}
 		acc[queryItem.name] = queryItem;
 		legends[queryItem.name] = queryItem.legend;
 		return acc;

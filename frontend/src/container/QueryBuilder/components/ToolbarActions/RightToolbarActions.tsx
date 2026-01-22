@@ -27,7 +27,9 @@ export default function RightToolbarActions({
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
-		if (showLiveLogs) return;
+		if (showLiveLogs) {
+			return;
+		}
 
 		registerShortcut(LogsExplorerShortcuts.StageAndRunQuery, onStageRunQuery);
 
@@ -37,7 +39,7 @@ export default function RightToolbarActions({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [onStageRunQuery, showLiveLogs]);
 
-	if (showLiveLogs)
+	if (showLiveLogs) {
 		return (
 			<div className="right-toolbar-actions-container">
 				<Button
@@ -50,6 +52,7 @@ export default function RightToolbarActions({
 				</Button>
 			</div>
 		);
+	}
 
 	const handleCancelQuery = (): void => {
 		if (listQueryKeyRef?.current) {

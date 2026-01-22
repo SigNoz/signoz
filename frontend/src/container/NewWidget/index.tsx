@@ -723,7 +723,9 @@ function NewWidget({
 		enableDrillDown && !isNewDashboard && !!query.get('widgetId');
 
 	const handleSwitchToViewMode = useCallback(() => {
-		if (!query.get('widgetId')) return;
+		if (!query.get('widgetId')) {
+			return;
+		}
 		const widgetId = query.get('widgetId') || '';
 		const graphType = query.get('graphType') || '';
 		const queryParams = {

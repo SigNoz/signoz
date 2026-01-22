@@ -24,7 +24,7 @@ import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/c
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
@@ -450,8 +450,12 @@ function HostMetricsDetails({
 										size="small"
 										strokeColor={((): string => {
 											const cpuPercent = Number((host.cpu * 100).toFixed(1));
-											if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-											if (cpuPercent >= 60) return Color.BG_AMBER_500;
+											if (cpuPercent >= 90) {
+												return Color.BG_SAKURA_500;
+											}
+											if (cpuPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"
@@ -463,8 +467,12 @@ function HostMetricsDetails({
 										size="small"
 										strokeColor={((): string => {
 											const memoryPercent = Number((host.memory * 100).toFixed(1));
-											if (memoryPercent >= 90) return Color.BG_CHERRY_500;
-											if (memoryPercent >= 60) return Color.BG_AMBER_500;
+											if (memoryPercent >= 90) {
+												return Color.BG_CHERRY_500;
+											}
+											if (memoryPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"
