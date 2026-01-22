@@ -1,26 +1,24 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
+import * as useGetMetricAlertsHooks from 'hooks/metricsExplorer/v2/useGetMetricAlerts';
+import * as useGetMetricDashboardsHooks from 'hooks/metricsExplorer/v2/useGetMetricDashboards';
+import { UseQueryResult } from 'react-query';
+import { userEvent } from 'tests/test-utils';
+import { SuccessResponseV2 } from 'types/api';
+import {
+	GetMetricAlertsResponse,
+	GetMetricDashboardsResponse,
+} from 'types/api/metricsExplorer/v2';
 
 import DashboardsAndAlertsPopover from '../DashboardsAndAlertsPopover';
-
-const mockAlert1 = {
-	alert_id: '1',
-	alert_name: 'Alert 1',
-};
-const mockAlert2 = {
-	alert_id: '2',
-	alert_name: 'Alert 2',
-};
-const mockDashboard1 = {
-	dashboard_id: '1',
-	dashboard_name: 'Dashboard 1',
-};
-const mockDashboard2 = {
-	dashboard_id: '2',
-	dashboard_name: 'Dashboard 2',
-};
-const mockAlerts = [mockAlert1, mockAlert2];
-const mockDashboards = [mockDashboard1, mockDashboard2];
+import {
+	getMockAlertsData,
+	getMockDashboardsData,
+	MOCK_ALERT_1,
+	MOCK_ALERT_2,
+	MOCK_DASHBOARD_1,
+	MOCK_DASHBOARD_2,
+} from './testUtlls';
 
 const mockSafeNavigate = jest.fn();
 jest.mock('hooks/useSafeNavigate', () => ({
@@ -28,7 +26,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
-
 const mockSetQuery = jest.fn();
 const mockUrlQuery = {
 	set: mockSetQuery,
@@ -39,125 +36,164 @@ jest.mock('hooks/useUrlQuery', () => ({
 	default: jest.fn(() => mockUrlQuery),
 }));
 
-describe('DashboardsAndAlertsPopover', () => {
-	it('renders the popover correctly with multiple dashboards and alerts', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={mockAlerts}
-				dashboards={mockDashboards}
-			/>,
-		);
+const MOCK_METRIC_NAME = 'test-metric';
 
-		expect(
-			screen.getByText(`${mockDashboards.length} dashboards`),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText(`${mockAlerts.length} alert rules`),
-		).toBeInTheDocument();
+type UseGetMetricAlertsResult = UseQueryResult<
+	SuccessResponseV2<GetMetricAlertsResponse>,
+	Error
+>;
+type UseGetMetricDashboardsResult = UseQueryResult<
+	SuccessResponseV2<GetMetricDashboardsResponse>,
+	Error
+>;
+
+const useGetMetricAlertsMock = jest.spyOn(
+	useGetMetricAlertsHooks,
+	'useGetMetricAlerts',
+);
+const useGetMetricDashboardsMock = jest.spyOn(
+	useGetMetricDashboardsHooks,
+	'useGetMetricDashboards',
+);
+
+describe('DashboardsAndAlertsPopover', () => {
+	beforeEach(() => {
+		useGetMetricAlertsMock.mockReturnValue(({
+			data: getMockAlertsData(),
+		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
+		useGetMetricDashboardsMock.mockReturnValue(({
+			data: getMockDashboardsData(),
+		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+	});
+
+	it('renders the popover correctly with multiple dashboards and alerts', () => {
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
+
+		expect(screen.getByText(`2 dashboards`)).toBeInTheDocument();
+		expect(screen.getByText(`2 alert rules`)).toBeInTheDocument();
 	});
 
 	it('renders null with no dashboards and alerts', () => {
+		useGetMetricAlertsMock.mockReturnValue(({
+			data: undefined,
+		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
+		useGetMetricDashboardsMock.mockReturnValue(({
+			data: undefined,
+		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+
 		const { container } = render(
-			<DashboardsAndAlertsPopover alerts={[]} dashboards={[]} />,
+			<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />,
 		);
-		expect(container).toBeEmptyDOMElement();
+
+		expect(
+			container.querySelector('dashboards-and-alerts-popover-container'),
+		).toBeNull();
 	});
 
 	it('renders popover with single dashboard and alert', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={[mockAlert1]}
-				dashboards={[mockDashboard1]}
-			/>,
-		);
+		useGetMetricAlertsMock.mockReturnValue(({
+			data: getMockAlertsData({
+				data: {
+					alerts: [MOCK_ALERT_1],
+				},
+			}),
+		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
+		useGetMetricDashboardsMock.mockReturnValue(({
+			data: getMockDashboardsData({
+				data: {
+					dashboards: [MOCK_DASHBOARD_1],
+				},
+			}),
+		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
+
 		expect(screen.getByText(`1 dashboard`)).toBeInTheDocument();
 		expect(screen.getByText(`1 alert rule`)).toBeInTheDocument();
 	});
 
-	it('renders popover with dashboard id if name is not available', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={mockAlerts}
-				dashboards={[{ ...mockDashboard1, dashboard_name: undefined } as any]}
-			/>,
-		);
+	it('renders popover with dashboard id if name is not available', async () => {
+		useGetMetricDashboardsMock.mockReturnValue(({
+			data: getMockDashboardsData({
+				data: {
+					dashboards: [{ ...MOCK_DASHBOARD_1, dashboardName: '' }],
+				},
+			}),
+		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
 
-		fireEvent.click(screen.getByText(`1 dashboard`));
-		expect(screen.getByText(mockDashboard1.dashboard_id)).toBeInTheDocument();
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
+
+		await userEvent.click(screen.getByText(`1 dashboard`));
+		expect(screen.getByText(MOCK_DASHBOARD_1.dashboardId)).toBeInTheDocument();
 	});
 
-	it('renders popover with alert id if name is not available', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={[{ ...mockAlert1, alert_name: undefined } as any]}
-				dashboards={mockDashboards}
-			/>,
-		);
+	it('renders popover with alert id if name is not available', async () => {
+		useGetMetricAlertsMock.mockReturnValue(({
+			data: getMockAlertsData({
+				data: {
+					alerts: [{ ...MOCK_ALERT_1, alertName: '' }],
+				},
+			}),
+		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
 
-		fireEvent.click(screen.getByText(`1 alert rule`));
-		expect(screen.getByText(mockAlert1.alert_id)).toBeInTheDocument();
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
+
+		await userEvent.click(screen.getByText(`1 alert rule`));
+		expect(screen.getByText(MOCK_ALERT_1.alertId)).toBeInTheDocument();
 	});
 
-	it('navigates to the dashboard when the dashboard is clicked', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={mockAlerts}
-				dashboards={mockDashboards}
-			/>,
-		);
+	it('navigates to the dashboard when the dashboard is clicked', async () => {
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
 		// Click on 2 dashboards button
-		fireEvent.click(screen.getByText(`${mockDashboards.length} dashboards`));
+		await userEvent.click(screen.getByText(`2 dashboards`));
 		// Popover showing list of 2 dashboards should be visible
-		expect(screen.getByText(mockDashboard1.dashboard_name)).toBeInTheDocument();
-		expect(screen.getByText(mockDashboard2.dashboard_name)).toBeInTheDocument();
+		expect(screen.getByText(MOCK_DASHBOARD_1.dashboardName)).toBeInTheDocument();
+		expect(screen.getByText(MOCK_DASHBOARD_2.dashboardName)).toBeInTheDocument();
 
 		// Click on the first dashboard
-		fireEvent.click(screen.getByText(mockDashboard1.dashboard_name));
+		await userEvent.click(screen.getByText(MOCK_DASHBOARD_1.dashboardName));
 
 		// Should navigate to the dashboard
 		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			`/dashboard/${mockDashboard1.dashboard_id}`,
+			`/dashboard/${MOCK_DASHBOARD_1.dashboardId}`,
 		);
 	});
 
-	it('navigates to the alert when the alert is clicked', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={mockAlerts}
-				dashboards={mockDashboards}
-			/>,
-		);
+	it('navigates to the alert when the alert is clicked', async () => {
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
 		// Click on 2 alert rules button
-		fireEvent.click(screen.getByText(`${mockAlerts.length} alert rules`));
+		await userEvent.click(screen.getByText(`2 alert rules`));
 		// Popover showing list of 2 alert rules should be visible
-		expect(screen.getByText(mockAlert1.alert_name)).toBeInTheDocument();
-		expect(screen.getByText(mockAlert2.alert_name)).toBeInTheDocument();
+		expect(screen.getByText(MOCK_ALERT_1.alertName)).toBeInTheDocument();
+		expect(screen.getByText(MOCK_ALERT_2.alertName)).toBeInTheDocument();
 
 		// Click on the first alert rule
-		fireEvent.click(screen.getByText(mockAlert1.alert_name));
+		await userEvent.click(screen.getByText(MOCK_ALERT_1.alertName));
 
 		// Should navigate to the alert rule
 		expect(mockSetQuery).toHaveBeenCalledWith(
 			QueryParams.ruleId,
-			mockAlert1.alert_id,
+			MOCK_ALERT_1.alertId,
 		);
 	});
 
-	it('renders unique dashboards even when there are duplicates', () => {
-		render(
-			<DashboardsAndAlertsPopover
-				alerts={mockAlerts}
-				dashboards={[...mockDashboards, mockDashboard1]}
-			/>,
-		);
-		expect(
-			screen.getByText(`${mockDashboards.length} dashboards`),
-		).toBeInTheDocument();
+	it('renders unique dashboards even when there are duplicates', async () => {
+		useGetMetricDashboardsMock.mockReturnValue(({
+			data: getMockDashboardsData({
+				data: {
+					dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2, MOCK_DASHBOARD_1],
+				},
+			}),
+		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
 
-		fireEvent.click(screen.getByText(`${mockDashboards.length} dashboards`));
-		expect(screen.getByText(mockDashboard1.dashboard_name)).toBeInTheDocument();
-		expect(screen.getByText(mockDashboard2.dashboard_name)).toBeInTheDocument();
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
+
+		expect(screen.getByText('2 dashboards')).toBeInTheDocument();
+
+		await userEvent.click(screen.getByText('2 dashboards'));
+		expect(screen.getByText(MOCK_DASHBOARD_1.dashboardName)).toBeInTheDocument();
+		expect(screen.getByText(MOCK_DASHBOARD_2.dashboardName)).toBeInTheDocument();
 	});
 });
