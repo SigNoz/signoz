@@ -81,7 +81,9 @@ function useFunnelGraph({
 
 	const getPercentageChange = useCallback(
 		(current: number, previous: number): number => {
-			if (previous === 0) return 0;
+			if (previous === 0) {
+				return 0;
+			}
 			return Math.abs(Math.round(((current - previous) / previous) * 100));
 		},
 		[],
@@ -97,7 +99,9 @@ function useFunnelGraph({
 		const errorSteps: number[] = [];
 		let stepCount = 1;
 
-		if (!data) return { successSteps, errorSteps, totalSteps: 0 };
+		if (!data) {
+			return { successSteps, errorSteps, totalSteps: 0 };
+		}
 
 		while (
 			data[`total_s${stepCount}_spans`] !== undefined &&
@@ -120,14 +124,18 @@ function useFunnelGraph({
 	}, [data]);
 
 	useEffect(() => {
-		if (!canvasRef.current) return;
+		if (!canvasRef.current) {
+			return;
+		}
 
 		if (chartRef.current) {
 			chartRef.current.destroy();
 		}
 
 		const ctx = canvasRef.current.getContext('2d');
-		if (!ctx) return;
+		if (!ctx) {
+			return;
+		}
 
 		const { successSteps, errorSteps, totalSteps } = getStepGraphData();
 
@@ -166,7 +174,9 @@ function useFunnelGraph({
 
 	useEffect(() => {
 		const chart = chartRef.current;
-		if (!chart) return;
+		if (!chart) {
+			return;
+		}
 
 		const { successSteps, errorSteps } = getStepGraphData();
 

@@ -508,7 +508,9 @@ function MultiIngestionSettings(): JSX.Element {
 		};
 
 		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signalName);
-		if (!signalCfg) return;
+		if (!signalCfg) {
+			return;
+		}
 
 		// Only set size if usesSize is true
 		if (signalCfg.usesSize) {
@@ -597,7 +599,9 @@ function MultiIngestionSettings(): JSX.Element {
 		};
 
 		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signal.signal);
-		if (!signalCfg) return;
+		if (!signalCfg) {
+			return;
+		}
 
 		const noSizeProvided =
 			isUndefined(dailyLimit) && isUndefined(secondsLimit) && signalCfg.usesSize;

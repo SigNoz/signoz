@@ -147,7 +147,9 @@ export default function TableViewActions(
 
 	// Memoize bodyHtml computation
 	const bodyHtml = useMemo(() => {
-		if (record.field !== 'body') return { __html: '' };
+		if (record.field !== 'body') {
+			return { __html: '' };
+		}
 
 		return {
 			__html: getSanitizedLogBody(record.value, { shouldEscapeHtml: true }),
@@ -157,23 +159,34 @@ export default function TableViewActions(
 	const fieldFilterKey = filterKeyForField(fieldData.field);
 
 	const handleGroupByAttribute = useCallback((): void => {
-		if (!stagedQuery) return;
+		if (!stagedQuery) {
+			return;
+		}
 		const normalizedDataType: DataTypes | undefined =
 			dataType && Object.values(DataTypes).includes(dataType as DataTypes)
 				? (dataType as DataTypes)
 				: undefined;
 
-		const updatedQuery = updateQueriesData(stagedQuery, 'queryData', (item) => {
-			const newGroupByItem: BaseAutocompleteData = {
-				key: fieldFilterKey,
-				type: fieldType || '',
-				dataType: normalizedDataType,
-			};
+		const updatedQuery = updateQueriesData(
+			stagedQuery,
+			'queryData',
+			(item, index) => {
+				// Only add groupBy for index 0
+				if (index === 0) {
+					const newGroupByItem: BaseAutocompleteData = {
+						key: fieldFilterKey,
+						type: fieldType || '',
+						dataType: normalizedDataType,
+					};
 
-			const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
+					const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
 
-			return { ...item, groupBy: updatedGroupBy };
-		});
+					return { ...item, groupBy: updatedGroupBy };
+				}
+
+				return item;
+			},
+		);
 
 		const queryData: ICurrentQueryData = {
 			name: viewName,
@@ -208,7 +221,9 @@ export default function TableViewActions(
 
 	// Memoize cleanTimestamp computation
 	const cleanTimestamp = useMemo(() => {
-		if (record.field !== 'timestamp') return '';
+		if (record.field !== 'timestamp') {
+			return '';
+		}
 		return fieldData.value.replace(/^["']|["']$/g, '');
 	}, [record.field, fieldData.value]);
 

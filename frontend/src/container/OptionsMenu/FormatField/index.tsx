@@ -11,14 +11,18 @@ function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 
 	const onChange = useCallback(
 		(event: RadioChangeEvent) => {
-			if (!config) return;
+			if (!config) {
+				return;
+			}
 
 			config.onChange(event.target.value);
 		},
 		[config],
 	);
 
-	if (!config) return null;
+	if (!config) {
+		return null;
+	}
 
 	return (
 		<FormatFieldWrapper direction="vertical">

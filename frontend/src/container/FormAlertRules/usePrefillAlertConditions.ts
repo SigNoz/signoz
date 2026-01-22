@@ -17,7 +17,9 @@ export const usePrefillAlertConditions = (
 
 	// Extract and set match type
 	const reduceTo = useMemo(() => {
-		if (!stagedQuery) return null;
+		if (!stagedQuery) {
+			return null;
+		}
 		const isSameTimeAggregation = stagedQuery.builder.queryData.every(
 			(queryData) =>
 				queryData?.reduceTo === stagedQuery.builder.queryData[0]?.reduceTo,
@@ -45,7 +47,9 @@ export const usePrefillAlertConditions = (
 		}) || {
 			thresholds: null,
 		};
-		if (!thresholds || thresholds.length === 0) return null;
+		if (!thresholds || thresholds.length === 0) {
+			return null;
+		}
 		const sortedThresholds = thresholds.sort((a, b) => {
 			const aIndex = THRESHOLD_COLORS_SORTING_ORDER.indexOf(
 				a.thresholdColor || '',

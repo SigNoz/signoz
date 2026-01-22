@@ -13,7 +13,9 @@ function LicenseSection(): JSX.Element | null {
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
 	const getMaskedKey = (key: string): string => {
-		if (!key || key.length < 4) return key || 'N/A';
+		if (!key || key.length < 4) {
+			return key || 'N/A';
+		}
 		return `${key.substring(0, 2)}********${key
 			.substring(key.length - 2)
 			.trim()}`;

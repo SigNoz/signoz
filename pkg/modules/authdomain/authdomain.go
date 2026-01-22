@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -32,6 +33,8 @@ type Module interface {
 
 	// Get the IDP info of the domain provided.
 	GetAuthNProviderInfo(context.Context, *authtypes.AuthDomain) *authtypes.AuthNProviderInfo
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

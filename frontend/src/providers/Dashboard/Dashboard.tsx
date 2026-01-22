@@ -5,7 +5,6 @@ import locked from 'api/v1/dashboards/id/lock';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
@@ -13,6 +12,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
+import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { defaultTo, isEmpty } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
@@ -371,7 +371,7 @@ export function DashboardProvider({
 						onOk() {
 							setSelectedDashboard(updatedDashboardData);
 
-							const { maxTime, minTime } = getMinMax(
+							const { maxTime, minTime } = getMinMaxForSelectedTime(
 								globalTime.selectedTime,
 								globalTime.minTime,
 								globalTime.maxTime,
