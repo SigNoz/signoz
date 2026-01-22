@@ -38,7 +38,7 @@ module.exports = {
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity
 		// TODO: Uncomment after running: yarn add -D eslint-plugin-spellcheck
-		// 'spellcheck',
+		// 'spellcheck', // Correct spellings
 	],
 	settings: {
 		react: {
