@@ -4037,6 +4037,9 @@ components:
       type: object
     TypesResetPasswordToken:
       properties:
+        expiresAt:
+          format: date-time
+          type: string
         id:
           type: string
         passwordId:
