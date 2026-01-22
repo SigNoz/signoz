@@ -1,7 +1,13 @@
 import './RunQueryBtn.scss';
 
 import { Button } from 'antd';
-import { Command, Loader2, Play } from 'lucide-react';
+import {
+	ChevronUp,
+	Command,
+	CornerDownLeft,
+	Loader2,
+	Play,
+} from 'lucide-react';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 interface RunQueryBtnProps {
@@ -34,18 +40,12 @@ function RunQueryBtn({
 			icon={<Play size={14} />}
 		>
 			Run Query
-			<div className="kbd-hint">
-				{isMac ? <Command size={12} /> : <span>Ctrl</span>}
-				<span className="kbd-plus">+</span>
-				<span className="kbd-key">Enter</span>
+			<div className="cmd-hint">
+				{isMac ? <Command size={12} /> : <ChevronUp size={12} />}
+				<CornerDownLeft size={12} />
 			</div>
 		</Button>
 	);
 }
 
 export default RunQueryBtn;
-
-// should i use cmd instead of icon
-// fix size of run query btn
-// other style suggestion
-// light mode style fix
