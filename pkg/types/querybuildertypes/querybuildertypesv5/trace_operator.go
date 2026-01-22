@@ -366,26 +366,6 @@ func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
 	return c
 }
 
-// Normalize normalizes all the field keys in the query
-func (q *QueryBuilderTraceOperator) Normalize() {
-
-	// normalize select fields
-	for idx := range q.SelectFields {
-		q.SelectFields[idx].Normalize()
-	}
-
-	// normalize group by fields
-	for idx := range q.GroupBy {
-		q.GroupBy[idx].Normalize()
-	}
-
-	// normalize order by fields
-	for idx := range q.Order {
-		q.Order[idx].Key.Normalize()
-	}
-
-}
-
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
 func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	traceOperatorCount := 0
