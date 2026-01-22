@@ -91,7 +91,8 @@ func (n *JSONAccessNode) FieldPath() string {
 
 type planBuilder struct {
 	key        *TelemetryFieldKey
-	paths      []string
+	paths      []string // cumulative paths for type cache lookups
+	segments   []string // individual path segments for node names
 	isPromoted bool
 	typeCache  map[string][]JSONDataType
 }
@@ -102,8 +103,8 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
 	}
 
-	part := pb.paths[index]
-	pathSoFar := strings.Join(pb.paths[:index+1], ArraySep)
+	pathSoFar := pb.paths[index]           // cumulative path for type cache lookup
+	segmentName := pb.segments[index] // segment name for node
 	isTerminal := index == len(pb.paths)-1
 
 	// Calculate progression parameters based on parent's values
@@ -133,7 +134,7 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 
 	// Create node for this path segment
 	node := &JSONAccessNode{
-		Name:            part,
+		Name:            segmentName,
 		IsTerminal:      isTerminal,
 		AvailableTypes:  types,
 		Branches:        make(map[JSONAccessBranchType]*JSONAccessNode),
@@ -182,6 +183,7 @@ func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, t
 	pb := &planBuilder{
 		key:        key,
 		paths:      key.ArrayParentPaths(),
+		segments:   key.ArrayPathSegments(),
 		isPromoted: key.Materialized,
 		typeCache:  typeCache,
 	}
