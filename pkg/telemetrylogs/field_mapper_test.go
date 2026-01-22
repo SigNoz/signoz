@@ -164,7 +164,7 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(nil)
+	fm := NewFieldMapper()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -261,7 +261,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(nil)
+			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, &tc.key)
 
 			if tc.expectedError != nil {

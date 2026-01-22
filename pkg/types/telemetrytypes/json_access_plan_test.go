@@ -1,10 +1,8 @@
-package telemetrymetadata
+package telemetrytypes
 
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -14,8 +12,8 @@ import (
 // ============================================================================
 
 // makeKey creates a TelemetryFieldKey for testing
-func makeKey(name string, dataType telemetrytypes.JSONDataType, materialized bool) *telemetrytypes.TelemetryFieldKey {
-	return &telemetrytypes.TelemetryFieldKey{
+func makeKey(name string, dataType JSONDataType, materialized bool) *TelemetryFieldKey {
+	return &TelemetryFieldKey{
 		Name:         name,
 		JSONDataType: &dataType,
 		Materialized: materialized,
@@ -42,7 +40,7 @@ type jsonAccessTestNode struct {
 
 // toTestNode converts a JSONAccessNode tree into jsonAccessTestNode so that
 // it can be serialized to YAML for easy visual comparison in tests.
-func toTestNode(n *telemetrytypes.JSONAccessNode) *jsonAccessTestNode {
+func toTestNode(n *JSONAccessNode) *jsonAccessTestNode {
 	if n == nil {
 		return nil
 	}
@@ -86,7 +84,7 @@ func toTestNode(n *telemetrytypes.JSONAccessNode) *jsonAccessTestNode {
 
 // plansToYAML converts a slice of JSONAccessNode plans to a YAML string that
 // can be compared against a per-test expectedTree.
-func plansToYAML(t *testing.T, plans []*telemetrytypes.JSONAccessNode) string {
+func plansToYAML(t *testing.T, plans []*JSONAccessNode) string {
 	t.Helper()
 
 	testNodes := make([]*jsonAccessTestNode, 0, len(plans))
@@ -106,17 +104,17 @@ func plansToYAML(t *testing.T, plans []*telemetrytypes.JSONAccessNode) string {
 func TestNode_Alias(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     *telemetrytypes.JSONAccessNode
+		node     *JSONAccessNode
 		expected string
 	}{
 		{
 			name:     "Root node returns name as-is",
-			node:     telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
-			expected: telemetrylogs.LogsV2BodyJSONColumn,
+			node:     NewRootJSONAccessNode("body_json", 32, 0),
+			expected: "body_json",
 		},
 		{
 			name: "Node without parent returns backticked name",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name:   "user",
 				Parent: nil,
 			},
@@ -124,36 +122,36 @@ func TestNode_Alias(t *testing.T) {
 		},
 		{
 			name: "Node with root parent uses dot separator",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name:   "age",
-				Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+				Parent: NewRootJSONAccessNode("body_json", 32, 0),
 			},
-			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".age`",
+			expected: "`" + "body_json" + ".age`",
 		},
 		{
 			name: "Node with non-root parent uses array separator",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name: "name",
-				Parent: &telemetrytypes.JSONAccessNode{
+				Parent: &JSONAccessNode{
 					Name:   "education",
-					Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+					Parent: NewRootJSONAccessNode("body_json", 32, 0),
 				},
 			},
-			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".education[].name`",
+			expected: "`" + "body_json" + ".education[].name`",
 		},
 		{
 			name: "Nested array path with multiple levels",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name: "type",
-				Parent: &telemetrytypes.JSONAccessNode{
+				Parent: &JSONAccessNode{
 					Name: "awards",
-					Parent: &telemetrytypes.JSONAccessNode{
+					Parent: &JSONAccessNode{
 						Name:   "education",
-						Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+						Parent: NewRootJSONAccessNode("body_json", 32, 0),
 					},
 				},
 			},
-			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".education[].awards[].type`",
+			expected: "`" + "body_json" + ".education[].awards[].type`",
 		},
 	}
 
@@ -168,49 +166,49 @@ func TestNode_Alias(t *testing.T) {
 func TestNode_FieldPath(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     *telemetrytypes.JSONAccessNode
+		node     *JSONAccessNode
 		expected string
 	}{
 		{
 			name: "Simple field path from root",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name:   "user",
-				Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+				Parent: NewRootJSONAccessNode("body_json", 32, 0),
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: telemetrylogs.LogsV2BodyJSONColumn + ".`user`",
+			expected: "body_json" + ".`user`",
 		},
 		{
 			name: "Field path with backtick-required key",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name:   "user-name", // requires backtick
-				Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+				Parent: NewRootJSONAccessNode("body_json", 32, 0),
 			},
-			expected: telemetrylogs.LogsV2BodyJSONColumn + ".`user-name`",
+			expected: "body_json" + ".`user-name`",
 		},
 		{
 			name: "Nested field path",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name: "age",
-				Parent: &telemetrytypes.JSONAccessNode{
+				Parent: &JSONAccessNode{
 					Name:   "user",
-					Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+					Parent: NewRootJSONAccessNode("body_json", 32, 0),
 				},
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".user`.`age`",
+			expected: "`" + "body_json" + ".user`.`age`",
 		},
 		{
 			name: "Array element field path",
-			node: &telemetrytypes.JSONAccessNode{
+			node: &JSONAccessNode{
 				Name: "name",
-				Parent: &telemetrytypes.JSONAccessNode{
+				Parent: &JSONAccessNode{
 					Name:   "education",
-					Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+					Parent: NewRootJSONAccessNode("body_json", 32, 0),
 				},
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".education`.`name`",
+			expected: "`" + "body_json" + ".education`.`name`",
 		},
 	}
 
@@ -227,17 +225,17 @@ func TestNode_FieldPath(t *testing.T) {
 // ============================================================================
 
 func TestPlanJSON_BasicStructure(t *testing.T) {
-	types, _ := telemetrylogs.TestJSONTypeSet()
+	types, _ := TestJSONTypeSet()
 
 	tests := []struct {
 		name         string
-		key          *telemetrytypes.TelemetryFieldKey
+		key          *TelemetryFieldKey
 		expectErr    bool
 		expectedYAML string
 	}{
 		{
 			name: "Simple path not promoted",
-			key:  makeKey("user.name", telemetrytypes.String, false),
+			key:  makeKey("user.name", String, false),
 			expectedYAML: `
 - name: user.name
   column: body_json
@@ -251,7 +249,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 		},
 		{
 			name: "Simple path promoted",
-			key:  makeKey("user.name", telemetrytypes.String, true),
+			key:  makeKey("user.name", String, true),
 			expectedYAML: `
 - name: user.name
   column: body_json
@@ -274,7 +272,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 		},
 		{
 			name:         "Empty path returns error",
-			key:          makeKey("", telemetrytypes.String, false),
+			key:          makeKey("", String, false),
 			expectErr:    true,
 			expectedYAML: "",
 		},
@@ -282,21 +280,24 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plans, err := buildJSONAccessPlan(tt.key, types)
+			err := tt.key.SetJSONAccessPlan(JSONColumnMetadata{
+				BaseColumn:     "body_json",
+				PromotedColumn: "body_json_promoted",
+			}, types)
 			if tt.expectErr {
 				require.Error(t, err)
-				require.Nil(t, plans)
+				require.Nil(t, tt.key.JSONPlan)
 				return
 			}
 			require.NoError(t, err)
-			got := plansToYAML(t, plans)
+			got := plansToYAML(t, tt.key.JSONPlan)
 			require.YAMLEq(t, tt.expectedYAML, got)
 		})
 	}
 }
 
 func TestPlanJSON_ArrayPaths(t *testing.T) {
-	types, _ := telemetrylogs.TestJSONTypeSet()
+	types, _ := TestJSONTypeSet()
 
 	tests := []struct {
 		name         string
@@ -431,26 +432,32 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key := makeKey(tt.path, telemetrytypes.String, false)
-			plans, err := buildJSONAccessPlan(key, types)
+			key := makeKey(tt.path, String, false)
+			err := key.SetJSONAccessPlan(JSONColumnMetadata{
+				BaseColumn:     "body_json",
+				PromotedColumn: "body_json_promoted",
+			}, types)
 			require.NoError(t, err)
-			require.NotNil(t, plans)
-			require.Len(t, plans, 1)
-			got := plansToYAML(t, plans)
+			require.NotNil(t, key.JSONPlan)
+			require.Len(t, key.JSONPlan, 1)
+			got := plansToYAML(t, key.JSONPlan)
 			require.YAMLEq(t, tt.expectedYAML, got)
 		})
 	}
 }
 
 func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
-	types, _ := telemetrylogs.TestJSONTypeSet()
+	types, _ := TestJSONTypeSet()
 	path := "education[].awards[].type"
 
 	t.Run("Non-promoted plan", func(t *testing.T) {
-		key := makeKey(path, telemetrytypes.String, false)
-		plans, err := buildJSONAccessPlan(key, types)
+		key := makeKey(path, String, false)
+		err := key.SetJSONAccessPlan(JSONColumnMetadata{
+			BaseColumn:     "body_json",
+			PromotedColumn: "body_json_promoted",
+		}, types)
 		require.NoError(t, err)
-		require.Len(t, plans, 1)
+		require.Len(t, key.JSONPlan, 1)
 
 		expectedYAML := `
 - name: education
@@ -484,15 +491,18 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           elemType: String
           valueType: String
 `
-		got := plansToYAML(t, plans)
+		got := plansToYAML(t, key.JSONPlan)
 		require.YAMLEq(t, expectedYAML, got)
 	})
 
 	t.Run("Promoted plan", func(t *testing.T) {
-		key := makeKey(path, telemetrytypes.String, true)
-		plans, err := buildJSONAccessPlan(key, types)
+		key := makeKey(path, String, true)
+		err := key.SetJSONAccessPlan(JSONColumnMetadata{
+			BaseColumn:     "body_json",
+			PromotedColumn: "body_json_promoted",
+		}, types)
 		require.NoError(t, err)
-		require.Len(t, plans, 2)
+		require.Len(t, key.JSONPlan, 2)
 
 		expectedYAML := `
 - name: education
@@ -559,13 +569,13 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           elemType: String
           valueType: String
 `
-		got := plansToYAML(t, plans)
+		got := plansToYAML(t, key.JSONPlan)
 		require.YAMLEq(t, expectedYAML, got)
 	})
 }
 
 func TestPlanJSON_EdgeCases(t *testing.T) {
-	types, _ := telemetrylogs.TestJSONTypeSet()
+	types, _ := TestJSONTypeSet()
 
 	tests := []struct {
 		name         string
@@ -676,29 +686,35 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Choose key type based on path; operator does not affect the tree shape asserted here.
-			keyType := telemetrytypes.String
+			keyType := String
 			switch tt.path {
 			case "education":
-				keyType = telemetrytypes.ArrayJSON
+				keyType = ArrayJSON
 			case "education[].type":
-				keyType = telemetrytypes.String
+				keyType = String
 			}
 			key := makeKey(tt.path, keyType, false)
-			plans, err := buildJSONAccessPlan(key, types)
+			err := key.SetJSONAccessPlan(JSONColumnMetadata{
+				BaseColumn:     "body_json",
+				PromotedColumn: "body_json_promoted",
+			}, types)
 			require.NoError(t, err)
-			got := plansToYAML(t, plans)
+			got := plansToYAML(t, key.JSONPlan)
 			require.YAMLEq(t, tt.expectedYAML, got)
 		})
 	}
 }
 
 func TestPlanJSON_TreeStructure(t *testing.T) {
-	types, _ := telemetrylogs.TestJSONTypeSet()
+	types, _ := TestJSONTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
-	key := makeKey(path, telemetrytypes.String, false)
-	plans, err := buildJSONAccessPlan(key, types)
+	key := makeKey(path, String, false)
+	err := key.SetJSONAccessPlan(JSONColumnMetadata{
+		BaseColumn:     "body_json",
+		PromotedColumn: "body_json_promoted",
+	}, types)
 	require.NoError(t, err)
-	require.Len(t, plans, 1)
+	require.Len(t, key.JSONPlan, 1)
 
 	expectedYAML := `
 - name: education
@@ -793,6 +809,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
                   valueType: String
 `
 
-	got := plansToYAML(t, plans)
+	got := plansToYAML(t, key.JSONPlan)
 	require.YAMLEq(t, expectedYAML, got)
 }

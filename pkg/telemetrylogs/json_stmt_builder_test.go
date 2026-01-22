@@ -752,10 +752,10 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 	}
 }
 
-func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
+func buildTestTelemetryMetadataStore(t *testing.T, promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
-	types, _ := TestJSONTypeSet()
+	types, _ := telemetrytypes.TestJSONTypeSet()
 	for path, jsonTypes := range types {
 		promoted := false
 
@@ -776,6 +776,11 @@ func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestes
 				JSONDataType:  &jsonType,
 				Materialized:  promoted,
 			}
+			err := key.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
+				BaseColumn:     LogsV2BodyJSONColumn,
+				PromotedColumn: LogsV2BodyPromotedColumn,
+			}, types)
+			require.NoError(t, err)
 			mockMetadataStore.SetKey(key)
 		}
 	}
@@ -783,10 +788,10 @@ func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestes
 	return mockMetadataStore
 }
 
-func buildJSONTestStatementBuilder(_ *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
-	mockMetadataStore := buildTestTelemetryMetadataStore(promotedPaths...)
-	fm := NewFieldMapper(mockMetadataStore)
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+func buildJSONTestStatementBuilder(t *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
+	mockMetadataStore := buildTestTelemetryMetadataStore(t, promotedPaths...)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 	resourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(

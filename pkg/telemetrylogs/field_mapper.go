@@ -62,14 +62,12 @@ var (
 )
 
 type fieldMapper struct {
-	metadataStore telemetrytypes.MetadataStore
 }
 
-func NewFieldMapper(metadataStore telemetrytypes.MetadataStore) qbtypes.FieldMapper {
-	return &fieldMapper{
-		metadataStore: metadataStore,
-	}
+func NewFieldMapper() qbtypes.FieldMapper {
+	return &fieldMapper{}
 }
+
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:

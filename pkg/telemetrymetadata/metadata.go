@@ -50,8 +50,9 @@ type telemetryMetaStore struct {
 	relatedMetadataDBName     string
 	relatedMetadataTblName    string
 
-	fm               qbtypes.FieldMapper
-	conditionBuilder qbtypes.ConditionBuilder
+	fm                 qbtypes.FieldMapper
+	conditionBuilder   qbtypes.ConditionBuilder
+	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 }
 
 func escapeForLike(s string) string {
@@ -97,6 +98,14 @@ func NewTelemetryMetaStore(
 		logResourceKeysTblName:    logResourceKeysTblName,
 		relatedMetadataDBName:     relatedMetadataDBName,
 		relatedMetadataTblName:    relatedMetadataTblName,
+		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
+			telemetrytypes.SignalLogs: {
+				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
+					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
+				},
+			},
+		},
 	}
 
 	fm := NewFieldMapper()

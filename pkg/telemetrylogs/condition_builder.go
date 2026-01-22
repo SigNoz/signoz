@@ -16,13 +16,11 @@ import (
 )
 
 type conditionBuilder struct {
-	fm            qbtypes.FieldMapper
-	// todo(Piyush): remove this
-	metadataStore telemetrytypes.MetadataStore
+	fm qbtypes.FieldMapper
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.MetadataStore) *conditionBuilder {
-	return &conditionBuilder{fm: fm, metadataStore: metadataStore}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
 }
 
 func (c *conditionBuilder) conditionFor(

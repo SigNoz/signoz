@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 )
 
 // Helper function to limit string length for display
@@ -951,88 +950,4 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
-}
-
-
-
-// ============================================================================
-// Test JSON Type Set Data Setup
-// ============================================================================
-
-// TestJSONTypeSet returns a map of path->types and a mock MetadataStore for testing
-// This represents the type information available in the test JSON structure
-func TestJSONTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.MetadataStore) {
-	types := map[string][]telemetrytypes.JSONDataType{
-		"user.name":                                           {telemetrytypes.String},
-		"user.permissions":                                    {telemetrytypes.ArrayString},
-		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
-		"user.height":                                         {telemetrytypes.Float64},
-		"education":                                           {telemetrytypes.ArrayJSON},
-		"education[].name":                                    {telemetrytypes.String},
-		"education[].type":                                    {telemetrytypes.String, telemetrytypes.Int64},
-		"education[].internal_type":                           {telemetrytypes.String},
-		"education[].metadata.location":                       {telemetrytypes.String},
-		"education[].parameters":                              {telemetrytypes.ArrayFloat64, telemetrytypes.ArrayDynamic},
-		"education[].duration":                                {telemetrytypes.String},
-		"education[].mode":                                    {telemetrytypes.String},
-		"education[].year":                                    {telemetrytypes.Int64},
-		"education[].field":                                   {telemetrytypes.String},
-		"education[].awards":                                  {telemetrytypes.ArrayDynamic, telemetrytypes.ArrayJSON},
-		"education[].awards[].name":                           {telemetrytypes.String},
-		"education[].awards[].rank":                           {telemetrytypes.Int64},
-		"education[].awards[].medal":                          {telemetrytypes.String},
-		"education[].awards[].type":                           {telemetrytypes.String},
-		"education[].awards[].semester":                       {telemetrytypes.Int64},
-		"education[].awards[].participated":                   {telemetrytypes.ArrayDynamic, telemetrytypes.ArrayJSON},
-		"education[].awards[].participated[].type":            {telemetrytypes.String},
-		"education[].awards[].participated[].field":           {telemetrytypes.String},
-		"education[].awards[].participated[].project_type":    {telemetrytypes.String},
-		"education[].awards[].participated[].project_name":    {telemetrytypes.String},
-		"education[].awards[].participated[].race_type":       {telemetrytypes.String},
-		"education[].awards[].participated[].team_based":      {telemetrytypes.Bool},
-		"education[].awards[].participated[].team_name":       {telemetrytypes.String},
-		"education[].awards[].participated[].team":            {telemetrytypes.ArrayJSON},
-		"education[].awards[].participated[].members":         {telemetrytypes.ArrayString},
-		"education[].awards[].participated[].team[].name":     {telemetrytypes.String},
-		"education[].awards[].participated[].team[].branch":   {telemetrytypes.String},
-		"education[].awards[].participated[].team[].semester": {telemetrytypes.Int64},
-		"interests":                                                                  {telemetrytypes.ArrayJSON},
-		"interests[].type":                                                           {telemetrytypes.String},
-		"interests[].entities":                                                       {telemetrytypes.ArrayJSON},
-		"interests[].entities.application_date":                                      {telemetrytypes.String},
-		"interests[].entities[].reviews":                                             {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].given_by":                                  {telemetrytypes.String},
-		"interests[].entities[].reviews[].remarks":                                   {telemetrytypes.String},
-		"interests[].entities[].reviews[].weight":                                    {telemetrytypes.Float64},
-		"interests[].entities[].reviews[].passed":                                    {telemetrytypes.Bool},
-		"interests[].entities[].reviews[].type":                                      {telemetrytypes.String},
-		"interests[].entities[].reviews[].analysis_type":                             {telemetrytypes.Int64},
-		"interests[].entities[].reviews[].entries":                                   {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].entries[].subject":                         {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].status":                          {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata":                        {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].company":              {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].experience":           {telemetrytypes.Int64},
-		"interests[].entities[].reviews[].entries[].metadata[].unit":                 {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions":            {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":     {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].duration": {telemetrytypes.Int64, telemetrytypes.Float64},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].unit":     {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings":  {telemetrytypes.ArrayInt64, telemetrytypes.ArrayString},
-		"message": {telemetrytypes.String},
-	}
-
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	for path, dataTypes := range types {
-		for _, dataType := range dataTypes {
-			mockMetadataStore.SetKey(&telemetrytypes.TelemetryFieldKey{
-				Name:          path,
-				JSONDataType:  &dataType,
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
-			})
-		}
-	}
-	return types, mockMetadataStore
 }

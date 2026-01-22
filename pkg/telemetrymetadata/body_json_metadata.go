@@ -146,7 +146,7 @@ func (t *telemetryMetaStore) buildJSONPlans(ctx context.Context, keys []*telemet
 
 	// build plans for keys now
 	for _, key := range keys {
-		key.JSONPlan, err = buildJSONAccessPlan(key, typeCache)
+		err = key.SetJSONAccessPlan(t.jsonColumnMetadata[telemetrytypes.SignalLogs][telemetrytypes.FieldContextBody], typeCache)
 		if err != nil {
 			return err
 		}

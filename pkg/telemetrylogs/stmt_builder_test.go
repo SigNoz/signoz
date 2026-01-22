@@ -197,8 +197,8 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fm := NewFieldMapper(mockMetadataStore)
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -317,8 +317,8 @@ func TestStatementBuilderListQuery(t *testing.T) {
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fm := NewFieldMapper(mockMetadataStore)
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -425,8 +425,8 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fm := NewFieldMapper(mockMetadataStore)
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -501,8 +501,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fm := NewFieldMapper(mockMetadataStore)
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -596,8 +596,8 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
-	fm := NewFieldMapper(mockMetadataStore)
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
