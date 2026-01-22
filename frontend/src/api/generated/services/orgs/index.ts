@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,14 +16,14 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	GetMyOrganization200,
 	RenderErrorResponseDTO,
 	TypesOrganizationDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../index';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -32,15 +33,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint returns the organization I belong to
  * @summary Get my organization
  */
-export const getMyOrganization = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetMyOrganization200>({
+export const getMyOrganization = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMyOrganization200>({
 		url: `/api/v2/orgs/me`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetMyOrganizationQueryKey = () =>
-	['getMyOrganization'] as const;
+export const getGetMyOrganizationQueryKey = () => {
+	return ['getMyOrganization'] as const;
+};
 
 export const getGetMyOrganizationQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
@@ -118,13 +121,14 @@ export const invalidateGetMyOrganization = async (
  */
 export const updateMyOrganization = (
 	typesOrganizationDTO: TypesOrganizationDTO,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/orgs/me`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesOrganizationDTO,
 	});
+};
 
 export const getUpdateMyOrganizationMutationOptions = <
 	TError = RenderErrorResponseDTO,
