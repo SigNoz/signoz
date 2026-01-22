@@ -69,10 +69,10 @@ type StorableRole struct {
 type Role struct {
 	types.Identifiable
 	types.TimeAuditable
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Type        string      `json:"type"`
-	OrgID       valuer.UUID `json:"org_id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Type        valuer.String `json:"type"`
+	OrgID       valuer.UUID   `json:"orgId"`
 }
 
 type PostableRole struct {
@@ -96,7 +96,7 @@ func NewStorableRoleFromRole(role *Role) *StorableRole {
 		TimeAuditable: role.TimeAuditable,
 		Name:          role.Name,
 		Description:   role.Description,
-		Type:          role.Type,
+		Type:          role.Type.String(),
 		OrgID:         role.OrgID.StringValue(),
 	}
 }
@@ -107,7 +107,7 @@ func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
 		TimeAuditable: storableRole.TimeAuditable,
 		Name:          storableRole.Name,
 		Description:   storableRole.Description,
-		Type:          storableRole.Type,
+		Type:          valuer.NewString(storableRole.Type),
 		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
 	}
 }
@@ -123,7 +123,7 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 		},
 		Name:        name,
 		Description: description,
-		Type:        roleType.StringValue(),
+		Type:        roleType,
 		OrgID:       orgID,
 	}
 }
@@ -180,7 +180,7 @@ func (role *Role) NewPatchableObjects(additions []*authtypes.Object, deletions [
 }
 
 func (role *Role) CanEditDelete() error {
-	if role.Type == RoleTypeManaged.String() {
+	if role.Type == RoleTypeManaged {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot edit/delete managed role: %s", role.Name)
 	}
 
