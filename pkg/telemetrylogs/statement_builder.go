@@ -179,6 +179,7 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 				if len(fieldKeys) == 1 {
 					k.JSONDataType = fieldKeys[0].JSONDataType
 					k.Materialized = fieldKeys[0].Materialized
+					k.JSONPlan = fieldKeys[0].JSONPlan
 				}
 				k.Indexes = fieldKeys[0].Indexes
 

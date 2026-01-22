@@ -244,7 +244,6 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
-  valueType: String
 `,
 		},
 		{
@@ -258,7 +257,6 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
-  valueType: String
 - name: user.name
   column: body_json_promoted
   availableTypes:
@@ -267,7 +265,6 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
   maxDynamicPaths: 256
   isTerminal: true
   elemType: String
-  valueType: String
 `,
 		},
 		{
@@ -321,7 +318,6 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
-      valueType: String
 `,
 		},
 		{
@@ -348,7 +344,6 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
-          valueType: String
         dynamic:
           name: type
           availableTypes:
@@ -357,7 +352,6 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-          valueType: String
 `,
 		},
 		{
@@ -405,7 +399,6 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
                             - String
                           isTerminal: true
                           elemType: String
-                          valueType: String
 `,
 		},
 		{
@@ -425,7 +418,6 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
-      valueType: String
 `,
 		},
 	}
@@ -480,7 +472,6 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
-          valueType: String
         dynamic:
           name: type
           availableTypes:
@@ -489,7 +480,6 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-          valueType: String
 `
 		got := plansToYAML(t, key.JSONPlan)
 		require.YAMLEq(t, expectedYAML, got)
@@ -525,7 +515,6 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
-          valueType: String
         dynamic:
           name: type
           availableTypes:
@@ -534,7 +523,6 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-          valueType: String
 - name: education
   column: body_json_promoted
   availableTypes:
@@ -558,7 +546,6 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           maxDynamicPaths: 16
           isTerminal: true
           elemType: String
-          valueType: String
         dynamic:
           name: type
           availableTypes:
@@ -567,7 +554,6 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-          valueType: String
 `
 		got := plansToYAML(t, key.JSONPlan)
 		require.YAMLEq(t, expectedYAML, got)
@@ -580,26 +566,17 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name         string
 		path         string
-		value        any
 		expectedYAML string
+		expectErr    bool
 	}{
 		{
-			name:  "Path with no available types",
-			path:  "unknown.path",
-			value: "test",
-			expectedYAML: `
-- name: unknown.path
-  column: body_json
-  maxDynamicTypes: 16
-  isTerminal: true
-  elemType: String
-  valueType: String
-`,
+			name:      "Path with no available types",
+			path:      "unknown.path",
+			expectErr: true,
 		},
 		{
 			name:  "Very deep nesting - validates progression doesn't go negative",
 			path:  "interests[].entities[].reviews[].entries[].metadata[].positions[].name",
-			value: "Engineer",
 			expectedYAML: `
 - name: interests
   column: body_json
@@ -642,13 +619,11 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
                             - String
                           isTerminal: true
                           elemType: String
-                          valueType: String
 `,
 		},
 		{
 			name:  "Path with mixed scalar and array types",
 			path:  "education[].type",
-			value: "high_school",
 			expectedYAML: `
 - name: education
   column: body_json
@@ -664,13 +639,11 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
-      valueType: String
 `,
 		},
 		{
 			name:  "Exists with only array types available",
 			path:  "education",
-			value: nil,
 			expectedYAML: `
 - name: education
   column: body_json
@@ -698,6 +671,10 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 				BaseColumn:     "body_json",
 				PromotedColumn: "body_json_promoted",
 			}, types)
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 			got := plansToYAML(t, key.JSONPlan)
 			require.YAMLEq(t, tt.expectedYAML, got)
@@ -750,7 +727,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
                   maxDynamicTypes: 1
                   isTerminal: true
                   elemType: String
-                  valueType: String
             dynamic:
               name: team
               availableTypes:
@@ -766,7 +742,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
                   maxDynamicPaths: 64
                   isTerminal: true
                   elemType: String
-                  valueType: String
         dynamic:
           name: participated
           availableTypes:
@@ -790,7 +765,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
                   maxDynamicPaths: 16
                   isTerminal: true
                   elemType: String
-                  valueType: String
             dynamic:
               name: team
               availableTypes:
@@ -806,7 +780,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
                   maxDynamicPaths: 64
                   isTerminal: true
                   elemType: String
-                  valueType: String
 `
 
 	got := plansToYAML(t, key.JSONPlan)
