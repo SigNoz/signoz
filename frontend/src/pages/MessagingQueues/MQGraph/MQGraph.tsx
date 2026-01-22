@@ -1,4 +1,5 @@
 import logEvent from 'api/common/logEvent';
+import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -7,6 +8,7 @@ import { Card } from 'container/GridCardLayout/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -31,9 +33,15 @@ function MessagingQueuesGraph(): JSX.Element {
 		[consumerGrp, topic, partition],
 	);
 
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
 	const widgetData = useMemo(
-		() => getWidgetQueryBuilder(getWidgetQuery({ filterItems })),
-		[filterItems],
+		() =>
+			getWidgetQueryBuilder(getWidgetQuery({ filterItems, dotMetricsEnabled })),
+		[filterItems, dotMetricsEnabled],
 	);
 
 	const history = useHistory();

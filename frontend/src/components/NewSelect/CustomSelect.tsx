@@ -147,7 +147,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const highlightMatchedText = useCallback(
 		(text: string, searchQuery: string): React.ReactNode => {
-			if (!searchQuery || !highlightSearch) return text;
+			if (!searchQuery || !highlightSearch) {
+				return text;
+			}
 
 			try {
 				const parts = text.split(
@@ -257,8 +259,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			<CloseOutlined
 				onClick={(e): void => {
 					e.stopPropagation();
-					if (onChange) onChange(undefined, []);
-					if (onClear) onClear();
+					if (onChange) {
+						onChange(undefined, []);
+					}
+					if (onClear) {
+						onClear();
+					}
 				}}
 			/>
 		),
@@ -280,7 +286,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				setActiveOptionIndex(0);
 			}
 
-			if (onSearch) onSearch(trimmedValue);
+			if (onSearch) {
+				onSearch(trimmedValue);
+			}
 		},
 		[onSearch, isOpen],
 	);
@@ -301,7 +309,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			if (isOpen) {
 				// Get flattened list of all selectable options
 				const getFlatOptions = (): OptionData[] => {
-					if (!filteredOptions) return [];
+					if (!filteredOptions) {
+						return [];
+					}
 
 					const flatList: OptionData[] = [];
 

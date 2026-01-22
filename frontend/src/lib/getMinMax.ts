@@ -1,5 +1,7 @@
-import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { isString } from 'lodash-es';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -43,7 +45,7 @@ export const getMinTimeForRelativeTimes = (
 };
 
 const GetMinMax = (
-	interval: Time | TimeV2 | string,
+	interval: Time | string,
 	dateTimeRange?: [number, number],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {
@@ -127,6 +129,15 @@ const GetMinMax = (
 		maxTime: maxTime * 1000000,
 	};
 };
+
+export const getMinMaxForSelectedTime = (
+	selectedTime: Time | CustomTimeType,
+	minTime: number,
+	maxTime: number,
+): GetMinMaxPayload =>
+	selectedTime !== 'custom'
+		? GetMinMax(selectedTime)
+		: GetMinMax(selectedTime, [minTime, maxTime]);
 
 export interface GetMinMaxPayload {
 	minTime: GlobalReducer['minTime'];

@@ -19,7 +19,9 @@ export const getCustomTimeRanges = (): CustomTimeRange[] => {
 		const stored = localStorage.getItem(
 			LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES,
 		);
-		if (!stored) return [];
+		if (!stored) {
+			return [];
+		}
 
 		const parsed = JSON.parse(stored);
 

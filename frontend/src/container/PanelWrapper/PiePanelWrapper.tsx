@@ -122,7 +122,9 @@ function PiePanelWrapper({
 		baseSize: number;
 		innerRadius: number;
 	}): number => {
-		if (!text) return baseSize;
+		if (!text) {
+			return baseSize;
+		}
 
 		const { length } = text;
 		// More aggressive scaling for very long numbers

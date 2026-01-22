@@ -20,7 +20,6 @@ import {
 	getQueueOverview,
 	QueueOverviewResponse,
 } from 'api/messagingQueues/celery/getQueueOverview';
-import { isNumber } from 'chart.js/helpers';
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -33,6 +32,7 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { formatNumericValue } from 'utils/numericUtils';
 
 const INITIAL_PAGE_SIZE = 20;
 
@@ -60,8 +60,12 @@ function ProgressRender(item: string | number): JSX.Element {
 				size="small"
 				strokeColor={((): string => {
 					const cpuPercent = percent;
-					if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-					if (cpuPercent >= 60) return Color.BG_AMBER_500;
+					if (cpuPercent >= 90) {
+						return Color.BG_SAKURA_500;
+					}
+					if (cpuPercent >= 60) {
+						return Color.BG_AMBER_500;
+					}
 					return Color.BG_FOREST_500;
 				})()}
 				className="progress-bar"
@@ -239,10 +243,7 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 				const bValue = Number(b.p95_latency);
 				return aValue - bValue;
 			},
-			render: (value: number | string): string => {
-				if (!isNumber(value)) return value.toString();
-				return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
-			},
+			render: formatNumericValue,
 		},
 		{
 			title: 'THROUGHPUT (ops/s)',
@@ -257,10 +258,7 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 				const bValue = Number(b.throughput);
 				return aValue - bValue;
 			},
-			render: (value: number | string): string => {
-				if (!isNumber(value)) return value.toString();
-				return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
-			},
+			render: formatNumericValue,
 		},
 	];
 }
@@ -337,7 +335,9 @@ function makeFilters(urlQuery: URLSearchParams): Filter[] {
 	return filterConfigs
 		.map(({ paramName, operator, key }) => {
 			const value = urlQuery.get(paramName);
-			if (!value) return null;
+			if (!value) {
+				return null;
+			}
 
 			return {
 				key: {
@@ -464,7 +464,9 @@ export default function CeleryOverviewTable({
 
 	const getFilteredData = useCallback(
 		(data: RowData[]): RowData[] => {
-			if (!searchText) return data;
+			if (!searchText) {
+				return data;
+			}
 
 			const searchLower = searchText.toLowerCase();
 			return data.filter((record) =>

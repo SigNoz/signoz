@@ -302,3 +302,7 @@ type MetricAttributesResponse struct {
 	Attributes []MetricAttribute `json:"attributes"`
 	TotalKeys  int64             `json:"totalKeys"`
 }
+
+type MetricNameParams struct {
+	MetricName string `query:"metricName"`
+}

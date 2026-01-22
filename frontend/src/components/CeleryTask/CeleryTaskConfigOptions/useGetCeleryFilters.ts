@@ -69,7 +69,9 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 			const uniqueValues = [
 				...new Set(
 					responses.flatMap(({ payload }) => {
-						if (!payload) return [];
+						if (!payload) {
+							return [];
+						}
 
 						const dataType = filterAttributeKeyDataType || DataTypes.String;
 						const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
