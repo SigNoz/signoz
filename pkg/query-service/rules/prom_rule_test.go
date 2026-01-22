@@ -6,6 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	pql "github.com/prometheus/prometheus/promql"
+	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -14,11 +20,8 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	pql "github.com/prometheus/prometheus/promql"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
-	"github.com/stretchr/testify/assert"
 )
 
 func getVectorValues(vectors []ruletypes.Sample) []float64 {
@@ -961,7 +964,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -969,14 +972,14 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), evalTime)
+		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
 			continue
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
@@ -1077,7 +1080,7 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1085,14 +1088,14 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), evalTime)
+		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
 			continue
 		}
 
-		assert.Equal(t, 1, retVal.(int), "case %d", idx)
+		assert.Equal(t, 1, alertsFound, "case %d", idx)
 		for _, item := range rule.Active {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(qslabels.AlertNameLabel), "[No data]"), "case %d", idx)
@@ -1309,7 +1312,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1317,14 +1320,14 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			continue
 		}
 
-		retVal, err := rule.Eval(context.Background(), evalTime)
+		alertsFound, err := rule.Eval(context.Background(), evalTime)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
 			continue
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
@@ -1339,5 +1342,158 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		}
 
 		promProvider.Close()
+	}
+}
+
+func TestPromRuleEval_RequireMinPoints(t *testing.T) {
+	// fixed base time for deterministic tests
+	baseTime := time.Unix(1700000000, 0)
+	evalTime := baseTime.Add(5 * time.Minute)
+
+	evalWindow := 5 * time.Minute
+	lookBackDelta := time.Minute
+
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Unit test",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeProm,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(evalWindow),
+			Frequency:  ruletypes.Duration(time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompareOp: ruletypes.ValueIsAbove,
+			MatchType: ruletypes.AtleastOnce,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {Query: "test_metric"},
+				},
+			},
+		},
+	}
+
+	fingerprintCols := []cmock.ColumnType{
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "any(labels)", Type: "String"},
+	}
+	fingerprint := uint64(12345)
+	fingerprintData := [][]any{{fingerprint, `{"__name__":"test_metric"}`}}
+
+	samplesCols := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "fingerprint", Type: "UInt64"},
+		{Name: "unix_milli", Type: "Int64"},
+		{Name: "value", Type: "Float64"},
+		{Name: "flags", Type: "UInt32"},
+	}
+	samplesData := [][]any{
+		{"test_metric", fingerprint, baseTime.UnixMilli(), 100.0, 0},
+		{"test_metric", fingerprint, baseTime.Add(time.Minute).UnixMilli(), 150.0, 0},
+		{"test_metric", fingerprint, baseTime.Add(2 * time.Minute).UnixMilli(), 250.0, 0},
+	}
+	targetForAlert := 200.0
+	targetForNoAlert := 500.0
+
+	// see Timestamps on base_rule
+	evalTimeMs := evalTime.UnixMilli()
+	queryStart := ((evalTimeMs-evalWindow.Milliseconds()-lookBackDelta.Milliseconds())/60000)*60000 + 1 // truncate to minute + 1ms
+	queryEnd := (evalTimeMs / 60000) * 60000                                                            // truncate to minute
+
+	cases := []struct {
+		description       string
+		alertCondition    bool
+		requireMinPoints  bool
+		requiredNumPoints int
+		expectAlerts      int
+	}{
+		{
+			description:      "AlertCondition=false, RequireMinPoints=false",
+			alertCondition:   false,
+			requireMinPoints: false,
+			expectAlerts:     0,
+		},
+		{
+			description:      "AlertCondition=true, RequireMinPoints=false",
+			alertCondition:   true,
+			requireMinPoints: false,
+			expectAlerts:     1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=more_than_required",
+			alertCondition:    true,
+			requireMinPoints:  true,
+			requiredNumPoints: 2,
+			expectAlerts:      1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=same_as_required",
+			alertCondition:    true,
+			requireMinPoints:  true,
+			requiredNumPoints: 3,
+			expectAlerts:      1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=insufficient",
+			alertCondition:    true,
+			requireMinPoints:  true,
+			requiredNumPoints: 4,
+			expectAlerts:      0,
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for _, c := range cases {
+		rc := postableRule.RuleCondition
+
+		rc.Target = &targetForNoAlert
+		if c.alertCondition {
+			rc.Target = &targetForAlert
+		}
+		rc.RequireMinPoints = c.requireMinPoints
+		rc.RequiredNumPoints = c.requiredNumPoints
+		rc.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:        postableRule.AlertName,
+					TargetValue: rc.Target,
+					MatchType:   rc.MatchType,
+					CompareOp:   rc.CompareOp,
+				},
+			},
+		}
+
+		t.Run(c.description, func(t *testing.T) {
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+			telemetryStore.Mock().
+				ExpectQuery("SELECT fingerprint, any").
+				WithArgs("test_metric", "__name__", "test_metric").
+				WillReturnRows(cmock.NewRows(fingerprintCols, fingerprintData))
+			telemetryStore.Mock().
+				ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
+				WithArgs("test_metric", "test_metric", "__name__", "test_metric", queryStart, queryEnd).
+				WillReturnRows(cmock.NewRows(samplesCols, samplesData))
+			promProvider := prometheustest.New(
+				context.Background(),
+				instrumentationtest.New().ToProviderSettings(),
+				prometheus.Config{LookbackDelta: lookBackDelta},
+				telemetryStore,
+			)
+			defer func() {
+				_ = promProvider.Close()
+			}()
+
+			options := clickhouseReader.NewOptions("primaryNamespace")
+			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			require.NoError(t, err)
+
+			alertsFound, err := rule.Eval(context.Background(), evalTime)
+			require.NoError(t, err)
+
+			assert.Equal(t, c.expectAlerts, alertsFound)
+		})
 	}
 }

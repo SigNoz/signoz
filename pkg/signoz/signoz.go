@@ -415,6 +415,7 @@ func New(
 		licensing,
 		tokenizer,
 		config,
+		modules.AuthDomain,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
