@@ -55,11 +55,10 @@ module.exports = {
 		// Code quality rules
 		'prefer-const': 'error', // Enforces const for variables never reassigned
 		'no-var': 'error', // Disallows var, enforces let/const
-		// TODO: Enable after fixing ~50 violations (auto-fixable)
-		// 'no-else-return': ['error', { allowElseIf: false }], // Reduces nesting by disallowing else after return
+		'no-else-return': ['error', { allowElseIf: false }], // Reduces nesting by disallowing else after return
 		'no-cond-assign': 'error', // Prevents accidental assignment in conditions (if (x = 1) instead of if (x === 1))
 		'no-debugger': 'error', // Disallows debugger statements in production code
-		// curly: 'error', // Requires curly braces for all control statements
+		curly: 'error', // Requires curly braces for all control statements
 		eqeqeq: ['error', 'always', { null: 'ignore' }], // Enforces === and !== (allows == null for null/undefined check)
 		// TODO: Enable after fixing ~15 console.log statements
 		// 'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error

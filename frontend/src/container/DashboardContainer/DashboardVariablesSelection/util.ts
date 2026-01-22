@@ -141,7 +141,9 @@ const collectCyclePath = (
 
 	while (current !== end) {
 		const parent = findParent(current);
-		if (!parent) break;
+		if (!parent) {
+			break;
+		}
 		path.push(parent);
 		current = parent;
 	}
@@ -194,10 +196,16 @@ export const buildDependencyGraph = (
 
 	// Initialize in-degree and adjacency list
 	Object.keys(dependencies).forEach((node) => {
-		if (!inDegree[node]) inDegree[node] = 0;
-		if (!adjList[node]) adjList[node] = [];
+		if (!inDegree[node]) {
+			inDegree[node] = 0;
+		}
+		if (!adjList[node]) {
+			adjList[node] = [];
+		}
 		dependencies[node]?.forEach((child) => {
-			if (!inDegree[child]) inDegree[child] = 0;
+			if (!inDegree[child]) {
+				inDegree[child] = 0;
+			}
 			inDegree[child]++;
 			adjList[node].push(child);
 		});
@@ -234,7 +242,9 @@ export const buildDependencyGraph = (
 
 		adjList[current]?.forEach((neighbor) => {
 			inDegree[neighbor]--;
-			if (inDegree[neighbor] === 0) queue.push(neighbor);
+			if (inDegree[neighbor] === 0) {
+				queue.push(neighbor);
+			}
 		});
 	}
 
