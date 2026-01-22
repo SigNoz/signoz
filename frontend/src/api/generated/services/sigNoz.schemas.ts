@@ -70,28 +70,6 @@ export interface AuthtypesCallbackAuthNSupportDTO {
 	url?: string;
 }
 
-export interface AuthtypesDeprecatedGettableLoginDTO {
-	/**
-	 * @type string
-	 */
-	accessJwt?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
-}
-
-export interface AuthtypesDeprecatedPostableLoginDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-}
-
 export interface AuthtypesGettableAuthDomainDTO {
 	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
 	/**
@@ -1619,14 +1597,6 @@ export type AcceptInvite201 = {
 	status?: string;
 };
 
-export type DeprecatedCreateSessionByEmailPassword200 = {
-	data?: AuthtypesDeprecatedGettableLoginDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-};
-
 export type ListPromotedAndIndexedPaths200 = {
 	/**
 	 * @type array
@@ -1839,6 +1809,14 @@ export type SearchIngestionKeys200 = {
 	status?: string;
 };
 
+export type GetMetricAlertsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+};
+
 export type GetMetricAlerts200 = {
 	data?: MetricsexplorertypesMetricAlertsResponseDTO;
 	/**
@@ -1847,12 +1825,28 @@ export type GetMetricAlerts200 = {
 	status?: string;
 };
 
+export type GetMetricDashboardsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+};
+
 export type GetMetricDashboards200 = {
 	data?: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
 	 * @type string
 	 */
 	status?: string;
+};
+
+export type GetMetricHighlightsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
 };
 
 export type GetMetricHighlights200 = {
@@ -1872,6 +1866,14 @@ export type GetMetricAttributes200 = {
 	 * @type string
 	 */
 	status?: string;
+};
+
+export type GetMetricMetadataParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
 };
 
 export type GetMetricMetadata200 = {
