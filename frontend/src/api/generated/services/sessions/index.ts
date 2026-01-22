@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,11 +16,8 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
-	AuthtypesDeprecatedPostableLoginDTO,
 	AuthtypesPostableEmailPasswordSessionDTO,
 	AuthtypesPostableRotateTokenDTO,
 	CreateSessionByEmailPassword200,
@@ -28,11 +26,12 @@ import type {
 	CreateSessionBySAMLCallback303,
 	CreateSessionBySAMLCallbackBody,
 	CreateSessionBySAMLCallbackParams,
-	DeprecatedCreateSessionByEmailPassword200,
 	GetSessionContext200,
 	RenderErrorResponseDTO,
 	RotateSession200,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../index';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -42,15 +41,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint creates a session for a user using google callback
  * @summary Create session by google callback
  */
-export const createSessionByGoogleCallback = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<unknown>({
+export const createSessionByGoogleCallback = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<unknown>({
 		url: `/api/v1/complete/google`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getCreateSessionByGoogleCallbackQueryKey = () =>
-	['createSessionByGoogleCallback'] as const;
+export const getCreateSessionByGoogleCallbackQueryKey = () => {
+	return ['createSessionByGoogleCallback'] as const;
+};
 
 export const getCreateSessionByGoogleCallbackQueryOptions = <
 	TData = Awaited<ReturnType<typeof createSessionByGoogleCallback>>,
@@ -129,15 +130,17 @@ export const invalidateCreateSessionByGoogleCallback = async (
  * This endpoint creates a session for a user using oidc callback
  * @summary Create session by oidc callback
  */
-export const createSessionByOIDCCallback = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<unknown>({
+export const createSessionByOIDCCallback = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<unknown>({
 		url: `/api/v1/complete/oidc`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getCreateSessionByOIDCCallbackQueryKey = () =>
-	['createSessionByOIDCCallback'] as const;
+export const getCreateSessionByOIDCCallbackQueryKey = () => {
+	return ['createSessionByOIDCCallback'] as const;
+};
 
 export const getCreateSessionByOIDCCallbackQueryOptions = <
 	TData = Awaited<ReturnType<typeof createSessionByOIDCCallback>>,
@@ -329,100 +332,15 @@ export const useCreateSessionBySAMLCallback = <
 	return useMutation(mutationOptions);
 };
 /**
- * This endpoint is deprecated and will be removed in the future
- * @deprecated
- * @summary Deprecated create session by email password
- */
-export const deprecatedCreateSessionByEmailPassword = (
-	authtypesDeprecatedPostableLoginDTO: AuthtypesDeprecatedPostableLoginDTO,
-	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<DeprecatedCreateSessionByEmailPassword200>({
-		url: `/api/v1/login`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: authtypesDeprecatedPostableLoginDTO,
-		signal,
-	});
-
-export const getDeprecatedCreateSessionByEmailPasswordMutationOptions = <
-	TError = RenderErrorResponseDTO,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deprecatedCreateSessionByEmailPassword>>,
-		TError,
-		{ data: AuthtypesDeprecatedPostableLoginDTO },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deprecatedCreateSessionByEmailPassword>>,
-	TError,
-	{ data: AuthtypesDeprecatedPostableLoginDTO },
-	TContext
-> => {
-	const mutationKey = ['deprecatedCreateSessionByEmailPassword'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deprecatedCreateSessionByEmailPassword>>,
-		{ data: AuthtypesDeprecatedPostableLoginDTO }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return deprecatedCreateSessionByEmailPassword(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeprecatedCreateSessionByEmailPasswordMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deprecatedCreateSessionByEmailPassword>>
->;
-export type DeprecatedCreateSessionByEmailPasswordMutationBody = AuthtypesDeprecatedPostableLoginDTO;
-export type DeprecatedCreateSessionByEmailPasswordMutationError = RenderErrorResponseDTO;
-
-/**
- * @deprecated
- * @summary Deprecated create session by email password
- */
-export const useDeprecatedCreateSessionByEmailPassword = <
-	TError = RenderErrorResponseDTO,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deprecatedCreateSessionByEmailPassword>>,
-		TError,
-		{ data: AuthtypesDeprecatedPostableLoginDTO },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deprecatedCreateSessionByEmailPassword>>,
-	TError,
-	{ data: AuthtypesDeprecatedPostableLoginDTO },
-	TContext
-> => {
-	const mutationOptions = getDeprecatedCreateSessionByEmailPasswordMutationOptions(
-		options,
-	);
-
-	return useMutation(mutationOptions);
-};
-/**
  * This endpoint deletes the session
  * @summary Delete session
  */
-export const deleteSession = () =>
-	GeneratedAPIInstance<void>({
+export const deleteSession = () => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/sessions`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeleteSessionMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -452,7 +370,9 @@ export const getDeleteSessionMutationOptions = <
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteSession>>,
 		void
-	> = () => deleteSession();
+	> = () => {
+		return deleteSession();
+	};
 
 	return { mutationFn, ...mutationOptions };
 };
@@ -490,15 +410,17 @@ export const useDeleteSession = <
  * This endpoint returns the context for the session
  * @summary Get session context
  */
-export const getSessionContext = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetSessionContext200>({
+export const getSessionContext = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetSessionContext200>({
 		url: `/api/v2/sessions/context`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetSessionContextQueryKey = () =>
-	['getSessionContext'] as const;
+export const getGetSessionContextQueryKey = () => {
+	return ['getSessionContext'] as const;
+};
 
 export const getGetSessionContextQueryOptions = <
 	TData = Awaited<ReturnType<typeof getSessionContext>>,
@@ -577,14 +499,15 @@ export const invalidateGetSessionContext = async (
 export const createSessionByEmailPassword = (
 	authtypesPostableEmailPasswordSessionDTO: AuthtypesPostableEmailPasswordSessionDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreateSessionByEmailPassword200>({
+) => {
+	return GeneratedAPIInstance<CreateSessionByEmailPassword200>({
 		url: `/api/v2/sessions/email_password`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesPostableEmailPasswordSessionDTO,
 		signal,
 	});
+};
 
 export const getCreateSessionByEmailPasswordMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -661,14 +584,15 @@ export const useCreateSessionByEmailPassword = <
 export const rotateSession = (
 	authtypesPostableRotateTokenDTO: AuthtypesPostableRotateTokenDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<RotateSession200>({
+) => {
+	return GeneratedAPIInstance<RotateSession200>({
 		url: `/api/v2/sessions/rotate`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesPostableRotateTokenDTO,
 		signal,
 	});
+};
 
 export const getRotateSessionMutationOptions = <
 	TError = RenderErrorResponseDTO,

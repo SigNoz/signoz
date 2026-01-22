@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,10 +13,10 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
+
+import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../index';
-import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -25,14 +26,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint returns the supported features and their details
  * @summary Get features
  */
-export const getFeatures = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetFeatures200>({
+export const getFeatures = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetFeatures200>({
 		url: `/api/v2/features`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetFeaturesQueryKey = () => ['getFeatures'] as const;
+export const getGetFeaturesQueryKey = () => {
+	return ['getFeatures'] as const;
+};
 
 export const getGetFeaturesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFeatures>>,

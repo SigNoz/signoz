@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,9 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	GetOrgPreference200,
 	GetOrgPreferencePathParameters,
@@ -31,6 +30,8 @@ import type {
 	UpdateUserPreferencePathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../index';
+
 type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
@@ -39,15 +40,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint lists all org preferences
  * @summary List org preferences
  */
-export const listOrgPreferences = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListOrgPreferences200>({
+export const listOrgPreferences = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListOrgPreferences200>({
 		url: `/api/v1/org/preferences`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListOrgPreferencesQueryKey = () =>
-	['listOrgPreferences'] as const;
+export const getListOrgPreferencesQueryKey = () => {
+	return ['listOrgPreferences'] as const;
+};
 
 export const getListOrgPreferencesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listOrgPreferences>>,
@@ -126,16 +129,19 @@ export const invalidateListOrgPreferences = async (
 export const getOrgPreference = (
 	{ name }: GetOrgPreferencePathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetOrgPreference200>({
+) => {
+	return GeneratedAPIInstance<GetOrgPreference200>({
 		url: `/api/v1/org/preferences/${name}`,
 		method: 'GET',
 		signal,
 	});
+};
 
 export const getGetOrgPreferenceQueryKey = ({
 	name,
-}: GetOrgPreferencePathParameters) => ['getOrgPreference'] as const;
+}: GetOrgPreferencePathParameters) => {
+	return ['getOrgPreference'] as const;
+};
 
 export const getGetOrgPreferenceQueryOptions = <
 	TData = Awaited<ReturnType<typeof getOrgPreference>>,
@@ -227,13 +233,14 @@ export const invalidateGetOrgPreference = async (
 export const updateOrgPreference = (
 	{ name }: UpdateOrgPreferencePathParameters,
 	preferencetypesUpdatablePreferenceDTO: PreferencetypesUpdatablePreferenceDTO,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/org/preferences/${name}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: preferencetypesUpdatablePreferenceDTO,
 	});
+};
 
 export const getUpdateOrgPreferenceMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -320,15 +327,17 @@ export const useUpdateOrgPreference = <
  * This endpoint lists all user preferences
  * @summary List user preferences
  */
-export const listUserPreferences = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListUserPreferences200>({
+export const listUserPreferences = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListUserPreferences200>({
 		url: `/api/v1/user/preferences`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListUserPreferencesQueryKey = () =>
-	['listUserPreferences'] as const;
+export const getListUserPreferencesQueryKey = () => {
+	return ['listUserPreferences'] as const;
+};
 
 export const getListUserPreferencesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listUserPreferences>>,
@@ -407,16 +416,19 @@ export const invalidateListUserPreferences = async (
 export const getUserPreference = (
 	{ name }: GetUserPreferencePathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetUserPreference200>({
+) => {
+	return GeneratedAPIInstance<GetUserPreference200>({
 		url: `/api/v1/user/preferences/${name}`,
 		method: 'GET',
 		signal,
 	});
+};
 
 export const getGetUserPreferenceQueryKey = ({
 	name,
-}: GetUserPreferencePathParameters) => ['getUserPreference'] as const;
+}: GetUserPreferencePathParameters) => {
+	return ['getUserPreference'] as const;
+};
 
 export const getGetUserPreferenceQueryOptions = <
 	TData = Awaited<ReturnType<typeof getUserPreference>>,
@@ -508,13 +520,14 @@ export const invalidateGetUserPreference = async (
 export const updateUserPreference = (
 	{ name }: UpdateUserPreferencePathParameters,
 	preferencetypesUpdatablePreferenceDTO: PreferencetypesUpdatablePreferenceDTO,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/user/preferences/${name}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: preferencetypesUpdatablePreferenceDTO,
 	});
+};
 
 export const getUpdateUserPreferenceMutationOptions = <
 	TError = RenderErrorResponseDTO,
