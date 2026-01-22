@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (provider *provider) addMetricsExplorerV2Routes(router *mux.Router) error {
+func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/metrics/stats", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetStats),
 		handler.OpenAPIDef{

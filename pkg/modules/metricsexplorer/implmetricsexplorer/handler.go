@@ -2,7 +2,6 @@ package implmetricsexplorer
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -11,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/gorilla/mux"
 )
 
 type handler struct {
@@ -80,10 +78,13 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	// Extract metric_name from URL path
-	vars := mux.Vars(req)
-	metricName := vars["metric_name"]
-	if metricName == "" {
+	var params metricsexplorertypes.MetricNameParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if params.MetricName == "" {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required in URL path"))
 		return
 	}
@@ -95,7 +96,7 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 	}
 
 	// Set metric name from URL path
-	in.MetricName = metricName
+	in.MetricName = params.MetricName
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
@@ -114,23 +115,28 @@ func (h *handler) GetMetricMetadata(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
-	if metricName == "" {
+	var params metricsexplorertypes.MetricNameParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if params.MetricName == "" {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
 		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	metadataMap, err := h.module.GetMetricMetadataMulti(req.Context(), orgID, []string{metricName})
+	metadataMap, err := h.module.GetMetricMetadataMulti(req.Context(), orgID, []string{params.MetricName})
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	metadata, ok := metadataMap[metricName]
+	metadata, ok := metadataMap[params.MetricName]
 	if !ok || metadata == nil {
-		render.Error(rw, errors.NewNotFoundf(errors.CodeNotFound, "metadata not found for metric %q", metricName))
+		render.Error(rw, errors.NewNotFoundf(errors.CodeNotFound, "metadata not found for metric %q", params.MetricName))
 		return
 	}
 
@@ -144,14 +150,19 @@ func (h *handler) GetMetricAlerts(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
-	if metricName == "" {
+	var params metricsexplorertypes.MetricNameParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if params.MetricName == "" {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
 		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	out, err := h.module.GetMetricAlerts(req.Context(), orgID, metricName)
+	out, err := h.module.GetMetricAlerts(req.Context(), orgID, params.MetricName)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -166,14 +177,19 @@ func (h *handler) GetMetricDashboards(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
-	if metricName == "" {
+	var params metricsexplorertypes.MetricNameParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if params.MetricName == "" {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
 		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	out, err := h.module.GetMetricDashboards(req.Context(), orgID, metricName)
+	out, err := h.module.GetMetricDashboards(req.Context(), orgID, params.MetricName)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -188,14 +204,19 @@ func (h *handler) GetMetricHighlights(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	metricName := strings.TrimSpace(req.URL.Query().Get("metricName"))
-	if metricName == "" {
+	var params metricsexplorertypes.MetricNameParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if params.MetricName == "" {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName query parameter is required"))
 		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	highlights, err := h.module.GetMetricHighlights(req.Context(), orgID, metricName)
+	highlights, err := h.module.GetMetricHighlights(req.Context(), orgID, params.MetricName)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -209,6 +230,7 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		render.Error(rw, err)
 		return
 	}
+
 	var in metricsexplorertypes.MetricAttributesRequest
 	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
 		render.Error(rw, err)
@@ -221,5 +243,6 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 		render.Error(rw, err)
 		return
 	}
+
 	render.Success(rw, http.StatusOK, out)
 }
