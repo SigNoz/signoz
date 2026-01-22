@@ -1,6 +1,6 @@
 .run-query-btn {
 	display: flex;
-	width: 132px;
+	min-width: 132px;
 	align-items: center;
 	gap: 6px;
 
@@ -11,7 +11,7 @@
 
 .cancel-query-btn {
 	display: flex;
-	width: 132px;
+	min-width: 132px;
 	align-items: center;
 	gap: 6px;
 }
