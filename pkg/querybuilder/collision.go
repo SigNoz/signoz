@@ -100,7 +100,6 @@ func deduplicateKeys(key telemetrytypes.TelemetryFieldKey, keysMap map[string]te
 	}
 }
 
-
 func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, intrinsicOrCalculatedField *telemetrytypes.TelemetryFieldKey) []string {
 
 	// for recording modifications
@@ -123,14 +122,15 @@ func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys 
 
 		*/
 
-		// Check if there is any matching key in the metadata with the same name
+		// Check if there is any matching key in the metadata with the same name and it is not the same intrinsic/calculated field
 		match := false
 		for _, mapKey := range keys[key.Name] {
 			// Either field context is unspecified or matches
 			// and
 			// Either field data type is unspecified or matches
 			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
-				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) {
+				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) &&
+				mapKey.String() != intrinsicOrCalculatedField.String() {
 				match = true
 				break
 			}
@@ -143,7 +143,7 @@ func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys 
 		// use the intrinsic/calculated field
 		if !match {
 			// This is the case where user is using an intrinsic/calculated field
-			// with a context or data type that doesn't match the intrinsic/calculated field
+			// with a context or data type that may or may not match the intrinsic/calculated field
 			// and there is no matching key in the metadata with the same name
 			// So we can safely override the context and data type
 
@@ -214,6 +214,9 @@ func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys 
 			return actions
 		} else {
 			// multiple matching keys, set materialized only if all the keys are materialized
+			// TODO: This could all be redundant if it is not, it should be.
+			// Downstream query builder should handle multiple matching keys with their own metadata
+			// and not rely on this function to do so.
 			materialized := true
 			indexes := []telemetrytypes.JSONDataTypeIndex{}
 			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
