@@ -444,8 +444,8 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 			}],
 			"order": [{
 				"key": {
-					"name": "timestamp",
-					"fieldContext": "span"
+					"name": "service.name",
+					"fieldContext": "resource"
 				},
 				"direction": "desc"
 			}],
@@ -465,13 +465,11 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		require.NotNil(t, query.Filter)
 		assert.Equal(t, "service.name = 'frontend'", query.Filter.Expression)
 		assert.Equal(t, 1, len(query.GroupBy))
-		// Normalized during unmarshaling - only FieldContext is normalized, not Name
 		assert.Equal(t, "service.name", query.GroupBy[0].Name)
 		assert.Equal(t, telemetrytypes.FieldContextResource, query.GroupBy[0].FieldContext)
 		assert.Equal(t, 1, len(query.Order))
-		// Normalized during unmarshaling - only FieldContext is normalized, not Name
-		assert.Equal(t, "timestamp", query.Order[0].Key.Name)
-		assert.Equal(t, telemetrytypes.FieldContextSpan, query.Order[0].Key.FieldContext)
+		assert.Equal(t, "service.name", query.Order[0].Key.Name)
+		assert.Equal(t, telemetrytypes.FieldContextResource, query.Order[0].Key.FieldContext)
 		assert.Equal(t, OrderDirectionDesc, query.Order[0].Direction)
 		assert.Equal(t, 100, query.Limit)
 	})
@@ -533,6 +531,7 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 	})
 
 	t.Run("query with all optional fields", func(t *testing.T) {
+		// NOTE: This json payload is not realistic, just for testing all fields
 		jsonData := `{
 			"name": "A",
 			"signal": "traces",
@@ -626,17 +625,14 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 			"name": "A",
 			"signal": "traces",
 			"selectFields": [{
-				"name": "service.name",
-				"fieldContext": "resource"
+				"name": "resource.service.name"
 			}],
 			"groupBy": [{
-				"name": "host.name",
-				"fieldContext": "resource"
+				"name": "resource.host.name"
 			}],
 			"order": [{
 				"key": {
-					"name": "duration",
-					"fieldContext": "span"
+					"name": "span.duration"
 				},
 				"direction": "desc"
 			}]
