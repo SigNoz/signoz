@@ -8,8 +8,20 @@ import (
 )
 
 type Config struct {
-	AllowSelfPasswordReset     bool          `mapstructure:"allow_self_password_reset"`
-	PasswordResetTokenValidity time.Duration `mapstructure:"password_reset_token_validity"`
+	Auth AuthConfig `mapstructure:"auth"`
+}
+
+type AuthConfig struct {
+	Password PasswordConfig `mapstructure:"password"`
+}
+
+type PasswordConfig struct {
+	Reset ResetConfig `mapstructure:"reset"`
+}
+
+type ResetConfig struct {
+	AllowSelf        bool          `mapstructure:"allow_self"`
+	MaxTokenLifetime time.Duration `mapstructure:"max_token_lifetime"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -18,14 +30,20 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		AllowSelfPasswordReset:     false,
-		PasswordResetTokenValidity: 6 * time.Hour,
+		Auth: AuthConfig{
+			Password: PasswordConfig{
+				Reset: ResetConfig{
+					AllowSelf:        false,
+					MaxTokenLifetime: 6 * time.Hour,
+				},
+			},
+		},
 	}
 }
 
 func (c Config) Validate() error {
-	if c.PasswordResetTokenValidity <= 0 {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "password_reset_token_validity must be positive")
+	if c.Auth.Password.Reset.MaxTokenLifetime <= 0 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auth::password::reset::max_token_lifetime must be positive")
 	}
 
 	return nil

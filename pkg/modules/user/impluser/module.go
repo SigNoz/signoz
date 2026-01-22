@@ -305,7 +305,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.PasswordResetTokenValidity))
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Auth.Password.Reset.MaxTokenLifetime))
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 }
 
 func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
-	if !module.config.AllowSelfPasswordReset {
+	if !module.config.Auth.Password.Reset.AllowSelf {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "users are not allowed to reset their password themselves")
 	}
 
