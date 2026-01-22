@@ -7,13 +7,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.jsontypeexporter import export_json_types
 from fixtures.logs import Logs
-
-
-def _assert_ok(response: requests.Response) -> None:
-    if response.status_code != HTTPStatus.OK:
-        raise AssertionError(f"HTTP {response.status_code}: {response.text}")
 
 
 def test_logs_json_body_simple_searches(
@@ -21,7 +15,6 @@ def test_logs_json_body_simple_searches(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -67,32 +60,31 @@ def test_logs_json_body_simple_searches(
         }
     )
 
-    logs_list = [
-        Logs(
-            timestamp=now - timedelta(seconds=3),
-            resources={"service.name": "auth-service"},
-            attributes={},
-            body=log1_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=2),
-            resources={"service.name": "auth-service"},
-            attributes={},
-            body=log2_body,
-            severity_text="ERROR",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=1),
-            resources={"service.name": "db-service"},
-            attributes={},
-            body=log3_body,
-            severity_text="INFO",
-        ),
-    ]
-
-    export_json_types(logs_list)
-    insert_logs(logs_list)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=3),
+                resources={"service.name": "auth-service"},
+                attributes={},
+                body=log1_body,
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=2),
+                resources={"service.name": "auth-service"},
+                attributes={},
+                body=log2_body,
+                severity_text="ERROR",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=1),
+                resources={"service.name": "db-service"},
+                attributes={},
+                body=log3_body,
+                severity_text="INFO",
+            ),
+        ]
+    )
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
@@ -131,7 +123,7 @@ def test_logs_json_body_simple_searches(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -172,7 +164,7 @@ def test_logs_json_body_simple_searches(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -214,7 +206,7 @@ def test_logs_json_body_simple_searches(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -256,7 +248,7 @@ def test_logs_json_body_simple_searches(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -297,7 +289,7 @@ def test_logs_json_body_simple_searches(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -312,7 +304,6 @@ def test_logs_json_body_nested_keys(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -377,32 +368,31 @@ def test_logs_json_body_nested_keys(
         }
     )
 
-    logs_list = [
-        Logs(
-            timestamp=now - timedelta(seconds=3),
-            resources={"service.name": "api-service"},
-            attributes={},
-            body=log1_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=2),
-            resources={"service.name": "api-service"},
-            attributes={},
-            body=log2_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=1),
-            resources={"service.name": "api-service"},
-            attributes={},
-            body=log3_body,
-            severity_text="INFO",
-        ),
-    ]
-
-    export_json_types(logs_list)
-    insert_logs(logs_list)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=3),
+                resources={"service.name": "api-service"},
+                attributes={},
+                body=log1_body,
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=2),
+                resources={"service.name": "api-service"},
+                attributes={},
+                body=log2_body,
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=1),
+                resources={"service.name": "api-service"},
+                attributes={},
+                body=log3_body,
+                severity_text="INFO",
+            ),
+        ]
+    )
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
@@ -439,7 +429,7 @@ def test_logs_json_body_nested_keys(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -481,7 +471,7 @@ def test_logs_json_body_nested_keys(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -525,7 +515,7 @@ def test_logs_json_body_nested_keys(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -567,7 +557,7 @@ def test_logs_json_body_nested_keys(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -584,16 +574,15 @@ def test_logs_json_body_array_membership(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
 ) -> None:
     """
     Setup:
     Insert logs with JSON bodies containing arrays
 
     Tests:
-    1. Search by has(body.tags, "value") - string array
-    2. Search by has(body.ids, 123) - numeric array
-    3. Search by has(body.flags, true) - boolean array
+    1. Search by has(body.tags[*], "value") - string array
+    2. Search by has(body.ids[*], 123) - numeric array
+    3. Search by has(body.flags[*], true) - boolean array
     """
     now = datetime.now(tz=timezone.utc)
 
@@ -633,36 +622,35 @@ def test_logs_json_body_array_membership(
         }
     )
 
-    logs_list = [
-        Logs(
-            timestamp=now - timedelta(seconds=3),
-            resources={"service.name": "app-service"},
-            attributes={},
-            body=log1_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=2),
-            resources={"service.name": "app-service"},
-            attributes={},
-            body=log2_body,
-            severity_text="INFO",
-        ),
-        Logs(
-            timestamp=now - timedelta(seconds=1),
-            resources={"service.name": "app-service"},
-            attributes={},
-            body=log3_body,
-            severity_text="INFO",
-        ),
-    ]
-
-    export_json_types(logs_list)
-    insert_logs(logs_list)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=3),
+                resources={"service.name": "app-service"},
+                attributes={},
+                body=log1_body,
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=2),
+                resources={"service.name": "app-service"},
+                attributes={},
+                body=log2_body,
+                severity_text="INFO",
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=1),
+                resources={"service.name": "app-service"},
+                attributes={},
+                body=log3_body,
+                severity_text="INFO",
+            ),
+        ]
+    )
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    # Test 1: Search by has(body.tags, "production")
+    # Test 1: Search by has(body.tags[*], "production")
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -682,7 +670,7 @@ def test_logs_json_body_array_membership(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": 'has(body.tags, "production")'},
+                            "filter": {"expression": 'has(body.tags[*], "production")'},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -695,7 +683,7 @@ def test_logs_json_body_array_membership(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -704,7 +692,7 @@ def test_logs_json_body_array_membership(
     tags_list = [json.loads(row["data"]["body"])["tags"] for row in rows]
     assert all("production" in tags for tags in tags_list)
 
-    # Test 2: Search by has(body.ids, 200)
+    # Test 2: Search by has(body.ids[*], 200)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -724,7 +712,7 @@ def test_logs_json_body_array_membership(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": "has(body.ids, 200)"},
+                            "filter": {"expression": "has(body.ids[*], 200)"},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -737,7 +725,7 @@ def test_logs_json_body_array_membership(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -746,7 +734,7 @@ def test_logs_json_body_array_membership(
     ids_list = [json.loads(row["data"]["body"])["ids"] for row in rows]
     assert all(200 in ids for ids in ids_list)
 
-    # Test 3: Search by has(body.flags, true)
+    # Test 3: Search by has(body.flags[*], true)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
@@ -766,7 +754,7 @@ def test_logs_json_body_array_membership(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {"expression": "has(body.flags, true)"},
+                            "filter": {"expression": "has(body.flags[*], true)"},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -779,7 +767,7 @@ def test_logs_json_body_array_membership(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -794,7 +782,6 @@ def test_logs_json_body_listing(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -877,19 +864,18 @@ def test_logs_json_body_listing(
         },
     ]
 
-    logs_list = [
-        Logs(
-            timestamp=log_data["timestamp"],
-            resources={"service.name": "test-service"},
-            attributes={},
-            body=log_data["body"],
-            severity_text=log_data["severity"],
-        )
-        for log_data in logs_data
-    ]
-
-    export_json_types(logs_list)
-    insert_logs(logs_list)
+    insert_logs(
+        [
+            Logs(
+                timestamp=log_data["timestamp"],
+                resources={"service.name": "test-service"},
+                attributes={},
+                body=log_data["body"],
+                severity_text=log_data["severity"],
+            )
+            for log_data in logs_data
+        ]
+    )
 
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
@@ -925,7 +911,7 @@ def test_logs_json_body_listing(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -965,7 +951,7 @@ def test_logs_json_body_listing(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -1008,7 +994,7 @@ def test_logs_json_body_listing(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -1053,7 +1039,7 @@ def test_logs_json_body_listing(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -1099,7 +1085,7 @@ def test_logs_json_body_listing(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
@@ -1137,11 +1123,9 @@ def test_logs_json_body_listing(
         },
     )
 
-    _assert_ok(response)
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     count = results[0]["data"][0][0]
     assert count == 4  # 4 logs have status="success"
-
-
