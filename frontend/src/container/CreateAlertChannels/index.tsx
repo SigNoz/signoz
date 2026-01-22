@@ -476,7 +476,9 @@ function CreateAlertChannels({
 						break;
 					case ChannelType.Pagerduty:
 						request = preparePagerRequest();
-						if (request) await testPagerApi(request);
+						if (request) {
+							await testPagerApi(request);
+						}
 						break;
 					case ChannelType.MsTeams:
 						request = prepareMsTeamsRequest();

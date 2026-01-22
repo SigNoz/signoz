@@ -33,7 +33,9 @@ function S3BucketsSelector({
 
 	// Get all regions to display (union of account regions and initialBucketsByRegion regions)
 	const allRegions = useMemo(() => {
-		if (!activeAccount) return [];
+		if (!activeAccount) {
+			return [];
+		}
 
 		// Get unique regions from both sources
 		const initialRegions = Object.keys(initialBucketsByRegion);

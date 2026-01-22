@@ -15,7 +15,9 @@ export const useCopySpanLink = (
 
 	const onSpanCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
-			if (!span) return;
+			if (!span) {
+				return;
+			}
 
 			event.preventDefault();
 			event.stopPropagation();

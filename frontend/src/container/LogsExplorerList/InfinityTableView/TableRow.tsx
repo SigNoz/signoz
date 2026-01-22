@@ -52,7 +52,9 @@ export default function TableRow({
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			if (!handleSetActiveContextLog || !currentLog) return;
+			if (!handleSetActiveContextLog || !currentLog) {
+				return;
+			}
 
 			handleSetActiveContextLog(currentLog);
 		},
@@ -60,7 +62,9 @@ export default function TableRow({
 	);
 
 	const handleShowLogDetails = useCallback(() => {
-		if (!onShowLogDetails || !currentLog) return;
+		if (!onShowLogDetails || !currentLog) {
+			return;
+		}
 		onShowLogDetails(currentLog);
 	}, [currentLog, onShowLogDetails]);
 
@@ -71,9 +75,13 @@ export default function TableRow({
 	return (
 		<>
 			{tableColumns.map((column) => {
-				if (!column.render) return <td>Empty</td>;
+				if (!column.key) {
+					return null;
+				}
 
-				if (!column.key) return null;
+				if (!column.render) {
+					return <td key={column.key}>Empty</td>;
+				}
 
 				const element: ColumnTypeRender<Record<string, unknown>> = column.render(
 					log[column.key as keyof Record<string, unknown>],

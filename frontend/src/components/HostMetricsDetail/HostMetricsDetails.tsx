@@ -450,8 +450,12 @@ function HostMetricsDetails({
 										size="small"
 										strokeColor={((): string => {
 											const cpuPercent = Number((host.cpu * 100).toFixed(1));
-											if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-											if (cpuPercent >= 60) return Color.BG_AMBER_500;
+											if (cpuPercent >= 90) {
+												return Color.BG_SAKURA_500;
+											}
+											if (cpuPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"
@@ -463,8 +467,12 @@ function HostMetricsDetails({
 										size="small"
 										strokeColor={((): string => {
 											const memoryPercent = Number((host.memory * 100).toFixed(1));
-											if (memoryPercent >= 90) return Color.BG_CHERRY_500;
-											if (memoryPercent >= 60) return Color.BG_AMBER_500;
+											if (memoryPercent >= 90) {
+												return Color.BG_CHERRY_500;
+											}
+											if (memoryPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"

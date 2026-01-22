@@ -31,7 +31,9 @@ export default function Dashboards({
 	} = useGetAllDashboard();
 
 	useEffect(() => {
-		if (!dashboardsList) return;
+		if (!dashboardsList) {
+			return;
+		}
 
 		const sortedDashboards = dashboardsList.data.sort((a, b) => {
 			const aUpdateAt = new Date(a.updatedAt).getTime();

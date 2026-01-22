@@ -17,7 +17,9 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 	const isDarkMode = useIsDarkMode();
 
-	if (!config) return null;
+	if (!config) {
+		return null;
+	}
 
 	return (
 		<AddColumnWrapper direction="vertical">

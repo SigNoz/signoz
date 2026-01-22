@@ -60,7 +60,9 @@ const useQueryPagination = (
 			perPageOptions,
 		);
 
-		if (paginationQuery && isValidPaginationData) return;
+		if (paginationQuery && isValidPaginationData) {
+			return;
+		}
 
 		redirectWithCurrentPagination(defaultPaginationConfig);
 	}, [

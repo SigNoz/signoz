@@ -57,7 +57,9 @@ const getLogsUpdaterConfig = (
 	updateFormatting: (newFormatting: FormattingOptions, mode: string): void => {
 		if (mode === PreferenceMode.SAVED_VIEW) {
 			setSavedViewPreferences((prev) => {
-				if (!prev) return { columns: [], formatting: newFormatting };
+				if (!prev) {
+					return { columns: [], formatting: newFormatting };
+				}
 				return {
 					...prev,
 					formatting: newFormatting,
