@@ -176,7 +176,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<section className="left-actions">
 			<FilterOutlined />
 			<Typography.Text className="text">
-				{lastQueryName ? 'Filters for' : 'Filters'}
+				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
 			{queryOptions.length > 1 && (!isListView || shouldShowDropdownInListView) ? (
 				<Combobox open={open} onOpenChange={setOpen}>
