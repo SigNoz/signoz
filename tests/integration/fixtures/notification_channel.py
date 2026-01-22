@@ -70,7 +70,7 @@ def notification_channel(
     )
 
 
-@pytest.fixture(name="create_webhook_notification_channel", scope="package")
+@pytest.fixture(name="create_webhook_notification_channel", scope="function")
 def create_webhook_notification_channel(
     signoz: types.SigNoz,
     create_user_admin: None, # pylint: disable=unused-argument
