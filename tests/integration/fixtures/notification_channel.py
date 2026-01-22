@@ -110,14 +110,14 @@ def create_webhook_notification_channel(
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.NO_CONTENT, (
-            f"Failed to delete channel, "
-            f"Response: {response.text} "
-            f"Response status: {response.status_code}"
-        )
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            raise Exception(f"Failed to delete channel, api returned {response.status_code} with response: {response.text}")
 
 
     yield _create_webhook_notification_channel
     # delete the channel after the test
     for channel_id in channel_ids:
-        _delete_webhook_notification_channel(channel_id)
+        try:
+            _delete_webhook_notification_channel(channel_id)
+        except Exception as e:
+            logger.error("Error deleting channel: %s", {"channel_id": channel_id, "error": e})
