@@ -133,13 +133,14 @@ function ExplorerColumnsRenderer({
 						},
 					]);
 				}
-			} else if (selectedField)
+			} else if (selectedField) {
 				setSelectedTracesFields([
 					{
 						...selectedField,
 						fieldDataType: selectedField.fieldDataType as FieldDataType,
 					},
 				]);
+			}
 		}
 		setOpen(false);
 	};

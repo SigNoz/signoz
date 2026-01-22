@@ -18,7 +18,9 @@ interface UseSafeNavigateProps {
 }
 
 const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
-	if (url1.pathname !== url2.pathname) return false;
+	if (url1.pathname !== url2.pathname) {
+		return false;
+	}
 
 	const params1 = new URLSearchParams(url1.search);
 	const params2 = new URLSearchParams(url2.search);
@@ -34,7 +36,9 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
 				const query1 = params1.get('compositeQuery');
 				const query2 = params2.get('compositeQuery');
 
-				if (!query1 || !query2) return false;
+				if (!query1 || !query2) {
+					return false;
+				}
 
 				const decoded1 = JSON.parse(decodeURIComponent(query1));
 				const decoded2 = JSON.parse(decodeURIComponent(query2));
@@ -66,13 +70,17 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
  */
 const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	// Different pathnames means it's not a default navigation
-	if (currentUrl.pathname !== targetUrl.pathname) return false;
+	if (currentUrl.pathname !== targetUrl.pathname) {
+		return false;
+	}
 
 	const currentParams = new URLSearchParams(currentUrl.search);
 	const targetParams = new URLSearchParams(targetUrl.search);
 
 	// Case 1: Clean URL getting params for the first time
-	if (!currentParams.toString() && targetParams.toString()) return true;
+	if (!currentParams.toString() && targetParams.toString()) {
+		return true;
+	}
 
 	// Case 2: Check for new params that didn't exist before
 	const currentKeys = new Set(Array.from(currentParams.keys()));

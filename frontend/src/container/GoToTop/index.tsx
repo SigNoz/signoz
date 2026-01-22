@@ -10,7 +10,9 @@ function GoToTop(): JSX.Element | null {
 
 	const { panelType } = useQueryBuilder();
 
-	if (!isVisible) return null;
+	if (!isVisible) {
+		return null;
+	}
 
 	if (panelType === PANEL_TYPES.LIST) {
 		return (

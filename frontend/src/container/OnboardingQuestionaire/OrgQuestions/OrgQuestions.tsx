@@ -282,8 +282,12 @@ function OrgQuestions({
 						<div className="opentelemetry-radio-container">
 							<Radio.Group
 								value={((): string | undefined => {
-									if (usesOtel === true) return 'yes';
-									if (usesOtel === false) return 'no';
+									if (usesOtel === true) {
+										return 'yes';
+									}
+									if (usesOtel === false) {
+										return 'no';
+									}
 									return undefined;
 								})()}
 								onChange={(e: RadioChangeEvent): void =>

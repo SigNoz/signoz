@@ -69,7 +69,9 @@ const useBaseAggregateOptions = ({
 	const { selectedDashboard } = useDashboard();
 
 	useEffect(() => {
-		if (!aggregateData) return;
+		if (!aggregateData) {
+			return;
+		}
 		const resolveQuery = async (): Promise<void> => {
 			const updatedQuery = await getUpdatedQuery({
 				widgetConfig: {
@@ -94,7 +96,9 @@ const useBaseAggregateOptions = ({
 	});
 
 	const getContextLinksItems = useCallback(() => {
-		if (!contextLinks?.linksData) return [];
+		if (!contextLinks?.linksData) {
+			return [];
+		}
 
 		try {
 			const processedLinks = processContextLinks(

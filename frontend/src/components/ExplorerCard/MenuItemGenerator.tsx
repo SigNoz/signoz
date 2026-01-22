@@ -52,7 +52,9 @@ function MenuItemGenerator({
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(key, viewData);
-			if (!currentViewDetails) return;
+			if (!currentViewDetails) {
+				return;
+			}
 			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			handleExplorerTabChange(currentPanelType, {

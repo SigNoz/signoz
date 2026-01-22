@@ -35,7 +35,9 @@ function ContextLogRenderer({
 	const { stagedQuery } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);

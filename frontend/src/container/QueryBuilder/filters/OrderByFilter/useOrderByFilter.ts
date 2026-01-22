@@ -45,7 +45,9 @@ export const useOrderByFilter = ({
 	);
 
 	const customValue: IOption[] = useMemo(() => {
-		if (!searchText) return [];
+		if (!searchText) {
+			return [];
+		}
 
 		return [
 			{
