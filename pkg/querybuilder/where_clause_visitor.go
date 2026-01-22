@@ -824,8 +824,8 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 
-	// Now consider that GetFieldKeyFromKeyText may have extacted the context which was actually part of the name
-	// e.g., span.div_num is actually the name but GetFieldKeyFromKeyText extacted span as context and div_num as name
+	// Now consider that GetFieldKeyFromKeyText may have extracted the context which was actually part of the name
+	// e.g., span.div_num is actually the name but GetFieldKeyFromKeyText extracted span as context and div_num as name
 
 	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
 
