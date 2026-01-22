@@ -93,7 +93,11 @@ def create_webhook_notification_channel(
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.CREATED
+        assert response.status_code == HTTPStatus.CREATED,(
+            f"Failed to create channel, "
+            f"Response: {response.text} "
+            f"Response status: {response.status_code}"
+        )
         
         channel_id = response.json()["data"]["id"]
         channel_ids.append(channel_id)
@@ -106,7 +110,11 @@ def create_webhook_notification_channel(
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.NO_CONTENT
+        assert response.status_code == HTTPStatus.NO_CONTENT, (
+            f"Failed to delete channel, "
+            f"Response: {response.text} "
+            f"Response status: {response.status_code}"
+        )
 
 
     yield _create_webhook_notification_channel
