@@ -2555,10 +2555,6 @@ paths:
         description, unit, type, temporality, monotonicity for a specified metric
       operationId: UpdateMetricMetadata
       parameters:
-      - in: query
-        name: metricName
-        schema:
-          type: string
       - in: path
         name: metric_name
         required: true

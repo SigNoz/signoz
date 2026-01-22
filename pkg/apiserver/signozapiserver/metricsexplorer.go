@@ -95,7 +95,6 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Update metric metadata",
 			Description:         "This endpoint helps to update metadata information like metric description, unit, type, temporality, monotonicity for a specified metric",
 			Request:             new(metricsexplorertypes.UpdateMetricMetadataRequest),
-			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "application/json",
 			Response:            nil,
 			ResponseContentType: "application/json",

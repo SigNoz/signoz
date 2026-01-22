@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/gorilla/mux"
 )
 
 type handler struct {
@@ -78,13 +79,11 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	var params metricsexplorertypes.MetricNameParams
-	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
-		render.Error(rw, err)
-		return
-	}
+	// Extract metric_name from URL path
+	vars := mux.Vars(req)
+	metricName := vars["metric_name"]
 
-	if params.MetricName == "" {
+	if metricName == "" {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required in URL path"))
 		return
 	}
@@ -96,7 +95,7 @@ func (h *handler) UpdateMetricMetadata(rw http.ResponseWriter, req *http.Request
 	}
 
 	// Set metric name from URL path
-	in.MetricName = params.MetricName
+	in.MetricName = metricName
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	err = h.module.UpdateMetricMetadata(req.Context(), orgID, &in)
