@@ -230,3 +230,12 @@ py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 	@find tests -type f -name "*.pyc" -delete 2>/dev/null || true
 	@find tests -type f -name "*.pyo" -delete 2>/dev/null || true
 	@echo ">> python cache cleaned"
+
+
+##############################################################
+# generate commands
+##############################################################
+.PHONY: gen-mocks
+gen-mocks:
+	@echo ">> Generating mocks"
+	@mockery --config .mockery.yml
