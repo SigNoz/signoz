@@ -57,8 +57,11 @@ function SpanItem({
 	const handleHover = (hoverState: boolean): void => {
 		// setIsLocalHover(hoverState);
 
-		if (hoverState) onSpanHover(spanData.id);
-		else onSpanHover('');
+		if (hoverState) {
+			onSpanHover(spanData.id);
+		} else {
+			onSpanHover('');
+		}
 	};
 
 	const handleClick = (): void => {

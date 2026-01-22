@@ -99,7 +99,9 @@ function MetricNameSearch({
 
 	const handleKeyDown = useCallback(
 		(event: React.KeyboardEvent<HTMLInputElement>) => {
-			if (!isPopoverOpen) return;
+			if (!isPopoverOpen) {
+				return;
+			}
 
 			if (event.key === 'ArrowDown') {
 				event.preventDefault();

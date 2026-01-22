@@ -364,7 +364,9 @@ function FormAlertRules({
 
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
-		if (currentQuery.queryType !== EQueryType.PROM) return retval;
+		if (currentQuery.queryType !== EQueryType.PROM) {
+			return retval;
+		}
 
 		if (!currentQuery.promql || currentQuery.promql.length === 0) {
 			notifications.error({
@@ -389,7 +391,9 @@ function FormAlertRules({
 
 	const validateChQueryParams = useCallback((): boolean => {
 		let retval = true;
-		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) return retval;
+		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) {
+			return retval;
+		}
 
 		if (
 			!currentQuery.clickhouse_sql ||
@@ -416,7 +420,9 @@ function FormAlertRules({
 	}, [t, currentQuery, notifications]);
 
 	const validateQBParams = useCallback((): boolean => {
-		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) return true;
+		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) {
+			return true;
+		}
 
 		if (
 			!currentQuery.builder.queryData ||

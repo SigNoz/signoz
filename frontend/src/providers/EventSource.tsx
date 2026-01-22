@@ -99,14 +99,18 @@ export function EventSourceProvider({
 				description: (error as APIError).getErrorMessage(),
 			});
 			setIsConnectionError(true);
-			if (!eventSourceRef.current) return;
+			if (!eventSourceRef.current) {
+				return;
+			}
 			eventSourceRef.current.close();
 			Logout();
 		}
 	}, [notifications, queryClient]);
 
 	const destroyEventSourceSession = useCallback(() => {
-		if (!eventSourceRef.current) return;
+		if (!eventSourceRef.current) {
+			return;
+		}
 
 		eventSourceRef.current.close();
 		eventSourceRef.current.removeEventListener('error', handleErrorConnection);

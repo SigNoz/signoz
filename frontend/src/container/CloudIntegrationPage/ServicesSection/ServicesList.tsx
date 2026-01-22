@@ -32,7 +32,9 @@ function ServicesList({
 	);
 
 	const filteredServices = useMemo(() => {
-		if (filter === 'all_services') return services;
+		if (filter === 'all_services') {
+			return services;
+		}
 
 		return services.filter((service) => {
 			const isEnabled =
@@ -42,13 +44,19 @@ function ServicesList({
 	}, [services, filter]);
 
 	useEffect(() => {
-		if (activeService || !services?.length) return;
+		if (activeService || !services?.length) {
+			return;
+		}
 
 		handleActiveService(services[0].id);
 	}, [services, activeService, handleActiveService]);
 
-	if (isLoading) return <Spinner size="large" height="25vh" />;
-	if (!services) return <div>No services found</div>;
+	if (isLoading) {
+		return <Spinner size="large" height="25vh" />;
+	}
+	if (!services) {
+		return <div>No services found</div>;
+	}
 
 	return (
 		<div className="services-list">

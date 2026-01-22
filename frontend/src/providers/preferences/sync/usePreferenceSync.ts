@@ -38,7 +38,9 @@ export function usePreferenceSync({
 	const updateExtraDataSelectColumns = (
 		columns: TelemetryFieldKey[],
 	): TelemetryFieldKey[] | null => {
-		if (!columns) return null;
+		if (!columns) {
+			return null;
+		}
 		return columns.map((column) => ({
 			...column,
 			name: column.name ?? column.key,

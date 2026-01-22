@@ -69,8 +69,9 @@ export const useAlertHistoryQueryParams = (): {
 	const hasStartAndEndParams = !!intStartTime && !!intEndTime;
 
 	const { maxTime, minTime } = useMemo(() => {
-		if (hasStartAndEndParams)
+		if (hasStartAndEndParams) {
 			return GetMinMax('custom', [intStartTime, intEndTime]);
+		}
 		return GetMinMax(relativeTime);
 	}, [hasStartAndEndParams, intStartTime, intEndTime, relativeTime]);
 
