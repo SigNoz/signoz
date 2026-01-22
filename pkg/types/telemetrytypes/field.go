@@ -74,6 +74,14 @@ func (f TelemetryFieldKey) String() string {
 	return sb.String()
 }
 
+func (f TelemetryFieldKey) Text() string {
+	return TelemetryFieldKeyToText(&f)
+}
+
+func (f *TelemetryFieldKey) GetTelemetryFieldKey() *TelemetryFieldKey {
+	return f
+}
+
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
 // The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
