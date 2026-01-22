@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,9 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
@@ -34,6 +33,8 @@ import type {
 	UpdatePublicDashboardPathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../index';
+
 type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
@@ -44,11 +45,12 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  */
 export const deletePublicDashboard = ({
 	id,
-}: DeletePublicDashboardPathParameters) =>
-	GeneratedAPIInstance<string>({
+}: DeletePublicDashboardPathParameters) => {
+	return GeneratedAPIInstance<string>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeletePublicDashboardMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -123,16 +125,19 @@ export const useDeletePublicDashboard = <
 export const getPublicDashboard = (
 	{ id }: GetPublicDashboardPathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetPublicDashboard200>({
+) => {
+	return GeneratedAPIInstance<GetPublicDashboard200>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'GET',
 		signal,
 	});
+};
 
 export const getGetPublicDashboardQueryKey = ({
 	id,
-}: GetPublicDashboardPathParameters) => ['getPublicDashboard'] as const;
+}: GetPublicDashboardPathParameters) => {
+	return ['getPublicDashboard'] as const;
+};
 
 export const getGetPublicDashboardQueryOptions = <
 	TData = Awaited<ReturnType<typeof getPublicDashboard>>,
@@ -225,14 +230,15 @@ export const createPublicDashboard = (
 	{ id }: CreatePublicDashboardPathParameters,
 	dashboardtypesPostablePublicDashboardDTO: DashboardtypesPostablePublicDashboardDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreatePublicDashboard201>({
+) => {
+	return GeneratedAPIInstance<CreatePublicDashboard201>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: dashboardtypesPostablePublicDashboardDTO,
 		signal,
 	});
+};
 
 export const getCreatePublicDashboardMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -322,13 +328,14 @@ export const useCreatePublicDashboard = <
 export const updatePublicDashboard = (
 	{ id }: UpdatePublicDashboardPathParameters,
 	dashboardtypesUpdatablePublicDashboardDTO: DashboardtypesUpdatablePublicDashboardDTO,
-) =>
-	GeneratedAPIInstance<string>({
+) => {
+	return GeneratedAPIInstance<string>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: dashboardtypesUpdatablePublicDashboardDTO,
 	});
+};
 
 export const getUpdatePublicDashboardMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -418,16 +425,19 @@ export const useUpdatePublicDashboard = <
 export const getPublicDashboardData = (
 	{ id }: GetPublicDashboardDataPathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetPublicDashboardData200>({
+) => {
+	return GeneratedAPIInstance<GetPublicDashboardData200>({
 		url: `/api/v1/public/dashboards/${id}`,
 		method: 'GET',
 		signal,
 	});
+};
 
 export const getGetPublicDashboardDataQueryKey = ({
 	id,
-}: GetPublicDashboardDataPathParameters) => ['getPublicDashboardData'] as const;
+}: GetPublicDashboardDataPathParameters) => {
+	return ['getPublicDashboardData'] as const;
+};
 
 export const getGetPublicDashboardDataQueryOptions = <
 	TData = Awaited<ReturnType<typeof getPublicDashboardData>>,
@@ -519,18 +529,20 @@ export const invalidateGetPublicDashboardData = async (
 export const getPublicDashboardWidgetQueryRange = (
 	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetPublicDashboardWidgetQueryRange200>({
+) => {
+	return GeneratedAPIInstance<GetPublicDashboardWidgetQueryRange200>({
 		url: `/api/v1/public/dashboards/${id}/widgets/${idx}/query_range`,
 		method: 'GET',
 		signal,
 	});
+};
 
 export const getGetPublicDashboardWidgetQueryRangeQueryKey = ({
 	id,
 	idx,
-}: GetPublicDashboardWidgetQueryRangePathParameters) =>
-	['getPublicDashboardWidgetQueryRange'] as const;
+}: GetPublicDashboardWidgetQueryRangePathParameters) => {
+	return ['getPublicDashboardWidgetQueryRange'] as const;
+};
 
 export const getGetPublicDashboardWidgetQueryRangeQueryOptions = <
 	TData = Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,

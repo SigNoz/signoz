@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,9 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	AcceptInvite201,
 	ChangePasswordPathParameters,
@@ -38,8 +37,8 @@ import type {
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
 	TypesChangePasswordRequestDTO,
-	TypesPostableAcceptInviteDTO,
 	TypesPostableAPIKeyDTO,
+	TypesPostableAcceptInviteDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesStorableAPIKeyDTO,
@@ -48,6 +47,8 @@ import type {
 	UpdateUser200,
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../index';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -61,14 +62,15 @@ export const changePassword = (
 	{ id }: ChangePasswordPathParameters,
 	typesChangePasswordRequestDTO: TypesChangePasswordRequestDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/changePassword/${id}`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesChangePasswordRequestDTO,
 		signal,
 	});
+};
 
 export const getChangePasswordMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -158,16 +160,19 @@ export const useChangePassword = <
 export const getResetPasswordToken = (
 	{ id }: GetResetPasswordTokenPathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetResetPasswordToken200>({
+) => {
+	return GeneratedAPIInstance<GetResetPasswordToken200>({
 		url: `/api/v1/getResetPasswordToken/${id}`,
 		method: 'GET',
 		signal,
 	});
+};
 
 export const getGetResetPasswordTokenQueryKey = ({
 	id,
-}: GetResetPasswordTokenPathParameters) => ['getResetPasswordToken'] as const;
+}: GetResetPasswordTokenPathParameters) => {
+	return ['getResetPasswordToken'] as const;
+};
 
 export const getGetResetPasswordTokenQueryOptions = <
 	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
@@ -256,14 +261,17 @@ export const invalidateGetResetPasswordToken = async (
  * This endpoint lists all invites
  * @summary List invites
  */
-export const listInvite = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListInvite200>({
+export const listInvite = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListInvite200>({
 		url: `/api/v1/invite`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListInviteQueryKey = () => ['listInvite'] as const;
+export const getListInviteQueryKey = () => {
+	return ['listInvite'] as const;
+};
 
 export const getListInviteQueryOptions = <
 	TData = Awaited<ReturnType<typeof listInvite>>,
@@ -334,14 +342,15 @@ export const invalidateListInvite = async (
 export const createInvite = (
 	typesPostableInviteDTO: TypesPostableInviteDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreateInvite201>({
+) => {
+	return GeneratedAPIInstance<CreateInvite201>({
 		url: `/api/v1/invite`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesPostableInviteDTO,
 		signal,
 	});
+};
 
 export const getCreateInviteMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -413,11 +422,12 @@ export const useCreateInvite = <
  * This endpoint deletes an invite by id
  * @summary Delete invite
  */
-export const deleteInvite = ({ id }: DeleteInvitePathParameters) =>
-	GeneratedAPIInstance<void>({
+export const deleteInvite = ({ id }: DeleteInvitePathParameters) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/invite/${id}`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeleteInviteMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -492,15 +502,17 @@ export const useDeleteInvite = <
 export const getInvite = (
 	{ token }: GetInvitePathParameters,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<GetInvite200>({
+) => {
+	return GeneratedAPIInstance<GetInvite200>({
 		url: `/api/v1/invite/${token}`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetInviteQueryKey = ({ token }: GetInvitePathParameters) =>
-	['getInvite'] as const;
+export const getGetInviteQueryKey = ({ token }: GetInvitePathParameters) => {
+	return ['getInvite'] as const;
+};
 
 export const getGetInviteQueryOptions = <
 	TData = Awaited<ReturnType<typeof getInvite>>,
@@ -581,14 +593,15 @@ export const invalidateGetInvite = async (
 export const acceptInvite = (
 	typesPostableAcceptInviteDTO: TypesPostableAcceptInviteDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<AcceptInvite201>({
+) => {
+	return GeneratedAPIInstance<AcceptInvite201>({
 		url: `/api/v1/invite/accept`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesPostableAcceptInviteDTO,
 		signal,
 	});
+};
 
 export const getAcceptInviteMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -663,14 +676,15 @@ export const useAcceptInvite = <
 export const createBulkInvite = (
 	typesPostableInviteDTO: TypesPostableInviteDTO[],
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/invite/bulk`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesPostableInviteDTO,
 		signal,
 	});
+};
 
 export const getCreateBulkInviteMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -742,14 +756,17 @@ export const useCreateBulkInvite = <
  * This endpoint lists all api keys
  * @summary List api keys
  */
-export const listAPIKeys = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListAPIKeys200>({
+export const listAPIKeys = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListAPIKeys200>({
 		url: `/api/v1/pats`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListAPIKeysQueryKey = () => ['listAPIKeys'] as const;
+export const getListAPIKeysQueryKey = () => {
+	return ['listAPIKeys'] as const;
+};
 
 export const getListAPIKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAPIKeys>>,
@@ -828,14 +845,15 @@ export const invalidateListAPIKeys = async (
 export const createAPIKey = (
 	typesPostableAPIKeyDTO: TypesPostableAPIKeyDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreateAPIKey201>({
+) => {
+	return GeneratedAPIInstance<CreateAPIKey201>({
 		url: `/api/v1/pats`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesPostableAPIKeyDTO,
 		signal,
 	});
+};
 
 export const getCreateAPIKeyMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -907,11 +925,12 @@ export const useCreateAPIKey = <
  * This endpoint revokes an api key
  * @summary Revoke api key
  */
-export const revokeAPIKey = ({ id }: RevokeAPIKeyPathParameters) =>
-	GeneratedAPIInstance<void>({
+export const revokeAPIKey = ({ id }: RevokeAPIKeyPathParameters) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/pats/${id}`,
 		method: 'DELETE',
 	});
+};
 
 export const getRevokeAPIKeyMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -986,13 +1005,14 @@ export const useRevokeAPIKey = <
 export const updateAPIKey = (
 	{ id }: UpdateAPIKeyPathParameters,
 	typesStorableAPIKeyDTO: TypesStorableAPIKeyDTO,
-) =>
-	GeneratedAPIInstance<string>({
+) => {
+	return GeneratedAPIInstance<string>({
 		url: `/api/v1/pats/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesStorableAPIKeyDTO,
 	});
+};
 
 export const getUpdateAPIKeyMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -1067,14 +1087,15 @@ export const useUpdateAPIKey = <
 export const resetPassword = (
 	typesPostableResetPasswordDTO: TypesPostableResetPasswordDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/resetPassword`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesPostableResetPasswordDTO,
 		signal,
 	});
+};
 
 export const getResetPasswordMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -1146,14 +1167,17 @@ export const useResetPassword = <
  * This endpoint lists all users
  * @summary List users
  */
-export const listUsers = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListUsers200>({
+export const listUsers = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListUsers200>({
 		url: `/api/v1/user`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListUsersQueryKey = () => ['listUsers'] as const;
+export const getListUsersQueryKey = () => {
+	return ['listUsers'] as const;
+};
 
 export const getListUsersQueryOptions = <
 	TData = Awaited<ReturnType<typeof listUsers>>,
@@ -1221,11 +1245,12 @@ export const invalidateListUsers = async (
  * This endpoint deletes the user by id
  * @summary Delete user
  */
-export const deleteUser = ({ id }: DeleteUserPathParameters) =>
-	GeneratedAPIInstance<void>({
+export const deleteUser = ({ id }: DeleteUserPathParameters) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/user/${id}`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeleteUserMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -1297,15 +1322,20 @@ export const useDeleteUser = <
  * This endpoint returns the user by id
  * @summary Get user
  */
-export const getUser = ({ id }: GetUserPathParameters, signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetUser200>({
+export const getUser = (
+	{ id }: GetUserPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetUser200>({
 		url: `/api/v1/user/${id}`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetUserQueryKey = ({ id }: GetUserPathParameters) =>
-	['getUser'] as const;
+export const getGetUserQueryKey = ({ id }: GetUserPathParameters) => {
+	return ['getUser'] as const;
+};
 
 export const getGetUserQueryOptions = <
 	TData = Awaited<ReturnType<typeof getUser>>,
@@ -1386,13 +1416,14 @@ export const invalidateGetUser = async (
 export const updateUser = (
 	{ id }: UpdateUserPathParameters,
 	typesUserDTO: TypesUserDTO,
-) =>
-	GeneratedAPIInstance<UpdateUser200>({
+) => {
+	return GeneratedAPIInstance<UpdateUser200>({
 		url: `/api/v1/user/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: typesUserDTO,
 	});
+};
 
 export const getUpdateUserMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -1464,14 +1495,17 @@ export const useUpdateUser = <
  * This endpoint returns the user I belong to
  * @summary Get my user
  */
-export const getMyUser = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetMyUser200>({
+export const getMyUser = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMyUser200>({
 		url: `/api/v1/user/me`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetMyUserQueryKey = () => ['getMyUser'] as const;
+export const getGetMyUserQueryKey = () => {
+	return ['getMyUser'] as const;
+};
 
 export const getGetMyUserQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyUser>>,
