@@ -291,3 +291,8 @@ flagger:
     float:
     integer:
     object:
+
+##################### User #####################
+user:
+  # Whether to allow users to reset their password themselves.
+  allow_self_password_reset: true

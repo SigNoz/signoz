@@ -16,6 +16,6 @@ func newConfig() factory.Config {
 	}
 }
 
-func (c *Config) Validate() error {
+func (c Config) Validate() error {
 	return nil
 }
