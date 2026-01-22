@@ -9,6 +9,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
@@ -165,9 +166,8 @@ function QuerySection({
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-									<Button
-										type="primary"
-										onClick={(): void => {
+									<RunQueryBtn
+										onStageRunQuery={(): void => {
 											runQuery();
 											logEvent('Alert: Stage and run query', {
 												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
@@ -176,11 +176,7 @@ function QuerySection({
 												queryType: queryCategory,
 											});
 										}}
-										className="stage-run-query"
-										icon={<Play size={14} />}
-									>
-										Stage & Run Query
-									</Button>
+									/>
 								</span>
 							}
 							items={tabs}
