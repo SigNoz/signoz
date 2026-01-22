@@ -34,11 +34,11 @@ function AlertTypeSelectionPage(): JSX.Element {
 				queryParams.set(QueryParams.alertType, type);
 			}
 
-			const showNewCreateAlertsPageFlag = queryParams.get(
-				QueryParams.showNewCreateAlertsPage,
+			const showClassicCreateAlertsPageFlag = queryParams.get(
+				QueryParams.showClassicCreateAlertsPage,
 			);
-			if (showNewCreateAlertsPageFlag === 'true') {
-				queryParams.set(QueryParams.showNewCreateAlertsPage, 'true');
+			if (showClassicCreateAlertsPageFlag === 'true') {
+				queryParams.set(QueryParams.showClassicCreateAlertsPage, 'true');
 			}
 
 			safeNavigate(`${ROUTES.ALERTS_NEW}?${queryParams.toString()}`);
