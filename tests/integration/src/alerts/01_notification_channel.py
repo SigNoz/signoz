@@ -1,10 +1,13 @@
-from fixtures import types
-from http import HTTPStatus
 import uuid
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-import requests
+from http import HTTPStatus
 from typing import Callable, List
-from wiremock.client import Mapping, MappingRequest, MappingResponse, HttpMethods
+
+import requests
+from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
+
+from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+
 
 def test_webhook_notification_channel(
     signoz: types.SigNoz,
