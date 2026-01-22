@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/dustin/go-humanize"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -356,15 +357,18 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 
 	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
 
+	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
+	humanizedTokenLifetime := humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", "")
+
 	if err := module.emailing.SendHTML(
 		ctx,
 		user.Email.String(),
 		"Reset your SigNoz password",
 		emailtypes.TemplateNameResetPassword,
 		map[string]any{
-			"Name":             user.DisplayName,
-			"Link":             resetLink,
-			"MaxTokenLifetime": module.config.Password.Reset.MaxTokenLifetime.String(),
+			"Name":   user.DisplayName,
+			"Link":   resetLink,
+			"Expiry": humanizedTokenLifetime,
 		},
 	); err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
