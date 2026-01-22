@@ -190,7 +190,9 @@ const formatValuesForFilter = (
 export const convertExpressionToFilters = (
 	expression: string,
 ): TagFilterItem[] => {
-	if (!expression) return [];
+	if (!expression) {
+		return [];
+	}
 
 	const queryPairs = extractQueryPairs(expression);
 	const filters: TagFilterItem[] = [];
@@ -271,7 +273,9 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		const { key, op, value } = filter;
 
 		// Skip invalid filters with no key
-		if (!key) return;
+		if (!key) {
+			return;
+		}
 
 		let shouldAddToNonExisting = true; // Flag to decide if the filter should be added to non-existing filters
 		const sanitizedOperator = op.trim().toUpperCase();
@@ -545,7 +549,9 @@ export const removeKeysFromExpression = (
 					? existingQueryPairs.filter((pair) => {
 							const pairKey = pair.key?.trim().toLowerCase();
 							const matchesKey = pairKey === `${key}`.trim().toLowerCase();
-							if (!matchesKey) return false;
+							if (!matchesKey) {
+								return false;
+							}
 							const value = pair.value?.toString().trim();
 							return value && value.includes('$');
 					  })

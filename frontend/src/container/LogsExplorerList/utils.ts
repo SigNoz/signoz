@@ -22,7 +22,9 @@ export const convertKeysToColumnFields = (
  */
 export const isTraceToLogsQuery = (queryData: IBuilderQuery): boolean => {
 	// Check if this is a trace-to-logs query by looking for trace_id filter
-	if (!queryData?.filters?.items) return false;
+	if (!queryData?.filters?.items) {
+		return false;
+	}
 
 	const traceIdFilter = queryData.filters.items.find(
 		(item: TagFilterItem) => item.key?.key === 'trace_id',

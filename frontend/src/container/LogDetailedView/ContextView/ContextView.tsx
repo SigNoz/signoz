@@ -19,7 +19,9 @@ function ContextView({
 	isEdit,
 }: LogContextProps): JSX.Element {
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	if (!contextQuery) return <></>;
+	if (!contextQuery) {
+		return <></>;
+	}
 
 	return (
 		<div className="log-context-container">

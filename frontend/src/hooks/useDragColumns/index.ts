@@ -64,7 +64,9 @@ const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 	);
 
 	useEffect(() => {
-		if (draggedColumnsQuery || !localStorageDraggedColumns) return;
+		if (draggedColumnsQuery || !localStorageDraggedColumns) {
+			return;
+		}
 
 		redirectWithNewDraggedColumns(localStorageDraggedColumns);
 	}, [

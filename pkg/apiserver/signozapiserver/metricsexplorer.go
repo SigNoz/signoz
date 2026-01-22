@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (provider *provider) addMetricsExplorerV2Routes(router *mux.Router) error {
+func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/metrics/stats", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetStats),
 		handler.OpenAPIDef{
@@ -75,6 +75,7 @@ func (provider *provider) addMetricsExplorerV2Routes(router *mux.Router) error {
 			Summary:             "Get metric metadata",
 			Description:         "This endpoint returns metadata information like metric description, unit, type, temporality, monotonicity for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricMetadata),
 			ResponseContentType: "application/json",
@@ -113,6 +114,7 @@ func (provider *provider) addMetricsExplorerV2Routes(router *mux.Router) error {
 			Summary:             "Get metric highlights",
 			Description:         "This endpoint returns highlights like number of datapoints, totaltimeseries, active time series, last received time for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricHighlightsResponse),
 			ResponseContentType: "application/json",
@@ -132,6 +134,7 @@ func (provider *provider) addMetricsExplorerV2Routes(router *mux.Router) error {
 			Summary:             "Get metric alerts",
 			Description:         "This endpoint returns associated alerts for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricAlertsResponse),
 			ResponseContentType: "application/json",
@@ -151,6 +154,7 @@ func (provider *provider) addMetricsExplorerV2Routes(router *mux.Router) error {
 			Summary:             "Get metric dashboards",
 			Description:         "This endpoint returns associated dashboards for a specified metric",
 			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricDashboardsResponse),
 			ResponseContentType: "application/json",

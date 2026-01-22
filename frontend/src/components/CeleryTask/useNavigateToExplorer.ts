@@ -49,7 +49,9 @@ export function useNavigateToExplorer(): (
 								...(item.filters?.items || []),
 								...selectedFilters,
 							].filter((item) => {
-								if (seen.has(item.id)) return false;
+								if (seen.has(item.id)) {
+									return false;
+								}
 								seen.add(item.id);
 								return true;
 							});
