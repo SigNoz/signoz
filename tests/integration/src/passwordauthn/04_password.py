@@ -7,6 +7,8 @@ from sqlalchemy import sql
 from fixtures import types
 from fixtures.logger import setup_logger
 
+from datetime import datetime, timedelta, timezone
+
 logger = setup_logger(__name__)
 
 
@@ -500,3 +502,222 @@ def test_reset_password_with_invalid_token(
         timeout=2,
     )
     assert response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND)
+
+
+def test_reset_password_with_expired_token(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
+    """
+    Test that resetting password with an expired token fails.
+    """
+    admin_token = get_token("admin@integration.test", "password123Z$")
+
+    # Get user ID for the forgot@integration.test user
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == HTTPStatus.OK
+    user_response = response.json()["data"]
+    found_user = next(
+        (
+            user
+            for user in user_response
+            if user["email"] == "forgot@integration.test"
+        ),
+        None,
+    )
+    assert found_user is not None
+
+    # Get org ID
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
+        params={
+            "email": "forgot@integration.test",
+            "ref": f"{signoz.self.host_configs['8080'].base()}",
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    org_id = response.json()["data"]["orgs"][0]["id"]
+
+    # Call forgot password to generate a new token
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
+        json={
+            "email": "forgot@integration.test",
+            "orgId": org_id,
+            "frontendBaseURL": signoz.self.host_configs["8080"].base(),
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Query the database to get the token and then expire it
+    reset_token = None
+    with signoz.sqlstore.conn.connect() as conn:
+        # First get the token
+        result = conn.execute(
+            sql.text("""
+                SELECT rpt.token, rpt.id
+                FROM reset_password_token rpt
+                JOIN factor_password fp ON rpt.password_id = fp.id
+                WHERE fp.user_id = :user_id
+            """),
+            {"user_id": found_user["id"]},
+        )
+        row = result.fetchone()
+        assert row is not None, "Reset password token should exist"
+        reset_token = row[0]
+        token_id = row[1]
+
+        # Now expire the token by setting expires_at to a past time
+        conn.execute(
+            sql.text("""
+                UPDATE reset_password_token 
+                SET expires_at = :expired_time 
+                WHERE id = :token_id
+            """),
+            {
+                "expired_time": "2020-01-01 00:00:00",
+                "token_id": token_id,
+            },
+        )
+        conn.commit()
+
+    assert reset_token is not None
+
+    # Try to use the expired token - should fail with 403 Forbidden
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "expiredTokenPassword123Z$!", "token": reset_token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_reset_password_token_expiry_is_set(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
+    """
+    Test that when a reset password token is created, it has a valid expiry time set.
+    The default validity is 6 hours.
+    """
+    admin_token = get_token("admin@integration.test", "password123Z$")
+
+    # Create a new user for this test
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": "expiry_test@integration.test", "role": "VIEWER", "name": "expiry test user"},
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    # Get the invite token
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    invite_response = response.json()["data"]
+    found_invite = next(
+        (
+            invite
+            for invite in invite_response
+            if invite["email"] == "expiry_test@integration.test"
+        ),
+        None,
+    )
+
+    # Accept the invite
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
+        json={
+            "password": "expiryTestPassword123Z$",
+            "displayName": "expiry test user",
+            "token": f"{found_invite['token']}",
+        },
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    # Get user ID
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    user_response = response.json()["data"]
+    found_user = next(
+        (
+            user
+            for user in user_response
+            if user["email"] == "expiry_test@integration.test"
+        ),
+        None,
+    )
+    assert found_user is not None
+
+    # Get org ID and call forgot password
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
+        params={
+            "email": "expiry_test@integration.test",
+            "ref": f"{signoz.self.host_configs['8080'].base()}",
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    org_id = response.json()["data"]["orgs"][0]["id"]
+
+    # Record time before creating token
+    time_before = datetime.now(timezone.utc)
+
+    # Call forgot password to generate token
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
+        json={
+            "email": "expiry_test@integration.test",
+            "orgId": org_id,
+            "frontendBaseURL": signoz.self.host_configs["8080"].base(),
+        },
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Query database to verify expiry is set correctly
+    with signoz.sqlstore.conn.connect() as conn:
+        result = conn.execute(
+            sql.text("""
+                SELECT rpt.expires_at
+                FROM reset_password_token rpt
+                JOIN factor_password fp ON rpt.password_id = fp.id
+                WHERE fp.user_id = :user_id
+            """),
+            {"user_id": found_user["id"]},
+        )
+        row = result.fetchone()
+        assert row is not None, "Reset password token should exist"
+        expires_at = row[0]
+
+        # Verify expires_at is set and is in the future (default is 6 hours)
+        # Allow some tolerance for test execution time
+        assert expires_at is not None, "expires_at should be set"
+        
+        # Convert to datetime if it's a string
+        if isinstance(expires_at, str):
+            expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+        
+        # The token should expire between 5 hours and 7 hours from now
+        # (allowing for some variance in test execution and config)
+        min_expected_expiry = time_before + timedelta(hours=5)
+        max_expected_expiry = time_before + timedelta(hours=7)
+        
+        # Make expires_at timezone-aware if it isn't
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+            
+        assert expires_at > min_expected_expiry, f"Token expiry {expires_at} should be at least 5 hours from now"
+        assert expires_at < max_expected_expiry, f"Token expiry {expires_at} should be less than 7 hours from now"
