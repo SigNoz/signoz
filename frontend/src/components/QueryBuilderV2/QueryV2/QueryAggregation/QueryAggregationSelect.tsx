@@ -84,25 +84,33 @@ function getFunctionContextAtCursor(
 	let funcName: string | null = null;
 	let parenStack = 0;
 	for (let i = cursorPos - 1; i >= 0; i--) {
-		if (text[i] === ')') parenStack++;
-		else if (text[i] === '(') {
+		if (text[i] === ')') {
+			parenStack++;
+		} else if (text[i] === '(') {
 			if (parenStack === 0) {
 				openParenIndex = i;
 				const before = text.slice(0, i);
 				const match = before.match(/(\w+)\s*$/);
-				if (match) funcName = match[1].toLowerCase();
+				if (match) {
+					funcName = match[1].toLowerCase();
+				}
 				break;
 			}
 			parenStack--;
 		}
 	}
-	if (openParenIndex === -1 || !funcName) return null;
+	if (openParenIndex === -1 || !funcName) {
+		return null;
+	}
 	// Scan forwards to find the matching closing parenthesis
 	let closeParenIndex = -1;
 	let depth = 1;
 	for (let j = openParenIndex + 1; j < text.length; j++) {
-		if (text[j] === '(') depth++;
-		else if (text[j] === ')') depth--;
+		if (text[j] === '(') {
+			depth++;
+		} else if (text[j] === ')') {
+			depth--;
+		}
 		if (depth === 0) {
 			closeParenIndex = j;
 			break;
@@ -277,10 +285,14 @@ function QueryAggregationSelect({
 
 	// Transaction filter to limit aggregations
 	const transactionFilterExtension = useMemo(() => {
-		if (maxAggregations === undefined) return [];
+		if (maxAggregations === undefined) {
+			return [];
+		}
 
 		return EditorState.transactionFilter.of((tr: Transaction) => {
-			if (!tr.docChanged) return tr;
+			if (!tr.docChanged) {
+				return tr;
+			}
 
 			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
 			const oldMatches = [
@@ -425,7 +437,9 @@ function QueryAggregationSelect({
 		() =>
 			Object.keys(aggregateAttributeData?.data.data.keys || {}).flatMap((key) => {
 				const attributeKeys = aggregateAttributeData?.data.data.keys[key];
-				if (!attributeKeys) return [];
+				if (!attributeKeys) {
+					return [];
+				}
 
 				return attributeKeys.map((attributeKey) => ({
 					label: attributeKey.name,
@@ -482,7 +496,9 @@ function QueryAggregationSelect({
 									const start = match.index ?? 0;
 									return cursorPos >= start && cursorPos <= start + match[0].length;
 								});
-								if (!isEditing) return null;
+								if (!isEditing) {
+									return null;
+								}
 							}
 						}
 
@@ -523,7 +539,9 @@ function QueryAggregationSelect({
 								const argsString = doc.slice(lastOpenParen + 1, cursorPos);
 								argsString.split(',').forEach((arg) => {
 									const trimmed = arg.trim();
-									if (trimmed) usedArgs.add(trimmed);
+									if (trimmed) {
+										usedArgs.add(trimmed);
+									}
 								});
 							}
 

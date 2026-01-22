@@ -793,9 +793,12 @@ function QueryBuilderSearchV2(
 			const values: string[] = [];
 			const { tagValue } = getTagToken(searchValue);
 			if (isArray(tagValue)) {
-				if (!isEmpty(tagValue[tagValue.length - 1]))
+				if (!isEmpty(tagValue[tagValue.length - 1])) {
 					values.push(tagValue[tagValue.length - 1]);
-			} else if (!isEmpty(tagValue)) values.push(tagValue);
+				}
+			} else if (!isEmpty(tagValue)) {
+				values.push(tagValue);
+			}
 
 			if (attributeValues?.payload) {
 				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
@@ -960,7 +963,9 @@ function QueryBuilderSearchV2(
 							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
-								if (!isDisabled) tagEditHandler(value);
+								if (!isDisabled) {
+									tagEditHandler(value);
+								}
 							}}
 						>
 							{chipValue}

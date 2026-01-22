@@ -101,7 +101,9 @@ function AnomalyAlertEvaluationView({
 		hooks: {
 			draw: [
 				(u: any): void => {
-					if (!selectedSeries) return;
+					if (!selectedSeries) {
+						return;
+					}
 
 					const { ctx } = u;
 					const upperBandIdx = 3;

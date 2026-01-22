@@ -52,7 +52,9 @@ function OptionsMenu({
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
-			if (!format) return;
+			if (!format) {
+				return;
+			}
 
 			format.onChange(key);
 		},
@@ -148,7 +150,9 @@ function OptionsMenu({
 	}
 
 	const handleKeyDown = (e: KeyboardEvent): void => {
-		if (!selectedValue) return;
+		if (!selectedValue) {
+			return;
+		}
 
 		const optionsData = addColumn?.options || [];
 

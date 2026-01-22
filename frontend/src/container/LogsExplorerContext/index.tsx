@@ -37,8 +37,9 @@ function LogsExplorerContext({
 			if (
 				(!tagFiltersLength && (!filters || !filters.items.length)) ||
 				tagFiltersLength === filters?.items.length
-			)
+			) {
 				return;
+			}
 
 			const nextQuery: Query = {
 				...contextQuery,

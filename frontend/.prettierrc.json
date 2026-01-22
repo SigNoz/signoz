@@ -7,7 +7,7 @@
 	"semi": true,
 	"printWidth": 80,
 	"bracketSpacing": true,
-	"bracketSameLine": false,
+	"jsxBracketSameLine": false,
 	"arrowParens": "always",
 	"endOfLine": "lf",
 	"quoteProps": "as-needed",

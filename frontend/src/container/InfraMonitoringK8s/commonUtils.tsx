@@ -27,7 +27,9 @@ import {
  * Converts size in bytes to a human-readable string with appropriate units
  */
 export function formatBytes(bytes: number, decimals = 2): string {
-	if (bytes === 0) return '0 Bytes';
+	if (bytes === 0) {
+		return '0 Bytes';
+	}
 
 	const k = 1024;
 	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];

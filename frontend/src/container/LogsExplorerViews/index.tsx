@@ -118,8 +118,12 @@ function LogsExplorerViewsContainer({
 	]);
 
 	const isLimit: boolean = useMemo(() => {
-		if (!listQuery) return false;
-		if (!listQuery.limit) return false;
+		if (!listQuery) {
+			return false;
+		}
+		if (!listQuery.limit) {
+			return false;
+		}
 
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
@@ -213,10 +217,16 @@ function LogsExplorerViewsContainer({
 	}, [data?.payload, data?.warning]);
 
 	const handleEndReached = useCallback(() => {
-		if (!listQuery) return;
+		if (!listQuery) {
+			return;
+		}
 
-		if (isLimit) return;
-		if (logs.length < pageSize) return;
+		if (isLimit) {
+			return;
+		}
+		if (logs.length < pageSize) {
+			return;
+		}
 
 		const { limit, filters, filter } = listQuery;
 
@@ -225,7 +235,9 @@ function LogsExplorerViewsContainer({
 		const nextPageSize =
 			limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
 
-		if (!stagedQuery) return;
+		if (!stagedQuery) {
+			return;
+		}
 
 		const newRequestData = getRequestData(stagedQuery, {
 			filters: filters || { items: [], op: 'AND' },
@@ -258,7 +270,9 @@ function LogsExplorerViewsContainer({
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
-			if (!dashboard || !selectedPanelType) return;
+			if (!dashboard || !selectedPanelType) {
+				return;
+			}
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(
 				selectedPanelType,
@@ -268,7 +282,9 @@ function LogsExplorerViewsContainer({
 
 			const widgetId = v4();
 
-			if (!exportDefaultQuery) return;
+			if (!exportDefaultQuery) {
+				return;
+			}
 
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType: selectedPanelType,
@@ -358,7 +374,9 @@ function LogsExplorerViewsContainer({
 	}, []);
 
 	const chartData = useMemo(() => {
-		if (!stagedQuery) return [];
+		if (!stagedQuery) {
+			return [];
+		}
 
 		if (selectedPanelType === PANEL_TYPES.LIST) {
 			if (listChartData && listChartData.payload.data?.result.length > 0) {
@@ -367,7 +385,9 @@ function LogsExplorerViewsContainer({
 			return [];
 		}
 
-		if (!data || data.payload.data?.result.length === 0) return [];
+		if (!data || data.payload.data?.result.length === 0) {
+			return [];
+		}
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
 			(queryData) => queryData.groupBy.length > 0,

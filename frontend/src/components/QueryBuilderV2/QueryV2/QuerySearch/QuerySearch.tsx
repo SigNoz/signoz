@@ -135,10 +135,14 @@ function QuerySearch({
 	const updateEditorValue = useCallback(
 		(value: string, options: { skipOnChange?: boolean } = {}): void => {
 			const view = editorRef.current;
-			if (!view) return;
+			if (!view) {
+				return;
+			}
 
 			const currentValue = view.state.doc.toString();
-			if (currentValue === value) return;
+			if (currentValue === value) {
+				return;
+			}
 
 			if (options.skipOnChange) {
 				isProgrammaticChangeRef.current = true;
@@ -165,7 +169,9 @@ function QuerySearch({
 
 	useEffect(
 		() => {
-			if (!isEditorReady) return;
+			if (!isEditorReady) {
+				return;
+			}
 
 			const newExpression = queryData.filter?.expression || '';
 			const currentExpression = getCurrentExpression();
@@ -236,7 +242,9 @@ function QuerySearch({
 	const toggleSuggestions = useCallback(
 		(timeout?: number) => {
 			const timeoutId = setTimeout(() => {
-				if (!editorRef.current) return;
+				if (!editorRef.current) {
+					return;
+				}
 				if (isFocused) {
 					startCompletion(editorRef.current);
 				} else {
@@ -281,7 +289,9 @@ function QuerySearch({
 				options.forEach((opt) => merged.set(opt.label, opt));
 				if (searchText && lastKeyRef.current !== searchText) {
 					(keySuggestions || []).forEach((opt) => {
-						if (!merged.has(opt.label)) merged.set(opt.label, opt);
+						if (!merged.has(opt.label)) {
+							merged.set(opt.label, opt);
+						}
 					});
 				}
 				setKeySuggestions(Array.from(merged.values()));
@@ -346,7 +356,9 @@ function QuerySearch({
 
 	// Helper function to check if operator is for list operations (IN, NOT IN, etc.)
 	const isListOperator = (op: string | undefined): boolean => {
-		if (!op) return false;
+		if (!op) {
+			return false;
+		}
 		return op.toUpperCase() === 'IN' || op.toUpperCase() === 'NOT IN';
 	};
 
@@ -400,8 +412,9 @@ function QuerySearch({
 				!key ||
 				(key === activeKey && !isLoadingSuggestions && !fetchingComplete) ||
 				!isMountedRef.current
-			)
+			) {
 				return;
+			}
 
 			// Set loading state and store the key we're fetching for
 			setIsLoadingSuggestions(true);
@@ -538,7 +551,9 @@ function QuerySearch({
 	);
 
 	const handleUpdate = useCallback((viewUpdate: { view: EditorView }): void => {
-		if (!isMountedRef.current) return;
+		if (!isMountedRef.current) {
+			return;
+		}
 
 		if (!editorRef.current) {
 			editorRef.current = viewUpdate.view;
@@ -582,13 +597,21 @@ function QuerySearch({
 					| 'bracketList'
 					| null = null;
 
-				if (context.isInKey) newContextType = 'key';
-				else if (context.isInOperator) newContextType = 'operator';
-				else if (context.isInValue) newContextType = 'value';
-				else if (context.isInConjunction) newContextType = 'conjunction';
-				else if (context.isInFunction) newContextType = 'function';
-				else if (context.isInParenthesis) newContextType = 'parenthesis';
-				else if (context.isInBracketList) newContextType = 'bracketList';
+				if (context.isInKey) {
+					newContextType = 'key';
+				} else if (context.isInOperator) {
+					newContextType = 'operator';
+				} else if (context.isInValue) {
+					newContextType = 'value';
+				} else if (context.isInConjunction) {
+					newContextType = 'conjunction';
+				} else if (context.isInFunction) {
+					newContextType = 'function';
+				} else if (context.isInParenthesis) {
+					newContextType = 'parenthesis';
+				} else if (context.isInBracketList) {
+					newContextType = 'bracketList';
+				}
 
 				setQueryContext(context);
 
@@ -637,7 +660,9 @@ function QuerySearch({
 
 	// Helper function to render a badge for the current context mode
 	const renderContextBadge = (): JSX.Element => {
-		if (!editingMode) return <Tag>Unknown</Tag>;
+		if (!editingMode) {
+			return <Tag>Unknown</Tag>;
+		}
 
 		switch (editingMode) {
 			case 'key':
@@ -665,7 +690,9 @@ function QuerySearch({
 		// This matches words before the cursor position
 		// eslint-disable-next-line no-useless-escape
 		const word = context.matchBefore(/[a-zA-Z0-9_.:/?&=#%\-\[\]]*/);
-		if (word?.from === word?.to && !context.explicit) return null;
+		if (word?.from === word?.to && !context.explicit) {
+			return null;
+		}
 
 		// Get current query from editor
 		const currentExpression = getCurrentExpression();
@@ -1228,7 +1255,9 @@ function QuerySearch({
 	}, [isFocused, toggleSuggestions]);
 
 	useEffect(() => {
-		if (!queryContext) return;
+		if (!queryContext) {
+			return;
+		}
 		// Trigger suggestions based on context
 		if (editorRef.current) {
 			toggleSuggestions(10);

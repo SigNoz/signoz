@@ -6,7 +6,9 @@ import { TableLabel } from '../types';
 function TabLabel({ routeKey, label }: TableLabel): JSX.Element {
 	const { pathname } = useLocation();
 
-	if (pathname === routeKey) return <Typography.Link>{label}</Typography.Link>;
+	if (pathname === routeKey) {
+		return <Typography.Link>{label}</Typography.Link>;
+	}
 
 	return <Typography>{label}</Typography>;
 }

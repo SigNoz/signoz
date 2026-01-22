@@ -55,7 +55,9 @@ function FunnelTopTracesTable({
 	);
 
 	const data = useMemo(() => {
-		if (!response?.payload?.data) return [];
+		if (!response?.payload?.data) {
+			return [];
+		}
 		return response.payload.data.map((item) => ({
 			trace_id: item.data.trace_id,
 			duration_ms: item.data.duration_ms,
