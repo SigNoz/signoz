@@ -41,7 +41,9 @@ function useTimezoneFormatter({
 	}, [cache, userTimezone]);
 
 	const clearCacheEntries = useCallback(() => {
-		if (cache.size <= CACHE_SIZE_LIMIT) return;
+		if (cache.size <= CACHE_SIZE_LIMIT) {
+			return;
+		}
 
 		// Sort entries by timestamp (oldest first)
 		const sortedEntries = Array.from(cache.entries()).sort(

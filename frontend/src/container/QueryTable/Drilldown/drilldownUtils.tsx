@@ -53,7 +53,9 @@ export const getRoute = (key: string): string => {
 };
 
 export const isNumberDataType = (dataType: DataTypes | undefined): boolean => {
-	if (!dataType) return false;
+	if (!dataType) {
+		return false;
+	}
 	return dataType === DataTypes.Int64 || dataType === DataTypes.Float64;
 };
 
@@ -90,7 +92,9 @@ function addFiltersToQuerySteps(
 		filters.forEach(({ filterKey, filterValue, operator }) => {
 			// skip if this step doesn't group by our key
 			const baseMeta = step.groupBy.find((g) => g.key === filterKey);
-			if (!baseMeta) return;
+			if (!baseMeta) {
+				return;
+			}
 
 			newFilters.items.push({
 				id: uuid(),
@@ -235,7 +239,9 @@ export const getPieChartClickData = (
 	label: string | React.ReactNode;
 } | null => {
 	const { metric, queryName } = arc.data.record;
-	if (!queryName || !metric) return null;
+	if (!queryName || !metric) {
+		return null;
+	}
 
 	const label = <span style={{ color: arc.data.color }}>{arc.data.label}</span>;
 	return {
@@ -286,7 +292,9 @@ export const getViewQuery = (
 
 	const queryBuilderData = VIEW_QUERY_MAP[key];
 
-	if (!queryBuilderData) return null;
+	if (!queryBuilderData) {
+		return null;
+	}
 
 	let existingFilters: TagFilterItem[] = [];
 	let existingFilterExpression: string | undefined;
@@ -301,7 +309,9 @@ export const getViewQuery = (
 	const filters = filtersToAdd.reduce((acc: any[], filter) => {
 		// use existing query to get baseMeta
 		const baseMeta = getBaseMeta(query, filter.filterKey);
-		if (!baseMeta) return acc;
+		if (!baseMeta) {
+			return acc;
+		}
 
 		acc.push({
 			id: uuid(),

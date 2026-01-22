@@ -52,16 +52,24 @@ const useDashboardVarConfig = ({
 		| 'traces'
 		| 'metrics'
 		| 'all sources' => {
-		if (!query || !aggregateData?.queryName) return 'all sources';
+		if (!query || !aggregateData?.queryName) {
+			return 'all sources';
+		}
 
 		try {
 			const { dataSource } = getAggregateColumnHeader(
 				query,
 				aggregateData.queryName,
 			);
-			if (dataSource === 'logs') return 'logs';
-			if (dataSource === 'traces') return 'traces';
-			if (dataSource === 'metrics') return 'metrics';
+			if (dataSource === 'logs') {
+				return 'logs';
+			}
+			if (dataSource === 'traces') {
+				return 'traces';
+			}
+			if (dataSource === 'metrics') {
+				return 'metrics';
+			}
 		} catch (error) {
 			console.warn('Error determining data source:', error);
 		}

@@ -29,7 +29,8 @@ type Rule interface {
 
 	PreferredChannels() []string
 
-	Eval(context.Context, time.Time) (interface{}, error)
+	// Eval evaluates the rule at the given timestamp and returns the number of active alerts.
+	Eval(context.Context, time.Time) (int, error)
 	String() string
 	SetLastError(error)
 	LastError() error

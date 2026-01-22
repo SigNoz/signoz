@@ -107,30 +107,6 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	return context, nil
 }
 
-func (module *module) DeprecatedCreateSessionByEmailPassword(ctx context.Context, email valuer.Email, password string) (*authtypes.Token, error) {
-	users, err := module.userGetter.GetUsersByEmail(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(users) == 0 {
-		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
-	}
-
-	factorPassword, err := module.userGetter.GetFactorPasswordByUserID(ctx, users[0].ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if !factorPassword.Equals(password) {
-		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
-	}
-
-	identity := authtypes.NewIdentity(users[0].ID, users[0].OrgID, users[0].Email, users[0].Role)
-
-	return module.tokenizer.CreateToken(ctx, identity, map[string]string{})
-}
-
 func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email valuer.Email, password string, orgID valuer.UUID) (*authtypes.Token, error) {
 	passwordAuthN, err := getProvider[authn.PasswordAuthN](authNProvider, module.authNs)
 	if err != nil {

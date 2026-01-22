@@ -50,7 +50,9 @@ export default function AttributeActions({
 	}, [record.value]);
 
 	const handleFilterIn = useCallback(async (): Promise<void> => {
-		if (!onAddToQuery || isFilterInLoading) return;
+		if (!onAddToQuery || isFilterInLoading) {
+			return;
+		}
 		setIsFilterInLoading(true);
 		try {
 			await Promise.resolve(
@@ -62,7 +64,9 @@ export default function AttributeActions({
 	}, [onAddToQuery, record.field, record.value, isFilterInLoading]);
 
 	const handleFilterOut = useCallback(async (): Promise<void> => {
-		if (!onAddToQuery || isFilterOutLoading) return;
+		if (!onAddToQuery || isFilterOutLoading) {
+			return;
+		}
 		setIsFilterOutLoading(true);
 		try {
 			await Promise.resolve(

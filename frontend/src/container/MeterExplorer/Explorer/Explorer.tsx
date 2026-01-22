@@ -79,7 +79,9 @@ function Explorer(): JSX.Element {
 			_isNewDashboard?: boolean,
 			queryToExport?: Query,
 		): void => {
-			if (!dashboard) return;
+			if (!dashboard) {
+				return;
+			}
 
 			const widgetId = uuid();
 

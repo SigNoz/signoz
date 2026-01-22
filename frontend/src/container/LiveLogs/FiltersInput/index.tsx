@@ -30,7 +30,9 @@ function FiltersInput(): JSX.Element {
 		(filters: TagFilter) => {
 			const listQueryData = stagedQuery?.builder.queryData[0];
 
-			if (!listQueryData) return;
+			if (!listQueryData) {
+				return;
+			}
 
 			const queryData: IBuilderQuery = {
 				...listQueryData,

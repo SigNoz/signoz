@@ -155,7 +155,9 @@ function PublicDashboardSetting(): JSX.Element {
 	});
 
 	const handleCreatePublicDashboard = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		createPublicDashboard({
 			dashboardId: selectedDashboard.id,
@@ -165,7 +167,9 @@ function PublicDashboardSetting(): JSX.Element {
 	};
 
 	const handleUpdatePublicDashboard = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		updatePublicDashboard({
 			dashboardId: selectedDashboard.id,
@@ -175,7 +179,9 @@ function PublicDashboardSetting(): JSX.Element {
 	};
 
 	const handleRevokePublicDashboardAccess = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		revokePublicDashboardAccess({
 			id: selectedDashboard.id,
@@ -201,7 +207,9 @@ function PublicDashboardSetting(): JSX.Element {
 	]);
 
 	const handleCopyPublicDashboardURL = (): void => {
-		if (!publicDashboardResponse?.data?.publicPath) return;
+		if (!publicDashboardResponse?.data?.publicPath) {
+			return;
+		}
 
 		try {
 			setCopyPublicDashboardURL(

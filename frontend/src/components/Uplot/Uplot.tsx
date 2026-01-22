@@ -93,7 +93,9 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		}, []);
 
 		const create = useCallback(() => {
-			if (targetRef.current === null) return;
+			if (targetRef.current === null) {
+				return;
+			}
 
 			// If data is empty, hide cursor
 			if (data && data[0] && data[0]?.length === 0) {

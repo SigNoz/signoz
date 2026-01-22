@@ -66,7 +66,9 @@ export const useHandleExplorerTabChange = (): {
 		) => {
 			const newPanelType = type as PANEL_TYPES;
 
-			if (newPanelType === panelType && !currentQueryData) return;
+			if (newPanelType === panelType && !currentQueryData) {
+				return;
+			}
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 

@@ -23,7 +23,9 @@ export const useAddDynamicVariableToPanels = (): ((
 			widgetIds?: string[],
 			applyToAll?: boolean,
 		): Dashboard | undefined => {
-			if (!variableConfig) return dashboard;
+			if (!variableConfig) {
+				return dashboard;
+			}
 
 			const { dynamicVariablesAttribute, name } = variableConfig;
 

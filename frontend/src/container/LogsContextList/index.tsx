@@ -63,7 +63,9 @@ function LogsContextList({
 	]);
 
 	const currentStagedQueryData = useMemo(() => {
-		if (!query || query.builder.queryData.length !== 1) return null;
+		if (!query || query.builder.queryData.length !== 1) {
+			return null;
+		}
 
 		return query.builder.queryData[0];
 	}, [query]);
@@ -117,7 +119,9 @@ function LogsContextList({
 	);
 
 	const handleShowNextLines = useCallback(() => {
-		if (isDisabledFetch) return;
+		if (isDisabledFetch) {
+			return;
+		}
 
 		const log = order === ORDERBY_FILTERS.ASC ? firstLog : lastLog;
 
@@ -144,7 +148,9 @@ function LogsContextList({
 	]);
 
 	useEffect(() => {
-		if (!isEdit) return;
+		if (!isEdit) {
+			return;
+		}
 
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,

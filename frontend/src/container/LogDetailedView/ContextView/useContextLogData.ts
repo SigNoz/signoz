@@ -73,7 +73,9 @@ export const useContextLogData = ({
 	]);
 
 	const currentStagedQueryData = useMemo(() => {
-		if (!query || query.builder.queryData.length !== 1) return null;
+		if (!query || query.builder.queryData.length !== 1) {
+			return null;
+		}
 
 		return query.builder.queryData[0];
 	}, [query]);
@@ -165,7 +167,9 @@ export const useContextLogData = ({
 	]);
 
 	useEffect(() => {
-		if (!isEdit) return;
+		if (!isEdit) {
+			return;
+		}
 
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
