@@ -134,7 +134,9 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 				<div className="stats">
 					{Object.keys(serviceExecTime)
 						.sort((a, b) => {
-							if (spread <= 0) return 0;
+							if (spread <= 0) {
+								return 0;
+							}
 							const aValue = (serviceExecTime[a] * 100) / spread;
 							const bValue = (serviceExecTime[b] * 100) / spread;
 							return bValue - aValue;

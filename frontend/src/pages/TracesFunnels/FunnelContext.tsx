@@ -211,7 +211,9 @@ export function FunnelProvider({
 	}
 
 	const handleRunFunnel = useCallback(async (): Promise<void> => {
-		if (validTracesCount === 0) return;
+		if (validTracesCount === 0) {
+			return;
+		}
 
 		queryClient.refetchQueries([
 			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,

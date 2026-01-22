@@ -492,7 +492,9 @@ describe('utils', () => {
 			jest.doMock('dayjs', () => {
 				const originalDayjs = jest.requireActual('dayjs');
 				const mockDayjs = (date?: string | Date): Dayjs => {
-					if (date) return originalDayjs(date);
+					if (date) {
+						return originalDayjs(date);
+					}
 					return originalDayjs(MOCK_DATE_STRING_NON_LEAP_YEAR);
 				};
 				Object.assign(mockDayjs, originalDayjs);
@@ -599,7 +601,9 @@ describe('utils', () => {
 			jest.doMock('dayjs', () => {
 				const originalDayjs = jest.requireActual('dayjs');
 				const mockDayjs = (date?: string | Date): Dayjs => {
-					if (date) return originalDayjs(date);
+					if (date) {
+						return originalDayjs(date);
+					}
 					return originalDayjs(MOCK_DATE_STRING_SPANS_MONTHS);
 				};
 				Object.assign(mockDayjs, originalDayjs);

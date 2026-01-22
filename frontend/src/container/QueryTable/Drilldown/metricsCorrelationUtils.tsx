@@ -52,10 +52,14 @@ function modifyKeyVal(pair: IQueryPair, mapping: KeyValueMapping): string {
 
 	// Map a single value token using valueMappings, skipping variables
 	const mapOne = (val: string | undefined): string | undefined => {
-		if (val == null) return val;
+		if (val == null) {
+			return val;
+		}
 		const t = String(val).trim();
 		// Skip variables for now. We will handle them later.
-		if (t.startsWith('$')) return t;
+		if (t.startsWith('$')) {
+			return t;
+		}
 		const raw = isQuoted(t) ? unquote(t) : t;
 		return mapping.valueMappings[raw] ?? raw;
 	};
@@ -121,7 +125,9 @@ export function replaceKeysAndValuesInExpression(
 	for (let i = 0; i < pairs.length; i += 1) {
 		const pair = pairs[i];
 		// Require complete positions for safe slicing
-		if (!pair?.position) continue;
+		if (!pair?.position) {
+			continue;
+		}
 		const start =
 			pair.position.keyStart ??
 			pair.position.operatorStart ??
@@ -148,7 +154,9 @@ export function replaceKeysAndValuesInExpression(
 	for (let i = 0; i < withBounds.length; i += 1) {
 		const item = withBounds[i];
 		const sourceKey = item.pair?.key?.trim().toLowerCase();
-		if (!sourceKey) continue;
+		if (!sourceKey) {
+			continue;
+		}
 
 		const mapping = attributeToMapping.get(sourceKey);
 		if (!mapping) {

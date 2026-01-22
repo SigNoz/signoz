@@ -63,7 +63,9 @@ function WidgetGraph({
 
 	// Apply graph visibility when lineChartRef is available
 	useEffect(() => {
-		if (!lineChartRef.current) return;
+		if (!lineChartRef.current) {
+			return;
+		}
 
 		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);

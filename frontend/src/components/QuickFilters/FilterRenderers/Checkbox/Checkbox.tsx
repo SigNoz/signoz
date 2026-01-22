@@ -95,10 +95,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	// Derive isOpen from filter state + user action
 	const isOpen = useMemo(() => {
 		// If user explicitly toggled, respect that
-		if (userToggleState !== null) return userToggleState;
+		if (userToggleState !== null) {
+			return userToggleState;
+		}
 
 		// Auto-open if this filter has active filters in the query
-		if (isSomeFilterPresentForCurrentAttribute) return true;
+		if (isSomeFilterPresentForCurrentAttribute) {
+			return true;
+		}
 
 		// Otherwise use default behavior (first 2 filters open)
 		return filter.defaultOpen;

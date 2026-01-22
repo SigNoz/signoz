@@ -105,7 +105,9 @@ function LiveLogsList({
 	);
 
 	useEffect(() => {
-		if (!activeLogId || activeLogIndex < 0) return;
+		if (!activeLogId || activeLogIndex < 0) {
+			return;
+		}
 
 		ref?.current?.scrollToIndex({
 			index: activeLogIndex,

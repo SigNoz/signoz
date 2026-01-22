@@ -96,7 +96,9 @@ export default function SavedViews({
 		}
 
 		const currentViewDetails = getViewDetailsUsingViewKey(view.id, currentViews);
-		if (!currentViewDetails) return;
+		if (!currentViewDetails) {
+			return;
+		}
 		const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 		if (selectedEntity) {

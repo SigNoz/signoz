@@ -78,4 +78,5 @@ def test_webhook_notification_channel(
         json={"method": "POST", "url": webhook_endpoint_path},
         timeout=5,
     )
+    # Verify that the test notification was sent to the notification channel
     assert response.json()["count"] == 1

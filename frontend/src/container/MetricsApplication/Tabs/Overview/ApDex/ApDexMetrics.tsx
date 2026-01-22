@@ -84,7 +84,9 @@ function ApDexMetrics({
 	);
 
 	const threshold: ReactNode = useMemo(() => {
-		if (thresholdValue) return <DisplayThreshold threshold={thresholdValue} />;
+		if (thresholdValue) {
+			return <DisplayThreshold threshold={thresholdValue} />;
+		}
 		return null;
 	}, [thresholdValue]);
 
