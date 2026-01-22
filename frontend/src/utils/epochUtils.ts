@@ -110,13 +110,19 @@ export const getTimeDifference = (minTime: number, maxTime: number): string => {
 	const diff = dayjs.duration(diffInMs, 'milliseconds');
 
 	const weeks = diff.asWeeks();
-	if (weeks >= 1) return `${roundHalfUp(weeks)}w`;
+	if (weeks >= 1) {
+		return `${roundHalfUp(weeks)}w`;
+	}
 
 	const days = diff.asDays();
-	if (days >= 1) return `${roundHalfUp(days)}d`;
+	if (days >= 1) {
+		return `${roundHalfUp(days)}d`;
+	}
 
 	const hours = diff.asHours();
-	if (hours >= 1) return `${roundHalfUp(hours)}h`;
+	if (hours >= 1) {
+		return `${roundHalfUp(hours)}h`;
+	}
 
 	return `${roundHalfUp(diff.asMinutes())}m`;
 };

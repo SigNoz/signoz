@@ -88,7 +88,9 @@ export const buildFilters = (
 			(q) => q.queryName === requestData.queryName,
 		);
 
-		if (!formulaQuery) return {};
+		if (!formulaQuery) {
+			return {};
+		}
 
 		const queryNames = extractQueryNamesFromExpression(formulaQuery.expression);
 		const filteredQueryData = query.builder.queryData.filter((q) =>

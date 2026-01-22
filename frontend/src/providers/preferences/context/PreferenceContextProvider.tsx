@@ -58,9 +58,10 @@ export function PreferenceContextProvider({
 
 export function usePreferenceContext(): PreferenceContextValue {
 	const ctx = useContext(PreferenceContext);
-	if (!ctx)
+	if (!ctx) {
 		throw new Error(
 			'usePreferenceContext must be used within PreferenceContextProvider',
 		);
+	}
 	return ctx;
 }

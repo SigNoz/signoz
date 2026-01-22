@@ -151,7 +151,9 @@ function K8sClustersList({
 			op: 'and',
 		};
 
-		if (!selectedRowData) return baseFilters;
+		if (!selectedRowData) {
+			return baseFilters;
+		}
 
 		const { groupedByMeta } = selectedRowData;
 
@@ -171,7 +173,9 @@ function K8sClustersList({
 	};
 
 	const fetchGroupedByRowDataQuery = useMemo(() => {
-		if (!selectedRowData) return null;
+		if (!selectedRowData) {
+			return null;
+		}
 
 		const baseQuery = getK8sClustersListQuery();
 
@@ -276,7 +280,9 @@ function K8sClustersList({
 	);
 
 	const nestedClustersData = useMemo(() => {
-		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) {
+			return [];
+		}
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
@@ -426,7 +432,9 @@ function K8sClustersList({
 	}, [data?.payload?.data?.total]);
 
 	const selectedClusterData = useMemo(() => {
-		if (!selectedClusterName) return null;
+		if (!selectedClusterName) {
+			return null;
+		}
 		if (groupBy.length > 0) {
 			// If grouped by, return the cluster from the formatted grouped by clusters data
 			return (
@@ -467,7 +475,9 @@ function K8sClustersList({
 	const isGroupedByAttribute = groupBy.length > 0;
 
 	const handleExpandedRowViewAllClick = (): void => {
-		if (!selectedRowData) return;
+		if (!selectedRowData) {
+			return;
+		}
 
 		const filters = createFiltersForSelectedRowData(selectedRowData, groupBy);
 

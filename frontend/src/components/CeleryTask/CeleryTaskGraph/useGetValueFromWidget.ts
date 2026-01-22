@@ -49,8 +49,12 @@ export const useGetValueFromWidget = (
 	const isError = queries.some((query) => query.isError);
 
 	const values = queries.map((query) => {
-		if (query.isLoading) return 'Loading...';
-		if (query.isError) return 'Error';
+		if (query.isLoading) {
+			return 'Loading...';
+		}
+		if (query.isError) {
+			return 'Error';
+		}
 
 		const value = parseFloat(
 			query.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]

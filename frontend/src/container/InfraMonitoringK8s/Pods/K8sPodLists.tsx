@@ -256,7 +256,9 @@ function K8sPodsList({
 			op: 'and',
 		};
 
-		if (!selectedRowData) return baseFilters;
+		if (!selectedRowData) {
+			return baseFilters;
+		}
 
 		const { groupedByMeta } = selectedRowData;
 
@@ -276,7 +278,9 @@ function K8sPodsList({
 	};
 
 	const fetchGroupedByRowDataQuery = useMemo(() => {
-		if (!selectedRowData) return null;
+		if (!selectedRowData) {
+			return null;
+		}
 
 		const baseQuery = getK8sPodsListQuery();
 
@@ -333,7 +337,9 @@ function K8sPodsList({
 	const totalCount = data?.payload?.data?.total || 0;
 
 	const nestedPodsData = useMemo(() => {
-		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) {
+			return [];
+		}
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
@@ -462,7 +468,9 @@ function K8sPodsList({
 	}, [data?.payload?.data?.total]);
 
 	const selectedPodData = useMemo(() => {
-		if (!selectedPodUID) return null;
+		if (!selectedPodUID) {
+			return null;
+		}
 		if (groupBy.length > 0) {
 			// If grouped by, return the pod from the formatted grouped by pods data
 			return nestedPodsData.find((pod) => pod.podUID === selectedPodUID) || null;
@@ -567,7 +575,9 @@ function K8sPodsList({
 	const isGroupedByAttribute = groupBy.length > 0;
 
 	const handleExpandedRowViewAllClick = (): void => {
-		if (!selectedRowData) return;
+		if (!selectedRowData) {
+			return;
+		}
 
 		const filters = createFiltersForSelectedRowData(selectedRowData);
 

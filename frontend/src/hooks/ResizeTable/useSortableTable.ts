@@ -26,7 +26,9 @@ const useSortableTable = <T>(
 	});
 
 	const handleChange: TableProps<T>['onChange'] = (pagination, __, sorter) => {
-		if (Array.isArray(sorter)) return;
+		if (Array.isArray(sorter)) {
+			return;
+		}
 		const searchParams = new URLSearchParams(search);
 		setSortedInfo(sorter as SorterResult<T>);
 		searchParams.set('columnKey', sorter.columnKey as string);

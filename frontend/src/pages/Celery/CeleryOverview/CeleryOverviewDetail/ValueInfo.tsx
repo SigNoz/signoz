@@ -86,32 +86,52 @@ export default function ValueInfo({
 	const navigateToExplorer = useNavigateToExplorer();
 
 	const avgLatencyInMs = useMemo(() => {
-		if (avgLatency === 'NaN') return 'NaN';
+		if (avgLatency === 'NaN') {
+			return 'NaN';
+		}
 		const numericValue = parseFloat(avgLatency);
 		return (numericValue / 1000000).toFixed(2);
 	}, [avgLatency]);
 
 	const getColorBasedOnValue = (value: string): string => {
 		const numericValue = parseFloat(value);
-		if (value === 'NaN') return 'gray';
-		if (numericValue < 3) return 'green';
-		if (numericValue < 8) return 'yellow';
+		if (value === 'NaN') {
+			return 'gray';
+		}
+		if (numericValue < 3) {
+			return 'green';
+		}
+		if (numericValue < 8) {
+			return 'yellow';
+		}
 		return 'red';
 	};
 
 	const getColorForLatency = (value: string): string => {
 		const numericValue = parseFloat(value);
-		if (value === 'NaN') return 'gray';
-		if (numericValue < 100) return 'green';
-		if (numericValue < 200) return 'yellow';
+		if (value === 'NaN') {
+			return 'gray';
+		}
+		if (numericValue < 100) {
+			return 'green';
+		}
+		if (numericValue < 200) {
+			return 'yellow';
+		}
 		return 'red';
 	};
 
 	const getColorForErrorRate = (value: string): string => {
 		const numericValue = parseFloat(value);
-		if (value === 'NaN') return 'gray';
-		if (numericValue < 60) return 'green';
-		if (numericValue < 90) return 'yellow';
+		if (value === 'NaN') {
+			return 'gray';
+		}
+		if (numericValue < 60) {
+			return 'green';
+		}
+		if (numericValue < 90) {
+			return 'yellow';
+		}
 		return 'red';
 	};
 
