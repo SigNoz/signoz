@@ -163,17 +163,26 @@ export default function TableViewActions(
 				? (dataType as DataTypes)
 				: undefined;
 
-		const updatedQuery = updateQueriesData(stagedQuery, 'queryData', (item) => {
-			const newGroupByItem: BaseAutocompleteData = {
-				key: fieldFilterKey,
-				type: fieldType || '',
-				dataType: normalizedDataType,
-			};
+		const updatedQuery = updateQueriesData(
+			stagedQuery,
+			'queryData',
+			(item, index) => {
+				// Only add groupBy for index 0
+				if (index === 0) {
+					const newGroupByItem: BaseAutocompleteData = {
+						key: fieldFilterKey,
+						type: fieldType || '',
+						dataType: normalizedDataType,
+					};
 
-			const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
+					const updatedGroupBy = [...(item.groupBy || []), newGroupByItem];
 
-			return { ...item, groupBy: updatedGroupBy };
-		});
+					return { ...item, groupBy: updatedGroupBy };
+				}
+
+				return item;
+			},
+		);
 
 		const queryData: ICurrentQueryData = {
 			name: viewName,
