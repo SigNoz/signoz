@@ -815,8 +815,9 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
 
 	for _, item := range v.fieldKeys[keyName] {
-		// Either FieldContext matches or unspecified
-		// Either FieldDataType matches or unspecified
+		// Match items where:
+		// 1) user didn't specify context OR context matches, AND
+		// 2) user didn't specify data type OR data type matches.
 		if (fieldKey.FieldContext == telemetrytypes.FieldContextUnspecified || fieldKey.FieldContext == item.FieldContext) &&
 			(fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || fieldKey.FieldDataType == item.FieldDataType) {
 			fieldKeysForName = append(fieldKeysForName, item)
