@@ -15,11 +15,10 @@ import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -60,7 +59,7 @@ export interface ChartPreviewProps {
 	query: Query | null;
 	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
-	selectedInterval?: Time | TimeV2 | CustomTimeType;
+	selectedInterval?: Time | CustomTimeType;
 	headline?: JSX.Element;
 	alertDef?: AlertDef;
 	userQueryKey?: string;

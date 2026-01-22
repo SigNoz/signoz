@@ -36,7 +36,7 @@ func TestNewModules(t *testing.T) {
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
 	require.NoError(t, err)
-	tokenizer := tokenizertest.New()
+	tokenizer := tokenizertest.NewMockTokenizer(t)
 	emailing := emailingtest.New()
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
