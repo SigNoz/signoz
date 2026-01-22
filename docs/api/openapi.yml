@@ -2611,6 +2611,11 @@ paths:
       deprecated: false
       description: This endpoint returns associated alerts for a specified metric
       operationId: GetMetricAlerts
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2660,6 +2665,11 @@ paths:
       deprecated: false
       description: This endpoint returns associated dashboards for a specified metric
       operationId: GetMetricDashboards
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2710,6 +2720,11 @@ paths:
       description: This endpoint returns highlights like number of datapoints, totaltimeseries,
         active time series, last received time for a specified metric
       operationId: GetMetricHighlights
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2871,6 +2886,11 @@ paths:
       description: This endpoint returns metadata information like metric description,
         unit, type, temporality, monotonicity for a specified metric
       operationId: GetMetricMetadata
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:

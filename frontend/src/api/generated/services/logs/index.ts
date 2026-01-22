@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,14 +16,14 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	ListPromotedAndIndexedPaths200,
 	PromotetypesPromotePathDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../index';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -32,15 +33,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoints promotes and indexes paths
  * @summary Promote and index paths
  */
-export const listPromotedAndIndexedPaths = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListPromotedAndIndexedPaths200>({
+export const listPromotedAndIndexedPaths = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListPromotedAndIndexedPaths200>({
 		url: `/api/v1/logs/promote_paths`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListPromotedAndIndexedPathsQueryKey = () =>
-	['listPromotedAndIndexedPaths'] as const;
+export const getListPromotedAndIndexedPathsQueryKey = () => {
+	return ['listPromotedAndIndexedPaths'] as const;
+};
 
 export const getListPromotedAndIndexedPathsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
@@ -120,14 +123,15 @@ export const invalidateListPromotedAndIndexedPaths = async (
 export const handlePromoteAndIndexPaths = (
 	promotetypesPromotePathDTONull: PromotetypesPromotePathDTO[] | null,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/logs/promote_paths`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: promotetypesPromotePathDTONull,
 		signal,
 	});
+};
 
 export const getHandlePromoteAndIndexPathsMutationOptions = <
 	TError = RenderErrorResponseDTO,

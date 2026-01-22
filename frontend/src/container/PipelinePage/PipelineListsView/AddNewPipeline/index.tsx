@@ -60,7 +60,9 @@ function AddNewPipeline({
 		}
 		if (isAdd) {
 			setCurrPipelineData((prevState) => {
-				if (prevState) return [...prevState, newPipeLineData];
+				if (prevState) {
+					return [...prevState, newPipeLineData];
+				}
 				return [newPipeLineData];
 			});
 		}

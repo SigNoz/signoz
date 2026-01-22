@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,9 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	CreateIngestionKey200,
 	CreateIngestionKeyLimit201,
@@ -34,6 +33,8 @@ import type {
 	UpdateIngestionKeyPathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../index';
+
 type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
@@ -42,14 +43,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint returns the ingestion keys for a workspace
  * @summary Get ingestion keys for workspace
  */
-export const getIngestionKeys = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetIngestionKeys200>({
+export const getIngestionKeys = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetIngestionKeys200>({
 		url: `/api/v2/gateway/ingestion_keys`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetIngestionKeysQueryKey = () => ['getIngestionKeys'] as const;
+export const getGetIngestionKeysQueryKey = () => {
+	return ['getIngestionKeys'] as const;
+};
 
 export const getGetIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getIngestionKeys>>,
@@ -128,14 +132,15 @@ export const invalidateGetIngestionKeys = async (
 export const createIngestionKey = (
 	gatewaytypesPostableIngestionKeyDTO: GatewaytypesPostableIngestionKeyDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreateIngestionKey200>({
+) => {
+	return GeneratedAPIInstance<CreateIngestionKey200>({
 		url: `/api/v2/gateway/ingestion_keys`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: gatewaytypesPostableIngestionKeyDTO,
 		signal,
 	});
+};
 
 export const getCreateIngestionKeyMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -209,11 +214,12 @@ export const useCreateIngestionKey = <
  */
 export const deleteIngestionKey = ({
 	keyId,
-}: DeleteIngestionKeyPathParameters) =>
-	GeneratedAPIInstance<void>({
+}: DeleteIngestionKeyPathParameters) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/gateway/ingestion_keys/${keyId}`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeleteIngestionKeyMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -288,13 +294,14 @@ export const useDeleteIngestionKey = <
 export const updateIngestionKey = (
 	{ keyId }: UpdateIngestionKeyPathParameters,
 	gatewaytypesPostableIngestionKeyDTO: GatewaytypesPostableIngestionKeyDTO,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/gateway/ingestion_keys/${keyId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: gatewaytypesPostableIngestionKeyDTO,
 	});
+};
 
 export const getUpdateIngestionKeyMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -385,14 +392,15 @@ export const createIngestionKeyLimit = (
 	{ keyId }: CreateIngestionKeyLimitPathParameters,
 	gatewaytypesPostableIngestionKeyLimitDTO: GatewaytypesPostableIngestionKeyLimitDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreateIngestionKeyLimit201>({
+) => {
+	return GeneratedAPIInstance<CreateIngestionKeyLimit201>({
 		url: `/api/v2/gateway/ingestion_keys/${keyId}/limits`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: gatewaytypesPostableIngestionKeyLimitDTO,
 		signal,
 	});
+};
 
 export const getCreateIngestionKeyLimitMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -481,11 +489,12 @@ export const useCreateIngestionKeyLimit = <
  */
 export const deleteIngestionKeyLimit = ({
 	limitId,
-}: DeleteIngestionKeyLimitPathParameters) =>
-	GeneratedAPIInstance<void>({
+}: DeleteIngestionKeyLimitPathParameters) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/gateway/ingestion_keys/limits/${limitId}`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeleteIngestionKeyLimitMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -560,13 +569,14 @@ export const useDeleteIngestionKeyLimit = <
 export const updateIngestionKeyLimit = (
 	{ limitId }: UpdateIngestionKeyLimitPathParameters,
 	gatewaytypesUpdatableIngestionKeyLimitDTO: GatewaytypesUpdatableIngestionKeyLimitDTO,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/gateway/ingestion_keys/limits/${limitId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: gatewaytypesUpdatableIngestionKeyLimitDTO,
 	});
+};
 
 export const getUpdateIngestionKeyLimitMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -653,15 +663,17 @@ export const useUpdateIngestionKeyLimit = <
  * This endpoint returns the ingestion keys for a workspace
  * @summary Search ingestion keys for workspace
  */
-export const searchIngestionKeys = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<SearchIngestionKeys200>({
+export const searchIngestionKeys = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<SearchIngestionKeys200>({
 		url: `/api/v2/gateway/ingestion_keys/search`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getSearchIngestionKeysQueryKey = () =>
-	['searchIngestionKeys'] as const;
+export const getSearchIngestionKeysQueryKey = () => {
+	return ['searchIngestionKeys'] as const;
+};
 
 export const getSearchIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,

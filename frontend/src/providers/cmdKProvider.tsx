@@ -45,6 +45,8 @@ export function CmdKProvider({
 
 export function useCmdK(): CmdKContextType {
 	const ctx = useContext(CmdKContext);
-	if (!ctx) throw new Error('useCmdK must be used inside CmdKProvider');
+	if (!ctx) {
+		throw new Error('useCmdK must be used inside CmdKProvider');
+	}
 	return ctx;
 }

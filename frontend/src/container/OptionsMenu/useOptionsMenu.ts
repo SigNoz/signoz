@@ -294,7 +294,9 @@ const useOptionsMenu = ({
 					...(preferences?.columns || []),
 				].find(({ name }) => name === key);
 
-				if (!column) return acc;
+				if (!column) {
+					return acc;
+				}
 				return [...acc, column];
 			}, [] as TelemetryFieldKey[]);
 

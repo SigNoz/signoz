@@ -46,14 +46,17 @@ export const isValidHavingValue = (search: string): boolean => {
 export const getUniqueOrderByValues = (values: IOption[]): IOption[] => {
 	const modifiedValues = values.map((item) => {
 		const match = parse(item.value, { delimiter: orderByValueDelimiter });
-		if (!match) return { label: item.label, value: item.value };
+		if (!match) {
+			return { label: item.label, value: item.value };
+		}
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, order] = match.data.flat() as string[];
-		if (order)
+		if (order) {
 			return {
 				label: item.label,
 				value: item.value,
 			};
+		}
 
 		return {
 			label: `${item.value} ${ORDERBY_FILTERS.ASC}`,
@@ -71,8 +74,12 @@ export const getUniqueOrderByValues = (values: IOption[]): IOption[] => {
 
 export const getValidOrderByResult = (result: IOption[]): IOption[] =>
 	result.reduce<IOption[]>((acc, item) => {
-		if (item.value === ORDERBY_FILTERS.ASC || item.value === ORDERBY_FILTERS.DESC)
+		if (
+			item.value === ORDERBY_FILTERS.ASC ||
+			item.value === ORDERBY_FILTERS.DESC
+		) {
 			return acc;
+		}
 
 		if (
 			item.value.includes(ORDERBY_FILTERS.ASC) ||
@@ -116,7 +123,9 @@ export const filterByOperatorConfig = (
 	options: IOption[],
 	key?: OperatorConfigKeys,
 ): IOption[] => {
-	if (!key || !OPERATORS_CONFIG[key]) return options;
+	if (!key || !OPERATORS_CONFIG[key]) {
+		return options;
+	}
 	return options.filter((option) =>
 		OPERATORS_CONFIG[key].includes(option.label),
 	);

@@ -104,8 +104,12 @@ function EndPointMetrics({
 											const errorRatePercent = Number(
 												Number(metricsData?.errorRate ?? 0).toFixed(2),
 											);
-											if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-											if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+											if (errorRatePercent >= 90) {
+												return Color.BG_SAKURA_500;
+											}
+											if (errorRatePercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"

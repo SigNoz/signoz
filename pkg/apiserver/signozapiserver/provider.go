@@ -163,7 +163,7 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
-	if err := provider.addMetricsExplorerV2Routes(router); err != nil {
+	if err := provider.addMetricsExplorerRoutes(router); err != nil {
 		return err
 	}
 

@@ -16,7 +16,9 @@ function DraggableTableRow({
 
 	const handleDrop = useCallback(
 		(item: { index: number }) => {
-			if (moveRow) moveRow(item.index, index);
+			if (moveRow) {
+				moveRow(item.index, index);
+			}
 		},
 		[moveRow, index],
 	);

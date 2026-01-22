@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,9 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	AuthtypesPostableAuthDomainDTO,
 	AuthtypesUpdateableAuthDomainDTO,
@@ -28,6 +27,8 @@ import type {
 	UpdateAuthDomainPathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../index';
+
 type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
@@ -36,14 +37,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint lists all auth domains
  * @summary List all auth domains
  */
-export const listAuthDomains = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<ListAuthDomains200>({
+export const listAuthDomains = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListAuthDomains200>({
 		url: `/api/v1/domains`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getListAuthDomainsQueryKey = () => ['listAuthDomains'] as const;
+export const getListAuthDomainsQueryKey = () => {
+	return ['listAuthDomains'] as const;
+};
 
 export const getListAuthDomainsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
@@ -122,14 +126,15 @@ export const invalidateListAuthDomains = async (
 export const createAuthDomain = (
 	authtypesPostableAuthDomainDTO: AuthtypesPostableAuthDomainDTO,
 	signal?: AbortSignal,
-) =>
-	GeneratedAPIInstance<CreateAuthDomain200>({
+) => {
+	return GeneratedAPIInstance<CreateAuthDomain200>({
 		url: `/api/v1/domains`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesPostableAuthDomainDTO,
 		signal,
 	});
+};
 
 export const getCreateAuthDomainMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -201,11 +206,12 @@ export const useCreateAuthDomain = <
  * This endpoint deletes an auth domain
  * @summary Delete auth domain
  */
-export const deleteAuthDomain = ({ id }: DeleteAuthDomainPathParameters) =>
-	GeneratedAPIInstance<void>({
+export const deleteAuthDomain = ({ id }: DeleteAuthDomainPathParameters) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'DELETE',
 	});
+};
 
 export const getDeleteAuthDomainMutationOptions = <
 	TError = RenderErrorResponseDTO,
@@ -280,13 +286,14 @@ export const useDeleteAuthDomain = <
 export const updateAuthDomain = (
 	{ id }: UpdateAuthDomainPathParameters,
 	authtypesUpdateableAuthDomainDTO: AuthtypesUpdateableAuthDomainDTO,
-) =>
-	GeneratedAPIInstance<void>({
+) => {
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesUpdateableAuthDomainDTO,
 	});
+};
 
 export const getUpdateAuthDomainMutationOptions = <
 	TError = RenderErrorResponseDTO,
