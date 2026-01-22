@@ -59,10 +59,18 @@ export const getDurationFromNow = (epochTimestamp: number): string => {
 	const seconds = duration.seconds();
 
 	let result = '';
-	if (days > 0) result += `${days}d `;
-	if (hours > 0) result += `${hours}h `;
-	if (minutes > 0) result += `${minutes}m `;
-	if (seconds > 0) result += `${seconds}s`;
+	if (days > 0) {
+		result += `${days}d `;
+	}
+	if (hours > 0) {
+		result += `${hours}h `;
+	}
+	if (minutes > 0) {
+		result += `${minutes}m `;
+	}
+	if (seconds > 0) {
+		result += `${seconds}s`;
+	}
 
 	return result.trim();
 };
@@ -167,7 +175,9 @@ export const hasDatePassed = (expiresAt: string): boolean => {
 
 export const getDaysUntilExpiry = (expiresAt: string): number => {
 	const date = dayjs(expiresAt);
-	if (!date.isValid()) return 0;
+	if (!date.isValid()) {
+		return 0;
+	}
 	return date.diff(dayjs(), 'day');
 };
 

@@ -207,7 +207,9 @@ function ColumnView({
 	);
 
 	const handleColumnOrderChange = (newColumns: ColumnDef<any>[]): void => {
-		if (isEmpty(newColumns) || isEqual(newColumns, selectedColumns)) return;
+		if (isEmpty(newColumns) || isEqual(newColumns, selectedColumns)) {
+			return;
+		}
 
 		const formattedColumns = newColumns.map((column) => ({
 			id: column.id,

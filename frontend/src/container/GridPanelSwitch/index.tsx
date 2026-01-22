@@ -65,7 +65,9 @@ const GridPanelSwitch = forwardRef<
 			currentProps,
 		]);
 
-		if (!Component || !componentProps) return null;
+		if (!Component || !componentProps) {
+			return null;
+		}
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		return <Component {...componentProps} />;
 	},

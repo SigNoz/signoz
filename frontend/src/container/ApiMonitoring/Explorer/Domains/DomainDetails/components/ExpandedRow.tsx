@@ -42,7 +42,9 @@ function ExpandedRow({
 		(state) => state.globalTime,
 	);
 	const groupedByRowDataQueryPayload = useMemo(() => {
-		if (!selectedRowData) return null;
+		if (!selectedRowData) {
+			return null;
+		}
 
 		const filters = createFiltersForSelectedRowData(selectedRowData);
 

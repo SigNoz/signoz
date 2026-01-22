@@ -86,7 +86,7 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
 	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
 	SIGNOZ_WEB_ENABLED=false \
-	SIGNOZ_JWT_SECRET=secret \
+	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
@@ -104,7 +104,7 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS=true \
 	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
 	SIGNOZ_WEB_ENABLED=false \
-	SIGNOZ_JWT_SECRET=secret \
+	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
@@ -231,3 +231,12 @@ py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 	@find tests -type f -name "*.pyc" -delete 2>/dev/null || true
 	@find tests -type f -name "*.pyo" -delete 2>/dev/null || true
 	@echo ">> python cache cleaned"
+
+
+##############################################################
+# generate commands
+##############################################################
+.PHONY: gen-mocks
+gen-mocks:
+	@echo ">> Generating mocks"
+	@mockery --config .mockery.yml

@@ -4,7 +4,14 @@ packages:
   github.com/SigNoz/signoz/pkg/alertmanager:
     config:
       all: true
-      dir: '{{.InterfaceDir}}/mocks'
-      filename: "mocks.go"
+      dir: '{{.InterfaceDir}}/alertmanagertest'
+      filename: "alertmanager.go"
       structname: 'Mock{{.InterfaceName}}'
-      pkgname: '{{.SrcPackageName}}mock'
+      pkgname: '{{.SrcPackageName}}test'
+  github.com/SigNoz/signoz/pkg/tokenizer:
+    config:
+      all: true
+      dir: '{{.InterfaceDir}}/tokenizertest'
+      filename: "tokenizer.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'

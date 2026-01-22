@@ -55,7 +55,9 @@ function MetricDetails({
 	const metric = data?.payload?.data;
 
 	const lastReceived = useMemo(() => {
-		if (!metric) return null;
+		if (!metric) {
+			return null;
+		}
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
 
@@ -67,7 +69,9 @@ function MetricDetails({
 	const isMetricDetailsLoading = isLoading || isFetching;
 
 	const timeSeries = useMemo(() => {
-		if (!metric) return null;
+		if (!metric) {
+			return null;
+		}
 		const timeSeriesActive = formatNumberToCompactFormat(metric.timeSeriesActive);
 		const timeSeriesTotal = formatNumberToCompactFormat(metric.timeSeriesTotal);
 

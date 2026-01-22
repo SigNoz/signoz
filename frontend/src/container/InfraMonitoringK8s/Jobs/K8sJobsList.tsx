@@ -148,7 +148,9 @@ function K8sJobsList({
 			op: 'and',
 		};
 
-		if (!selectedRowData) return baseFilters;
+		if (!selectedRowData) {
+			return baseFilters;
+		}
 
 		const { groupedByMeta } = selectedRowData;
 
@@ -168,7 +170,9 @@ function K8sJobsList({
 	};
 
 	const fetchGroupedByRowDataQuery = useMemo(() => {
-		if (!selectedRowData) return null;
+		if (!selectedRowData) {
+			return null;
+		}
 
 		const baseQuery = getK8sJobsListQuery();
 
@@ -266,7 +270,9 @@ function K8sJobsList({
 	);
 
 	const nestedJobsData = useMemo(() => {
-		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) {
+			return [];
+		}
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
@@ -446,7 +452,9 @@ function K8sJobsList({
 	const isGroupedByAttribute = groupBy.length > 0;
 
 	const handleExpandedRowViewAllClick = (): void => {
-		if (!selectedRowData) return;
+		if (!selectedRowData) {
+			return;
+		}
 
 		const filters = createFiltersForSelectedRowData(selectedRowData, groupBy);
 

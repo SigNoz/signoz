@@ -26,7 +26,9 @@ export const prioritizeOrAddOptionForSingleSelect = (
 					(subOption) => subOption.value === value,
 				);
 
-				if (extractedOption) foundOption = extractedOption;
+				if (extractedOption) {
+					foundOption = extractedOption;
+				}
 
 				// Keep the group if it still has remaining options
 				return remainingSubOptions.length > 0
@@ -115,7 +117,9 @@ export const filterOptionsBySearch = (
 	options: OptionData[],
 	searchText: string,
 ): OptionData[] => {
-	if (!searchText.trim()) return options;
+	if (!searchText.trim()) {
+		return options;
+	}
 
 	const lowerSearchText = searchText.toLowerCase();
 

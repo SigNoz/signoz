@@ -24,7 +24,9 @@ export function useMultiIntersectionObserver(
 	);
 
 	useEffect(() => {
-		if (!elementsRef.current.length) return;
+		if (!elementsRef.current.length) {
+			return;
+		}
 
 		const observer = new IntersectionObserver((entries) => {
 			setEverVisibles((prev) => {
@@ -42,7 +44,9 @@ export function useMultiIntersectionObserver(
 		}, options);
 
 		elementsRef.current.forEach((el) => {
-			if (el) observer.observe(el);
+			if (el) {
+				observer.observe(el);
+			}
 		});
 
 		return (): void => {

@@ -73,7 +73,9 @@ function QuestionBlock({
 							const filteredOptions = group.items.filter((option) =>
 								option.toLowerCase().includes(searchQuery),
 							);
-							if (filteredOptions.length === 0) return null;
+							if (filteredOptions.length === 0) {
+								return null;
+							}
 							return (
 								<Flex gap={8} vertical key={group.id}>
 									{group.category && (

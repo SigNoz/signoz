@@ -40,7 +40,9 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 
 	const handleViewModeOptionChange = useCallback(
 		({ key }: { key: string }) => {
-			if (isLogViewMode(key)) handleViewModeChange(key);
+			if (isLogViewMode(key)) {
+				handleViewModeChange(key);
+			}
 		},
 		[handleViewModeChange],
 	);

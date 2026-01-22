@@ -32,10 +32,12 @@ type Identity struct {
 }
 
 type CallbackIdentity struct {
-	Name  string       `json:"name"`
-	Email valuer.Email `json:"email"`
-	OrgID valuer.UUID  `json:"orgId"`
-	State State        `json:"state"`
+	Name   string       `json:"name"`
+	Email  valuer.Email `json:"email"`
+	OrgID  valuer.UUID  `json:"orgId"`
+	State  State        `json:"state"`
+	Groups []string     `json:"groups,omitempty"`
+	Role   string       `json:"role,omitempty"`
 }
 
 type State struct {
@@ -85,12 +87,14 @@ func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role
 	}
 }
 
-func NewCallbackIdentity(name string, email valuer.Email, orgID valuer.UUID, state State) *CallbackIdentity {
+func NewCallbackIdentity(name string, email valuer.Email, orgID valuer.UUID, state State, groups []string, role string) *CallbackIdentity {
 	return &CallbackIdentity{
-		Name:  name,
-		Email: email,
-		OrgID: orgID,
-		State: state,
+		Name:   name,
+		Email:  email,
+		OrgID:  orgID,
+		State:  state,
+		Groups: groups,
+		Role:   role,
 	}
 }
 

@@ -364,7 +364,9 @@ function FormAlertRules({
 
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
-		if (currentQuery.queryType !== EQueryType.PROM) return retval;
+		if (currentQuery.queryType !== EQueryType.PROM) {
+			return retval;
+		}
 
 		if (!currentQuery.promql || currentQuery.promql.length === 0) {
 			notifications.error({
@@ -389,7 +391,9 @@ function FormAlertRules({
 
 	const validateChQueryParams = useCallback((): boolean => {
 		let retval = true;
-		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) return retval;
+		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) {
+			return retval;
+		}
 
 		if (
 			!currentQuery.clickhouse_sql ||
@@ -416,7 +420,9 @@ function FormAlertRules({
 	}, [t, currentQuery, notifications]);
 
 	const validateQBParams = useCallback((): boolean => {
-		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) return true;
+		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) {
+			return true;
+		}
 
 		if (
 			!currentQuery.builder.queryData ||
@@ -788,11 +794,18 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
+	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
+		urlQuery,
+	]);
+
 	// Only update automatically when creating a new metrics-based alert rule
-	const shouldUpdateYAxisUnit = useMemo(
-		() => isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT,
-		[isNewRule, alertType],
-	);
+	const shouldUpdateYAxisUnit = useMemo(() => {
+		// Do not update if we are coming to the page from dashboards (we still show warning)
+		if (source === YAxisSource.DASHBOARDS) {
+			return false;
+		}
+		return isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT;
+	}, [isNewRule, alertType, source]);
 
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		alertDef.condition.selectedQueryName,
@@ -907,6 +920,7 @@ function FormAlertRules({
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 							queryOptions={queryOptions}
+							yAxisUnit={yAxisUnit || ''}
 						/>
 
 						{renderBasicInfo()}
