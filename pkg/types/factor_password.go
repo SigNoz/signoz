@@ -36,9 +36,9 @@ type ChangePasswordRequest struct {
 }
 
 type PostableForgotPassword struct {
-	OrgID           string `json:"orgId"`
-	Email           string `json:"email"`
-	FrontendBaseURL string `json:"frontendBaseURL"`
+	OrgID           valuer.UUID  `json:"orgId"`
+	Email           valuer.Email `json:"email"`
+	FrontendBaseURL string       `json:"frontendBaseURL"`
 }
 
 type ResetPasswordToken struct {

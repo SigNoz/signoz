@@ -337,18 +337,16 @@ func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	req := new(types.PostableForgotPassword)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	email, err := valuer.NewEmail(req.Email)
+	err := h.module.ForgotPassword(ctx, req.OrgID, req.Email, req.FrontendBaseURL)
 	if err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email address"))
+		render.Error(w, err)
 		return
 	}
-
-	_ = h.module.ForgotPassword(ctx, valuer.MustNewUUID(req.OrgID), email, req.FrontendBaseURL)
 
 	render.Success(w, http.StatusNoContent, nil)
 }

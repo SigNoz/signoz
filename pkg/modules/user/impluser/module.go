@@ -326,17 +326,16 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
 	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
-		return nil // for security reasons
-	}
-
-	if user == nil {
-		return nil // for security reasons
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil // for security reasons
+		}
+		return err
 	}
 
 	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
-		return nil
+		return err
 	}
 
 	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
