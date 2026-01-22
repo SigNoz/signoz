@@ -638,6 +638,7 @@ func TestStatementBuilderBucketQuery(t *testing.T) {
 	cases := []struct {
 		name        string
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		requestType qbtypes.RequestType
 		expected    qbtypes.Statement
 		expectedErr error
 	}{
@@ -655,10 +656,33 @@ func TestStatementBuilderBucketQuery(t *testing.T) {
 					Expression: "service.name = 'cartservice'",
 				},
 			},
+			requestType: qbtypes.RequestTypeBucket,
 			expected: qbtypes.Statement{
 				Query:       "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, histogram(30)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts ORDER BY ts",
 				Args:        []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 				BucketCount: 30,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "distribution query with distribution aggregation",
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "distribution(duration, 20)",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'frontend'",
+				},
+			},
+			requestType: qbtypes.RequestTypeDistribution,
+			expected: qbtypes.Statement{
+				Query:       "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT 1747947419000000000 AS ts, histogram(20)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ?",
+				Args:        []any{"frontend", "%service.name%", "%service.name\":\"frontend%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				BucketCount: 20,
 			},
 			expectedErr: nil,
 		},
@@ -691,7 +715,7 @@ func TestStatementBuilderBucketQuery(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, qbtypes.RequestTypeBucket, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)

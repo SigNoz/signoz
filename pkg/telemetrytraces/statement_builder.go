@@ -105,8 +105,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
-	case qbtypes.RequestTypeBucket:
-		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables)
+	case qbtypes.RequestTypeBucket, qbtypes.RequestTypeDistribution:
+		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables, requestType)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -821,10 +821,11 @@ func (b *traceQueryStatementBuilder) buildBucketQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	requestType qbtypes.RequestType,
 ) (*qbtypes.Statement, error) {
 
 	if len(query.Aggregations) == 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for bucket query")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for query")
 	}
 
 	var (
@@ -841,10 +842,14 @@ func (b *traceQueryStatementBuilder) buildBucketQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	sb.Select(fmt.Sprintf(
-		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-		int64(query.StepInterval.Seconds()),
-	))
+	if requestType == qbtypes.RequestTypeDistribution {
+		sb.Select(fmt.Sprintf("%d AS ts", start))
+	} else {
+		sb.Select(fmt.Sprintf(
+			"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
+			int64(query.StepInterval.Seconds()),
+		))
+	}
 
 	aggExpr := query.Aggregations[0]
 	rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
@@ -865,8 +870,11 @@ func (b *traceQueryStatementBuilder) buildBucketQuery(
 		return nil, err
 	}
 
-	sb.GroupBy("ts")
-	sb.OrderBy("ts")
+	if requestType == qbtypes.RequestTypeDistribution {
+	} else {
+		sb.GroupBy("ts")
+		sb.OrderBy("ts")
+	}
 
 	bucketCount := 0
 	if len(query.Aggregations) > 0 {

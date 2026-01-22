@@ -70,3 +70,42 @@ func TestReadAsBucketFromArray(t *testing.T) {
 	}
 	assert.Equal(t, expectedCounts, bucketData.Counts)
 }
+
+func TestReadAsDistributionFromArray(t *testing.T) {
+	columns := []cmock.ColumnType{
+		{Name: "ts", Type: "UInt64"},
+		{Name: "__result_0", Type: "Array(Array(Float64))"},
+	}
+
+	rowsData := [][]any{
+		{
+			uint64(1704103200),
+			[][]float64{
+				{0, 10, 5},
+				{10, 20, 3},
+				{20, 30, 2},
+			},
+		},
+	}
+
+	rows := cmock.NewRows(columns, rowsData)
+
+	// Test distribution consumption
+	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_distribution_query", 0)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	distData, ok := result.(*qbtypes.DistributionData)
+	require.True(t, ok, "expected *qbtypes.DistributionData")
+
+	assert.Equal(t, "test_distribution_query", distData.QueryName)
+	assert.Len(t, distData.Results, 3)
+
+	// Validate distribution buckets (timestamp is in milliseconds after conversion)
+	expectedBuckets := []*qbtypes.DistributionBucket{
+		{Timestamp: 1704103200000, BucketStart: 0, BucketEnd: 10, Value: 5},
+		{Timestamp: 1704103200000, BucketStart: 10, BucketEnd: 20, Value: 3},
+		{Timestamp: 1704103200000, BucketStart: 20, BucketEnd: 30, Value: 2},
+	}
+	assert.Equal(t, expectedBuckets, distData.Results)
+}

@@ -26,9 +26,10 @@ var (
 )
 
 type BucketPoint struct {
-	timestamp int64
-	bucketEnd float64
-	value     float64
+	timestamp   int64
+	bucketStart float64
+	bucketEnd   float64
+	value       float64
 }
 
 // consume reads every row and shapes it into the payload expected for the
@@ -51,8 +52,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
-	case qbtypes.RequestTypeBucket:
-		payload, err = readAsBucket(rows, queryName, bucketCount)
+	case qbtypes.RequestTypeBucket, qbtypes.RequestTypeDistribution:
+		payload, err = readAsBucket(rows, queryName, kind, bucketCount)
 		// TODO: add support for other request types
 	}
 
@@ -478,7 +479,7 @@ func numericAsFloat(v any) float64 {
 	}
 }
 
-func readAsBucket(rows driver.Rows, queryName string, bucketCount int) (*qbtypes.BucketData, error) {
+func readAsBucket(rows driver.Rows, queryName string, kind qbtypes.RequestType, bucketCount int) (any, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
@@ -550,6 +551,7 @@ func readAsBucket(rows driver.Rows, queryName string, bucketCount int) (*qbtypes
 
 					bucketPoints = append(bucketPoints, BucketPoint{
 						timestamp: ts,
+						bucketStart: lower,
 						bucketEnd: upper,
 						value:     count,
 					})
@@ -565,6 +567,22 @@ func readAsBucket(rows driver.Rows, queryName string, bucketCount int) (*qbtypes
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	if kind == qbtypes.RequestTypeDistribution {
+		results := make([]*qbtypes.DistributionBucket, len(bucketPoints))
+		for i, p := range bucketPoints {
+			results[i] = &qbtypes.DistributionBucket{
+				Timestamp:   p.timestamp,
+				BucketStart: p.bucketStart,
+				BucketEnd:   p.bucketEnd,
+				Value:       p.value,
+			}
+		}
+		return &qbtypes.DistributionData{
+			QueryName: queryName,
+			Results:   results,
+		}, nil
 	}
 
 	return buildBucketData(bucketPoints, uniqueTs, uniqueEnd, startByEnd, queryName, bucketCount)

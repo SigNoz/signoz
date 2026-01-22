@@ -19,7 +19,7 @@ import (
 const (
 	defaultHeatmapBuckets = "20"
 	// Histogram max buckets limit is 250
-	maxHeatmapBuckets = 250
+	maxBuckets = 250
 )
 
 type aggExprRewriter struct {
@@ -234,16 +234,16 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		}
 	} else {
 		// Non-If functions: map every argument as a column/value
-		if name == AggrFuncHeatmap.Name.StringValue() {
+		if name == AggrFuncHeatmap.Name.StringValue() || name == qbtypes.RequestTypeDistribution.StringValue() {
 			buckets := defaultHeatmapBuckets
 			if len(args) == 2 {
 				buckets = args[1].String()
 				val, err := strconv.Atoi(buckets)
 				if err != nil {
-					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid heatmap bucket count '%s': must be a number", buckets)
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid bucket count '%s': must be a number", buckets)
 				}
-				if val <= 0 || val > maxHeatmapBuckets {
-					return errors.NewInvalidInputf(errors.CodeInvalidInput, "heatmap buckets count %d exceeds range [1, %d]", val, maxHeatmapBuckets)
+				if val <= 0 || val > maxBuckets {
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "buckets count %d exceeds range [1, %d]", val, maxBuckets)
 				}
 				args = args[:1]
 				fn.Params.Items.Items = args
@@ -293,7 +293,7 @@ func parseFragment(sql string) (chparser.Expr, error) {
 	return sel.SelectItems[0].Expr, nil
 }
 
-// ParseBucketCount extracts bucket count from heatmap aggregation expression.
+// ParseBucketCount extracts bucket count from heatmap or distribution aggregation expression.
 func ParseBucketCount(expr string) (int, error) {
 	wrapped := fmt.Sprintf("SELECT %s", expr)
 	p := chparser.NewParser(wrapped)
@@ -308,7 +308,12 @@ func ParseBucketCount(expr string) (int, error) {
 	}
 
 	functionExpr, ok := sel.SelectItems[0].Expr.(*chparser.FunctionExpr)
-	if !ok || strings.ToLower(functionExpr.Name.Name) != "heatmap" {
+	if !ok {
+		return 0, nil
+	}
+
+	funcName := strings.ToLower(functionExpr.Name.Name)
+	if funcName != "heatmap" && funcName != "distribution" {
 		return 0, nil
 	}
 
@@ -323,8 +328,8 @@ func ParseBucketCount(expr string) (int, error) {
 			if count <= 0 {
 				return 0, nil
 			}
-			if count > maxHeatmapBuckets {
-				return maxHeatmapBuckets, nil
+			if count > maxBuckets {
+				return maxBuckets, nil
 			}
 			return count, nil
 		}

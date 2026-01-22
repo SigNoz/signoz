@@ -41,7 +41,7 @@ func TestParseBucketCount(t *testing.T) {
 		{
 			name:          "heatmap with bucket count exceeding max",
 			expr:          "heatmap(duration_nano, 500)",
-			expectedCount: 250, // maxHeatmapBuckets
+			expectedCount: 250, // maxBuckets
 			expectedError: false,
 		},
 		{
@@ -65,7 +65,7 @@ func TestParseBucketCount(t *testing.T) {
 		{
 			name:          "histogram function",
 			expr:          "histogram(duration_nano, 30)",
-			expectedCount: 0, // ParseBucketCount only works with heatmap
+			expectedCount: 0,
 			expectedError: false,
 		},
 		{
@@ -73,6 +73,24 @@ func TestParseBucketCount(t *testing.T) {
 			expr:          "heatmap(duration_nano, 'invalid')",
 			expectedCount: 0,
 			expectedError: true,
+		},
+		{
+			name:          "distribution without bucket count",
+			expr:          "distribution(duration_nano)",
+			expectedCount: 0,
+			expectedError: false,
+		},
+		{
+			name:          "distribution with valid bucket count",
+			expr:          "distribution(duration_nano, 15)",
+			expectedCount: 15,
+			expectedError: false,
+		},
+		{
+			name:          "distribution with bucket count exceeding max",
+			expr:          "distribution(duration_nano, 300)",
+			expectedCount: 250, // maxBuckets
+			expectedError: false,
 		},
 		{
 			name:          "empty expression",

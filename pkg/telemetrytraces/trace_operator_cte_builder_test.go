@@ -427,6 +427,49 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "distribution query with trace operator",
+			requestType: qbtypes.RequestTypeDistribution,
+			operator: qbtypes.QueryBuilderTraceOperator{
+				Expression:   "A => B",
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "distribution(duration_nano, 30)",
+					},
+				},
+			},
+			compositeQuery: &qbtypes.CompositeQuery{
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &qbtypes.Filter{
+								Expression: "service.name = 'api'",
+							},
+						},
+					},
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:   "B",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &qbtypes.Filter{
+								Expression: "service.name = 'database'",
+							},
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query:       "WITH toDateTime64(1747947419000000000, 9) AS t_from, toDateTime64(1747983448000000000, 9) AS t_to, 1747945619 AS bucket_from, 1747983448 AS bucket_to, all_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __resource_filter_A AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), A AS (SELECT * FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter_A) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND true), __resource_filter_B AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), B AS (SELECT * FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter_B) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND true), A_DIR_DESC_B AS (SELECT p.* FROM A AS p INNER JOIN B AS c ON p.trace_id = c.trace_id AND p.span_id = c.parent_span_id) SELECT 1747947419000000000 AS ts, histogram(30)(multiIf(duration_nano <> ?, duration_nano, NULL)) AS __result_0 FROM A_DIR_DESC_B SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Args:        []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "api", "%service.name%", "%service.name\":\"api%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "database", "%service.name%", "%service.name\":\"database%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 0},
+				BucketCount: 30,
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()

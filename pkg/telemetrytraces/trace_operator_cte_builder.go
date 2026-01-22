@@ -402,8 +402,8 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 		return b.buildTraceQuery(ctx, selectFromCTE)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, selectFromCTE)
-	case qbtypes.RequestTypeBucket:
-		return b.buildBucketQuery(ctx, selectFromCTE)
+	case qbtypes.RequestTypeBucket, qbtypes.RequestTypeDistribution:
+		return b.buildBucketQuery(ctx, selectFromCTE, requestType)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -906,17 +906,21 @@ func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
 	return 0, false
 }
 
-func (b *traceOperatorCTEBuilder) buildBucketQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+func (b *traceOperatorCTEBuilder) buildBucketQuery(ctx context.Context, selectFromCTE string, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
 	if len(b.operator.Aggregations) == 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for heatmap query")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for query")
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	sb.Select(fmt.Sprintf(
-		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-		int64(b.operator.StepInterval.Seconds()),
-	))
+	if requestType == qbtypes.RequestTypeDistribution {
+		sb.Select(fmt.Sprintf("%d AS ts", b.start))
+	} else {
+	    sb.Select(fmt.Sprintf(
+		    "toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
+		    int64(b.operator.StepInterval.Seconds()),
+	    ))
+	}
 
 	keySelectors := b.getKeySelectors()
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
@@ -944,8 +948,11 @@ func (b *traceOperatorCTEBuilder) buildBucketQuery(ctx context.Context, selectFr
 
 	sb.From(selectFromCTE)
 
-	sb.GroupBy("ts")
-	sb.OrderBy("ts")
+	if requestType == qbtypes.RequestTypeDistribution {
+	} else {
+		sb.GroupBy("ts")
+		sb.OrderBy("ts")
+	}
 
 	bucketCount := 0
 	if len(b.operator.Aggregations) > 0 {
