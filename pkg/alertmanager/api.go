@@ -266,13 +266,13 @@ func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = api.alertmanager.CreateChannel(ctx, claims.OrgID, receiver)
+	channel, err := api.alertmanager.CreateChannel(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusNoContent, nil)
+	render.Success(rw, http.StatusCreated, channel)
 }
 
 func (api *API) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
