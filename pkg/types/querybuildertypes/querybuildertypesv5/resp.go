@@ -202,6 +202,18 @@ type BucketData struct {
 	Counts       [][]float64 `json:"counts"`
 }
 
+type DistributionBucket struct {
+	Timestamp   int64   `json:"ts"`
+	BucketStart float64 `json:"bucket_start"`
+	BucketEnd   float64 `json:"bucket_end"`
+	Value       float64 `json:"value"`
+}
+
+type DistributionData struct {
+	QueryName string                `json:"queryName"`
+	Results   []*DistributionBucket `json:"results"`
+}
+
 func roundToNonZeroDecimals(val float64, n int) float64 {
 	if val == 0 || math.IsNaN(val) || math.IsInf(val, 0) {
 		return val

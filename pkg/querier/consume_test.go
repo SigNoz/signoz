@@ -67,3 +67,71 @@ func TestReadAsBucketFromRows(t *testing.T) {
 	}
 	assert.Equal(t, expectedCounts, bucketData.Counts)
 }
+
+func TestReadAsDistributionFromRows(t *testing.T) {
+	columns := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "bucket_end", Type: "Float64"},
+		{Name: "bucket_start", Type: "Float64"},
+		{Name: "value", Type: "Float64"},
+	}
+
+	ts := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
+
+	rowsData := [][]any{
+		{ts, 10.0, 0.0, 5.0},
+		{ts, 20.0, 10.0, 3.0},
+		{ts, 30.0, 20.0, 2.0},
+		{ts, 50.0, 30.0, 1.0},
+	}
+
+	rows := cmock.NewRows(columns, rowsData)
+
+	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_distribution_query")
+	require.NoError(t, err)
+	if result == nil {
+		t.Fatalf("result is nil, error: %v", err)
+	}
+	require.NotNil(t, result)
+
+	distributionData, ok := result.(*qbtypes.DistributionData)
+	require.True(t, ok, "expected *qbtypes.DistributionData, got %T", result)
+
+	assert.Equal(t, "test_distribution_query", distributionData.QueryName)
+	assert.Len(t, distributionData.Results, 4)
+
+	expectedBuckets := []*qbtypes.DistributionBucket{
+		{
+			Timestamp:   ts.UnixMilli(),
+			BucketStart: 0.0,
+			BucketEnd:   10.0,
+			Value:       5.0,
+		},
+		{
+			Timestamp:   ts.UnixMilli(),
+			BucketStart: 10.0,
+			BucketEnd:   20.0,
+			Value:       3.0,
+		},
+		{
+			Timestamp:   ts.UnixMilli(),
+			BucketStart: 20.0,
+			BucketEnd:   30.0,
+			Value:       2.0,
+		},
+		{
+			Timestamp:   ts.UnixMilli(),
+			BucketStart: 30.0,
+			BucketEnd:   50.0,
+			Value:       1.0,
+		},
+	}
+
+	for i, expected := range expectedBuckets {
+		actual := distributionData.Results[i]
+		assert.Equal(t, expected.Timestamp, actual.Timestamp, "bucket %d timestamp mismatch", i)
+		assert.Equal(t, expected.BucketStart, actual.BucketStart, "bucket %d start mismatch", i)
+		assert.Equal(t, expected.BucketEnd, actual.BucketEnd, "bucket %d end mismatch", i)
+		assert.Equal(t, expected.Value, actual.Value, "bucket %d value mismatch", i)
+	}
+}

@@ -141,8 +141,8 @@ func (b *MetricQueryStatementBuilder) Build(
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	if requestType == qbtypes.RequestTypeBucket {
-		return b.buildBucketQuery(ctx, start, end, query, keys, variables)
+	if requestType == qbtypes.RequestTypeBucket || requestType == qbtypes.RequestTypeDistribution {
+		return b.buildBucketQuery(ctx, start, end, query, keys, variables, requestType)
 	}
 
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
@@ -620,6 +620,7 @@ func (b *MetricQueryStatementBuilder) buildBucketQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	requestType qbtypes.RequestType,
 ) (*qbtypes.Statement, error) {
 	filteredKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(keys))
 	maps.Copy(filteredKeys, keys)
@@ -691,24 +692,43 @@ func (b *MetricQueryStatementBuilder) buildBucketQuery(
 	}
 
 	inner := sqlbuilder.NewSelectBuilder()
-	inner.Select("ts")
+	if requestType == qbtypes.RequestTypeDistribution {
+		inner.Select(fmt.Sprintf("%d AS ts", start))
+	} else {
+		inner.Select("ts")
+	}
 	inner.Where("le != '+Inf'")
 	inner.Where("toFloat64OrNull(le) IS NOT NULL")
 	inner.Where("isFinite(toFloat64OrNull(le))")
 	inner.SelectMore("toFloat64OrNull(le) AS bucket_end")
 	inner.SelectMore("sum(value) AS value")
 	inner.From("__spatial_aggregation_cte")
-	inner.GroupBy("ts", "bucket_end")
-	inner.OrderBy("ts", "bucket_end")
+	if requestType == qbtypes.RequestTypeDistribution {
+		inner.GroupBy("bucket_end")
+		inner.OrderBy("bucket_end")
+	} else {
+		inner.GroupBy("ts", "bucket_end")
+		inner.OrderBy("ts", "bucket_end")
+	}
 	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("ts")
-	sb.SelectMore("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end) AS bucket_start")
-	sb.SelectMore("bucket_end")
-	sb.SelectMore("greatest(value - lagInFrame(value, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end), toFloat64(0)) AS value")
+	if requestType == qbtypes.RequestTypeDistribution {
+		sb.SelectMore("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (ORDER BY bucket_end) AS bucket_start")
+		sb.SelectMore("bucket_end")
+		sb.SelectMore("greatest(value - lagInFrame(value, 1, toFloat64(0)) OVER (ORDER BY bucket_end), toFloat64(0)) AS value")
+	} else {
+		sb.SelectMore("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end) AS bucket_start")
+		sb.SelectMore("bucket_end")
+		sb.SelectMore("greatest(value - lagInFrame(value, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end), toFloat64(0)) AS value")
+	}
 	sb.From("(" + innerQ + ")")
-	sb.OrderBy("ts", "bucket_end")
+	if requestType == qbtypes.RequestTypeDistribution {
+		sb.OrderBy("bucket_end")
+	} else {
+		sb.OrderBy("ts", "bucket_end")
+	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
