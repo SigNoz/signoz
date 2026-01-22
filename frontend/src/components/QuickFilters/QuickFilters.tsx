@@ -26,7 +26,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
 import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
 
@@ -70,15 +70,17 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		redirectWithQueryBuilderData,
 		panelType,
 	} = useQueryBuilder();
-	const [value, setValue] = useState(lastUsedQuery || 0);
 	const [open, setOpen] = useState(false);
 
-	// Sync value with lastUsedQuery when queries change (e.g., after deletion)
-	useEffect(() => {
-		const maxIndex = (currentQuery?.builder?.queryData?.length || 1) - 1;
-		const validIndex = Math.min(lastUsedQuery || 0, maxIndex);
-		setValue(validIndex);
-	}, [lastUsedQuery, currentQuery?.builder?.queryData?.length]);
+	// Sync lastUsedQuery when queries change (e.g., after deletion)
+	const validQueryIndex = useMemo(
+		() =>
+			Math.min(
+				lastUsedQuery || 0,
+				(currentQuery?.builder?.queryData?.length || 1) - 1,
+			),
+		[lastUsedQuery, currentQuery?.builder?.queryData?.length],
+	);
 
 	// Determine if we're in ListView mode
 	const isListView = panelType === PANEL_TYPES.LIST;
@@ -180,7 +182,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				<Combobox open={open} onOpenChange={setOpen}>
 					<ComboboxTrigger
 						placeholder="Select a query"
-						value={queryOptions.find((f) => f.value === value)?.label || ''}
+						value={queryOptions.find((f) => f.value === validQueryIndex)?.label || ''}
 						className="select-box"
 					/>
 					{open && (
@@ -192,11 +194,10 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 											key={option.value}
 											value={String(option.value)}
 											onSelect={(): void => {
-												setValue(option.value);
 												handleQueryChange(option.value);
 												setOpen(false);
 											}}
-											isSelected={value === option.value}
+											isSelected={validQueryIndex === option.value}
 											showCheck={false}
 										>
 											{option.label}
