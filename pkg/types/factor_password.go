@@ -47,6 +47,7 @@ type ResetPasswordToken struct {
 	Identifiable
 	Token      string      `bun:"token,type:text,notnull" json:"token"`
 	PasswordID valuer.UUID `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
+	ExpiresAt  time.Time   `bun:"expires_at,type:timestamptz,notnull" json:"expiresAt"`
 }
 
 type FactorPassword struct {
@@ -142,13 +143,14 @@ func NewHashedPassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func NewResetPasswordToken(passwordID valuer.UUID) (*ResetPasswordToken, error) {
+func NewResetPasswordToken(passwordID valuer.UUID, expiresAt time.Time) (*ResetPasswordToken, error) {
 	return &ResetPasswordToken{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		Token:      valuer.GenerateUUID().String(),
 		PasswordID: passwordID,
+		ExpiresAt:  expiresAt,
 	}, nil
 }
 

@@ -305,7 +305,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.PasswordResetTokenValidity))
 	if err != nil {
 		return nil, err
 	}
@@ -368,6 +368,10 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err
+	}
+
+	if resetPasswordToken.ExpiresAt.Before(time.Now()) {
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
