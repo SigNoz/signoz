@@ -1,10 +1,10 @@
-from typing import Callable
 from http import HTTPStatus
-import requests
-import uuid
+from typing import Callable
+
 import docker
 import docker.errors
 import pytest
+import requests
 from testcontainers.core.container import Network
 from wiremock.testing.testcontainer import WireMockContainer
 
@@ -13,6 +13,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
 
 @pytest.fixture(name="notification_channel", scope="package")
 def notification_channel(
@@ -73,32 +74,41 @@ def notification_channel(
 @pytest.fixture(name="create_webhook_notification_channel", scope="function")
 def create_webhook_notification_channel(
     signoz: types.SigNoz,
-    create_user_admin: None, # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str]
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
 ) -> Callable[[str, str, dict, bool], str]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     channel_ids = []
 
     # function to create notification channel
-    def _create_webhook_notification_channel(channel_name: str, webhook_url: str, http_config: dict = {}, send_resolved: bool = True) -> str:
+    def _create_webhook_notification_channel(
+        channel_name: str,
+        webhook_url: str,
+        http_config: dict = {},
+        send_resolved: bool = True,
+    ) -> str:
         response = requests.post(
             signoz.self.host_configs["8080"].get("/api/v1/channels"),
             json={
                 "name": channel_name,
                 "webhook_configs": [
-                    {"send_resolved": send_resolved, "url": webhook_url, "http_config": http_config}
+                    {
+                        "send_resolved": send_resolved,
+                        "url": webhook_url,
+                        "http_config": http_config,
+                    }
                 ],
             },
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.CREATED,(
+        assert response.status_code == HTTPStatus.CREATED, (
             f"Failed to create channel, "
             f"Response: {response.text} "
             f"Response status: {response.status_code}"
         )
-        
+
         channel_id = response.json()["data"]["id"]
         channel_ids.append(channel_id)
         return channel_id
@@ -111,8 +121,9 @@ def create_webhook_notification_channel(
             timeout=5,
         )
         if response.status_code != HTTPStatus.NO_CONTENT:
-            raise Exception(f"Failed to delete channel, api returned {response.status_code} with response: {response.text}")
-
+            raise Exception(
+                f"Failed to delete channel, api returned {response.status_code} with response: {response.text}"
+            )
 
     yield _create_webhook_notification_channel
     # delete the channel after the test
@@ -120,4 +131,6 @@ def create_webhook_notification_channel(
         try:
             _delete_webhook_notification_channel(channel_id)
         except Exception as e:
-            logger.error("Error deleting channel: %s", {"channel_id": channel_id, "error": e})
+            logger.error(
+                "Error deleting channel: %s", {"channel_id": channel_id, "error": e}
+            )
