@@ -208,9 +208,15 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					: rowB.endpointCount;
 
 			// Handle cases where one or both values are empty
-			if (!endpointA && !endpointB) return 0;
-			if (!endpointA) return 1;
-			if (!endpointB) return -1;
+			if (!endpointA && !endpointB) {
+				return 0;
+			}
+			if (!endpointA) {
+				return 1;
+			}
+			if (!endpointB) {
+				return -1;
+			}
 
 			return Number(endpointA) - Number(endpointB);
 		},
@@ -288,8 +294,12 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					size="small"
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
-						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						if (errorRatePercent >= 90) {
+							return Color.BG_SAKURA_500;
+						}
+						if (errorRatePercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
 						return Color.BG_FOREST_500;
 					})()}
 					className="progress-bar error-rate"
@@ -992,7 +1002,9 @@ export const getEndPointsColumnsConfig = (
 			return (
 				<div className="endpoint-name-value">
 					{((): React.ReactNode => {
-						if (!isGroupedByAttribute) return null;
+						if (!isGroupedByAttribute) {
+							return null;
+						}
 						return expandedRowKeys.includes(record.key) ? (
 							<ChevronDown size={14} />
 						) : (
@@ -1065,8 +1077,12 @@ export const getEndPointsColumnsConfig = (
 				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
 				string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
-					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					if (errorRatePercent >= 90) {
+						return Color.BG_SAKURA_500;
+					}
+					if (errorRatePercent >= 60) {
+						return Color.BG_AMBER_500;
+					}
 					return Color.BG_FOREST_500;
 				})()}
 				className="progress-bar error-rate"
@@ -1108,7 +1124,9 @@ export const formatEndPointsDataForTable = (
 	orderBy?: OrderByPayload | null,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): EndPointsTableRowData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	const isGroupedByAttribute = groupBy.length > 0;
 
 	let formattedData: EndPointsTableRowData[] = [];
@@ -1229,7 +1247,9 @@ export interface TopErrorsTableRowData {
 export const formatTopErrorsDataForTable = (
 	scalarResult: TopErrorsResponseRow | undefined,
 ): TopErrorsTableRowData[] => {
-	if (!scalarResult?.data) return [];
+	if (!scalarResult?.data) {
+		return [];
+	}
 
 	const columns = scalarResult.columns || [];
 	const rows = scalarResult.data || [];
@@ -1368,7 +1388,9 @@ export const createFiltersForSelectedRowData = (
 		op: 'and',
 	};
 
-	if (!selectedRowData) return baseFilters;
+	if (!selectedRowData) {
+		return baseFilters;
+	}
 
 	const { groupedByMeta = {} } = selectedRowData;
 
@@ -2313,7 +2335,9 @@ export const getFormattedEndPointMetricsData = (
 export const getFormattedEndPointStatusCodeData = (
 	data: EndPointStatusCodeResponseRow[],
 ): EndPointStatusCodeData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	return data.map((row) => ({
 		key: v4(),
 		statusCode: getDisplayValue(row.data.response_status_code),
@@ -2410,7 +2434,9 @@ interface EndPointDropDownData {
 export const getFormattedEndPointDropDownData = (
 	data: EndPointDropDownResponseRow[],
 ): EndPointDropDownData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	return data.map((row) => ({
 		key: v4(),
 		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
@@ -2447,7 +2473,9 @@ export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): DependentServicesData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	const totalCount = data?.reduce((acc, row) => acc + Number(row.data.A), 0);
 	return data?.map((row) => ({
 		key: v4(),
@@ -2548,8 +2576,12 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
 						);
-						if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
-						if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
+						if (errorPercentagePercent >= 90) {
+							return Color.BG_SAKURA_500;
+						}
+						if (errorPercentagePercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
 						return Color.BG_FOREST_500;
 					})()}
 					className="progress-bar error-rate"
@@ -2651,7 +2683,9 @@ export const groupStatusCodes = (
 	// First pass: collect all series and timestamps
 	result.forEach((series) => {
 		const statusCode = series.metric?.response_status_code;
-		if (!statusCode) return;
+		if (!statusCode) {
+			return;
+		}
 
 		const statusClass = getStatusCodeClass(statusCode);
 
@@ -2691,7 +2725,9 @@ export const groupStatusCodes = (
 	// Second pass: aggregate values by status class and timestamp
 	result.forEach((series) => {
 		const statusCode = series.metric?.response_status_code;
-		if (!statusCode) return;
+		if (!statusCode) {
+			return;
+		}
 
 		const statusClass = getStatusCodeClass(statusCode);
 
@@ -3082,8 +3118,12 @@ export const getAllEndpointsWidgetData = (
 							? 0
 							: errorRate) as number).toFixed(2),
 					);
-					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					if (errorRatePercent >= 90) {
+						return Color.BG_SAKURA_500;
+					}
+					if (errorRatePercent >= 60) {
+						return Color.BG_AMBER_500;
+					}
 					return Color.BG_FOREST_500;
 				})()}
 				className="progress-bar error-rate"

@@ -86,7 +86,9 @@ function WidgetGraphComponent({
 	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
-		if (!lineChartRef.current) return;
+		if (!lineChartRef.current) {
+			return;
+		}
 
 		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
@@ -110,7 +112,9 @@ function WidgetGraphComponent({
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const onDeleteHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== widget.id,
@@ -130,7 +134,9 @@ function WidgetGraphComponent({
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
@@ -140,7 +146,9 @@ function WidgetGraphComponent({
 	};
 
 	const onCloneHandler = async (): Promise<void> => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const uuid = v4();
 
@@ -178,7 +186,9 @@ function WidgetGraphComponent({
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+					if (setLayouts) {
+						setLayouts(updatedDashboard.data?.data?.layout || []);
+					}
 					if (setSelectedDashboard && updatedDashboard.data) {
 						setSelectedDashboard(updatedDashboard.data);
 					}

@@ -23,7 +23,9 @@ export const initializeDefaultVariables = (
 		selectedValue: IDashboardVariable['selectedValue'],
 	) => void,
 ): void => {
-	if (!variables) return;
+	if (!variables) {
+		return;
+	}
 
 	Object.values(variables).forEach((variable) => {
 		const { id, name, allSelected, showALLOption } = variable;

@@ -78,8 +78,12 @@ describe('useDarkMode', () => {
 
 		it('should load theme from localStorage', () => {
 			localStorageMock.getItem.mockImplementation((key: string) => {
-				if (key === 'THEME') return 'light';
-				if (key === 'THEME_AUTO_SWITCH') return 'true';
+				if (key === 'THEME') {
+					return 'light';
+				}
+				if (key === 'THEME_AUTO_SWITCH') {
+					return 'true';
+				}
 				return null;
 			});
 

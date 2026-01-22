@@ -122,7 +122,7 @@ def create_saml_client(
                         "config": {
                             "full.path": "false",
                             "attribute.nameformat": "Basic",
-                            "single": "true", # ! this was changed to true as we need the groups in the single attribute section
+                            "single": "true",  # ! this was changed to true as we need the groups in the single attribute section
                             "friendly.name": "groups",
                             "attribute.name": "groups",
                         },
@@ -322,7 +322,9 @@ def get_oidc_settings(idp: types.TestContainerIDP) -> dict:
 
 
 @pytest.fixture(name="create_user_idp", scope="function")
-def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool, str, str], None]:
+def create_user_idp(
+    idp: types.TestContainerIDP,
+) -> Callable[[str, str, bool, str, str], None]:
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -332,7 +334,13 @@ def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool, st
 
     created_users = []
 
-    def _create_user_idp(email: str, password: str, verified: bool = True, first_name: str = "", last_name: str = "") -> None:
+    def _create_user_idp(
+        email: str,
+        password: str,
+        verified: bool = True,
+        first_name: str = "",
+        last_name: str = "",
+    ) -> None:
         payload = {
             "username": email,
             "email": email,
@@ -358,19 +366,25 @@ def create_user_idp(idp: types.TestContainerIDP) -> Callable[[str, str, bool, st
 @pytest.fixture(name="idp_login", scope="function")
 def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
     def _idp_login(email: str, password: str) -> None:
-        # Input email. The following element is present in the idp login page.
-        # <input id="username" name="username" value="" type="text" autocomplete="username" autofocus aria-invalid=""/>
-        driver.find_element(By.ID, "username").send_keys(email)
-
-        # Input password. The following element is present in the idp login page.
-        # <input id="password" name="password" value="" type="password" autocomplete="current-password" aria-invalid=""/>
-        driver.find_element(By.ID, "password").send_keys(password)
-
-        # Click login button. The following element is present in the idp login page.
-        # <button class="pf-v5-c-button pf-m-primary pf-m-block " name="login" id="kc-login" type="submit" >Sign In</button>
-        driver.find_element(By.ID, "kc-login").click()
-
+        # wait for the elements to be clickable before interacting with them
         wait = WebDriverWait(driver, 10)
+
+        # NOTE: `element_to_be_clickable` ensures the element is visible and enabled before interaction
+        # there could be scenarios where the DOM may change between the time we find the element
+        # and the time we start interacting with it
+        # this avoids the race conditions
+
+        # Fill the email in username field
+        username_field = wait.until(EC.element_to_be_clickable((By.ID, "username")))
+        username_field.send_keys(email)
+        
+        # Fill the password in password field
+        password_field = wait.until(EC.element_to_be_clickable((By.ID, "password")))
+        password_field.send_keys(password)
+
+        # Click the login button
+        login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
+        login_button.click()
 
         # Wait till kc-login element has vanished from the page, which means that a redirection is taking place.
         wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
@@ -400,14 +414,14 @@ def create_group_idp(idp: types.TestContainerIDP) -> Callable[[str], str]:
     for group_id in created_groups:
         try:
             client.delete_group(group_id)
-        except Exception: # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
 
 @pytest.fixture(name="create_user_idp_with_groups", scope="function")
 def create_user_idp_with_groups(
     idp: types.TestContainerIDP,
-    create_group_idp: Callable[[str], str], # pylint: disable=redefined-outer-name
+    create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str, bool, List[str]], None]:
     """Creates a user in Keycloak IDP with specified groups."""
     client = KeycloakAdmin(
@@ -450,14 +464,14 @@ def create_user_idp_with_groups(
     for user_id in created_users:
         try:
             client.delete_user(user_id)
-        except Exception: # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
 
 @pytest.fixture(name="add_user_to_group", scope="function")
 def add_user_to_group(
     idp: types.TestContainerIDP,
-    create_group_idp: Callable[[str], str], # pylint: disable=redefined-outer-name
+    create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str], None]:
     """Adds an existing user to a group."""
     client = KeycloakAdmin(
@@ -478,7 +492,7 @@ def add_user_to_group(
 @pytest.fixture(name="create_user_idp_with_role", scope="function")
 def create_user_idp_with_role(
     idp: types.TestContainerIDP,
-    create_group_idp: Callable[[str], str], # pylint: disable=redefined-outer-name
+    create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str, bool, str, List[str]], None]:
     """Creates a user in Keycloak IDP with a custom role attribute and optional groups."""
     client = KeycloakAdmin(
@@ -524,13 +538,14 @@ def create_user_idp_with_role(
     for user_id in created_users:
         try:
             client.delete_user(user_id)
-        except Exception: # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
 
 @pytest.fixture(name="setup_user_profile", scope="package")
 def setup_user_profile(idp: types.TestContainerIDP) -> Callable[[], None]:
     """Setup Keycloak User Profile with signoz_role attribute."""
+
     def _setup_user_profile() -> None:
         client = KeycloakAdmin(
             server_url=idp.container.host_configs["6060"].base(),
@@ -538,35 +553,36 @@ def setup_user_profile(idp: types.TestContainerIDP) -> Callable[[], None]:
             password=IDP_ROOT_PASSWORD,
             realm_name="master",
         )
-        
+
         # Get current user profile config
         profile = client.get_realm_users_profile()
-        
+
         # Check if signoz_role attribute already exists
         attributes = profile.get("attributes", [])
-        signoz_role_exists = any(attr.get("name") == "signoz_role" for attr in attributes)
-        
+        signoz_role_exists = any(
+            attr.get("name") == "signoz_role" for attr in attributes
+        )
+
         if not signoz_role_exists:
             # Add signoz_role attribute to user profile
-            attributes.append({
-                "name": "signoz_role",
-                "displayName": "SigNoz Role",
-                "validations": {},
-                "annotations": {},
-                # "required": {
-                #     "roles": []  # Not required
-                # },
-                "permissions": {
-                    "view": ["admin", "user"],
-                    "edit": ["admin"]
-                },
-                "multivalued": False
-            })
+            attributes.append(
+                {
+                    "name": "signoz_role",
+                    "displayName": "SigNoz Role",
+                    "validations": {},
+                    "annotations": {},
+                    # "required": {
+                    #     "roles": []  # Not required
+                    # },
+                    "permissions": {"view": ["admin", "user"], "edit": ["admin"]},
+                    "multivalued": False,
+                }
+            )
             profile["attributes"] = attributes
-            
+
             # Update the realm user profile
             client.update_realm_users_profile(payload=profile)
-    
+
     return _setup_user_profile
 
 
@@ -575,7 +591,7 @@ def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
     # Check if groups scope exists
     scopes = client.get_client_scopes()
     groups_scope_exists = any(s.get("name") == "groups" for s in scopes)
-    
+
     if not groups_scope_exists:
         # Create the groups client scope
         client.create_client_scope(
@@ -652,11 +668,11 @@ def get_user_by_email(signoz: types.SigNoz, admin_token: str, email: str) -> dic
 
 
 def perform_oidc_login(
-    signoz: types.SigNoz, # pylint: disable=unused-argument
+    signoz: types.SigNoz,  # pylint: disable=unused-argument
     idp: types.TestContainerIDP,
     driver: webdriver.Chrome,
     get_session_context: Callable[[str], str],
-    idp_login: Callable[[str, str], None], # pylint: disable=redefined-outer-name
+    idp_login: Callable[[str, str], None],  # pylint: disable=redefined-outer-name
     email: str,
     password: str,
 ) -> None:
@@ -688,10 +704,10 @@ def get_saml_domain(signoz: types.SigNoz, admin_token: str) -> dict:
 
 
 def perform_saml_login(
-    signoz: types.SigNoz, # pylint: disable=unused-argument
+    signoz: types.SigNoz,  # pylint: disable=unused-argument
     driver: webdriver.Chrome,
     get_session_context: Callable[[str], str],
-    idp_login: Callable[[str, str], None], # pylint: disable=redefined-outer-name
+    idp_login: Callable[[str, str], None],  # pylint: disable=redefined-outer-name
     email: str,
     password: str,
 ) -> None:

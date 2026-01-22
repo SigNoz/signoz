@@ -3,7 +3,7 @@
 import { render, screen } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/config';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';

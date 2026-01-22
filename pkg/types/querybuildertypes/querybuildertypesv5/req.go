@@ -280,6 +280,31 @@ func (r *QueryRangeRequest) NumAggregationForQuery(name string) int64 {
 	return int64(numAgg)
 }
 
+// HasOrderSpecified returns true if any query has an explicit order provided.
+func (r *QueryRangeRequest) HasOrderSpecified() bool {
+	for _, query := range r.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case QueryBuilderQuery[TraceAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case QueryBuilderQuery[LogAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case QueryBuilderQuery[MetricAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case QueryBuilderFormula:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (r *QueryRangeRequest) FuncsForQuery(name string) []Function {
 	funcs := []Function{}
 	for _, query := range r.CompositeQuery.Queries {

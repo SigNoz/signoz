@@ -132,8 +132,9 @@ export function getColumns(
 			}
 
 			if (column === 'breach_percentage' && text) {
-				if (!isNumber(text))
+				if (!isNumber(text)) {
 					return <Typography.Text>{text.toString()}</Typography.Text>;
+				}
 				return (
 					<Typography.Text>
 						{(typeof text === 'string' ? parseFloat(text) : text).toFixed(2)} %

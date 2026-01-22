@@ -65,6 +65,10 @@ jobs:
           set -ex
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
       - name: docker-community
         shell: bash
         run: |

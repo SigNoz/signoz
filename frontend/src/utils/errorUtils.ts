@@ -4,7 +4,9 @@
  * @returns HTTP status code if available, undefined otherwise
  */
 export const getHttpStatusCode = (error: any): number | undefined => {
-	if (!error) return undefined;
+	if (!error) {
+		return undefined;
+	}
 
 	// Try to get status code from APIError instance (transformed by ErrorResponseHandlerV2)
 	if (typeof error.getHttpStatusCode === 'function') {

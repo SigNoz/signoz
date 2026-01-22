@@ -169,7 +169,9 @@ export const useSpanContextLogs = ({
 
 	// Get first and last span logs for context queries
 	const { firstSpanLog, lastSpanLog } = useMemo(() => {
-		if (spanLogs.length === 0) return { firstSpanLog: null, lastSpanLog: null };
+		if (spanLogs.length === 0) {
+			return { firstSpanLog: null, lastSpanLog: null };
+		}
 
 		const sortedLogs = [...spanLogs].sort(
 			(a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
@@ -182,12 +184,16 @@ export const useSpanContextLogs = ({
 	}, [spanLogs]);
 	// Phase 2: Fetch context logs before first span log
 	const beforeFilter = useMemo(() => {
-		if (!firstSpanLog) return null;
+		if (!firstSpanLog) {
+			return null;
+		}
 		return createContextFilters(traceId, firstSpanLog.id, 'lt');
 	}, [traceId, firstSpanLog]);
 
 	const beforeQueryPayload = useMemo(() => {
-		if (!beforeFilter) return null;
+		if (!beforeFilter) {
+			return null;
+		}
 		return getSpanLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
@@ -211,12 +217,16 @@ export const useSpanContextLogs = ({
 
 	// Phase 3: Fetch context logs after last span log
 	const afterFilter = useMemo(() => {
-		if (!lastSpanLog) return null;
+		if (!lastSpanLog) {
+			return null;
+		}
 		return createContextFilters(traceId, lastSpanLog.id, 'gt');
 	}, [traceId, lastSpanLog]);
 
 	const afterQueryPayload = useMemo(() => {
-		if (!afterFilter) return null;
+		if (!afterFilter) {
+			return null;
+		}
 		return getSpanLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
@@ -241,7 +251,9 @@ export const useSpanContextLogs = ({
 
 	// Extract context logs
 	const beforeLogs = useMemo(() => {
-		if (!beforeData?.payload?.data?.newResult?.data?.result?.[0]?.list) return [];
+		if (!beforeData?.payload?.data?.newResult?.data?.result?.[0]?.list) {
+			return [];
+		}
 
 		return beforeData.payload.data.newResult.data.result[0].list.map(
 			(item: any) => ({
@@ -252,7 +264,9 @@ export const useSpanContextLogs = ({
 	}, [beforeData]);
 
 	const afterLogs = useMemo(() => {
-		if (!afterData?.payload?.data?.newResult?.data?.result?.[0]?.list) return [];
+		if (!afterData?.payload?.data?.newResult?.data?.result?.[0]?.list) {
+			return [];
+		}
 
 		return afterData.payload.data.newResult.data.result[0].list.map(
 			(item: any) => ({
@@ -270,13 +284,17 @@ export const useSpanContextLogs = ({
 	// Phase 4: Check for trace_id-only logs when span has no logs
 	// This helps differentiate between "no logs for span" vs "no logs for trace"
 	const traceOnlyFilter = useMemo(() => {
-		if (spanLogs.length > 0) return null;
+		if (spanLogs.length > 0) {
+			return null;
+		}
 		const filters = getTraceOnlyFilters(traceId);
 		return convertFiltersToExpression(filters);
 	}, [traceId, spanLogs.length]);
 
 	const traceOnlyQueryPayload = useMemo(() => {
-		if (!traceOnlyFilter) return null;
+		if (!traceOnlyFilter) {
+			return null;
+		}
 		return getSpanLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
@@ -298,7 +316,9 @@ export const useSpanContextLogs = ({
 	});
 
 	const hasTraceIdLogs = useMemo(() => {
-		if (spanLogs.length > 0) return true;
+		if (spanLogs.length > 0) {
+			return true;
+		}
 		return !!(
 			traceOnlyData?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0
 		);

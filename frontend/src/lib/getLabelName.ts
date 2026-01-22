@@ -44,8 +44,12 @@ const getLabelName = (
 	const result = `${value === undefined ? '' : value}`;
 
 	if (post.length === 0 && pre.length === 0) {
-		if (result) return result;
-		if (query) return query;
+		if (result) {
+			return result;
+		}
+		if (query) {
+			return query;
+		}
 		return result;
 	}
 	return `${result}{${pre}${post}}`;

@@ -6,7 +6,9 @@ function GetFormulaName(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	formulas: { name: string; [key: string]: any }[] = [],
 ): string | null {
-	if (!formulas.length) return 'F1';
+	if (!formulas.length) {
+		return 'F1';
+	}
 	if (formulas.length === MAX_QUERIES) {
 		return null;
 	}

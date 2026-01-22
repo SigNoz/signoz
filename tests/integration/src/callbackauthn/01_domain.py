@@ -78,11 +78,14 @@ def test_create_and_get_domain(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     data = response.json()["data"]
-    
+
     assert len(data) == 2
 
     for domain in data:
-        assert domain["name"] in ["domain-google.integration.test", "domain-saml.integration.test"]
+        assert domain["name"] in [
+            "domain-google.integration.test",
+            "domain-saml.integration.test",
+        ]
         assert domain["ssoType"] in ["google_auth", "saml"]
 
 

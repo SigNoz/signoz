@@ -185,7 +185,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	}, [data, selectedDashboard?.id]);
 
 	const onSaveHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const updatedDashboard: Props = {
 			id: selectedDashboard.id,
@@ -209,8 +211,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			onSuccess: (updatedDashboard) => {
 				setSelectedRowWidgetId(null);
 				if (updatedDashboard.data) {
-					if (updatedDashboard.data.data.layout)
+					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
+					}
 					setSelectedDashboard(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
@@ -280,15 +283,21 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
-		if (!currentSelectRowId) return;
+		if (!currentSelectRowId) {
+			return;
+		}
 
 		const currentWidget = selectedDashboard?.data?.widgets?.find(
 			(e) => e.id === currentSelectRowId,
 		);
 
-		if (!currentWidget) return;
+		if (!currentWidget) {
+			return;
+		}
 
 		currentWidget.title = newTitle;
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
@@ -307,11 +316,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
-				if (setPanelMap) setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				if (setPanelMap) {
+					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				}
 				form.setFieldValue('title', '');
 				setIsSettingsModalOpen(false);
 				setCurrentSelectRowId(null);
@@ -320,7 +333,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!currentSelectRowId) return;
+		if (!currentSelectRowId) {
+			return;
+		}
 		form.setFieldValue(
 			'title',
 			(widgets?.find((widget) => widget.id === currentSelectRowId)
@@ -330,7 +345,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleRowCollapse = (id: string): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 		const rowProperties = { ...currentPanelMap[id] };
 		const updatedPanelMap = { ...currentPanelMap };
 
@@ -437,9 +454,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	const handleRowDelete = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
-		if (!currentSelectRowId) return;
+		if (!currentSelectRowId) {
+			return;
+		}
 
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== currentSelectRowId,
@@ -464,11 +485,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
-				if (setPanelMap) setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				if (setPanelMap) {
+					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				}
 				setIsDeleteModalOpen(false);
 				setCurrentSelectRowId(null);
 			},
