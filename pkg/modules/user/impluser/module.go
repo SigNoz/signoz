@@ -305,30 +305,39 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Auth.Password.Reset.MaxTokenLifetime))
+	// check if a token already exists for this password id
+	existingResetPasswordToken, err := module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
+	if err == nil && !existingResetPasswordToken.IsExpired() {
+		return existingResetPasswordToken, nil // return the existing token if it is not expired
+	}
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err // return the error if it is not a not found error
+	}
+
+	// create a new token
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
 	if err != nil {
 		return nil, err
 	}
 
-	err = module.store.CreateResetPasswordToken(ctx, resetPasswordToken)
+	// upsert
+	err = module.store.UpsertResetPasswordToken(ctx, resetPasswordToken)
 	if err != nil {
-		if !errors.Ast(err, errors.TypeAlreadyExists) {
-			return nil, err
-		}
+		return nil, err
+	}
 
-		// if the token already exists, we return the existing token
-		resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
-		if err != nil {
-			return nil, err
-		}
+	// refetch to avoid race conditions
+	resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
+	if err != nil {
+		return nil, err
 	}
 
 	return resetPasswordToken, nil
 }
 
 func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
-	if !module.config.Auth.Password.Reset.AllowSelf {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "users are not allowed to reset their password themselves")
+	if !module.config.Password.Reset.AllowSelf {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "users are not allowed to reset their password themselves, please contact an admin to reset your password")
 	}
 
 	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
@@ -353,8 +362,9 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		"Reset your SigNoz password",
 		emailtypes.TemplateNameResetPassword,
 		map[string]any{
-			"Name": user.DisplayName,
-			"Link": resetLink,
+			"Name":             user.DisplayName,
+			"Link":             resetLink,
+			"MaxTokenLifetime": module.config.Password.Reset.MaxTokenLifetime.String(),
 		},
 	); err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
@@ -370,8 +380,8 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	if resetPasswordToken.ExpiresAt.Before(time.Now()) {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "reset password token has expired")
+	if resetPasswordToken.IsExpired() {
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)

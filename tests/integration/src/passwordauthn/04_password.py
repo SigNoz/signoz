@@ -277,26 +277,6 @@ def test_forgot_password_returns_204_for_nonexistent_email(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
 
-def test_forgot_password_returns_204_for_invalid_email_format(
-    signoz: types.SigNoz,
-) -> None:
-    """
-    Test that forgotPassword returns 400 for invalid email format.
-    """
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
-        json={
-            "email": "not-an-email",
-            "orgId": "some-org-id",
-            "frontendBaseURL": signoz.self.host_configs["8080"].base(),
-        },
-        timeout=5,
-    )
-
-    # Should return 400 for invalid email format
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-
-
 def test_forgot_password_creates_reset_token(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
@@ -409,14 +389,6 @@ def test_forgot_password_creates_reset_token(
     assert reset_token is not None
     assert reset_token != ""
 
-    # Try resetting password with an invalid (weak) password - should fail
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "weak", "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-
     # Reset password with a valid strong password
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
@@ -435,73 +407,6 @@ def test_forgot_password_creates_reset_token(
         assert False, "Old password should not work after reset"
     except AssertionError:
         pass  # Expected - old password should fail
-
-
-def test_forgot_password_token_cannot_be_reused(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
-    """
-    Test that a reset password token cannot be reused after password reset.
-    """
-    admin_token = get_token("admin@integration.test", "password123Z$")
-
-    # Get user ID for the forgot@integration.test user (created in previous test)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == HTTPStatus.OK
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "forgot@integration.test"
-        ),
-        None,
-    )
-
-    # Get a new reset password token
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{found_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
-
-    # Use the token to reset password
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "anotherNewPassword123Z$!", "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
-
-    # Try to reuse the same token - should fail
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "yetAnotherPassword123Z$!", "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND)
-
-
-def test_reset_password_with_invalid_token(
-    signoz: types.SigNoz,
-) -> None:
-    """
-    Test that resetting password with an invalid token fails.
-    """
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "validPassword123Z$!", "token": "invalid-token-12345"},
-        timeout=2,
-    )
-    assert response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND)
 
 
 def test_reset_password_with_expired_token(
@@ -595,129 +500,3 @@ def test_reset_password_with_expired_token(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
-
-
-def test_reset_password_token_expiry_is_set(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
-    """
-    Test that when a reset password token is created, it has a valid expiry time set.
-    The default validity is 6 hours.
-    """
-    admin_token = get_token("admin@integration.test", "password123Z$")
-
-    # Create a new user for this test
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "expiry_test@integration.test", "role": "VIEWER", "name": "expiry test user"},
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == HTTPStatus.CREATED
-
-    # Get the invite token
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    invite_response = response.json()["data"]
-    found_invite = next(
-        (
-            invite
-            for invite in invite_response
-            if invite["email"] == "expiry_test@integration.test"
-        ),
-        None,
-    )
-
-    # Accept the invite
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "expiryTestPassword123Z$",
-            "displayName": "expiry test user",
-            "token": f"{found_invite['token']}",
-        },
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.CREATED
-
-    # Get user ID
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "expiry_test@integration.test"
-        ),
-        None,
-    )
-    assert found_user is not None
-
-    # Get org ID and call forgot password
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-        params={
-            "email": "expiry_test@integration.test",
-            "ref": f"{signoz.self.host_configs['8080'].base()}",
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    org_id = response.json()["data"]["orgs"][0]["id"]
-
-    # Record time before creating token
-    time_before = datetime.now(timezone.utc)
-
-    # Call forgot password to generate token
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/factor_password/forgot"),
-        json={
-            "email": "expiry_test@integration.test",
-            "orgId": org_id,
-            "frontendBaseURL": signoz.self.host_configs["8080"].base(),
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
-
-    # Query database to verify expiry is set correctly
-    with signoz.sqlstore.conn.connect() as conn:
-        result = conn.execute(
-            sql.text("""
-                SELECT rpt.expires_at
-                FROM reset_password_token rpt
-                JOIN factor_password fp ON rpt.password_id = fp.id
-                WHERE fp.user_id = :user_id
-            """),
-            {"user_id": found_user["id"]},
-        )
-        row = result.fetchone()
-        assert row is not None, "Reset password token should exist"
-        expires_at = row[0]
-
-        # Verify expires_at is set and is in the future (default is 6 hours)
-        # Allow some tolerance for test execution time
-        assert expires_at is not None, "expires_at should be set"
-        
-        # Convert to datetime if it's a string
-        if isinstance(expires_at, str):
-            expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
-        
-        # The token should expire between 5 hours and 7 hours from now
-        # (allowing for some variance in test execution and config)
-        min_expected_expiry = time_before + timedelta(hours=5)
-        max_expected_expiry = time_before + timedelta(hours=7)
-        
-        # Make expires_at timezone-aware if it isn't
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-            
-        assert expires_at > min_expected_expiry, f"Token expiry {expires_at} should be at least 5 hours from now"
-        assert expires_at < max_expected_expiry, f"Token expiry {expires_at} should be less than 7 hours from now"

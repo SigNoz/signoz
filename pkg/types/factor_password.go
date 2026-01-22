@@ -47,7 +47,7 @@ type ResetPasswordToken struct {
 	Identifiable
 	Token      string      `bun:"token,type:text,notnull" json:"token"`
 	PasswordID valuer.UUID `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
-	ExpiresAt  time.Time   `bun:"expires_at,type:timestamptz,notnull" json:"expiresAt"`
+	ExpiresAt  time.Time   `bun:"expires_at,type:timestamptz,nullzero" json:"expiresAt"`
 }
 
 type FactorPassword struct {
@@ -215,4 +215,8 @@ func (f *FactorPassword) Equals(password string) bool {
 
 func comparePassword(hashedPassword string, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
+}
+
+func (r *ResetPasswordToken) IsExpired() bool {
+	return r.ExpiresAt.Before(time.Now())
 }

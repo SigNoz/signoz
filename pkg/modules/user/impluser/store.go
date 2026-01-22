@@ -391,6 +391,23 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 	return resetPasswordToken, nil
 }
 
+func (store *store) UpsertResetPasswordToken(ctx context.Context, resetPasswordToken *types.ResetPasswordToken) error {
+	_, err := store.
+		sqlstore.
+		BunDB().
+		NewInsert().
+		Model(resetPasswordToken).
+		On("CONFLICT (password_id) DO UPDATE").
+		Set("token = EXCLUDED.token").
+		Set("expires_at = EXCLUDED.expires_at").
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to upsert reset password token")
+	}
+
+	return nil
+}
+
 func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
 	resetPasswordRequest := new(types.ResetPasswordToken)
 
