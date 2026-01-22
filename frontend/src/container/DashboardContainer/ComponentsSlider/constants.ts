@@ -12,6 +12,7 @@ export const PANEL_TYPES_INITIAL_QUERY = {
 	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
 	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
 	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
+	[PANEL_TYPES.DISTRIBUTION]: initialQueriesMap.metrics,
 	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
 };
 

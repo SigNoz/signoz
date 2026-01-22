@@ -79,3 +79,17 @@ describe('handleQueryChange', () => {
 		expect(q.queryName).toBe('A');
 	});
 });
+
+test('resets aggregation when switching from DISTRIBUTION for Logs/Traces', () => {
+	const superset = buildSupersetQuery({
+		dataSource: DataSource.LOGS,
+		aggregations: [{ expression: 'distribution(duration)' }],
+	});
+	const output = handleQueryChange(
+		PANEL_TYPES.TIME_SERIES as keyof PartialPanelTypes,
+		superset as Query,
+		PANEL_TYPES.DISTRIBUTION,
+	);
+	const q = output.builder.queryData[0];
+	expect(q.aggregations?.[0]).toEqual({ expression: 'count() ' });
+});

@@ -678,49 +678,53 @@ export function QueryBuilderProvider({
 		});
 	}, [createNewBuilderFormula]);
 
-	const addTraceOperator = useCallback((expression = '') => {
-		const trimmed = (expression || '').trim();
+	const addTraceOperator = useCallback(
+		(expression = '') => {
+			const trimmed = (expression || '').trim();
+			let aggregations = initialQueryBuilderFormTraceOperatorValues.aggregations;
 
-		setCurrentQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-				  };
+			if (!trimmed && panelType === PANEL_TYPES.DISTRIBUTION) {
+				aggregations = [{ expression: 'distribution(' }];
+			}
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					// enforce single trace operator and replace only expression
-					queryTraceOperator: [updated],
-				},
+			const getUpdatedTraceOperator = (
+				existing: IBuilderTraceOperator | null,
+			): IBuilderTraceOperator =>
+				existing
+					? {
+							...existing,
+							expression: trimmed,
+							aggregations:
+								!trimmed && panelType === PANEL_TYPES.DISTRIBUTION
+									? aggregations
+									: existing.aggregations,
+					  }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+							aggregations,
+					  };
+
+			const updateState = (prevState: QueryState): QueryState => {
+				const existing = prevState.builder.queryTraceOperator?.[0] || null;
+				const updated = getUpdatedTraceOperator(existing);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						// enforce single trace operator and replace only expression
+						queryTraceOperator: [updated],
+					},
+				};
 			};
-		});
-		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-				  };
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					// enforce single trace operator and replace only expression
-					queryTraceOperator: [updated],
-				},
-			};
-		});
-	}, []);
+			setCurrentQuery(updateState);
+			setSupersetQuery(updateState);
+		},
+		[panelType],
+	);
 
 	const removeTraceOperator = useCallback(() => {
 		setCurrentQuery((prevState) => ({

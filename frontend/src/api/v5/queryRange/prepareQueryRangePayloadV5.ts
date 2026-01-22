@@ -59,6 +59,8 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 			return 'raw';
 		case PANEL_TYPES.HISTOGRAM:
 			return 'distribution';
+		case PANEL_TYPES.DISTRIBUTION:
+			return 'distribution';
 		default:
 			return '';
 	}
@@ -294,9 +296,14 @@ export function createAggregation(
 		return queryData.aggregations.flatMap(
 			(agg: { expression: string; alias?: string }) => {
 				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
-				return isEmpty(parsedAggregations)
-					? [{ expression: 'count()' }]
-					: parsedAggregations;
+				if (isEmpty(parsedAggregations)) {
+					if (agg.expression.trim().startsWith('distribution(')) {
+						return [{ expression: agg.expression }];
+					}
+					return [{ expression: 'count()' }];
+				}
+
+				return parsedAggregations;
 			},
 		);
 	}

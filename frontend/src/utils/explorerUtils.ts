@@ -13,6 +13,7 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.PIE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.HISTOGRAM]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.EMPTY_WIDGET]: ExplorerViews.LIST,
+	[PANEL_TYPES.DISTRIBUTION]: ExplorerViews.TIMESERIES,
 };
 
 export const explorerViewToPanelType = {
