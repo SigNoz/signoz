@@ -150,13 +150,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
 			}
 
-			// fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)
-			// expr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldExpr, key.JSONDataType.StringValue())
-			// if key.Materialized {
-			// 	promotedFieldExpr := BodyPromotedColumnPrefix + fmt.Sprintf("`%s`", key.Name)
-			// 	expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", promotedFieldExpr, key.JSONDataType.StringValue()))
-			// }
-			return m.buildFieldForJSON(ctx, key)
+			return m.buildFieldForJSON(key)
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
@@ -245,12 +239,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 }
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern
-func (m *fieldMapper) buildFieldForJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	plan, err := PlanJSON(ctx, key, qbtypes.FilterOperatorExists, nil, m.metadataStore)
-	if err != nil {
-		return "", err
-	}
-
+func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	plan := key.JSONPlan
 	if len(plan) == 0 {
 		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"Could not find any valid paths for: %s", key.Name)

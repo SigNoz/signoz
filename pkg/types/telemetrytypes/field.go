@@ -23,6 +23,7 @@ const (
 	// e.g., "body.status" where "body." is the prefix
 	BodyJSONStringSearchPrefix = "body."
 	ArraySep                   = jsontypeexporter.ArraySeparator
+	// TODO(Piyush): Remove once we've migrated to the new array syntax
 	ArrayAnyIndex              = "[*]."
 )
 
@@ -35,12 +36,37 @@ type TelemetryFieldKey struct {
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
 
 	JSONDataType *JSONDataType       `json:"-"`
+	JSONPlan     JSONAccessPlan      `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
 }
 
 func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
 	return strings.Contains(f.Name, ArraySep) || strings.Contains(f.Name, ArrayAnyIndex)
+}
+
+func (f *TelemetryFieldKey) ArrayParentPaths() []string {
+	path := strings.ReplaceAll(f.Name, ArrayAnyIndex, ArraySep)
+	parts := strings.Split(path, ArraySep)
+	return parts
+}
+
+
+func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
+	paths := f.ArrayParentPaths()
+	selectors := make([]*FieldKeySelector, 0, len(paths))
+	for i := range paths {
+		pathSoFar := strings.Join(paths[:i+1], ArraySep)
+		selectors = append(selectors, &FieldKeySelector{
+			Name:              pathSoFar,
+			SelectorMatchType: FieldSelectorMatchTypeExact,
+			Signal:            f.Signal,
+			FieldContext:      f.FieldContext,
+			Limit:             1,
+		})
+	}
+
+	return selectors
 }
 
 func (f TelemetryFieldKey) String() string {

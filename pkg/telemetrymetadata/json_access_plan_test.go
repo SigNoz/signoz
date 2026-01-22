@@ -1,12 +1,10 @@
-package telemetrylogs
+package telemetrymetadata
 
 import (
-	"context"
 	"testing"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -38,7 +36,6 @@ type jsonAccessTestNode struct {
 	MaxDynamicTypes int                            `yaml:"maxDynamicTypes,omitempty"`
 	MaxDynamicPaths int                            `yaml:"maxDynamicPaths,omitempty"`
 	ElemType        string                         `yaml:"elemType,omitempty"`
-	ValueType       string                         `yaml:"valueType,omitempty"`
 	AvailableTypes  []string                       `yaml:"availableTypes,omitempty"`
 	Branches        map[string]*jsonAccessTestNode `yaml:"branches,omitempty"`
 }
@@ -74,7 +71,6 @@ func toTestNode(n *telemetrytypes.JSONAccessNode) *jsonAccessTestNode {
 	// Terminal config
 	if n.TerminalConfig != nil {
 		out.ElemType = n.TerminalConfig.ElemType.StringValue()
-		out.ValueType = n.TerminalConfig.ValueType.StringValue()
 	}
 
 	// Branches
@@ -115,8 +111,8 @@ func TestNode_Alias(t *testing.T) {
 	}{
 		{
 			name:     "Root node returns name as-is",
-			node:     telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
-			expected: LogsV2BodyJSONColumn,
+			node:     telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
+			expected: telemetrylogs.LogsV2BodyJSONColumn,
 		},
 		{
 			name: "Node without parent returns backticked name",
@@ -130,9 +126,9 @@ func TestNode_Alias(t *testing.T) {
 			name: "Node with root parent uses dot separator",
 			node: &telemetrytypes.JSONAccessNode{
 				Name:   "age",
-				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+				Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 			},
-			expected: "`" + LogsV2BodyJSONColumn + ".age`",
+			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".age`",
 		},
 		{
 			name: "Node with non-root parent uses array separator",
@@ -140,10 +136,10 @@ func TestNode_Alias(t *testing.T) {
 				Name: "name",
 				Parent: &telemetrytypes.JSONAccessNode{
 					Name:   "education",
-					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+					Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
-			expected: "`" + LogsV2BodyJSONColumn + ".education[].name`",
+			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".education[].name`",
 		},
 		{
 			name: "Nested array path with multiple levels",
@@ -153,11 +149,11 @@ func TestNode_Alias(t *testing.T) {
 					Name: "awards",
 					Parent: &telemetrytypes.JSONAccessNode{
 						Name:   "education",
-						Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+						Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 					},
 				},
 			},
-			expected: "`" + LogsV2BodyJSONColumn + ".education[].awards[].type`",
+			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".education[].awards[].type`",
 		},
 	}
 
@@ -179,18 +175,18 @@ func TestNode_FieldPath(t *testing.T) {
 			name: "Simple field path from root",
 			node: &telemetrytypes.JSONAccessNode{
 				Name:   "user",
-				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+				Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: LogsV2BodyJSONColumn + ".`user`",
+			expected: telemetrylogs.LogsV2BodyJSONColumn + ".`user`",
 		},
 		{
 			name: "Field path with backtick-required key",
 			node: &telemetrytypes.JSONAccessNode{
 				Name:   "user-name", // requires backtick
-				Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+				Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 			},
-			expected: LogsV2BodyJSONColumn + ".`user-name`",
+			expected: telemetrylogs.LogsV2BodyJSONColumn + ".`user-name`",
 		},
 		{
 			name: "Nested field path",
@@ -198,11 +194,11 @@ func TestNode_FieldPath(t *testing.T) {
 				Name: "age",
 				Parent: &telemetrytypes.JSONAccessNode{
 					Name:   "user",
-					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+					Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "`" + LogsV2BodyJSONColumn + ".user`.`age`",
+			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".user`.`age`",
 		},
 		{
 			name: "Array element field path",
@@ -210,11 +206,11 @@ func TestNode_FieldPath(t *testing.T) {
 				Name: "name",
 				Parent: &telemetrytypes.JSONAccessNode{
 					Name:   "education",
-					Parent: telemetrytypes.NewRootJSONAccessNode(LogsV2BodyJSONColumn, 32, 0),
+					Parent: telemetrytypes.NewRootJSONAccessNode(telemetrylogs.LogsV2BodyJSONColumn, 32, 0),
 				},
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "`" + LogsV2BodyJSONColumn + ".education`.`name`",
+			expected: "`" + telemetrylogs.LogsV2BodyJSONColumn + ".education`.`name`",
 		},
 	}
 
@@ -231,7 +227,7 @@ func TestNode_FieldPath(t *testing.T) {
 // ============================================================================
 
 func TestPlanJSON_BasicStructure(t *testing.T) {
-	_, metadataStore := testTypeSet()
+	types, _ := telemetrylogs.TestJSONTypeSet()
 
 	tests := []struct {
 		name         string
@@ -286,7 +282,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plans, err := PlanJSON(context.Background(), tt.key, qbtypes.FilterOperatorEqual, "John", metadataStore)
+			plans, err := buildJSONAccessPlan(tt.key, types)
 			if tt.expectErr {
 				require.Error(t, err)
 				require.Nil(t, plans)
@@ -300,7 +296,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 }
 
 func TestPlanJSON_ArrayPaths(t *testing.T) {
-	_, metadataStore := testTypeSet()
+	types, _ := telemetrylogs.TestJSONTypeSet()
 
 	tests := []struct {
 		name         string
@@ -436,7 +432,7 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := makeKey(tt.path, telemetrytypes.String, false)
-			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", metadataStore)
+			plans, err := buildJSONAccessPlan(key, types)
 			require.NoError(t, err)
 			require.NotNil(t, plans)
 			require.Len(t, plans, 1)
@@ -447,13 +443,12 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 }
 
 func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
-	_, metadataStore := testTypeSet()
+	types, _ := telemetrylogs.TestJSONTypeSet()
 	path := "education[].awards[].type"
-	value := "sports"
 
 	t.Run("Non-promoted plan", func(t *testing.T) {
 		key := makeKey(path, telemetrytypes.String, false)
-		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, metadataStore)
+		plans, err := buildJSONAccessPlan(key, types)
 		require.NoError(t, err)
 		require.Len(t, plans, 1)
 
@@ -495,7 +490,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 
 	t.Run("Promoted plan", func(t *testing.T) {
 		key := makeKey(path, telemetrytypes.String, true)
-		plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, value, metadataStore)
+		plans, err := buildJSONAccessPlan(key, types)
 		require.NoError(t, err)
 		require.Len(t, plans, 2)
 
@@ -570,7 +565,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 }
 
 func TestPlanJSON_EdgeCases(t *testing.T) {
-	_, metadataStore := testTypeSet()
+	types, _ := telemetrylogs.TestJSONTypeSet()
 
 	tests := []struct {
 		name         string
@@ -689,7 +684,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 				keyType = telemetrytypes.String
 			}
 			key := makeKey(tt.path, keyType, false)
-			plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, tt.value, metadataStore)
+			plans, err := buildJSONAccessPlan(key, types)
 			require.NoError(t, err)
 			got := plansToYAML(t, plans)
 			require.YAMLEq(t, tt.expectedYAML, got)
@@ -698,10 +693,10 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 }
 
 func TestPlanJSON_TreeStructure(t *testing.T) {
-	_, metadataStore := testTypeSet()
+	types, _ := telemetrylogs.TestJSONTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
 	key := makeKey(path, telemetrytypes.String, false)
-	plans, err := PlanJSON(context.Background(), key, qbtypes.FilterOperatorEqual, "John", metadataStore)
+	plans, err := buildJSONAccessPlan(key, types)
 	require.NoError(t, err)
 	require.Len(t, plans, 1)
 
@@ -800,86 +795,4 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 
 	got := plansToYAML(t, plans)
 	require.YAMLEq(t, expectedYAML, got)
-}
-
-// ============================================================================
-// Test Data Setup
-// ============================================================================
-
-// testTypeSet returns a map of path->types and a mock MetadataStore for testing
-// This represents the type information available in the test JSON structure
-func testTypeSet() (map[string][]telemetrytypes.JSONDataType, telemetrytypes.MetadataStore) {
-	types := map[string][]telemetrytypes.JSONDataType{
-		"user.name":                                           {telemetrytypes.String},
-		"user.permissions":                                    {telemetrytypes.ArrayString},
-		"user.age":                                            {telemetrytypes.Int64, telemetrytypes.String},
-		"user.height":                                         {telemetrytypes.Float64},
-		"education":                                           {telemetrytypes.ArrayJSON},
-		"education[].name":                                    {telemetrytypes.String},
-		"education[].type":                                    {telemetrytypes.String, telemetrytypes.Int64},
-		"education[].internal_type":                           {telemetrytypes.String},
-		"education[].metadata.location":                       {telemetrytypes.String},
-		"education[].parameters":                              {telemetrytypes.ArrayFloat64, telemetrytypes.ArrayDynamic},
-		"education[].duration":                                {telemetrytypes.String},
-		"education[].mode":                                    {telemetrytypes.String},
-		"education[].year":                                    {telemetrytypes.Int64},
-		"education[].field":                                   {telemetrytypes.String},
-		"education[].awards":                                  {telemetrytypes.ArrayDynamic, telemetrytypes.ArrayJSON},
-		"education[].awards[].name":                           {telemetrytypes.String},
-		"education[].awards[].rank":                           {telemetrytypes.Int64},
-		"education[].awards[].medal":                          {telemetrytypes.String},
-		"education[].awards[].type":                           {telemetrytypes.String},
-		"education[].awards[].semester":                       {telemetrytypes.Int64},
-		"education[].awards[].participated":                   {telemetrytypes.ArrayDynamic, telemetrytypes.ArrayJSON},
-		"education[].awards[].participated[].type":            {telemetrytypes.String},
-		"education[].awards[].participated[].field":           {telemetrytypes.String},
-		"education[].awards[].participated[].project_type":    {telemetrytypes.String},
-		"education[].awards[].participated[].project_name":    {telemetrytypes.String},
-		"education[].awards[].participated[].race_type":       {telemetrytypes.String},
-		"education[].awards[].participated[].team_based":      {telemetrytypes.Bool},
-		"education[].awards[].participated[].team_name":       {telemetrytypes.String},
-		"education[].awards[].participated[].team":            {telemetrytypes.ArrayJSON},
-		"education[].awards[].participated[].members":         {telemetrytypes.ArrayString},
-		"education[].awards[].participated[].team[].name":     {telemetrytypes.String},
-		"education[].awards[].participated[].team[].branch":   {telemetrytypes.String},
-		"education[].awards[].participated[].team[].semester": {telemetrytypes.Int64},
-		"interests":                                                                  {telemetrytypes.ArrayJSON},
-		"interests[].type":                                                           {telemetrytypes.String},
-		"interests[].entities":                                                       {telemetrytypes.ArrayJSON},
-		"interests[].entities.application_date":                                      {telemetrytypes.String},
-		"interests[].entities[].reviews":                                             {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].given_by":                                  {telemetrytypes.String},
-		"interests[].entities[].reviews[].remarks":                                   {telemetrytypes.String},
-		"interests[].entities[].reviews[].weight":                                    {telemetrytypes.Float64},
-		"interests[].entities[].reviews[].passed":                                    {telemetrytypes.Bool},
-		"interests[].entities[].reviews[].type":                                      {telemetrytypes.String},
-		"interests[].entities[].reviews[].analysis_type":                             {telemetrytypes.Int64},
-		"interests[].entities[].reviews[].entries":                                   {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].entries[].subject":                         {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].status":                          {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata":                        {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].company":              {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].experience":           {telemetrytypes.Int64},
-		"interests[].entities[].reviews[].entries[].metadata[].unit":                 {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions":            {telemetrytypes.ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":     {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].duration": {telemetrytypes.Int64, telemetrytypes.Float64},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].unit":     {telemetrytypes.String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings":  {telemetrytypes.ArrayInt64, telemetrytypes.ArrayString},
-		"message": {telemetrytypes.String},
-	}
-
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	for path, dataTypes := range types {
-		for _, dataType := range dataTypes {
-			mockMetadataStore.SetKey(&telemetrytypes.TelemetryFieldKey{
-				Name:          path,
-				JSONDataType:  &dataType,
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[dataType],
-			})
-		}
-	}
-	return types, mockMetadataStore
 }

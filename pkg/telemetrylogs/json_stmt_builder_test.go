@@ -755,7 +755,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 func buildTestTelemetryMetadataStore(promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
-	types, _ := testTypeSet()
+	types, _ := TestJSONTypeSet()
 	for path, jsonTypes := range types {
 		promoted := false
 

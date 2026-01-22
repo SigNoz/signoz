@@ -22,7 +22,7 @@ type JSONAccessPlan = []*JSONAccessNode
 type TerminalConfig struct {
 	Key       *TelemetryFieldKey
 	ElemType  JSONDataType
-	ValueType JSONDataType
+	// ValueType JSONDataType
 }
 
 // Node is now a tree structure representing the complete JSON path traversal

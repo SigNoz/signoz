@@ -692,7 +692,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	}
 
 	// filter arrays from keys
-	if BodyJSONQueryEnabled {
+	if BodyJSONQueryEnabled && functionName != "hasToken" {
 		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, key := range keys {
 			if key.FieldDataType.IsArray() {

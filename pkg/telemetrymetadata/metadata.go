@@ -574,7 +574,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	if querybuilder.BodyJSONQueryEnabled {
-		bodyJSONPaths, finished, err := t.getBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
+		bodyJSONPaths, finished, err := t.buildBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
 			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", "error", err)
 		}
