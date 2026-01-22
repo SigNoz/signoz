@@ -456,8 +456,8 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	}
 
 	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context) error {
-			err = module.granter.SetManagedRoles(ctx, organization.ID, managedRoles)
+		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context, orgID valuer.UUID) error {
+			err = module.granter.CreateManagedRoles(ctx, orgID, managedRoles)
 			if err != nil {
 				return err
 			}

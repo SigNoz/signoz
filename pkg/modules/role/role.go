@@ -59,7 +59,7 @@ type Granter interface {
 	ModifyGrant(context.Context, valuer.UUID, string, string, string) error
 
 	// Bootstrap the managed roles.
-	SetManagedRoles(context.Context, valuer.UUID, []*roletypes.Role) error
+	CreateManagedRoles(context.Context, valuer.UUID, []*roletypes.Role) error
 }
 
 type RegisterTypeable interface {

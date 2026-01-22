@@ -88,7 +88,7 @@ func (granter *granter) Revoke(ctx context.Context, orgID valuer.UUID, name stri
 	return granter.authz.Write(ctx, nil, tuples)
 }
 
-func (granter *granter) SetManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*roletypes.Role) error {
+func (granter *granter) CreateManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*roletypes.Role) error {
 	err := granter.store.RunInTx(ctx, func(ctx context.Context) error {
 		for _, role := range managedRoles {
 			err := granter.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
