@@ -12,16 +12,6 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-// testFieldKey returns a mock TelemetryFieldKey for the given name
-func testFieldKey(name string) *telemetrytypes.TelemetryFieldKey {
-	return &telemetrytypes.TelemetryFieldKey{
-		Name:          name,
-		Signal:        telemetrytypes.SignalLogs,
-		FieldContext:  telemetrytypes.FieldContextAttribute,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}
-}
-
 // TestPrepareWhereClause_EmptyVariableList ensures PrepareWhereClause errors when a variable has an empty list value
 func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	tests := []struct {
@@ -52,7 +42,13 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	}
 
 	keys := map[string][]*telemetrytypes.TelemetryFieldKey{
-		"service": {testFieldKey("service")},
+		"service": []*telemetrytypes.TelemetryFieldKey{
+			{
+				Name:          "service",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}},
 	}
 
 	for _, tt := range tests {
@@ -158,7 +154,14 @@ func TestVisitKey(t *testing.T) {
 			name:    "Key not found",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": {testFieldKey("service")},
+				"service": []*telemetrytypes.TelemetryFieldKey{
+					{
+						Name:          "service",
+						Signal:        telemetrytypes.SignalLogs,
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
 			},
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
 			expectedErrors:     []string{"key `unknown_key` not found"},
@@ -332,7 +335,14 @@ func TestVisitKey(t *testing.T) {
 			name:    "Unknown key with ignoreNotFoundKeys=false",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": {testFieldKey("service")},
+				"service": []*telemetrytypes.TelemetryFieldKey{
+					{
+						Name:          "service",
+						Signal:        telemetrytypes.SignalLogs,
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
 			},
 			ignoreNotFoundKeys: false,
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
@@ -345,7 +355,14 @@ func TestVisitKey(t *testing.T) {
 			name:    "Unknown key with ignoreNotFoundKeys=true",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": {testFieldKey("service")},
+				"service": []*telemetrytypes.TelemetryFieldKey{
+					{
+						Name:          "service",
+						Signal:        telemetrytypes.SignalLogs,
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
 			},
 			ignoreNotFoundKeys: true,
 			expectedKeys:       []telemetrytypes.TelemetryFieldKey{},
