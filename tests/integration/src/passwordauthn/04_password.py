@@ -493,10 +493,10 @@ def test_reset_password_with_expired_token(
 
     assert reset_token is not None
 
-    # Try to use the expired token - should fail with 403 Forbidden
+    # Try to use the expired token - should fail with 401 Unauthorized
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
         json={"password": "expiredTokenPassword123Z$!", "token": reset_token},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
