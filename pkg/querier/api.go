@@ -239,9 +239,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 					if err != nil {
 						errs = append(errs, err)
 					}
-					for _, w := range warnings {
-						a.set.Logger.WarnContext(req.Context(), w)
-					}
+					a.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
@@ -251,9 +249,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 					if err != nil {
 						errs = append(errs, err)
 					}
-					for _, w := range warnings {
-						a.set.Logger.WarnContext(req.Context(), w)
-					}
+					a.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
@@ -263,9 +259,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 					if err != nil {
 						errs = append(errs, err)
 					}
-					for _, w := range warnings {
-						a.set.Logger.WarnContext(req.Context(), w)
-					}
+					a.set.Logger.WarnContext(req.Context(), "variable replace warnings", "warnings", warnings)
 					spec.Filter.Expression = replaced
 				}
 				queryRangeRequest.CompositeQuery.Queries[idx].Spec = spec
