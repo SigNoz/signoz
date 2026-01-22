@@ -699,6 +699,10 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 				filteredKeys = append(filteredKeys, key)
 			}
 		}
+		if len(filteredKeys) == 0 {
+			v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be an array field; no array fields found", functionName))
+			return ""
+		}
 		keys = filteredKeys
 	}
 
