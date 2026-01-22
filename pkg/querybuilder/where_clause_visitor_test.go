@@ -435,14 +435,52 @@ func TestVisitKey(t *testing.T) {
 			expectedWarnings:   []string{"ambiguous"},
 			expectedMainWrnURL: "https://signoz.io/docs/userguide/field-context-data-types/",
 		},
-		// Context as part of name tests
+		// These 3 unit tests have both attibute.custom_field and custom_field in the map
 		{
-			name:    "attribute.custom_field where entire string is the name",
-			keyText: "attribute.custom_field",
+			name:    "only custom_field is selected",
+			keyText: "custom_field",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"attribute.custom_field": {
 					{
 						Name:          "attribute.custom_field",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+				"custom_field": {
+					{
+						Name:          "custom_field",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			expectedKeys: []telemetrytypes.TelemetryFieldKey{
+				{
+					Name:          "custom_field",
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				},
+			},
+			expectedErrors:     nil,
+			expectedMainErrURL: "",
+			expectedWarnings:   nil,
+			expectedMainWrnURL: "",
+		},
+				{
+			name:    "only attribute.custom_field is selected",
+			keyText: "attribute.attribute.custom_field",
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"attribute.custom_field": {
+					{
+						Name:          "attribute.custom_field",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+				"custom_field": {
+					{
+						Name:          "custom_field",
 						FieldContext:  telemetrytypes.FieldContextAttribute,
 						FieldDataType: telemetrytypes.FieldDataTypeString,
 					},
@@ -461,7 +499,7 @@ func TestVisitKey(t *testing.T) {
 			expectedMainWrnURL: "",
 		},
 		{
-			name:    "attribute.custom_field matches both full name and stripped name when both exist",
+			name:    "both custom_field and attribute.custom_field are selected",
 			keyText: "attribute.custom_field",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"attribute.custom_field": {

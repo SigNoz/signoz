@@ -814,6 +814,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// so we need to filter the available field keys based on the provided context and data type
 	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
 
+	// If user said key = 'xyz', we look up in the map for all possible field keys with name 'xyz'
 	for _, item := range v.fieldKeys[keyName] {
 		// Match items where:
 		// 1) user didn't specify context OR context matches, AND
@@ -824,15 +825,18 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 		}
 	}
 
-
 	// Now consider that GetFieldKeyFromKeyText may have extracted the context which was actually part of the name
-	// e.g., span.div_num is actually the name but GetFieldKeyFromKeyText extracted span as context and div_num as name
+	// If user said attribute.key = 'xyz',
+	// 1. either user meant key ( this is already handled above in fieldKeysForName )
+	// 2. or user meant `attribute.key` we look up in the map for all possible field keys with name 'attribute.key'
 
+	// Note: 
+	// If user only wants to search `attribute.key`, then they have to use `attribute.attribute.key`
+	// If user only wants to search `key`, then they have to use `key`
+	// If user wants to search both, they can use `attribute.key` and we will resolve the ambiguity
 	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
-
 		contextPrefixedFieldName := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
 		for _, item := range v.fieldKeys[contextPrefixedFieldName] {
-
 			// Match items where: user didn't specify data type OR data type matches. Context filtering not needed here since context was used to construct the lookup key.
 			if fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == fieldKey.FieldDataType {
 				fieldKeysForName = append(fieldKeysForName, item)
