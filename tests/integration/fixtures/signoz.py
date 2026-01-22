@@ -67,6 +67,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_GATEWAY_URL": gateway.container_configs["8080"].base(),
                 "SIGNOZ_TOKENIZER_JWT_SECRET": "secret",
                 "SIGNOZ_GLOBAL_INGESTION__URL": "https://ingest.test.signoz.cloud",
+                "SIGNOZ_USER_ALLOW__SELF__PASSWORD__RESET": True
             }
             | sqlstore.env
             | clickhouse.env
