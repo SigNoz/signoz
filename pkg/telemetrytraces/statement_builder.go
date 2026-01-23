@@ -222,13 +222,13 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 		Reason for doing this is to not create an unexpected behavior for users
 	*/
 	for idx := range query.SelectFields {
-		actions = append(actions, b.adjustKey(ctx, &query.SelectFields[idx], keys)...)
+		actions = append(actions, b.adjustKey(&query.SelectFields[idx], keys)...)
 	}
 	for idx := range query.GroupBy {
-		actions = append(actions, b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)...)
+		actions = append(actions, b.adjustKey(&query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		actions = append(actions, b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)...)
+		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
 	for _, action := range actions {
@@ -259,7 +259,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	return query
 }
 
-func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
+func (b *traceQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
 	// for recording actions taken
 	actions := []string{}
