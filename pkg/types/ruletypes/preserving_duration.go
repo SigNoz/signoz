@@ -22,18 +22,6 @@ func NewPreservingDuration(d time.Duration) PreservingDuration {
 	}
 }
 
-// NewPreservingDurationFromString creates a PreservingDuration from a string.
-func NewPreservingDurationFromString(s string) (PreservingDuration, error) {
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		return PreservingDuration{}, fmt.Errorf("invalid duration: %w", err)
-	}
-	return PreservingDuration{
-		value: d,
-		raw:   s,
-	}, nil
-}
-
 // UnmarshalJSON implements json.Unmarshaler.
 func (pd *PreservingDuration) UnmarshalJSON(b []byte) error {
 	var s string

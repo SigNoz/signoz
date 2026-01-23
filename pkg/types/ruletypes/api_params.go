@@ -433,7 +433,6 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
-	RawData   string     `json:"-"`
 }
 
 func (g *GettableRule) MarshalJSON() ([]byte, error) {
