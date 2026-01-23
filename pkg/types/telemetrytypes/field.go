@@ -26,13 +26,6 @@ const (
 	ArrayAnyIndex              = "[*]."
 )
 
-type Keyed interface {
-	GetTelemetryFieldKey() *TelemetryFieldKey
-}
-
-// To ensure TelemetryFieldKey implements Keyed
-var _ = Keyed(&TelemetryFieldKey{})
-
 type TelemetryFieldKey struct {
 	Name          string        `json:"name"`
 	Description   string        `json:"description,omitempty"`
@@ -76,10 +69,6 @@ func (f TelemetryFieldKey) String() string {
 
 func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
-}
-
-func (f *TelemetryFieldKey) GetTelemetryFieldKey() *TelemetryFieldKey {
-	return f
 }
 
 // Normalize parses and normalizes a TelemetryFieldKey by extracting

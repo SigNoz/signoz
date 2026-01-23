@@ -180,21 +180,21 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 		}
 	}
 
-	revertContextForAliasKeys := func(key telemetrytypes.Keyed) {
-		contextPrefixedKeyName := fmt.Sprintf("%s.%s", key.GetTelemetryFieldKey().FieldContext.StringValue(), key.GetTelemetryFieldKey().Name)
+	revertContextForAliasKeys := func(key *telemetrytypes.TelemetryFieldKey) {
+		contextPrefixedKeyName := fmt.Sprintf("%s.%s", key.FieldContext.StringValue(), key.Name)
 		if aliasExpressions[contextPrefixedKeyName] {
-			key.GetTelemetryFieldKey().FieldContext = telemetrytypes.FieldContextUnspecified
-			key.GetTelemetryFieldKey().Name = contextPrefixedKeyName
+			key.FieldContext = telemetrytypes.FieldContextUnspecified
+			key.Name = contextPrefixedKeyName
 		}
 	}
 
 	if len(aliasExpressions) > 0 {
 		for idx := range query.GroupBy {
-			revertContextForAliasKeys(&query.GroupBy[idx])
+			revertContextForAliasKeys(&query.GroupBy[idx].TelemetryFieldKey)
 		}
 
 		for idx := range query.Order {
-			revertContextForAliasKeys(&query.Order[idx].Key)
+			revertContextForAliasKeys(&query.Order[idx].Key.TelemetryFieldKey)
 		}
 	}
 
