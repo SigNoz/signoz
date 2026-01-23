@@ -23,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -90,7 +89,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, organization.Getter, user.Getter, role.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config],
+	authzCallback func(context.Context, sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, role.Setter, role.Granter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	roleSetterCallback func(sqlstore.SQLStore, authz.AuthZ, licensing.Licensing, []role.RegisterTypeable) role.Setter,
@@ -289,7 +288,7 @@ func New(
 	roleGetter := implrole.NewGetter(implrole.NewStore(sqlstore))
 
 	// Initialize authz
-	authzProviderFactory := authzCallback(ctx, sqlstore, orgGetter, userGetter, roleGetter)
+	authzProviderFactory := authzCallback(ctx, sqlstore)
 	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
 		return nil, err

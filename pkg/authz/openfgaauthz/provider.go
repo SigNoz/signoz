@@ -7,11 +7,7 @@ import (
 
 	authz "github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/role"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -33,20 +29,17 @@ type provider struct {
 	openfgaServer *openfgapkgserver.Server
 	storeID       string
 	modelID       string
-	orgGetter     organization.Getter
-	userGetter    user.Getter
-	roleGetter    role.Getter
 	mtx           sync.RWMutex
 	stopChan      chan struct{}
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, orgGetter, userGetter, roleGetter)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, orgGetter organization.Getter, userGetter user.Getter, roleGetter role.Getter) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
 
 	store, err := NewSQLStore(sqlstore)
@@ -72,9 +65,6 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		settings:      scopedProviderSettings,
 		openfgaServer: openfgaServer,
 		openfgaSchema: openfgaSchema,
-		orgGetter:     orgGetter,
-		userGetter:    userGetter,
-		roleGetter:    roleGetter,
 		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
 	}, nil
@@ -95,11 +85,6 @@ func (provider *provider) Start(ctx context.Context) error {
 	provider.modelID = modelID
 	provider.storeID = storeId
 	provider.mtx.Unlock()
-
-	err = provider.migrateExistingUsers(ctx)
-	if err != nil {
-		return err
-	}
 
 	<-provider.stopChan
 	return nil
@@ -352,52 +337,4 @@ func (provider *provider) getStoreIDandModelID() (string, string) {
 	modelID := provider.modelID
 
 	return storeID, modelID
-}
-
-func (provider *provider) migrateExistingUsers(ctx context.Context) error {
-	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
-	if err != nil {
-		return err
-	}
-
-	tuples := []*openfgav1.TupleKey{}
-	for _, org := range orgs {
-		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
-		if err != nil {
-			return err
-		}
-
-		roles, err := provider.roleGetter.List(ctx, org.ID)
-		if err != nil {
-			return err
-		}
-
-		roleNameToID := make(map[string]valuer.UUID)
-		for _, role := range roles {
-			roleNameToID[role.Name] = role.ID
-		}
-
-		for _, user := range users {
-			grants, err := authtypes.TypeableRole.Tuples(
-				authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.String(), user.OrgID, nil),
-				authtypes.RelationAssignee,
-				[]authtypes.Selector{
-					authtypes.MustNewSelector(authtypes.TypeRole, roleNameToID[roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)].StringValue()),
-				},
-				org.ID,
-			)
-			if err != nil {
-				return err
-			}
-
-			tuples = append(tuples, grants...)
-		}
-	}
-
-	err = provider.Write(ctx, tuples, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

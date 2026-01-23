@@ -8,11 +8,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/sharder"
-	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/openfga/language/pkg/go/transformer"
@@ -22,15 +17,10 @@ import (
 func TestProviderStartStop(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sqlstore := sqlstoretest.New(sqlstore.Config{Provider: "postgres"}, sqlmock.QueryMatcherRegexp)
-	sharder, err := noopsharder.New(context.TODO(), providerSettings, sharder.Config{})
-	require.NoError(t, err)
-	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
-	roleGetter := implrole.NewGetter(implrole.NewStore(sqlstore))
 
 	expectedModel := `module base 
 	type user`
-	provider, err := newOpenfgaProvider(context.Background(), providerSettings, authz.Config{}, sqlstore, []transformer.ModuleFile{{Name: "test.fga", Contents: expectedModel}}, orgGetter, userGetter, roleGetter)
+	provider, err := newOpenfgaProvider(context.Background(), providerSettings, authz.Config{}, sqlstore, []transformer.ModuleFile{{Name: "test.fga", Contents: expectedModel}})
 	require.NoError(t, err)
 
 	storeRows := sqlstore.Mock().NewRows([]string{"id", "name", "created_at", "updated_at"}).AddRow("01K3V0NTN47MPTMEV1PD5ST6ZC", "signoz", time.Now(), time.Now())
@@ -44,11 +34,6 @@ func TestProviderStartStop(t *testing.T) {
 	sqlstore.Mock().ExpectQuery("SELECT authorization_model_id, schema_version, type, type_definition, serialized_protobuf FROM authorization_model WHERE authorization_model_id = (.+)  AND store = (.+)").WithArgs("01K44QQKXR6F729W160NFCJT58", "01K3V0NTN47MPTMEV1PD5ST6ZC").WillReturnRows(modelRows)
 
 	sqlstore.Mock().ExpectExec("INSERT INTO authorization_model (.+) VALUES (.+)").WillReturnResult(sqlmock.NewResult(1, 1))
-	sqlstore.Mock().ExpectQuery(`SELECT (.+) FROM "organizations" AS (.+) WHERE (.+)`).WillReturnRows(sqlstore.Mock().NewRows([]string{"id", "name", "created_at", "updated_at"}))
-	go func() {
-		err := provider.Start(context.Background())
-		require.NoError(t, err)
-	}()
 
 	// wait for the service to start
 	time.Sleep(time.Second * 2)
