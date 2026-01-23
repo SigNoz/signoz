@@ -55,6 +55,7 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_SETTINGS_TIMEOUT__BEFORE__CHECKING__EXECUTION__SPEED", "10")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_SETTINGS_MAX__BYTES__TO__READ", "1000000")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_SETTINGS_MAX__RESULT__ROWS", "10000")
+	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_SETTINGS_PREFER__COLUMN__NAME__TO__ALIAS", "1")
 
 	conf, err := config.New(
 		context.Background(),
@@ -83,6 +84,7 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 				TimeoutBeforeCheckingExecutionSpeed: 10,
 				MaxBytesToRead:                      1000000,
 				MaxResultRows:                       10000,
+				PreferColumnNameToAlias:             1,
 			},
 		},
 	}
