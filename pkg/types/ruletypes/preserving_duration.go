@@ -23,19 +23,28 @@ func NewPreservingDuration(d time.Duration) PreservingDuration {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
+// Accepts both string format ("5m", "1h") and numeric format (nanoseconds as int64/float64)
 func (pd *PreservingDuration) UnmarshalJSON(b []byte) error {
+	// Try unmarshaling as string first (preferred format)
 	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
+	if err := json.Unmarshal(b, &s); err == nil {
+		d, err := time.ParseDuration(s)
+		if err != nil {
+			return fmt.Errorf("invalid duration: %w", err)
+		}
+		pd.value = d
+		pd.raw = s
+		return nil
 	}
 
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		return fmt.Errorf("invalid duration: %w", err)
+	// Fall back to numeric format (nanoseconds as int64 or float64)
+	var ns float64
+	if err := json.Unmarshal(b, &ns); err != nil {
+		return fmt.Errorf("duration must be a string (e.g., \"5m\") or number (nanoseconds): %w", err)
 	}
 
-	pd.value = d
-	pd.raw = s
+	pd.value = time.Duration(ns)
+	pd.raw = pd.value.String() // Convert numeric to standard string format
 	return nil
 }
 
