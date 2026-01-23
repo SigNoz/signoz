@@ -361,7 +361,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
 
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
-	humanizedTokenLifetime := humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", "")
+	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
 	if err := module.emailing.SendHTML(
 		ctx,
