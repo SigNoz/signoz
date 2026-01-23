@@ -14,6 +14,7 @@ from fixtures.querier import (
     make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from src.querier.util import assert_identical_query_response
 
 
 def test_traces_list(
@@ -217,76 +218,61 @@ def test_traces_list(
         },
     )
 
+    # Query results with context appended to key names
+    response_with_inline_context = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "limit": 10,
+                    "offset": 0,
+                    "order": [
+                        {"key": {"name": "timestamp"}, "direction": "desc"},
+                    ],
+                    "selectFields": [
+                        {
+                            "name": "resource.service.name",
+                            "fieldDataType": "string",
+                            "signal": "traces",
+                        },
+                        {
+                            "name": "span.name:string",
+                            "signal": "traces",
+                        },
+                        {
+                            "name": "span.duration_nano",
+                            "signal": "traces",
+                        },
+                        {
+                            "name": "span.http_method",
+                            "signal": "traces",
+                        },
+                        {
+                            "name": "span.response_status_code",
+                            "signal": "traces",
+                        },
+                    ],
+                    "having": {"expression": ""},
+                    "aggregations": [{"expression": "count()"}],
+                },
+            }
+        ],
+    )
+    assert_identical_query_response(response, response_with_inline_context)
+
+
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
-
-    # Query results with context appended to key names
-    response_with_inline_context = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json={
-            "schemaVersion": "v1",
-            "start": int(
-                (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
-                * 1000
-            ),
-            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "disabled": False,
-                            "limit": 10,
-                            "offset": 0,
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
-                            ],
-                            "selectFields": [
-                                {
-                                    "name": "resource.service.name",
-                                    "fieldDataType": "string",
-                                    "signal": "traces",
-                                },
-                                {
-                                    "name": "span.name:string",
-                                    "signal": "traces",
-                                },
-                                {
-                                    "name": "span.duration_nano",
-                                    "signal": "traces",
-                                },
-                                {
-                                    "name": "span.http_method",
-                                    "signal": "traces",
-                                },
-                                {
-                                    "name": "span.response_status_code",
-                                    "signal": "traces",
-                                },
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-    assert response_with_inline_context.status_code == HTTPStatus.OK
-    assert response_with_inline_context.json()["status"] == "success"
-
-    assert (
-        response.json()["data"]["data"]["results"]
-        == response_with_inline_context.json()["data"]["data"]["results"]
-    )
 
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
