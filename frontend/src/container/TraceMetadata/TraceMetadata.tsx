@@ -1,8 +1,10 @@
 import './TraceMetadata.styles.scss';
 
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
 import history from 'lib/history';
 import {
 	ArrowLeft,
@@ -11,6 +13,8 @@ import {
 	DraftingCompass,
 	Timer,
 } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
+import { useMemo } from 'react';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 export interface ITraceMetadataProps {
@@ -22,6 +26,7 @@ export interface ITraceMetadataProps {
 	totalSpans: number;
 	totalErrorSpans: number;
 	notFound: boolean;
+	isDataLoading: boolean;
 }
 
 function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
@@ -34,7 +39,18 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 		totalErrorSpans,
 		totalSpans,
 		notFound,
+		isDataLoading,
 	} = props;
+
+	const { timezone } = useTimezone();
+
+	const startTimeInMs = useMemo(
+		() =>
+			dayjs(startTime * 1e3)
+				.tz(timezone.value)
+				.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS),
+		[startTime, timezone.value],
+	);
 
 	const handlePreviousBtnClick = (): void => {
 		if (window.history.length > 1) {
@@ -57,7 +73,18 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 					</div>
 					<Typography.Text className="trace-id-value">{traceID}</Typography.Text>
 				</div>
-				{!notFound && (
+
+				{isDataLoading && (
+					<div className="second-row">
+						<div className="service-entry-info">
+							<BetweenHorizonalStart size={14} />
+							<Skeleton.Input active className="skeleton-input" size="small" />
+							<Skeleton.Input active className="skeleton-input" size="small" />
+							<Skeleton.Input active className="skeleton-input" size="small" />
+						</div>
+					</div>
+				)}
+				{!isDataLoading && !notFound && (
 					<div className="second-row">
 						<div className="service-entry-info">
 							<BetweenHorizonalStart size={14} />
@@ -79,8 +106,9 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 							<Tooltip title="Start timestamp">
 								<CalendarClock size={14} />
 							</Tooltip>
+
 							<Typography.Text className="text">
-								{formatEpochTimestamp(startTime * 1000)}
+								{startTimeInMs || 'N/A'}
 							</Typography.Text>
 						</div>
 					</div>
