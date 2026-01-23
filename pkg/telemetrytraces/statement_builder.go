@@ -285,9 +285,9 @@ func (b *traceQueryStatementBuilder) adjustKey(ctx context.Context, key *telemet
 	}
 
 	if isIntrinsicOrCalculatedField {
-		actions = append(actions, querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)...)
+		actions = append(actions, querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)...)
 	} else {
-		actions = append(actions, querybuilder.AdjustKey(ctx, key, keys, nil)...)
+		actions = append(actions, querybuilder.AdjustKey(key, keys, nil)...)
 	}
 
 	return actions

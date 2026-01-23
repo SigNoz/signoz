@@ -232,10 +232,10 @@ func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetry
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
 		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
-		return querybuilder.AdjustKey(ctx, key, keys, &intrinsicOrCalculatedField)
+		return querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)
 	}
 
-	return querybuilder.AdjustKey(ctx, key, keys, nil)
+	return querybuilder.AdjustKey(key, keys, nil)
 
 }
 

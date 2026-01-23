@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"context"
 	"fmt"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -100,7 +99,7 @@ func deduplicateKeys(key telemetrytypes.TelemetryFieldKey, keysMap map[string]te
 	}
 }
 
-func AdjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, intrinsicOrCalculatedField *telemetrytypes.TelemetryFieldKey) []string {
+func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, intrinsicOrCalculatedField *telemetrytypes.TelemetryFieldKey) []string {
 
 	// for recording modifications
 	actions := []string{}

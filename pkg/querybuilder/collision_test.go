@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"context"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -620,8 +619,7 @@ func TestAdjustKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := tt.key
-			ctx := context.Background()
-			actions := AdjustKey(ctx, &key, tt.keys, tt.intrinsicOrCalculatedField)
+			actions := AdjustKey(&key, tt.keys, tt.intrinsicOrCalculatedField)
 
 			assert.Equal(t, tt.expectedKey.Name, key.Name, "Name mismatch: %s", tt.description)
 			assert.Equal(t, tt.expectedKey.FieldContext, key.FieldContext, "FieldContext mismatch: %s", tt.description)
