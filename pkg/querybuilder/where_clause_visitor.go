@@ -525,6 +525,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 
 			if ok {
+				if varItem.Type == qbtypes.DynamicVariableType {
+					if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
+						// this is likely overlooked by user, we treat it as if it was IN instead of =
+						v.logger.Warn("received unexpected __all__ value for single select dynamic variable", "variable", var_, "keys", keys, "value", value) //nolint:sloglint
+						return ""
+					}
+				}
 				switch varValues := varItem.Value.(type) {
 				case []any:
 					if len(varValues) == 0 {
@@ -849,7 +856,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// 1. either user meant key ( this is already handled above in fieldKeysForName )
 	// 2. or user meant `attribute.key` we look up in the map for all possible field keys with name 'attribute.key'
 
-	// Note: 
+	// Note:
 	// If user only wants to search `attribute.key`, then they have to use `attribute.attribute.key`
 	// If user only wants to search `key`, then they have to use `key`
 	// If user wants to search both, they can use `attribute.key` and we will resolve the ambiguity

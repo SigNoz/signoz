@@ -2,8 +2,6 @@ from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, Dict, List, Optional, Tuple
 
-import requests
-
 from fixtures import querier, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
@@ -23,6 +21,8 @@ metric_values_for_test = {
     "service-c": 70.0,
     "service-d": 10.0,
 }
+
+SCALAR_FORMAT_OPTIONS = {"formatTableResultForUI": True, "fillGaps": False}
 
 
 def generate_logs_with_counts(
@@ -83,30 +83,6 @@ def generate_metrics_with_values(
             )
         )
     return metrics
-
-
-def make_scalar_query_request(
-    signoz: types.SigNoz,
-    token: str,
-    now: datetime,
-    queries: List[Dict],
-    lookback_minutes: int = 5,
-) -> requests.Response:
-    return requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int(
-                (now - timedelta(minutes=lookback_minutes)).timestamp() * 1000
-            ),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "scalar",
-            "compositeQuery": {"queries": queries},
-            "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
-        },
-    )
 
 
 def build_logs_query(
@@ -218,11 +194,16 @@ def test_logs_scalar_group_by_single_agg_no_order(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_logs_query(group_by=["service.name"])],
+        request_type="scalar",
+        format_options={"formatTableResultForUI": True, "fillGaps": False},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -246,11 +227,16 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_asc(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_logs_query(group_by=["service.name"], order_by=[("count()", "asc")])],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -274,11 +260,16 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_desc(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_logs_query(group_by=["service.name"], order_by=[("count()", "desc")])],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -302,15 +293,20 @@ def test_logs_scalar_group_by_single_agg_order_by_grouping_key_asc(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"], order_by=[("service.name", "asc")]
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -334,15 +330,20 @@ def test_logs_scalar_group_by_single_agg_order_by_grouping_key_desc(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"], order_by=[("service.name", "desc")]
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -366,10 +367,13 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"],
@@ -377,6 +381,8 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
                 order_by=[("count()", "asc")],
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -398,10 +404,13 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_second_agg_desc(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"],
@@ -409,6 +418,8 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_second_agg_desc(
                 order_by=[("count_distinct(body)", "desc")],
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -431,15 +442,20 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"], order_by=[("count()", "asc")], limit=2
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -463,15 +479,20 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"], order_by=[("count()", "desc")], limit=3
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -495,15 +516,20 @@ def test_logs_scalar_group_by_order_by_grouping_key_asc_limit_2(
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_logs_query(
                 group_by=["service.name"], order_by=[("service.name", "asc")], limit=2
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -527,11 +553,16 @@ def test_traces_scalar_group_by_single_agg_no_order(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_traces_query(group_by=["service.name"])],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -555,11 +586,16 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_asc(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_traces_query(group_by=["service.name"], order_by=[("count()", "asc")])],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -583,11 +619,16 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_desc(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_traces_query(group_by=["service.name"], order_by=[("count()", "desc")])],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -611,15 +652,20 @@ def test_traces_scalar_group_by_single_agg_order_by_grouping_key_asc(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_traces_query(
                 group_by=["service.name"], order_by=[("service.name", "asc")]
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -643,15 +689,20 @@ def test_traces_scalar_group_by_single_agg_order_by_grouping_key_desc(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_traces_query(
                 group_by=["service.name"], order_by=[("service.name", "desc")]
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -675,10 +726,13 @@ def test_traces_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_traces_query(
                 group_by=["service.name"],
@@ -686,6 +740,8 @@ def test_traces_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
                 order_by=[("count()", "asc")],
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -707,15 +763,20 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_traces_query(
                 group_by=["service.name"], order_by=[("count()", "asc")], limit=2
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -739,15 +800,20 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_traces_query(
                 group_by=["service.name"], order_by=[("count()", "desc")], limit=3
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -771,15 +837,20 @@ def test_traces_scalar_group_by_order_by_grouping_key_asc_limit_2(
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_traces_query(
                 group_by=["service.name"], order_by=[("service.name", "asc")], limit=2
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -803,11 +874,16 @@ def test_metrics_scalar_group_by_single_agg_no_order(
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [build_metrics_query(group_by=["service.name"])],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -836,16 +912,21 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_asc(
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_metrics_query(
                 group_by=["service.name"],
                 order_by=[("sum(test.metric)", "asc")],
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -874,16 +955,21 @@ def test_metrics_scalar_group_by_single_agg_order_by_grouping_key_asc(
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_metrics_query(
                 group_by=["service.name"],
                 order_by=[("service.name", "asc")],
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -912,10 +998,13 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_metrics_query(
                 group_by=["service.name"],
@@ -923,6 +1012,8 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
                 limit=2,
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -946,10 +1037,13 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_metrics_query(
                 group_by=["service.name"],
@@ -957,6 +1051,8 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
                 limit=3,
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -980,10 +1076,13 @@ def test_metrics_scalar_group_by_order_by_grouping_key_asc_limit_2(
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_scalar_query_request(
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    response = querier.make_query_request(
         signoz,
         token,
-        now,
+        start_ms,
+        end_ms,
         [
             build_metrics_query(
                 group_by=["service.name"],
@@ -991,6 +1090,8 @@ def test_metrics_scalar_group_by_order_by_grouping_key_asc_limit_2(
                 limit=2,
             )
         ],
+        request_type="scalar",
+        format_options=SCALAR_FORMAT_OPTIONS,
     )
 
     assert response.status_code == HTTPStatus.OK

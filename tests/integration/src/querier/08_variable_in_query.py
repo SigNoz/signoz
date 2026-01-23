@@ -1,47 +1,19 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, List
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
-    DEFAULT_STEP_INTERVAL,
+    build_scalar_query,
     get_all_series,
     get_series_values,
     make_query_request,
+    sum_series_values,
 )
 
-
-def build_logs_query(
-    name: str,
-    *,
-    filter_expression: Optional[str] = None,
-    step_interval: int = DEFAULT_STEP_INTERVAL,
-    group_by: Optional[List[Dict]] = None,
-    aggregations: Optional[List[Dict]] = None,
-    disabled: bool = False,
-) -> Dict[str, Any]:
-    spec: Dict[str, Any] = {
-        "name": name,
-        "signal": "logs",
-        "stepInterval": step_interval,
-        "disabled": disabled,
-        "having": {"expression": ""},
-        "aggregations": aggregations or [{"expression": "count()"}],
-    }
-
-    if filter_expression:
-        spec["filter"] = {"expression": filter_expression}
-
-    if group_by:
-        spec["groupBy"] = group_by
-
-    return {"type": "builder_query", "spec": spec}
-
-
-def sum_series_values(series_values: List[Dict]) -> float:
-    return sum(point["value"] for point in series_values)
+LOGS_COUNT_AGG = [{"expression": "count()"}]
 
 
 def test_query_range_with_standalone_variable(
@@ -86,7 +58,11 @@ def test_query_range_with_standalone_variable(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="service.name = $service")],
+        [
+            build_scalar_query(
+                "A", "logs", LOGS_COUNT_AGG, filter_expression="service.name = $service"
+            )
+        ],
         variables={"service": {"type": "query", "value": "auth-service"}},
     )
 
@@ -140,7 +116,14 @@ def test_query_range_with_variable_in_array(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="service.name IN $services")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="service.name IN $services",
+            )
+        ],
         variables={
             "services": {"type": "custom", "value": ["auth-service", "api-service"]}
         },
@@ -196,7 +179,14 @@ def test_query_range_with_variable_composed_in_string(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="cluster_name = '$environment-xyz'")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="cluster_name = '$environment-xyz'",
+            )
+        ],
         variables={"environment": {"type": "dynamic", "value": "prod"}},
     )
 
@@ -250,7 +240,14 @@ def test_query_range_with_variable_in_like_pattern(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="service.name LIKE '$env%'")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="service.name LIKE '$env%'",
+            )
+        ],
         variables={"env": {"type": "text", "value": "prod"}},
     )
 
@@ -304,7 +301,14 @@ def test_query_range_with_multiple_variables_in_string(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="path = '$region-$env-cluster'")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="path = '$region-$env-cluster'",
+            )
+        ],
         variables={
             "region": {"type": "query", "value": "us-west"},
             "env": {"type": "custom", "value": "prod"},
@@ -354,7 +358,14 @@ def test_query_range_with_variable_prefix_and_suffix(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="label = 'prefix-$var-suffix'")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="label = 'prefix-$var-suffix'",
+            )
+        ],
         variables={"var": {"type": "text", "value": "middle"}},
     )
 
@@ -401,7 +412,14 @@ def test_query_range_with_variable_without_quotes(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="cluster_name = $environment-xyz")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="cluster_name = $environment-xyz",
+            )
+        ],
         variables={"environment": {"type": "custom", "value": "staging"}},
     )
 
@@ -464,8 +482,10 @@ def test_query_range_time_series_with_group_by(
         start_ms,
         end_ms,
         [
-            build_logs_query(
+            build_scalar_query(
                 "A",
+                "logs",
+                LOGS_COUNT_AGG,
                 filter_expression="cluster_name = '$env-xyz'",
                 group_by=[
                     {
@@ -520,7 +540,14 @@ def test_query_range_with_different_variable_types(
             token,
             start_ms,
             end_ms,
-            [build_logs_query("A", filter_expression="service.name = $service")],
+            [
+                build_scalar_query(
+                    "A",
+                    "logs",
+                    LOGS_COUNT_AGG,
+                    filter_expression="service.name = $service",
+                )
+            ],
             variables={"service": {"type": var_type, "value": "auth-service"}},
         )
 
@@ -579,7 +606,11 @@ def test_query_range_with_all_value_standalone(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="service.name = $service")],
+        [
+            build_scalar_query(
+                "A", "logs", LOGS_COUNT_AGG, filter_expression="service.name = $service"
+            )
+        ],
         variables={"service": {"type": "dynamic", "value": "__all__"}},
     )
 
@@ -634,7 +665,14 @@ def test_query_range_with_all_value_in_composed_string(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="cluster_name = '$environment-xyz'")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="cluster_name = '$environment-xyz'",
+            )
+        ],
         variables={"environment": {"type": "dynamic", "value": "__all__"}},
     )
 
@@ -690,8 +728,11 @@ def test_query_range_with_all_value_partial_filter(
         start_ms,
         end_ms,
         [
-            build_logs_query(
-                "A", filter_expression="service.name = $service AND env = $env"
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="service.name = $service AND env = $env",
             )
         ],
         variables={
@@ -743,7 +784,14 @@ def test_query_range_with_all_value_in_array(
         token,
         start_ms,
         end_ms,
-        [build_logs_query("A", filter_expression="service.name IN $services")],
+        [
+            build_scalar_query(
+                "A",
+                "logs",
+                LOGS_COUNT_AGG,
+                filter_expression="service.name IN $services",
+            )
+        ],
         variables={"services": {"type": "dynamic", "value": "__all__"}},
     )
 
