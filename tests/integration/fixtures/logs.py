@@ -9,6 +9,7 @@ from ksuid import KsuidMs
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
+from fixtures.utils import parse_iso_8601_timestamp
 
 
 class LogsResource(ABC):
@@ -329,6 +330,58 @@ class Logs(ABC):
             ]
         )
 
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+    ) -> "Logs":
+        """Create a Logs instance from a dict."""
+        # parse timestamp from iso format
+        timestamp = parse_iso_8601_timestamp(data["timestamp"])
+        return cls(
+            timestamp=timestamp,
+            resources=data.get("resources", {}),
+            attributes=data.get("attributes", {}),
+            body=data["body"],
+            severity_text=data.get("severity_text", "INFO"),
+        )
+
+    @classmethod
+    def load_from_file(
+        cls,
+        file_path: str,
+        base_time: Optional[datetime.datetime] = None,
+    ) -> List["Logs"]:
+        """Load logs from a JSONL file."""
+
+        data_list = []
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data_list.append(json.loads(line))
+
+        # If base_time provided, calculate time offset
+        time_offset = datetime.timedelta(0)
+        if base_time is not None:
+            # Find earliest timestamp
+            earliest = None
+            for data in data_list:
+                ts = parse_iso_8601_timestamp(data["timestamp"])
+                if earliest is None or ts < earliest:
+                    earliest = ts
+            if earliest is not None:
+                time_offset = base_time - earliest
+
+        logs = []
+        for data in data_list:
+            original_ts = parse_iso_8601_timestamp(data["timestamp"])
+            adjusted_ts = original_ts + time_offset
+            data["timestamp"] = adjusted_ts.isoformat()
+            logs.append(cls.from_dict(data))
+
+        return logs
 
 @pytest.fixture(name="insert_logs", scope="function")
 def insert_logs(

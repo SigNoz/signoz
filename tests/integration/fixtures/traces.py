@@ -13,6 +13,7 @@ import pytest
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
+from fixtures.utils import parse_duration, parse_iso_8601_timestamp
 
 
 class TracesKind(Enum):
@@ -23,11 +24,19 @@ class TracesKind(Enum):
     SPAN_KIND_PRODUCER = 4
     SPAN_KIND_CONSUMER = 5
 
+    @classmethod
+    def from_value(cls, value: int) -> "TracesKind":
+        return cls(value)
+
 
 class TracesStatusCode(Enum):
     STATUS_CODE_UNSET = 0
     STATUS_CODE_OK = 1
     STATUS_CODE_ERROR = 2
+
+    @classmethod
+    def from_value(cls, value: int) -> "TracesStatusCode":
+        return cls(value)
 
 
 class TracesRefType(Enum):
@@ -602,6 +611,82 @@ class Traces(ABC):
             dtype=object,
         )
 
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+    ) -> "Traces":
+        """Create a Traces instance from a dict."""
+        # parse timestamp from iso format
+        timestamp = parse_iso_8601_timestamp(data["timestamp"])
+        duration = parse_duration(data.get("duration", "PT1S"))
+
+        kind = TracesKind.from_value(
+            data.get("kind", TracesKind.SPAN_KIND_INTERNAL.value)
+        )
+        status_code = TracesStatusCode.from_value(
+            data.get("status_code", TracesStatusCode.STATUS_CODE_UNSET.value)
+        )
+
+        return cls(
+            timestamp=timestamp,
+            duration=duration,
+            trace_id=data["trace_id"],
+            span_id=data["span_id"],
+            parent_span_id=data.get("parent_span_id", ""),
+            name=data.get("name", "default span"),
+            kind=kind,
+            status_code=status_code,
+            status_message=data.get("status_message", ""),
+            resources=data.get("resources", {}),
+            attributes=data.get("attributes", {}),
+            trace_state=data.get("trace_state", ""),
+            flags=data.get("flags", 0),
+        )
+
+    @classmethod
+    def load_from_file(
+        cls,
+        file_path: str,
+        base_time: Optional[datetime.datetime] = None,
+    ) -> List["Traces"]:
+        """Load traces from a JSONL file."""
+
+        data_list = []
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data_list.append(json.loads(line))
+
+        if not data_list:
+            return []
+
+        # If base_time provided, calculate time offset
+        time_offset = datetime.timedelta(0)
+        if base_time is not None:
+            # Find earliest timestamp
+            earliest = None
+            for data in data_list:
+                ts = parse_iso_8601_timestamp(data["timestamp"])
+                if earliest is None or ts < earliest:
+                    earliest = ts
+            if earliest is not None:
+                time_offset = base_time - earliest
+
+        traces = []
+        for data in data_list:
+            # add time offset to timestamp
+            original_ts = parse_iso_8601_timestamp(data["timestamp"])
+            duration = parse_duration(data.get("duration", "PT1S"))
+            adjusted_ts = original_ts + time_offset
+            data["timestamp"] = adjusted_ts.isoformat()
+            # parse duration of the span
+            data["duration"] = duration
+            traces.append(cls.from_dict(data))
+
+        return traces
 
 @pytest.fixture(name="insert_traces", scope="function")
 def insert_traces(

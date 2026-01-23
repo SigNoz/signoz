@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Literal
 from urllib.parse import urljoin
 
 import clickhouse_connect
@@ -162,3 +162,15 @@ class Network:
 
     def __log__(self) -> str:
         return f"Network(id={self.id}, name={self.name})"
+
+
+# Alerts related types
+
+@dataclass(frozen=True)
+class AlertData:
+    # type of the alert data, one of 'metrics', 'logs', 'traces'
+    type: Literal["metrics", "logs", "traces"]
+    # path to the data file in testdata directory
+    data_path: str
+
+
