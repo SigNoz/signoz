@@ -294,10 +294,9 @@ flagger:
 
 ##################### User #####################
 user:
-  auth:
-    password:
-      reset:
-        # Whether to allow users to reset their password themselves.
-        allow_self: true
-        # The duration within which a user can reset their password.
-        max_token_lifetime: 6h
+  password:
+    reset:
+      # Whether to allow users to reset their password themselves.
+      allow_self: true
+      # The duration within which a user can reset their password.
+      max_token_lifetime: 6h

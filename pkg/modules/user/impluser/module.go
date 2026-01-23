@@ -308,11 +308,20 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 	// check if a token already exists for this password id
 	existingResetPasswordToken, err := module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
-	if err == nil && !existingResetPasswordToken.IsExpired() {
-		return existingResetPasswordToken, nil // return the existing token if it is not expired
-	}
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err // return the error if it is not a not found error
+	}
+
+	// return the existing token if it is not expired
+	if existingResetPasswordToken != nil && !existingResetPasswordToken.IsExpired() {
+		return existingResetPasswordToken, nil // return the existing token if it is not expired
+	}
+
+	// delete the existing token entry
+	if existingResetPasswordToken != nil {
+		if err := module.store.DeleteResetPasswordTokenByPasswordID(ctx, password.ID); err != nil {
+			return nil, err
+		}
 	}
 
 	// create a new token
@@ -321,23 +330,10 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		return nil, err
 	}
 
-	// upsert
-	err = module.store.UpsertResetPasswordToken(ctx, resetPasswordToken)
+	// create a new token
+	err = module.store.CreateResetPasswordToken(ctx, resetPasswordToken)
 	if err != nil {
 		return nil, err
-	}
-
-	// refetch to avoid race conditions
-	resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	// clean up expired token (opportunistic approach)
-	err = module.store.DeleteExpiredResetPasswordTokens(ctx)
-	if err != nil {
-		// do not halt the flow if this fails
-		module.settings.Logger().ErrorContext(ctx, "failed to delete expired reset password tokens", "error", err)
 	}
 
 	return resetPasswordToken, nil

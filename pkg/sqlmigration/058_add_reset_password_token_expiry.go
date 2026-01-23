@@ -61,7 +61,7 @@ func (migration *addResetPasswordTokenExpiry) Up(ctx context.Context, db *bun.DB
 	}
 
 	// for existing rows set
-	defaultValueForExistingRows := time.Now().Add(2 * time.Hour)
+	defaultValueForExistingRows := time.Now()
 
 	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, defaultValueForExistingRows)
 
