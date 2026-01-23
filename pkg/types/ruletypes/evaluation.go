@@ -47,7 +47,7 @@ func (rollingWindow RollingWindow) GetFrequency() Duration {
 
 type CumulativeWindow struct {
 	Schedule  CumulativeSchedule `json:"schedule"`
-	Frequency Duration           `json:"frequency"`
+	Frequency PreservingDuration `json:"frequency"`
 	Timezone  string             `json:"timezone"`
 }
 
@@ -79,7 +79,7 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	if _, err := time.LoadLocation(cumulativeWindow.Timezone); err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is invalid")
 	}
-	if cumulativeWindow.Frequency <= 0 {
+	if cumulativeWindow.Frequency.Duration() <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
 	}
 	return nil
@@ -221,7 +221,7 @@ func (cw CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Locatio
 }
 
 func (cumulativeWindow CumulativeWindow) GetFrequency() Duration {
-	return cumulativeWindow.Frequency
+	return Duration(cumulativeWindow.Frequency.Duration())
 }
 
 type EvaluationEnvelope struct {

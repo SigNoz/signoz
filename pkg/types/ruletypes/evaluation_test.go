@@ -69,7 +69,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(15),
 				},
-				Frequency: Duration(5 * time.Minute),
+				Frequency: NewPreservingDuration(5 * time.Minute),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -83,7 +83,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Frequency: Duration(1 * time.Hour),
+				Frequency: NewPreservingDuration(1 * time.Hour),
 				Timezone:  "Asia/Kolkata",
 			},
 			current: time.Date(2025, 3, 15, 15, 30, 0, 0, time.UTC),
@@ -98,7 +98,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:    intPtr(14),
 					Minute:  intPtr(0),
 				},
-				Frequency: Duration(24 * time.Hour),
+				Frequency: NewPreservingDuration(24 * time.Hour),
 				Timezone:  "America/New_York",
 			},
 			current: time.Date(2025, 3, 18, 19, 0, 0, 0, time.UTC), // Tuesday
@@ -113,7 +113,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:   intPtr(0),
 					Minute: intPtr(0),
 				},
-				Frequency: Duration(24 * time.Hour),
+				Frequency: NewPreservingDuration(24 * time.Hour),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
@@ -125,7 +125,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 				Schedule: CumulativeSchedule{
 					Type: ScheduleTypeHourly,
 				},
-				Frequency: Duration(5 * time.Minute),
+				Frequency: NewPreservingDuration(5 * time.Minute),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -768,7 +768,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Frequency: Duration(2 * time.Minute),
+				Frequency: NewPreservingDuration(2 * time.Minute),
 				Timezone:  "UTC",
 			},
 		},
@@ -847,10 +847,10 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					t.Fatalf("Expected RollingWindow spec, got %T", envelope.Spec)
 				}
 				wantSpec := tt.wantSpec.(RollingWindow)
-				if gotSpec.EvalWindow != wantSpec.EvalWindow {
+				if gotSpec.EvalWindow.Duration() != wantSpec.EvalWindow.Duration() {
 					t.Errorf("RollingWindow.EvalWindow = %v, want %v", gotSpec.EvalWindow, wantSpec.EvalWindow)
 				}
-				if gotSpec.Frequency != wantSpec.Frequency {
+				if gotSpec.Frequency.Duration() != wantSpec.Frequency.Duration() {
 					t.Errorf("RollingWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 			case CumulativeEvaluation:
@@ -866,7 +866,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					(gotSpec.Schedule.Minute != nil && wantSpec.Schedule.Minute != nil && *gotSpec.Schedule.Minute != *wantSpec.Schedule.Minute) {
 					t.Errorf("CumulativeWindow.Schedule.Minute = %v, want %v", gotSpec.Schedule.Minute, wantSpec.Schedule.Minute)
 				}
-				if gotSpec.Frequency != wantSpec.Frequency {
+				if gotSpec.Frequency.Duration() != wantSpec.Frequency.Duration() {
 					t.Errorf("CumulativeWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 				if gotSpec.Timezone != wantSpec.Timezone {
