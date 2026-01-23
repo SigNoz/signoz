@@ -67,7 +67,7 @@ def test_root_user_signoz_admin_assignment(
     roles = response.json()["data"]
     admin_role_entry = next((role for role in roles if role["name"] == "signoz-admin"), None)
     assert admin_role_entry is not None
-    org_id = admin_role_entry["org_id"]
+    org_id = admin_role_entry["orgId"]
     admin_role_id = admin_role_entry["id"]
 
     # to be super sure of authorization server, let's validate the tuples in DB as well. 

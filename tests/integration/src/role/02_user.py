@@ -68,7 +68,7 @@ def test_user_invite_accept_role_grant(
         timeout=2,
     )
     assert roles_response.status_code == HTTPStatus.OK
-    org_id = roles_response.json()["data"][0]["org_id"]
+    org_id = roles_response.json()["data"][0]["orgId"]
 
     # check role assignment tuples in DB
     with signoz.sqlstore.conn.connect() as conn:
@@ -125,7 +125,7 @@ def test_user_update_role_grant(
     )
     assert roles_response.status_code == HTTPStatus.OK
     roles_data = roles_response.json()["data"]
-    org_id = roles_data[0]["org_id"]
+    org_id = roles_data[0]["orgId"]
     viewer_role_id = next(role["id"] for role in roles_data if role["name"] == "signoz-viewer")
 
     # Update the user's role to viewer
@@ -208,7 +208,7 @@ def test_user_delete_role_revoke(
         timeout=2,
     )
     assert roles_response.status_code == HTTPStatus.OK
-    org_id = roles_response.json()["data"][0]["org_id"]
+    org_id = roles_response.json()["data"][0]["orgId"]
     editor_role_id = next(
         role["id"]
         for role in roles_response.json()["data"]
