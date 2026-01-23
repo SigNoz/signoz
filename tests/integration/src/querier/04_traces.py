@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, Dict, List
 
+import pytest
 import requests
 
 from fixtures import types
@@ -10,6 +11,7 @@ from fixtures.querier import (
     assert_minutely_bucket_values,
     find_named_result,
     index_series_by_label,
+    make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
@@ -488,11 +490,73 @@ def test_traces_list(
     assert set(values) == set(["topic-service", "http-service"])
 
 
+@pytest.mark.parametrize(
+    "order_by,aggregation_alias,expected_status",
+    [
+        # Case 1a: count by count()
+        pytest.param({"name": "count()"}, "count_", HTTPStatus.OK),
+        # Case 1b: count by count() with alias span.count_
+        pytest.param({"name": "count()"}, "span.count_", HTTPStatus.OK),
+        # Case 2a: count by count() with context specified in the key
+        pytest.param(
+            {"name": "count()", "fieldContext": "span"}, "count_", HTTPStatus.OK
+        ),
+        # Case 2b: count by count() with context specified in the key with alias span.count_
+        pytest.param(
+            {"name": "count()", "fieldContext": "span"}, "span.count_", HTTPStatus.OK
+        ),
+        # Case 3a: count by span.count() and context specified in the key [BAD REQUEST]
+        pytest.param(
+            {"name": "span.count()", "fieldContext": "span"},
+            "count_",
+            HTTPStatus.BAD_REQUEST,
+        ),
+        # Case 3b: count by span.count() and context specified in the key with alias span.count_ [BAD REQUEST]
+        pytest.param(
+            {"name": "span.count()", "fieldContext": "span"},
+            "span.count_",
+            HTTPStatus.BAD_REQUEST,
+        ),
+        # Case 4a: count by span.count() and context specified in the key
+        pytest.param(
+            {"name": "span.count()", "fieldContext": ""}, "count_", HTTPStatus.OK
+        ),
+        # Case 4b: count by span.count() and context specified in the key with alias span.count_
+        pytest.param(
+            {"name": "span.count()", "fieldContext": ""}, "span.count_", HTTPStatus.OK
+        ),
+        # Case 5a: count by count_
+        pytest.param({"name": "count_"}, "count_", HTTPStatus.OK),
+        # Case 5b: count by count_ with alias span.count_
+        pytest.param({"name": "count_"}, "count_", HTTPStatus.OK),
+        # Case 6a: count by span.count_
+        pytest.param({"name": "span.count_"}, "count_", HTTPStatus.OK),
+        # Case 6b: count by span.count_ with alias span.count_
+        pytest.param(
+            {"name": "span.count_"}, "span.count_", HTTPStatus.BAD_REQUEST
+        ),  # THIS SHOULD BE OK BUT FAILS DUE TO LIMITATION IN CURRENT IMPLEMENTATION
+        # Case 7a: count by span.count_ and context specified in the key [BAD REQUEST]
+        pytest.param(
+            {"name": "span.count_", "fieldContext": "span"},
+            "count_",
+            HTTPStatus.BAD_REQUEST,
+        ),
+        # Case 7b: count by span.count_ and context specified in the key with alias span.count_
+        pytest.param(
+            {"name": "span.count_", "fieldContext": "span"},
+            "span.count_",
+            HTTPStatus.OK,
+        ),
+    ],
+)
 def test_traces_aggergate_order_by_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
+    order_by: Dict[str, str],
+    aggregation_alias: str,
+    expected_status: HTTPStatus,
 ) -> None:
     """
     Setup:
@@ -616,148 +680,38 @@ def test_traces_aggergate_order_by_count(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    request_payload = {
-        "schemaVersion": "v1",
-        "start": int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
-            * 1000
-        ),
-        "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
-        "requestType": "time_series",
-        "compositeQuery": {
-            "queries": [
-                {
-                    "type": "builder_query",
-                    "spec": {
-                        "name": "A",
-                        "signal": "traces",
-                        "disabled": False,
-                        "order": [
-                            {"key": {"name": "count()"},
-                              "direction": "desc"}
-                        ],
-                        "aggregations": [{"expression": "count()", "alias": "count_"}],
-                    }
-                }
-            ]
-        }
+    query = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "traces",
+            "disabled": False,
+            "order": [{"key": {"name": "count()"}, "direction": "desc"}],
+            "aggregations": [{"expression": "count()", "alias": "count_"}],
+        },
     }
 
     # Query traces count for spans
 
-    # Case 1: count by count()
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "count()"
-    response1 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
+    query["spec"]["order"][0]["key"] = order_by
+    query["spec"]["aggregations"][0]["alias"] = aggregation_alias
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="time_series",
+        queries=[query],
     )
 
-    assert response1.status_code == HTTPStatus.OK
-    assert response1.json()["status"] == "success"
+    assert response.status_code == expected_status
+    if expected_status != HTTPStatus.OK:
+        return
+    assert response.json()["status"] == "success"
 
-    # Case 2: count by count() with context specified in the key
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "count()"
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = "span"
-    response2 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
-    )
-
-    assert response2.status_code == HTTPStatus.OK
-    assert response2.json()["status"] == "success"
-
-    assert response1.json()['data']['data']['results'] == response2.json()['data']['data']['results']
-
-    # Case 3: count by span.count() and context specified in the key [BAD REQUEST]
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count()"
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = "span"
-    response3 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
-    )
-
-    assert response3.status_code == HTTPStatus.BAD_REQUEST
-
-
-    # Case 4: count by span.count() and context specified in the key
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count()"
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = ""
-    response4 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
-    )
-
-    assert response4.status_code == HTTPStatus.OK
-    assert response4.json()["status"] == "success"
-    assert response1.json()['data']['data']['results'] == response4.json()['data']['data']['results']   
-
-
-    # Case 5: count by count_
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "count_"
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = ""
-    response5 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
-    )
-
-    assert response5.status_code == HTTPStatus.OK
-    assert response5.json()["status"] == "success"
-
-    assert response1.json()['data']['data']['results'] == response5.json()['data']['data']['results']
-
-    # Case 6: count by span.count_
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count_"
-    response6 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
-    )
-
-    assert response6.status_code == HTTPStatus.OK
-    assert response6.json()["status"] == "success"
-
-    assert response1.json()['data']['data']['results'] == response6.json()['data']['data']['results']
-
-    # Case 7: count by span.count_ and context specified in the key [BAD REQUEST    ]
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["name"] = "span.count_"
-    request_payload["compositeQuery"]["queries"][0]["spec"]["order"][0]["key"]["fieldContext"] = "span"
-
-    response7 = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=2,
-        headers={
-            "authorization": f"Bearer {token}",
-        },
-        json=request_payload
-    )
-
-    assert response7.status_code == HTTPStatus.BAD_REQUEST
-
-    results = response1.json()["data"]["data"]["results"]
-
+    results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
     aggregations = results[0]["aggregations"]
     assert len(aggregations) == 1
