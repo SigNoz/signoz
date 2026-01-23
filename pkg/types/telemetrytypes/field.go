@@ -82,17 +82,6 @@ func (f *TelemetryFieldKey) GetTelemetryFieldKey() *TelemetryFieldKey {
 	return f
 }
 
-// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
-// The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
-func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
-
-	keyTextParts := strings.Split(key, ".")
-
-	var explicitFieldContextProvided, explicitFieldDataTypeProvided bool
-	var explicitFieldContext FieldContext
-	var explicitFieldDataType FieldDataType
-	var ok bool
-
 // Normalize parses and normalizes a TelemetryFieldKey by extracting
 // the field context and data type from the field name if they are not already specified.
 // This function modifies the key in place.
@@ -187,20 +176,6 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 		FieldContext:  FieldContextUnspecified,
 		FieldDataType: explicitFieldDataType,
 	}
-}
-
-func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
-	var sb strings.Builder
-	if key.FieldContext != FieldContextUnspecified {
-		sb.WriteString(key.FieldContext.StringValue())
-		sb.WriteString(".")
-	}
-	sb.WriteString(key.Name)
-	if key.FieldDataType != FieldDataTypeUnspecified {
-		sb.WriteString(":")
-		sb.WriteString(key.FieldDataType.StringValue())
-	}
-	return sb.String()
 }
 
 func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {

@@ -410,7 +410,12 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	for i, order := range q.Order {
 		orderKey := order.Key.Name
 
-		if !validOrderKeys[orderKey] {
+		// Also check the context-prefixed key name for alias matching
+		// This handles cases where user specifies alias like "span.count_" and
+		// order by comes as FieldContext=span, Name=count_
+		contextPrefixedKey := fmt.Sprintf("%s.%s", order.Key.FieldContext.StringValue(), order.Key.Name)
+
+		if !validOrderKeys[orderKey] && !validOrderKeys[contextPrefixedKey] {
 			orderId := fmt.Sprintf("order by clause #%d", i+1)
 			if q.Name != "" {
 				orderId = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)
