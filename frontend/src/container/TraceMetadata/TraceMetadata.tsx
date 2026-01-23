@@ -106,11 +106,10 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 							<Tooltip title="Start timestamp">
 								<CalendarClock size={14} />
 							</Tooltip>
-							{startTimeInMs ? (
-								<Typography.Text className="text">{startTimeInMs}</Typography.Text>
-							) : (
-								<Typography.Text className="text">N/A</Typography.Text>
-							)}
+
+							<Typography.Text className="text">
+								{startTimeInMs || 'N/A'}
+							</Typography.Text>
 						</div>
 					</div>
 				)}
