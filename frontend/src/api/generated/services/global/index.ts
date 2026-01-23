@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,13 +13,13 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type {
 	GetGlobalConfig200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../index';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -28,14 +29,17 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoints returns global config
  * @summary Get global config
  */
-export const getGlobalConfig = (signal?: AbortSignal) =>
-	GeneratedAPIInstance<GetGlobalConfig200>({
+export const getGlobalConfig = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetGlobalConfig200>({
 		url: `/api/v1/global/config`,
 		method: 'GET',
 		signal,
 	});
+};
 
-export const getGetGlobalConfigQueryKey = () => ['getGlobalConfig'] as const;
+export const getGetGlobalConfigQueryKey = () => {
+	return ['getGlobalConfig'] as const;
+};
 
 export const getGetGlobalConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,

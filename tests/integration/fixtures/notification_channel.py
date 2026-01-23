@@ -121,7 +121,7 @@ def create_webhook_notification_channel(
             timeout=5,
         )
         if response.status_code != HTTPStatus.NO_CONTENT:
-            raise Exception(
+            raise Exception( # pylint: disable=broad-exception-raised
                 f"Failed to delete channel, api returned {response.status_code} with response: {response.text}"
             )
 
@@ -130,7 +130,7 @@ def create_webhook_notification_channel(
     for channel_id in channel_ids:
         try:
             _delete_webhook_notification_channel(channel_id)
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-exception-caught
             logger.error(
                 "Error deleting channel: %s", {"channel_id": channel_id, "error": e}
             )
