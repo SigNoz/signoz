@@ -24,12 +24,15 @@ export const getFiltersToAddToView = (clickedData: any): FilterData[] => {
 			.reduce((acc: FilterData[], col: any) => {
 				// only add table col which have isValueColumn false. and the filter value suffices the isEmptyFilterValue condition.
 				const { dataIndex } = col;
-				if (!dataIndex || typeof dataIndex !== 'string') return acc;
+				if (!dataIndex || typeof dataIndex !== 'string') {
+					return acc;
+				}
 				if (
 					clickedData?.column?.isValueColumn &&
 					isEmptyFilterValue(clickedData?.record?.[dataIndex])
-				)
+				) {
 					return acc;
+				}
 				return [
 					...acc,
 					{

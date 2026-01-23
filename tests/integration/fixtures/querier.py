@@ -329,3 +329,130 @@ def find_named_result(
         ),
         None,
     )
+
+
+def build_scalar_query(
+    name: str,
+    signal: str,
+    aggregations: List[Dict],
+    *,
+    group_by: Optional[List[Dict]] = None,
+    order: Optional[List[Dict]] = None,
+    limit: Optional[int] = None,
+    filter_expression: Optional[str] = None,
+    having_expression: Optional[str] = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+) -> Dict:
+    spec: Dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "disabled": disabled,
+        "aggregations": aggregations,
+    }
+
+    if group_by:
+        spec["groupBy"] = group_by
+
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
+
+    if having_expression:
+        spec["having"] = {"expression": having_expression}
+
+    return {"type": "builder_query", "spec": spec}
+
+
+def build_group_by_field(
+    name: str,
+    field_data_type: str = "string",
+    field_context: str = "resource",
+) -> Dict:
+    return {
+        "name": name,
+        "fieldDataType": field_data_type,
+        "fieldContext": field_context,
+    }
+
+
+def build_order_by(name: str, direction: str = "desc") -> Dict:
+    return {"key": {"name": name}, "direction": direction}
+
+
+def build_logs_aggregation(expression: str, alias: Optional[str] = None) -> Dict:
+    agg: Dict[str, Any] = {"expression": expression}
+    if alias:
+        agg["alias"] = alias
+    return agg
+
+
+def build_metrics_aggregation(
+    metric_name: str,
+    time_aggregation: str,
+    space_aggregation: str,
+    temporality: str = "cumulative",
+) -> Dict:
+    return {
+        "metricName": metric_name,
+        "temporality": temporality,
+        "timeAggregation": time_aggregation,
+        "spaceAggregation": space_aggregation,
+    }
+
+
+def get_scalar_table_data(response_json: Dict) -> List[List[Any]]:
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    if not results:
+        return []
+    return results[0].get("data", [])
+
+
+def get_scalar_columns(response_json: Dict) -> List[Dict]:
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    if not results:
+        return []
+    return results[0].get("columns", [])
+
+
+def assert_scalar_result_order(
+    data: List[List[Any]],
+    expected_order: List[tuple],
+    context: str = "",
+) -> None:
+    assert len(data) == len(expected_order), (
+        f"{context}: Expected {len(expected_order)} rows, got {len(data)}. "
+        f"Data: {data}"
+    )
+
+    for i, (row, expected) in enumerate(zip(data, expected_order)):
+        for j, expected_val in enumerate(expected):
+            actual_val = row[j]
+            assert actual_val == expected_val, (
+                f"{context}: Row {i}, column {j} mismatch. "
+                f"Expected {expected_val}, got {actual_val}. "
+                f"Full row: {row}, expected: {expected}"
+            )
+
+
+def assert_scalar_column_order(
+    data: List[List[Any]],
+    column_index: int,
+    expected_values: List[Any],
+    context: str = "",
+) -> None:
+    assert len(data) == len(
+        expected_values
+    ), f"{context}: Expected {len(expected_values)} rows, got {len(data)}"
+
+    actual_values = [row[column_index] for row in data]
+    assert actual_values == expected_values, (
+        f"{context}: Column {column_index} order mismatch. "
+        f"Expected {expected_values}, got {actual_values}"
+    )

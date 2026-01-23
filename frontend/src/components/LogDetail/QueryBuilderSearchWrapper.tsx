@@ -29,8 +29,9 @@ function QueryBuilderSearchWrapper({
 			(!tagFiltersLength && (!filters || !filters.items.length)) ||
 			tagFiltersLength === filters?.items.length ||
 			!contextQuery
-		)
+		) {
 			return;
+		}
 
 		const nextQuery: Query = {
 			...contextQuery,
@@ -48,7 +49,9 @@ function QueryBuilderSearchWrapper({
 	};
 
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	if (!contextQuery || !isEdit) return <></>;
+	if (!contextQuery || !isEdit) {
+		return <></>;
+	}
 
 	return (
 		<QueryBuilderSearch

@@ -147,14 +147,14 @@ func BenchmarkBucketCache_MergeTimeSeriesValues(b *testing.B) {
 	for _, tc := range testCases {
 		b.Run(tc.name, func(b *testing.B) {
 			// Create test buckets
-			buckets := make([]*cachedBucket, tc.numBuckets)
+			buckets := make([]*qbtypes.CachedBucket, tc.numBuckets)
 			for i := 0; i < tc.numBuckets; i++ {
 				startMs := uint64(i * 10000)
 				endMs := uint64((i + 1) * 10000)
 				result := createBenchmarkResultWithSeries(startMs, endMs, 1000, tc.numSeries, tc.numValues)
 
 				valueBytes, _ := json.Marshal(result.Value)
-				buckets[i] = &cachedBucket{
+				buckets[i] = &qbtypes.CachedBucket{
 					StartMs: startMs,
 					EndMs:   endMs,
 					Type:    qbtypes.RequestTypeTimeSeries,
@@ -417,8 +417,8 @@ func createBenchmarkResultWithSeries(startMs, endMs uint64, _ uint64, numSeries,
 }
 
 // Helper function to create buckets with specific gap patterns
-func createBucketsWithPattern(numBuckets int, pattern string) []*cachedBucket {
-	buckets := make([]*cachedBucket, 0, numBuckets)
+func createBucketsWithPattern(numBuckets int, pattern string) []*qbtypes.CachedBucket {
+	buckets := make([]*qbtypes.CachedBucket, 0, numBuckets)
 
 	for i := 0; i < numBuckets; i++ {
 		// Skip some buckets based on pattern
@@ -432,7 +432,7 @@ func createBucketsWithPattern(numBuckets int, pattern string) []*cachedBucket {
 		startMs := uint64(i * 10000)
 		endMs := uint64((i + 1) * 10000)
 
-		buckets = append(buckets, &cachedBucket{
+		buckets = append(buckets, &qbtypes.CachedBucket{
 			StartMs: startMs,
 			EndMs:   endMs,
 			Type:    qbtypes.RequestTypeTimeSeries,

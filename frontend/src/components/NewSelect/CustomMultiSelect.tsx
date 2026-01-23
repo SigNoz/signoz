@@ -165,7 +165,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				return;
 			}
 
-			if (!onChange) return;
+			if (!onChange) {
+				return;
+			}
 
 			// Case 1: Cleared (empty array or undefined)
 			if (!newValue || currentNewValue.length === 0) {
@@ -327,7 +329,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 * Selects all chips
 	 */
 	const selectAllChips = useCallback((): void => {
-		if (selectedValues.length === 0) return;
+		if (selectedValues.length === 0) {
+			return;
+		}
 
 		// When maxTagCount is set, only select visible chips
 		const visibleCount =
@@ -394,7 +398,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 * Handle copy event
 	 */
 	const handleCopy = useCallback((): void => {
-		if (selectedChips.length === 0) return;
+		if (selectedChips.length === 0) {
+			return;
+		}
 
 		const selectedTexts = selectedChips
 			.sort((a, b) => a - b)
@@ -409,7 +415,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 * Handle cut event
 	 */
 	const handleCut = useCallback((): void => {
-		if (selectedChips.length === 0) return;
+		if (selectedChips.length === 0) {
+			return;
+		}
 
 		// First copy the content
 		handleCopy();
@@ -577,7 +585,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 			}
 
-			if (onSearch) onSearch(trimmedValue);
+			if (onSearch) {
+				onSearch(trimmedValue);
+			}
 		},
 		[
 			onSearch,
@@ -596,7 +606,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 */
 	const highlightMatchedText = useCallback(
 		(text: string, searchQuery: string): React.ReactNode => {
-			if (!searchQuery || !highlightSearch) return text;
+			if (!searchQuery || !highlightSearch) {
+				return text;
+			}
 
 			try {
 				const parts = text.split(
@@ -632,7 +644,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// Adjusted handleSelectAll for internal change handler
 	const handleSelectAll = useCallback((): void => {
-		if (!options) return;
+		if (!options) {
+			return;
+		}
 
 		if (isAllSelected) {
 			// If all are selected, deselect all
@@ -658,7 +672,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const handleItemSelection = (source?: string): void => {
 				// Special handling for ALL option is done by the caller
 
-				if (!option.value) return;
+				if (!option.value) {
+					return;
+				}
 
 				if (source === 'option') {
 					if (
@@ -792,7 +808,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// Helper function to get visible chip indices
 	const getVisibleChipIndices = useCallback((): number[] => {
 		// If no values, return empty array
-		if (selectedValues.length === 0) return [];
+		if (selectedValues.length === 0) {
+			return [];
+		}
 
 		// If maxTagCount is set and greater than 0, only return the first maxTagCount indices
 		const visibleCount =
@@ -836,7 +854,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 			// Get flattened list of all selectable options
 			const getFlatOptions = (): OptionData[] => {
-				if (!visibleOptions) return [];
+				if (!visibleOptions) {
+					return [];
+				}
 
 				const flatList: OptionData[] = [];
 				const hasAll = enableAllSelection && !searchText;
@@ -1845,7 +1865,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			// but base indices/visibility on the original `selectedValues`
 			if (!isAllSelected) {
 				const index = selectedValues.indexOf(value);
-				if (index === -1) return <div style={{ display: 'none' }} />; // Should not happen if value comes from displayValue
+				if (index === -1) {
+					return <div style={{ display: 'none' }} />;
+				} // Should not happen if value comes from displayValue
 
 				const isActive = index === activeChipIndex;
 				const isSelected = selectedChips.includes(index);
@@ -1931,7 +1953,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		// Normal clear behavior
 		handleInternalChange([], true);
-		if (onClear) onClear();
+		if (onClear) {
+			onClear();
+		}
 	}, [onClear, handleInternalChange, allOptionShown, isAllSelected]);
 
 	// ===== Component Rendering =====

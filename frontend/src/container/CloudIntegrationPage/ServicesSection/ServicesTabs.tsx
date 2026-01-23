@@ -34,7 +34,9 @@ function ServicesFilter({
 	);
 
 	const { enabledCount, availableCount } = useMemo(() => {
-		if (!services) return { enabledCount: 0, availableCount: 0 };
+		if (!services) {
+			return { enabledCount: 0, availableCount: 0 };
+		}
 
 		return services.reduce(
 			(acc, service) => {
@@ -58,8 +60,12 @@ function ServicesFilter({
 		[services, enabledCount, availableCount],
 	);
 
-	if (isLoading) return null;
-	if (!services?.length) return null;
+	if (isLoading) {
+		return null;
+	}
+	if (!services?.length) {
+		return null;
+	}
 
 	return (
 		<div className="services-filter">

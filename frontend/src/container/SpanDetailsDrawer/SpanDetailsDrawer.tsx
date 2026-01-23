@@ -21,6 +21,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import AttributeActions from 'container/SpanDetailsDrawer/Attributes/AttributeActions';
 import dayjs from 'dayjs';
 import useClickOutside from 'hooks/useClickOutside';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
@@ -103,6 +104,10 @@ interface IResourceAttribute {
 const DEFAULT_RESOURCE_ATTRIBUTES = {
 	serviceName: 'service.name',
 	name: 'name',
+	spanId: 'span_id',
+	spanKind: 'kind_string',
+	statusCodeString: 'status_code_string',
+	statusMessage: 'status_message',
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -835,6 +840,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									{selectedSpan.spanId}
 								</Typography.Text>
 							</div>
+							<div className="attribute-actions-wrapper">
+								<AttributeActions
+									record={{
+										field: DEFAULT_RESOURCE_ATTRIBUTES.spanId,
+										value: selectedSpan.spanId,
+									}}
+									showPinned={false}
+									showCopyOptions={false}
+								/>
+							</div>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">start time</Typography.Text>
@@ -863,6 +878,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 										</Typography.Text>
 									</Tooltip>
 								</div>
+								<div className="attribute-actions-wrapper">
+									<AttributeActions
+										record={{
+											field: DEFAULT_RESOURCE_ATTRIBUTES.serviceName,
+											value: selectedSpan.serviceName,
+										}}
+										showPinned={false}
+										showCopyOptions={false}
+									/>
+								</div>
 							</div>
 						</div>
 						<div className="item">
@@ -871,6 +896,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								<Typography.Text className="attribute-value">
 									{selectedSpan.spanKind}
 								</Typography.Text>
+							</div>
+							<div className="attribute-actions-wrapper">
+								<AttributeActions
+									record={{
+										field: DEFAULT_RESOURCE_ATTRIBUTES.spanKind,
+										value: selectedSpan.spanKind,
+									}}
+									showPinned={false}
+									showCopyOptions={false}
+								/>
 							</div>
 						</div>
 						<div className="item">
@@ -882,6 +917,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									{selectedSpan.statusCodeString}
 								</Typography.Text>
 							</div>
+							<div className="attribute-actions-wrapper">
+								<AttributeActions
+									record={{
+										field: DEFAULT_RESOURCE_ATTRIBUTES.statusCodeString,
+										value: selectedSpan.statusCodeString,
+									}}
+									showPinned={false}
+									showCopyOptions={false}
+								/>
+							</div>
 						</div>
 
 						{selectedSpan.statusMessage && (
@@ -891,6 +936,16 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 									attributeValue={selectedSpan.statusMessage}
 									onExpand={showStatusMessageModal}
 								/>
+								<div className="attribute-actions-wrapper">
+									<AttributeActions
+										record={{
+											field: DEFAULT_RESOURCE_ATTRIBUTES.statusMessage,
+											value: selectedSpan.statusMessage,
+										}}
+										showPinned={false}
+										showCopyOptions={false}
+									/>
+								</div>
 							</div>
 						)}
 						<div className="item">

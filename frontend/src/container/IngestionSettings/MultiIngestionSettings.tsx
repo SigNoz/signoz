@@ -508,7 +508,9 @@ function MultiIngestionSettings(): JSX.Element {
 		};
 
 		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signalName);
-		if (!signalCfg) return;
+		if (!signalCfg) {
+			return;
+		}
 
 		// Only set size if usesSize is true
 		if (signalCfg.usesSize) {
@@ -597,7 +599,9 @@ function MultiIngestionSettings(): JSX.Element {
 		};
 
 		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signal.signal);
-		if (!signalCfg) return;
+		if (!signalCfg) {
+			return;
+		}
 
 		const noSizeProvided =
 			isUndefined(dailyLimit) && isUndefined(secondsLimit) && signalCfg.usesSize;
@@ -758,7 +762,7 @@ function MultiIngestionSettings(): JSX.Element {
 		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
 		thresholds[0].thresholdValue = threshold;
 
-		const URL = `${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true&${
+		const URL = `${ROUTES.ALERTS_NEW}?${
 			QueryParams.compositeQuery
 		}=${encodeURIComponent(stringifiedQuery)}&${
 			QueryParams.thresholds

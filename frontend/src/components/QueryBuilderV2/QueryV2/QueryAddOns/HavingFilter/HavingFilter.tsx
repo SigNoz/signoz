@@ -157,7 +157,9 @@ function HavingFilter({
 
 	// Helper to check if we're after an operator
 	const isAfterOperator = (tokens: string[]): boolean => {
-		if (tokens.length === 0) return false;
+		if (tokens.length === 0) {
+			return false;
+		}
 		const lastToken = tokens[tokens.length - 1];
 		// Check if the last token is exactly an operator or ends with an operator and space
 		return havingOperators.some((op) => {

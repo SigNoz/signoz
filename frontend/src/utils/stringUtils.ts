@@ -1,5 +1,7 @@
 export function unquote(str: string): string {
-	if (typeof str !== 'string') return str;
+	if (typeof str !== 'string') {
+		return str;
+	}
 
 	const trimmed = str.trim();
 	const firstChar = trimmed[0];

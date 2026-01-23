@@ -127,7 +127,9 @@ function RawLogView({
 
 	const handleClickExpand = useCallback(
 		(event: MouseEvent) => {
-			if (isReadOnly) return;
+			if (isReadOnly) {
+				return;
+			}
 
 			// Use custom click handler if provided, otherwise use default behavior
 			if (onLogClick) {

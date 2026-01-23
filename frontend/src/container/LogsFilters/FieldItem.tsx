@@ -24,7 +24,9 @@ function FieldItem({
 	const isDarkMode = useIsDarkMode();
 
 	const onClickHandler = useCallback(() => {
-		if (!isLoading && buttonOnClick) buttonOnClick({ fieldData, fieldIndex });
+		if (!isLoading && buttonOnClick) {
+			buttonOnClick({ fieldData, fieldIndex });
+		}
 	}, [buttonOnClick, fieldData, fieldIndex, isLoading]);
 
 	const renderContent = useMemo(() => {

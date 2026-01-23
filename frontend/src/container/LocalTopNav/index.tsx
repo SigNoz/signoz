@@ -4,7 +4,7 @@ import NewExplorerCTA from 'container/NewExplorerCTA';
 import { FileText } from 'lucide-react';
 import { useLocation } from 'react-use';
 
-import DateTimeSelector from '../TopNav/DateTimeSelection';
+import DateTimeSelector from '../TopNav/DateTimeSelectionV2';
 import { Container } from './styles';
 import { LocalTopNavProps } from './types';
 
@@ -37,7 +37,7 @@ function LocalTopNav({
 						{actions}
 						{renderPermissions?.isDateTimeEnabled && (
 							<div>
-								<DateTimeSelector />
+								<DateTimeSelector showAutoRefresh={false} />
 							</div>
 						)}
 					</Space>
