@@ -57,7 +57,7 @@ func (migration *addResetPasswordTokenExpiry) Up(ctx context.Context, db *bun.DB
 	column := &sqlschema.Column{
 		Name:     sqlschema.ColumnName("expires_at"),
 		DataType: sqlschema.DataTypeTimestamp,
-		Nullable: false,
+		Nullable: true,
 	}
 
 	// for existing rows set
