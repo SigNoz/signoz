@@ -221,7 +221,7 @@ def test_traces_list(
     assert response.json()["status"] == "success"
 
     # Query results with context appended to key names
-    response_ = requests.post(
+    response_with_inline_context = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=2,
         headers={
@@ -280,12 +280,12 @@ def test_traces_list(
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
         },
     )
-    assert response_.status_code == HTTPStatus.OK
-    assert response_.json()["status"] == "success"
+    assert response_with_inline_context.status_code == HTTPStatus.OK
+    assert response_with_inline_context.json()["status"] == "success"
 
     assert (
         response.json()["data"]["data"]["results"]
-        == response_.json()["data"]["data"]["results"]
+        == response_with_inline_context.json()["data"]["data"]["results"]
     )
 
     results = response.json()["data"]["data"]["results"]

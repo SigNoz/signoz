@@ -493,7 +493,7 @@ def test_logs_list_with_order_by(
     assert response.json()["status"] == "success"
 
     # Verify that both queries return the same results with specifying context with key name
-    response_ = make_query_request(
+    response_with_inline_context = make_query_request(
         signoz,
         token,
         start_ms=int(
@@ -504,12 +504,12 @@ def test_logs_list_with_order_by(
         queries=[query_with_inline_context],
     )
 
-    assert response_.status_code == HTTPStatus.OK
-    assert response_.json()["status"] == "success"
+    assert response_with_inline_context.status_code == HTTPStatus.OK
+    assert response_with_inline_context.json()["status"] == "success"
 
     assert (
         response.json()["data"]["data"]["results"]
-        == response_.json()["data"]["data"]["results"]
+        == response_with_inline_context.json()["data"]["data"]["results"]
     )
 
     results = response.json()["data"]["data"]["results"]
