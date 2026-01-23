@@ -333,6 +333,13 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		return nil, err
 	}
 
+	// clean up expired token (opportunistic approach)
+	err = module.store.DeleteExpiredResetPasswordTokens(ctx)
+	if err != nil {
+		// do not halt the flow if this fails
+		module.settings.Logger().ErrorContext(ctx, "failed to delete expired reset password tokens", "error", err)
+	}
+
 	return resetPasswordToken, nil
 }
 

@@ -408,6 +408,18 @@ func (store *store) UpsertResetPasswordToken(ctx context.Context, resetPasswordT
 	return nil
 }
 
+func (store *store) DeleteExpiredResetPasswordTokens(ctx context.Context) error {
+	_, err := store.sqlstore.BunDB().NewDelete().
+		Model(&types.ResetPasswordToken{}).
+		Where("expires_at IS NULL OR expires_at < ?", time.Now()).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete expired reset password tokens")
+	}
+
+	return nil
+}
+
 func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
 	resetPasswordRequest := new(types.ResetPasswordToken)
 

@@ -144,6 +144,7 @@ type UserStore interface {
 	GetResetPasswordToken(ctx context.Context, token string) (*ResetPasswordToken, error)
 	GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*ResetPasswordToken, error)
 	UpsertResetPasswordToken(ctx context.Context, resetPasswordToken *ResetPasswordToken) error
+	DeleteExpiredResetPasswordTokens(ctx context.Context) error
 	UpdatePassword(ctx context.Context, password *FactorPassword) error
 
 	// API KEY
