@@ -24,7 +24,9 @@ import {
 	MetricMetadataState,
 } from './types';
 
-export function formatTimestampToReadableDate(timestamp: number): string {
+export function formatTimestampToReadableDate(
+	timestamp: number | string,
+): string {
 	const date = new Date(timestamp);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
