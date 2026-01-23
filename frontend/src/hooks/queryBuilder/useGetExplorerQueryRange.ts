@@ -40,7 +40,9 @@ export const useGetExplorerQueryRange = (
 			: REACT_QUERY_KEY.GET_QUERY_RANGE;
 
 	const isEnabled = useMemo(() => {
-		if (!options) return isEnabledQuery;
+		if (!options) {
+			return isEnabledQuery;
+		}
 		if (typeof options.enabled === 'boolean') {
 			return options.enabled && (!isDependentOnQB || isEnabledQuery);
 		}

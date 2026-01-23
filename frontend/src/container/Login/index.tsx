@@ -268,7 +268,9 @@ function Login(): JSX.Element {
 		isEmailValid && !versionLoading && !sessionsContextLoading;
 
 	const isSubmitButtonEnabled = useMemo((): boolean => {
-		if (!isEmailValid || isSubmitting) return false;
+		if (!isEmailValid || isSubmitting) {
+			return false;
+		}
 		const hasMultipleOrgs = (sessionsContext?.orgs.length ?? 0) > 1;
 		if (hasMultipleOrgs && !orgId) {
 			return false;

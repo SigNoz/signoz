@@ -28,7 +28,9 @@ export const getDraggedColumns = <T>(
 				({ title: columnTitle }) => title === columnTitle,
 			);
 
-			if (column) return [...acc, column];
+			if (column) {
+				return [...acc, column];
+			}
 			return acc;
 		}, [] as ColumnsType<T>);
 	}

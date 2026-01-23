@@ -257,7 +257,9 @@ describe('ExplorerOptionWrapper', () => {
 			// Create a real handleExport function similar to LogsExplorerViews
 			// This should NOT call useUpdateDashboard (as per PR #8029)
 			const handleExport = (dashboard: Dashboard | null): void => {
-				if (!dashboard) return;
+				if (!dashboard) {
+					return;
+				}
 
 				// Call the actual generateExportToDashboardLink function (not mocked)
 				const dashboardEditView = generateExportToDashboardLink({
