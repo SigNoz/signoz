@@ -1,4 +1,6 @@
 import { chooseAutocompleteFromCustomValue } from '../chooseAutocompleteFromCustomValue';
+import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import {
 	DataTypes,
 	BaseAutocompleteData,
@@ -44,6 +46,63 @@ describe('chooseAutocompleteFromCustomValue', () => {
 	it('normalizes "number" to Float64', () => {
 		const res = chooseAutocompleteFromCustomValue([], 'latency', 'number');
 		expect(res.dataType).toEqual(DataTypes.Float64);
+	});
+
+	it('same key but different dataType returns new object with computed id', () => {
+		// in source, service.name is String; request with number should yield Float64
+		const res = chooseAutocompleteFromCustomValue(
+			source,
+			'service.name',
+			'number' as any,
+		);
+		const expectedId = createIdFromObjectFields(
+			{ key: 'service.name', dataType: DataTypes.Float64, type: '' },
+			baseAutoCompleteIdKeysOrder,
+		);
+		expect(res).toEqual(
+			expect.objectContaining({
+				key: 'service.name',
+				dataType: DataTypes.Float64,
+				type: '',
+				id: expectedId,
+			}),
+		);
+	});
+
+	it('unknown dataType produces object with id from key+unknown+type', () => {
+		const res = chooseAutocompleteFromCustomValue(
+			[],
+			'unknown_key',
+			'unknown' as any,
+		);
+		const expectedId = createIdFromObjectFields(
+			{ key: 'unknown_key', dataType: 'unknown' as any, type: '' },
+			baseAutoCompleteIdKeysOrder,
+		);
+		expect(res).toEqual(
+			expect.objectContaining({
+				key: 'unknown_key',
+				dataType: 'unknown',
+				type: '',
+				id: expectedId,
+			}),
+		);
+	});
+
+	it('undefined dataType defaults to EMPTY and computes id', () => {
+		const res = chooseAutocompleteFromCustomValue([], 'undef_key');
+		const expectedId = createIdFromObjectFields(
+			{ key: 'undef_key', dataType: DataTypes.EMPTY, type: '' },
+			baseAutoCompleteIdKeysOrder,
+		);
+		expect(res).toEqual(
+			expect.objectContaining({
+				key: 'undef_key',
+				dataType: DataTypes.EMPTY,
+				type: '',
+				id: expectedId,
+			}),
+		);
 	});
 
 	it('uses empty string as default type when fieldType is not provided', () => {
