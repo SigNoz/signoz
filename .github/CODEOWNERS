@@ -101,7 +101,7 @@
 
 # Integration tests
 
-/tests/integration/ @vikrantgupta25
+/tests/integration/ @vikrantgupta25, @srikanthccv
 
 # OpenAPI types generator
 
