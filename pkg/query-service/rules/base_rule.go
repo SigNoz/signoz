@@ -338,6 +338,18 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 	return r.evaluationTimestamp
 }
 
+func (r *BaseRule) SetLastTimestampWithDatapoints(ts time.Time) {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	r.lastTimestampWithDatapoints = ts
+}
+
+func (r *BaseRule) LastTimestampWithDatapoints() time.Time {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	return r.lastTimestampWithDatapoints
+}
+
 func (r *BaseRule) State() model.AlertState {
 	maxState := model.StateInactive
 	for _, a := range r.Active {
