@@ -762,7 +762,7 @@ function MultiIngestionSettings(): JSX.Element {
 		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
 		thresholds[0].thresholdValue = threshold;
 
-		const URL = `${ROUTES.ALERTS_NEW}?showNewCreateAlertsPage=true&${
+		const URL = `${ROUTES.ALERTS_NEW}?${
 			QueryParams.compositeQuery
 		}=${encodeURIComponent(stringifiedQuery)}&${
 			QueryParams.thresholds
