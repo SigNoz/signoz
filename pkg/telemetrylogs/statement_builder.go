@@ -200,13 +200,13 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 		Reason for doing this is to not create an unexpected behavior for users
 	*/
 	for idx := range query.SelectFields {
-		actions = append(actions, b.adjustKey(ctx, &query.SelectFields[idx], keys)...)
+		actions = append(actions, b.adjustKey(&query.SelectFields[idx], keys)...)
 	}
 	for idx := range query.GroupBy {
-		actions = append(actions, b.adjustKey(ctx, &query.GroupBy[idx].TelemetryFieldKey, keys)...)
+		actions = append(actions, b.adjustKey(&query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		actions = append(actions, b.adjustKey(ctx, &query.Order[idx].Key.TelemetryFieldKey, keys)...)
+		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
 	for _, action := range actions {
@@ -226,7 +226,7 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 	return query
 }
 
-func (b *logQueryStatementBuilder) adjustKey(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
+func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
 	// First check if it matches with any intrinsic fields
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey

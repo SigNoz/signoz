@@ -842,7 +842,7 @@ func TestAdjustKey(t *testing.T) {
 			key := c.inputKey
 
 			// Call adjustKey
-			statementBuilder.adjustKey(context.Background(), &key, c.keysMap)
+			statementBuilder.adjustKey(&key, c.keysMap)
 
 			// Verify the key was adjusted as expected
 			require.Equal(t, c.expectedKey.Name, key.Name, "key name should match")
