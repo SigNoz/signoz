@@ -839,7 +839,7 @@ func (r *ThresholdRule) String() string {
 	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        ruletypes.Duration(r.evalWindow),
+		EvalWindow:        ruletypes.NewPreservingDuration(r.evalWindow),
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,

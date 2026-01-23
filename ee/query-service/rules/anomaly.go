@@ -543,7 +543,7 @@ func (r *AnomalyRule) String() string {
 	ar := ruletypes.PostableRule{
 		AlertName:         r.Name(),
 		RuleCondition:     r.Condition(),
-		EvalWindow:        ruletypes.Duration(r.EvalWindow()),
+		EvalWindow:        ruletypes.NewPreservingDuration(r.EvalWindow()),
 		Labels:            r.Labels().Map(),
 		Annotations:       r.Annotations().Map(),
 		PreferredChannels: r.PreferredChannels(),

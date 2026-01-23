@@ -610,6 +610,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	return &ruletypes.GettableRule{
 		Id:           id.StringValue(),
 		PostableRule: parsedRule,
+		RawData:      ruleStr,
 	}, nil
 }
 
@@ -830,6 +831,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 		}
 
 		ruleResponse.Id = s.ID.StringValue()
+		ruleResponse.RawData = s.Data
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
@@ -860,6 +862,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 		return nil, err
 	}
 	r.Id = id.StringValue()
+	r.RawData = s.Data
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
 		r.State = model.StateDisabled
@@ -969,6 +972,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
 		PostableRule: storedRule,
+		RawData:      storedJSON.Data,
 	}
 
 	// fetch state of rule from memory
@@ -1047,6 +1051,7 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 			continue
 		}
 		rule.Id = storedRule.ID.StringValue()
+		rule.RawData = storedRule.Data
 		rule.CreatedAt = &storedRule.CreatedAt
 		rule.CreatedBy = &storedRule.CreatedBy
 		rule.UpdatedAt = &storedRule.UpdatedAt

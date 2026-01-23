@@ -40,12 +40,12 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	AlertName   string    `json:"alert,omitempty"`
-	AlertType   AlertType `json:"alertType,omitempty"`
-	Description string    `json:"description,omitempty"`
-	RuleType    RuleType  `json:"ruleType,omitempty"`
-	EvalWindow  Duration  `json:"evalWindow,omitempty"`
-	Frequency   Duration  `json:"frequency,omitempty"`
+	AlertName   string             `json:"alert,omitempty"`
+	AlertType   AlertType          `json:"alertType,omitempty"`
+	Description string             `json:"description,omitempty"`
+	RuleType    RuleType           `json:"ruleType,omitempty"`
+	EvalWindow  PreservingDuration `json:"evalWindow,omitempty"`
+	Frequency   PreservingDuration `json:"frequency,omitempty"`
 
 	RuleCondition *RuleCondition    `json:"condition,omitempty"`
 	Labels        map[string]string `json:"labels,omitempty"`
@@ -71,12 +71,12 @@ type NotificationSettings struct {
 	Renotify  Renotify `json:"renotify,omitempty"`
 	UsePolicy bool     `json:"usePolicy,omitempty"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
-	NewGroupEvalDelay *Duration `json:"newGroupEvalDelay,omitempty"`
+	NewGroupEvalDelay *PreservingDuration `json:"newGroupEvalDelay,omitempty"`
 }
 
 type Renotify struct {
 	Enabled          bool               `json:"enabled"`
-	ReNotifyInterval Duration           `json:"interval,omitempty"`
+	ReNotifyInterval PreservingDuration `json:"interval,omitempty"`
 	AlertStates      []model.AlertState `json:"alertStates,omitempty"`
 }
 
@@ -85,10 +85,10 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	var noDataRenotifyInterval time.Duration
 	if ns.Renotify.Enabled {
 		if slices.Contains(ns.Renotify.AlertStates, model.StateNoData) {
-			noDataRenotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+			noDataRenotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 		if slices.Contains(ns.Renotify.AlertStates, model.StateFiring) {
-			renotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+			renotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 	} else {
 		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
@@ -190,12 +190,12 @@ func (r *PostableRule) processRuleDefaults() {
 		r.SchemaVersion = DefaultSchemaVersion
 	}
 
-	if r.EvalWindow == 0 {
-		r.EvalWindow = Duration(5 * time.Minute)
+	if r.EvalWindow.IsZero() {
+		r.EvalWindow = NewPreservingDuration(5 * time.Minute)
 	}
 
-	if r.Frequency == 0 {
-		r.Frequency = Duration(1 * time.Minute)
+	if r.Frequency.IsZero() {
+		r.Frequency = NewPreservingDuration(1 * time.Minute)
 	}
 
 	if r.RuleCondition != nil {
@@ -246,7 +246,7 @@ func (r *PostableRule) processRuleDefaults() {
 			r.NotificationSettings = &NotificationSettings{
 				Renotify: Renotify{
 					Enabled:          true,
-					ReNotifyInterval: Duration(4 * time.Hour),
+					ReNotifyInterval: NewPreservingDuration(4 * time.Hour),
 					AlertStates:      []model.AlertState{model.StateFiring},
 				},
 			}
@@ -433,25 +433,22 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
+	RawData   string     `json:"-"`
 }
 
 func (g *GettableRule) MarshalJSON() ([]byte, error) {
 	type Alias GettableRule
 
-	switch g.SchemaVersion {
-	case DefaultSchemaVersion:
-		copyStruct := *g
-		aux := Alias(copyStruct)
+	copyStruct := *g
+	aux := Alias(copyStruct)
+	if g.SchemaVersion == DefaultSchemaVersion {
 		if aux.RuleCondition != nil {
 			aux.RuleCondition.Thresholds = nil
 		}
 		aux.Evaluation = nil
 		aux.SchemaVersion = ""
 		aux.NotificationSettings = nil
-		return json.Marshal(aux)
-	default:
-		copyStruct := *g
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
 	}
+
+	return json.Marshal(aux)
 }

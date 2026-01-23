@@ -41,8 +41,8 @@ func TestPromRuleEval(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: ruletypes.NewPreservingDuration(5 * time.Minute),
+			Frequency:  ruletypes.NewPreservingDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -748,8 +748,8 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: ruletypes.NewPreservingDuration(5 * time.Minute),
+			Frequency:  ruletypes.NewPreservingDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1007,8 +1007,8 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: ruletypes.NewPreservingDuration(5 * time.Minute),
+			Frequency:  ruletypes.NewPreservingDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1118,8 +1118,8 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: ruletypes.NewPreservingDuration(5 * time.Minute),
+			Frequency:  ruletypes.NewPreservingDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1358,8 +1358,8 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(evalWindow),
-			Frequency:  ruletypes.Duration(time.Minute),
+			EvalWindow: ruletypes.NewPreservingDuration(evalWindow),
+			Frequency:  ruletypes.NewPreservingDuration(time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,

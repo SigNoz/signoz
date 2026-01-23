@@ -161,7 +161,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		source:            p.Source,
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
-		evalWindow:        time.Duration(p.EvalWindow),
+		evalWindow:        p.EvalWindow.Duration(),
 		labels:            qslabels.FromMap(p.Labels),
 		annotations:       qslabels.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
@@ -175,7 +175,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 
 	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
 	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
-		newGroupEvalDelay := time.Duration(*p.NotificationSettings.NewGroupEvalDelay)
+		newGroupEvalDelay := p.NotificationSettings.NewGroupEvalDelay.Duration()
 		baseRule.newGroupEvalDelay = &newGroupEvalDelay
 	}
 

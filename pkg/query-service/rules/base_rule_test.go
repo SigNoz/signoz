@@ -124,8 +124,8 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 		Evaluation: &ruletypes.EvaluationEnvelope{
 			Kind: ruletypes.RollingEvaluation,
 			Spec: ruletypes.RollingWindow{
-				EvalWindow: ruletypes.Duration(5 * time.Minute),
-				Frequency:  ruletypes.Duration(1 * time.Minute),
+				EvalWindow: ruletypes.NewPreservingDuration(5 * time.Minute),
+				Frequency:  ruletypes.NewPreservingDuration(1 * time.Minute),
 			},
 		},
 		RuleCondition: &ruletypes.RuleCondition{
@@ -706,8 +706,8 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Set newGroupEvalDelay in NotificationSettings if provided
 			if tt.newGroupEvalDelay != nil {
 				postableRule.NotificationSettings = &ruletypes.NotificationSettings{
-					NewGroupEvalDelay: func() *ruletypes.Duration {
-						d := ruletypes.Duration(*tt.newGroupEvalDelay)
+					NewGroupEvalDelay: func() *ruletypes.PreservingDuration {
+						d := ruletypes.NewPreservingDuration(*tt.newGroupEvalDelay)
 						return &d
 					}(),
 				}

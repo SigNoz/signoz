@@ -40,8 +40,8 @@ func TestRollingWindow_EvaluationTime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rw := &RollingWindow{
-				EvalWindow: tt.evalWindow,
-				Frequency:  Duration(1 * time.Minute),
+				EvalWindow: NewPreservingDuration(time.Duration(tt.evalWindow)),
+				Frequency:  NewPreservingDuration(1 * time.Minute),
 			}
 
 			gotStart, gotEnd := rw.NextWindowFor(tt.current)
@@ -755,8 +755,8 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 			jsonInput: `{"kind":"rolling","spec":{"evalWindow":"5m","frequency":"1m"}}`,
 			wantKind:  RollingEvaluation,
 			wantSpec: RollingWindow{
-				EvalWindow: Duration(5 * time.Minute),
-				Frequency:  Duration(1 * time.Minute),
+				EvalWindow: NewPreservingDuration(5 * time.Minute),
+				Frequency:  NewPreservingDuration(1 * time.Minute),
 			},
 		},
 		{

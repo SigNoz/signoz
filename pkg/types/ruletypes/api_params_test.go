@@ -171,10 +171,10 @@ func TestParseIntoRule(t *testing.T) {
 			kind:        RuleDataKindJson,
 			expectError: false,
 			validate: func(t *testing.T, rule *PostableRule) {
-				if rule.EvalWindow != Duration(5*time.Minute) {
+				if rule.EvalWindow.Duration() != time.Duration(5*time.Minute) {
 					t.Errorf("Expected default eval window '5m', got '%v'", rule.EvalWindow)
 				}
-				if rule.Frequency != Duration(1*time.Minute) {
+				if rule.Frequency.Duration() != time.Duration(1*time.Minute) {
 					t.Errorf("Expected default frequency '1m', got '%v'", rule.Frequency)
 				}
 				if rule.RuleCondition.CompositeQuery.BuilderQueries["A"].Expression != "A" {
@@ -504,7 +504,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 					t.Error("Expected Evaluation to be nil for v2")
 				}
 
-				if rule.EvalWindow != Duration(5*time.Minute) {
+				if rule.EvalWindow.Duration() != time.Duration(5*time.Minute) {
 					t.Error("Expected default EvalWindow to be applied")
 				}
 				if rule.RuleType != RuleTypeThreshold {

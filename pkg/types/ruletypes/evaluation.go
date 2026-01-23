@@ -23,26 +23,26 @@ type Evaluation interface {
 }
 
 type RollingWindow struct {
-	EvalWindow Duration `json:"evalWindow"`
-	Frequency  Duration `json:"frequency"`
+	EvalWindow PreservingDuration `json:"evalWindow"`
+	Frequency  PreservingDuration `json:"frequency"`
 }
 
 func (rollingWindow RollingWindow) Validate() error {
-	if rollingWindow.EvalWindow <= 0 {
+	if rollingWindow.EvalWindow.Duration() <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
 	}
-	if rollingWindow.Frequency <= 0 {
+	if rollingWindow.Frequency.Duration() <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
 	}
 	return nil
 }
 
 func (rollingWindow RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time) {
-	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr
+	return curr.Add(-rollingWindow.EvalWindow.Duration()), curr
 }
 
 func (rollingWindow RollingWindow) GetFrequency() Duration {
-	return rollingWindow.Frequency
+	return Duration(rollingWindow.Frequency.Duration())
 }
 
 type CumulativeWindow struct {
