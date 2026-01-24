@@ -118,7 +118,7 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozViewerRoleName, roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -175,7 +175,7 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozViewerRoleName, roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozAdminRoleName})
 		if err != nil {
 			render.Error(rw, err)
 			return
