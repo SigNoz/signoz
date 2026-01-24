@@ -24,7 +24,7 @@ export function getMockMetricHighlightsData(
 			data: {
 				data: {
 					dataPoints: 1000000,
-					lastReceived: 1716393600,
+					lastReceived: '2026-01-24T00:00:00Z',
 					totalTimeSeries: 1000000,
 					activeTimeSeries: 1000000,
 				},
