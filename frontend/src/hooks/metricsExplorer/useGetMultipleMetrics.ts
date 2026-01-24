@@ -12,24 +12,20 @@ type QueryResult = UseQueryResult<
 type UseGetMultipleMetrics = (
 	metricNames: string[],
 	options?: UseQueryOptions<SuccessResponseV2<MetricMetadataResponse>, Error>,
+	headers?: Record<string, string>,
 ) => QueryResult[];
 
 export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 	metricNames,
 	options,
+	headers,
 ) =>
 	useQueries(
 		metricNames.map(
 			(metricName) =>
 				({
 					queryKey: [REACT_QUERY_KEY.GET_METRIC_METADATA, metricName],
-					queryFn: ({ signal }) =>
-						getMetricMetadata(
-							{
-								metricName,
-							},
-							signal,
-						),
+					queryFn: ({ signal }) => getMetricMetadata(metricName, signal, headers),
 					...options,
 				} as UseQueryOptions<SuccessResponseV2<MetricMetadataResponse>, Error>),
 		),
