@@ -2,15 +2,6 @@ import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { SuccessResponseV2 } from 'types/api';
-import {
-	GetMetricAlertsResponse,
-	GetMetricAttributesResponse,
-	GetMetricDashboardsResponse,
-	GetMetricHighlightsResponse,
-	GetMetricMetadataResponse,
-	UpdateMetricMetadataRequest,
-} from 'types/api/metricsExplorer/v2';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -23,10 +14,21 @@ import {
 	MetricMetadata,
 	MetricMetadataState,
 } from './types';
+import {
+	GetMetricAlerts200,
+	GetMetricAttributes200,
+	GetMetricDashboards200,
+	GetMetricHighlights200,
+	GetMetricMetadata200,
+} from 'api/generated/services/sigNoz.schemas';
+import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
 
 export function formatTimestampToReadableDate(
-	timestamp: number | string,
+	timestamp: number | string | undefined,
 ): string {
+	if (!timestamp) {
+		return '-';
+	}
 	const date = new Date(timestamp);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -59,7 +61,10 @@ export function formatTimestampToReadableDate(
 	return date.toLocaleDateString();
 }
 
-export function formatNumberToCompactFormat(num: number): string {
+export function formatNumberToCompactFormat(num: number | undefined): string {
+	if (!num) {
+		return '-';
+	}
 	return new Intl.NumberFormat('en-US', {
 		notation: 'compact',
 		maximumFractionDigits: 1,
@@ -182,9 +187,9 @@ export function getMetricDetailsQuery(
 }
 
 export function transformMetricHighlights(
-	apiData: SuccessResponseV2<GetMetricHighlightsResponse> | undefined,
+	apiData: GetMetricHighlights200 | undefined,
 ): MetricHighlight | null {
-	if (!apiData || !apiData.data || !apiData.data.data) {
+	if (!apiData || !apiData.data) {
 		return null;
 	}
 
@@ -193,49 +198,39 @@ export function transformMetricHighlights(
 		lastReceived,
 		totalTimeSeries,
 		activeTimeSeries,
-	} = apiData.data.data;
+	} = apiData.data;
 
 	return {
-		dataPoints,
-		lastReceived,
-		totalTimeSeries,
-		activeTimeSeries,
+		dataPoints: dataPoints ?? 0,
+		lastReceived: lastReceived ?? 0,
+		totalTimeSeries: totalTimeSeries ?? 0,
+		activeTimeSeries: activeTimeSeries ?? 0,
 	};
 }
 
 export function transformMetricAlerts(
-	apiData: SuccessResponseV2<GetMetricAlertsResponse> | undefined,
+	apiData: GetMetricAlerts200 | undefined,
 ): MetricAlert[] {
-	if (
-		!apiData ||
-		!apiData.data ||
-		!apiData.data.data ||
-		!apiData.data.data.alerts
-	) {
+	if (!apiData || !apiData.data || !apiData.data.alerts) {
 		return [];
 	}
-	return apiData.data.data.alerts.map((alert) => ({
-		alertName: alert.alertName,
-		alertId: alert.alertId,
+	return apiData.data.alerts.map((alert) => ({
+		alertName: alert.alertName ?? '',
+		alertId: alert.alertId ?? '',
 	}));
 }
 
 export function transformMetricDashboards(
-	apiData: SuccessResponseV2<GetMetricDashboardsResponse> | undefined,
+	apiData: GetMetricDashboards200 | undefined,
 ): MetricDashboard[] {
-	if (
-		!apiData ||
-		!apiData.data ||
-		!apiData.data.data ||
-		!apiData.data.data.dashboards
-	) {
+	if (!apiData || !apiData.data || !apiData.data.dashboards) {
 		return [];
 	}
-	const dashboards = apiData.data.data.dashboards.map((dashboard) => ({
-		dashboardName: dashboard.dashboardName,
-		dashboardId: dashboard.dashboardId,
-		widgetId: dashboard.widgetId,
-		widgetName: dashboard.widgetName,
+	const dashboards = apiData.data.dashboards.map((dashboard) => ({
+		dashboardName: dashboard.dashboardName ?? '',
+		dashboardId: dashboard.dashboardId ?? '',
+		widgetId: dashboard.widgetId ?? '',
+		widgetName: dashboard.widgetName ?? '',
 	}));
 	// Remove duplicate dashboards
 	return dashboards.filter(
@@ -244,7 +239,9 @@ export function transformMetricDashboards(
 	);
 }
 
-export function transformTemporality(temporality: string): Temporality {
+export function transformTemporality(
+	temporality: string | undefined,
+): Temporality {
 	switch (temporality) {
 		case 'delta':
 			return Temporality.DELTA;
@@ -255,7 +252,7 @@ export function transformTemporality(temporality: string): Temporality {
 	}
 }
 
-export function transformMetricType(type: string): MetricType {
+export function transformMetricType(type: string | undefined): MetricType {
 	switch (type) {
 		case 'sum':
 			return MetricType.SUM;
@@ -273,31 +270,25 @@ export function transformMetricType(type: string): MetricType {
 }
 
 export function transformMetricMetadata(
-	apiData: SuccessResponseV2<GetMetricMetadataResponse> | undefined,
+	apiData: GetMetricMetadata200 | undefined,
 ): MetricMetadata | null {
-	if (!apiData || !apiData.data || !apiData.data.data) {
+	if (!apiData || !apiData.data) {
 		return null;
 	}
-	const {
-		type,
-		description,
-		unit,
-		temporality,
-		isMonotonic,
-	} = apiData.data.data;
+	const { type, description, unit, temporality, isMonotonic } = apiData.data;
 
 	return {
 		metricType: transformMetricType(type),
-		description,
-		unit,
+		description: description ?? '',
+		unit: unit ?? '',
 		temporality: transformTemporality(temporality),
-		isMonotonic,
+		isMonotonic: isMonotonic ?? false,
 	};
 }
 
 export function transformUpdateMetricMetadataRequest(
 	metricMetadata: MetricMetadataState,
-): UpdateMetricMetadataRequest {
+): UpdateMetricMetadataMutationBody {
 	return {
 		type: metricMetadata.metricType,
 		description: metricMetadata.description,
@@ -311,18 +302,19 @@ export function transformUpdateMetricMetadataRequest(
 }
 
 export function transformMetricAttributes(
-	apiData: SuccessResponseV2<GetMetricAttributesResponse> | undefined,
+	apiData: GetMetricAttributes200 | undefined,
 ): { attributes: MetricAttribute[]; totalKeys: number } {
-	if (!apiData || !apiData.data || !apiData.data.data) {
+	if (!apiData || !apiData.data) {
 		return { attributes: [], totalKeys: 0 };
 	}
-	const { attributes, totalKeys } = apiData.data.data;
+	const { attributes, totalKeys } = apiData.data;
 	return {
-		attributes: attributes.map((attribute) => ({
-			key: attribute.key,
-			values: attribute.values,
-			valueCount: attribute.valueCount,
-		})),
-		totalKeys,
+		attributes:
+			attributes?.map((attribute) => ({
+				key: attribute.key ?? '',
+				values: attribute.values ?? [],
+				valueCount: attribute.valueCount ?? 0,
+			})) ?? [],
+		totalKeys: totalKeys ?? 0,
 	};
 }

@@ -10,11 +10,11 @@ import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/uti
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/v2/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import { useUpdateMetricMetadata } from 'api/generated/services/metrics';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -215,12 +215,14 @@ function Metadata({
 	const handleSave = useCallback(() => {
 		updateMetricMetadata(
 			{
-				metricName,
-				payload: transformUpdateMetricMetadataRequest(metricMetadata),
+				pathParams: {
+					metricName: metricName ?? '',
+				},
+				data: transformUpdateMetricMetadataRequest(metricMetadata),
 			},
 			{
 				onSuccess: (response): void => {
-					if (response?.httpStatusCode === 200) {
+					if (response.status === 200) {
 						logEvent(MetricsExplorerEvents.MetricMetadataUpdated, {
 							[MetricsExplorerEventKeys.MetricName]: metricName,
 							[MetricsExplorerEventKeys.Tab]: 'summary',

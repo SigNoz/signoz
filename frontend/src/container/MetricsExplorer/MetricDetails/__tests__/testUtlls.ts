@@ -1,29 +1,40 @@
-import { SuccessResponseV2 } from 'types/api';
 import {
-	GetMetricAlertsResponse,
-	GetMetricAttributesResponse,
-	GetMetricDashboardsResponse,
-	GetMetricHighlightsResponse,
-	GetMetricMetadataResponse,
-} from 'types/api/metricsExplorer/v2';
+	GetMetricAlerts200,
+	GetMetricAttributes200,
+	GetMetricDashboards200,
+	GetMetricHighlights200,
+	GetMetricMetadata200,
+} from 'api/generated/services/sigNoz.schemas';
+
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { Temporality } from 'types/common/queryBuilder';
 
 export function getMockMetricHighlightsData(
-	overrides?: Partial<GetMetricHighlightsResponse>,
-): SuccessResponseV2<GetMetricHighlightsResponse> {
+	overrides?: Partial<GetMetricHighlights200>,
+	{
+		isLoading = false,
+		isError = false,
+	}: {
+		isLoading?: boolean;
+		isError?: boolean;
+	} = {},
+): ReturnType<typeof metricsExplorerHooks.useGetMetricHighlights> {
 	return {
-		httpStatusCode: 200,
 		data: {
 			data: {
-				dataPoints: 1000000,
-				lastReceived: 1716393600,
-				totalTimeSeries: 1000000,
-				activeTimeSeries: 1000000,
+				data: {
+					dataPoints: 1000000,
+					lastReceived: 1716393600,
+					totalTimeSeries: 1000000,
+					activeTimeSeries: 1000000,
+				},
+				status: 'success',
 				...overrides,
 			},
-			status: 'success',
 		},
-	};
+		isLoading,
+		isError,
+	} as ReturnType<typeof metricsExplorerHooks.useGetMetricHighlights>;
 }
 
 export const MOCK_DASHBOARD_1 = {
@@ -48,77 +59,117 @@ export const MOCK_ALERT_2 = {
 };
 
 export function getMockDashboardsData(
-	overrides?: Partial<GetMetricDashboardsResponse>,
-): SuccessResponseV2<GetMetricDashboardsResponse> {
+	overrides?: Partial<GetMetricDashboards200>,
+	{
+		isLoading = false,
+		isError = false,
+	}: {
+		isLoading?: boolean;
+		isError?: boolean;
+	} = {},
+): ReturnType<typeof metricsExplorerHooks.useGetMetricDashboards> {
 	return {
-		httpStatusCode: 200,
 		data: {
 			data: {
-				dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2],
+				data: {
+					dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2],
+				},
+				status: 'success',
+				...overrides,
 			},
-			status: 'success',
-			...overrides,
 		},
-	};
+		isLoading,
+		isError,
+	} as ReturnType<typeof metricsExplorerHooks.useGetMetricDashboards>;
 }
 
 export function getMockAlertsData(
-	overrides?: Partial<GetMetricAlertsResponse>,
-): SuccessResponseV2<GetMetricAlertsResponse> {
+	overrides?: Partial<GetMetricAlerts200>,
+	{
+		isLoading = false,
+		isError = false,
+	}: {
+		isLoading?: boolean;
+		isError?: boolean;
+	} = {},
+): ReturnType<typeof metricsExplorerHooks.useGetMetricAlerts> {
 	return {
-		httpStatusCode: 200,
 		data: {
 			data: {
-				alerts: [MOCK_ALERT_1, MOCK_ALERT_2],
+				data: {
+					alerts: [MOCK_ALERT_1, MOCK_ALERT_2],
+				},
+				status: 'success',
+				...overrides,
 			},
-			status: 'success',
-			...overrides,
 		},
-	};
+		isLoading,
+		isError,
+	} as ReturnType<typeof metricsExplorerHooks.useGetMetricAlerts>;
 }
 
 export function getMockMetricAttributesData(
-	overrides?: Partial<GetMetricAttributesResponse>,
-): SuccessResponseV2<GetMetricAttributesResponse> {
+	overrides?: Partial<GetMetricAttributes200>,
+	{
+		isLoading = false,
+		isError = false,
+	}: {
+		isLoading?: boolean;
+		isError?: boolean;
+	} = {},
+): ReturnType<typeof metricsExplorerHooks.useGetMetricAttributes> {
 	return {
-		httpStatusCode: 200,
 		data: {
 			data: {
-				attributes: [
-					{
-						key: 'attribute1',
-						values: ['value1', 'value2'],
-						valueCount: 2,
-					},
-					{
-						key: 'attribute2',
-						values: ['value3'],
-						valueCount: 1,
-					},
-				],
-				totalKeys: 2,
+				data: {
+					attributes: [
+						{
+							key: 'attribute1',
+							values: ['value1', 'value2'],
+							valueCount: 2,
+						},
+						{
+							key: 'attribute2',
+							values: ['value3'],
+							valueCount: 1,
+						},
+					],
+					totalKeys: 2,
+				},
+				status: 'success',
+				...overrides,
 			},
-			status: 'success',
-			...overrides,
 		},
-	};
+		isLoading,
+		isError,
+	} as ReturnType<typeof metricsExplorerHooks.useGetMetricAttributes>;
 }
 
 export function getMockMetricMetadataData(
-	overrides?: Partial<GetMetricMetadataResponse>,
-): SuccessResponseV2<GetMetricMetadataResponse> {
+	overrides?: Partial<GetMetricMetadata200>,
+	{
+		isLoading = false,
+		isError = false,
+	}: {
+		isLoading?: boolean;
+		isError?: boolean;
+	} = {},
+): ReturnType<typeof metricsExplorerHooks.useGetMetricMetadata> {
 	return {
-		httpStatusCode: 200,
 		data: {
 			data: {
-				description: 'test_description',
-				type: 'gauge',
-				unit: 'test_unit',
-				temporality: Temporality.Delta,
-				isMonotonic: false,
+				data: {
+					description: 'test_description',
+					type: 'gauge',
+					unit: 'test_unit',
+					temporality: Temporality.Delta,
+					isMonotonic: false,
+				},
+				status: 'success',
+				...overrides,
 			},
-			status: 'success',
-			...overrides,
 		},
-	};
+		isLoading,
+		isError,
+	} as ReturnType<typeof metricsExplorerHooks.useGetMetricMetadata>;
 }
