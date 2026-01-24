@@ -44,14 +44,6 @@ export function escapeRegExp(str: string): string {
 	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/**
- * Escapes dollar signs in replacement strings to prevent $1, $2 from being
- * interpreted as backreferences in String.replace()
- */
-export function escapeReplacement(str: string): string {
-	return str.replace(/\$/g, '$$$$');
-}
-
 export function replaceValueInExpression(
 	expression: string,
 	key: string,
@@ -69,7 +61,7 @@ export function replaceValueInExpression(
 	return expression.replace(
 		regex,
 		(_: string, prefix: string, quote: string) =>
-			`${prefix}${quote}${escapeReplacement(newValue)}${quote}`,
+			`${prefix}${quote}${newValue}${quote}`,
 	);
 }
 
@@ -96,8 +88,7 @@ export function replaceValuesInExpression(
 					const valueRegex = new RegExp(`(['"])(${escapeRegExp(original)})\\1`, 'g');
 					modifiedValues = modifiedValues.replace(
 						valueRegex,
-						(__: string, quote: string) =>
-							`${quote}${escapeReplacement(suggested)}${quote}`,
+						(__: string, quote: string) => `${quote}${suggested}${quote}`,
 					);
 				}
 			});
