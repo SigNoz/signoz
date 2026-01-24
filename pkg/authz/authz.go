@@ -16,10 +16,10 @@ type AuthZ interface {
 	Check(context.Context, *openfgav1.TupleKey) error
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, authtypes.Relation, authtypes.Typeable, []authtypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
 
 	// CheckWithTupleCreationWithoutClaims checks permissions for anonymous users.
-	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, authtypes.Relation, authtypes.Relation, authtypes.Typeable, []authtypes.Selector) error
+	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
 
 	// Batch Check returns error when the upstream authorization server is unavailable or for all the tuples of subject (s) doesn't have relation (r) on object (o).
 	BatchCheck(context.Context, []*openfgav1.TupleKey) error

@@ -43,6 +43,9 @@ type Getter interface {
 
 	// Lists all the roles for the organization.
 	List(context.Context, valuer.UUID) ([]*roletypes.Role, error)
+
+	//  Lists all the roles for the organization filtered by name
+	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*roletypes.Role, error)
 }
 
 type Granter interface {

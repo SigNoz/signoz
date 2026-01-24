@@ -61,25 +61,26 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		signozViewer, err := middleware.roleGetter.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozViewerRoleName)
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozViewerRoleName, roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		signozEditor, err := middleware.roleGetter.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozEditorRoleName)
-		if err != nil {
-			render.Error(rw, err)
-			return
+		selectors := []authtypes.Selector{}
+		for _, role := range roles {
+			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
 		}
 
-		signozAdmin, err := middleware.roleGetter.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozAdminRoleName)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, signozViewer.ID.String()), authtypes.MustNewSelector(authtypes.TypeRole, signozEditor.ID.String()), authtypes.MustNewSelector(authtypes.TypeRole, signozAdmin.ID.String())})
+		err = middleware.authzService.CheckWithTupleCreation(
+			req.Context(),
+			claims,
+			orgId,
+			authtypes.RelationAssignee,
+			authtypes.TypeableRole,
+			selectors,
+			selectors,
+		)
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
@@ -117,19 +118,26 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		signozEditor, err := middleware.roleGetter.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozEditorRoleName)
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozViewerRoleName, roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		signozAdmin, err := middleware.roleGetter.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozAdminRoleName)
-		if err != nil {
-			render.Error(rw, err)
-			return
+		selectors := []authtypes.Selector{}
+		for _, role := range roles {
+			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, signozEditor.ID.String()), authtypes.MustNewSelector(authtypes.TypeRole, signozAdmin.ID.String())})
+		err = middleware.authzService.CheckWithTupleCreation(
+			req.Context(),
+			claims,
+			orgId,
+			authtypes.RelationAssignee,
+			authtypes.TypeableRole,
+			selectors,
+			selectors,
+		)
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
@@ -167,13 +175,26 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		signozAdmin, err := middleware.roleGetter.GetByOrgIDAndName(req.Context(), orgId, roletypes.SigNozAdminRoleName)
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozViewerRoleName, roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, authtypes.RelationAssignee, authtypes.RelationAssignee, authtypes.TypeableRole, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeRole, signozAdmin.ID.String())})
+		selectors := []authtypes.Selector{}
+		for _, role := range roles {
+			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(
+			req.Context(),
+			claims,
+			orgId,
+			authtypes.RelationAssignee,
+			authtypes.TypeableRole,
+			selectors,
+			selectors,
+		)
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
@@ -209,9 +230,10 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		claims, err := authtypes.ClaimsFromContext(req.Context())
+		ctx := req.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -229,7 +251,18 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, relation, translation, typeable, selectors)
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, roles)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		roleSelectors := []authtypes.Selector{}
+		for _, role := range roles {
+			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(ctx, claims, orgId, relation, typeable, selectors, roleSelectors)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -239,7 +272,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 	})
 }
 
-func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn) http.HandlerFunc {
+func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)
@@ -248,13 +281,24 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 			return
 		}
 
-		selectors, orgID, err := cb(req, orgs)
+		selectors, orgId, err := cb(req, orgs)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, translation, typeable, selectors)
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, roles)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		roleSelectors := []authtypes.Selector{}
+		for _, role := range roles {
+			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
+		}
+
+		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgId, relation, typeable, selectors, roleSelectors)
 		if err != nil {
 			render.Error(rw, err)
 			return

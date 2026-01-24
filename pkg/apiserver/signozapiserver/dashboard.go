@@ -83,7 +83,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
-		authtypes.RelationRead, authtypes.RelationRead,
+		authtypes.RelationRead,
 		dashboardtypes.TypeableMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
@@ -92,7 +92,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}), handler.OpenAPIDef{
+		}, []string{}), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardData",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard data",
@@ -111,7 +111,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		authtypes.RelationRead, authtypes.RelationRead,
+		authtypes.RelationRead,
 		dashboardtypes.TypeableMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
@@ -120,7 +120,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}), handler.OpenAPIDef{
+		}, []string{}), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardWidgetQueryRange",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get query range result",

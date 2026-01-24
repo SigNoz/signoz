@@ -20,7 +20,7 @@ func NewGranter(store roletypes.Store, authz authz.AuthZ) role.Granter {
 }
 
 func (granter *granter) Grant(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := granter.store.GetByOrgIDAndName(ctx, name, orgID)
+	role, err := granter.store.GetByOrgIDAndName(ctx, orgID, name)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (granter *granter) ModifyGrant(ctx context.Context, orgID valuer.UUID, exis
 }
 
 func (granter *granter) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	role, err := granter.store.GetByOrgIDAndName(ctx, name, orgID)
+	role, err := granter.store.GetByOrgIDAndName(ctx, orgID, name)
 	if err != nil {
 		return err
 	}

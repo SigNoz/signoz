@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type store struct {
@@ -48,7 +49,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return role, nil
 }
 
-func (store *store) GetByOrgIDAndName(ctx context.Context, name string, orgID valuer.UUID) (*roletypes.StorableRole, error) {
+func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*roletypes.StorableRole, error) {
 	role := new(roletypes.StorableRole)
 	err := store.
 		sqlstore.
@@ -73,6 +74,23 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 		NewSelect().
 		Model(&roles).
 		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, nil
+}
+
+func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*roletypes.StorableRole, error) {
+	roles := make([]*roletypes.StorableRole, 0)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&roles).
+		Where("org_id = ?", orgID).
+		Where("name IN (?)", bun.In(names)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
