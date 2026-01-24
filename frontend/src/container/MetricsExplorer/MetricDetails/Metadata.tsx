@@ -3,6 +3,7 @@ import { useQueryClient } from 'react-query';
 import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
+import { useUpdateMetricMetadata } from 'api/generated/services/metrics';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { ResizeTable } from 'components/ResizeTable';
@@ -12,7 +13,6 @@ import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/uti
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/v2/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 
@@ -215,12 +215,14 @@ function Metadata({
 	const handleSave = useCallback(() => {
 		updateMetricMetadata(
 			{
-				metricName,
-				payload: transformUpdateMetricMetadataRequest(metricMetadata),
+				pathParams: {
+					metricName: metricName ?? '',
+				},
+				data: transformUpdateMetricMetadataRequest(metricMetadata),
 			},
 			{
 				onSuccess: (response): void => {
-					if (response?.httpStatusCode === 200) {
+					if (response.status === 200) {
 						logEvent(MetricsExplorerEvents.MetricMetadataUpdated, {
 							[MetricsExplorerEventKeys.MetricName]: metricName,
 							[MetricsExplorerEventKeys.Tab]: 'summary',

@@ -5,8 +5,6 @@ import { Dropdown, Typography } from 'antd';
 import { Skeleton } from 'antd/lib';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { useGetMetricAlerts } from 'hooks/metricsExplorer/v2/useGetMetricAlerts';
-import { useGetMetricDashboards } from 'hooks/metricsExplorer/v2/useGetMetricDashboards';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -15,6 +13,10 @@ import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 import { transformMetricAlerts, transformMetricDashboards } from './utils';
+import {
+	useGetMetricAlerts,
+	useGetMetricDashboards,
+} from 'api/generated/services/metrics';
 
 function DashboardsAndAlertsPopover({
 	metricName,
@@ -26,16 +28,34 @@ function DashboardsAndAlertsPopover({
 		data: alertsData,
 		isLoading: isLoadingAlerts,
 		isError: isErrorAlerts,
-	} = useGetMetricAlerts(metricName);
+	} = useGetMetricAlerts(
+		{
+			metricName: metricName ?? '',
+		},
+		{
+			query: {
+				enabled: !!metricName,
+			},
+		},
+	);
 
 	const {
 		data: dashboardsData,
 		isLoading: isLoadingDashboards,
 		isError: isErrorDashboards,
-	} = useGetMetricDashboards(metricName);
+	} = useGetMetricDashboards(
+		{
+			metricName: metricName ?? '',
+		},
+		{
+			query: {
+				enabled: !!metricName,
+			},
+		},
+	);
 
-	const alerts = transformMetricAlerts(alertsData);
-	const dashboards = transformMetricDashboards(dashboardsData);
+	const alerts = transformMetricAlerts(alertsData?.data);
+	const dashboards = transformMetricDashboards(dashboardsData?.data);
 
 	const alertsPopoverContent = useMemo(() => {
 		if (alerts && alerts.length > 0) {

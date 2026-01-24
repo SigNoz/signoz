@@ -1,5 +1,4 @@
 import { Skeleton, Tooltip, Typography } from 'antd';
-import { useGetMetricHighlights } from 'hooks/metricsExplorer/v2/useGetMetricHighlights';
 import { useMemo } from 'react';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
@@ -9,20 +8,30 @@ import {
 	formatTimestampToReadableDate,
 	transformMetricHighlights,
 } from './utils';
+import { useGetMetricHighlights } from 'api/generated/services/metrics';
 
 function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const {
 		data: metricHighlightsData,
 		isLoading: isLoadingMetricHighlights,
 		isError: isErrorMetricHighlights,
-	} = useGetMetricHighlights(metricName ?? '', {
-		enabled: !!metricName,
-	});
+	} = useGetMetricHighlights(
+		{
+			metricName: metricName ?? '',
+		},
+		{
+			query: {
+				enabled: !!metricName,
+			},
+		},
+	);
 
-	const metricHighlights = transformMetricHighlights(metricHighlightsData);
+	const metricHighlights = transformMetricHighlights(metricHighlightsData?.data);
 
 	const dataPoints = useMemo(() => {
-		if (!metricHighlights) return null;
+		if (!metricHighlights) {
+			return null;
+		}
 		if (isErrorMetricHighlights) {
 			return (
 				<Typography.Text className="metric-details-grid-value">-</Typography.Text>
@@ -38,7 +47,9 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	}, [metricHighlights, isErrorMetricHighlights]);
 
 	const timeSeries = useMemo(() => {
-		if (!metricHighlights) return null;
+		if (!metricHighlights) {
+			return null;
+		}
 		if (isErrorMetricHighlights) {
 			return (
 				<Typography.Text className="metric-details-grid-value">-</Typography.Text>
@@ -66,7 +77,9 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	}, [metricHighlights, isErrorMetricHighlights]);
 
 	const lastReceived = useMemo(() => {
-		if (!metricHighlights) return null;
+		if (!metricHighlights) {
+			return null;
+		}
 		if (isErrorMetricHighlights) {
 			return (
 				<Typography.Text className="metric-details-grid-value">-</Typography.Text>

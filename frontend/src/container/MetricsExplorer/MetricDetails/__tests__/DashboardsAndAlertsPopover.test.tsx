@@ -1,14 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
-import * as useGetMetricAlertsHooks from 'hooks/metricsExplorer/v2/useGetMetricAlerts';
-import * as useGetMetricDashboardsHooks from 'hooks/metricsExplorer/v2/useGetMetricDashboards';
-import { UseQueryResult } from 'react-query';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { userEvent } from 'tests/test-utils';
-import { SuccessResponseV2 } from 'types/api';
-import {
-	GetMetricAlertsResponse,
-	GetMetricDashboardsResponse,
-} from 'types/api/metricsExplorer/v2';
 
 import DashboardsAndAlertsPopover from '../DashboardsAndAlertsPopover';
 import {
@@ -38,32 +31,19 @@ jest.mock('hooks/useUrlQuery', () => ({
 
 const MOCK_METRIC_NAME = 'test-metric';
 
-type UseGetMetricAlertsResult = UseQueryResult<
-	SuccessResponseV2<GetMetricAlertsResponse>,
-	Error
->;
-type UseGetMetricDashboardsResult = UseQueryResult<
-	SuccessResponseV2<GetMetricDashboardsResponse>,
-	Error
->;
-
 const useGetMetricAlertsMock = jest.spyOn(
-	useGetMetricAlertsHooks,
+	metricsExplorerHooks,
 	'useGetMetricAlerts',
 );
 const useGetMetricDashboardsMock = jest.spyOn(
-	useGetMetricDashboardsHooks,
+	metricsExplorerHooks,
 	'useGetMetricDashboards',
 );
 
 describe('DashboardsAndAlertsPopover', () => {
 	beforeEach(() => {
-		useGetMetricAlertsMock.mockReturnValue(({
-			data: getMockAlertsData(),
-		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
-		useGetMetricDashboardsMock.mockReturnValue(({
-			data: getMockDashboardsData(),
-		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+		useGetMetricAlertsMock.mockReturnValue(getMockAlertsData());
+		useGetMetricDashboardsMock.mockReturnValue(getMockDashboardsData());
 	});
 
 	it('renders the popover correctly with multiple dashboards and alerts', () => {
@@ -74,12 +54,16 @@ describe('DashboardsAndAlertsPopover', () => {
 	});
 
 	it('renders null with no dashboards and alerts', () => {
-		useGetMetricAlertsMock.mockReturnValue(({
-			data: undefined,
-		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
-		useGetMetricDashboardsMock.mockReturnValue(({
-			data: undefined,
-		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+		useGetMetricAlertsMock.mockReturnValue(
+			getMockAlertsData({
+				data: undefined,
+			}),
+		);
+		useGetMetricDashboardsMock.mockReturnValue(
+			getMockDashboardsData({
+				data: undefined,
+			}),
+		);
 
 		const { container } = render(
 			<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />,
@@ -91,20 +75,20 @@ describe('DashboardsAndAlertsPopover', () => {
 	});
 
 	it('renders popover with single dashboard and alert', () => {
-		useGetMetricAlertsMock.mockReturnValue(({
-			data: getMockAlertsData({
+		useGetMetricAlertsMock.mockReturnValue(
+			getMockAlertsData({
 				data: {
 					alerts: [MOCK_ALERT_1],
 				},
 			}),
-		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
-		useGetMetricDashboardsMock.mockReturnValue(({
-			data: getMockDashboardsData({
+		);
+		useGetMetricDashboardsMock.mockReturnValue(
+			getMockDashboardsData({
 				data: {
 					dashboards: [MOCK_DASHBOARD_1],
 				},
 			}),
-		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+		);
 
 		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
@@ -113,13 +97,13 @@ describe('DashboardsAndAlertsPopover', () => {
 	});
 
 	it('renders popover with dashboard id if name is not available', async () => {
-		useGetMetricDashboardsMock.mockReturnValue(({
-			data: getMockDashboardsData({
+		useGetMetricDashboardsMock.mockReturnValue(
+			getMockDashboardsData({
 				data: {
 					dashboards: [{ ...MOCK_DASHBOARD_1, dashboardName: '' }],
 				},
 			}),
-		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+		);
 
 		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
@@ -128,13 +112,13 @@ describe('DashboardsAndAlertsPopover', () => {
 	});
 
 	it('renders popover with alert id if name is not available', async () => {
-		useGetMetricAlertsMock.mockReturnValue(({
-			data: getMockAlertsData({
+		useGetMetricAlertsMock.mockReturnValue(
+			getMockAlertsData({
 				data: {
 					alerts: [{ ...MOCK_ALERT_1, alertName: '' }],
 				},
 			}),
-		} as Partial<UseGetMetricAlertsResult>) as UseGetMetricAlertsResult);
+		);
 
 		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
@@ -180,13 +164,13 @@ describe('DashboardsAndAlertsPopover', () => {
 	});
 
 	it('renders unique dashboards even when there are duplicates', async () => {
-		useGetMetricDashboardsMock.mockReturnValue(({
-			data: getMockDashboardsData({
+		useGetMetricDashboardsMock.mockReturnValue(
+			getMockDashboardsData({
 				data: {
 					dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2, MOCK_DASHBOARD_1],
 				},
 			}),
-		} as Partial<UseGetMetricDashboardsResult>) as UseGetMetricDashboardsResult);
+		);
 
 		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 

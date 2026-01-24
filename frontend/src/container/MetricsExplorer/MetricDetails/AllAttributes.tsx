@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import {
 	Button,
@@ -11,9 +11,9 @@ import {
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
+import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { useGetMetricAttributes } from 'hooks/metricsExplorer/v2/useGetMetricAttributes';
 import { useNotifications } from 'hooks/useNotifications';
 import { Compass, Copy, Search } from 'lucide-react';
 
@@ -130,11 +130,20 @@ function AllAttributes({
 		data: attributesData,
 		isLoading: isLoadingAttributes,
 		isError: isErrorAttributes,
-	} = useGetMetricAttributes({
-		metricName,
-	});
+		mutate: getMetricAttributes,
+	} = useGetMetricAttributes();
 
-	const { attributes } = transformMetricAttributes(attributesData);
+	useEffect(() => {
+		if (metricName) {
+			getMetricAttributes({
+				data: {
+					metricName,
+				},
+			});
+		}
+	}, [getMetricAttributes, metricName]);
+
+	const { attributes } = transformMetricAttributes(attributesData?.data);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 

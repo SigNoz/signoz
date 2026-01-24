@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Empty, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { useGetMetricMetadata } from 'hooks/metricsExplorer/v2/useGetMetricMetadata';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, Crosshair, X } from 'lucide-react';
 
@@ -17,6 +16,7 @@ import Highlights from './Highlights';
 import Metadata from './Metadata';
 import { MetricDetailsProps } from './types';
 import { getMetricDetailsQuery, transformMetricMetadata } from './utils';
+import { useGetMetricMetadata } from 'api/generated/services/metrics';
 
 import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
@@ -34,11 +34,18 @@ function MetricDetails({
 		data: metricMetadataResponse,
 		isLoading: isLoadingMetricMetadata,
 		isError: isErrorMetricMetadata,
-	} = useGetMetricMetadata(metricName ?? '', {
-		enabled: !!metricName,
-	});
+	} = useGetMetricMetadata(
+		{
+			metricName: metricName ?? '',
+		},
+		{
+			query: {
+				enabled: !!metricName,
+			},
+		},
+	);
 
-	const metadata = transformMetricMetadata(metricMetadataResponse);
+	const metadata = transformMetricMetadata(metricMetadataResponse?.data);
 
 	const showInspectFeature = useMemo(
 		() => isInspectEnabled(metadata?.metricType),
