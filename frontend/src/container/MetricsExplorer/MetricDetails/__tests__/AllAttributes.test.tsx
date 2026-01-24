@@ -1,12 +1,9 @@
-import { UseQueryResult } from 'react-query';
 import * as reactUseHooks from 'react-use';
 import { render, screen } from '@testing-library/react';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import * as useGetMetricAttributesHooks from 'hooks/metricsExplorer/v2/useGetMetricAttributes';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 import { userEvent } from 'tests/test-utils';
-import { SuccessResponseV2 } from 'types/api';
-import { GetMetricAttributesResponse } from 'types/api/metricsExplorer/v2';
 
 import ROUTES from '../../../../constants/routes';
 import AllAttributes, { AllAttributesValue } from '../AllAttributes';
@@ -28,25 +25,24 @@ jest
 const mockMetricName = 'test-metric';
 const mockMetricType = MetricType.GAUGE;
 
-type UseGetMetricAttributesResult = UseQueryResult<
-	SuccessResponseV2<GetMetricAttributesResponse>,
-	Error
->;
 const mockUseCopyToClipboard = jest.fn();
 jest
 	.spyOn(reactUseHooks, 'useCopyToClipboard')
 	.mockReturnValue([{ value: 'value1' }, mockUseCopyToClipboard] as any);
 
 const useGetMetricAttributesMock = jest.spyOn(
-	useGetMetricAttributesHooks,
+	metricsExplorerHooks,
 	'useGetMetricAttributes',
 );
 
+const mockUseGetMetricAttributes = jest.fn();
+
 describe('AllAttributes', () => {
 	beforeEach(() => {
-		useGetMetricAttributesMock.mockReturnValue(({
-			data: getMockMetricAttributesData(),
-		} as Partial<UseGetMetricAttributesResult>) as UseGetMetricAttributesResult);
+		useGetMetricAttributesMock.mockReturnValue({
+			...getMockMetricAttributesData(),
+			mutate: mockUseGetMetricAttributes,
+		});
 	});
 
 	it('renders attributes section with title', () => {
@@ -82,14 +78,15 @@ describe('AllAttributes', () => {
 	});
 
 	it('handles empty attributes array', () => {
-		useGetMetricAttributesMock.mockReturnValue(({
-			data: getMockMetricAttributesData({
+		useGetMetricAttributesMock.mockReturnValue({
+			...getMockMetricAttributesData({
 				data: {
 					attributes: [],
 					totalKeys: 0,
 				},
 			}),
-		} as Partial<UseGetMetricAttributesResult>) as UseGetMetricAttributesResult);
+			mutate: mockUseGetMetricAttributes,
+		});
 		render(
 			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);

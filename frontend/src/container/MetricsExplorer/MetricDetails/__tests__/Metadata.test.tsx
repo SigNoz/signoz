@@ -6,21 +6,17 @@ import {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
 } from 'components/YAxisUnitSelector/types';
-import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/v2/useUpdateMetricMetadata';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import * as useNotificationsHooks from 'hooks/useNotifications';
-import { UseMutationResult } from 'react-query';
 import { userEvent } from 'tests/test-utils';
-import { SuccessResponseV2 } from 'types/api';
-import {
-	UpdateMetricMetadataResponse,
-	UseUpdateMetricMetadataProps,
-} from 'types/api/metricsExplorer/v2';
 import { SelectOption } from 'types/common/select';
 
 import Metadata from '../Metadata';
 import { MetricMetadata } from '../types';
 import { transformMetricMetadata } from '../utils';
 import { getMockMetricMetadataData } from './testUtlls';
+import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import { AxiosResponse } from 'axios';
 
 // Mock antd select for testing
 jest.mock('antd', () => ({
@@ -83,18 +79,16 @@ jest.mock('react-query', () => ({
 }));
 
 const mockUseUpdateMetricMetadataHook = jest.spyOn(
-	useUpdateMetricMetadataHooks,
+	metricsExplorerHooks,
 	'useUpdateMetricMetadata',
 );
-type UseUpdateMetricMetadataResult = UseMutationResult<
-	SuccessResponseV2<UpdateMetricMetadataResponse>,
-	Error,
-	UseUpdateMetricMetadataProps
+type UseUpdateMetricMetadataResult = ReturnType<
+	typeof metricsExplorerHooks.useUpdateMetricMetadata
 >;
 const mockUseUpdateMetricMetadata = jest.fn();
 
 const mockMetricMetadata = transformMetricMetadata(
-	getMockMetricMetadataData(),
+	(getMockMetricMetadataData().data as AxiosResponse<GetMetricMetadata200>).data,
 ) as MetricMetadata;
 
 const mockErrorNotification = jest.fn();
@@ -194,14 +188,15 @@ describe('Metadata', () => {
 
 		expect(mockUseUpdateMetricMetadata).toHaveBeenCalledWith(
 			expect.objectContaining({
-				metricName: mockMetricName,
-				payload: expect.objectContaining({
-					description: 'Updated description',
+				data: expect.objectContaining({
 					type: MetricType.SUM,
 					temporality: Temporality.CUMULATIVE,
 					unit: 'By',
 					isMonotonic: true,
 				}),
+				pathParams: {
+					metricName: mockMetricName,
+				},
 			}),
 			expect.objectContaining({
 				onSuccess: expect.any(Function),
@@ -232,7 +227,7 @@ describe('Metadata', () => {
 
 		const onSuccessCallback =
 			mockUseUpdateMetricMetadata.mock.calls[0][1].onSuccess;
-		onSuccessCallback({ httpStatusCode: 200 });
+		onSuccessCallback({ status: 200 });
 
 		expect(mockSuccessNotification).toHaveBeenCalledWith({
 			message: 'Metadata updated successfully',
@@ -261,7 +256,7 @@ describe('Metadata', () => {
 
 		const onSuccessCallback =
 			mockUseUpdateMetricMetadata.mock.calls[0][1].onSuccess;
-		onSuccessCallback({ httpStatusCode: 500 });
+		onSuccessCallback({ status: 500 });
 
 		expect(mockErrorNotification).toHaveBeenCalledWith({
 			message:

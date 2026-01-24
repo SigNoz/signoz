@@ -1,45 +1,23 @@
 import { render } from '@testing-library/react';
-import { formatNumberIntoHumanReadableFormat } from 'container/MetricsExplorer/Summary/utils';
-import * as useGetMetricHighlightsHooks from 'hooks/metricsExplorer/v2/useGetMetricHighlights';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
-import { GetMetricHighlightsResponse } from 'types/api/metricsExplorer/v2';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 
 import Highlights from '../Highlights';
-import {
-	formatNumberToCompactFormat,
-	formatTimestampToReadableDate,
-} from '../utils';
 import { getMockMetricHighlightsData } from './testUtlls';
 
 const MOCK_METRIC_NAME = 'test-metric';
 const METRIC_DETAILS_GRID_VALUE_SELECTOR = '.metric-details-grid-value';
 
-type UseGetMetricHighlightsResult = UseQueryResult<
-	SuccessResponseV2<GetMetricHighlightsResponse>,
-	Error
->;
 const useGetMetricHighlightsMock = jest.spyOn(
-	useGetMetricHighlightsHooks,
+	metricsExplorerHooks,
 	'useGetMetricHighlights',
 );
-const mockMetricHighlightsData = getMockMetricHighlightsData();
 
 describe('Highlights', () => {
 	beforeEach(() => {
-		useGetMetricHighlightsMock.mockReturnValue(({
-			data: mockMetricHighlightsData,
-		} as Partial<UseGetMetricHighlightsResult>) as UseGetMetricHighlightsResult);
+		useGetMetricHighlightsMock.mockReturnValue(getMockMetricHighlightsData());
 	});
 
 	it('should render all highlights data correctly', () => {
-		const {
-			dataPoints,
-			activeTimeSeries,
-			totalTimeSeries,
-			lastReceived,
-		} = mockMetricHighlightsData.data.data;
-
 		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
 		const metricHighlightsValues = container.querySelectorAll(
@@ -47,24 +25,20 @@ describe('Highlights', () => {
 		);
 
 		expect(metricHighlightsValues).toHaveLength(3);
-		expect(metricHighlightsValues[0].textContent).toBe(
-			formatNumberIntoHumanReadableFormat(dataPoints),
-		);
-		expect(metricHighlightsValues[1].textContent).toBe(
-			`${formatNumberToCompactFormat(
-				totalTimeSeries,
-			)} total ⎯ ${formatNumberToCompactFormat(activeTimeSeries)} active`,
-		);
-		expect(metricHighlightsValues[2].textContent).toBe(
-			formatTimestampToReadableDate(lastReceived),
-		);
+		expect(metricHighlightsValues[0].textContent).toBe('1M+');
+		expect(metricHighlightsValues[1].textContent).toBe('1M total ⎯ 1M active');
+		expect(metricHighlightsValues[2].textContent).toBe('1/21/1970');
 	});
 
 	it('should render "-" for highlights data when there is an error', () => {
-		useGetMetricHighlightsMock.mockReturnValue(({
-			isError: true,
-			data: getMockMetricHighlightsData(),
-		} as Partial<UseGetMetricHighlightsResult>) as UseGetMetricHighlightsResult);
+		useGetMetricHighlightsMock.mockReturnValue(
+			getMockMetricHighlightsData(
+				{},
+				{
+					isError: true,
+				},
+			),
+		);
 
 		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
@@ -77,9 +51,14 @@ describe('Highlights', () => {
 	});
 
 	it('should render loading state when data is loading', () => {
-		useGetMetricHighlightsMock.mockReturnValue(({
-			isLoading: true,
-		} as Partial<UseGetMetricHighlightsResult>) as UseGetMetricHighlightsResult);
+		useGetMetricHighlightsMock.mockReturnValue(
+			getMockMetricHighlightsData(
+				{},
+				{
+					isLoading: true,
+				},
+			),
+		);
 
 		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
@@ -87,9 +66,11 @@ describe('Highlights', () => {
 	});
 
 	it('should not render grid values when there is no data', () => {
-		useGetMetricHighlightsMock.mockReturnValue(({
-			data: undefined,
-		} as Partial<UseGetMetricHighlightsResult>) as UseGetMetricHighlightsResult);
+		useGetMetricHighlightsMock.mockReturnValue(
+			getMockMetricHighlightsData({
+				data: undefined,
+			}),
+		);
 
 		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
 

@@ -1,10 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import ROUTES from 'constants/routes';
-import * as useGetMetricMetadata from 'hooks/metricsExplorer/v2/useGetMetricMetadata';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponseV2 } from 'types/api';
-import { GetMetricMetadataResponse } from 'types/api/metricsExplorer/v2';
 
 import MetricDetails from '../MetricDetails';
 import { getMockMetricMetadataData } from './testUtlls';
@@ -72,21 +69,14 @@ jest.mock(
 		},
 );
 
-type UseGetMetricMetadataResult = UseQueryResult<
-	SuccessResponseV2<GetMetricMetadataResponse>,
-	Error
->;
 const useGetMetricMetadataMock = jest.spyOn(
-	useGetMetricMetadata,
+	metricsExplorerHooks,
 	'useGetMetricMetadata',
 );
-const mockMetricMetadata = getMockMetricMetadataData();
 
 describe('MetricDetails', () => {
 	beforeEach(() => {
-		useGetMetricMetadataMock.mockReturnValue(({
-			data: mockMetricMetadata,
-		} as Partial<UseGetMetricMetadataResult>) as UseGetMetricMetadataResult);
+		useGetMetricMetadataMock.mockReturnValue(getMockMetricMetadataData());
 	});
 
 	it('renders metric details correctly', () => {
