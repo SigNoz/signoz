@@ -33,22 +33,6 @@ function isEligibleOperator(op: string): boolean {
 	return upperOp === OPERATORS['='] || upperOp === OPERATORS.IN;
 }
 
-function extractStringValues(value: string | string[] | unknown): string[] {
-	if (Array.isArray(value)) {
-		return value.filter(
-			(v): v is string => typeof v === 'string' && v.trim() !== '',
-		);
-	}
-	if (typeof value === 'string' && value.trim() !== '') {
-		return [value];
-	}
-	return [];
-}
-
-/**
- * Returns a case-insensitive match if one exists.
- * Returns null if exact match exists or no case-insensitive match found.
- */
 function findCaseInsensitiveMatch(
 	matchedValues: string[],
 	searchValue: string,
@@ -75,47 +59,30 @@ function extractFromExpression(
 	filterItems: TagFilterItem[],
 ): NormalizedFilter[] {
 	return parsedFilters
-		.filter((parsed) => parsed.values.length > 0)
 		.map((parsed) => {
+			const validValues = parsed.values.filter((v) => v.trim() !== '');
+			if (validValues.length === 0) return null;
+
 			const matchingItem = filterItems.find(
 				(item) =>
 					item.key?.key === parsed.key &&
 					isEligibleOperator(item.op || '') &&
-					parsed.values.some((v) =>
+					validValues.some((v) =>
 						Array.isArray(item.value) ? item.value.includes(v) : item.value === v,
 					),
 			);
 
 			return {
 				key: parsed.key,
-				op: parsed.op === 'IN' ? 'IN' : '=', // expression parser parses only IN and =
-				values: parsed.values,
+				op: parsed.op === 'IN' ? 'IN' : '=',
+				values: validValues,
 				dataType: matchingItem?.key?.dataType || DataTypes.String,
 				keyType: matchingItem?.key?.type || '',
 				isFromExpression: !matchingItem,
 				sourceFilterItem: matchingItem,
 			} as NormalizedFilter;
-		});
-}
-
-function extractFromFilterItems(
-	filterItems: TagFilterItem[],
-): NormalizedFilter[] {
-	return filterItems
-		.filter(
-			(item) =>
-				isEligibleOperator(item.op || '') &&
-				extractStringValues(item.value).length > 0,
-		)
-		.map((item) => ({
-			key: item.key?.key || '',
-			op: item.op?.toUpperCase() === OPERATORS.IN ? 'IN' : '=',
-			values: extractStringValues(item.value),
-			dataType: (item.key?.dataType as DataTypes) || DataTypes.String,
-			keyType: item.key?.type || '',
-			isFromExpression: false,
-			sourceFilterItem: item,
-		}));
+		})
+		.filter((filter): filter is NormalizedFilter => filter !== null);
 }
 
 async function fetchValueSuggestion(
@@ -147,7 +114,7 @@ async function fetchValueSuggestion(
 				if (suggested) return suggested;
 			}
 		} catch {
-			// Continue to next tag type
+			// Ignore errors and try the next tag type
 		}
 	}
 
@@ -226,10 +193,11 @@ function deduplicateSuggestions(
 	return suggestions.filter((suggestion) => {
 		const key = suggestion.filterItem.key?.key || '';
 		const op = suggestion.filterItem.op?.toUpperCase() || '=';
+
 		const value =
-			op === 'IN' && suggestion.suggestedValues
-				? suggestion.suggestedValues.join(',')
-				: suggestion.suggestedValue;
+			op === 'IN' && suggestion.originalValues
+				? suggestion.originalValues.join(',')
+				: suggestion.originalValue;
 
 		const identifier = `${key}:${op}:${value}`;
 		if (seen.has(identifier)) return false;
@@ -300,9 +268,11 @@ export async function getSuggestions(
 	const parsedFilters = expression ? parseFilterExpression(expression) : [];
 	const hasExpression = parsedFilters.length > 0;
 
-	const normalizedFilters = hasExpression
-		? extractFromExpression(parsedFilters, filterItems)
-		: extractFromFilterItems(filterItems);
+	if (!hasExpression) {
+		return { suggestions: [], combinedSuggestion: null, isLoading: false };
+	}
+
+	const normalizedFilters = extractFromExpression(parsedFilters, filterItems);
 
 	if (normalizedFilters.length === 0) {
 		return { suggestions: [], combinedSuggestion: null, isLoading: false };
@@ -318,7 +288,7 @@ export async function getSuggestions(
 	const suggestions = deduplicateSuggestions(validSuggestions);
 
 	const combinedSuggestion =
-		hasExpression && suggestions.length > 0
+		suggestions.length > 0
 			? buildCombinedSuggestion(expression, suggestions)
 			: null;
 
