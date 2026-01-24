@@ -14,7 +14,10 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useUpdateMetricMetadata } from 'api/generated/services/metrics';
+import {
+	invalidateGetMetricMetadata,
+	useUpdateMetricMetadata,
+} from 'api/generated/services/metrics';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -232,11 +235,12 @@ function Metadata({
 							message: 'Metadata updated successfully',
 						});
 						setIsEditing(false);
+						// TODO: To update this to use invalidateGetMetricList
+						// once we have switched to the V2 API in summary page
 						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_METRICS_LIST]);
-						queryClient.invalidateQueries([
-							REACT_QUERY_KEY.GET_METRIC_METADATA,
+						invalidateGetMetricMetadata(queryClient, {
 							metricName,
-						]);
+						});
 					} else {
 						notifications.error({
 							message:

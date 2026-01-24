@@ -63,7 +63,7 @@ export interface MetricMetadata {
 
 export interface MetricMetadataState {
 	metricType: MetricType;
-	description: string;
+	description: string | undefined;
 	temporality: Temporality | undefined;
 	unit: string | undefined;
 }

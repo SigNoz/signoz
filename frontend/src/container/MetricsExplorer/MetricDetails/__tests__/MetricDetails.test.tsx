@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
+import { userEvent } from 'tests/test-utils';
 
 import MetricDetails from '../MetricDetails';
 import { getMockMetricMetadataData } from './testUtlls';
@@ -99,7 +100,7 @@ describe('MetricDetails', () => {
 		expect(screen.getByTestId('metadata')).toBeInTheDocument();
 	});
 
-	it('renders the "open in explorer" and "inspect" buttons', () => {
+	it('renders the "open in explorer" and "inspect" buttons', async () => {
 		render(
 			<MetricDetails
 				onClose={mockOnClose}
@@ -113,10 +114,10 @@ describe('MetricDetails', () => {
 		expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
 		expect(screen.getByTestId('inspect-metric-button')).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId('open-in-explorer-button'));
+		await userEvent.click(screen.getByTestId('open-in-explorer-button'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
 
-		fireEvent.click(screen.getByTestId('inspect-metric-button'));
+		await userEvent.click(screen.getByTestId('inspect-metric-button'));
 		expect(mockOpenInspectModal).toHaveBeenCalled();
 	});
 
