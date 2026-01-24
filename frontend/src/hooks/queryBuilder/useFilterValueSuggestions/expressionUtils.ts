@@ -58,7 +58,7 @@ export function parseFilterExpression(
 		}
 	}
 
-	const inStartRegex = /([a-zA-Z_][a-zA-Z0-9_.]*)(\s+)IN(\s*)\[/gi;
+	const inStartRegex = /([a-zA-Z_][a-zA-Z0-9_.]*)(\s+)(?<!NOT\s+)IN(\s*)\[/gi;
 	for (const match of expression.matchAll(inStartRegex)) {
 		if (match.index !== undefined) {
 			const bracketStart = match.index + match[0].length;
