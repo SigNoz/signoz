@@ -34,6 +34,7 @@ import {
 	formatDataForMetricsTable,
 	getMetricsListQuery,
 } from './utils';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 import './Summary.styles.scss';
 
@@ -128,7 +129,7 @@ function Summary(): JSX.Element {
 	} = useGetMetricsList(metricsListQuery, {
 		enabled: !!metricsListQuery && !isInspectModalOpen,
 		queryKey: [
-			'metricsList',
+			REACT_QUERY_KEY.GET_METRICS_LIST,
 			queryFiltersWithoutId,
 			orderBy,
 			pageSize,
