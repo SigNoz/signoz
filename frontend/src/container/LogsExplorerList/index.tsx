@@ -18,6 +18,10 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import {
+	CombinedFilterSuggestion,
+	useFilterValueSuggestions,
+} from 'hooks/queryBuilder/useFilterValueSuggestions';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -72,6 +76,11 @@ function LogsExplorerList({
 		lastUsedQuery,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const currentQueryData = useMemo(
+		() => currentQuery?.builder.queryData[lastUsedQuery || 0],
+		[currentQuery, lastUsedQuery],
+	);
 
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
@@ -240,6 +249,47 @@ function LogsExplorerList({
 		return getEmptyLogsListConfig(handleClearFilters);
 	}, [isTraceToLogsNavigation, handleClearFilters]);
 
+	const shouldFetchSuggestions =
+		!isLoading &&
+		!isFetching &&
+		logs.length === 0 &&
+		!isError &&
+		isFilterApplied &&
+		!isTraceToLogsNavigation;
+
+	const { combinedSuggestion } = useFilterValueSuggestions(
+		currentStagedQueryData || undefined,
+		shouldFetchSuggestions,
+	);
+
+	const handleApplyCombinedSuggestion = useCallback(
+		(combined: CombinedFilterSuggestion): void => {
+			if (!currentQueryData) return;
+			const queryIndex = lastUsedQuery ?? 0;
+
+			const preparedQuery = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item, idx) => ({
+						...item,
+						...(idx === queryIndex && {
+							filter: { ...item.filter, expression: combined.suggestedExpression },
+							// Clear filters.items when updating expression to avoid conflicts
+							filters: {
+								items: [],
+								op: 'AND',
+							},
+						}),
+					})),
+				},
+			};
+
+			redirectWithQueryBuilderData(preparedQuery);
+		},
+		[currentQuery, lastUsedQuery, currentQueryData, redirectWithQueryBuilderData],
+	);
+
 	return (
 		<div className="logs-list-view-container">
 			{(isLoading || (isFetching && logs.length === 0)) && <LogsLoading />}
@@ -259,6 +309,8 @@ function LogsExplorerList({
 						dataSource={DataSource.LOGS}
 						panelType="LIST"
 						customMessage={getEmptyStateMessage}
+						combinedSuggestion={combinedSuggestion}
+						onApplyCombinedSuggestion={handleApplyCombinedSuggestion}
 					/>
 				)}
 
