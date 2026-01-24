@@ -44,7 +44,7 @@ func (setter *setter) GetOrCreate(ctx context.Context, orgID valuer.UUID, role *
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	existingRole, err := setter.store.GetByOrgIDAndName(ctx, role.Name, role.OrgID)
+	existingRole, err := setter.store.GetByOrgIDAndName(ctx, role.OrgID, role.Name)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
