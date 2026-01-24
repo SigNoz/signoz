@@ -295,7 +295,7 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 
 		roleSelectors := []authtypes.Selector{}
 		for _, role := range roles {
-			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
+			roleSelectors = append(roleSelectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
 		}
 
 		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgId, relation, typeable, selectors, roleSelectors)
