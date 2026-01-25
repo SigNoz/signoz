@@ -75,7 +75,9 @@ function LogDetailInner({
 	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
@@ -153,7 +155,9 @@ function LogDetailInner({
 		(value: string, queryIndex: number) => {
 			// update the query at the given index
 			setContextQuery((prev) => {
-				if (!prev) return prev;
+				if (!prev) {
+					return prev;
+				}
 
 				return {
 					...prev,

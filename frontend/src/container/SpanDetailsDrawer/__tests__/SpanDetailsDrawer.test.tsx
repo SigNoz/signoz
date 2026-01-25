@@ -362,7 +362,9 @@ describe('SpanDetailsDrawer', () => {
 			const filterExpression = (query as any)?.query?.builder?.queryData?.[0]
 				?.filter?.expression;
 
-			if (!filterExpression) return Promise.resolve(mockEmptyLogsResponse);
+			if (!filterExpression) {
+				return Promise.resolve(mockEmptyLogsResponse);
+			}
 
 			// Check for span logs query (contains both trace_id and span_id)
 			if (filterExpression.includes('span_id')) {

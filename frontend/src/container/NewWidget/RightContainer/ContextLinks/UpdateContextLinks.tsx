@@ -51,7 +51,9 @@ function UpdateContextLinks({
 
 	// Extract field variables from the widget's query (all groupBy fields from all queries)
 	const fieldVariables = useMemo(() => {
-		if (!selectedWidget?.query?.builder?.queryData) return {};
+		if (!selectedWidget?.query?.builder?.queryData) {
+			return {};
+		}
 
 		const fieldVars: Record<string, string | number | boolean> = {};
 
@@ -164,7 +166,7 @@ function UpdateContextLinks({
 			onSave(newContextLink);
 		} catch (error) {
 			// Form validation failed, don't call onSave
-			console.log('Form validation failed:', error);
+			console.error('Form validation failed:', error);
 		}
 	};
 

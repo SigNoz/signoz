@@ -8,7 +8,7 @@ import {
 	CustomTimeType,
 	LexicalContext,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction, useMemo } from 'react';

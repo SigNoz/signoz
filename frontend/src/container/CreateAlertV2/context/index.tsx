@@ -63,12 +63,13 @@ export function CreateAlertProvider(
 		initialAlertType,
 	} = props;
 
-	const [alertState, setAlertState] = useReducer(
-		alertCreationReducer,
-		INITIAL_ALERT_STATE,
-	);
-
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+
+	const [alertState, setAlertState] = useReducer(alertCreationReducer, {
+		...INITIAL_ALERT_STATE,
+		yAxisUnit: currentQuery.unit,
+	});
+
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);

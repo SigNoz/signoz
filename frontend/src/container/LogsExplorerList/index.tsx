@@ -202,7 +202,9 @@ function LogsExplorerList({
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {
-		if (!currentStagedQueryData) return false;
+		if (!currentStagedQueryData) {
+			return false;
+		}
 		return isTraceToLogsQuery(currentStagedQueryData);
 	}, [currentStagedQueryData]);
 
@@ -210,7 +212,9 @@ function LogsExplorerList({
 		const queryIndex = lastUsedQuery ?? 0;
 		const updatedQuery = currentQuery?.builder.queryData?.[queryIndex];
 
-		if (!updatedQuery) return;
+		if (!updatedQuery) {
+			return;
+		}
 
 		if (updatedQuery?.filters?.items) {
 			updatedQuery.filters.items = [];
@@ -235,7 +239,9 @@ function LogsExplorerList({
 	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
 
 	const getEmptyStateMessage = useMemo(() => {
-		if (!isTraceToLogsNavigation) return;
+		if (!isTraceToLogsNavigation) {
+			return;
+		}
 
 		return getEmptyLogsListConfig(handleClearFilters);
 	}, [isTraceToLogsNavigation, handleClearFilters]);
