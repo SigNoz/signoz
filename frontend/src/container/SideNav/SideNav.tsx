@@ -165,9 +165,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [isScrolled, setIsScrolled] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const prevSidebarOpenRef = useRef<boolean>(isPinned);
-	const userManuallyCollapsedRef = useRef<boolean>(false);
-	const hasInitializedDefaultsRef = useRef<boolean>(false);
 
 	const [isHovered, setIsHovered] = useState(false);
 	const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -252,10 +249,13 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			| string[]
 			| undefined;
 
-		// Check if preference exists (user has set it before, even if empty)
-		const preferenceExists = navShortcutsPreference !== undefined;
+		// If userPreferences not loaded yet, return empty to avoid showing defaults before preferences load
+		if (userPreferences === null) {
+			return [];
+		}
 
-		if (preferenceExists && isArray(navShortcuts)) {
+		// If preference exists with non-empty array, use stored shortcuts
+		if (isArray(navShortcuts) && navShortcuts.length > 0) {
 			return navShortcuts
 				.map((shortcut) =>
 					defaultMoreMenuItems.find((item) => item.itemKey === shortcut),
@@ -263,13 +263,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				.filter((item): item is SidebarItem => item !== undefined);
 		}
 
-		// Preference doesn't exist or userPreferences not loaded yet
-		// If userPreferences is null, return empty to avoid showing defaults before preferences load
-		if (userPreferences === null) {
-			return [];
-		}
-
-		// Preference doesn't exist - use defaults for first-time users
+		// No preference, or empty array → use defaults
 		return defaultMoreMenuItems.filter((item) => item.isPinned);
 	}, [userPreferences]);
 
@@ -302,12 +296,18 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		computedSecondaryMenuItems,
 	);
 
-	// Sync state when computed values change (when userPreferences loads or updates)
-	// This ensures we respect user preferences without showing defaults first
+	// Track if we've done the initial sync (to avoid overwriting user actions during session)
+	const hasInitializedRef = useRef(userPreferences !== null);
+
+	// Sync state only on initial load when userPreferences first becomes available
 	useEffect(() => {
-		setPinnedMenuItems(computedPinnedMenuItems);
-		setSecondaryMenuItems(computedSecondaryMenuItems);
-	}, [computedPinnedMenuItems, computedSecondaryMenuItems]);
+		// Only sync once: when userPreferences loads for the first time
+		if (!hasInitializedRef.current && userPreferences !== null) {
+			setPinnedMenuItems(computedPinnedMenuItems);
+			setSecondaryMenuItems(computedSecondaryMenuItems);
+			hasInitializedRef.current = true;
+		}
+	}, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -336,7 +336,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		setShowVersionUpdateNotification,
 	] = useState(false);
 
-	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(!isPinned);
+	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
 
 	const [
 		isReorderShortcutNavItemsModalOpen,
@@ -399,37 +399,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[updateUserPreferenceInContext, updateUserPreferenceMutation],
 	);
 
-	// Set default shortcuts on mount if shortcuts are empty
-	useEffect(() => {
-		// Only run when userPreferences are loaded (not null) and we haven't initialized yet
-		if (userPreferences === null || hasInitializedDefaultsRef.current) {
-			return;
-		}
-
-		const navShortcutsPreference = userPreferences.find(
-			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
-		);
-		const navShortcuts = (navShortcutsPreference?.value as unknown) as
-			| string[]
-			| undefined;
-
-		// Check if shortcuts are empty (preference doesn't exist or is empty array)
-		const isEmpty =
-			!navShortcutsPreference ||
-			!isArray(navShortcuts) ||
-			navShortcuts.length === 0;
-
-		if (isEmpty) {
-			const defaultShortcuts = defaultMoreMenuItems.filter(
-				(item) => item.isPinned,
-			);
-			updateNavShortcutsPreference(defaultShortcuts);
-		}
-
-		// Mark as initialized so we don't check again in this session
-		hasInitializedDefaultsRef.current = true;
-	}, [userPreferences, updateNavShortcutsPreference]);
-
 	const onTogglePin = useCallback(
 		(item: SidebarItem): void => {
 			// Update secondary menu items first with new isPinned state
@@ -483,21 +452,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			setTempPinnedMenuItems(pinnedMenuItems);
 		}
 	}, [isReorderShortcutNavItemsModalOpen, pinnedMenuItems]);
-
-	useEffect(() => {
-		const isSidebarOpen = isPinned || isHovered || isDropdownOpen;
-		const wasSidebarOpen = prevSidebarOpenRef.current;
-
-		if (!isSidebarOpen) {
-			// Sidebar is collapsed - always collapse more menu and reset manual collapse flag
-			setIsMoreMenuCollapsed(true);
-			userManuallyCollapsedRef.current = false;
-		} else if (!wasSidebarOpen && !userManuallyCollapsedRef.current) {
-			// Sidebar just opened (transitioned from collapsed) - auto-expand only if user didn't manually collapse
-			setIsMoreMenuCollapsed(false);
-		}
-		prevSidebarOpenRef.current = isSidebarOpen;
-	}, [isPinned, isHovered, isDropdownOpen]);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -1182,12 +1136,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 													action: isMoreMenuCollapsed ? 'expand' : 'collapse',
 												});
 												setIsMoreMenuCollapsed(newCollapsedState);
-												// Track if user manually collapsed it
-												if (newCollapsedState) {
-													userManuallyCollapsedRef.current = true;
-												} else {
-													userManuallyCollapsedRef.current = false;
-												}
 											}}
 										>
 											<div className="nav-section-title-icon">
