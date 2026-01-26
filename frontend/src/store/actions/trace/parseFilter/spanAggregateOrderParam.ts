@@ -20,8 +20,7 @@ export const parseAggregateOrderParams = (
 				current = parsedValue;
 			}
 		} catch (error) {
-			console.log(error);
-			console.log('error while parsing json');
+			console.error('error while parsing json: ', error);
 		}
 	}
 

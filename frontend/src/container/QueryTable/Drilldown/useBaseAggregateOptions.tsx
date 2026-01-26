@@ -129,7 +129,6 @@ const useBaseAggregateOptions = ({
 
 	const handleBaseDrilldown = useCallback(
 		(key: string): void => {
-			console.log('Base drilldown:', { key, aggregateData });
 			const route = getRoute(key);
 			const timeRange = aggregateData?.timeRange;
 			const filtersToAdd = aggregateData?.filters || [];

@@ -157,11 +157,16 @@ describe('AlertTypeSelection', () => {
 		expect(mockSafeNavigate).toHaveBeenCalled();
 	});
 
-	it('should navigate to new create alerts page with correct params if showNewCreateAlertsPage is true', () => {
+	it('should navigate to classic create alerts page with correct params if showClassicCreateAlertsPage is true', () => {
 		useUrlQuerySpy.mockReturnValue(({
 			set: mockSetUrlQuery,
 			toString: mockToString,
-			get: mockGetUrlQuery.mockReturnValue('true'),
+			get: mockGetUrlQuery.mockImplementation((key: string) => {
+				if (key === QueryParams.showClassicCreateAlertsPage) {
+					return 'true';
+				}
+				return null;
+			}),
 		} as Partial<URLSearchParams>) as URLSearchParams);
 
 		render(<AlertTypeSelection />);
@@ -176,7 +181,7 @@ describe('AlertTypeSelection', () => {
 			AlertTypes.METRICS_BASED_ALERT,
 		);
 		expect(mockSetUrlQuery).toHaveBeenCalledWith(
-			QueryParams.showNewCreateAlertsPage,
+			QueryParams.showClassicCreateAlertsPage,
 			'true',
 		);
 		expect(mockSafeNavigate).toHaveBeenCalled();
