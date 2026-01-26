@@ -105,8 +105,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
-	case qbtypes.RequestTypeBucket, qbtypes.RequestTypeDistribution:
-		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables, requestType)
+	case qbtypes.RequestTypeHeatmap:
+		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -821,17 +821,13 @@ func (b *traceQueryStatementBuilder) buildBucketQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-	requestType qbtypes.RequestType,
 ) (*qbtypes.Statement, error) {
-
-	if len(query.Aggregations) == 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one aggregation is required for query")
-	}
-
 	var (
 		cteFragments []string
 		cteArgs      [][]any
 	)
+
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -842,54 +838,115 @@ func (b *traceQueryStatementBuilder) buildBucketQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	if requestType == qbtypes.RequestTypeDistribution {
-		sb.Select(fmt.Sprintf("%d AS ts", start))
-	} else {
-		sb.Select(fmt.Sprintf(
-			"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-			int64(query.StepInterval.Seconds()),
-		))
+	for aggIdx := range query.Aggregations {
+		aggExpr := query.Aggregations[aggIdx]
+		rewritten, _, err := b.aggExprRewriter.Rewrite(
+			ctx, aggExpr.Expression,
+			uint64(query.StepInterval.Seconds()),
+			keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		bucketCount := querybuilder.ParseHeatmapBucketCount(rewritten)
+		fieldExpr := querybuilder.ExtractHeatmapField(rewritten)
+
+		// Calculate histogram bounds across dataset
+		histogramBoundsCTE := fmt.Sprintf("histogram_bounds_%d", aggIdx)
+		boundsSB := sqlbuilder.NewSelectBuilder()
+		boundsSB.Select(
+			fmt.Sprintf("min(%s) AS min_value", fieldExpr),
+			fmt.Sprintf("max(%s) AS max_value", fieldExpr),
+			fmt.Sprintf("(max(%s) - min(%s)) / %d AS bin_width", fieldExpr, fieldExpr, bucketCount),
+		)
+		boundsSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+
+		if frag, _, _ := b.maybeAttachResourceFilter(ctx, boundsSB, query, start, end, variables); frag != "" {
+			boundsSB.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+		}
+
+		preparedWhereClause, err = b.addFilterCondition(ctx, boundsSB, start, end, query, keys, variables)
+		if err != nil {
+			return nil, err
+		}
+
+		boundsSQL, boundsArgs := boundsSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", histogramBoundsCTE, boundsSQL))
+		cteArgs = append(cteArgs, boundsArgs)
+
+		// Assign spans to a histogram bucket
+		bucketAssignmentCTE := fmt.Sprintf("bucket_assignment_%d", aggIdx)
+		assignmentSB := sqlbuilder.NewSelectBuilder()
+		assignmentSB.Select(
+			fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", int64(query.StepInterval.Seconds())),
+			fmt.Sprintf("greatest(0, least(%d, floor((%s - (SELECT min_value FROM %s)) / (SELECT bin_width FROM %s)))) AS bucket_idx", bucketCount-1, fieldExpr, histogramBoundsCTE, histogramBoundsCTE),
+			fmt.Sprintf("(SELECT min_value FROM %s) + bucket_idx * (SELECT bin_width FROM %s) AS bucket_upper_bound", histogramBoundsCTE, histogramBoundsCTE),
+		)
+		assignmentSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+
+		if frag, _, _ := b.maybeAttachResourceFilter(ctx, assignmentSB, query, start, end, variables); frag != "" {
+			assignmentSB.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+		}
+
+		_, err = b.addFilterCondition(ctx, assignmentSB, start, end, query, keys, variables)
+		if err != nil {
+			return nil, err
+		}
+
+		assignmentSQL, assignmentArgs := assignmentSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", bucketAssignmentCTE, assignmentSQL))
+		cteArgs = append(cteArgs, assignmentArgs)
+
+		// Aggregate bucket counts per time interval
+		histogramDataCTE := fmt.Sprintf("histogram_data_%d", aggIdx)
+		histogramSB := sqlbuilder.NewSelectBuilder()
+		histogramSB.Select(
+			"ts",
+			fmt.Sprintf("groupArray([toFloat64(bucket_upper_bound) - (SELECT bin_width FROM %s), toFloat64(bucket_upper_bound), toFloat64(count)]) AS __result_%d", histogramBoundsCTE, aggIdx),
+		)
+		histogramSB.From(
+			fmt.Sprintf("(SELECT ts, bucket_upper_bound, count() AS count FROM %s GROUP BY ts, bucket_upper_bound ORDER BY ts, bucket_upper_bound)", bucketAssignmentCTE),
+		)
+		histogramSB.GroupBy("ts")
+
+		histogramSQL, histogramArgs := histogramSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", histogramDataCTE, histogramSQL))
+		cteArgs = append(cteArgs, histogramArgs)
 	}
 
-	aggExpr := query.Aggregations[0]
-	rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-		ctx, aggExpr.Expression,
-		uint64(query.StepInterval.Seconds()),
-		keys,
-	)
-	if err != nil {
-		return nil, err
+	// Join all histogram aggregations by timestamp
+	finalSB := sqlbuilder.NewSelectBuilder()
+	var tsBuilder strings.Builder
+	tsBuilder.WriteString("COALESCE(histogram_data_0.ts")
+	for aggIdx := 1; aggIdx < len(query.Aggregations); aggIdx++ {
+		tsBuilder.WriteString(fmt.Sprintf(", histogram_data_%d.ts", aggIdx))
+	}
+	tsBuilder.WriteString(") AS ts")
+	finalSB.Select(tsBuilder.String())
+
+	for aggIdx := range query.Aggregations {
+		finalSB.SelectMore(fmt.Sprintf("histogram_data_%d.__result_%d", aggIdx, aggIdx))
 	}
 
-	sb.SelectMore(fmt.Sprintf("%s AS __result_0", rewritten))
-
-	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
-	if err != nil {
-		return nil, err
+	finalSB.From("histogram_data_0")
+	for aggIdx := 1; aggIdx < len(query.Aggregations); aggIdx++ {
+		finalSB.JoinWithOption(
+			sqlbuilder.FullJoin,
+			fmt.Sprintf("histogram_data_%d", aggIdx),
+			fmt.Sprintf("histogram_data_0.ts = histogram_data_%d.ts", aggIdx),
+		)
 	}
+	finalSB.OrderBy("ts")
 
-	if requestType == qbtypes.RequestTypeDistribution {
-	} else {
-		sb.GroupBy("ts")
-		sb.OrderBy("ts")
-	}
+	mainSQL, mainArgs := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	bucketCount := 0
-	if len(query.Aggregations) > 0 {
-		bucketCount, _ = querybuilder.ParseBucketCount(query.Aggregations[0].Expression)
-	}
-
-	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
-
-	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL + " SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000"
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	stmt := &qbtypes.Statement{
-		Query:       finalSQL,
-		Args:        finalArgs,
-		BucketCount: bucketCount,
+		Query: finalSQL,
+		Args:  finalArgs,
 	}
 	if preparedWhereClause != nil {
 		stmt.Warnings = preparedWhereClause.Warnings

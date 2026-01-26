@@ -25,13 +25,6 @@ var (
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
-type BucketPoint struct {
-	timestamp   int64
-	bucketStart float64
-	bucketEnd   float64
-	value       float64
-}
-
 // consume reads every row and shapes it into the payload expected for the
 // given request type.
 //
@@ -39,21 +32,19 @@ type BucketPoint struct {
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, bucketCount int) (any, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
 		err     error
 	)
 
 	switch kind {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
-	case qbtypes.RequestTypeBucket, qbtypes.RequestTypeDistribution:
-		payload, err = readAsBucket(rows, queryName, kind, bucketCount)
 		// TODO: add support for other request types
 	}
 
@@ -116,6 +107,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		lblValsCapacity = 0
 	}
 
+	bucketBounds := make(map[int]map[float64]bool)
+	seriesHistograms := make(map[sKey]map[int64]map[float64]float64)
+
 	for rows.Next() {
 		if err := rows.Scan(slots...); err != nil {
 			return nil, err
@@ -126,7 +120,8 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			lblVals       = make([]string, 0, lblValsCapacity)
 			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
 			aggValues     = map[int]float64{} // all __result_N in this row
-			fallbackValue float64             // value when NO __result_N columns exist
+			aggBuckets    = map[int]map[float64]float64{}
+			fallbackValue float64 // value when NO __result_N columns exist
 			fallbackSeen  bool
 		)
 
@@ -139,7 +134,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				if m := aggRe.FindStringSubmatch(name); m != nil {
+				if name == "ts" {
+					ts = int64(val)
+				} else if m := aggRe.FindStringSubmatch(name); m != nil {
 					id, _ := strconv.Atoi(m[1])
 					aggValues[id] = val
 				} else if numericColsCount == 1 { // classic single-value query
@@ -161,7 +158,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				tempVal := reflect.ValueOf(ptr)
 				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
 					val := numericAsFloat(tempVal.Elem().Elem().Interface())
-					if m := aggRe.FindStringSubmatch(name); m != nil {
+					if name == "ts" {
+						ts = int64(val)
+					} else if m := aggRe.FindStringSubmatch(name); m != nil {
 						id, _ := strconv.Atoi(m[1])
 						aggValues[id] = val
 					} else if numericColsCount == 1 { // classic single-value query
@@ -199,17 +198,66 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
+			case *[][]*float64, *[][]any:
+				if m := aggRe.FindStringSubmatch(name); m != nil {
+					id, _ := strconv.Atoi(m[1])
+
+					vPtr := reflect.ValueOf(ptr)
+					if vPtr.Kind() == reflect.Ptr && !vPtr.IsNil() {
+						vSlice := vPtr.Elem()
+						if vSlice.Kind() == reflect.Slice {
+							if vSlice.Len() == 0 {
+								aggBuckets[id] = make(map[float64]float64)
+								continue
+							}
+
+							bucketMap := make(map[float64]float64)
+
+							for i := 0; i < vSlice.Len(); i++ {
+								item := vSlice.Index(i)
+
+								if item.Kind() == reflect.Ptr {
+									if item.IsNil() {
+										continue
+									}
+									item = item.Elem()
+								}
+
+								if item.Kind() == reflect.Slice || item.Kind() == reflect.Array {
+									if item.Len() >= 3 {
+										upper := numericAsFloat(derefValue(item.Index(1).Interface()))
+										count := numericAsFloat(derefValue(item.Index(2).Interface()))
+
+										if !math.IsNaN(upper) && !math.IsInf(upper, 0) &&
+											!math.IsNaN(count) && !math.IsInf(count, 0) {
+											bucketMap[upper] = count
+
+											if bucketBounds[id] == nil {
+												bucketBounds[id] = make(map[float64]bool)
+											}
+											bucketBounds[id][upper] = true
+										}
+									}
+								}
+							}
+
+							if len(bucketMap) > 0 {
+								aggBuckets[id] = bucketMap
+							}
+						}
+					}
+				}
 			default:
 				continue
 			}
 		}
 
 		// Edge-case: no __result_N columns, but a single numeric column present
-		if len(aggValues) == 0 && fallbackSeen {
+		if len(aggValues) == 0 && len(aggBuckets) == 0 && fallbackSeen {
 			aggValues[0] = fallbackValue
 		}
 
-		if ts == 0 || len(aggValues) == 0 {
+		if ts == 0 || len(aggValues) == 0 && len(aggBuckets) == 0 {
 			continue // nothing useful
 		}
 
@@ -235,9 +283,67 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				Partial:   isPartialValue(ts),
 			})
 		}
+
+		for aggIdx, bucketMap := range aggBuckets {
+			key := sKey{agg: aggIdx, key: labelsKey}
+
+			series, ok := seriesMap[key]
+			if !ok {
+				series = &qbtypes.TimeSeries{Labels: lblObjs}
+				seriesMap[key] = series
+			}
+
+			// Store histogram data for normalization
+			if seriesHistograms[key] == nil {
+				seriesHistograms[key] = make(map[int64]map[float64]float64)
+			}
+			seriesHistograms[key][ts] = bucketMap
+
+			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
+				Timestamp: ts,
+				Value:     0,
+				Values:    nil,
+				Bucket:    &qbtypes.Bucket{},
+				Partial:   isPartialValue(ts),
+			})
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	// Normalize histogram data
+	for key, timestampData := range seriesHistograms {
+		series := seriesMap[key]
+		aggIdx := key.agg
+
+		sortedBounds := make([]float64, 0, len(bucketBounds[aggIdx]))
+		for bound := range bucketBounds[aggIdx] {
+			sortedBounds = append(sortedBounds, bound)
+		}
+		sort.Float64s(sortedBounds)
+
+		if len(sortedBounds) > 0 && sortedBounds[0] > 0 {
+			// Prepend 0 to the beginning if the first bucket is not 0
+			sortedBounds = append([]float64{0}, sortedBounds...)
+		}
+
+		for _, tsVal := range series.Values {
+			if tsVal.Values == nil {
+				bucketMap := timestampData[tsVal.Timestamp]
+				values := make([]float64, len(sortedBounds))
+				for i, bound := range sortedBounds {
+					if count, exists := bucketMap[bound]; exists {
+						values[i] = count
+					}
+				}
+				tsVal.Values = values
+
+				if tsVal.Bucket != nil {
+					tsVal.Bucket.Bounds = sortedBounds
+				}
+			}
+		}
 	}
 
 	maxAgg := -1
@@ -246,6 +352,13 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			maxAgg = k.agg
 		}
 	}
+
+	for aggIdx := range bucketBounds {
+		if aggIdx > maxAgg {
+			maxAgg = aggIdx
+		}
+	}
+
 	if maxAgg < 0 {
 		return &qbtypes.TimeSeriesData{
 			QueryName: queryName,
@@ -477,226 +590,4 @@ func numericAsFloat(v any) float64 {
 	default:
 		return math.NaN()
 	}
-}
-
-func readAsBucket(rows driver.Rows, queryName string, kind qbtypes.RequestType, bucketCount int) (any, error) {
-	colNames := rows.Columns()
-	colTypes := rows.ColumnTypes()
-
-	var tsIdx, resultIdx int = -1, -1
-	for i, name := range colNames {
-		switch name {
-		case "ts":
-			tsIdx = i
-		case "__result_0":
-			resultIdx = i
-		}
-	}
-
-	scan := make([]any, len(colNames))
-	for i := range scan {
-		st := colTypes[i].ScanType()
-		if st == nil {
-			var v any
-			scan[i] = &v
-		} else {
-			scan[i] = reflect.New(st).Interface()
-		}
-	}
-
-	bucketPoints := make([]BucketPoint, 0)
-	uniqueTs := make(map[int64]bool)
-	uniqueEnd := make(map[float64]bool)
-	startByEnd := make(map[float64]float64)
-
-	for rows.Next() {
-		if err := rows.Scan(scan...); err != nil {
-			return nil, err
-		}
-
-		var ts int64
-		var histData any
-
-		if tsIdx >= 0 {
-			if val := derefValue(scan[tsIdx]); val != nil {
-				if t, ok := val.(time.Time); ok {
-					ts = t.UnixMilli()
-				} else if t, ok := val.(uint64); ok {
-					ts = int64(t) * 1000
-				}
-			}
-		}
-
-		if resultIdx >= 0 {
-			histData = derefValue(scan[resultIdx])
-		}
-
-		vHist := reflect.ValueOf(histData)
-		if vHist.Kind() == reflect.Slice {
-			for i := 0; i < vHist.Len(); i++ {
-				b := vHist.Index(i).Interface()
-
-				vBin := reflect.ValueOf(b)
-				if vBin.Kind() == reflect.Slice && vBin.Len() >= 3 {
-					lower := numericAsFloat(vBin.Index(0).Interface())
-					upper := numericAsFloat(vBin.Index(1).Interface())
-					count := numericAsFloat(vBin.Index(2).Interface())
-
-					if math.IsNaN(upper) || math.IsInf(upper, 0) || math.IsNaN(count) || math.IsInf(count, 0) {
-						continue
-					}
-					if math.IsNaN(lower) {
-						continue
-					}
-
-					bucketPoints = append(bucketPoints, BucketPoint{
-						timestamp: ts,
-						bucketStart: lower,
-						bucketEnd: upper,
-						value:     count,
-					})
-					uniqueTs[ts] = true
-					uniqueEnd[upper] = true
-
-					if _, exists := startByEnd[upper]; !exists {
-						startByEnd[upper] = lower
-					}
-				}
-			}
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	if kind == qbtypes.RequestTypeDistribution {
-		results := make([]*qbtypes.DistributionBucket, len(bucketPoints))
-		for i, p := range bucketPoints {
-			results[i] = &qbtypes.DistributionBucket{
-				Timestamp:   p.timestamp,
-				BucketStart: p.bucketStart,
-				BucketEnd:   p.bucketEnd,
-				Value:       p.value,
-			}
-		}
-		return &qbtypes.DistributionData{
-			QueryName: queryName,
-			Results:   results,
-		}, nil
-	}
-
-	return buildBucketData(bucketPoints, uniqueTs, uniqueEnd, startByEnd, queryName, bucketCount)
-}
-
-func buildBucketData(points []BucketPoint, uniqueTs map[int64]bool, uniqueEnd map[float64]bool, startByEnd map[float64]float64, queryName string, bucketCount int) (*qbtypes.BucketData, error) {
-	sortedTs := make([]int64, 0, len(uniqueTs))
-	for t := range uniqueTs {
-		sortedTs = append(sortedTs, t)
-	}
-	slices.Sort(sortedTs)
-
-	sortedEnds := make([]float64, 0, len(uniqueEnd))
-	for end := range uniqueEnd {
-		sortedEnds = append(sortedEnds, end)
-	}
-	sort.Float64s(sortedEnds)
-
-	bucketStarts := make([]float64, len(sortedEnds))
-	for i := range sortedEnds {
-		if i == 0 {
-			if start, ok := startByEnd[sortedEnds[i]]; ok {
-				bucketStarts[i] = start
-			} else {
-				bucketStarts[i] = 0
-			}
-		} else {
-			bucketStarts[i] = sortedEnds[i-1]
-		}
-	}
-
-	counts := make([][]float64, len(sortedTs))
-	for i := range counts {
-		counts[i] = make([]float64, len(sortedEnds))
-	}
-
-	tsIdx := make(map[int64]int, len(sortedTs))
-	for i, t := range sortedTs {
-		tsIdx[t] = i
-	}
-	endIdx := make(map[float64]int, len(sortedEnds))
-	for i, l := range sortedEnds {
-		endIdx[l] = i
-	}
-
-	for _, p := range points {
-		if tI, ok := tsIdx[p.timestamp]; ok {
-			if lI, ok := endIdx[p.bucketEnd]; ok {
-				counts[tI][lI] = p.value
-			}
-		}
-	}
-
-	if bucketCount > 0 && len(sortedEnds) > bucketCount {
-		sortedEnds, bucketStarts, counts = mergeBuckets(sortedEnds, bucketStarts, counts, bucketCount)
-	}
-
-	return &qbtypes.BucketData{
-		QueryName:    queryName,
-		BucketBounds: sortedEnds,
-		BucketStarts: bucketStarts,
-		Timestamps:   sortedTs,
-		Counts:       counts,
-	}, nil
-}
-
-// mergeBuckets merges excess buckets to match the requested bucket count
-func mergeBuckets(bucketEnds []float64, bucketStarts []float64, counts [][]float64, targetCount int) ([]float64, []float64, [][]float64) {
-	if len(bucketEnds) <= targetCount {
-		return bucketEnds, bucketStarts, counts
-	}
-
-	mergeFactor := float64(len(bucketEnds)) / float64(targetCount)
-
-	mergedEnds := make([]float64, 0, targetCount)
-	mergedStarts := make([]float64, 0, targetCount)
-	mergedCounts := make([][]float64, len(counts))
-	for i := range mergedCounts {
-		mergedCounts[i] = make([]float64, 0, targetCount)
-	}
-
-	for targetIdx := 0; targetIdx < targetCount; targetIdx++ {
-		startIdx := int(float64(targetIdx) * mergeFactor)
-		endIdx := int(float64(targetIdx+1) * mergeFactor)
-		if targetIdx == targetCount-1 {
-			endIdx = len(bucketEnds)
-		}
-
-		if startIdx >= len(bucketEnds) {
-			break
-		}
-		if endIdx > len(bucketEnds) {
-			endIdx = len(bucketEnds)
-		}
-
-		var start float64
-		if targetIdx == 0 {
-			start = bucketStarts[startIdx]
-		} else {
-			start = mergedEnds[targetIdx-1]
-		}
-		end := bucketEnds[endIdx-1]
-
-		mergedStarts = append(mergedStarts, start)
-		mergedEnds = append(mergedEnds, end)
-
-		for rowIdx := range counts {
-			sum := 0.0
-			for bucketIdx := startIdx; bucketIdx < endIdx; bucketIdx++ {
-				sum += counts[rowIdx][bucketIdx]
-			}
-			mergedCounts[rowIdx] = append(mergedCounts[rowIdx], sum)
-		}
-	}
-
-	return mergedEnds, mergedStarts, mergedCounts
 }

@@ -1,111 +1,164 @@
 package querier
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// Mock implementations for driver.Rows and driver.ColumnType
+type mockColumnType struct {
+	name     string
+	scanType reflect.Type
+}
+
+func (m mockColumnType) Name() string             { return m.name }
+func (m mockColumnType) DatabaseTypeName() string { return "Mock" }
+func (m mockColumnType) ScanType() reflect.Type   { return m.scanType }
+func (m mockColumnType) Nullable() bool           { return false }
+func (m mockColumnType) Precision() (int64, bool) { return 0, false }
+func (m mockColumnType) Scale() (int64, bool)     { return 0, false }
+
+type mockRows struct {
+	colTypes []driver.ColumnType
+	values   [][]any
+	cursor   int
+}
+
+func (m *mockRows) Next() bool {
+	m.cursor++
+	return m.cursor <= len(m.values)
+}
+
+func (m *mockRows) Scan(dest ...any) error {
+	row := m.values[m.cursor-1]
+	for i, d := range dest {
+		v := reflect.ValueOf(d).Elem()
+		val := reflect.ValueOf(row[i])
+		if val.IsValid() {
+			if val.Type().AssignableTo(v.Type()) {
+				v.Set(val)
+			} else {
+				v.Set(val)
+			}
+		}
+	}
+	return nil
+}
+
+func (m *mockRows) Columns() []string {
+	names := make([]string, len(m.colTypes))
+	for i, c := range m.colTypes {
+		names[i] = c.Name()
+	}
+	return names
+}
+
+func (m *mockRows) ColumnTypes() []driver.ColumnType {
+	return m.colTypes
+}
+func (m *mockRows) Close() error              { return nil }
+func (m *mockRows) Err() error                { return nil }
+func (m *mockRows) Totals(dest ...any) error  { return nil }
+func (m *mockRows) ScanStruct(dest any) error { return nil }
+
+func floatPtr(v float64) *float64 { return &v }
+
 func TestReadAsBucketFromArray(t *testing.T) {
-	columns := []cmock.ColumnType{
-		{Name: "ts", Type: "DateTime"},
-		{Name: "__result_0", Type: "Array(Array(Float64))"},
+	colTypes := []driver.ColumnType{
+		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
+		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]*float64{})},
 	}
 
 	rowsData := [][]any{
 		{
 			time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-			[][]float64{
-				{0, 10, 5},
-				{10, 20, 3},
+			[][]*float64{
+				{floatPtr(0), floatPtr(10), floatPtr(5)},
+				{floatPtr(10), floatPtr(20), floatPtr(3)},
 			},
 		},
 		{
 			time.Date(2024, 1, 1, 10, 1, 0, 0, time.UTC),
-			[][]float64{
-				{0, 10, 2},
-				{10, 20, 6},
-				{20, 30, 4},
+			[][]*float64{
+				{floatPtr(0), floatPtr(10), floatPtr(2)},
+				{floatPtr(10), floatPtr(20), floatPtr(6)},
+				{floatPtr(20), floatPtr(30), floatPtr(4)},
 			},
 		},
 	}
 
-	rows := cmock.NewRows(columns, rowsData)
+	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	// Test regular consumption
-	result, err := consume(rows, qbtypes.RequestTypeBucket, nil, qbtypes.Step{}, "test_bucket_query", 0)
+	// Test heatmap consumption
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_bucket_query")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	bucketData, ok := result.(*qbtypes.BucketData)
-	require.True(t, ok, "expected *qbtypes.BucketData")
+	timeSeriesData, ok := result.(*qbtypes.TimeSeriesData)
+	require.True(t, ok, "expected *qbtypes.TimeSeriesData for heatmap")
 
-	assert.Equal(t, "test_bucket_query", bucketData.QueryName)
-	assert.Len(t, bucketData.Timestamps, 2)
-	assert.Len(t, bucketData.Counts, 2)
+	assert.Equal(t, "test_bucket_query", timeSeriesData.QueryName)
+	assert.Len(t, timeSeriesData.Aggregations, 1)
 
-	// Validate Timestamps
-	expectedTs := []int64{
-		time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC).UnixMilli(),
-		time.Date(2024, 1, 1, 10, 1, 0, 0, time.UTC).UnixMilli(),
-	}
-	assert.Equal(t, expectedTs, bucketData.Timestamps)
+	agg := timeSeriesData.Aggregations[0]
+	assert.Equal(t, "__result_0", agg.Alias)
+	assert.Len(t, agg.Series, 1)
 
-	// Validate BucketBounds (sorted unique ends)
-	expectedBounds := []float64{10, 20, 30}
-	assert.Equal(t, expectedBounds, bucketData.BucketBounds)
+	series := agg.Series[0]
+	assert.Len(t, series.Values, 2) // 2 timestamps
 
-	// Validate BucketStarts
-	expectedStarts := []float64{0, 10, 20}
-	assert.Equal(t, expectedStarts, bucketData.BucketStarts)
-
-	// Validate Counts
-	expectedCounts := [][]float64{
-		{5, 3, 0}, // for 10:00
-		{2, 6, 4}, // for 10:01
-	}
-	assert.Equal(t, expectedCounts, bucketData.Counts)
+	// Validate first timestamp
+	expectedTs1 := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC).UnixMilli()
+	assert.Equal(t, expectedTs1, series.Values[0].Timestamp)
 }
 
-func TestReadAsDistributionFromArray(t *testing.T) {
-	columns := []cmock.ColumnType{
-		{Name: "ts", Type: "UInt64"},
-		{Name: "__result_0", Type: "Array(Array(Float64))"},
+func TestReadAsHeatmapWithEmptyBuckets(t *testing.T) {
+	colTypes := []driver.ColumnType{
+		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
+		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]*float64{})},
 	}
 
 	rowsData := [][]any{
 		{
-			uint64(1704103200),
-			[][]float64{
-				{0, 10, 5},
-				{10, 20, 3},
-				{20, 30, 2},
-			},
+			time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
+			[][]*float64{}, // Empty histogram
 		},
 	}
 
-	rows := cmock.NewRows(columns, rowsData)
+	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	// Test distribution consumption
-	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_distribution_query", 0)
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_empty_heatmap")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	distData, ok := result.(*qbtypes.DistributionData)
-	require.True(t, ok, "expected *qbtypes.DistributionData")
+	timeSeriesData, ok := result.(*qbtypes.TimeSeriesData)
+	require.True(t, ok, "expected *qbtypes.TimeSeriesData for heatmap")
 
-	assert.Equal(t, "test_distribution_query", distData.QueryName)
-	assert.Len(t, distData.Results, 3)
+	assert.Equal(t, "test_empty_heatmap", timeSeriesData.QueryName)
+	assert.Len(t, timeSeriesData.Aggregations, 1) // Should have aggregations even with empty buckets
+}
 
-	// Validate distribution buckets (timestamp is in milliseconds after conversion)
-	expectedBuckets := []*qbtypes.DistributionBucket{
-		{Timestamp: 1704103200000, BucketStart: 0, BucketEnd: 10, Value: 5},
-		{Timestamp: 1704103200000, BucketStart: 10, BucketEnd: 20, Value: 3},
-		{Timestamp: 1704103200000, BucketStart: 20, BucketEnd: 30, Value: 2},
+func TestReadAsHeatmapWithNoRows(t *testing.T) {
+	colTypes := []driver.ColumnType{
+		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
+		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]*float64{})},
 	}
-	assert.Equal(t, expectedBuckets, distData.Results)
+
+	rowsData := [][]any{}
+
+	rows := &mockRows{colTypes: colTypes, values: rowsData}
+
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_no_rows")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	timeSeriesData, ok := result.(*qbtypes.TimeSeriesData)
+	require.True(t, ok, "expected *qbtypes.TimeSeriesData for heatmap")
+	assert.Nil(t, timeSeriesData.Aggregations)
 }

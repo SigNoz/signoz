@@ -656,33 +656,10 @@ func TestStatementBuilderBucketQuery(t *testing.T) {
 					Expression: "service.name = 'cartservice'",
 				},
 			},
-			requestType: qbtypes.RequestTypeBucket,
+			requestType: qbtypes.RequestTypeHeatmap,
 			expected: qbtypes.Statement{
-				Query:       "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, histogram(30)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts ORDER BY ts",
-				Args:        []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
-				BucketCount: 30,
-			},
-			expectedErr: nil,
-		},
-		{
-			name: "distribution query with distribution aggregation",
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "distribution(duration, 20)",
-					},
-				},
-				Filter: &qbtypes.Filter{
-					Expression: "service.name = 'frontend'",
-				},
-			},
-			requestType: qbtypes.RequestTypeDistribution,
-			expected: qbtypes.Statement{
-				Query:       "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT 1747947419000000000 AS ts, histogram(20)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ?",
-				Args:        []any{"frontend", "%service.name%", "%service.name\":\"frontend%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
-				BucketCount: 20,
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), global_bins_0 AS (SELECT min(toFloat64(attributes_number['duration'])) AS global_min, max(toFloat64(attributes_number['duration'])) AS global_max, (max(toFloat64(attributes_number['duration'])) - min(toFloat64(attributes_number['duration']))) / 30 AS bin_width FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ?), binned_data_0 AS (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, floor((toFloat64(attributes_number['duration']) - (SELECT global_min FROM global_bins_0)) / (SELECT bin_width FROM global_bins_0)) AS bin_index, (SELECT global_min FROM global_bins_0) + bin_index * (SELECT bin_width FROM global_bins_0) AS bin_upper FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ?), agg_data_0 AS (SELECT ts, groupArray([toFloat64(bin_upper) - (SELECT bin_width FROM global_bins_0), toFloat64(bin_upper), toFloat64(count)]) AS __result_0 FROM (SELECT ts, bin_upper, count() AS count FROM binned_data_0 WHERE bin_index >= 0 AND bin_index < 30 GROUP BY ts, bin_upper ORDER BY ts, bin_upper) GROUP BY ts) SELECT agg_data_0.ts AS ts, agg_data_0.__result_0 FROM agg_data_0 ORDER BY ts SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 			expectedErr: nil,
 		},
@@ -724,7 +701,6 @@ func TestStatementBuilderBucketQuery(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, c.expected.Query, q.Query)
 				require.Equal(t, c.expected.Args, q.Args)
-				require.Equal(t, c.expected.BucketCount, q.BucketCount, "BucketCount should match")
 			}
 		})
 	}

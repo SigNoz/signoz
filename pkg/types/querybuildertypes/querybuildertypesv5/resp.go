@@ -145,7 +145,7 @@ type TimeSeriesValue struct {
 }
 
 type Bucket struct {
-	Step float64 `json:"step"`
+	Bounds []float64 `json:"bounds,omitempty"`
 }
 
 type ColumnType struct {
@@ -191,28 +191,6 @@ type RawStream struct {
 	Logs  chan *RawRow
 	Done  chan *bool
 	Error chan error
-}
-
-type BucketData struct {
-	QueryName    string      `json:"queryName"`
-	BucketStarts []float64   `json:"bucketStarts,omitempty"`
-	BucketBounds []float64   `json:"bucketBounds"`
-	BucketCount  int         `json:"bucketCount,omitempty"`
-	Timestamps   []int64     `json:"timestamps"`
-	Counts       [][]float64 `json:"counts"`
-	Unit         string      `json:"unit,omitempty"`
-}
-
-type DistributionBucket struct {
-	Timestamp   int64   `json:"ts"`
-	BucketStart float64 `json:"bucket_start"`
-	BucketEnd   float64 `json:"bucket_end"`
-	Value       float64 `json:"value"`
-}
-
-type DistributionData struct {
-	QueryName string                `json:"queryName"`
-	Results   []*DistributionBucket `json:"results"`
 }
 
 func roundToNonZeroDecimals(val float64, n int) float64 {

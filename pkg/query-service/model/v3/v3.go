@@ -67,8 +67,6 @@ const (
 	AggregateOperatorHistQuant90   AggregateOperator = "hist_quantile_90"
 	AggregateOperatorHistQuant95   AggregateOperator = "hist_quantile_95"
 	AggregateOperatorHistQuant99   AggregateOperator = "hist_quantile_99"
-	AggregateOperatorHeatmap       AggregateOperator = "heatmap"
-	AggregateOperatorDistribution  AggregateOperator = "distribution"
 )
 
 func (a AggregateOperator) Validate() error {
@@ -102,9 +100,7 @@ func (a AggregateOperator) Validate() error {
 		AggregateOperatorHistQuant75,
 		AggregateOperatorHistQuant90,
 		AggregateOperatorHistQuant95,
-		AggregateOperatorHistQuant99,
-		AggregateOperatorHeatmap,
-		AggregateOperatorDistribution:
+		AggregateOperatorHistQuant99:
 		return nil
 	default:
 		return fmt.Errorf("invalid operator: %s", a)

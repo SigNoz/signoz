@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	defaultBuckets = "20"
-	// Histogram max buckets limit is 250
-	maxBuckets = 250
+	// DefaultHeatmapBucketCount is the default number of buckets for heatmap visualization.
+	DefaultHeatmapBucketCount = 20
+	// This is limited by ClickHouse's histogram function.
+	MaxHeatmapBuckets = 250
 )
 
 type aggExprRewriter struct {
@@ -234,21 +235,21 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		}
 	} else {
 		// Non-If functions: map every argument as a column/value
-		if name == AggrFuncHeatmap.Name.StringValue() || name == qbtypes.RequestTypeDistribution.StringValue() {
-			buckets := defaultBuckets
+		if name == AggrFuncHeatmap.Name.StringValue() {
+			buckets := strconv.Itoa(DefaultHeatmapBucketCount)
 			if len(args) == 2 {
 				buckets = args[1].String()
 				val, err := strconv.Atoi(buckets)
 				if err != nil {
 					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid bucket count '%s': must be a number", buckets)
 				}
-				if val <= 0 || val > maxBuckets {
-					return errors.NewInvalidInputf(errors.CodeInvalidInput, "buckets count %d exceeds range [1, %d]", val, maxBuckets)
+				if val <= 0 || val > MaxHeatmapBuckets {
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "buckets count %d outside range [1, %d]", val, MaxHeatmapBuckets)
 				}
 				args = args[:1]
 				fn.Params.Items.Items = args
 			}
-			fn.Name.Name = fmt.Sprintf("histogram(%s)", buckets)
+			fn.Name.Name = fmt.Sprintf("heatmap(%s)", buckets)
 		}
 
 		for i, arg := range args {
@@ -293,46 +294,110 @@ func parseFragment(sql string) (chparser.Expr, error) {
 	return sel.SelectItems[0].Expr, nil
 }
 
-// ParseBucketCount extracts bucket count from heatmap or distribution aggregation expression.
-func ParseBucketCount(expr string) (int, error) {
-	wrapped := fmt.Sprintf("SELECT %s", expr)
-	p := chparser.NewParser(wrapped)
-	stmts, err := p.ParseStmts()
-	if err != nil || len(stmts) == 0 {
-		return 0, err
+// ParseHeatmapBucketCount extracts the bucket count from a heatmap expression.
+// If the bucket count cannot be parsed, it returns the default bucket count.
+func ParseHeatmapBucketCount(expr string) int {
+	if !strings.Contains(expr, "heatmap(") {
+		return DefaultHeatmapBucketCount
 	}
 
-	sel, ok := stmts[0].(*chparser.SelectQuery)
-	if !ok || len(sel.SelectItems) == 0 {
-		return 0, nil
+	start := strings.Index(expr, "heatmap(")
+	if start == -1 {
+		return DefaultHeatmapBucketCount
 	}
 
-	functionExpr, ok := sel.SelectItems[0].Expr.(*chparser.FunctionExpr)
-	if !ok {
-		return 0, nil
+	start += len("heatmap(")
+	end := strings.Index(expr[start:], ")")
+	if end == -1 {
+		return DefaultHeatmapBucketCount
 	}
 
-	funcName := strings.ToLower(functionExpr.Name.Name)
-	if funcName != "heatmap" && funcName != "distribution" {
-		return 0, nil
+	bucketStr := expr[start : start+end]
+	bucketCount, err := strconv.Atoi(bucketStr)
+	if err != nil {
+		return DefaultHeatmapBucketCount
 	}
 
-	if functionExpr.Params != nil && functionExpr.Params.Items != nil {
-		items := functionExpr.Params.Items.Items
-		if len(items) == 2 {
-			val := strings.Trim(items[1].String(), "'")
-			count, err := strconv.Atoi(val)
-			if err != nil {
-				return 0, fmt.Errorf("invalid bucket count '%s': %w", val, err)
-			}
-			if count <= 0 {
-				return 0, nil
-			}
-			if count > maxBuckets {
-				return maxBuckets, nil
-			}
-			return count, nil
+	return bucketCount
+}
+
+// ExtractHeatmapField extracts the field from heatmap expression
+func ExtractHeatmapField(expr string) string {
+	heatmapIdx := strings.Index(expr, "heatmap(")
+	if heatmapIdx == -1 {
+		return expr
+	}
+
+	start := heatmapIdx + len("heatmap(")
+	parenCount := 1
+	i := start
+	for i < len(expr) && parenCount > 0 {
+		switch expr[i] {
+		case '(':
+			parenCount++
+		case ')':
+			parenCount--
+		}
+		i++
+	}
+
+	if i >= len(expr) || expr[i] != '(' {
+		return expr
+	}
+
+	start = i + 1
+	parenCount = 1
+	i = start
+	for i < len(expr) && parenCount > 0 {
+		switch expr[i] {
+		case '(':
+			parenCount++
+		case ')':
+			parenCount--
+		}
+		i++
+	}
+
+	fieldExpr := expr[start : i-1]
+
+	// If it's a multiIf, extract the field second argument
+	if strings.HasPrefix(strings.TrimSpace(fieldExpr), "multiIf(") {
+		inner := strings.TrimSpace(fieldExpr)
+		inner = strings.TrimPrefix(inner, "multiIf(")
+		inner = strings.TrimSuffix(inner, ")")
+
+		parts := splitRespectingParens(inner, ',')
+		if len(parts) >= 2 {
+			return strings.TrimSpace(parts[1])
 		}
 	}
-	return 0, nil
+
+	return strings.TrimSpace(fieldExpr)
+}
+
+func splitRespectingParens(s string, delim rune) []string {
+	var parts []string
+	var current strings.Builder
+	parenCount := 0
+
+	for _, ch := range s {
+		if ch == '(' {
+			parenCount++
+			current.WriteRune(ch)
+		} else if ch == ')' {
+			parenCount--
+			current.WriteRune(ch)
+		} else if ch == delim && parenCount == 0 {
+			parts = append(parts, current.String())
+			current.Reset()
+		} else {
+			current.WriteRune(ch)
+		}
+	}
+
+	if current.Len() > 0 {
+		parts = append(parts, current.String())
+	}
+
+	return parts
 }
