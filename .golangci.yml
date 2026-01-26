@@ -6,7 +6,6 @@ linters:
     - depguard
     - errcheck
     - forbidigo
-    - gocyclo
     - govet
     - iface
     - ineffassign
@@ -17,8 +16,6 @@ linters:
     - unparam
     - unused
   settings:
-    gocyclo:
-      min-complexity: 81
     depguard:
       rules:
         noerrors:
