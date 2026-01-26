@@ -634,7 +634,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	}
 }
 
-func TestStatementBuilderBucketQuery(t *testing.T) {
+func TestStatementBuilderHeatmapQueryy(t *testing.T) {
 	cases := []struct {
 		name        string
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]

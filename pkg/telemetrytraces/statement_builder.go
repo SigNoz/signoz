@@ -106,7 +106,7 @@ func (b *traceQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeHeatmap:
-		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables)
+		return b.buildHeatmapQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -814,7 +814,7 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 	)
 }
 
-func (b *traceQueryStatementBuilder) buildBucketQuery(
+func (b *traceQueryStatementBuilder) buildHeatmapQuery(
 	ctx context.Context,
 	_ *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],

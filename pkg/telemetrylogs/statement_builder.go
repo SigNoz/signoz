@@ -84,7 +84,7 @@ func (b *logQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
 	case qbtypes.RequestTypeHeatmap:
-		return b.buildBucketQuery(ctx, q, query, start, end, keys, variables)
+		return b.buildHeatmapQueryy(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -691,7 +691,7 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 	)
 }
 
-func (b *logQueryStatementBuilder) buildBucketQuery(
+func (b *logQueryStatementBuilder) buildHeatmapQueryy(
 	ctx context.Context,
 	_ *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
