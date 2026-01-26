@@ -69,7 +69,7 @@ func (m *mockRows) ScanStruct(dest any) error { return nil }
 
 func floatPtr(v float64) *float64 { return &v }
 
-func TestReadAsBucketFromArray(t *testing.T) {
+func TestConsumeHeatmap(t *testing.T) {
 	colTypes := []driver.ColumnType{
 		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
 		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]*float64{})},
@@ -96,7 +96,7 @@ func TestReadAsBucketFromArray(t *testing.T) {
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
 	// Test heatmap consumption
-	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_bucket_query")
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_bucket_query", 2)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -113,12 +113,36 @@ func TestReadAsBucketFromArray(t *testing.T) {
 	series := agg.Series[0]
 	assert.Len(t, series.Values, 2) // 2 timestamps
 
+	firstBounds := series.Values[0].Bucket.Bounds
+	require.NotNil(t, firstBounds)
+	assert.Equal(t, 3, len(firstBounds), "should have 3 boundary points for 2 bins")
+	assert.Equal(t, 0.0, firstBounds[0])
+	assert.Equal(t, 15.0, firstBounds[1])
+	assert.Equal(t, 30.0, firstBounds[2])
+
+	// All timestamps should have the same bounds
+	for i, tsVal := range series.Values {
+		assert.Equal(t, firstBounds, tsVal.Bucket.Bounds,
+			"timestamp %d should have same bounds", i)
+		assert.Equal(t, 2, len(tsVal.Values),
+			"timestamp %d should have 2 bin counts", i)
+	}
+
 	// Validate first timestamp
 	expectedTs1 := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC).UnixMilli()
 	assert.Equal(t, expectedTs1, series.Values[0].Timestamp)
+
+	// First timestamp bins: [0-10): 5, [10-20): 3
+	// Fixed bins: [0-15), [15-30)
+	assert.Equal(t, 5.0, series.Values[0].Values[0], "first bin should have 5 counts")
+	assert.Equal(t, 3.0, series.Values[0].Values[1], "second bin should have 3 counts")
+
+	// Second timestamp bins: [0-10): 2, [10-20): 6, [20-30): 4
+	assert.Equal(t, 2.0, series.Values[1].Values[0], "first bin should have 2 counts")
+	assert.Equal(t, 10.0, series.Values[1].Values[1], "second bin should have 6+4=10 counts")
 }
 
-func TestReadAsHeatmapWithEmptyBuckets(t *testing.T) {
+func TestConsumeHeatmapWithEmptyBuckets(t *testing.T) {
 	colTypes := []driver.ColumnType{
 		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
 		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]*float64{})},
@@ -133,7 +157,7 @@ func TestReadAsHeatmapWithEmptyBuckets(t *testing.T) {
 
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_empty_heatmap")
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_empty_heatmap", 2)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -141,10 +165,13 @@ func TestReadAsHeatmapWithEmptyBuckets(t *testing.T) {
 	require.True(t, ok, "expected *qbtypes.TimeSeriesData for heatmap")
 
 	assert.Equal(t, "test_empty_heatmap", timeSeriesData.QueryName)
-	assert.Len(t, timeSeriesData.Aggregations, 1) // Should have aggregations even with empty buckets
+	// With empty buckets, we should still have aggregations but with empty series
+	assert.Len(t, timeSeriesData.Aggregations, 1)
+	assert.Len(t, timeSeriesData.Aggregations[0].Series, 1)
+	assert.Len(t, timeSeriesData.Aggregations[0].Series[0].Values, 0)
 }
 
-func TestReadAsHeatmapWithNoRows(t *testing.T) {
+func TestConsumeHeatmapWithNoRows(t *testing.T) {
 	colTypes := []driver.ColumnType{
 		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
 		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]*float64{})},
@@ -154,7 +181,7 @@ func TestReadAsHeatmapWithNoRows(t *testing.T) {
 
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_no_rows")
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_no_rows", 0)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 

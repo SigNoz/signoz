@@ -249,7 +249,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 				args = args[:1]
 				fn.Params.Items.Items = args
 			}
-			fn.Name.Name = fmt.Sprintf("heatmap(%s)", buckets)
+			fn.Name.Name = fmt.Sprintf("histogram(%s)", buckets)
 		}
 
 		for i, arg := range args {
@@ -295,109 +295,36 @@ func parseFragment(sql string) (chparser.Expr, error) {
 }
 
 // ParseHeatmapBucketCount extracts the bucket count from a heatmap expression.
-// If the bucket count cannot be parsed, it returns the default bucket count.
-func ParseHeatmapBucketCount(expr string) int {
+func ParseHeatmapBucketCount(expr string) (int, error) {
 	if !strings.Contains(expr, "heatmap(") {
-		return DefaultHeatmapBucketCount
+		return 0, fmt.Errorf("expression does not contain heatmap function")
 	}
 
 	start := strings.Index(expr, "heatmap(")
 	if start == -1 {
-		return DefaultHeatmapBucketCount
+		return 0, fmt.Errorf("heatmap function not found in expression")
 	}
 
 	start += len("heatmap(")
-	end := strings.Index(expr[start:], ")")
-	if end == -1 {
-		return DefaultHeatmapBucketCount
+
+	commaIdx := strings.Index(expr[start:], ",")
+	if commaIdx == -1 {
+		return 0, fmt.Errorf("heatmap expression missing comma separator")
 	}
 
-	bucketStr := expr[start : start+end]
+	bucketStart := start + commaIdx + 1
+	bucketStart += len(expr[bucketStart:]) - len(strings.TrimLeft(expr[bucketStart:], " \t"))
+
+	end := strings.Index(expr[bucketStart:], ")")
+	if end == -1 {
+		return 0, fmt.Errorf("heatmap expression missing closing parenthesis")
+	}
+
+	bucketStr := strings.TrimSpace(expr[bucketStart : bucketStart+end])
 	bucketCount, err := strconv.Atoi(bucketStr)
 	if err != nil {
-		return DefaultHeatmapBucketCount
+		return 0, fmt.Errorf("invalid bucket count '%s': %w", bucketStr, err)
 	}
 
-	return bucketCount
-}
-
-// ExtractHeatmapField extracts the field from heatmap expression
-func ExtractHeatmapField(expr string) string {
-	heatmapIdx := strings.Index(expr, "heatmap(")
-	if heatmapIdx == -1 {
-		return expr
-	}
-
-	start := heatmapIdx + len("heatmap(")
-	parenCount := 1
-	i := start
-	for i < len(expr) && parenCount > 0 {
-		switch expr[i] {
-		case '(':
-			parenCount++
-		case ')':
-			parenCount--
-		}
-		i++
-	}
-
-	if i >= len(expr) || expr[i] != '(' {
-		return expr
-	}
-
-	start = i + 1
-	parenCount = 1
-	i = start
-	for i < len(expr) && parenCount > 0 {
-		switch expr[i] {
-		case '(':
-			parenCount++
-		case ')':
-			parenCount--
-		}
-		i++
-	}
-
-	fieldExpr := expr[start : i-1]
-
-	// If it's a multiIf, extract the field second argument
-	if strings.HasPrefix(strings.TrimSpace(fieldExpr), "multiIf(") {
-		inner := strings.TrimSpace(fieldExpr)
-		inner = strings.TrimPrefix(inner, "multiIf(")
-		inner = strings.TrimSuffix(inner, ")")
-
-		parts := splitRespectingParens(inner, ',')
-		if len(parts) >= 2 {
-			return strings.TrimSpace(parts[1])
-		}
-	}
-
-	return strings.TrimSpace(fieldExpr)
-}
-
-func splitRespectingParens(s string, delim rune) []string {
-	var parts []string
-	var current strings.Builder
-	parenCount := 0
-
-	for _, ch := range s {
-		if ch == '(' {
-			parenCount++
-			current.WriteRune(ch)
-		} else if ch == ')' {
-			parenCount--
-			current.WriteRune(ch)
-		} else if ch == delim && parenCount == 0 {
-			parts = append(parts, current.String())
-			current.Reset()
-		} else {
-			current.WriteRune(ch)
-		}
-	}
-
-	if current.Len() > 0 {
-		parts = append(parts, current.String())
-	}
-
-	return parts
+	return bucketCount, nil
 }
