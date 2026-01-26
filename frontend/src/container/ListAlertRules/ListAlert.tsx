@@ -1,14 +1,6 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Dropdown,
-	Flex,
-	Input,
-	MenuProps,
-	Tag,
-	Typography,
-} from 'antd';
+import { Button, Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
