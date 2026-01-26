@@ -146,7 +146,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 		tupleID := ulid.MustNew(ulid.Timestamp(now), entropy).String()
 
 		if migration.sqlstore.BunDB().Dialect().Name() == dialect.PG {
-			_, err = tx.ExecContext(ctx, `
+			result, err := tx.ExecContext(ctx, `
 			INSERT INTO tuple (store, object_type, object_id, relation, _user, user_type, ulid, inserted_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (store, object_type, object_id, relation, _user) DO NOTHING`,
@@ -154,6 +154,15 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			)
 			if err != nil {
 				return err
+			}
+
+			rowsAffected, err := result.RowsAffected()
+			if err != nil {
+				return err
+			}
+
+			if rowsAffected == 0 {
+				continue
 			}
 
 			_, err = tx.ExecContext(ctx, `
@@ -167,7 +176,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			}
 
 		} else {
-			_, err = tx.ExecContext(ctx, `
+			result, err := tx.ExecContext(ctx, `
 			INSERT INTO tuple (store, object_type, object_id, relation, user_object_type, user_object_id, user_relation, user_type, ulid, inserted_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (store, object_type, object_id, relation, user_object_type, user_object_id, user_relation) DO NOTHING`,
@@ -175,6 +184,15 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			)
 			if err != nil {
 				return err
+			}
+
+			rowsAffected, err := result.RowsAffected()
+			if err != nil {
+				return err
+			}
+
+			if rowsAffected == 0 {
+				continue
 			}
 
 			_, err = tx.ExecContext(ctx, `
