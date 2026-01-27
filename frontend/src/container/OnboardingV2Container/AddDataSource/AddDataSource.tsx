@@ -240,8 +240,7 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (region) {
 			try {
-				const url = new URL(region);
-				const parts = url.hostname.split('.');
+				const parts = region.split('.');
 				if (parts[0]?.includes('ingest') && parts.length > 1) {
 					region = parts[1];
 					urlObj.searchParams.set('region', region);
