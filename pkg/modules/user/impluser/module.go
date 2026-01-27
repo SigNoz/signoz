@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -29,12 +30,13 @@ type Module struct {
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
+	granter   role.Granter
 	analytics analytics.Analytics
 	config    user.Config
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, config user.Config) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, granter role.Granter, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -43,6 +45,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		granter:   granter,
 		config:    config,
 	}
 }
@@ -227,7 +230,6 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	}
 
 	user.UpdatedAt = time.Now()
-
 	updatedUser, err := m.store.UpdateUser(ctx, orgID, id, user)
 	if err != nil {
 		return nil, err
@@ -258,8 +260,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return updatedUser, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
+func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -269,7 +271,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	adminUsers, err := module.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 	if err != nil {
 		return err
 	}
@@ -278,11 +280,11 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	if err := m.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+	if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
 		return err
 	}
 
-	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
 
@@ -476,7 +478,7 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	}
 
 	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.orgSetter.Create(ctx, organization)
+		err = module.orgSetter.Create(ctx, organization)
 		if err != nil {
 			return err
 		}
