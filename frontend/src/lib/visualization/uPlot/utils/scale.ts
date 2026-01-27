@@ -229,8 +229,12 @@ function applyHardLimits(
 
 	const { hardMinOnly, hardMaxOnly, min, max } = params;
 
-	if (hardMinOnly && min != null) currentMin = min;
-	if (hardMaxOnly && max != null) currentMax = max;
+	if (hardMinOnly && min != null) {
+		currentMin = min;
+	}
+	if (hardMaxOnly && max != null) {
+		currentMax = max;
+	}
 
 	return [currentMin, currentMax];
 }
@@ -300,10 +304,14 @@ export function findMinMaxThresholdValues(
 
 	thresholds.forEach((threshold) => {
 		const { thresholdValue, thresholdUnit } = threshold;
-		if (thresholdValue === undefined) return;
+		if (thresholdValue === undefined) {
+			return;
+		}
 
 		const compareValue = convertValue(thresholdValue, thresholdUnit, yAxisUnit);
-		if (compareValue === null) return;
+		if (compareValue === null) {
+			return;
+		}
 
 		if (minThresholdValue === null || compareValue < minThresholdValue) {
 			minThresholdValue = compareValue;

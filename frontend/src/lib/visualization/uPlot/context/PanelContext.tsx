@@ -28,14 +28,18 @@ export const PanelContextProvider = ({
 
 	const onToggleSeriesVisibility = useCallback((seriesIndex: number): void => {
 		const plot = uPlotInstanceRef.current;
-		if (!plot) return;
+		if (!plot) {
+			return;
+		}
 
 		const isReset = activeSeriesIndex.current === seriesIndex;
 		activeSeriesIndex.current = isReset ? undefined : seriesIndex;
 
 		plot.batch(() => {
 			plot.series.forEach((_, index) => {
-				if (index === 0) return;
+				if (index === 0) {
+					return;
+				}
 				const currentSeriesIndex = index;
 				plot.setSeries(
 					currentSeriesIndex,
@@ -50,14 +54,18 @@ export const PanelContextProvider = ({
 
 	const onToggleSeriesOnOff = useCallback((seriesIndex: number): void => {
 		const plot = uPlotInstanceRef.current;
-		if (!plot) return;
+		if (!plot) {
+			return;
+		}
 
 		plot.setSeries(seriesIndex, { show: !plot.series[seriesIndex].show }, false);
 	}, []);
 
 	const onFocusSeries = useCallback((seriesIndex: number | null): void => {
 		const plot = uPlotInstanceRef.current;
-		if (!plot) return;
+		if (!plot) {
+			return;
+		}
 
 		plot.setSeries(
 			seriesIndex,

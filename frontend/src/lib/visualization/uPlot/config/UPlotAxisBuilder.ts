@@ -243,14 +243,30 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 
 		// Add properties conditionally
-		if (label) axisConfig.label = label;
-		if (stroke) axisConfig.stroke = stroke;
-		if (grid) axisConfig.grid = grid;
-		if (ticks) axisConfig.ticks = ticks;
-		if (values) axisConfig.values = values;
-		if (gap !== undefined) axisConfig.gap = gap;
-		if (space !== undefined) axisConfig.space = space;
-		if (size) axisConfig.size = size;
+		if (label) {
+			axisConfig.label = label;
+		}
+		if (stroke) {
+			axisConfig.stroke = stroke;
+		}
+		if (grid) {
+			axisConfig.grid = grid;
+		}
+		if (ticks) {
+			axisConfig.ticks = ticks;
+		}
+		if (values) {
+			axisConfig.values = values;
+		}
+		if (gap !== undefined) {
+			axisConfig.gap = gap;
+		}
+		if (space !== undefined) {
+			axisConfig.space = space;
+		}
+		if (size) {
+			axisConfig.size = size;
+		}
 
 		return axisConfig;
 	}

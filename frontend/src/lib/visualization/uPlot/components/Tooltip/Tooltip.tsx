@@ -26,8 +26,12 @@ function resolveSeriesColor(
 	u: uPlot,
 	seriesIdx: number,
 ): string {
-	if (typeof stroke === 'function') return String(stroke(u, seriesIdx));
-	if (typeof stroke === 'string') return stroke;
+	if (typeof stroke === 'function') {
+		return String(stroke(u, seriesIdx));
+	}
+	if (typeof stroke === 'string') {
+		return stroke;
+	}
 	return FALLBACK_SERIES_COLOR;
 }
 
@@ -43,7 +47,9 @@ function buildTooltipContent(
 
 	for (let idx = 1; idx < series.length; idx += 1) {
 		const s = series[idx];
-		if (!s?.show) continue;
+		if (!s?.show) {
+			continue;
+		}
 
 		const dataIdx = dataIdxs[idx] ?? 0;
 		const raw = data[idx]?.[dataIdx];
@@ -57,8 +63,11 @@ function buildTooltipContent(
 			isActive,
 		};
 
-		if (isActive) active.push(item);
-		else rest.push(item);
+		if (isActive) {
+			active.push(item);
+		} else {
+			rest.push(item);
+		}
 	}
 
 	return [...active, ...rest];
@@ -74,7 +83,9 @@ export default function Tooltip({
 	const headerTitle = useMemo(() => {
 		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
-		if (!cursorIdx) return null;
+		if (!cursorIdx) {
+			return null;
+		}
 		return dayjs(data[0][cursorIdx] * 1000)
 			.tz(timezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
