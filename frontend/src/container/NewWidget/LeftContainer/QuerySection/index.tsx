@@ -21,7 +21,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo, isUndefined } from 'lodash-es';
-import { Atom, Play, Terminal } from 'lucide-react';
+import { Atom, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -29,20 +29,14 @@ import {
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
-function QuerySection({
-	selectedGraph,
-	queryResponse,
-}: QueryProps): JSX.Element {
+function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 	const {
 		currentQuery,
 		handleRunQuery: handleRunQueryFromQueryBuilder,
@@ -254,10 +248,6 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
 }
 
 export default QuerySection;
