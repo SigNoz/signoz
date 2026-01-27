@@ -145,4 +145,16 @@ module.exports = {
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
 	},
+	overrides: [
+		{
+			files: ['src/api/generated/**/*.ts'],
+			rules: {
+				'@typescript-eslint/explicit-function-return-type': 'off',
+				'@typescript-eslint/explicit-module-boundary-types': 'off',
+				'no-nested-ternary': 'off',
+				'@typescript-eslint/no-unused-vars': 'warn',
+				'sonarjs/no-duplicate-string': 'off',
+			},
+		},
+	],
 };
