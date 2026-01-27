@@ -1273,38 +1273,6 @@ func TestAdjustKeys(t *testing.T) {
 			expectDeprecatedFieldsAdd: true,
 		},
 		{
-			name: "adjust keys for alias expressions in aggregations - group by",
-			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-				Aggregations: []qbtypes.TraceAggregation{
-					{
-						Expression: "sum(metric.max_count)",
-						Alias:      "metric.max_count",
-					},
-				},
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         "max_count",
-							FieldContext: telemetrytypes.FieldContextMetric,
-						},
-					},
-				},
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			// After alias adjustment, name becomes "metric.max_count" with FieldContextUnspecified
-			// Then adjustKey looks up "metric.max_count" in keysMap and finds it as an attribute field
-			expectedGroupBy: []qbtypes.GroupByKey{
-				{
-					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name:          "metric.max_count",
-						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
-					},
-				},
-			},
-			expectDeprecatedFieldsAdd: true,
-		},
-		{
 			name: "adjust keys for alias expressions in aggregations - order by",
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Aggregations: []qbtypes.TraceAggregation{
@@ -1341,59 +1309,6 @@ func TestAdjustKeys(t *testing.T) {
 			},
 			expectDeprecatedFieldsAdd: true,
 		},
-		{
-			name: "adjust keys for alias expressions - both group by and order by",
-			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-				Aggregations: []qbtypes.TraceAggregation{
-					{
-						Expression: "count()",
-						Alias:      "resource.count",
-					},
-				},
-				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         "count",
-							FieldContext: telemetrytypes.FieldContextResource,
-						},
-					},
-				},
-				Order: []qbtypes.OrderBy{
-					{
-						Key: qbtypes.OrderByKey{
-							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name:         "count",
-								FieldContext: telemetrytypes.FieldContextResource,
-							},
-						},
-						Direction: qbtypes.OrderDirectionAsc,
-					},
-				},
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			// After alias adjustment, name becomes "resource.count" with FieldContextUnspecified
-			// "resource.count" is not in keysMap, so context stays unspecified
-			expectedGroupBy: []qbtypes.GroupByKey{
-				{
-					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-						Name:         "resource.count",
-						FieldContext: telemetrytypes.FieldContextUnspecified,
-					},
-				},
-			},
-			expectedOrder: []qbtypes.OrderBy{
-				{
-					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name:         "resource.count",
-							FieldContext: telemetrytypes.FieldContextUnspecified,
-						},
-					},
-					Direction: qbtypes.OrderDirectionAsc,
-				},
-			},
-			expectDeprecatedFieldsAdd: true,
-		},
 	}
 
 	fm := NewFieldMapper()
@@ -1422,7 +1337,7 @@ func TestAdjustKeys(t *testing.T) {
 			}
 
 			// Call adjustKeys
-			c.query = statementBuilder.adjustKeys(context.Background(), keysMapCopy, c.query)
+			c.query = statementBuilder.adjustKeys(context.Background(), keysMapCopy, c.query, qbtypes.RequestTypeScalar)
 
 			// Verify select fields were adjusted
 			if c.expectedSelectFields != nil {

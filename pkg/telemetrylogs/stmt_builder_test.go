@@ -689,7 +689,7 @@ func TestAdjustKey(t *testing.T) {
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "severity_number",
 				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			},
 		},
 		{

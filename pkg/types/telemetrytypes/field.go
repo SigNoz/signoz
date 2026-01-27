@@ -71,6 +71,12 @@ func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
 }
 
+func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
+	return f.Name == key.Name &&
+		f.FieldContext == key.FieldContext &&
+		f.FieldDataType == key.FieldDataType
+}
+
 // Normalize parses and normalizes a TelemetryFieldKey by extracting
 // the field context and data type from the field name if they are not already specified.
 // This function modifies the key in place.

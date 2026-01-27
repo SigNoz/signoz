@@ -71,7 +71,7 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
-	query = b.adjustKeys(ctx, keys, query)
+	query = b.adjustKeys(ctx, keys, query, requestType)
 
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
@@ -139,42 +139,11 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 	return keySelectors
 }
 
-func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {
+func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {
 	/*
 		Adjust keys for alias expressions in aggregations
-		For example, if user is using `body.count` as an alias for aggregation and
-		Uses it in orderBy or group by, upstream code will convert it to just `count` with fieldContext as Body
-		But we need to adjust it back to `body.count` with fieldContext as unspecified
-
-		NOTE": One ambiguity here is that if user specified alias `body.count` is also a valid field then we're not sure
-		what user meant. Here we take a call that we chose alias over fieldName because if user sepcifically wants to order or group by
-		a that field, a different alias can be chosen.
 	*/
-
-	aliasExpressions := map[string]bool{}
-	for _, agg := range query.Aggregations {
-		if agg.Alias != "" {
-			aliasExpressions[agg.Alias] = true
-		}
-	}
-
-	revertContextForAliasKeys := func(key *telemetrytypes.TelemetryFieldKey) {
-		contextPrefixedKeyName := fmt.Sprintf("%s.%s", key.FieldContext.StringValue(), key.Name)
-		if aliasExpressions[contextPrefixedKeyName] {
-			key.FieldContext = telemetrytypes.FieldContextUnspecified
-			key.Name = contextPrefixedKeyName
-		}
-	}
-
-	if len(aliasExpressions) > 0 {
-		for idx := range query.GroupBy {
-			revertContextForAliasKeys(&query.GroupBy[idx].TelemetryFieldKey)
-		}
-
-		for idx := range query.Order {
-			revertContextForAliasKeys(&query.Order[idx].Key.TelemetryFieldKey)
-		}
-	}
+	actions := querybuilder.AdjustKeysForAliasExpressions(&query, requestType)
 
 	/*
 		Check if user is using multiple contexts or data types for same field name
@@ -192,7 +161,7 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 		and make it just http.status_code and remove the duplicate entry.
 	*/
 
-	actions := querybuilder.AdjustDuplicateKeys(&query)
+	actions = append(actions, querybuilder.AdjustDuplicateKeys(&query)...)
 
 	/*
 		Now adjust each key to have correct context and data type

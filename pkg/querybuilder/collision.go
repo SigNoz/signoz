@@ -129,7 +129,7 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			// Either field data type is unspecified or matches
 			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || mapKey.FieldContext == key.FieldContext) &&
 				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) &&
-				mapKey.String() != intrinsicOrCalculatedField.String() {
+				!mapKey.Equal(intrinsicOrCalculatedField) {
 				match = true
 				break
 			}
@@ -146,110 +146,147 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			// and there is no matching key in the metadata with the same name
 			// So we can safely override the context and data type
 
-			if key.String() != intrinsicOrCalculatedField.String() {
-				actions = append(actions, fmt.Sprintf("Overriding key: %s to %s", key, intrinsicOrCalculatedField))
-				key.FieldContext = intrinsicOrCalculatedField.FieldContext
-				key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
-				key.JSONDataType = intrinsicOrCalculatedField.JSONDataType
-				key.Indexes = intrinsicOrCalculatedField.Indexes
-				key.Materialized = intrinsicOrCalculatedField.Materialized
+			actions = append(actions, fmt.Sprintf("Overriding key: %s to %s", key, intrinsicOrCalculatedField))
+			key.FieldContext = intrinsicOrCalculatedField.FieldContext
+			key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
+			key.JSONDataType = intrinsicOrCalculatedField.JSONDataType
+			key.Indexes = intrinsicOrCalculatedField.Indexes
+			key.Materialized = intrinsicOrCalculatedField.Materialized
+
+			return actions
+
+		}
+	}
+
+	// This means that the key provided by the user cannot be overidden to a single field because of ambiguity
+	// So we need to look into metadata keys to find the best match
+
+	// check if all the keys for the given field with matching context and data type
+	matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
+	for _, metadataKey := range keys[key.Name] {
+		// Only consider keys that match the context and data type (if specified)
+		if (key.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == metadataKey.FieldContext) &&
+			(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType) {
+			matchingKeys = append(matchingKeys, metadataKey)
+		}
+	}
+
+	// Also consider if context is actually part of the key name
+	contextPrefixedMatchingKeys := []*telemetrytypes.TelemetryFieldKey{}
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		for _, metadataKey := range keys[key.FieldContext.StringValue()+"."+key.Name] {
+			// Since we prefixed the context in the name, we only need to match data type
+			if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType {
+				contextPrefixedMatchingKeys = append(contextPrefixedMatchingKeys, metadataKey)
 			}
+		}
+	}
 
-			return actions
-
+	if len(matchingKeys)+len(contextPrefixedMatchingKeys) == 0 {
+		// we do not have any matching keys, most likely user made a mistake, let downstream query builder handle it
+		// Set materialized to false explicitly to avoid QB looking for materialized column
+		key.Materialized = false
+	} else if len(matchingKeys)+len(contextPrefixedMatchingKeys) == 1 {
+		// only one matching key, use it
+		var matchingKey *telemetrytypes.TelemetryFieldKey
+		if len(matchingKeys) == 1 {
+			matchingKey = matchingKeys[0]
 		} else {
-			// Here we have a key which is an intrinsic field but also exists in the metadata with the same name
-			// We cannot prefer intrinsic field over metadata field or vice versa in this function, because we don't have any means to convey this to the user
-			// Leave this upto downstream query builder to decide and throw warning if needed
-			// Set materialized to false explicitly to avoid QB looking for materialized column
-			key.Materialized = false
-			return actions
+			matchingKey = contextPrefixedMatchingKeys[0]
 		}
 
+		if !key.Equal(matchingKey) {
+			actions = append(actions, fmt.Sprintf("Adjusting key %s to %s", key, matchingKey))
+		}
+		key.FieldContext = matchingKey.FieldContext
+		key.FieldDataType = matchingKey.FieldDataType
+		key.JSONDataType = matchingKey.JSONDataType
+		key.Indexes = matchingKey.Indexes
+		key.Materialized = matchingKey.Materialized
+
+		return actions
 	} else {
-		// check if all the keys for the given field with matching context and data type
-		matchingKeys := []*telemetrytypes.TelemetryFieldKey{}
-		for _, metadataKey := range keys[key.Name] {
-			// Only consider keys that match the context and data type (if specified)
-			if (key.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == metadataKey.FieldContext) &&
-				(key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType) {
-				matchingKeys = append(matchingKeys, metadataKey)
+		// multiple matching keys, set materialized only if all the keys are materialized
+		// TODO: This could all be redundant if it is not, it should be.
+		// Downstream query builder should handle multiple matching keys with their own metadata
+		// and not rely on this function to do so.
+		materialized := true
+		indexes := []telemetrytypes.JSONDataTypeIndex{}
+		fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
+		dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
+		for _, matchingKey := range matchingKeys {
+			materialized = materialized && matchingKey.Materialized
+			fieldContextsSeen[matchingKey.FieldContext] = true
+			dataTypesSeen[matchingKey.FieldDataType] = true
+			indexes = append(indexes, matchingKey.Indexes...)
+		}
+		for _, matchingKey := range contextPrefixedMatchingKeys {
+			materialized = materialized && matchingKey.Materialized
+			fieldContextsSeen[matchingKey.FieldContext] = true
+			dataTypesSeen[matchingKey.FieldDataType] = true
+			indexes = append(indexes, matchingKey.Indexes...)
+		}
+		key.Materialized = materialized
+		if len(indexes) > 0 {
+			key.Indexes = indexes
+		}
+
+		if len(fieldContextsSeen) == 1 && key.FieldContext == telemetrytypes.FieldContextUnspecified {
+			// all matching keys have same field context, use it
+			for context := range fieldContextsSeen {
+				actions = append(actions, fmt.Sprintf("Adjusting key %s to have field context %s", key, context.StringValue()))
+				key.FieldContext = context
+				break
 			}
 		}
 
-		// Also consider if context is actually part of the key name
-		contextPrefixedMatchingKeys := []*telemetrytypes.TelemetryFieldKey{}
-		if key.FieldContext != telemetrytypes.FieldContextUnspecified {
-			for _, metadataKey := range keys[key.FieldContext.StringValue()+"."+key.Name] {
-				// Since we prefixed the context in the name, we only need to match data type
-				if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == metadataKey.FieldDataType {
-					contextPrefixedMatchingKeys = append(contextPrefixedMatchingKeys, metadataKey)
-				}
+		if len(dataTypesSeen) == 1 && key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+			// all matching keys have same data type, use it
+			for dt := range dataTypesSeen {
+				actions = append(actions, fmt.Sprintf("Adjusting key %s to have data type %s", key, dt.StringValue()))
+				key.FieldDataType = dt
+				break
 			}
 		}
+	}
 
-		if len(matchingKeys)+len(contextPrefixedMatchingKeys) == 0 {
-			// we do not have any matching keys, most likely user made a mistake, let downstream query builder handle it
-			// Set materialized to false explicitly to avoid QB looking for materialized column
-			key.Materialized = false
-		} else if len(matchingKeys)+len(contextPrefixedMatchingKeys) == 1 {
-			// only one matching key, use it
-			var matchingKey *telemetrytypes.TelemetryFieldKey
-			if len(matchingKeys) == 1 {
-				matchingKey = matchingKeys[0]
-			} else {
-				matchingKey = contextPrefixedMatchingKeys[0]
-			}
+	return actions
+}
 
-			if key.String() != matchingKey.String() {
-				actions = append(actions, fmt.Sprintf("Adjusting key %s to %s", key, matchingKey))
-			}
-			key.FieldContext = matchingKey.FieldContext
-			key.FieldDataType = matchingKey.FieldDataType
-			key.JSONDataType = matchingKey.JSONDataType
-			key.Indexes = matchingKey.Indexes
-			key.Materialized = matchingKey.Materialized
+func AdjustKeysForAliasExpressions[T any](query *qbtypes.QueryBuilderQuery[T], requestType qbtypes.RequestType) []string {
+	/*
+		For example, if user is using `body.count` as an alias for aggregation and
+		Uses it in orderBy or group by, upstream code will convert it to just `count` with fieldContext as Body
+		But we need to adjust it back to `body.count` with fieldContext as unspecified
 
-			return actions
-		} else {
-			// multiple matching keys, set materialized only if all the keys are materialized
-			// TODO: This could all be redundant if it is not, it should be.
-			// Downstream query builder should handle multiple matching keys with their own metadata
-			// and not rely on this function to do so.
-			materialized := true
-			indexes := []telemetrytypes.JSONDataTypeIndex{}
-			fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
-			dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
-			for _, matchingKey := range matchingKeys {
-				materialized = materialized && matchingKey.Materialized
-				fieldContextsSeen[matchingKey.FieldContext] = true
-				dataTypesSeen[matchingKey.FieldDataType] = true
-				indexes = append(indexes, matchingKey.Indexes...)
-			}
-			for _, matchingKey := range contextPrefixedMatchingKeys {
-				materialized = materialized && matchingKey.Materialized
-				fieldContextsSeen[matchingKey.FieldContext] = true
-				dataTypesSeen[matchingKey.FieldDataType] = true
-				indexes = append(indexes, matchingKey.Indexes...)
-			}
-			key.Materialized = materialized
-			if len(indexes) > 0 {
-				key.Indexes = indexes
-			}
-
-			if len(fieldContextsSeen) == 1 {
-				// all matching keys have same field context, use it
-				for context := range fieldContextsSeen {
-					key.FieldContext = context
-					break
+		NOTE": One ambiguity here is that if user specified alias `body.count` is also a valid field then we're not sure
+		what user meant. Here we take a call that we chose alias over fieldName because if user sepcifically wants to order or group by
+		a that field, a different alias can be chosen.
+	*/
+	actions := []string{}
+	if requestType != qbtypes.RequestTypeRaw && requestType != qbtypes.RequestTypeRawStream {
+		aliasExpressions := map[string]bool{}
+		for _, agg := range query.Aggregations {
+			switch v := any(agg).(type) {
+			case qbtypes.LogAggregation:
+				if v.Alias != "" {
+					aliasExpressions[v.Alias] = true
 				}
+			case qbtypes.TraceAggregation:
+				if v.Alias != "" {
+					aliasExpressions[v.Alias] = true
+				}
+			default:
+				continue
 			}
-
-			if len(dataTypesSeen) == 1 {
-				// all matching keys have same data type, use it
-				for dt := range dataTypesSeen {
-					key.FieldDataType = dt
-					break
+		}
+		if len(aliasExpressions) > 0 {
+			for idx := range query.Order {
+				contextPrefixedKeyName := fmt.Sprintf("%s.%s", query.Order[idx].Key.FieldContext.StringValue(), query.Order[idx].Key.Name)
+				if aliasExpressions[contextPrefixedKeyName] {
+					actions = append(actions, fmt.Sprintf("Adjusting OrderBy key %s to %s", query.Order[idx].Key, contextPrefixedKeyName))
+					query.Order[idx].Key.FieldContext = telemetrytypes.FieldContextUnspecified
+					query.Order[idx].Key.Name = contextPrefixedKeyName
 				}
 			}
 		}

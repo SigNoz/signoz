@@ -277,64 +277,74 @@ func TestAdjustKey(t *testing.T) {
 		description                string
 	}{
 		{
-			name: "intrinsic field with no matching metadata key",
+			name: "intrinsic field with no matching attribute/resource key",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "trace_id",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Name:          "trace_id", // User provided key "trace_id" with no context or data type
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keys: map[string][]*telemetrytypes.TelemetryFieldKey{},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"trace_id": { // This is the intrinsic field itself in the keys map
+					&telemetrytypes.TelemetryFieldKey{
+						Name:          "trace_id",
+						FieldContext:  telemetrytypes.FieldContextLog,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
 			intrinsicOrCalculatedField: &telemetrytypes.TelemetryFieldKey{
 				Name:          "trace_id",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldContext:  telemetrytypes.FieldContextLog,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  true,
 			},
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "trace_id",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  true,
+				FieldContext:  telemetrytypes.FieldContextLog, // Use intrinsic field context
+				FieldDataType: telemetrytypes.FieldDataTypeString, // Use intrinsic field data type
 			},
 			expectedActions: []string{
-				"Overriding key: name=trace_id,context=attribute,datatype=string to name=trace_id,datatype=string,materialized=true",
+				"Overriding key: name=trace_id to name=trace_id,context=log,datatype=string",
 			},
-			description: "Intrinsic field with no metadata match should use intrinsic field properties",
+			description: "Intrinsic field with no attribute.resource key match should use intrinsic field properties",
 		},
 		{
-			name: "intrinsic field with matching metadata key",
+			name: "intrinsic field with matching attribute/resource key",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "trace_id",
+				Name:          "trace_id", // User provided key "trace_id" with no context or data type
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
 			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"trace_id": {
 					{
-						Name:          "trace_id",
+						Name:          "trace_id", // This is an attribute key matching the intrinsic field name
 						FieldContext:  telemetrytypes.FieldContextAttribute,
 						FieldDataType: telemetrytypes.FieldDataTypeString,
-						Materialized:  false,
+						Materialized:  true,
+					},
+					{
+						Name:          "trace_id", // This is the intrinsic field itself in the keys map
+						FieldContext:  telemetrytypes.FieldContextLog,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
 					},
 				},
 			},
 			intrinsicOrCalculatedField: &telemetrytypes.TelemetryFieldKey{
 				Name:          "trace_id",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldContext:  telemetrytypes.FieldContextLog,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  true,
 			},
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "trace_id",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				FieldContext:  telemetrytypes.FieldContextUnspecified, // This is left unspecified due to ambiguity
+				FieldDataType: telemetrytypes.FieldDataTypeString,     // This is set to string as both have same type
 				Materialized:  false,
 			},
-			expectedActions: []string{},
-			description:     "Intrinsic field with metadata match should set materialized to false (ambiguous case)",
+			expectedActions: []string{"Adjusting key name=trace_id to have data type string"},
+			description:     "Intrinsic field with attribute key match should set data type to string since both in both intrinsic and attribute have same type (ambiguous case)",
 		},
 		{
-			name: "non-intrinsic field with single matching metadata key",
+			name: "non-intrinsic field with single matching attribute key",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "custom_field",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
@@ -353,17 +363,17 @@ func TestAdjustKey(t *testing.T) {
 			intrinsicOrCalculatedField: nil,
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "custom_field",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextAttribute, // Use attribute field context
+				FieldDataType: telemetrytypes.FieldDataTypeString, // Use attribute field data type
 				Materialized:  true,
 			},
 			expectedActions: []string{
 				"Adjusting key name=custom_field to name=custom_field,context=attribute,datatype=string,materialized=true",
 			},
-			description: "Single matching metadata key should use its properties",
+			description: "Single matching attribute key should use its properties",
 		},
 		{
-			name: "non-intrinsic field with no matching metadata keys",
+			name: "non-intrinsic field with no matching attribute keys",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "unknown_field",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -378,91 +388,25 @@ func TestAdjustKey(t *testing.T) {
 				Materialized:  false,
 			},
 			expectedActions: []string{},
-			description:     "No matching metadata keys should set materialized to false",
-		},
-		{
-			name: "multiple matching keys all materialized with same context and data type",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "field",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"field": {
-					{
-						Name:          "field",
-						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-						Materialized:  true,
-					},
-					{
-						Name:          "field",
-						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-						Materialized:  true,
-					},
-				},
-			},
-			intrinsicOrCalculatedField: nil,
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "field",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  true,
-			},
-			expectedActions: []string{},
-			description:     "Multiple matching keys all materialized with same properties should use those properties",
-		},
-		{
-			name: "multiple matching keys with mixed materialization",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "field",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"field": {
-					{
-						Name:          "field",
-						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-						Materialized:  true,
-					},
-					{
-						Name:          "field",
-						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-						Materialized:  false,
-					},
-				},
-			},
-			intrinsicOrCalculatedField: nil,
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "field",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  false,
-			},
-			expectedActions: []string{},
-			description:     "Multiple matching keys with mixed materialization should set materialized to false",
+			description:     "No matching attribute keys should set materialized to false",
 		},
 		{
 			name: "multiple matching keys with different contexts",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name:          "field",
+				Name:          "field", // User provided key "field" with no context and string data type
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"field": {
 					{
-						Name:          "field",
+						Name:          "field", // Attribute context
 						FieldContext:  telemetrytypes.FieldContextAttribute,
 						FieldDataType: telemetrytypes.FieldDataTypeString,
 						Materialized:  true,
 					},
 					{
-						Name:          "field",
+						Name:          "field", // Resource context
 						FieldContext:  telemetrytypes.FieldContextResource,
 						FieldDataType: telemetrytypes.FieldDataTypeString,
 						Materialized:  true,
@@ -472,12 +416,12 @@ func TestAdjustKey(t *testing.T) {
 			intrinsicOrCalculatedField: nil,
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "field",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
+				FieldContext:  telemetrytypes.FieldContextUnspecified, // Too ambiguous to set context
+				FieldDataType: telemetrytypes.FieldDataTypeString,     // Both have same data type
 				Materialized:  true,
 			},
 			expectedActions: []string{},
-			description:     "Multiple matching keys with different contexts should keep context unspecified",
+			description:     "Multiple matching keys with different contexts should keep context unspecified but data type specified",
 		},
 		{
 			name: "multiple matching keys with different data types",
@@ -510,7 +454,7 @@ func TestAdjustKey(t *testing.T) {
 				Materialized:  true,
 			},
 			expectedActions: []string{},
-			description:     "Multiple matching keys with different data types should keep data type unspecified",
+			description:     "Multiple matching keys with different data types should keep data type unspecified but context specified",
 		},
 		{
 			name: "specific context filters matching keys",
@@ -592,26 +536,32 @@ func TestAdjustKey(t *testing.T) {
 			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"duration": {
 					{
-						Name:          "duration",
+						Name:          "duration", // This is an attribute key matching the intrinsic field name
 						FieldContext:  telemetrytypes.FieldContextAttribute,
 						FieldDataType: telemetrytypes.FieldDataTypeNumber,
 						Materialized:  false,
+					},
+					{
+						Name:          "duration", // This is the intrinsic field itself in the keys map
+						FieldContext:  telemetrytypes.FieldContextSpan,
+						FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						Materialized:  true,
 					},
 				},
 			},
 			intrinsicOrCalculatedField: &telemetrytypes.TelemetryFieldKey{
 				Name:          "duration",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldContext:  telemetrytypes.FieldContextSpan,
 				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 				Materialized:  true,
 			},
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "duration",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 				Materialized:  false,
 			},
-			expectedActions: []string{},
+			expectedActions: []string{"Adjusting key name=duration,context=attribute to name=duration,context=attribute,datatype=number"},
 			description:     "User explicitly specified attribute.duration, should prefer metadata over intrinsic",
 		},
 	}
