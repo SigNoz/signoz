@@ -38,7 +38,7 @@ module.exports = {
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity
 		// TODO: Uncomment after running: yarn add -D eslint-plugin-spellcheck
-		// 'spellcheck',
+		// 'spellcheck', // Correct spellings
 	],
 	settings: {
 		react: {
@@ -60,8 +60,7 @@ module.exports = {
 		'no-debugger': 'error', // Disallows debugger statements in production code
 		curly: 'error', // Requires curly braces for all control statements
 		eqeqeq: ['error', 'always', { null: 'ignore' }], // Enforces === and !== (allows == null for null/undefined check)
-		// TODO: Enable after fixing ~15 console.log statements
-		// 'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
+		'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
 
 		// TypeScript rules
 		'@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions

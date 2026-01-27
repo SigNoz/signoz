@@ -16,7 +16,9 @@ interface UseGetYAxisUnitResult {
 	isError: boolean;
 }
 
-function getMetricNameFromQueryData(queryData: IBuilderQuery): string | null {
+export function getMetricNameFromQueryData(
+	queryData: IBuilderQuery,
+): string | null {
 	if (queryData.dataSource !== DataSource.METRICS) {
 		return null;
 	}

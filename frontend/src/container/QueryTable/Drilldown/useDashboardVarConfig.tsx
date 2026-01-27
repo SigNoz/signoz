@@ -83,11 +83,6 @@ const useDashboardVarConfig = ({
 			dashboardVar: [string, IDashboardVariable],
 			fieldValue: any,
 		) => {
-			console.log('Setting variable:', {
-				fieldName,
-				dashboardVarId: dashboardVar[0],
-				fieldValue,
-			});
 			onValueUpdate(fieldName, dashboardVar[1]?.id, fieldValue, false);
 			onClose();
 		},
@@ -96,10 +91,6 @@ const useDashboardVarConfig = ({
 
 	const handleUnsetVariable = useCallback(
 		(fieldName: string, dashboardVar: [string, IDashboardVariable]) => {
-			console.log('Unsetting variable:', {
-				fieldName,
-				dashboardVarId: dashboardVar[0],
-			});
 			onValueUpdate(fieldName, dashboardVar[0], null, false);
 			onClose();
 		},
@@ -109,12 +100,6 @@ const useDashboardVarConfig = ({
 	const handleCreateVariable = useCallback(
 		(fieldName: string, fieldValue: string | number | boolean) => {
 			const source = getSourceFromQuery();
-			console.log('Creating variable from drilldown:', {
-				fieldName,
-				fieldValue,
-				source,
-				widgetId,
-			});
 			createVariable(
 				fieldName,
 				fieldValue,
@@ -125,7 +110,7 @@ const useDashboardVarConfig = ({
 			);
 			onClose();
 		},
-		[createVariable, getSourceFromQuery, widgetId, onClose],
+		[createVariable, getSourceFromQuery, onClose],
 	);
 
 	const contextItems = useMemo(
