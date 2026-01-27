@@ -122,7 +122,9 @@ function TracesExplorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
-			if (!dashboard || !panelType) return;
+			if (!dashboard || !panelType) {
+				return;
+			}
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
 				? panelType

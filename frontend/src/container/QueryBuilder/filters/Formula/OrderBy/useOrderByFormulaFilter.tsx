@@ -80,7 +80,9 @@ export const useOrderByFormulaFilter = ({
 		mapLabelValuePairs(data).flat();
 
 	const customValue: IOption[] = useMemo(() => {
-		if (!searchText) return [];
+		if (!searchText) {
+			return [];
+		}
 
 		return [
 			{

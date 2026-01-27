@@ -61,6 +61,9 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	// Add request structure
 	opCtx.AddReqStructure(handler.openAPIDef.Request, openapi.WithContentType(handler.openAPIDef.RequestContentType))
 
+	// Add request query structure
+	opCtx.AddReqStructure(handler.openAPIDef.RequestQuery)
+
 	// Add success response
 	if handler.openAPIDef.Response != nil {
 		opCtx.AddRespStructure(

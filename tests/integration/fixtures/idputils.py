@@ -377,7 +377,7 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         # Fill the email in username field
         username_field = wait.until(EC.element_to_be_clickable((By.ID, "username")))
         username_field.send_keys(email)
-        
+
         # Fill the password in password field
         password_field = wait.until(EC.element_to_be_clickable((By.ID, "password")))
         password_field.send_keys(password)

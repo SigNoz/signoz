@@ -531,7 +531,9 @@ export const useQueryOperations: UseQueryOperations = ({
 	const isTracePanelType = panelType === PANEL_TYPES.TRACE;
 
 	useEffect(() => {
-		if (initialDataSource && dataSource !== initialDataSource) return;
+		if (initialDataSource && dataSource !== initialDataSource) {
+			return;
+		}
 
 		if (
 			dataSource === DataSource.METRICS &&

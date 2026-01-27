@@ -36,7 +36,9 @@ export function useFunnelMetrics({
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;
-		if (!sourceData) return [];
+		if (!sourceData) {
+			return [];
+		}
 
 		return [
 			{
@@ -102,7 +104,9 @@ export function useFunnelStepsMetrics({
 
 	const metricsData = useMemo(() => {
 		const sourceData = stepsOverviewData?.payload?.data?.[0]?.data;
-		if (!sourceData) return [];
+		if (!sourceData) {
+			return [];
+		}
 
 		return [
 			{

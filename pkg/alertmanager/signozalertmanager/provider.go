@@ -182,24 +182,29 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}))
 }
 
-func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := config.CreateReceiver(receiver); err != nil {
-		return err
+		return nil, err
 	}
 
 	channel, err := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		return provider.configStore.Set(ctx, config)
 	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return channel, nil
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

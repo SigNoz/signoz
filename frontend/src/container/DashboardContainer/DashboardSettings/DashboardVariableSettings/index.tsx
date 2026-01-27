@@ -127,7 +127,9 @@ function VariablesSettings({
 	};
 
 	useEffect(() => {
-		if (!variablesSettingsTabHandle) return;
+		if (!variablesSettingsTabHandle) {
+			return;
+		}
 
 		// eslint-disable-next-line no-param-reassign
 		variablesSettingsTabHandle.current = {

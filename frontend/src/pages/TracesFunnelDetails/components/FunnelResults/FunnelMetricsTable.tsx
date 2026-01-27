@@ -31,12 +31,13 @@ function FunnelMetricsContentRenderer({
 	isError?: boolean;
 	emptyState?: JSX.Element;
 }): JSX.Element {
-	if (isLoading)
+	if (isLoading) {
 		return (
 			<div className="funnel-metrics--loading-state">
 				<Spinner size="small" height="100%" />
 			</div>
 		);
+	}
 	if (data.length === 0 && emptyState) {
 		return emptyState;
 	}

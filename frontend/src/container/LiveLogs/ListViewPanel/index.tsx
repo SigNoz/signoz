@@ -27,7 +27,9 @@ function ListViewPanel(): JSX.Element {
 	const isFormatButtonVisible = logsOptions.includes(config.format?.value);
 
 	const renderPopoverContent = useCallback(() => {
-		if (!config.maxLines) return null;
+		if (!config.maxLines) {
+			return null;
+		}
 		const linedPerRow = config.maxLines.value as number;
 		const handleLinesPerRowChange = config.maxLines.onChange as (
 			value: unknown,

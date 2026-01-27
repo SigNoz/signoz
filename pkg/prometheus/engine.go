@@ -20,8 +20,9 @@ func NewEngine(logger *slog.Logger, cfg Config) *Engine {
 	return promql.NewEngine(promql.EngineOpts{
 		Logger:             logger,
 		Reg:                nil,
-		MaxSamples:         50000000,
-		Timeout:            time.Duration(2 * time.Minute),
+		MaxSamples:         5_0000_000,
+		Timeout:            2 * time.Minute,
 		ActiveQueryTracker: activeQueryTracker,
+		LookbackDelta:      cfg.LookbackDelta,
 	})
 }

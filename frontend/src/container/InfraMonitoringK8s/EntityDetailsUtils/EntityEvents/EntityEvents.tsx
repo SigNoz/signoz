@@ -199,12 +199,16 @@ export default function Events({
 	);
 
 	const handlePrev = (): void => {
-		if (!formattedEntityEvents.length) return;
+		if (!formattedEntityEvents.length) {
+			return;
+		}
 		setPage(page - 1);
 	};
 
 	const handleNext = (): void => {
-		if (!formattedEntityEvents.length) return;
+		if (!formattedEntityEvents.length) {
+			return;
+		}
 		setPage(page + 1);
 	};
 

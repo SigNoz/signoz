@@ -73,7 +73,9 @@ function DynamicVariableSelection({
 
 	// Create a dependency key from all dynamic variables
 	const dynamicVariablesKey = useMemo(() => {
-		if (!existingVariables) return 'no_variables';
+		if (!existingVariables) {
+			return 'no_variables';
+		}
 
 		const dynamicVars = Object.values(existingVariables)
 			.filter((v) => v.type === 'DYNAMIC')
@@ -380,7 +382,9 @@ function DynamicVariableSelection({
 
 			// Helper function to check if arrays have the same elements regardless of order
 			const areArraysEqualIgnoreOrder = (a: any[], b: any[]): boolean => {
-				if (a.length !== b.length) return false;
+				if (a.length !== b.length) {
+					return false;
+				}
 				const sortedA = [...a].sort();
 				const sortedB = [...b].sort();
 				return areArraysEqual(sortedA, sortedB);
