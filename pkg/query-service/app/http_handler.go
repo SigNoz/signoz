@@ -1023,7 +1023,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// the query range is calculated based on the rule's evalWindow and evalDelay
 			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
 			// to get the correct query range
-			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
+			start := end.Add(-rule.EvalWindow.Duration()).Add(-3 * time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
 				if rule.Version != "v5" {
 					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)

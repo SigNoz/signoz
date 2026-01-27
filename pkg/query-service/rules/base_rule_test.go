@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -124,8 +125,8 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 		Evaluation: &ruletypes.EvaluationEnvelope{
 			Kind: ruletypes.RollingEvaluation,
 			Spec: ruletypes.RollingWindow{
-				EvalWindow: ruletypes.Duration(5 * time.Minute),
-				Frequency:  ruletypes.Duration(1 * time.Minute),
+				EvalWindow: types.NewTextDuration(5 * time.Minute),
+				Frequency:  types.NewTextDuration(1 * time.Minute),
 			},
 		},
 		RuleCondition: &ruletypes.RuleCondition{
@@ -706,8 +707,8 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Set newGroupEvalDelay in NotificationSettings if provided
 			if tt.newGroupEvalDelay != nil {
 				postableRule.NotificationSettings = &ruletypes.NotificationSettings{
-					NewGroupEvalDelay: func() *ruletypes.Duration {
-						d := ruletypes.Duration(*tt.newGroupEvalDelay)
+					NewGroupEvalDelay: func() *types.TextDuration {
+						d := types.NewTextDuration(*tt.newGroupEvalDelay)
 						return &d
 					}(),
 				}
