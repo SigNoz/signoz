@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo } from 'react';
-import { formatEpochTimestamp } from 'utils/timeUtils';
 
 export interface ITraceMetadataProps {
 	traceID: string;

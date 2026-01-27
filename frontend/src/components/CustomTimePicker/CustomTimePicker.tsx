@@ -22,7 +22,6 @@ import {
 	Dispatch,
 	SetStateAction,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
