@@ -148,6 +148,23 @@ type Bucket struct {
 	Step float64 `json:"step"`
 }
 
+type DistributionData struct {
+	QueryName    string
+	Aggregations []*DistributionAggregation `json:"aggregations"`
+}
+
+type DistributionAggregation struct {
+	Index   int                   `json:"index"`
+	Alias   string                `json:"alias"`
+	Buckets []*DistributionBucket `json:"buckets"`
+}
+
+type DistributionBucket struct {
+	LowerBound float64 `json:"lowerBound"`
+	UpperBound float64 `json:"upperBound"`
+	Count      float64 `json:"count"`
+}
+
 type ColumnType struct {
 	valuer.String
 }
@@ -362,4 +379,28 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 func (r RawData) MarshalJSON() ([]byte, error) {
 	type Alias RawData
 	return json.Marshal((*Alias)(&r))
+}
+
+func (d DistributionData) MarshalJSON() ([]byte, error) {
+	type Alias DistributionData
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(&d),
+	})
+}
+
+func (b DistributionBucket) MarshalJSON() ([]byte, error) {
+	type Alias DistributionBucket
+	return json.Marshal(&struct {
+		*Alias
+		LowerBound any `json:"lowerBound"`
+		UpperBound any `json:"upperBound"`
+		Count      any `json:"count"`
+	}{
+		Alias:      (*Alias)(&b),
+		LowerBound: sanitizeValue(b.LowerBound),
+		UpperBound: sanitizeValue(b.UpperBound),
+		Count:      sanitizeValue(b.Count),
+	})
 }

@@ -45,6 +45,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
+	case qbtypes.RequestTypeDistribution:
+		payload, err = readAsDistribution(rows, queryName)
 		// TODO: add support for other request types
 	}
 
@@ -435,6 +437,105 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	return &qbtypes.RawData{
 		QueryName: queryName,
 		Rows:      outRows,
+	}, nil
+}
+
+func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+
+	resultCols := make(map[int]int)
+
+	for i, name := range colNames {
+		if m := aggRe.FindStringSubmatch(name); m != nil {
+			id, _ := strconv.Atoi(m[1])
+			resultCols[id] = i
+		}
+	}
+
+	scan := make([]any, len(colNames))
+	for i := range scan {
+		st := colTypes[i].ScanType()
+		if st == nil {
+			var v any
+			scan[i] = &v
+		} else {
+			scan[i] = reflect.New(st).Interface()
+		}
+	}
+
+	bucketsByIndex := make(map[int][]*qbtypes.DistributionBucket)
+
+	for rows.Next() {
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		for resultID, colIdx := range resultCols {
+			histData := derefValue(scan[colIdx])
+			vHist := reflect.ValueOf(histData)
+
+			if vHist.Kind() == reflect.Slice {
+				if vHist.Len() == 0 {
+					bucketsByIndex[resultID] = []*qbtypes.DistributionBucket{}
+					continue
+				}
+
+				buckets := make([]*qbtypes.DistributionBucket, 0, vHist.Len())
+
+				for i := 0; i < vHist.Len(); i++ {
+					b := vHist.Index(i).Interface()
+					vBin := reflect.ValueOf(b)
+
+					if vBin.Kind() == reflect.Slice && vBin.Len() >= 3 {
+						lower := numericAsFloat(derefValue(vBin.Index(0).Interface()))
+						upper := numericAsFloat(derefValue(vBin.Index(1).Interface()))
+						count := numericAsFloat(derefValue(vBin.Index(2).Interface()))
+
+						if lower == upper {
+							continue
+						}
+
+						if !math.IsNaN(lower) && !math.IsInf(lower, 0) &&
+							!math.IsNaN(upper) && !math.IsInf(upper, 0) &&
+							!math.IsNaN(count) && !math.IsInf(count, 0) {
+							buckets = append(buckets, &qbtypes.DistributionBucket{
+								LowerBound: lower,
+								UpperBound: upper,
+								Count:      count,
+							})
+						}
+					}
+				}
+
+				if len(buckets) > 0 {
+					bucketsByIndex[resultID] = buckets
+				}
+			}
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	resultIDs := make([]int, 0, len(bucketsByIndex))
+	for k := range bucketsByIndex {
+		resultIDs = append(resultIDs, k)
+	}
+	sort.Ints(resultIDs)
+
+	aggregations := make([]*qbtypes.DistributionAggregation, 0, len(resultIDs))
+	for _, id := range resultIDs {
+		aggregations = append(aggregations, &qbtypes.DistributionAggregation{
+			Index:   id,
+			Alias:   fmt.Sprintf("__result_%d", id),
+			Buckets: bucketsByIndex[id],
+		})
+	}
+
+	return &qbtypes.DistributionData{
+		QueryName:    queryName,
+		Aggregations: aggregations,
 	}, nil
 }
 
