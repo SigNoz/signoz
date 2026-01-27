@@ -796,12 +796,12 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 			});
 
 			const {
-				aggregateAttribute,
-				aggregateOperator,
-				timeAggregation,
-				spaceAggregation,
-				reduceTo,
-				filters,
+				aggregateAttribute: _aggregateAttribute,
+				aggregateOperator: _aggregateOperator,
+				timeAggregation: _timeAggregation,
+				spaceAggregation: _spaceAggregation,
+				reduceTo: _reduceTo,
+				filters: _filters,
 				...retainedQuery
 			} = query;
 

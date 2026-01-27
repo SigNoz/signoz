@@ -553,6 +553,18 @@ func (f Function) Copy() Function {
 	return c
 }
 
+// Validate validates the name and args for the function
+func (f Function) Validate() error {
+	if err := f.Name.Validate(); err != nil {
+		return err
+	}
+	// Validate args for function
+	if err := f.ValidateArgs(); err != nil {
+		return err
+	}
+	return nil
+}
+
 type LimitBy struct {
 	// keys to limit by
 	Keys []string `json:"keys"`
