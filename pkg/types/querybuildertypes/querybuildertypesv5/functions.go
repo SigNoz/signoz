@@ -206,38 +206,6 @@ func (fn Function) ValidateArgs() error {
 				name.StringValue(),
 			)
 		}
-	case FunctionNameFillZero:
-		if len(args) < 3 {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"start, end, and step values are required for function %s",
-				name.StringValue(),
-			)
-		}
-		_, startErr := parseFloat64Arg(args[0].Value)
-		if startErr != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"start value must be a floating value for function %s",
-				name.StringValue(),
-			)
-		}
-		_, endErr := parseFloat64Arg(args[1].Value)
-		if endErr != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"end value must be a floating value for function %s",
-				name.StringValue(),
-			)
-		}
-		_, stepErr := parseFloat64Arg(args[2].Value)
-		if stepErr != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"step value must be a floating value for function %s",
-				name.StringValue(),
-			)
-		}
 	}
 	return nil
 }

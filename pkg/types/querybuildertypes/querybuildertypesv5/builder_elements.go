@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 type Step struct{ time.Duration }
@@ -561,8 +560,7 @@ func (f Function) Validate() error {
 	}
 	// Validate args for function
 	if err := f.ValidateArgs(); err != nil {
-		// return err
-		zap.L().Warn("expected validation error in Function.Validate: invalid function args", zap.Error(err))
+		return err
 	}
 	return nil
 }
