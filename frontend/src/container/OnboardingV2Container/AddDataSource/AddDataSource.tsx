@@ -244,13 +244,22 @@ function OnboardingAddDataSource(): JSX.Element {
 		}
 
 		const ingestionKey = ingestionKeys?.data?.data?.[0]?.value;
-		const region = globalConfig?.data?.ingestion_url;
+		let region = globalConfig?.data?.ingestion_url;
 
 		if (ingestionKey) {
 			urlObj.searchParams.set('ingestion_key', ingestionKey);
 		}
 
 		if (region) {
+			try {
+				const url = new URL(region);
+				const parts = url.hostname.split('.');
+				if (parts[0]?.includes('ingest') && parts.length > 1) {
+					region = parts[1];
+				}
+			} catch (e) {
+				// ignore
+			}
 			urlObj.searchParams.set('region', region);
 		}
 
