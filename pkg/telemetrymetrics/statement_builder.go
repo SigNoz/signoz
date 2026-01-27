@@ -141,7 +141,7 @@ func (b *MetricQueryStatementBuilder) Build(
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
 	if requestType == qbtypes.RequestTypeHeatmap {
-		return b.buildHeatmapQuery(ctx, start, end, query, keys, variables, requestType)
+		return b.buildHeatmapQuery(ctx, start, end, query, keys, variables)
 	}
 
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
@@ -616,7 +616,6 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-	requestType qbtypes.RequestType,
 ) (*qbtypes.Statement, error) {
 	query.GroupBy = slices.Clone(query.GroupBy)
 
