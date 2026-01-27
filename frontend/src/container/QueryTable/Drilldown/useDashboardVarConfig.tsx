@@ -17,7 +17,6 @@ interface UseBaseAggregateOptionsProps {
 	query?: Query;
 	// panelType?: PANEL_TYPES;
 	aggregateData?: AggregateData | null;
-	widgetId?: string;
 	onClose: () => void;
 }
 
@@ -27,7 +26,6 @@ const useDashboardVarConfig = ({
 	query,
 	// panelType,
 	aggregateData,
-	widgetId,
 	onClose,
 }: UseBaseAggregateOptionsProps): {
 	dashbaordVariablesConfig: {
