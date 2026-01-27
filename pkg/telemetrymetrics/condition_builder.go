@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
@@ -139,13 +141,51 @@ func (c *conditionBuilder) ConditionFor(
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
+	start uint64,
 	_ uint64,
 ) (string, error) {
+	if c.isMetricScopeField(key.Name) {
+		return c.buildMetricScopeCondition(operator, value, start)
+	}
+
 	condition, err := c.conditionFor(ctx, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
 
 	return condition, nil
+}
+
+func (c *conditionBuilder) isMetricScopeField(keyName string) bool {
+	return keyName == MetricScopeFieldIsTopLevelOperation
+}
+
+// buildMetricScopeCondition handles synthetic field isTopLevelOperation for metrics signal.
+func (c *conditionBuilder) buildMetricScopeCondition(operator qbtypes.FilterOperator, value any, start uint64) (string, error) {
+	if operator != qbtypes.FilterOperatorEqual {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s only supports '=' operator", MetricScopeFieldIsTopLevelOperation)
+	}
+	// Accept true in bool or string form; anything else is invalid
+	isTrue := false
+	switch v := value.(type) {
+	case bool:
+		isTrue = v
+	case string:
+		isTrue = strings.ToLower(v) == "true"
+	default:
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s expects boolean value, got %T", MetricScopeFieldIsTopLevelOperation, value)
+	}
+	if !isTrue {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "%s can only be filtered with value 'true'", MetricScopeFieldIsTopLevelOperation)
+	}
+
+	startSec := int64(start / 1000)
+
+	return fmt.Sprintf(
+		"((JSONExtractString(labels, 'operation'), JSONExtractString(labels, 'service.name')) GLOBAL IN (SELECT DISTINCT name, serviceName FROM %s.%s WHERE time >= toDateTime(%d)))",
+		telemetrytraces.DBName,
+		// telemetrytraces.LocalTopLevelOperationsTableName,
+		telemetrytraces.TopLevelOperationsTableName,
+		startSec,
+	), nil
 }

@@ -3,11 +3,25 @@ package implservices
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 )
+
+// spanMetricsSingleBucketStep keeps pxx queries in a single bucket
+// while staying within the requested time range.
+func spanMetricsSingleBucketStep(startMs, endMs uint64) qbtypes.Step {
+	if endMs <= startMs {
+		return qbtypes.Step{Duration: time.Second}
+	}
+	duration := time.Duration(endMs-startMs) * time.Millisecond
+	if duration < time.Second {
+		duration = time.Second
+	}
+	return qbtypes.Step{Duration: duration}
+}
 
 // validateTagFilterItems validates the tag filter items. This should be used before using
 // buildFilterExpression or any other function that uses tag filter items.

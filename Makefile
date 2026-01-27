@@ -101,6 +101,7 @@ go-test: ## Runs go unit tests
 .PHONY: go-run-community
 go-run-community: ## Runs the community go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
+	SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS=true \
 	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \

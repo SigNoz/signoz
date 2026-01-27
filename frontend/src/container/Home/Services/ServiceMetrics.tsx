@@ -1,13 +1,7 @@
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
-import {
-	getQueryRangeRequestData,
-	getServiceListFromQuery,
-} from 'container/ServiceApplication/utils';
-import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
-import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
+import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -17,7 +11,6 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -30,7 +23,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 
-import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -166,32 +158,6 @@ function ServiceMetrics({
 		[queries],
 	);
 
-	const [isError, setIsError] = useState(false);
-
-	const queryKey: QueryKey = useMemo(
-		() => [
-			timeRange.startTime,
-			timeRange.endTime,
-			selectedTags,
-			globalSelectedInterval,
-		],
-		[
-			timeRange.startTime,
-			timeRange.endTime,
-			selectedTags,
-			globalSelectedInterval,
-		],
-	);
-
-	const {
-		data,
-		isLoading: isLoadingTopLevelOperations,
-		isError: isErrorTopLevelOperations,
-	} = useGetTopLevelOperations(queryKey, {
-		start: timeRange.startTime * 1e6,
-		end: timeRange.endTime * 1e6,
-	});
-
 	const handleTimeIntervalChange = useCallback((value: number): void => {
 		const timeInterval = TIME_PICKER_OPTIONS.find(
 			(option) => option.value === value,
@@ -209,66 +175,29 @@ function ServiceMetrics({
 		});
 	}, []);
 
-	const topLevelOperations = useMemo(() => Object.entries(data || {}), [data]);
-
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
-	const queryRangeRequestData = useMemo(
-		() =>
-			getQueryRangeRequestData({
-				topLevelOperations,
-				globalSelectedInterval,
-				dotMetricsEnabled,
-			}),
-		[globalSelectedInterval, topLevelOperations, dotMetricsEnabled],
-	);
-
-	const dataQueries = useGetQueriesRange(
-		queryRangeRequestData,
-		ENTITY_VERSION_V4,
-		{
-			queryKey: useMemo(
-				() => [
-					`GetMetricsQueryRange-home-${globalSelectedInterval}`,
-					timeRange.endTime,
-					timeRange.startTime,
-					globalSelectedInterval,
-				],
-				[globalSelectedInterval, timeRange.endTime, timeRange.startTime],
-			),
+	// Fetch services data from /api/v2/services
+	const { data: servicesData, isLoading, isError } = useQueryService({
+		minTime: timeRange.startTime * 1e6, // Convert ms to nanoseconds
+		maxTime: timeRange.endTime * 1e6, // Convert ms to nanoseconds
+		selectedTime: globalSelectedInterval,
+		selectedTags,
+		options: {
 			keepPreviousData: true,
-			enabled: true,
 			refetchOnMount: false,
-			onError: () => {
-				setIsError(true);
-			},
 		},
-	);
+	});
 
-	const isLoading = useMemo(() => dataQueries.some((query) => query.isLoading), [
-		dataQueries,
+	const services: ServicesList[] = useMemo(() => servicesData || [], [
+		servicesData,
 	]);
-
-	const services: ServicesList[] = useMemo(
-		() =>
-			getServiceListFromQuery({
-				queries: dataQueries,
-				topLevelOperations,
-				isLoading,
-			}),
-		[dataQueries, topLevelOperations, isLoading],
-	);
 
 	const sortedServices = useMemo(
 		() =>
-			services?.sort((a, b) => {
-				const aUpdateAt = new Date(a.p99).getTime();
-				const bUpdateAt = new Date(b.p99).getTime();
-				return bUpdateAt - aUpdateAt;
-			}) || [],
+			services?.sort(
+				(a, b) =>
+					// p99 is already a number (nanoseconds), sort descending
+					b.p99 - a.p99,
+			) || [],
 		[services],
 	);
 
@@ -293,7 +222,7 @@ function ServiceMetrics({
 		[safeNavigate],
 	);
 
-	if (isLoadingTopLevelOperations || isLoading) {
+	if (isLoading) {
 		return (
 			<Card className="services-list-card home-data-card loading-card">
 				<Card.Content>
@@ -303,7 +232,7 @@ function ServiceMetrics({
 		);
 	}
 
-	if (isErrorTopLevelOperations || isError) {
+	if (isError) {
 		return (
 			<Card className="services-list-card home-data-card error-card">
 				<Card.Content>

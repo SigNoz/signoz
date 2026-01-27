@@ -78,7 +78,7 @@ function ServiceOverview({
 				},
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: 'ns',
+				yAxisUnit: isSpanMetricEnable ? 'ms' : 'ns',
 				id: SERVICE_CHART_ID.latency,
 			}),
 		[
