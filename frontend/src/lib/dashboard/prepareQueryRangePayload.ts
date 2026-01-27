@@ -54,7 +54,9 @@ export const prepareQueryRangePayload = ({
 		}
 		case EQueryType.CLICKHOUSE: {
 			const chQueries = query[query.queryType].reduce((acc, query) => {
-				if (!query.query) return acc;
+				if (!query.query) {
+					return acc;
+				}
 
 				acc[query.name] = query;
 
@@ -70,7 +72,9 @@ export const prepareQueryRangePayload = ({
 		case EQueryType.PROM: {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			const promQueries = query[query.queryType].reduce((acc, query) => {
-				if (!query.query) return acc;
+				if (!query.query) {
+					return acc;
+				}
 
 				acc[query.name] = query;
 

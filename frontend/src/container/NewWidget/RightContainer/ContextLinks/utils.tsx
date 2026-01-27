@@ -136,7 +136,9 @@ const processContextLinks = (
 
 	// Process URLs with proper encoding/decoding
 	const finalUrls = urls.map((url) => {
-		if (typeof url !== 'string') return url;
+		if (typeof url !== 'string') {
+			return url;
+		}
 
 		try {
 			// 1. Get the URL and extract base URL and query string
@@ -148,7 +150,9 @@ const processContextLinks = (
 			});
 			const resolvedBaseUrl = resolvedBaseUrlResult.fullTexts[0];
 
-			if (!queryString) return resolvedBaseUrl;
+			if (!queryString) {
+				return resolvedBaseUrl;
+			}
 
 			// 2. Extract all query params using URLSearchParams
 			const searchParams = new URLSearchParams(queryString);

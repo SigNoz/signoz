@@ -6,7 +6,7 @@ import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -16,9 +16,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
+	source?: YAxisSource;
 }
 
-function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
+function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
 	const {
 		alertType,
@@ -35,8 +36,14 @@ function ChartPreview({ alertDef }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	const shouldUpdateYAxisUnit =
-		!isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
+	// Only update automatically when creating a new metrics-based alert rule
+	const shouldUpdateYAxisUnit = useMemo(() => {
+		// Do not update if we are coming to the page from dashboards (we still show warning)
+		if (source === YAxisSource.DASHBOARDS) {
+			return false;
+		}
+		return !isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
+	}, [isEditMode, alertType, source]);
 
 	const selectedQueryName = thresholdState.selectedQuery;
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(

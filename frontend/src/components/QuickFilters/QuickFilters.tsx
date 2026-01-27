@@ -87,7 +87,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// Generate query options based on available queries
 	const queryOptions = useMemo(() => {
-		if (!currentQuery?.builder?.queryData) return [];
+		if (!currentQuery?.builder?.queryData) {
+			return [];
+		}
 
 		return currentQuery.builder.queryData.map((query, index) => ({
 			label: query.queryName || String.fromCharCode(65 + index),
@@ -301,15 +303,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 								/>
 							);
 						case FiltersType.DURATION:
-							return (
-								<Duration
-									filter={filter}
-									onFilterChange={onFilterChange}
-									source={source}
-								/>
-							);
+							return <Duration filter={filter} onFilterChange={onFilterChange} />;
 						case FiltersType.SLIDER:
-							return <Slider filter={filter} />;
+							return <Slider />;
 						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
 							return (

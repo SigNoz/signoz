@@ -45,7 +45,9 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 
 	const onLogCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
-			if (!logId) return;
+			if (!logId) {
+				return;
+			}
 
 			event.preventDefault();
 			event.stopPropagation();
@@ -74,7 +76,9 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	}, [pathname, search, safeNavigate]);
 
 	useEffect(() => {
-		if (!isActiveLog) return;
+		if (!isActiveLog) {
+			return;
+		}
 
 		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
 

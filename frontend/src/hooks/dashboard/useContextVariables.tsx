@@ -47,7 +47,9 @@ function useContextVariables({
 
 	// Extract dashboard variables
 	const dashboardVariables = useMemo(() => {
-		if (!selectedDashboard?.data?.variables) return [];
+		if (!selectedDashboard?.data?.variables) {
+			return [];
+		}
 
 		return Object.entries(selectedDashboard.data.variables)
 			.filter(([, value]) => value.name)
@@ -95,7 +97,9 @@ function useContextVariables({
 
 	// Extract custom variables with '_' prefix to avoid conflicts
 	const customVariablesList = useMemo(() => {
-		if (!customVariables) return [];
+		if (!customVariables) {
+			return [];
+		}
 
 		return Object.entries(customVariables).map(([name, value]) => ({
 			name: `_${name}`, // Add '_' prefix to avoid conflicts
@@ -184,16 +188,22 @@ const extractVarName = (
 		const dotMatch = match.match(
 			new RegExp(`\\{\\{\\s*\\.(${varNamePattern})\\s*\\}\\}`),
 		);
-		if (dotMatch) return dotMatch[1].trim();
+		if (dotMatch) {
+			return dotMatch[1].trim();
+		}
 		const normalMatch = match.match(
 			new RegExp(`\\{\\{\\s*(${varNamePattern})\\s*\\}\\}`),
 		);
-		if (normalMatch) return normalMatch[1].trim();
+		if (normalMatch) {
+			return normalMatch[1].trim();
+		}
 	} else if (match.startsWith('[[')) {
 		const bracketMatch = match.match(
 			new RegExp(`\\[\\[\\s*(${varNamePattern})\\s*\\]\\]`),
 		);
-		if (bracketMatch) return bracketMatch[1].trim();
+		if (bracketMatch) {
+			return bracketMatch[1].trim();
+		}
 	} else if (match.startsWith(matcher)) {
 		// For $ variables, we always want to strip the prefix
 		// unless the full match exists in processedVariables

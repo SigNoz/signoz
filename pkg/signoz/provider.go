@@ -161,6 +161,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateUserPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewRenameOrgDomainsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddResetPasswordTokenExpiryFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -242,6 +243,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
 			handlers.GatewayHandler,
+			modules.RoleGetter,
+			handlers.Role,
 		),
 	)
 }

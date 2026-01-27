@@ -22,7 +22,9 @@ function BackButton(): JSX.Element {
 	const compositeQuery = useGetCompositeQueryParam();
 
 	const handleBack = useCallback(() => {
-		if (!compositeQuery) return;
+		if (!compositeQuery) {
+			return;
+		}
 
 		const nextCompositeQuery = constructCompositeQuery({
 			query: compositeQuery,

@@ -21,7 +21,9 @@ interface UseFunnelConfiguration {
 
 // Add this helper function
 export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
-	if (steps.some((step) => !step.filters)) return steps;
+	if (steps.some((step) => !step.filters)) {
+		return steps;
+	}
 
 	return steps.map((step) => ({
 		...step,
@@ -29,8 +31,8 @@ export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 			...step.filters,
 			items: step.filters.items.map((item) => {
 				const {
-					id: unusedId,
-					isIndexed,
+					id: _unusedId,
+					isIndexed: _isIndexed,
 					...keyObj
 				} = item.key as BaseAutocompleteData;
 				return {
@@ -126,7 +128,9 @@ export default function useFunnelConfiguration({
 
 	const hasFunnelStepDefinitionsChanged = useCallback(
 		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean => {
-			if (prevSteps.length !== nextSteps.length) return true;
+			if (prevSteps.length !== nextSteps.length) {
+				return true;
+			}
 			return prevSteps.some((step, index) => {
 				const nextStep = nextSteps[index];
 				return (
@@ -159,7 +163,9 @@ export default function useFunnelConfiguration({
 				onSuccess: (data) => {
 					const updatedFunnelSteps = data?.payload?.steps;
 
-					if (!updatedFunnelSteps) return;
+					if (!updatedFunnelSteps) {
+						return;
+					}
 
 					// Clear localStorage since steps are saved successfully
 					clearLocalStorageSavedSteps();
@@ -167,7 +173,9 @@ export default function useFunnelConfiguration({
 					queryClient.setQueryData(
 						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.funnel_id],
 						(oldData: any) => {
-							if (!oldData?.payload) return oldData;
+							if (!oldData?.payload) {
+								return oldData;
+							}
 							return {
 								...oldData,
 								payload: {

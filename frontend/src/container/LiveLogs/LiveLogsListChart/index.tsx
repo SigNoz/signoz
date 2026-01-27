@@ -22,14 +22,18 @@ function LiveLogsListChart({
 	const { isConnectionOpen } = useEventSource();
 
 	const listChartQuery: Query | null = useMemo(() => {
-		if (!currentQuery) return null;
+		if (!currentQuery) {
+			return null;
+		}
 
 		const currentFilterExpression =
 			currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
 
 		const validationResult = validateQuery(currentFilterExpression || '');
 
-		if (!validationResult.isValid) return null;
+		if (!validationResult.isValid) {
+			return null;
+		}
 
 		return {
 			...currentQuery,
@@ -63,9 +67,13 @@ function LiveLogsListChart({
 	);
 
 	const chartData: QueryData[] = useMemo(() => {
-		if (initialData) return initialData;
+		if (initialData) {
+			return initialData;
+		}
 
-		if (!data) return [];
+		if (!data) {
+			return [];
+		}
 
 		return data.payload.data.result;
 	}, [data, initialData]);

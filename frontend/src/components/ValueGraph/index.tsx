@@ -59,7 +59,9 @@ function ValueGraph({
 	// Adjust font size based on container size
 	useEffect(() => {
 		const updateFontSize = (): void => {
-			if (!containerRef.current) return;
+			if (!containerRef.current) {
+				return;
+			}
 
 			const { width, height } = containerRef.current.getBoundingClientRect();
 			const minDimension = Math.min(width, height);

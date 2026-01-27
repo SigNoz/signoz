@@ -15,9 +15,15 @@ function StatusMessage({
 	const { t } = useTranslation(['generalSettings']);
 
 	const messageColor = useMemo((): string => {
-		if (status === 'success') return green[6];
-		if (status === 'pending') return orange[6];
-		if (status === 'failed') return volcano[6];
+		if (status === 'success') {
+			return green[6];
+		}
+		if (status === 'pending') {
+			return orange[6];
+		}
+		if (status === 'failed') {
+			return volcano[6];
+		}
 		return 'inherit';
 	}, [status]);
 	if (!status) {

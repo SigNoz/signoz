@@ -3,6 +3,12 @@
 	font-family: inherit;
 	color: var(--text-vanilla-100);
 
+	&__tab-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
 	/* Tab block visuals */
 	&__tab {
 		display: flex;
