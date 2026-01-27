@@ -198,8 +198,6 @@ func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, t
 	}
 	key.JSONPlan = append(key.JSONPlan, node)
 
-	// TODO: PlanJSON requires the Start and End of the Query to select correct column between promoted and body_json using
-	// creation time in distributed_promoted_paths
 	if pb.isPromoted {
 		node, err := pb.buildPlan(0,
 			NewRootJSONAccessNode(columnInfo.PromotedColumn,
