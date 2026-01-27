@@ -14,6 +14,12 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import {
+	saveAsPreviousQuery,
+	getPreviousQueryFromKey,
+	removeKeyFromPreviousQuery,
+	getQueryKey,
+} from '../previousQuery.utils';
 
 export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
 	{ value: 'metrics', label: 'Metrics' },
@@ -27,6 +33,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 	signalSource,
 	onSignalSourceChange,
 	signalSourceChangeEnabled = false,
+	savePreviousQuery = false,
 }: {
 	query: IBuilderQuery;
 	index: number;
@@ -34,6 +41,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 	signalSource: 'meter' | '';
 	onSignalSourceChange: (value: string) => void;
 	signalSourceChangeEnabled: boolean;
+	savePreviousQuery: boolean;
 }): JSX.Element {
 	const [attributeKeys, setAttributeKeys] = useState<BaseAutocompleteData[]>([]);
 
@@ -50,7 +58,11 @@ export const MetricsSelect = memo(function MetricsSelect({
 		[handleChangeAggregatorAttribute, attributeKeys],
 	);
 
-	const { updateAllQueriesOperators, handleSetQueryData } = useQueryBuilder();
+	const {
+		updateAllQueriesOperators,
+		handleSetQueryData,
+		panelType,
+	} = useQueryBuilder();
 
 	const source = useMemo(
 		() => (signalSource === 'meter' ? 'meter' : 'metrics'),
@@ -79,22 +91,67 @@ export const MetricsSelect = memo(function MetricsSelect({
 		[updateAllQueriesOperators],
 	);
 
+	const getDefaultQueryFromSource = useCallback(
+		(source: string): IBuilderQuery => {
+			if (source === 'meter') {
+				return {
+					...defaultMeterQuery.builder.queryData[0],
+					source: 'meter',
+					queryName: query.queryName,
+				};
+			}
+			return {
+				...defaultMetricsQuery.builder.queryData[0],
+				source: '',
+				queryName: query.queryName,
+			};
+		},
+		[defaultMeterQuery, defaultMetricsQuery, query.queryName],
+	);
+
 	const handleSignalSourceChange = (value: string): void => {
+		let newQueryData: IBuilderQuery;
+
+		if (savePreviousQuery) {
+			const queryName = query.queryName || '';
+			const dataSource = query.dataSource || '';
+			const currSignalSource = query.source ?? '';
+			const newSignalSource = value === 'meter' ? 'meter' : '';
+
+			const currQueryKey = getQueryKey({
+				queryName: queryName,
+				dataSource: dataSource,
+				signalSource: currSignalSource,
+				panelType: panelType || '',
+			});
+
+			// save the current query key in session storage
+			saveAsPreviousQuery(currQueryKey, query);
+
+			const newQueryKey = getQueryKey({
+				queryName: queryName,
+				dataSource: dataSource,
+				signalSource: newSignalSource,
+				panelType: panelType || '',
+			});
+			const savedQuery: IBuilderQuery | null = getPreviousQueryFromKey(
+				newQueryKey,
+			);
+
+			// remove the new query key from session storage
+			removeKeyFromPreviousQuery(newQueryKey);
+
+			if (savedQuery) {
+				newQueryData = savedQuery;
+			} else {
+				newQueryData = getDefaultQueryFromSource(newSignalSource);
+			}
+		} else {
+			newQueryData = getDefaultQueryFromSource(value);
+		}
+
 		onSignalSourceChange(value);
-		handleSetQueryData(
-			index,
-			value === 'meter'
-				? {
-						...defaultMeterQuery.builder.queryData[0],
-						source: 'meter',
-						queryName: query.queryName,
-				  }
-				: {
-						...defaultMetricsQuery.builder.queryData[0],
-						source: '',
-						queryName: query.queryName,
-				  },
-		);
+		handleSetQueryData(index, newQueryData);
 	};
 
 	return (

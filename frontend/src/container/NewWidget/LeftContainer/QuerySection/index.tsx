@@ -169,6 +169,7 @@ function QuerySection({
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 							queryComponents={queryComponents}
 							signalSourceChangeEnabled
+							savePreviousQuery
 						/>
 					</div>
 				),

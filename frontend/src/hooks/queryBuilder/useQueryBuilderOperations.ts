@@ -1,4 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import {
+	getPreviousQueryFromKey,
+	removeKeyFromPreviousQuery,
+	saveAsPreviousQuery,
+} from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { LEGEND } from 'constants/global';
 import {
@@ -30,6 +35,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregation,
@@ -51,6 +57,8 @@ import {
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 
+import { getQueryKey } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
+
 export const useQueryOperations: UseQueryOperations = ({
 	query,
 	index,
@@ -59,6 +67,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	isListViewPanel = false,
 	entityVersion,
 	isForTraceOperator = false,
+	savePreviousQuery = false,
 }) => {
 	const {
 		handleSetQueryData,
@@ -417,11 +426,50 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
+			let newQueryData: IBuilderQuery | null = null;
+			if (savePreviousQuery) {
+				// save the current query key in session storage
+				const currKey = getQueryKey({
+					queryName: query.queryName || '',
+					dataSource: query.dataSource || '',
+					signalSource: query.source || '',
+					panelType: panelType || '',
+				});
+
+				saveAsPreviousQuery(currKey, query);
+
+				const newKey = getQueryKey({
+					queryName: query.queryName || '',
+					dataSource: nextSource || '',
+					signalSource: query.source || '',
+					panelType: panelType || '',
+				});
+
+				newQueryData = getPreviousQueryFromKey(newKey);
+
+				// remove the new query key from session storage
+				removeKeyFromPreviousQuery(newKey);
+			}
+
 			if (isListViewPanel) {
+				let listPanelQuery: Query | null = null;
+
 				if (nextSource === DataSource.LOGS) {
-					redirectWithQueryBuilderData(listViewInitialLogQuery);
+					listPanelQuery = listViewInitialLogQuery;
 				} else if (nextSource === DataSource.TRACES) {
-					redirectWithQueryBuilderData(listViewInitialTraceQuery);
+					listPanelQuery = listViewInitialTraceQuery;
+				}
+				if (newQueryData && listPanelQuery) {
+					listPanelQuery = {
+						...listPanelQuery,
+						builder: {
+							...listPanelQuery.builder,
+							queryData: [newQueryData],
+						},
+					};
+				}
+				if (listPanelQuery) {
+					redirectWithQueryBuilderData(listPanelQuery);
 				}
 			}
 
@@ -443,8 +491,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				aggregateOperator: newOperators[0].value,
 			};
 
+			newQueryData = newQueryData ? newQueryData : newQuery;
+
 			setOperators(newOperators);
-			handleSetQueryData(index, newQuery);
+			handleSetQueryData(index, newQueryData);
 		},
 		[
 			isListViewPanel,
@@ -453,6 +503,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			handleSetQueryData,
 			index,
 			redirectWithQueryBuilderData,
+			savePreviousQuery,
 		],
 	);
 
