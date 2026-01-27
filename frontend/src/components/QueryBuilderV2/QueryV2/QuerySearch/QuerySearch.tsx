@@ -29,7 +29,6 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
@@ -207,8 +206,6 @@ function QuerySearch({
 	const lastFetchedKeyRef = useRef<string>('');
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
-
-	const { handleRunQuery } = useQueryBuilder();
 
 	const { selectedDashboard } = useDashboard();
 

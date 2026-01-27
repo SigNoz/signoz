@@ -12,11 +12,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/dustin/go-humanize"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -28,10 +30,11 @@ type Module struct {
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
 	analytics analytics.Analytics
+	config    user.Config
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -40,6 +43,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		config:    config,
 	}
 }
 
@@ -302,31 +306,89 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
+	// check if a token already exists for this password id
+	existingResetPasswordToken, err := module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err // return the error if it is not a not found error
+	}
+
+	// return the existing token if it is not expired
+	if existingResetPasswordToken != nil && !existingResetPasswordToken.IsExpired() {
+		return existingResetPasswordToken, nil // return the existing token if it is not expired
+	}
+
+	// delete the existing token entry
+	if existingResetPasswordToken != nil {
+		if err := module.store.DeleteResetPasswordTokenByPasswordID(ctx, password.ID); err != nil {
+			return nil, err
+		}
+	}
+
+	// create a new token
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
 	if err != nil {
 		return nil, err
 	}
 
+	// create a new token
 	err = module.store.CreateResetPasswordToken(ctx, resetPasswordToken)
 	if err != nil {
-		if !errors.Ast(err, errors.TypeAlreadyExists) {
-			return nil, err
-		}
-
-		// if the token already exists, we return the existing token
-		resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return resetPasswordToken, nil
+}
+
+func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
+	if !module.config.Password.Reset.AllowSelf {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "users are not allowed to reset their password themselves, please contact an admin to reset your password")
+	}
+
+	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil // for security reasons
+		}
+		return err
+	}
+
+	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	if err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
+		return err
+	}
+
+	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
+
+	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
+	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
+
+	if err := module.emailing.SendHTML(
+		ctx,
+		user.Email.String(),
+		"Reset your SigNoz password",
+		emailtypes.TemplateNameResetPassword,
+		map[string]any{
+			"Name":   user.DisplayName,
+			"Link":   resetLink,
+			"Expiry": humanizedTokenLifetime,
+		},
+	); err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
+		return nil
+	}
+
+	return nil
 }
 
 func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
 	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err
+	}
+
+	if resetPasswordToken.IsExpired() {
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
