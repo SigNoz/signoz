@@ -272,11 +272,11 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 func AdjustKeysForAliasExpressions[T any](query *qbtypes.QueryBuilderQuery[T], requestType qbtypes.RequestType) []string {
 	/*
 		For example, if user is using `body.count` as an alias for aggregation and
-		Uses it in orderBy or group by, upstream code will convert it to just `count` with fieldContext as Body
+		Uses it in orderBy, upstream code will convert it to just `count` with fieldContext as Body
 		But we need to adjust it back to `body.count` with fieldContext as unspecified
 
 		NOTE: One ambiguity here is that if user specified alias `body.count` is also a valid field then we're not sure
-		what user meant. Here we take a call that we chose alias over fieldName because if user specifically wants to order or group by
+		what user meant. Here we take a call that we chose alias over fieldName because if user specifically wants to order by
 		that field, a different alias can be chosen.
 	*/
 	actions := []string{}
