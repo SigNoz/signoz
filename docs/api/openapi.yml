@@ -1985,6 +1985,35 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/factor_password/forgot:
+    post:
+      deprecated: false
+      description: This endpoint initiates the forgot password flow by sending a reset
+        password email
+      operationId: ForgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableForgotPassword'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Forgot password
+      tags:
+      - users
   /api/v2/features:
     get:
       deprecated: false
@@ -3979,6 +4008,15 @@ components:
         token:
           type: string
       type: object
+    TypesPostableForgotPassword:
+      properties:
+        email:
+          type: string
+        frontendBaseURL:
+          type: string
+        orgId:
+          type: string
+      type: object
     TypesPostableInvite:
       properties:
         email:
@@ -3999,6 +4037,9 @@ components:
       type: object
     TypesResetPasswordToken:
       properties:
+        expiresAt:
+          format: date-time
+          type: string
         id:
           type: string
         passwordId:
