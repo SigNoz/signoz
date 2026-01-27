@@ -12,6 +12,7 @@ linters:
     - misspell
     - nilnil
     - sloglint
+    - wastedassign
     - unparam
     - unused
   settings:
