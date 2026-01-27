@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"maps"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -141,8 +140,8 @@ func (b *MetricQueryStatementBuilder) Build(
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	if requestType == qbtypes.RequestTypeBucket || requestType == qbtypes.RequestTypeDistribution {
-		return b.buildBucketQuery(ctx, start, end, query, keys, variables, requestType)
+	if requestType == qbtypes.RequestTypeHeatmap {
+		return b.buildHeatmapQuery(ctx, start, end, query, keys, variables, requestType)
 	}
 
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
@@ -614,7 +613,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
 }
 
-func (b *MetricQueryStatementBuilder) buildBucketQuery(
+func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	ctx context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
@@ -622,14 +621,6 @@ func (b *MetricQueryStatementBuilder) buildBucketQuery(
 	variables map[string]qbtypes.VariableItem,
 	requestType qbtypes.RequestType,
 ) (*qbtypes.Statement, error) {
-	filteredKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(keys))
-	maps.Copy(filteredKeys, keys)
-	delete(filteredKeys, "le")
-
-	if len(query.Aggregations) == 0 {
-		return nil, fmt.Errorf("at least one aggregation is required")
-	}
-
 	query.GroupBy = slices.Clone(query.GroupBy)
 
 	leExists := false
@@ -648,28 +639,27 @@ func (b *MetricQueryStatementBuilder) buildBucketQuery(
 
 	query.Aggregations = slices.Clone(query.Aggregations)
 
-	query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
-	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
-	// For bucket queries, we want to ignore the __normalized filter
-	if query.Aggregations[0].TableHints != nil {
-		hints := *query.Aggregations[0].TableHints
-		query.Aggregations[0].TableHints = &hints
-	} else {
-		query.Aggregations[0].TableHints = &metrictypes.MetricTableHints{}
+	for i := range query.Aggregations {
+		// For heatmap queries, we want to ignore the __normalized filter
+		hints := metrictypes.MetricTableHints{}
+		if query.Aggregations[i].TableHints != nil {
+			hints = *query.Aggregations[i].TableHints
+		}
+		hints.SkipNormalizationCheck = true
+		query.Aggregations[i].TableHints = &hints
 	}
-	query.Aggregations[0].TableHints.SkipNormalizationCheck = true
 
 	var (
 		cteFragments []string
 		cteArgs      [][]any
 	)
 
-	timeSeriesCTE, timeSeriesCTEArgs, err := b.buildTimeSeriesCTE(ctx, start, end, query, filteredKeys, variables)
+	timeSeriesCTE, timeSeriesCTEArgs, err := b.buildTimeSeriesCTE(ctx, start, end, query, keys, variables)
 	if err != nil {
 		return nil, err
 	}
 
-	frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, filteredKeys, timeSeriesCTE, timeSeriesCTEArgs)
+	frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys, timeSeriesCTE, timeSeriesCTEArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +668,7 @@ func (b *MetricQueryStatementBuilder) buildBucketQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	frag, args = b.buildSpatialAggregationCTE(ctx, start, end, query, filteredKeys)
+	frag, args = b.buildSpatialAggregationCTE(ctx, start, end, query, keys)
 	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
@@ -691,50 +681,62 @@ func (b *MetricQueryStatementBuilder) buildBucketQuery(
 		finalArgs = append(finalArgs, a...)
 	}
 
-	inner := sqlbuilder.NewSelectBuilder()
+	tsExpr := "ts"
+	partitionExpr := "PARTITION BY ts"
+	finalTsExpr := "toUnixTimestamp(ts) * 1000 AS ts"
+	groupByKeys := []string{"ts", "bucket_end"}
+	orderByKeys := []string{"ts", "bucket_end"}
+
 	if requestType == qbtypes.RequestTypeDistribution {
-		inner.Select(fmt.Sprintf("%d AS ts", start))
-	} else {
-		inner.Select("ts")
+		tsExpr = fmt.Sprintf("%d AS ts", start)
+		partitionExpr = ""
+		finalTsExpr = fmt.Sprintf("%d AS ts", start)
+		groupByKeys = []string{"bucket_end"}
+		orderByKeys = []string{"bucket_end"}
 	}
+
+	inner := sqlbuilder.NewSelectBuilder()
+	inner.Select(tsExpr)
+	inner.SelectMore("toFloat64OrNull(le) AS bucket_end")
+	inner.SelectMore("sum(value) AS cumulative_value")
+	inner.From("__spatial_aggregation_cte")
 	inner.Where("le != '+Inf'")
 	inner.Where("toFloat64OrNull(le) IS NOT NULL")
 	inner.Where("isFinite(toFloat64OrNull(le))")
-	inner.SelectMore("toFloat64OrNull(le) AS bucket_end")
-	inner.SelectMore("sum(value) AS value")
-	inner.From("__spatial_aggregation_cte")
-	if requestType == qbtypes.RequestTypeDistribution {
-		inner.GroupBy("bucket_end")
-		inner.OrderBy("bucket_end")
-	} else {
-		inner.GroupBy("ts", "bucket_end")
-		inner.OrderBy("ts", "bucket_end")
-	}
+	inner.GroupBy(groupByKeys...)
+	inner.OrderBy(orderByKeys...)
 	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	bucketCTE := sqlbuilder.NewSelectBuilder()
+	lagOver := fmt.Sprintf("%s ORDER BY bucket_end", partitionExpr)
+	if partitionExpr == "" {
+		lagOver = "ORDER BY bucket_end"
+	}
+
+	bucketCTE.Select(tsExpr)
+	bucketCTE.SelectMore(fmt.Sprintf("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (%s) AS bucket_start", lagOver))
+	bucketCTE.SelectMore("bucket_end")
+	bucketCTE.SelectMore(fmt.Sprintf("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (%s), toFloat64(0)) AS value", lagOver))
+	bucketCTE.From("(" + innerQ + ")")
+	bucketCTE.OrderBy(orderByKeys...)
+	bucketQ, bucketArgs := bucketCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
+
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("ts")
-	if requestType == qbtypes.RequestTypeDistribution {
-		sb.SelectMore("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (ORDER BY bucket_end) AS bucket_start")
-		sb.SelectMore("bucket_end")
-		sb.SelectMore("greatest(value - lagInFrame(value, 1, toFloat64(0)) OVER (ORDER BY bucket_end), toFloat64(0)) AS value")
-	} else {
-		sb.SelectMore("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end) AS bucket_start")
-		sb.SelectMore("bucket_end")
-		sb.SelectMore("greatest(value - lagInFrame(value, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bucket_end), toFloat64(0)) AS value")
+	sb.Select(finalTsExpr)
+	sb.SelectMore("groupArray([bucket_start, bucket_end, value]) AS __result_0")
+	sb.From("(" + bucketQ + ")")
+	if requestType != qbtypes.RequestTypeDistribution {
+		sb.GroupBy("ts")
+		sb.Having("length(__result_0) > 0")
 	}
-	sb.From("(" + innerQ + ")")
-	if requestType == qbtypes.RequestTypeDistribution {
-		sb.OrderBy("bucket_end")
-	} else {
-		sb.OrderBy("ts", "bucket_end")
-	}
+	sb.OrderBy("ts")
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	finalQuery := combined + q
+
 	return &qbtypes.Statement{
 		Query: finalQuery,
-		Args:  append(finalArgs, append(innerArgs, a...)...),
+		Args:  append(finalArgs, append(innerArgs, append(bucketArgs, a...)...)...),
 	}, nil
 }

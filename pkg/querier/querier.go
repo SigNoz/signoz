@@ -577,10 +577,6 @@ func (q *querier) run(
 				v.QueryName = name
 			case *qbtypes.RawData:
 				v.QueryName = name
-			case *qbtypes.DistributionData:
-				v.QueryName = name
-			case *qbtypes.BucketData:
-				v.QueryName = name
 			}
 
 			results[name] = result.Value
