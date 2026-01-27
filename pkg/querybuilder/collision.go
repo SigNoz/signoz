@@ -158,7 +158,7 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 		}
 	}
 
-	// This means that the key provided by the user cannot be overidden to a single field because of ambiguity
+	// This means that the key provided by the user cannot be overridden to a single field because of ambiguity
 	// So we need to look into metadata keys to find the best match
 
 	// check if all the keys for the given field with matching context and data type
