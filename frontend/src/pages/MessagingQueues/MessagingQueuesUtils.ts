@@ -275,7 +275,7 @@ export function setConfigDetail(
 	},
 ): void {
 	// remove "key" and its value from the paramsToSet object
-	const { key, ...restParamsToSet } = paramsToSet || {};
+	const { key: _key, ...restParamsToSet } = paramsToSet || {};
 
 	if (!isEmpty(restParamsToSet)) {
 		const configDetail = {
