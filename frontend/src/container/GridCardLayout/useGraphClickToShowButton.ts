@@ -92,7 +92,9 @@ export const useGraphClickToShowButton = ({
 		menuList.style.zIndex = '9999';
 
 		const graphBounds = graphRef.current?.getBoundingClientRect();
-		if (!graphBounds) return;
+		if (!graphBounds) {
+			return;
+		}
 
 		graphRef.current?.appendChild(menuList);
 

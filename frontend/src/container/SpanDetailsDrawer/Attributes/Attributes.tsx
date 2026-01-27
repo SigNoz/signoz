@@ -46,8 +46,12 @@ function Attributes(props: IAttributesProps): JSX.Element {
 				const aIsPinned = pinnedAttributes[a.field];
 				const bIsPinned = pinnedAttributes[b.field];
 
-				if (aIsPinned && !bIsPinned) return -1;
-				if (!aIsPinned && bIsPinned) return 1;
+				if (aIsPinned && !bIsPinned) {
+					return -1;
+				}
+				if (!aIsPinned && bIsPinned) {
+					return 1;
+				}
 
 				// Within same pinning status, maintain alphabetical order
 				return a.field.localeCompare(b.field);

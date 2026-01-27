@@ -25,10 +25,14 @@ function mockOverflow(clientWidth: number, scrollWidth: number): void {
 function queryTooltipInner(): HTMLElement | null {
 	// find element that has role="tooltip" (could be the inner itself)
 	const tooltip = document.querySelector<HTMLElement>('[role="tooltip"]');
-	if (!tooltip) return document.querySelector(TOOLTIP_INNER_SELECTOR);
+	if (!tooltip) {
+		return document.querySelector(TOOLTIP_INNER_SELECTOR);
+	}
 
 	// if the role element is already the inner, return it; otherwise return its descendant
-	if (tooltip.classList.contains('ant-tooltip-inner')) return tooltip;
+	if (tooltip.classList.contains('ant-tooltip-inner')) {
+		return tooltip;
+	}
 	return (
 		(tooltip.querySelector(TOOLTIP_INNER_SELECTOR) as HTMLElement) ??
 		document.querySelector(TOOLTIP_INNER_SELECTOR)
@@ -52,7 +56,9 @@ describe('OverflowInputToolTip', () => {
 		});
 
 		const tooltipInner = queryTooltipInner();
-		if (!tooltipInner) throw new Error('Tooltip inner not found');
+		if (!tooltipInner) {
+			throw new Error('Tooltip inner not found');
+		}
 		expect(
 			within(tooltipInner).getByText('Very long overflowing text'),
 		).toBeInTheDocument();

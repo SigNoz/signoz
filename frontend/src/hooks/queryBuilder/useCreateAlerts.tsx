@@ -41,7 +41,9 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	);
 
 	return useCallback(() => {
-		if (!widget) return;
+		if (!widget) {
+			return;
+		}
 
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {

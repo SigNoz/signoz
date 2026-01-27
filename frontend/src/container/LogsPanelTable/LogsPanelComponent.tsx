@@ -95,7 +95,9 @@ function LogsPanelComponent({
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (): void => {
 				const log = logs.find((item) => item.id === record.id);
-				if (log) onSetActiveLog(log);
+				if (log) {
+					onSetActiveLog(log);
+				}
 			},
 		}),
 		[logs, onSetActiveLog],

@@ -61,7 +61,9 @@ function RuleOptions({
 	};
 
 	const onChangeSelectedQueryName = (value: string | unknown): void => {
-		if (typeof value !== 'string') return;
+		if (typeof value !== 'string') {
+			return;
+		}
 
 		setAlertDef({
 			...alertDef,

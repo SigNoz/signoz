@@ -198,8 +198,11 @@ function QueryBuilder({
 
 	const handleDelete = (queryIndex: number): void => {
 		const updated = [...fieldsQuery];
-		if (queryIndex !== 0) updated.splice(queryIndex - 1, 2);
-		else updated.splice(queryIndex, 2);
+		if (queryIndex !== 0) {
+			updated.splice(queryIndex - 1, 2);
+		} else {
+			updated.splice(queryIndex, 2);
+		}
 
 		setFieldsQuery(updated);
 

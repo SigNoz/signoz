@@ -202,7 +202,9 @@ function DashboardsList(): JSX.Element {
 	};
 
 	const sortHandle = (key: string): void => {
-		if (!dashboards) return;
+		if (!dashboards) {
+			return;
+		}
 		if (key === 'createdAt') {
 			sortDashboardsByCreatedAt(dashboards);
 			setSortOrder({

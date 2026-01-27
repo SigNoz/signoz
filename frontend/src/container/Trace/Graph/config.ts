@@ -30,7 +30,7 @@ export const getChartData = (
 	};
 	const chartLabels: ChartData<'line'>['labels'] = [];
 
-	if (allDataPoints && typeof allDataPoints === 'object')
+	if (allDataPoints && typeof allDataPoints === 'object') {
 		Object.keys(allDataPoints).forEach((timestamp) => {
 			const key = allDataPoints[timestamp];
 			if (key.value) {
@@ -39,6 +39,7 @@ export const getChartData = (
 				chartLabels.push(date.toDate().getTime());
 			}
 		});
+	}
 
 	return {
 		datasets: [

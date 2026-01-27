@@ -199,7 +199,9 @@ function ChartPreview({
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
-		if (setQueryStatus) setQueryStatus(queryResponse.status);
+		if (setQueryStatus) {
+			setQueryStatus(queryResponse.status);
+		}
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);

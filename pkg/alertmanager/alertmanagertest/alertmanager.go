@@ -2,7 +2,7 @@
 // github.com/vektra/mockery
 // template: testify
 
-package alertmanagermock
+package alertmanagertest
 
 import (
 	"context"
@@ -109,20 +109,31 @@ func (_c *MockAlertmanager_Collect_Call) RunAndReturn(run func(context1 context.
 }
 
 // CreateChannel provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v alertmanagertypes.Receiver) error {
+func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	ret := _mock.Called(context1, s, v)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateChannel")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) error); ok {
+	var r0 *alertmanagertypes.Channel
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)); ok {
+		return returnFunc(context1, s, v)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) *alertmanagertypes.Channel); ok {
 		r0 = returnFunc(context1, s, v)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*alertmanagertypes.Channel)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, alertmanagertypes.Receiver) error); ok {
+		r1 = returnFunc(context1, s, v)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockAlertmanager_CreateChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateChannel'
@@ -161,12 +172,12 @@ func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Con
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) Return(err error) *MockAlertmanager_CreateChannel_Call {
-	_c.Call.Return(err)
+func (_c *MockAlertmanager_CreateChannel_Call) Return(channel *alertmanagertypes.Channel, err error) *MockAlertmanager_CreateChannel_Call {
+	_c.Call.Return(channel, err)
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver) error) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }

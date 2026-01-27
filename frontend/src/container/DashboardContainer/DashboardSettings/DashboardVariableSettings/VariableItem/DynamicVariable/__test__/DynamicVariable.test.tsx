@@ -143,9 +143,15 @@ describe('DynamicVariable Component', () => {
 
 			options.forEach((option) => {
 				const text = option.textContent?.trim();
-				if (text === 'service.name') foundServiceName = true;
-				if (text === 'http.status_code') foundHttpStatusCode = true;
-				if (text === 'duration') foundDuration = true;
+				if (text === 'service.name') {
+					foundServiceName = true;
+				}
+				if (text === 'http.status_code') {
+					foundHttpStatusCode = true;
+				}
+				if (text === 'duration') {
+					foundDuration = true;
+				}
 			});
 
 			expect(foundServiceName).toBe(true);
