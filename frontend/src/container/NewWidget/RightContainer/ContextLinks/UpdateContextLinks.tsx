@@ -166,7 +166,7 @@ function UpdateContextLinks({
 			onSave(newContextLink);
 		} catch (error) {
 			// Form validation failed, don't call onSave
-			console.log('Form validation failed:', error);
+			console.error('Form validation failed:', error);
 		}
 	};
 
