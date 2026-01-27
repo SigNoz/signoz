@@ -48,47 +48,47 @@ var (
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, []string, bool, error) {
-		query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
-		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
+	}
+	defer rows.Close()
+
+	fieldKeys := []*telemetrytypes.TelemetryFieldKey{}
+	paths := []string{}
+	rowCount := 0
+	for rows.Next() {
+		var path string
+		var typesArray []string // ClickHouse returns array as []string
+		var lastSeen uint64
+
+		err = rows.Scan(&path, &typesArray, &lastSeen)
 		if err != nil {
-			return nil, nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
+			return nil, nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
 		}
-		defer rows.Close()
-	
-		fieldKeys := []*telemetrytypes.TelemetryFieldKey{}
-		paths := []string{}
-		rowCount := 0
-		for rows.Next() {
-			var path string
-			var typesArray []string // ClickHouse returns array as []string
-			var lastSeen uint64
-	
-			err = rows.Scan(&path, &typesArray, &lastSeen)
-			if err != nil {
-				return nil, nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
+
+		for _, typ := range typesArray {
+			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
+			if !found {
+				t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", "type", typ, "path", path)
+				continue
 			}
-	
-			for _, typ := range typesArray {
-				mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
-				if !found {
-					t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", "type", typ, "path", path)
-					continue
-				}
-				fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
-					Name:          path,
-					Signal:        telemetrytypes.SignalLogs,
-					FieldContext:  telemetrytypes.FieldContextBody,
-					FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
-					JSONDataType:  &mapping,
-				})
-			}
-	
-			paths = append(paths, path)
-			rowCount++
+			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
+				Name:          path,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
+				JSONDataType:  &mapping,
+			})
 		}
-		if rows.Err() != nil {
-			return nil, nil, false, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
-		}
+
+		paths = append(paths, path)
+		rowCount++
+	}
+	if rows.Err() != nil {
+		return nil, nil, false, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
+	}
 
 	return fieldKeys, paths, rowCount <= limit, nil
 }
@@ -122,16 +122,7 @@ func (t *telemetryMetaStore) buildBodyJSONPaths(ctx context.Context,
 func (t *telemetryMetaStore) buildJSONPlans(ctx context.Context, keys []*telemetrytypes.TelemetryFieldKey) error {
 	parentSelectors := make([]*telemetrytypes.FieldKeySelector, 0, len(keys))
 	for _, key := range keys {
-		parents:= key.ArrayParentPaths()
-		for _, parent := range parents {
-			parentSelectors = append(parentSelectors, &telemetrytypes.FieldKeySelector{
-				Name: parent,
-				SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
-				Signal:            key.Signal,
-				FieldContext:      key.FieldContext,
-				Limit:             1,
-			})
-		}
+		parentSelectors = append(parentSelectors, key.ArrayParentSelectors()...)
 	}
 
 	parentKeys, _, _, err := t.fetchBodyJSONPaths(ctx, parentSelectors)
@@ -151,7 +142,7 @@ func (t *telemetryMetaStore) buildJSONPlans(ctx context.Context, keys []*telemet
 			return err
 		}
 	}
-	
+
 	return nil
 }
 

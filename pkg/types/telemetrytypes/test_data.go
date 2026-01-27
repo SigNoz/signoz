@@ -4,7 +4,7 @@ package telemetrytypes
 // Test JSON Type Set Data Setup
 // ============================================================================
 
-// TestJSONTypeSet returns a map of path->types and a mock MetadataStore for testing
+// TestJSONTypeSet returns a map of path->types for testing
 // This represents the type information available in the test JSON structure
 func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
 	types := map[string][]JSONDataType{
@@ -67,18 +67,5 @@ func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
 		"message": {String},
 	}
 
-	// mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	// for path, dataTypes := range types {
-	// 	for _, dataType := range dataTypes {
-	// 		mockMetadataStore.SetKey(&TelemetryFieldKey{
-	// 			Name:          path,
-	// 			JSONDataType:  &dataType,
-	// 			Signal:        SignalLogs,
-	// 			FieldContext:  FieldContextBody,
-	// 			FieldDataType: MappingJSONDataTypeToFieldDataType[dataType],
-	// 		})
-	// 	}
-	// }
-	// return types, *mockMetadataStore
 	return types, nil
 }
