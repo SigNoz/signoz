@@ -162,24 +162,13 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 			return
 		}
 
-		selectors, orgId, err := cb(req, orgs)
+		selectors, orgID, err := cb(req, orgs)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, roles)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		roleSelectors := []authtypes.Selector{}
-		for _, role := range roles {
-			roleSelectors = append(roleSelectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
-		}
-
-		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgId, relation, typeable, selectors, roleSelectors)
+		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, selectors)
 		if err != nil {
 			render.Error(rw, err)
 			return
