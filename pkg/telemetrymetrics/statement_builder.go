@@ -665,13 +665,11 @@ func (b *MetricQueryStatementBuilder) buildDistributionQuery(
 		finalArgs = append(finalArgs, a...)
 	}
 
-	tsExpr := fmt.Sprintf("%d AS ts", start)
-	finalTsExpr := fmt.Sprintf("%d AS ts", start)
-	groupByKeys := []string{"bin_upper"}
-	orderByKeys := []string{"bin_upper"}
+	groupByKeys := []string{"ts", "bin_upper"}
+	orderByKeys := []string{"ts", "bin_upper"}
 
 	inner := sqlbuilder.NewSelectBuilder()
-	inner.Select(tsExpr)
+	inner.Select("ts")
 	inner.SelectMore("toFloat64OrNull(le) AS bin_upper")
 	inner.SelectMore("sum(value) AS cumulative_value")
 	inner.From("__spatial_aggregation_cte")
@@ -684,18 +682,28 @@ func (b *MetricQueryStatementBuilder) buildDistributionQuery(
 
 	binCTE := sqlbuilder.NewSelectBuilder()
 
-	binCTE.Select(tsExpr)
-	binCTE.SelectMore("lagInFrame(bin_upper, 1, toFloat64(0)) OVER (ORDER BY bin_upper) AS bin_lower")
+	binCTE.Select("ts")
+	binCTE.SelectMore("lagInFrame(bin_upper, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bin_upper) AS bin_lower")
 	binCTE.SelectMore("bin_upper")
-	binCTE.SelectMore("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (ORDER BY bin_upper), toFloat64(0)) AS value")
+	binCTE.SelectMore("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (PARTITION BY ts ORDER BY bin_upper), toFloat64(0)) AS value")
 	binCTE.From("(" + innerQ + ")")
 	binCTE.OrderBy(orderByKeys...)
 	binQ, binArgs := binCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
 
+	aggCTE := sqlbuilder.NewSelectBuilder()
+	aggCTE.Select("bin_lower")
+	aggCTE.SelectMore("bin_upper")
+	aggCTE.SelectMore("sum(value) AS value")
+	aggCTE.From("(" + binQ + ")")
+	aggCTE.GroupBy("bin_lower", "bin_upper")
+	aggCTE.OrderBy("bin_lower", "bin_upper")
+	aggQ, aggArgs := aggCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	tsExpr := fmt.Sprintf("%d AS ts", start)
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(finalTsExpr)
+	sb.Select(tsExpr)
 	sb.SelectMore("groupArray([bin_lower, bin_upper, value]) AS __result_0")
-	sb.From("(" + binQ + ")")
+	sb.From("(" + aggQ + ")")
 	sb.OrderBy("ts")
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -704,6 +712,6 @@ func (b *MetricQueryStatementBuilder) buildDistributionQuery(
 
 	return &qbtypes.Statement{
 		Query: finalQuery,
-		Args:  append(finalArgs, append(innerArgs, append(binArgs, a...)...)...),
+		Args:  append(finalArgs, append(innerArgs, append(binArgs, append(aggArgs, a...)...)...)...),
 	}, nil
 }
