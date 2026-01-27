@@ -149,6 +149,28 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		}
 	}
 
+	if req.RequestType == qbtypes.RequestTypeDistribution {
+		queryOrder := make([]string, 0, len(req.CompositeQuery.Queries))
+		for _, query := range req.CompositeQuery.Queries {
+			name := getQueryName(query.Spec)
+			if name != "" && typedResults[name] != nil {
+				queryOrder = append(queryOrder, name)
+			}
+		}
+
+		index := 0
+		for _, name := range queryOrder {
+			result := typedResults[name]
+			if distData, ok := result.Value.(*qbtypes.DistributionData); ok {
+				for _, agg := range distData.Aggregations {
+					agg.Index = index
+					agg.Alias = fmt.Sprintf("__result_%d", index)
+					index++
+				}
+			}
+		}
+	}
+
 	// Convert back to map[string]any
 	finalResults := make(map[string]any)
 	for name, result := range typedResults {

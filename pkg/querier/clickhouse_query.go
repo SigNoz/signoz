@@ -121,7 +121,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	defer rows.Close()
 
 	// TODO: map the errors from ClickHouse to our error types
-	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
+	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name, 0)
 	if err != nil {
 		return nil, err
 	}

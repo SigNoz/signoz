@@ -577,6 +577,8 @@ func (q *querier) run(
 				v.QueryName = name
 			case *qbtypes.RawData:
 				v.QueryName = name
+			case *qbtypes.DistributionData:
+				v.QueryName = name
 			}
 
 			results[name] = result.Value
@@ -814,6 +816,8 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 		case qbtypes.RequestTypeTimeSeries:
 			// Pass nil as cached value to ensure proper merging of all fresh results
 			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
+		case qbtypes.RequestTypeDistribution:
+			merged.Value = q.mergeDistributionResults(fresh)
 		}
 
 		return merged
@@ -988,4 +992,107 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	}
 
 	return result
+}
+
+func distributionBucketKey(lowerBound, upperBound float64) string {
+	return strconv.FormatFloat(lowerBound, 'f', -1, 64) + "-" + strconv.FormatFloat(upperBound, 'f', -1, 64)
+}
+
+// mergeDistributionResults merges distribution data from multiple fresh results
+func (q *querier) mergeDistributionResults(freshResults []*qbtypes.Result) *qbtypes.DistributionData {
+	// Map to store merged aggregations by index
+	aggMap := make(map[int]*qbtypes.DistributionAggregation)
+
+	// Process fresh results
+	for _, result := range freshResults {
+		freshDist, ok := result.Value.(*qbtypes.DistributionData)
+		if !ok || freshDist == nil || freshDist.Aggregations == nil {
+			continue
+		}
+
+		for _, agg := range freshDist.Aggregations {
+			if existingAgg, ok := aggMap[agg.Index]; ok {
+				// Merge buckets by adding counts for matching bounds
+				bucketMap := make(map[string]*qbtypes.DistributionBucket)
+				for _, b := range existingAgg.Buckets {
+					key := distributionBucketKey(b.LowerBound, b.UpperBound)
+					bucketMap[key] = b
+				}
+
+				for _, b := range agg.Buckets {
+					key := distributionBucketKey(b.LowerBound, b.UpperBound)
+					if existing, ok := bucketMap[key]; ok {
+						existing.Count += b.Count
+					} else {
+						bucketMap[key] = &qbtypes.DistributionBucket{
+							LowerBound: b.LowerBound,
+							UpperBound: b.UpperBound,
+							Count:      b.Count,
+						}
+					}
+				}
+
+				// Rebuild buckets from map
+				existingAgg.Buckets = make([]*qbtypes.DistributionBucket, 0, len(bucketMap))
+				for _, b := range bucketMap {
+					existingAgg.Buckets = append(existingAgg.Buckets, b)
+				}
+
+				// Sort by lower bound
+				slices.SortFunc(existingAgg.Buckets, func(a, b *qbtypes.DistributionBucket) int {
+					if a.LowerBound < b.LowerBound {
+						return -1
+					}
+					if a.LowerBound > b.LowerBound {
+						return 1
+					}
+					return 0
+				})
+			} else {
+				// Make a copy of the aggregation
+				aggCopy := &qbtypes.DistributionAggregation{
+					Index:   agg.Index,
+					Alias:   agg.Alias,
+					Buckets: make([]*qbtypes.DistributionBucket, len(agg.Buckets)),
+				}
+				for i, b := range agg.Buckets {
+					aggCopy.Buckets[i] = &qbtypes.DistributionBucket{
+						LowerBound: b.LowerBound,
+						UpperBound: b.UpperBound,
+						Count:      b.Count,
+					}
+				}
+				aggMap[agg.Index] = aggCopy
+			}
+		}
+	}
+
+	// Convert map to result
+	merged := &qbtypes.DistributionData{
+		Aggregations: make([]*qbtypes.DistributionAggregation, 0, len(aggMap)),
+	}
+
+	// Set QueryName from first fresh result
+	if len(freshResults) > 0 {
+		if freshDist, ok := freshResults[0].Value.(*qbtypes.DistributionData); ok && freshDist != nil {
+			merged.QueryName = freshDist.QueryName
+		}
+	}
+
+	for _, agg := range aggMap {
+		merged.Aggregations = append(merged.Aggregations, agg)
+	}
+
+	// Sort aggregations by index
+	slices.SortFunc(merged.Aggregations, func(a, b *qbtypes.DistributionAggregation) int {
+		if a.Index < b.Index {
+			return -1
+		}
+		if a.Index > b.Index {
+			return 1
+		}
+		return 0
+	})
+
+	return merged
 }

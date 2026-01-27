@@ -351,6 +351,27 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "bucket query with heatmap aggregation",
+			requestType: qbtypes.RequestTypeDistribution,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "distribution(duration_nano, 20)",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'redis-manual'",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT 1747947419000000000 AS ts, histogram(20)(multiIf(duration_nano <> ?, duration_nano, NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?",
+				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), 0, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()
@@ -660,7 +681,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "list query with deprecated filter field",
+			name:        "list query with deprecated filter field",
 			requestType: qbtypes.RequestTypeTrace,
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal: telemetrytypes.SignalTraces,

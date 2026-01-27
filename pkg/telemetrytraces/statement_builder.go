@@ -105,6 +105,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
+	case qbtypes.RequestTypeDistribution:
+		return b.buildDistributionQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -708,6 +710,70 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
+}
+
+// buildDistributionQuery builds SQL query for distribution
+func (b *traceQueryStatementBuilder) buildDistributionQuery(
+	ctx context.Context,
+	_ *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	sb.Select(fmt.Sprintf("%d AS ts", start))
+
+	var allChArgs []any
+	for i, aggExpr := range query.Aggregations {
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			ctx, aggExpr.Expression,
+			uint64(query.StepInterval.Seconds()),
+			keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
+		allChArgs = append(allChArgs, chArgs...)
+	}
+
+	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allChArgs...)
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)

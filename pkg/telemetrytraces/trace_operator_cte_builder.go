@@ -402,6 +402,8 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 		return b.buildTraceQuery(ctx, selectFromCTE)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, selectFromCTE)
+	case qbtypes.RequestTypeDistribution:
+		return b.buildDistributionQuery(ctx, selectFromCTE)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -869,6 +871,47 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	b.addHavingClause(sb)
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+	return &qbtypes.Statement{
+		Query: sql,
+		Args:  args,
+	}, nil
+}
+
+func (b *traceOperatorCTEBuilder) buildDistributionQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+
+	sb.Select(fmt.Sprintf("%d AS ts", b.start))
+
+	keySelectors := b.getKeySelectors()
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	var allChArgs []any
+	for i, aggExpr := range b.operator.Aggregations {
+		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+			ctx,
+			aggExpr.Expression,
+			uint64(b.operator.StepInterval.Seconds()),
+			keys,
+		)
+		if err != nil {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"failed to rewrite aggregation expression '%s': %v",
+				aggExpr.Expression,
+				err,
+			)
+		}
+
+		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
+		allChArgs = append(allChArgs, chArgs...)
+	}
+
+	sb.From(selectFromCTE)
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allChArgs...)
 	return &qbtypes.Statement{
 		Query: sql,
 		Args:  args,

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -72,7 +73,21 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	// Use the consume function like builderQuery does
-	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	bucketCount := 0
+	if q.kind == qbtypes.RequestTypeDistribution && len(q.spec.Aggregations) > 0 {
+		// Extract the maximum bucket count from all heatmap aggregations
+		for _, agg := range q.spec.Aggregations {
+			count, err := querybuilder.ParseHeatmapBucketCount(agg.Expression)
+			if err != nil {
+				count = querybuilder.DefaultHeatmapBucketCount
+			}
+			if count > bucketCount {
+				bucketCount = count
+			}
+		}
+	}
+
+	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name, bucketCount)
 	if err != nil {
 		return nil, err
 	}
