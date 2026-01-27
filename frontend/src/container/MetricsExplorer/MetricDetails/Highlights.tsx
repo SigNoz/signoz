@@ -6,7 +6,6 @@ import { HighlightsProps } from './types';
 import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
-	transformMetricHighlights,
 } from './utils';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 
@@ -26,7 +25,9 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		},
 	);
 
-	const metricHighlights = transformMetricHighlights(metricHighlightsData?.data);
+	const metricHighlights = useMemo(() => {
+		return metricHighlightsData?.data?.data ?? null;
+	}, [metricHighlightsData]);
 
 	const dataPoints = useMemo(() => {
 		if (!metricHighlights) {
@@ -39,7 +40,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		}
 		return (
 			<Typography.Text className="metric-details-grid-value">
-				<Tooltip title={metricHighlights?.dataPoints.toLocaleString()}>
+				<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
 					{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
 				</Tooltip>
 			</Typography.Text>

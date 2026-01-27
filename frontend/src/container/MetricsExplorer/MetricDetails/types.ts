@@ -1,3 +1,9 @@
+import {
+	MetricsexplorertypesMetricAlertDTO,
+	MetricsexplorertypesMetricAttributeDTO,
+	MetricsexplorertypesMetricDashboardDTO,
+	MetricsexplorertypesMetricHighlightsResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 
@@ -34,24 +40,11 @@ export interface AllAttributesValueProps {
 	goToMetricsExploreWithAppliedAttribute: (key: string, value: string) => void;
 }
 
-export interface MetricHighlight {
-	dataPoints: number;
-	lastReceived: number;
-	totalTimeSeries: number;
-	activeTimeSeries: number;
-}
+export type MetricHighlight = MetricsexplorertypesMetricHighlightsResponseDTO;
 
-export interface MetricAlert {
-	alertName: string;
-	alertId: string;
-}
+export type MetricAlert = MetricsexplorertypesMetricAlertDTO;
 
-export interface MetricDashboard {
-	dashboardName: string;
-	dashboardId: string;
-	widgetId: string;
-	widgetName: string;
-}
+export type MetricDashboard = MetricsexplorertypesMetricDashboardDTO;
 
 export interface MetricMetadata {
 	metricType: MetricType;
@@ -68,11 +61,7 @@ export interface MetricMetadataState {
 	unit: string | undefined;
 }
 
-export interface MetricAttribute {
-	key: string;
-	values: string[];
-	valueCount: number;
-}
+export type MetricAttribute = MetricsexplorertypesMetricAttributeDTO;
 
 export enum TableFields {
 	DESCRIPTION = 'description',

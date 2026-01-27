@@ -22,7 +22,7 @@ import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { AllAttributesProps, AllAttributesValueProps } from './types';
-import { getMetricDetailsQuery, transformMetricAttributes } from './utils';
+import { getMetricDetailsQuery } from './utils';
 
 const ALL_ATTRIBUTES_KEY = 'all-attributes';
 
@@ -143,7 +143,10 @@ function AllAttributes({
 		}
 	}, [getMetricAttributes, metricName]);
 
-	const { attributes } = transformMetricAttributes(attributesData?.data);
+	const attributes = useMemo(
+		() => attributesData?.data?.data?.attributes ?? [],
+		[attributesData],
+	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -205,7 +208,7 @@ function AllAttributes({
 			attributes.filter(
 				(attribute) =>
 					attribute.key.toLowerCase().includes(searchString.toLowerCase()) ||
-					attribute.values.some((value) =>
+					attribute.values?.some((value) =>
 						value.toLowerCase().includes(searchString.toLowerCase()),
 					),
 			),

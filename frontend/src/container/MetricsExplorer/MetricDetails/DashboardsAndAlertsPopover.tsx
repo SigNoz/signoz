@@ -12,7 +12,6 @@ import { Bell, Grid } from 'lucide-react';
 import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
-import { transformMetricAlerts, transformMetricDashboards } from './utils';
 import {
 	useGetMetricAlerts,
 	useGetMetricDashboards,
@@ -54,8 +53,18 @@ function DashboardsAndAlertsPopover({
 		},
 	);
 
-	const alerts = transformMetricAlerts(alertsData?.data);
-	const dashboards = transformMetricDashboards(dashboardsData?.data);
+	const alerts = useMemo(() => {
+		return alertsData?.data?.data?.alerts ?? [];
+	}, [alertsData]);
+
+	const dashboards = useMemo(() => {
+		const currentDashboards = dashboardsData?.data?.data?.dashboards ?? [];
+		// Remove duplicate dashboards
+		return currentDashboards.filter(
+			(dashboard, index, self) =>
+				index === self.findIndex((t) => t.dashboardId === dashboard.dashboardId),
+		);
+	}, [dashboardsData]);
 
 	const alertsPopoverContent = useMemo(() => {
 		if (alerts && alerts.length > 0) {
@@ -134,7 +143,7 @@ function DashboardsAndAlertsPopover({
 					>
 						<Grid size={12} color={Color.BG_SIENNA_500} />
 						<Typography.Text>
-							{pluralize(dashboards.length, 'dashboard', 'dashboards')}
+							{pluralize(dashboards.length, 'dashboard')}
 						</Typography.Text>
 					</div>
 				</Dropdown>
@@ -153,7 +162,7 @@ function DashboardsAndAlertsPopover({
 					>
 						<Bell size={12} color={Color.BG_SAKURA_500} />
 						<Typography.Text>
-							{pluralize(alerts.length, 'alert rule', 'alert rules')}
+							{pluralize(alerts.length, 'alert rule')}
 						</Typography.Text>
 					</div>
 				</Dropdown>
