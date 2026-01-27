@@ -14,6 +14,7 @@ import (
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/ee/modules/role/implrole"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -29,6 +30,7 @@ import (
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
+	pkgimplrole "github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -119,13 +121,17 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, sqlstore sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx))
 		},
-		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, role role.Module, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
-			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, role, queryParser, querier, licensing)
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, roleSetter role.Setter, granter role.Granter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, roleSetter, granter, queryParser, querier, licensing)
 		},
 		func(licensing licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return httpgateway.NewProviderFactory(licensing)
 		},
+		func(store sqlstore.SQLStore, authz authz.AuthZ, licensing licensing.Licensing, registry []role.RegisterTypeable) role.Setter {
+			return implrole.NewSetter(pkgimplrole.NewStore(store), authz, licensing, registry)
+		},
 	)
+
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", "error", err)
 		return err
