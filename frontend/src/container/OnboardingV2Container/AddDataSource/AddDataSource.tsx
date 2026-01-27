@@ -244,11 +244,11 @@ function OnboardingAddDataSource(): JSX.Element {
 				const parts = url.hostname.split('.');
 				if (parts[0]?.includes('ingest') && parts.length > 1) {
 					region = parts[1];
+					urlObj.searchParams.set('region', region);
 				}
 			} catch (e) {
 				// ignore
 			}
-			urlObj.searchParams.set('region', region);
 		}
 
 		// Step 3: Return the updated URL as a string
