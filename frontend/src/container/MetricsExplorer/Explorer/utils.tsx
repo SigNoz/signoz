@@ -1,3 +1,4 @@
+import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
 import { mapMetricUnitToUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
@@ -94,4 +95,16 @@ export function getMetricUnits(
 	return metrics
 		.map((metric) => metric?.unit)
 		.map((unit) => mapMetricUnitToUniversalUnit(unit) || undefined);
+}
+
+export function buildUpdateMetricYAxisUnitPayload(
+	metric: MetricMetadata | undefined,
+	yAxisUnit: string | undefined,
+): UpdateMetricMetadataMutationBody {
+	return {
+		type: metric?.type,
+		description: metric?.description,
+		unit: yAxisUnit,
+		temporality: metric?.temporality,
+	};
 }
