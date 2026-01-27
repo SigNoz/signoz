@@ -559,7 +559,9 @@ export function onGraphClick(
 		u,
 		formattedInspectMetricsTimeSeries,
 	);
-	if (seriesIndex <= 0) return;
+	if (seriesIndex <= 0) {
+		return;
+	}
 
 	const series = inspectMetricsTimeSeries[seriesIndex - 1];
 

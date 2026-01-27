@@ -375,7 +375,9 @@ export function getTraceOperatorContextAtCursor(
 		let lastTokenBeforeCursor: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === TraceOperatorGrammarLexer.EOF) continue;
+			if (token.type === TraceOperatorGrammarLexer.EOF) {
+				continue;
+			}
 
 			if (token.stop < cursorIndex || token.stop + 1 === cursorIndex) {
 				lastTokenBeforeCursor = token;
@@ -390,7 +392,9 @@ export function getTraceOperatorContextAtCursor(
 		let exactToken: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === TraceOperatorGrammarLexer.EOF) continue;
+			if (token.type === TraceOperatorGrammarLexer.EOF) {
+				continue;
+			}
 
 			if (token.start <= cursorIndex && cursorIndex <= token.stop + 1) {
 				exactToken = token;

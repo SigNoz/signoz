@@ -43,7 +43,7 @@ type Alertmanager interface {
 	UpdateChannelByReceiverAndID(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error
 
 	// CreateChannel creates a channel for the organization.
-	CreateChannel(context.Context, string, alertmanagertypes.Receiver) error
+	CreateChannel(context.Context, string, alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)
 
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error

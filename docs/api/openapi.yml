@@ -1007,43 +1007,6 @@ paths:
       summary: Create bulk invite
       tags:
       - users
-  /api/v1/login:
-    post:
-      deprecated: true
-      description: This endpoint is deprecated and will be removed in the future
-      operationId: DeprecatedCreateSessionByEmailPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesDeprecatedPostableLogin'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesDeprecatedGettableLogin'
-                  status:
-                    type: string
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Deprecated create session by email password
-      tags:
-      - sessions
   /api/v1/logs/promote_paths:
     get:
       deprecated: false
@@ -2022,6 +1985,35 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/factor_password/forgot:
+    post:
+      deprecated: false
+      description: This endpoint initiates the forgot password flow by sending a reset
+        password email
+      operationId: ForgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableForgotPassword'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Forgot password
+      tags:
+      - users
   /api/v2/features:
     get:
       deprecated: false
@@ -2427,6 +2419,11 @@ paths:
       deprecated: false
       description: This endpoint returns associated alerts for a specified metric
       operationId: GetMetricAlerts
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2476,6 +2473,11 @@ paths:
       deprecated: false
       description: This endpoint returns associated dashboards for a specified metric
       operationId: GetMetricDashboards
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2526,6 +2528,11 @@ paths:
       description: This endpoint returns highlights like number of datapoints, totaltimeseries,
         active time series, last received time for a specified metric
       operationId: GetMetricHighlights
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2687,6 +2694,11 @@ paths:
       description: This endpoint returns metadata information like metric description,
         unit, type, temporality, monotonicity for a specified metric
       operationId: GetMetricMetadata
+      parameters:
+      - in: query
+        name: metricName
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -3141,20 +3153,6 @@ components:
         provider:
           type: string
         url:
-          type: string
-      type: object
-    AuthtypesDeprecatedGettableLogin:
-      properties:
-        accessJwt:
-          type: string
-        userId:
-          type: string
-      type: object
-    AuthtypesDeprecatedPostableLogin:
-      properties:
-        email:
-          type: string
-        password:
           type: string
       type: object
     AuthtypesGettableAuthDomain:
@@ -4010,6 +4008,15 @@ components:
         token:
           type: string
       type: object
+    TypesPostableForgotPassword:
+      properties:
+        email:
+          type: string
+        frontendBaseURL:
+          type: string
+        orgId:
+          type: string
+      type: object
     TypesPostableInvite:
       properties:
         email:
@@ -4030,6 +4037,9 @@ components:
       type: object
     TypesResetPasswordToken:
       properties:
+        expiresAt:
+          format: date-time
+          type: string
         id:
           type: string
         passwordId:

@@ -534,7 +534,9 @@ function DateTimeSelection({
 
 	// Sync time picker state with URL on browser navigation
 	useEffect(() => {
-		if (navigationType !== 'POP') return;
+		if (navigationType !== 'POP') {
+			return;
+		}
 
 		if (searchStartTime && searchEndTime) {
 			handleAbsoluteTimeSync(searchStartTime, searchEndTime, minTime, maxTime);

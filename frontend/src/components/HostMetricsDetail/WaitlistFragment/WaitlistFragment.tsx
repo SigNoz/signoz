@@ -22,7 +22,9 @@ export default function WaitlistFragment({
 	const [isSuccess, setIsSuccess] = useState(false);
 
 	const handleJoinWaitlist = (): void => {
-		if (!user || !user.email) return;
+		if (!user || !user.email) {
+			return;
+		}
 
 		setIsSubmitting(true);
 

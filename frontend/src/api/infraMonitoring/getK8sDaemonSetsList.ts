@@ -83,7 +83,9 @@ export const getK8sDaemonSetsList = async (
 							...props.filters,
 							items: props.filters.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
-									if (item.value === undefined) return acc;
+									if (item.value === undefined) {
+										return acc;
+									}
 									if (
 										item.key &&
 										typeof item.key === 'object' &&

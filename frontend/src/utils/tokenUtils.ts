@@ -63,7 +63,9 @@ export function isBracketToken(tokenType: number): boolean {
 
 // Helper function to check if an operator typically uses bracket values (multi-value operators)
 export function isMultiValueOperator(operatorToken?: string): boolean {
-	if (!operatorToken) return false;
+	if (!operatorToken) {
+		return false;
+	}
 
 	const upperOp = operatorToken.toUpperCase();
 	return upperOp === 'IN';
@@ -79,7 +81,9 @@ export function isFunctionToken(tokenType: number): boolean {
 }
 
 export function isWrappedUnderQuotes(token: string): boolean {
-	if (!token) return false;
+	if (!token) {
+		return false;
+	}
 	const sanitizedToken = token.trim();
 	return (
 		(sanitizedToken.startsWith('"') && sanitizedToken.endsWith('"')) ||
@@ -126,7 +130,9 @@ export function isNonValueOperator(operator: string): boolean {
 }
 
 export function isQueryPairComplete(queryPair: Partial<IQueryPair>): boolean {
-	if (!queryPair) return false;
+	if (!queryPair) {
+		return false;
+	}
 	// A complete query pair must have a key, an operator, and a value (or EXISTS operator)
 	if (queryPair.operator && isNonValueOperator(queryPair.operator)) {
 		return !!queryPair.key && !!queryPair.operator;

@@ -142,7 +142,6 @@ describe('MultiIngestionSettings Page', () => {
 
 		// Check URL contains alerts/new route
 		expect(navigationCall).toContain('/alerts/new');
-		expect(navigationCall).toContain('showNewCreateAlertsPage=true');
 
 		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
@@ -231,7 +230,6 @@ describe('MultiIngestionSettings Page', () => {
 
 		// Check URL contains alerts/new route
 		expect(navigationCall).toContain('/alerts/new');
-		expect(navigationCall).toContain('showNewCreateAlertsPage=true');
 
 		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);

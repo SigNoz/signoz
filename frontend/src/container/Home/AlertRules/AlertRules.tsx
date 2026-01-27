@@ -41,8 +41,12 @@ export default function AlertRules({
 
 		const sortedRules = rules.sort((a, b) => {
 			// First, prioritize firing alerts
-			if (a.state === 'firing' && b.state !== 'firing') return -1;
-			if (a.state !== 'firing' && b.state === 'firing') return 1;
+			if (a.state === 'firing' && b.state !== 'firing') {
+				return -1;
+			}
+			if (a.state !== 'firing' && b.state === 'firing') {
+				return 1;
+			}
 
 			// Then sort by updateAt timestamp
 			const aUpdateAt = new Date(a.updateAt).getTime();

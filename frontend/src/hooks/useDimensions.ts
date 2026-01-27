@@ -31,7 +31,9 @@ export function useResizeObserver<T extends HTMLElement>(
 		}
 
 		return (): void => {
-			if (referenceNode) ro.disconnect();
+			if (referenceNode) {
+				ro.disconnect();
+			}
 		};
 	}, [ref, debounceTime]);
 
