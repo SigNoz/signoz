@@ -241,7 +241,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 
 	kind := q.kind
 	// All metric queries are time series then reduced if required
-	// Expect bucket requests as it should be executed as it is
+	// Expect heatmap requests as it should be executed as it is
 	if q.spec.Signal == telemetrytypes.SignalMetrics &&
 		kind != qbtypes.RequestTypeHeatmap {
 		kind = qbtypes.RequestTypeTimeSeries

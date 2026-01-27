@@ -386,12 +386,9 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	}
 
 	// TODO configurable if we don't rollout the new un-normalized metrics
-	skipNormalizationCheck := query.Aggregations[0].TableHints != nil && query.Aggregations[0].TableHints.SkipNormalizationCheck
-	if !skipNormalizationCheck {
-		sb.Where(
-			sb.EQ("__normalized", false),
-		)
-	}
+	sb.Where(
+		sb.EQ("__normalized", false),
+	)
 
 	if preparedWhereClause != nil {
 		sb.AddWhereClause(preparedWhereClause.WhereClause)
@@ -637,18 +634,6 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 		})
 	}
 
-	query.Aggregations = slices.Clone(query.Aggregations)
-
-	for i := range query.Aggregations {
-		// For heatmap queries, we want to ignore the __normalized filter
-		hints := metrictypes.MetricTableHints{}
-		if query.Aggregations[i].TableHints != nil {
-			hints = *query.Aggregations[i].TableHints
-		}
-		hints.SkipNormalizationCheck = true
-		query.Aggregations[i].TableHints = &hints
-	}
-
 	var (
 		cteFragments []string
 		cteArgs      [][]any
@@ -684,20 +669,20 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	tsExpr := "ts"
 	partitionExpr := "PARTITION BY ts"
 	finalTsExpr := "toUnixTimestamp(ts) * 1000 AS ts"
-	groupByKeys := []string{"ts", "bucket_end"}
-	orderByKeys := []string{"ts", "bucket_end"}
+	groupByKeys := []string{"ts", "bin_upper"}
+	orderByKeys := []string{"ts", "bin_upper"}
 
 	if requestType == qbtypes.RequestTypeDistribution {
 		tsExpr = fmt.Sprintf("%d AS ts", start)
 		partitionExpr = ""
 		finalTsExpr = fmt.Sprintf("%d AS ts", start)
-		groupByKeys = []string{"bucket_end"}
-		orderByKeys = []string{"bucket_end"}
+		groupByKeys = []string{"bin_upper"}
+		orderByKeys = []string{"bin_upper"}
 	}
 
 	inner := sqlbuilder.NewSelectBuilder()
 	inner.Select(tsExpr)
-	inner.SelectMore("toFloat64OrNull(le) AS bucket_end")
+	inner.SelectMore("toFloat64OrNull(le) AS bin_upper")
 	inner.SelectMore("sum(value) AS cumulative_value")
 	inner.From("__spatial_aggregation_cte")
 	inner.Where("le != '+Inf'")
@@ -707,24 +692,24 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	inner.OrderBy(orderByKeys...)
 	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	bucketCTE := sqlbuilder.NewSelectBuilder()
-	lagOver := fmt.Sprintf("%s ORDER BY bucket_end", partitionExpr)
+	binCTE := sqlbuilder.NewSelectBuilder()
+	lagOver := fmt.Sprintf("%s ORDER BY bin_upper", partitionExpr)
 	if partitionExpr == "" {
-		lagOver = "ORDER BY bucket_end"
+		lagOver = "ORDER BY bin_upper"
 	}
 
-	bucketCTE.Select(tsExpr)
-	bucketCTE.SelectMore(fmt.Sprintf("lagInFrame(bucket_end, 1, toFloat64(0)) OVER (%s) AS bucket_start", lagOver))
-	bucketCTE.SelectMore("bucket_end")
-	bucketCTE.SelectMore(fmt.Sprintf("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (%s), toFloat64(0)) AS value", lagOver))
-	bucketCTE.From("(" + innerQ + ")")
-	bucketCTE.OrderBy(orderByKeys...)
-	bucketQ, bucketArgs := bucketCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
+	binCTE.Select(tsExpr)
+	binCTE.SelectMore(fmt.Sprintf("lagInFrame(bin_upper, 1, toFloat64(0)) OVER (%s) AS bin_lower", lagOver))
+	binCTE.SelectMore("bin_upper")
+	binCTE.SelectMore(fmt.Sprintf("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (%s), toFloat64(0)) AS value", lagOver))
+	binCTE.From("(" + innerQ + ")")
+	binCTE.OrderBy(orderByKeys...)
+	binQ, binArgs := binCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(finalTsExpr)
-	sb.SelectMore("groupArray([bucket_start, bucket_end, value]) AS __result_0")
-	sb.From("(" + bucketQ + ")")
+	sb.SelectMore("groupArray([bin_lower, bin_upper, value]) AS __result_0")
+	sb.From("(" + binQ + ")")
 	if requestType != qbtypes.RequestTypeDistribution {
 		sb.GroupBy("ts")
 		sb.Having("length(__result_0) > 0")
@@ -737,6 +722,6 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 
 	return &qbtypes.Statement{
 		Query: finalQuery,
-		Args:  append(finalArgs, append(innerArgs, append(bucketArgs, a...)...)...),
+		Args:  append(finalArgs, append(innerArgs, append(binArgs, a...)...)...),
 	}, nil
 }

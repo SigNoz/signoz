@@ -472,7 +472,7 @@ func (r *QueryRangeRequest) Validate() error {
 			"invalid request type: %s",
 			r.RequestType,
 		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar, trace, distribution, bucket",
+			"Valid request types are: raw, timeseries, scalar, trace, distribution, heatmap",
 		)
 	}
 

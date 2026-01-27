@@ -197,9 +197,8 @@ func (s SpaceAggregation) Percentile() float64 {
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
 // from the start and end time, for internal use only when we need to override the derived tables
 type MetricTableHints struct {
-	TimeSeriesTableName    string
-	SamplesTableName       string
-	SkipNormalizationCheck bool
+	TimeSeriesTableName string
+	SamplesTableName    string
 }
 
 // Until recently, certain OTEL metrics encode the state in the value of the metric, which is in general
