@@ -186,59 +186,6 @@ export function getMetricDetailsQuery(
 	};
 }
 
-export function transformMetricHighlights(
-	apiData: GetMetricHighlights200 | undefined,
-): MetricHighlight | null {
-	if (!apiData || !apiData.data) {
-		return null;
-	}
-
-	const {
-		dataPoints,
-		lastReceived,
-		totalTimeSeries,
-		activeTimeSeries,
-	} = apiData.data;
-
-	return {
-		dataPoints: dataPoints ?? 0,
-		lastReceived: lastReceived ?? 0,
-		totalTimeSeries: totalTimeSeries ?? 0,
-		activeTimeSeries: activeTimeSeries ?? 0,
-	};
-}
-
-export function transformMetricAlerts(
-	apiData: GetMetricAlerts200 | undefined,
-): MetricAlert[] {
-	if (!apiData || !apiData.data || !apiData.data.alerts) {
-		return [];
-	}
-	return apiData.data.alerts.map((alert) => ({
-		alertName: alert.alertName ?? '',
-		alertId: alert.alertId ?? '',
-	}));
-}
-
-export function transformMetricDashboards(
-	apiData: GetMetricDashboards200 | undefined,
-): MetricDashboard[] {
-	if (!apiData || !apiData.data || !apiData.data.dashboards) {
-		return [];
-	}
-	const dashboards = apiData.data.dashboards.map((dashboard) => ({
-		dashboardName: dashboard.dashboardName ?? '',
-		dashboardId: dashboard.dashboardId ?? '',
-		widgetId: dashboard.widgetId ?? '',
-		widgetName: dashboard.widgetName ?? '',
-	}));
-	// Remove duplicate dashboards
-	return dashboards.filter(
-		(dashboard, index, self) =>
-			index === self.findIndex((t) => t.dashboardId === dashboard.dashboardId),
-	);
-}
-
 export function transformTemporality(
 	temporality: string | undefined,
 ): Temporality {
@@ -298,23 +245,5 @@ export function transformUpdateMetricMetadataRequest(
 			metricMetadata.metricType,
 			metricMetadata.temporality,
 		),
-	};
-}
-
-export function transformMetricAttributes(
-	apiData: GetMetricAttributes200 | undefined,
-): { attributes: MetricAttribute[]; totalKeys: number } {
-	if (!apiData || !apiData.data) {
-		return { attributes: [], totalKeys: 0 };
-	}
-	const { attributes, totalKeys } = apiData.data;
-	return {
-		attributes:
-			attributes?.map((attribute) => ({
-				key: attribute.key ?? '',
-				values: attribute.values ?? [],
-				valueCount: attribute.valueCount ?? 0,
-			})) ?? [],
-		totalKeys: totalKeys ?? 0,
 	};
 }
