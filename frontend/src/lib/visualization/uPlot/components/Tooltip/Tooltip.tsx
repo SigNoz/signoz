@@ -69,7 +69,6 @@ export default function Tooltip({
 	dataIdxs,
 	uPlotInstance,
 	timezone,
-	isPinned,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const headerTitle = useMemo(() => {

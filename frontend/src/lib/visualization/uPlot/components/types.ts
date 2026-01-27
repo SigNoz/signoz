@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { TooltipRenderArgs } from '../plugins/TooltipPlugin/types';
 
 /**
  * Props for the Plot component
@@ -47,6 +46,15 @@ export interface UPlotChartProps {
 	 * Test ID for the container div
 	 */
 	'data-testid'?: string;
+}
+
+export interface TooltipRenderArgs {
+	uPlotInstance: uPlot;
+	dataIdxs: Array<number | null>;
+	seriesIdx: number | null;
+	isPinned: boolean;
+	dismiss: () => void;
+	viaSync: boolean;
 }
 
 export type TooltipProps = TooltipRenderArgs & {
