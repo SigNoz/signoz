@@ -9,13 +9,15 @@ connectors:
 exporters:
   clickhouselogsexporter:
     dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_LOG_DATABASE}
-    sending_queue: {}
+    sending_queue:
+      enabled: true
     timeout: 45s
     use_new_schema: true
   clickhousetraces:
     datasource: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_TRACE_DATABASE}
     low_cardinal_exception_grouping: ${env:LOW_CARDINAL_EXCEPTION_GROUPING}
-    sending_queue: {}
+    sending_queue:
+      enabled: true
     timeout: 45s
     use_new_schema: true
   metadataexporter:
@@ -27,7 +29,8 @@ exporters:
     timeout: 45s
   signozclickhousemeter:
     dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_METER_DATABASE}
-    sending_queue: {}
+    sending_queue:
+      enabled: true
     timeout: 45s
   signozclickhousemetrics:
     dsn: tcp://${env:CLICKHOUSE_USER}:${env:CLICKHOUSE_PASSWORD}@${env:CLICKHOUSE_HOST}:${env:CLICKHOUSE_PORT}/${env:CLICKHOUSE_DATABASE}
