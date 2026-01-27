@@ -164,8 +164,8 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 		alertHash := sampleLabels.Hash()
 		// check if alert is active and then check if recovery threshold matches
 		if evalData.HasActiveAlert(alertHash) {
-			smpl, matchesRecoveryThrehold := threshold.matchesRecoveryThreshold(series, unit)
-			if matchesRecoveryThrehold {
+			smpl, matchesRecoveryThreshold := threshold.matchesRecoveryThreshold(series, unit)
+			if matchesRecoveryThreshold {
 				smpl.Target = *threshold.TargetValue
 				smpl.RecoveryTarget = threshold.RecoveryTarget
 				smpl.TargetUnit = threshold.TargetUnit

@@ -52,7 +52,9 @@ export function useTableContextMenu({
 	});
 
 	const aggregateData = useMemo((): AggregateData | null => {
-		if (!clickedData?.column?.isValueColumn) return null;
+		if (!clickedData?.column?.isValueColumn) {
+			return null;
+		}
 
 		return {
 			queryName: String(clickedData.column.queryName || ''),

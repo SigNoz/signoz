@@ -4,10 +4,14 @@ import { ArrowUp, ChevronUp, Command, Option } from 'lucide-react';
 import { ReactNode } from 'react';
 
 export function formatShortcut(shortcut?: string[]): ReactNode {
-	if (!shortcut || shortcut.length === 0) return null;
+	if (!shortcut || shortcut.length === 0) {
+		return null;
+	}
 
 	const combo = shortcut.find((s) => typeof s === 'string' && s.trim());
-	if (!combo) return null;
+	if (!combo) {
+		return null;
+	}
 
 	return combo.split('+').map((key) => {
 		const k = key.trim().toLowerCase();

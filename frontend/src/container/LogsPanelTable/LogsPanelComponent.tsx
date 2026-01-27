@@ -89,14 +89,15 @@ function LogsPanelComponent({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (): void => {
 				const log = logs.find((item) => item.id === record.id);
-				if (log) onSetActiveLog(log);
+				if (log) {
+					onSetActiveLog(log);
+				}
 			},
 		}),
 		[logs, onSetActiveLog],
@@ -171,7 +172,6 @@ function LogsPanelComponent({
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
-				onGroupByAttribute={onGroupByAttribute}
 				isListViewPanel
 				listViewPanelSelectedFields={widget?.selectedLogFields}
 			/>

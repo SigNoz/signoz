@@ -38,7 +38,9 @@ const normalizeTimezoneName = (timezone: string): string => {
 };
 
 const formatOffset = (offsetMinutes: number): string => {
-	if (offsetMinutes === 0) return 'UTC';
+	if (offsetMinutes === 0) {
+		return 'UTC';
+	}
 
 	const hours = Math.floor(Math.abs(offsetMinutes) / 60);
 	const minutes = Math.abs(offsetMinutes) % 60;

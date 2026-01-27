@@ -9,7 +9,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
@@ -158,6 +158,8 @@ function PublicDashboardContainer({
 								modalSelectedInterval={selectedTimeRangeLabel as Time}
 								disableUrlSync
 								showRecentlyUsed={false}
+								modalInitialStartTime={selectedTimeRange.startTime * 1000}
+								modalInitialEndTime={selectedTimeRange.endTime * 1000}
 							/>
 						</div>
 					</div>

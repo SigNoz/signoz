@@ -19,7 +19,9 @@ export const isFormula = (queryName: string): boolean =>
  * Specifically targets capital letters A-Z as query names, as after Z we dont have any query names
  */
 export function extractQueryNamesFromExpression(expression: string): string[] {
-	if (!expression) return [];
+	if (!expression) {
+		return [];
+	}
 
 	// Use regex to match standalone capital letters
 	// Uses word boundaries to ensure we only get standalone letters
@@ -34,7 +36,9 @@ export const hasColumnWidthsChanged = (
 	selectedDashboard?: Dashboard,
 ): boolean => {
 	// If no column widths stored, no changes
-	if (isEmpty(columnWidths) || !selectedDashboard) return false;
+	if (isEmpty(columnWidths) || !selectedDashboard) {
+		return false;
+	}
 
 	// Check each widget's column widths
 	return Object.keys(columnWidths).some((widgetId) => {
@@ -46,7 +50,9 @@ export const hasColumnWidthsChanged = (
 		const existingWidths = dashboardWidget?.columnWidths;
 
 		// If both are empty/undefined, no change
-		if (isEmpty(newWidths) || isEmpty(existingWidths)) return false;
+		if (isEmpty(newWidths) || isEmpty(existingWidths)) {
+			return false;
+		}
 
 		// Compare stored column widths with dashboard widget's column widths
 		return !isEqual(newWidths, existingWidths);

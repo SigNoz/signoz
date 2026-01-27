@@ -41,7 +41,9 @@ const allRegions = (): string[] =>
 	regions.flatMap((r) => r.subRegions.map((sr) => sr.name));
 
 const getRegionPreviewText = (regions: string[] | undefined): string[] => {
-	if (!regions) return [];
+	if (!regions) {
+		return [];
+	}
 	if (regions.includes('all')) {
 		return allRegions();
 	}

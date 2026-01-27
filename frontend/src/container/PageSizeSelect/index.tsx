@@ -25,7 +25,9 @@ function PageSizeSelect({
 		[redirectWithQuery],
 	);
 
-	if (!isShow) return null;
+	if (!isShow) {
+		return null;
+	}
 
 	return (
 		<Row>

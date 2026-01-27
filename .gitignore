@@ -1,6 +1,9 @@
 
 node_modules
 
+.vscode
+!.vscode/settings.json
+
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
@@ -12,7 +15,6 @@ frontend/coverage
 
 # production
 frontend/build
-frontend/.vscode
 frontend/.yarnclean
 frontend/.temp_cache
 frontend/test-results
@@ -31,7 +33,6 @@ frontend/src/constants/env.ts
 
 .idea
 
-**/.vscode
 **/build
 **/storage
 **/locust-scripts/__pycache__/
@@ -106,7 +107,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/

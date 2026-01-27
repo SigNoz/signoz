@@ -46,8 +46,9 @@ function SearchFilter({
 		const searchQueryString = new URLSearchParams(history.location.search).get(
 			'search',
 		);
-		if (searchQueryString)
+		if (searchQueryString) {
 			setQueries(convertURLQueryStringToQuery(searchQueryString) || []);
+		}
 	}, []);
 	useEffect(() => {
 		filterDashboards(executeSearchQueries(queries, searchData));

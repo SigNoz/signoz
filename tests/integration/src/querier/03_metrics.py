@@ -7,7 +7,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from src.querier.timeseries_utils import (
+from fixtures.querier import (
     assert_minutely_bucket_values,
     find_named_result,
     index_series_by_label,

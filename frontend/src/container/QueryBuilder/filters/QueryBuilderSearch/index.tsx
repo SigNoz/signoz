@@ -193,7 +193,9 @@ function QueryBuilderSearch({
 						disabled={isDisabled}
 						$isEnabled={!!searchValue}
 						onClick={(): void => {
-							if (!isDisabled) tagEditHandler(value);
+							if (!isDisabled) {
+								tagEditHandler(value);
+							}
 						}}
 					>
 						{chipValue}
@@ -204,12 +206,18 @@ function QueryBuilderSearch({
 	};
 
 	const onChangeHandler = (value: string[]): void => {
-		if (!isMulti) handleSearch(value[value.length - 1]);
+		if (!isMulti) {
+			handleSearch(value[value.length - 1]);
+		}
 	};
 
 	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
-		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
-		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
+		if (isMulti || event.key === 'Backspace') {
+			handleKeyDown(event);
+		}
+		if (isExistsNotExistsOperator(searchValue)) {
+			handleKeyDown(event);
+		}
 
 		// Editing is done after enter key press
 		if (event.key === 'Enter') {
@@ -263,7 +271,9 @@ function QueryBuilderSearch({
 	};
 
 	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute?.key && isMetricsDataSource) return [];
+		if (!query.aggregateAttribute?.key && isMetricsDataSource) {
+			return [];
+		}
 		return tags;
 	}, [isMetricsDataSource, query.aggregateAttribute?.key, tags]);
 

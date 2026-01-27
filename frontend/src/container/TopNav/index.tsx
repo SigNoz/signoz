@@ -7,7 +7,7 @@ import { matchPath, useHistory } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';
-import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
+import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/constants';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();

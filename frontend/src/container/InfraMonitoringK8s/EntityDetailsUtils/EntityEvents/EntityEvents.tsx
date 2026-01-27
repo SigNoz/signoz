@@ -16,7 +16,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { isArray } from 'lodash-es';
@@ -199,12 +199,16 @@ export default function Events({
 	);
 
 	const handlePrev = (): void => {
-		if (!formattedEntityEvents.length) return;
+		if (!formattedEntityEvents.length) {
+			return;
+		}
 		setPage(page - 1);
 	};
 
 	const handleNext = (): void => {
-		if (!formattedEntityEvents.length) return;
+		if (!formattedEntityEvents.length) {
+			return;
+		}
 		setPage(page + 1);
 	};
 
@@ -266,6 +270,8 @@ export default function Events({
 						onTimeChange={handleTimeChange}
 						defaultRelativeTime="5m"
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

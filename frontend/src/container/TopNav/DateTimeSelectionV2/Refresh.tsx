@@ -1,6 +1,8 @@
+import { Tooltip } from 'antd';
+import { Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { RefreshTextContainer, Typography } from './styles';
+import { RefreshTextContainer } from './styles';
 
 function RefreshText({
 	onLastRefreshHandler,
@@ -23,7 +25,9 @@ function RefreshText({
 
 	return (
 		<RefreshTextContainer refreshButtonHidden={refreshButtonHidden}>
-			<Typography>{refreshText}</Typography>
+			<Tooltip title={refreshText}>
+				<Clock size={12} />
+			</Tooltip>
 		</RefreshTextContainer>
 	);
 }

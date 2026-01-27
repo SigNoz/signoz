@@ -19,7 +19,7 @@ import {
 import {
 	listViewInitialLogQuery,
 	listViewInitialTraceQuery,
-} from 'container/NewDashboard/ComponentsSlider/constants';
+} from 'container/DashboardContainer/ComponentsSlider/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -531,7 +531,9 @@ export const useQueryOperations: UseQueryOperations = ({
 	const isTracePanelType = panelType === PANEL_TYPES.TRACE;
 
 	useEffect(() => {
-		if (initialDataSource && dataSource !== initialDataSource) return;
+		if (initialDataSource && dataSource !== initialDataSource) {
+			return;
+		}
 
 		if (
 			dataSource === DataSource.METRICS &&

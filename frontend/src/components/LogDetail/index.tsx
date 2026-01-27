@@ -56,11 +56,11 @@ function LogDetailInner({
 	log,
 	onClose,
 	onAddToQuery,
-	onGroupByAttribute,
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -76,7 +76,9 @@ function LogDetailInner({
 	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
@@ -163,7 +165,9 @@ function LogDetailInner({
 		(value: string, queryIndex: number) => {
 			// update the query at the given index
 			setContextQuery((prev) => {
-				if (!prev) return prev;
+				if (!prev) {
+					return prev;
+				}
 
 				return {
 					...prev,
@@ -375,10 +379,10 @@ function LogDetailInner({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onClickActionItem}
-					onGroupByAttribute={onGroupByAttribute}
 					isListViewPanel={isListViewPanel}
 					selectedOptions={options}
 					listViewPanelSelectedFields={listViewPanelSelectedFields}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}

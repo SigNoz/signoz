@@ -24,7 +24,9 @@ function StepsContent({
 	const { hasEditPermission } = useAppContext();
 
 	const handleAddForNewStep = useCallback(() => {
-		if (!span || !hasEditPermission) return;
+		if (!span || !hasEditPermission) {
+			return;
+		}
 
 		const stepWasAdded = handleAddStep();
 		if (stepWasAdded) {

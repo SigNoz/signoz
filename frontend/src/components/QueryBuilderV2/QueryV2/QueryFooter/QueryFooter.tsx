@@ -31,7 +31,9 @@ function TraceOperatorSection({
 	]);
 
 	const traceOperatorWarning = useMemo(() => {
-		if (currentQuery.builder.queryData.length === 0) return '';
+		if (currentQuery.builder.queryData.length === 0) {
+			return '';
+		}
 		const firstQuery = currentQuery.builder.queryData[0];
 		return `Currently, you are only seeing results from query ${firstQuery.queryName}. Add a trace operator to combine results of multiple queries.`;
 	}, [currentQuery]);

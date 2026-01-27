@@ -5,7 +5,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -87,6 +87,8 @@ function HostMetricLogsDetailedView({
 						onTimeChange={handleTimeChange}
 						defaultRelativeTime="5m"
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

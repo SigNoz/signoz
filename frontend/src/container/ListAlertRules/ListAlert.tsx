@@ -1,14 +1,6 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Dropdown,
-	Flex,
-	Input,
-	MenuProps,
-	Tag,
-	Typography,
-} from 'antd';
+import { Button, Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
@@ -109,41 +101,14 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}, [notificationsApi, t]);
 
-	const onClickNewAlertV2Handler = useCallback(() => {
+	const onClickNewAlertHandler = useCallback(() => {
 		logEvent('Alert: New alert button clicked', {
 			number: allAlertRules?.length,
 			layout: 'new',
 		});
-		params.set(QueryParams.showNewCreateAlertsPage, 'true');
-		safeNavigate(`${ROUTES.ALERT_TYPE_SELECTION}?${params.toString()}`);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const onClickNewClassicAlertHandler = useCallback(() => {
-		logEvent('Alert: New alert button clicked', {
-			number: allAlertRules?.length,
-			layout: 'classic',
-		});
 		safeNavigate(ROUTES.ALERT_TYPE_SELECTION);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	const newAlertMenuItems: MenuProps['items'] = [
-		{
-			key: 'new',
-			label: (
-				<span>
-					Try the new experience <Tag color="blue">Beta</Tag>
-				</span>
-			),
-			onClick: onClickNewAlertV2Handler,
-		},
-		{
-			key: 'classic',
-			label: 'Continue with the classic experience',
-			onClick: onClickNewClassicAlertHandler,
-		},
-	];
 
 	const onEditHandler = (record: GettableAlert, openInNewTab: boolean): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
@@ -415,11 +380,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				/>
 				<Flex gap={12}>
 					{addNewAlert && (
-						<Dropdown menu={{ items: newAlertMenuItems }} trigger={['click']}>
-							<Button type="primary" icon={<PlusOutlined />}>
-								New Alert
-							</Button>
-						</Dropdown>
+						<Button
+							type="primary"
+							onClick={onClickNewAlertHandler}
+							icon={<PlusOutlined />}
+						>
+							New Alert
+						</Button>
 					)}
 					<TextToolTip
 						{...{

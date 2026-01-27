@@ -14,7 +14,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -258,6 +258,8 @@ function EntityMetrics<T>({
 						defaultRelativeTime="5m"
 						isModalTimeSelection={isModalTimeSelection}
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

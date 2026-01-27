@@ -41,7 +41,7 @@ export const getConsumerLagDetails = async (
 > => {
 	const { detailType, ...restProps } = props;
 	const response = await axios.post(
-		`/messaging-queues/kafka/consumer-lag/${props.detailType}`,
+		`/messaging-queues/kafka/consumer-lag/${detailType}`,
 		{
 			...restProps,
 		},

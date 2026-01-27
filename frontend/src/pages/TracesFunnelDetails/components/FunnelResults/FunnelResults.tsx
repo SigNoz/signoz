@@ -24,15 +24,18 @@ function FunnelResults(): JSX.Element {
 		funnelId,
 	]);
 
-	if (hasAllEmptyStepFields) return <EmptyFunnelResults />;
+	if (hasAllEmptyStepFields) {
+		return <EmptyFunnelResults />;
+	}
 
-	if (hasIncompleteStepFields)
+	if (hasIncompleteStepFields) {
 		return (
 			<EmptyFunnelResults
 				title="Missing service / span names"
 				description="Fill in the service and span names for all the steps"
 			/>
 		);
+	}
 
 	if (isValidateStepsLoading || isFunnelUpdateMutating) {
 		return <Spinner size="large" />;

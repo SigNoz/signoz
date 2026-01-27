@@ -47,7 +47,6 @@ function ColumnView({
 		onSetActiveLog: handleSetActiveLog,
 		onClearActiveLog: handleClearActiveLog,
 		onAddToQuery: handleAddToQuery,
-		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
 
 	const [showActiveLog, setShowActiveLog] = useState<boolean>(false);
@@ -208,7 +207,9 @@ function ColumnView({
 	);
 
 	const handleColumnOrderChange = (newColumns: ColumnDef<any>[]): void => {
-		if (isEmpty(newColumns) || isEqual(newColumns, selectedColumns)) return;
+		if (isEmpty(newColumns) || isEqual(newColumns, selectedColumns)) {
+			return;
+		}
 
 		const formattedColumns = newColumns.map((column) => ({
 			id: column.id,
@@ -271,7 +272,6 @@ function ColumnView({
 					onClose={handleLogDetailClose}
 					onAddToQuery={handleAddToQuery}
 					onClickActionItem={handleAddToQuery}
-					onGroupByAttribute={handleGroupByAttribute}
 				/>
 			)}
 		</div>

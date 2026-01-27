@@ -419,7 +419,9 @@ function ExplorerOptions({
 				key,
 				viewsData?.data?.data,
 			);
-			if (!currentViewDetails) return;
+			if (!currentViewDetails) {
+				return;
+			}
 			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			if (handleChangeSelectedView) {
