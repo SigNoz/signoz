@@ -5,8 +5,11 @@
 	-webkit-font-smoothing: antialiased;
 	color: var(--bg-vanilla-100);
 	border-radius: 6px;
-	padding: 1rem 0.5rem 0.5rem 1rem;
+	padding: 1rem 1rem 0.5rem 1rem;
 	border: 1px solid rgba(255, 255, 255, 0.1);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 
 	&.lightMode {
 		background: var(--bg-vanilla-100);
@@ -17,17 +20,20 @@
 	.tooltip-header {
 		font-size: 13px;
 		font-weight: 500;
-		margin-bottom: 8px;
 	}
-	.tooltip-list {
-		&::-webkit-scrollbar {
-			width: 0.3rem;
-		}
-		&::-webkit-scrollbar-corner {
-			background: transparent;
-		}
-		&::-webkit-scrollbar-thumb {
-			background: rgb(136, 136, 136);
+
+	.tooltip-list-container {
+		height: 100%;
+		.tooltip-list {
+			&::-webkit-scrollbar {
+				width: 0.3rem;
+			}
+			&::-webkit-scrollbar-corner {
+				background: transparent;
+			}
+			&::-webkit-scrollbar-thumb {
+				background: rgb(136, 136, 136);
+			}
 		}
 	}
 

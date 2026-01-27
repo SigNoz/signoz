@@ -118,11 +118,19 @@ export class UPlotConfigBuilder {
 	/**
 	 * Add a hook for extensibility
 	 */
-	addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]): void {
+	addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]): () => void {
 		if (!this.hooks[type]) {
 			this.hooks[type] = [];
 		}
 		(this.hooks[type] as Hooks.Defs[T][]).push(hook);
+
+		// Return a function to remove the hook when the component unmounts
+		return (): void => {
+			const idx = (this.hooks[type] as Hooks.Defs[T][]).indexOf(hook);
+			if (idx !== -1) {
+				(this.hooks[type] as Hooks.Defs[T][]).splice(idx, 1);
+			}
+		};
 	}
 
 	/**

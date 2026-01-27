@@ -11,7 +11,7 @@ import type uPlot from 'uplot';
 import { TooltipProps } from '../types';
 
 const TOOLTIP_LIST_MAX_HEIGHT = 330;
-const TOOLTIP_ITEM_HEIGHT = 24;
+const TOOLTIP_ITEM_HEIGHT = 38;
 const FALLBACK_SERIES_COLOR = 'red';
 
 export type TooltipContentItem = {
@@ -78,6 +78,7 @@ export default function Tooltip({
 	dataIdxs,
 	uPlotInstance,
 	timezone,
+	isPinned,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const headerTitle = useMemo(() => {

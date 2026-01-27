@@ -2,11 +2,13 @@ import './Legend.styles.scss';
 
 import cx from 'classnames';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import type uPlot from 'uplot';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 
 import { LegendItem } from '../../config/types';
 import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import { usePanelContext } from '../../context/PanelContext';
+import { get } from 'lodash-es';
 
 interface LegendProps {
 	placement?: LegendPosition;
@@ -23,6 +25,8 @@ export default function Legend({
 		null,
 	);
 	const rafId = useRef<number | null>(null); // requestAnimationFrame id
+	const visibilityUpdatesRef = useRef<Record<number, boolean>>({});
+	const visibilityRafIdRef = useRef<number | null>(null);
 
 	const {
 		onToggleSeriesVisibility,
@@ -30,20 +34,77 @@ export default function Legend({
 		onFocusSeries,
 	} = usePanelContext();
 
+	const applyVisibilityUpdates = useCallback(
+		(updates: Record<number, boolean>): void => {
+			setLegendItemsMap(
+				(prev): Record<number, LegendItem> => {
+					let hasChanges = false;
+					const next = { ...prev };
+
+					for (const [idxStr, visible] of Object.entries(updates)) {
+						const idx = Number(idxStr);
+						const current = next[idx];
+						if (!current || current.visible === visible) {
+							continue;
+						}
+						next[idx] = { ...current, visible };
+						hasChanges = true;
+					}
+
+					return hasChanges ? next : prev;
+				},
+			);
+		},
+		[],
+	);
+
+	const queueVisibilityUpdate = useCallback(
+		(seriesIndex: number, show: boolean): void => {
+			// Accumulate visibility updates
+			visibilityUpdatesRef.current[seriesIndex] = show;
+
+			// Schedule a single state update per frame
+			if (visibilityRafIdRef.current !== null) {
+				return;
+			}
+
+			visibilityRafIdRef.current = requestAnimationFrame(() => {
+				const updates = visibilityUpdatesRef.current;
+				visibilityUpdatesRef.current = {};
+				visibilityRafIdRef.current = null;
+
+				applyVisibilityUpdates(updates);
+			});
+		},
+		[applyVisibilityUpdates],
+	);
+
+	const handleSetSeries = useCallback(
+		(_u: uPlot, seriesIndex: number | null, opts: uPlot.Series): void => {
+			// Using get because focus is not a property of uPlot.Series, but it's present in the opts.
+			if (get(opts, 'focus', false)) {
+				setFocusedSeriesIndex(seriesIndex);
+			}
+
+			// Keep legend visibility in sync with uPlot series visibility.
+			if (!seriesIndex || typeof opts.show !== 'boolean') {
+				return;
+			}
+
+			queueVisibilityUpdate(seriesIndex, opts.show);
+		},
+		[queueVisibilityUpdate],
+	);
+
 	useLayoutEffect(() => {
 		setLegendItemsMap(config.getLegendItems());
 
-		config.addHook(
-			'setSeries',
-			(u: uPlot, seriesIndex: number | null, opts: uPlot.Series) => {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				if (opts.focus) {
-					setFocusedSeriesIndex(seriesIndex);
-				}
-			},
-		);
-	}, [config]);
+		const removeHook = config.addHook('setSeries', handleSetSeries);
+
+		return (): void => {
+			removeHook();
+		};
+	}, [config, handleSetSeries]);
 
 	const getLegendItemIdFromEvent = useCallback(
 		(e: React.MouseEvent<HTMLDivElement>): string | undefined => {
