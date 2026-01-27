@@ -35,6 +35,10 @@ func TestProviderStartStop(t *testing.T) {
 
 	sqlstore.Mock().ExpectExec("INSERT INTO authorization_model (.+) VALUES (.+)").WillReturnResult(sqlmock.NewResult(1, 1))
 
+	go func() {
+		err := provider.Start(context.Background())
+		require.NoError(t, err)
+	}()
 	// wait for the service to start
 	time.Sleep(time.Second * 2)
 
