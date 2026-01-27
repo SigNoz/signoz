@@ -21,8 +21,9 @@
 	align-items: center;
 	gap: 2px;
 	padding: 2px 4px;
-	border-radius: 6px;
-	background: var(--bg-ink-200);
+	border-radius: 4px;
+	//not using var here to support opacity 60%. To be handled at design system level.
+	background: rgba(35, 38, 46, 0.6);
 	line-height: 1;
 	font-size: 10px;
 }
@@ -30,6 +31,7 @@
 .lightMode {
 	.cmd-hint {
 		color: var(--bg-ink-200);
-		background: var(--bg-vanilla-300);
+		//not using var here to support opacity 60%. To be handled at design system level.
+		background: rgba(231, 232, 236, 0.8);
 	}
 }
