@@ -672,14 +672,6 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	groupByKeys := []string{"ts", "bin_upper"}
 	orderByKeys := []string{"ts", "bin_upper"}
 
-	if requestType == qbtypes.RequestTypeDistribution {
-		tsExpr = fmt.Sprintf("%d AS ts", start)
-		partitionExpr = ""
-		finalTsExpr = fmt.Sprintf("%d AS ts", start)
-		groupByKeys = []string{"bin_upper"}
-		orderByKeys = []string{"bin_upper"}
-	}
-
 	inner := sqlbuilder.NewSelectBuilder()
 	inner.Select(tsExpr)
 	inner.SelectMore("toFloat64OrNull(le) AS bin_upper")
@@ -710,10 +702,8 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	sb.Select(finalTsExpr)
 	sb.SelectMore("groupArray([bin_lower, bin_upper, value]) AS __result_0")
 	sb.From("(" + binQ + ")")
-	if requestType != qbtypes.RequestTypeDistribution {
-		sb.GroupBy("ts")
-		sb.Having("length(__result_0) > 0")
-	}
+	sb.GroupBy("ts")
+	sb.Having("length(__result_0) > 0")
 	sb.OrderBy("ts")
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
