@@ -31,8 +31,8 @@ export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 			...step.filters,
 			items: step.filters.items.map((item) => {
 				const {
-					id: unusedId,
-					isIndexed,
+					id: _unusedId,
+					isIndexed: _isIndexed,
 					...keyObj
 				} = item.key as BaseAutocompleteData;
 				return {

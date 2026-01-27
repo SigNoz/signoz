@@ -64,7 +64,14 @@ module.exports = {
 
 		// TypeScript rules
 		'@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions
-		'@typescript-eslint/no-unused-vars': 'off',
+		'@typescript-eslint/no-unused-vars': [
+			// Disallows unused variables/args
+			'error',
+			{
+				argsIgnorePattern: '^_', // Allows unused args prefixed with _ (e.g., _unusedParam)
+				varsIgnorePattern: '^_', // Allows unused vars prefixed with _ (e.g., _unusedVar)
+			},
+		],
 		'@typescript-eslint/no-explicit-any': 'warn', // Warns when using 'any' type (consider upgrading to error)
 		// TODO: Change to 'error' after fixing ~80 empty function placeholders in providers/contexts
 		'@typescript-eslint/no-empty-function': 'off', // Disallows empty function bodies
