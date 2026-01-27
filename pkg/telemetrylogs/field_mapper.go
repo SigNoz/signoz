@@ -337,23 +337,12 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 
 	// For non-terminal nodes, we need to handle ALL possible branches at the next level
 	var nestedExpressions []string
-	hasJSON := nextNode.Branches[telemetrytypes.BranchJSON] != nil
-	hasDynamic := nextNode.Branches[telemetrytypes.BranchDynamic] != nil
-
-	if hasJSON {
-		jsonNested, err := m.buildArrayMap(nextNode, telemetrytypes.BranchJSON)
+	for branchType := range nextNode.Branches {
+		expr, err := m.buildArrayMap(nextNode, branchType)
 		if err != nil {
 			return "", err
 		}
-		nestedExpressions = append(nestedExpressions, jsonNested)
-	}
-
-	if hasDynamic {
-		dynamicNested, err := m.buildArrayMap(nextNode, telemetrytypes.BranchDynamic)
-		if err != nil {
-			return "", err
-		}
-		nestedExpressions = append(nestedExpressions, dynamicNested)
+		nestedExpressions = append(nestedExpressions, expr)
 	}
 
 	// If we have multiple nested expressions, we need to concat them
@@ -361,7 +350,6 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	if len(nestedExpressions) == 1 {
 		nestedExpr = nestedExpressions[0]
 	} else if len(nestedExpressions) > 1 {
-		// This shouldn't happen in our current tree structure, but handle it just in case
 		nestedExpr = fmt.Sprintf("arrayConcat(%s)", strings.Join(nestedExpressions, ", "))
 	} else {
 		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
