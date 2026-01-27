@@ -70,6 +70,7 @@ jobs:
           echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> frontend/.env
           echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> frontend/.env
           echo 'PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> frontend/.env
+          echo 'DOCS_BASE_URL="https://signoz.io"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
