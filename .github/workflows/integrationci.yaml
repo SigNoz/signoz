@@ -40,7 +40,6 @@ jobs:
           - bootstrap
           - passwordauthn
           - callbackauthn
-          - role
           - cloudintegrations
           - dashboard
           - querier
