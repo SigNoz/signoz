@@ -94,14 +94,18 @@ export function buildAlertScheduleFromRRule(
 	maxOccurrences = 10,
 ): Date[] | null {
 	try {
-		if (!rruleString) return null;
+		if (!rruleString) {
+			return null;
+		}
 
 		// Handle literal \n in string
 		let finalRRuleString = rruleString.replace(/\\n/g, '\n');
 
 		if (date) {
 			const dt = dayjs(date);
-			if (!dt.isValid()) throw new Error('Invalid date provided');
+			if (!dt.isValid()) {
+				throw new Error('Invalid date provided');
+			}
 
 			const [hours = 0, minutes = 0, seconds = 0] = startAt.split(':').map(Number);
 
@@ -124,7 +128,9 @@ export function buildAlertScheduleFromRRule(
 		const rruleObj = rrulestr(finalRRuleString);
 		const occurrences: Date[] = [];
 		rruleObj.all((date, index) => {
-			if (index >= maxOccurrences) return false;
+			if (index >= maxOccurrences) {
+				return false;
+			}
 			occurrences.push(date);
 			return true;
 		});
@@ -151,7 +157,9 @@ function generateMonthlyOccurrences(
 	for (let monthOffset = 0; monthOffset < scanMonths; monthOffset++) {
 		const monthDate = currentMonth.add(monthOffset, 'month');
 		targetDays.forEach((day) => {
-			if (occurrences.length >= maxOccurrences) return;
+			if (occurrences.length >= maxOccurrences) {
+				return;
+			}
 
 			const daysInMonth = monthDate.daysInMonth();
 			if (day <= daysInMonth) {
@@ -185,7 +193,9 @@ function generateWeeklyOccurrences(
 	for (let weekOffset = 0; weekOffset < maxOccurrences; weekOffset++) {
 		const weekDate = currentWeek.add(weekOffset, 'week');
 		targetWeekdays.forEach((weekday) => {
-			if (occurrences.length >= maxOccurrences) return;
+			if (occurrences.length >= maxOccurrences) {
+				return;
+			}
 
 			const targetDate = weekDate
 				.day(weekday)

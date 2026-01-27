@@ -37,7 +37,6 @@ func NewPromRule(
 	prometheus prometheus.Prometheus,
 	opts ...RuleOption,
 ) (*PromRule, error) {
-
 	opts = append(opts, WithLogger(logger))
 
 	baseRule, err := NewBaseRule(id, orgID, postableRule, reader, opts...)
@@ -53,7 +52,6 @@ func NewPromRule(
 	p.logger = logger
 
 	query, err := p.getPqlQuery()
-
 	if err != nil {
 		// can not generate a valid prom QL query
 		return nil, err
@@ -83,7 +81,6 @@ func (r *PromRule) GetSelectedQuery() string {
 }
 
 func (r *PromRule) getPqlQuery() (string, error) {
-
 	if r.version == "v5" {
 		if len(r.ruleCondition.CompositeQuery.Queries) > 0 {
 			selectedQuery := r.GetSelectedQuery()
@@ -158,9 +155,16 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	var resultVector ruletypes.Vector
 	for _, series := range matrixToProcess {
+		if !r.Condition().ShouldEval(series) {
+			r.logger.InfoContext(
+				ctx, "not enough data points to evaluate series, skipping",
+				"rule_id", r.ID(), "num_points", len(series.Points), "required_points", r.Condition().RequiredNumPoints,
+			)
+			continue
+		}
 		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
-      SendUnmatched: r.ShouldSendUnmatched(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err
@@ -170,14 +174,14 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	return resultVector, nil
 }
 
-func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
 	valueFormatter := formatter.FromUnit(r.Unit())
 
 	// prepare query, run query get data and filter the data based on the threshold
 	results, err := r.buildAndRunQuery(ctx, ts)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	r.mtx.Lock()
@@ -185,7 +189,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	resultFPs := map[uint64]struct{}{}
 
-	var alerts = make(map[uint64]*ruletypes.Alert, len(results))
+	alerts := make(map[uint64]*ruletypes.Alert, len(results))
 
 	ruleReceivers := r.Threshold.GetRuleReceivers()
 	ruleReceiverMap := make(map[string][]string)
@@ -208,7 +212,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
 		expand := func(text string) string {
-
 			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
@@ -251,7 +254,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			// SetLastError will deadlock.
 			r.health = ruletypes.HealthBad
 			r.lastError = err
-			return nil, err
+			return 0, err
 		}
 		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
@@ -378,7 +381,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 }
 
 func (r *PromRule) String() string {
-
 	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,

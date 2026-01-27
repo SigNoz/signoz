@@ -11,7 +11,9 @@ export function populateMultipleResults(
 
 	queryResults?.forEach((query: QueryDataV3) => {
 		const { queryName, legend, table } = query;
-		if (!table) return;
+		if (!table) {
+			return;
+		}
 
 		const { columns, rows } = table;
 

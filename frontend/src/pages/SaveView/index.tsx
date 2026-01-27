@@ -210,7 +210,9 @@ function SaveView(): JSX.Element {
 			view.id,
 			viewsData?.data.data,
 		);
-		if (!currentViewDetails) return;
+		if (!currentViewDetails) {
+			return;
+		}
 		const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 		if (sourcepage) {

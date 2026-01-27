@@ -114,9 +114,12 @@ function LabelSelect({
 		});
 	};
 	const renderPlaceholder = useCallback((): string => {
-		if (state.value === 'LabelKey') return 'Enter a label key then press ENTER.';
-		if (state.value === 'LabelValue')
+		if (state.value === 'LabelKey') {
+			return 'Enter a label key then press ENTER.';
+		}
+		if (state.value === 'LabelValue') {
 			return `Enter a value for label key(${staging[0]}) then press ENTER.`;
+		}
 		return t('placeholder_label_key_pair');
 	}, [t, state, staging]);
 	return (

@@ -16,7 +16,9 @@ export const INFRA_METADATA_KEYS = [
  * @returns true if the span has at least one infrastructure metadata key, false otherwise
  */
 export function hasInfraMetadata(span: Span | undefined): boolean {
-	if (!span?.tagMap) return false;
+	if (!span?.tagMap) {
+		return false;
+	}
 
 	return INFRA_METADATA_KEYS.some((key) => span.tagMap?.[key]);
 }

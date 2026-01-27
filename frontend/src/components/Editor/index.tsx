@@ -13,9 +13,13 @@ function Editor({
 	const isDarkMode = useIsDarkMode();
 
 	const onChangeHandler = (newValue?: string): void => {
-		if (readOnly) return;
+		if (readOnly) {
+			return;
+		}
 
-		if (typeof newValue === 'string' && onChange) onChange(newValue);
+		if (typeof newValue === 'string' && onChange) {
+			onChange(newValue);
+		}
 	};
 
 	const editorOptions = useMemo(

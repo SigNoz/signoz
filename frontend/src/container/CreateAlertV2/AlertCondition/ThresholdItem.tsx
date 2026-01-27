@@ -37,10 +37,7 @@ function ThresholdItem({
 		);
 		if (units.length === 0) {
 			component = (
-				<Tooltip
-					trigger="hover"
-					title="Please select a Y-axis unit for the query first"
-				>
+				<Tooltip trigger="hover" title="No compatible units available">
 					<Select
 						placeholder="Unit"
 						value={threshold.unit ? threshold.unit : null}

@@ -36,7 +36,9 @@ export const getRequestData = ({
 	page,
 	pageSize = INITIAL_PAGE_SIZE,
 }: GetRequestDataProps): Query | null => {
-	if (!query) return null;
+	if (!query) {
+		return null;
+	}
 
 	const paginateData = getPaginationQueryData({
 		filters: stagedQueryData?.filters || initialFilters,
