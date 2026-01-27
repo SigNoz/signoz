@@ -17,7 +17,6 @@ import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
-import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
@@ -150,12 +149,6 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const { org } = useAppContext();
 
-	const { data: ingestionKeys } = useGetAllIngestionsKeys({
-		search: '',
-		page: 1,
-		per_page: 10,
-	});
-
 	const { data: globalConfig } = useGetGlobalConfig();
 
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
@@ -243,12 +236,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			urlObj.searchParams.set('environment', selectedEnvironment);
 		}
 
-		const ingestionKey = ingestionKeys?.data?.data?.[0]?.value;
 		let region = globalConfig?.data?.ingestion_url;
-
-		if (ingestionKey) {
-			urlObj.searchParams.set('ingestion_key', ingestionKey);
-		}
 
 		if (region) {
 			try {
