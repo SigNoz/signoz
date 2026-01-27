@@ -64,11 +64,8 @@ def insert_alert_data(
     insert_metrics: Callable[[List[Metrics]], None],
     insert_traces: Callable[[List[Traces]], None],
     insert_logs: Callable[[List[Logs]], None],
+    get_testdata_file_path: Callable[[str], str],
 ) -> Callable[[List[types.AlertData]], None]:
-
-    def _get_file_path(file: str) -> str:
-        testdata_dir = os.path.join(os.path.dirname(__file__), "..", "testdata")
-        return os.path.join(testdata_dir, file)
 
     def _insert_alert_data(
         alert_data_items: List[types.AlertData],
@@ -86,19 +83,19 @@ def insert_alert_data(
         for data_item in alert_data_items:
             if data_item.type == "metrics":
                 _metrics = Metrics.load_from_file(
-                    _get_file_path(data_item.data_path),
+                    get_testdata_file_path(data_item.data_path),
                     base_time=now,
                 )
                 metrics.extend(_metrics)
             elif data_item.type == "traces":
                 _traces = Traces.load_from_file(
-                    _get_file_path(data_item.data_path),
+                    get_testdata_file_path(data_item.data_path),
                     base_time=now,
                 )
                 traces.extend(_traces)
             elif data_item.type == "logs":
                 _logs = Logs.load_from_file(
-                    _get_file_path(data_item.data_path),
+                    get_testdata_file_path(data_item.data_path),
                     base_time=now,
                 )
                 logs.extend(_logs)

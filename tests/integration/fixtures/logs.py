@@ -9,7 +9,7 @@ from ksuid import KsuidMs
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
-from fixtures.utils import parse_iso_8601_timestamp
+from fixtures.utils import parse_timestamp
 
 
 class LogsResource(ABC):
@@ -337,7 +337,7 @@ class Logs(ABC):
     ) -> "Logs":
         """Create a Logs instance from a dict."""
         # parse timestamp from iso format
-        timestamp = parse_iso_8601_timestamp(data["timestamp"])
+        timestamp = parse_timestamp(data["timestamp"])
         return cls(
             timestamp=timestamp,
             resources=data.get("resources", {}),
@@ -368,7 +368,7 @@ class Logs(ABC):
             # Find earliest timestamp
             earliest = None
             for data in data_list:
-                ts = parse_iso_8601_timestamp(data["timestamp"])
+                ts = parse_timestamp(data["timestamp"])
                 if earliest is None or ts < earliest:
                     earliest = ts
             if earliest is not None:
@@ -376,7 +376,7 @@ class Logs(ABC):
 
         logs = []
         for data in data_list:
-            original_ts = parse_iso_8601_timestamp(data["timestamp"])
+            original_ts = parse_timestamp(data["timestamp"])
             adjusted_ts = original_ts + time_offset
             data["timestamp"] = adjusted_ts.isoformat()
             logs.append(cls.from_dict(data))

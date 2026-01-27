@@ -13,7 +13,7 @@ import pytest
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
-from fixtures.utils import parse_duration, parse_iso_8601_timestamp
+from fixtures.utils import parse_duration, parse_timestamp
 
 
 class TracesKind(Enum):
@@ -618,7 +618,7 @@ class Traces(ABC):
     ) -> "Traces":
         """Create a Traces instance from a dict."""
         # parse timestamp from iso format
-        timestamp = parse_iso_8601_timestamp(data["timestamp"])
+        timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
 
         kind = TracesKind.from_value(
@@ -669,7 +669,7 @@ class Traces(ABC):
             # Find earliest timestamp
             earliest = None
             for data in data_list:
-                ts = parse_iso_8601_timestamp(data["timestamp"])
+                ts = parse_timestamp(data["timestamp"])
                 if earliest is None or ts < earliest:
                     earliest = ts
             if earliest is not None:
@@ -678,7 +678,7 @@ class Traces(ABC):
         traces = []
         for data in data_list:
             # add time offset to timestamp
-            original_ts = parse_iso_8601_timestamp(data["timestamp"])
+            original_ts = parse_timestamp(data["timestamp"])
             duration = parse_duration(data.get("duration", "PT1S"))
             adjusted_ts = original_ts + time_offset
             data["timestamp"] = adjusted_ts.isoformat()

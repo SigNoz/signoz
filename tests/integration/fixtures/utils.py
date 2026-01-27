@@ -5,7 +5,7 @@ import isodate
 
 
 # parses the given timestamp string from ISO format to datetime.datetime
-def parse_iso_8601_timestamp(ts_str: str) -> datetime.datetime:
+def parse_timestamp(ts_str: str) -> datetime.datetime:
     """
     Parse a timestamp string from ISO format.
     """
