@@ -64,7 +64,7 @@ function LeftContainer({
 				enableDrillDown={enableDrillDown}
 			/>
 			<QueryContainer className="query-section-left-container">
-				<QuerySection selectedGraph={selectedGraph} queryResponse={queryResponse} />
+				<QuerySection selectedGraph={selectedGraph} />
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer
 						selectedLogFields={selectedLogFields}

@@ -87,7 +87,7 @@ function TraceOperatorEditor({
 	// Track if the query was changed externally (from props) vs internally (user input)
 	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
 	const [lastExternalValue, setLastExternalValue] = useState<string>('');
-	const { currentQuery, handleRunQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
 
 	const queryOptions = useMemo(
 		() =>

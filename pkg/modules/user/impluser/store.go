@@ -391,6 +391,18 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 	return resetPasswordToken, nil
 }
 
+func (store *store) DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error {
+	_, err := store.sqlstore.BunDB().NewDelete().
+		Model(&types.ResetPasswordToken{}).
+		Where("password_id = ?", passwordID).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete reset password token")
+	}
+
+	return nil
+}
+
 func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
 	resetPasswordRequest := new(types.ResetPasswordToken)
 
