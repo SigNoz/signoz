@@ -57,7 +57,7 @@ export class UPlotConfigBuilder {
 	private tzDate: ((timestamp: number) => Date) | undefined;
 
 	private widgetId: string | undefined;
-	private onDragSelect: (startTime: number, endTime: number) => void | undefined;
+	private onDragSelect: (startTime: number, endTime: number) => void;
 
 	constructor(args?: {
 		widgetId?: string;
@@ -67,17 +67,21 @@ export class UPlotConfigBuilder {
 		if (widgetId) {
 			this.widgetId = widgetId;
 		}
-		this.onDragSelect = onDragSelect ?? _noop;
 
-		// Add a hook to handle the select event
-		this.addHook('setSelect', (self: uPlot): void => {
-			const selection = self.select;
-			if (selection) {
-				const startTime = self.posToVal(selection.left, 'x');
-				const endTime = self.posToVal(selection.left + selection.width, 'x');
-				this.onDragSelect(startTime * 1000, endTime * 1000);
-			}
-		});
+		this.onDragSelect = _noop;
+
+		if (onDragSelect) {
+			this.onDragSelect = onDragSelect;
+			// Add a hook to handle the select event
+			this.addHook('setSelect', (self: uPlot): void => {
+				const selection = self.select;
+				if (selection) {
+					const startTime = self.posToVal(selection.left, 'x');
+					const endTime = self.posToVal(selection.left + selection.width, 'x');
+					this.onDragSelect(startTime * 1000, endTime * 1000);
+				}
+			});
+		}
 	}
 
 	/**
@@ -190,18 +194,18 @@ export class UPlotConfigBuilder {
 	/**
 	 * Get legend items
 	 */
-	getLegendItems(): LegendItem[] {
+	getLegendItems(): Record<number, LegendItem> {
 		// Check if the widgetId is set and if it is, then get the legend items from the localstorage
-		return this.series.map((s: UPlotSeriesBuilder, index: number) => {
+		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
-			return {
+			acc[index + 1] = {
 				seriesIndex: index + 1, // +1 because the first series is the timestamp
 				color: seriesConfig.stroke,
 				label: seriesConfig.label,
-				focused: true,
 				visible: seriesConfig.show ?? true,
 			};
-		});
+			return acc;
+		}, {} as Record<number, LegendItem>);
 	}
 
 	/**

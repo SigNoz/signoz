@@ -196,10 +196,7 @@ function adjustLogRange(
 ): Range.MinMax {
 	let [currentMin, currentMax] = minMax;
 
-	if (currentMin != null && currentMin <= 1) {
-		// clamp min
-		currentMin = 1;
-	} else if (currentMin != null) {
+	if (currentMin != null) {
 		// snap min to nearest mag below
 		const minExp = Math.floor(logFn(currentMin));
 		currentMin = logBase ** minExp;

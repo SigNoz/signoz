@@ -154,7 +154,6 @@ export interface LegendItem {
 	seriesIndex: number;
 	label: uPlot.Series['label'];
 	color: uPlot.Series['stroke'];
-	focused: boolean;
 	visible: boolean;
 }
 

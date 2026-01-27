@@ -19,10 +19,10 @@ export default function Legend({
 	const [legendItemsMap, setLegendItemsMap] = useState<
 		Record<number, LegendItem>
 	>({});
-	const initialLegendItemsMap = useRef<Record<number, LegendItem>>({});
-	const focusedSeriesIndex = useRef<number | null>(null);
-	const animationFrameRef = useRef<boolean>(false);
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [focusedSeriesIndex, setFocusedSeriesIndex] = useState<number | null>(
+		null,
+	);
+	const rafId = useRef<number | null>(null); // requestAnimationFrame id
 
 	const {
 		onToggleSeriesVisibility,
@@ -31,13 +31,18 @@ export default function Legend({
 	} = usePanelContext();
 
 	useLayoutEffect(() => {
-		const legendItems = config.getLegendItems();
-		const legendItemsMap = legendItems.reduce((acc, item) => {
-			acc[item.seriesIndex] = item;
-			return acc;
-		}, {} as Record<number, LegendItem>);
-		initialLegendItemsMap.current = legendItemsMap;
-		setLegendItemsMap(legendItemsMap);
+		setLegendItemsMap(config.getLegendItems());
+
+		config.addHook(
+			'setSeries',
+			(u: uPlot, seriesIndex: number | null, opts: uPlot.Series) => {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				if (opts.focus) {
+					setFocusedSeriesIndex(seriesIndex);
+				}
+			},
+		);
 	}, [config]);
 
 	const getLegendItemIdFromEvent = useCallback(
@@ -72,41 +77,34 @@ export default function Legend({
 
 			onToggleSeriesVisibility(seriesIndex);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[onToggleSeriesVisibility, onToggleSeriesOnOff, getLegendItemIdFromEvent],
 	);
 
 	const handleMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>): void => {
-			const legendItemId = getLegendItemIdFromEvent(e);
-			const seriesIndex = legendItemId ? Number(legendItemId) : null;
-			if (seriesIndex === focusedSeriesIndex.current) {
-				return;
+		(e: React.MouseEvent<HTMLDivElement>, seriesIndex: number | null): void => {
+			if (rafId.current != null) {
+				cancelAnimationFrame(rafId.current);
 			}
-			focusedSeriesIndex.current = seriesIndex;
-			onFocusSeries(seriesIndex);
+			rafId.current = requestAnimationFrame(() => {
+				setFocusedSeriesIndex(seriesIndex);
+				onFocusSeries(seriesIndex);
+			});
 		},
-		[getLegendItemIdFromEvent, onFocusSeries],
+		[onFocusSeries],
 	);
 
-	const handleLegendMouseMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>): void => {
-			if (!animationFrameRef.current) {
-				animationFrameRef.current = true;
-
-				requestAnimationFrame(() => {
-					if (timeoutRef.current) {
-						clearTimeout(timeoutRef.current);
-					}
-					handleMove(e);
-					animationFrameRef.current = false;
-				});
-			}
-		},
-		[handleMove],
-	);
+	const handleLegendMouseMove = (e: React.MouseEvent<HTMLDivElement>): void => {
+		const legendItemId = getLegendItemIdFromEvent(e);
+		const seriesIndex = legendItemId ? Number(legendItemId) : null;
+		if (seriesIndex === focusedSeriesIndex) {
+			return;
+		}
+		handleMove(e, seriesIndex);
+	};
 
 	const handleLegendMouseLeave = useCallback((): void => {
-		focusedSeriesIndex.current = null;
+		setFocusedSeriesIndex(null);
 		onFocusSeries(null);
 	}, [onFocusSeries]);
 
@@ -127,7 +125,7 @@ export default function Legend({
 					data-legend-item-id={item.seriesIndex}
 					className={cx('legend-item', {
 						'legend-item-off': !item.visible,
-						'legend-item-unfocused': !item.focused,
+						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
 					})}
 				>
 					<div

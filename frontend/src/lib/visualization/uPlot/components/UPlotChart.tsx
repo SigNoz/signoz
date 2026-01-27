@@ -1,27 +1,32 @@
+import * as Sentry from '@sentry/react';
+import { Typography } from 'antd';
+import { isEqual } from 'lodash-es';
+import { LineChart } from 'lucide-react';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
-import { PlotProps } from './types';
+import { UPlotChartProps } from './types';
 
 /**
  * Check if dimensions have changed
  */
-function sameDimensions(prev: PlotProps, next: PlotProps): boolean {
+function sameDimensions(prev: UPlotChartProps, next: UPlotChartProps): boolean {
 	return next.width === prev.width && next.height === prev.height;
 }
 
 /**
- * Check if data has changed (reference equality)
+ * Check if data has changed (value equality)
  */
-function sameData(prev: PlotProps, next: PlotProps): boolean {
-	return next.data === prev.data;
+function sameData(prev: UPlotChartProps, next: UPlotChartProps): boolean {
+	return isEqual(next.data, prev.data);
 }
 
 /**
- * Check if config builder has changed (reference equality)
+ * Check if config builder has changed (value equality)
  */
-function sameConfig(prev: PlotProps, next: PlotProps): boolean {
-	return next.config === prev.config;
+function sameConfig(prev: UPlotChartProps, next: UPlotChartProps): boolean {
+	return isEqual(next.config, prev.config);
 }
 
 /**
@@ -37,10 +42,10 @@ export default function UPlotChart({
 	onDestroy,
 	children,
 	'data-testid': testId = 'uplot-main-div',
-}: PlotProps): JSX.Element {
+}: UPlotChartProps): JSX.Element {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
-	const prevPropsRef = useRef<PlotProps | null>(null);
+	const prevPropsRef = useRef<UPlotChartProps | null>(null);
 
 	/**
 	 * Initialize or reinitialize the plot
@@ -125,10 +130,21 @@ export default function UPlotChart({
 		prevPropsRef.current = currentProps;
 	}, [config, data, width, height, createPlot]);
 
+	if (data && data[0] && data[0]?.length === 0) {
+		return (
+			<div className="uplot-no-data not-found">
+				<LineChart size={48} strokeWidth={0.5} />
+				<Typography>No Data</Typography>
+			</div>
+		);
+	}
+
 	return (
-		<div style={{ position: 'relative' }}>
-			<div ref={containerRef} data-testid={testId} />
-			{children}
-		</div>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<div style={{ position: 'relative' }}>
+				<div ref={containerRef} data-testid={testId} />
+				{children}
+			</div>
+		</Sentry.ErrorBoundary>
 	);
 }

@@ -2,11 +2,12 @@ import { ReactNode } from 'react';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { TooltipRenderArgs } from '../plugins/TooltipPlugin/types';
 
 /**
  * Props for the Plot component
  */
-export interface PlotProps {
+export interface UPlotChartProps {
 	/**
 	 * uPlot configuration builder
 	 */
@@ -47,3 +48,7 @@ export interface PlotProps {
 	 */
 	'data-testid'?: string;
 }
+
+export type TooltipProps = TooltipRenderArgs & {
+	timezone: string;
+};

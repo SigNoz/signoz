@@ -37,9 +37,13 @@ export const PanelContextProvider = ({
 			plot.series.forEach((_, index) => {
 				if (index === 0) return;
 				const currentSeriesIndex = index;
-				plot.setSeries(currentSeriesIndex, {
-					show: isReset || currentSeriesIndex === seriesIndex,
-				});
+				plot.setSeries(
+					currentSeriesIndex,
+					{
+						show: isReset || currentSeriesIndex === seriesIndex,
+					},
+					false,
+				);
 			});
 		});
 	}, []);
@@ -48,16 +52,20 @@ export const PanelContextProvider = ({
 		const plot = uPlotInstanceRef.current;
 		if (!plot) return;
 
-		plot.setSeries(seriesIndex, { show: !plot.series[seriesIndex].show });
+		plot.setSeries(seriesIndex, { show: !plot.series[seriesIndex].show }, false);
 	}, []);
 
 	const onFocusSeries = useCallback((seriesIndex: number | null): void => {
 		const plot = uPlotInstanceRef.current;
 		if (!plot) return;
 
-		plot.setSeries(seriesIndex, {
-			focus: true,
-		});
+		plot.setSeries(
+			seriesIndex,
+			{
+				focus: true,
+			},
+			false,
+		);
 	}, []);
 
 	return (
