@@ -1,7 +1,10 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cd frontend && yarn run commitlint --edit $1
+# Convert $1 to absolute path before cd
+commit_msg_file="$(realpath "$1")"
+
+cd frontend && yarn run commitlint "$commit_msg_file"
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
