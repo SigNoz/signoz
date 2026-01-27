@@ -9,8 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -42,46 +40,7 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		commentCtx := ctxtypes.CommentFromContext(req.Context())
-		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
-			if err := claims.IsViewer(); err != nil {
-				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
-				render.Error(rw, err)
-				return
-			}
-
-			next(rw, req)
-			return
-		}
-
-		orgId, err := valuer.NewUUID(claims.OrgID)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozViewerRoleName, roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		selectors := []authtypes.Selector{}
-		for _, role := range roles {
-			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
-		}
-
-		err = middleware.authzService.CheckWithTupleCreation(
-			req.Context(),
-			claims,
-			orgId,
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
-			selectors,
-			selectors,
-		)
-		if err != nil {
+		if err := claims.IsViewer(); err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
 			return
@@ -99,46 +58,7 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		commentCtx := ctxtypes.CommentFromContext(req.Context())
-		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
-			if err := claims.IsEditor(); err != nil {
-				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
-				render.Error(rw, err)
-				return
-			}
-
-			next(rw, req)
-			return
-		}
-
-		orgId, err := valuer.NewUUID(claims.OrgID)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozEditorRoleName, roletypes.SigNozAdminRoleName})
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		selectors := []authtypes.Selector{}
-		for _, role := range roles {
-			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
-		}
-
-		err = middleware.authzService.CheckWithTupleCreation(
-			req.Context(),
-			claims,
-			orgId,
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
-			selectors,
-			selectors,
-		)
-		if err != nil {
+		if err := claims.IsEditor(); err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
 			return
@@ -156,46 +76,7 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		commentCtx := ctxtypes.CommentFromContext(req.Context())
-		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
-			if err := claims.IsAdmin(); err != nil {
-				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
-				render.Error(rw, err)
-				return
-			}
-
-			next(rw, req)
-			return
-		}
-
-		orgId, err := valuer.NewUUID(claims.OrgID)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, []string{roletypes.SigNozAdminRoleName})
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		selectors := []authtypes.Selector{}
-		for _, role := range roles {
-			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
-		}
-
-		err = middleware.authzService.CheckWithTupleCreation(
-			req.Context(),
-			claims,
-			orgId,
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
-			selectors,
-			selectors,
-		)
-		if err != nil {
+		if err := claims.IsAdmin(); err != nil {
 			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
 			render.Error(rw, err)
 			return
