@@ -8,7 +8,16 @@ import {
 export const getValueSuggestions = (
 	props: QueryKeyValueRequestProps,
 ): Promise<AxiosResponse<QueryKeyValueSuggestionsResponseProps>> => {
-	const { signal, key, searchText, signalSource, metricName } = props;
+	const {
+		signal,
+		key,
+		searchText,
+		signalSource,
+		metricName,
+		startUnixMilli,
+		endUnixMilli,
+		existingQuery,
+	} = props;
 
 	const encodedSignal = encodeURIComponent(signal);
 	const encodedKey = encodeURIComponent(key);
@@ -16,7 +25,17 @@ export const getValueSuggestions = (
 	const encodedSearchText = encodeURIComponent(searchText);
 	const encodedSource = encodeURIComponent(signalSource || '');
 
-	return axios.get(
-		`/fields/values?signal=${encodedSignal}&name=${encodedKey}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&source=${encodedSource}`,
-	);
+	let url = `/fields/values?signal=${encodedSignal}&name=${encodedKey}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&source=${encodedSource}`;
+
+	if (startUnixMilli !== undefined) {
+		url += `&startUnixMilli=${startUnixMilli}`;
+	}
+	if (endUnixMilli !== undefined) {
+		url += `&endUnixMilli=${endUnixMilli}`;
+	}
+	if (existingQuery) {
+		url += `&existingQuery=${encodeURIComponent(existingQuery)}`;
+	}
+
+	return axios.get(url);
 };

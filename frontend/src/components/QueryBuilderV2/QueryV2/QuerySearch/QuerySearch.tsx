@@ -35,6 +35,8 @@ import { debounce, isNull } from 'lodash-es';
 import { Info, TriangleAlert } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -44,6 +46,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,
@@ -112,6 +115,20 @@ function QuerySearch({
 	const [isEditorReady, setIsEditorReady] = useState(false);
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
+
+	// Get time range from Redux global state
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	// Convert nanoseconds to milliseconds - use useMemo with both deps to avoid multiple updates
+	const timeRange = useMemo(
+		() => ({
+			startUnixMilli: Math.floor(globalTime.minTime / 1000000),
+			endUnixMilli: Math.floor(globalTime.maxTime / 1000000),
+		}),
+		[globalTime.minTime, globalTime.maxTime],
+	);
 
 	const handleQueryValidation = useCallback((newExpression: string): void => {
 		try {
@@ -275,9 +292,10 @@ function QuerySearch({
 				signal: dataSource,
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
-				signalSource: signalSource as 'meter' | '',
+				signalSource: signalSource || '',
+				startUnixMilli: timeRange.startUnixMilli,
+				endUnixMilli: timeRange.endUnixMilli,
 			});
-
 			if (response.data.data) {
 				const { keys } = response.data.data;
 				const options = generateOptions(keys);
@@ -307,6 +325,8 @@ function QuerySearch({
 			queryData.aggregateAttribute?.key,
 			signalSource,
 			hardcodedAttributeKeys,
+			timeRange.startUnixMilli,
+			timeRange.endUnixMilli,
 		],
 	);
 
@@ -319,7 +339,12 @@ function QuerySearch({
 		setKeySuggestions([]);
 		debouncedFetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource, debouncedMetricName]);
+	}, [
+		dataSource,
+		debouncedMetricName,
+		timeRange.startUnixMilli,
+		timeRange.endUnixMilli,
+	]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
@@ -437,17 +462,19 @@ function QuerySearch({
 			}
 
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
+			const existingQuery = queryData.filter?.expression || ''; // getCurrentExpression();
 
 			try {
 				const response = await getValueSuggestions({
 					key,
 					searchText: sanitizedSearchText,
 					signal: dataSource,
-					signalSource: signalSource as 'meter' | '',
+					signalSource: signalSource || '',
 					metricName: debouncedMetricName ?? undefined,
-				});
-
-				// Skip updates if component unmounted or key changed
+					startUnixMilli: timeRange.startUnixMilli,
+					endUnixMilli: timeRange.endUnixMilli,
+					existingQuery,
+				}); // Skip updates if component unmounted or key changed
 				if (
 					!isMountedRef.current ||
 					lastKeyRef.current !== key ||
@@ -459,10 +486,10 @@ function QuerySearch({
 				// Process the response data
 				const responseData = response.data as any;
 				const values = responseData.data?.values || {};
-				const stringValues = values.stringValues || [];
-				const numberValues = values.numberValues || [];
-
-				// Generate options from string values - explicitly handle empty strings
+				const relatedValues = values.relatedValues || [];
+				const stringValues =
+					relatedValues.length > 0 ? relatedValues : values.stringValues || [];
+				const numberValues = values.numberValues || []; // Generate options from string values - explicitly handle empty strings
 				const stringOptions = stringValues
 					// Strict filtering for empty string - we'll handle it as a special case if needed
 					.filter(
@@ -534,11 +561,14 @@ function QuerySearch({
 		},
 		[
 			activeKey,
-			dataSource,
 			isLoadingSuggestions,
-			debouncedMetricName,
-			signalSource,
+			queryData.filter?.expression,
 			toggleSuggestions,
+			dataSource,
+			signalSource,
+			debouncedMetricName,
+			timeRange.startUnixMilli,
+			timeRange.endUnixMilli,
 		],
 	);
 
@@ -1255,19 +1285,17 @@ function QuerySearch({
 		if (!queryContext) {
 			return;
 		}
-		// Trigger suggestions based on context
-		if (editorRef.current) {
+		// Only trigger suggestions and fetch if editor is focused (i.e., user is interacting)
+		if (isFocused && editorRef.current) {
 			toggleSuggestions(10);
-		}
-
-		// Handle value suggestions for value context
-		if (queryContext.isInValue) {
-			const { keyToken, currentToken } = queryContext;
-			const key = keyToken || currentToken;
-
-			// Only fetch if needed and if we have a valid key
-			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions({ key });
+			// Handle value suggestions for value context
+			if (queryContext.isInValue) {
+				const { keyToken, currentToken } = queryContext;
+				const key = keyToken || currentToken;
+				// Only fetch if needed and if we have a valid key
+				if (key && key !== activeKey && !isLoadingSuggestions) {
+					fetchValueSuggestions({ key });
+				}
 			}
 		}
 	}, [
@@ -1276,6 +1304,7 @@ function QuerySearch({
 		isLoadingSuggestions,
 		activeKey,
 		fetchValueSuggestions,
+		isFocused,
 	]);
 
 	const getTooltipContent = (): JSX.Element => (

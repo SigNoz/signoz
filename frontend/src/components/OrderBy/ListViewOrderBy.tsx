@@ -2,8 +2,11 @@ import './ListViewOrderBy.styles.scss';
 
 import { Select, Spin } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -34,13 +37,35 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+	// Get time range from Redux global state
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	// Convert nanoseconds to milliseconds - use useMemo with both deps to avoid multiple updates
+	const timeRange = useMemo(
+		() => ({
+			startUnixMilli: Math.floor(globalTime.minTime / 1000000),
+			endUnixMilli: Math.floor(globalTime.maxTime / 1000000),
+		}),
+		[globalTime.minTime, globalTime.maxTime],
+	);
+
 	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useQuery({
-		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
+		queryKey: [
+			'orderByKeySuggestions',
+			dataSource,
+			debouncedInput,
+			timeRange.startUnixMilli,
+			timeRange.endUnixMilli,
+		],
 		queryFn: async () => {
 			const response = await getKeySuggestions({
 				signal: dataSource,
 				searchText: debouncedInput,
+				startUnixMilli: timeRange.startUnixMilli,
+				endUnixMilli: timeRange.endUnixMilli,
 			});
 			return response.data;
 		},
