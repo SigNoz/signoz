@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
