@@ -283,23 +283,12 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 	// Build arrayMap expressions for ALL available branches at the root level
 	var arrayMapExpressions []string
 	for _, node := range plan {
-		hasJSON := node.Branches[telemetrytypes.BranchJSON] != nil
-		hasDynamic := node.Branches[telemetrytypes.BranchDynamic] != nil
-
-		if hasJSON {
-			jsonExpr, err := m.buildArrayMap(node, telemetrytypes.BranchJSON)
+		for branchType := range node.Branches {
+			expr, err := m.buildArrayMap(node, branchType)
 			if err != nil {
 				return "", err
 			}
-			arrayMapExpressions = append(arrayMapExpressions, jsonExpr)
-		}
-
-		if hasDynamic {
-			dynamicExpr, err := m.buildArrayMap(node, telemetrytypes.BranchDynamic)
-			if err != nil {
-				return "", err
-			}
-			arrayMapExpressions = append(arrayMapExpressions, dynamicExpr)
+			arrayMapExpressions = append(arrayMapExpressions, expr)
 		}
 	}
 	if len(arrayMapExpressions) == 0 {
