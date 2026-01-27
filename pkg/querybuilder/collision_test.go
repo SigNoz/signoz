@@ -299,7 +299,7 @@ func TestAdjustKey(t *testing.T) {
 			},
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "trace_id",
-				FieldContext:  telemetrytypes.FieldContextLog, // Use intrinsic field context
+				FieldContext:  telemetrytypes.FieldContextLog,     // Use intrinsic field context
 				FieldDataType: telemetrytypes.FieldDataTypeString, // Use intrinsic field data type
 			},
 			expectedActions: []string{
@@ -364,11 +364,40 @@ func TestAdjustKey(t *testing.T) {
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "custom_field",
 				FieldContext:  telemetrytypes.FieldContextAttribute, // Use attribute field context
-				FieldDataType: telemetrytypes.FieldDataTypeString, // Use attribute field data type
+				FieldDataType: telemetrytypes.FieldDataTypeString,   // Use attribute field data type
 				Materialized:  true,
 			},
 			expectedActions: []string{
 				"Adjusting key name=custom_field to name=custom_field,context=attribute,datatype=string,materialized=true",
+			},
+			description: "Single matching attribute key should use its properties",
+		},
+		{
+			name: "non-intrinsic field with attribute prefix as matching key",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "custom_field",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"log.custom_field": {
+					{
+						Name:          "log.custom_field",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+						Materialized:  true,
+					},
+				},
+			},
+			intrinsicOrCalculatedField: nil,
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "log.custom_field",
+				FieldContext:  telemetrytypes.FieldContextAttribute, // Use attribute field context
+				FieldDataType: telemetrytypes.FieldDataTypeString,   // Use attribute field data type
+				Materialized:  true,
+			},
+			expectedActions: []string{
+				"Adjusting key name=custom_field,context=log to name=log.custom_field,context=attribute,datatype=string,materialized=true",
 			},
 			description: "Single matching attribute key should use its properties",
 		},
