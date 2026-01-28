@@ -47,7 +47,7 @@ func (provider *provider) Check(ctx context.Context, tuple *openfgav1.TupleKey) 
 	return provider.pkgAuthzService.Check(ctx, tuple)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 	return nil
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, _ authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
