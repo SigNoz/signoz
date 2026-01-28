@@ -107,18 +107,12 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		lblValsCapacity = 0
 	}
 
-	type bucketData struct {
-		lower float64
-		upper float64
-		count float64
-	}
-
 	type histogramRow struct {
 		ts         int64
 		lblVals    []string
 		lblObjs    []*qbtypes.Label
 		aggValues  map[int]float64
-		aggBuckets map[int][]bucketData
+		aggBuckets map[int]map[float64]float64
 	}
 
 	var allRows []histogramRow
@@ -133,7 +127,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			lblVals       = make([]string, 0, lblValsCapacity)
 			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
 			aggValues     = map[int]float64{} // all __result_N in this row
-			aggBuckets    = map[int][]bucketData{}
+			aggBuckets    = map[int]map[float64]float64{}
 			fallbackValue float64 // value when NO __result_N columns exist
 			fallbackSeen  bool
 		)
@@ -220,11 +214,11 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 						vSlice := vPtr.Elem()
 						if vSlice.Kind() == reflect.Slice {
 							if vSlice.Len() == 0 {
-								aggBuckets[id] = []bucketData{}
+								aggBuckets[id] = make(map[float64]float64)
 								continue
 							}
 
-							var buckets []bucketData
+							bucketMap := make(map[float64]float64)
 
 							for i := 0; i < vSlice.Len(); i++ {
 								item := vSlice.Index(i)
@@ -238,28 +232,19 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 								if item.Kind() == reflect.Slice || item.Kind() == reflect.Array {
 									if item.Len() >= 3 {
-										lower := numericAsFloat(derefValue(item.Index(0).Interface()))
 										upper := numericAsFloat(derefValue(item.Index(1).Interface()))
 										count := numericAsFloat(derefValue(item.Index(2).Interface()))
 
-										if lower == upper {
-											continue
-										}
-										if !math.IsNaN(lower) && !math.IsInf(lower, 0) &&
-											!math.IsNaN(upper) && !math.IsInf(upper, 0) &&
+										if !math.IsNaN(upper) && !math.IsInf(upper, 0) &&
 											!math.IsNaN(count) && !math.IsInf(count, 0) {
-											buckets = append(buckets, bucketData{
-												lower: lower,
-												upper: upper,
-												count: count,
-											})
+											bucketMap[upper] = count
 										}
 									}
 								}
 							}
 
-							if len(buckets) > 0 {
-								aggBuckets[id] = buckets
+							if len(bucketMap) > 0 {
+								aggBuckets[id] = bucketMap
 							}
 						}
 					}
@@ -291,7 +276,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		return nil, err
 	}
 
-	// Process rows and build time series
 	for _, row := range allRows {
 		sort.Strings(row.lblVals)
 		labelsKey := strings.Join(row.lblVals, ",")
@@ -316,10 +300,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		}
 
 		for aggIdx, buckets := range row.aggBuckets {
-			if len(buckets) == 0 {
-				continue
-			}
-
 			key := sKey{agg: aggIdx, key: labelsKey}
 
 			series, ok := seriesMap[key]
@@ -328,27 +308,42 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				seriesMap[key] = series
 			}
 
-			// Extract bounds and counts from the buckets
-			bounds := make([]float64, len(buckets)+1)
-			counts := make([]float64, len(buckets))
-
-			for i, bucket := range buckets {
-				if i == 0 {
-					bounds[0] = bucket.lower
-				}
-				bounds[i+1] = bucket.upper
-				counts[i] = bucket.count
+			if len(buckets) == 0 {
+				continue
 			}
 
-			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
-				Timestamp: row.ts,
-				Value:     0,
-				Values:    counts,
-				Bucket: &qbtypes.Bucket{
-					Bounds: bounds,
-				},
-				Partial: isPartialValue(row.ts),
-			})
+			// Sort upper bounds
+			upperBounds := make([]float64, 0, len(buckets))
+			for upper := range buckets {
+				upperBounds = append(upperBounds, upper)
+			}
+			sort.Float64s(upperBounds)
+
+			bounds := make([]float64, 0, len(upperBounds)+1)
+			counts := make([]float64, 0, len(upperBounds))
+
+			for i, upper := range upperBounds {
+				count := buckets[upper]
+
+				// Add lower bound for first bucket only
+				if i == 0 {
+					bounds = append(bounds, 0)
+				}
+
+				bounds = append(bounds, upper)
+				counts = append(counts, count)
+			}
+
+			if len(counts) > 0 && len(bounds) == len(counts)+1 {
+				series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
+					Timestamp: row.ts,
+					Values:    counts,
+					Bucket: &qbtypes.Bucket{
+						Bounds: bounds,
+					},
+					Partial: isPartialValue(row.ts),
+				})
+			}
 		}
 	}
 
