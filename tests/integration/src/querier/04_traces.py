@@ -875,7 +875,9 @@ def test_traces_aggregate_with_mixed_field_selectors(
     assert len(results) == 1
     aggregations = results[0]["aggregations"]
 
-    assert aggregations[0]["series"][0]["values"][0]["value"] >= 2.5 * 1e9  # p99 for http-service
+    assert (
+        aggregations[0]["series"][0]["values"][0]["value"] >= 2.5 * 1e9
+    )  # p99 for http-service
 
 
 def test_traces_fill_gaps(
