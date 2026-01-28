@@ -52,9 +52,6 @@ type Granter interface {
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, string, string) error
 
-	// Grants a role to the subject based on role id.
-	GrantByID(context.Context, valuer.UUID, valuer.UUID, string) error
-
 	// Revokes a granted role from the subject based on role name.
 	Revoke(context.Context, valuer.UUID, string, string) error
 

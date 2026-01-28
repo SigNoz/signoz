@@ -169,7 +169,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = role.PatchMetadata(req.Name, req.Description)
+	err = role.PatchMetadata(req.Description)
 	if err != nil {
 		render.Error(rw, err)
 		return
