@@ -2,21 +2,54 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import SpanHoverCard from '../SpanHoverCard';
+import { TimezoneContextType } from 'providers/Timezone';
 
-// Mock dayjs completely for testing
+// Mock timezone provider so SpanHoverCard can use useTimezone without a real context
+jest.mock('providers/Timezone', () => ({
+	__esModule: true,
+	useTimezone: (): TimezoneContextType => ({
+		timezone: {
+			name: 'Coordinated Universal Time — UTC, GMT',
+			value: 'UTC',
+			offset: 'UTC',
+			searchIndex: 'UTC',
+		},
+		browserTimezone: {
+			name: 'Coordinated Universal Time — UTC, GMT',
+			value: 'UTC',
+			offset: 'UTC',
+			searchIndex: 'UTC',
+		},
+		updateTimezone: jest.fn(),
+		formatTimezoneAdjustedTimestamp: jest.fn(() => 'mock-date'),
+		isAdaptationEnabled: true,
+		setIsAdaptationEnabled: jest.fn(),
+	}),
+}));
+
+// Mock dayjs for testing, including timezone helpers used in timezoneUtils
 jest.mock('dayjs', () => {
-	const mockDayjs = jest.fn(() => ({
-		format: jest.fn((formatString: string) => {
-			if (formatString === 'D/M/YY - HH:mm:ss') {
-				return '15/3/24 - 14:23:45';
-			}
-			return 'mock-date';
-		}),
-	}));
+	const mockDayjsInstance: any = {};
+
+	mockDayjsInstance.format = jest.fn((formatString: string) =>
+		// Match the DD_MMM_YYYY_HH_MM_SS format: 'DD MMM YYYY, HH:mm:ss'
+		formatString === 'DD MMM YYYY, HH:mm:ss'
+			? '15 Mar 2024, 14:23:45'
+			: 'mock-date',
+	);
+
+	// Support chaining: dayjs().tz(timezone).format(...) and dayjs().tz(timezone).utcOffset()
+	mockDayjsInstance.tz = jest.fn(() => mockDayjsInstance);
+	mockDayjsInstance.utcOffset = jest.fn(() => 0);
+
+	const mockDayjs = jest.fn(() => mockDayjsInstance);
+
 	Object.assign(mockDayjs, {
 		extend: jest.fn(),
+		// Support dayjs.tz.guess()
 		tz: { guess: jest.fn(() => 'UTC') },
 	});
+
 	return mockDayjs;
 });
 
@@ -84,7 +117,7 @@ describe('SpanHoverCard', () => {
 		expect(screen.getByText('Hover me')).toBeInTheDocument();
 	});
 
-	it('shows popover after 0.5 second delay on hover', async () => {
+	it('shows popover after 0.2 second delay on hover', async () => {
 		render(
 			<SpanHoverCard span={mockSpan} traceMetadata={mockTraceMetadata}>
 				<div data-testid={HOVER_ELEMENT_ID}>Hover for details</div>
@@ -101,7 +134,7 @@ describe('SpanHoverCard', () => {
 
 		// Advance time by 0.5 seconds
 		act(() => {
-			jest.advanceTimersByTime(500);
+			jest.advanceTimersByTime(200);
 		});
 
 		// Now popover should appear
@@ -117,10 +150,10 @@ describe('SpanHoverCard', () => {
 
 		const hoverElement = screen.getByTestId(HOVER_ELEMENT_ID);
 
-		// Quick hover and unhover
+		// Quick hover and unhover (less than the 0.2s delay)
 		fireEvent.mouseEnter(hoverElement);
 		act(() => {
-			jest.advanceTimersByTime(200); // Only 0.2 seconds
+			jest.advanceTimersByTime(100); // Only 0.1 seconds
 		});
 		fireEvent.mouseLeave(hoverElement);
 
@@ -163,7 +196,7 @@ describe('SpanHoverCard', () => {
 		expect(screen.getByText('Start time:')).toBeInTheDocument();
 	});
 
-	it('displays new date format with seconds', async () => {
+	it('displays date in DD MMM YYYY, HH:mm:ss format with seconds', async () => {
 		render(
 			<SpanHoverCard span={mockSpan} traceMetadata={mockTraceMetadata}>
 				<div data-testid={HOVER_ELEMENT_ID}>Date format test</div>
@@ -178,8 +211,8 @@ describe('SpanHoverCard', () => {
 			jest.advanceTimersByTime(500);
 		});
 
-		// Verify the new date format is displayed
-		expect(screen.getByText('15/3/24 - 14:23:45')).toBeInTheDocument();
+		// Verify the DD MMM YYYY, HH:mm:ss format is displayed
+		expect(screen.getByText('15 Mar 2024, 14:23:45')).toBeInTheDocument();
 	});
 
 	it('displays relative time information', async () => {
