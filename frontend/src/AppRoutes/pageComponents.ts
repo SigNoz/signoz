@@ -202,6 +202,10 @@ export const PasswordReset = Loadable(
 	() => import(/* webpackChunkName: "ResetPassword" */ 'pages/ResetPassword'),
 );
 
+export const ForgotPassword = Loadable(
+	() => import(/* webpackChunkName: "ForgotPassword" */ 'pages/ForgotPassword'),
+);
+
 export const SomethingWentWrong = Loadable(
 	() =>
 		import(
