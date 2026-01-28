@@ -162,6 +162,26 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 
 func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation] {
 
+	// add deprecated fields only during statement building
+	// why?
+	// 1. to not fail filter expression that use deprecated cols
+	// 2. this could have been moved to metadata fetching itself, however, that
+	// would mean, they also show up in suggestions we we don't want to do
+	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
+		if _, ok := keys[fieldKeyName]; !ok {
+			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
+		} else {
+			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
+		}
+	}
+
 	// Adjust keys for alias expressions in aggregations
 	actions := querybuilder.AdjustKeysForAliasExpressions(&query, requestType)
 
@@ -201,26 +221,6 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
 		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
-	}
-
-	// add deprecated fields only during statement building
-	// why?
-	// 1. to not fail filter expression that use deprecated cols
-	// 2. this could have been moved to metadata fetching itself, however, that
-	// would mean, they also show up in suggestions we we don't want to do
-	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
-		if _, ok := keys[fieldKeyName]; !ok {
-			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
-		} else {
-			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
-		}
-	}
-	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
-		if _, ok := keys[fieldKeyName]; !ok {
-			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
-		} else {
-			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
-		}
 	}
 
 	return query
