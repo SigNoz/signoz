@@ -836,11 +836,13 @@ def test_traces_aggregate_with_mixed_field_selectors(
         "spec": {
             "name": "A",
             "signal": "traces",
-            "groupBy": [{
-                "name": "service.name",
-                "fieldContext": "resource",
-                "fieldDataType": "string",
-            }],
+            "groupBy": [
+                {
+                    "name": "service.name",
+                    "fieldContext": "resource",
+                    "fieldDataType": "string",
+                }
+            ],
             "aggregations": [
                 {"expression": "p99(duration_nano)", "alias": "p99"},
                 {"expression": "avg(duration_nano)", "alias": "avgDuration"},

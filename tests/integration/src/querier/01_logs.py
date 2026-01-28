@@ -51,7 +51,6 @@ def test_logs_list(
                 attributes={
                     "log.iostream": "stdout",
                     "logtag": "F",
-                    "timestamp": "2024-01-01T00:00:00Z",
                     "code.file": "/opt/Integration.java",
                     "code.function": "com.example.Integration.process",
                     "code.line": 120,
@@ -72,7 +71,6 @@ def test_logs_list(
                 },
                 attributes={
                     "log.iostream": "stdout",
-                    "id": 2,
                     "logtag": "F",
                     "code.file": "/opt/integration.go",
                     "code.function": "com.example.Integration.process",
@@ -127,7 +125,6 @@ def test_logs_list(
         },
     )
 
-    print(response.text)
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
@@ -173,6 +170,396 @@ def test_logs_list(
     assert rows[1]["data"]["attributes_string"] == {
         "code.file": "/opt/Integration.java",
         "code.function": "com.example.Integration.process",
+        "log.iostream": "stdout",
+        "logtag": "F",
+        "telemetry.sdk.language": "java",
+    }
+    assert rows[1]["data"]["attributes_number"] == {"code.line": 120}
+
+    # Query values of severity_text attribute from the autocomplete API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "aggregateOperator": "noop",
+            "dataSource": "logs",
+            "aggregateAttribute": "",
+            "attributeKey": "severity_text",
+            "searchText": "",
+            "filterAttributeKeyDataType": "string",
+            "tagType": "resource",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["stringAttributeValues"]
+    assert len(values) == 2
+    assert "DEBUG" in values
+    assert "INFO" in values
+
+    # Query values of severity_text attribute from the fields API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "severity_text",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert len(values) == 2
+    assert "DEBUG" in values
+    assert "INFO" in values
+
+    # Query values of code.file attribute from the autocomplete API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "aggregateOperator": "noop",
+            "dataSource": "logs",
+            "aggregateAttribute": "",
+            "attributeKey": "code.file",
+            "searchText": "",
+            "filterAttributeKeyDataType": "string",
+            "tagType": "tag",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["stringAttributeValues"]
+    assert len(values) == 2
+    assert "/opt/Integration.java" in values
+    assert "/opt/integration.go" in values
+
+    # Query values of code.file attribute from the fields API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "code.file",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert len(values) == 2
+    assert "/opt/Integration.java" in values
+    assert "/opt/integration.go" in values
+
+    # Query values of code.line attribute from the autocomplete API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/autocomplete/attribute_values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "aggregateOperator": "noop",
+            "dataSource": "logs",
+            "aggregateAttribute": "",
+            "attributeKey": "code.line",
+            "searchText": "",
+            "filterAttributeKeyDataType": "float64",
+            "tagType": "tag",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["numberAttributeValues"]
+    assert len(values) == 1
+    assert 120 in values
+
+    # Query values of code.line attribute from the fields API
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "code.line",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["numberValues"]
+    assert len(values) == 1
+    assert 120 in values
+
+    # Query keys from the fields API with context specified in the key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "searchText": "resource.servic",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    keys = response.json()["data"]["keys"]
+    assert "service.name" in keys
+    assert any(k["fieldContext"] == "resource" for k in keys["service.name"])
+
+    # Do not treat `metric.` as a context prefix for logs
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "searchText": "metric.do",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    keys = response.json()["data"]["keys"]
+    assert "metric.domain_id" in keys
+
+    # Query values of service.name resource attribute using context-prefixed key
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "resource.service.name",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert "go" in values
+    assert "java" in values
+
+    # Query values of metric.domain_id (string attribute) and ensure context collision doesn't break it
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/values"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        params={
+            "signal": "logs",
+            "name": "metric.domain_id",
+            "searchText": "",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]["stringValues"]
+    assert "d-001" in values
+
+
+def test_logs_list_with_corrupt_data(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Setup:
+    Insert 2 logs with different attributes
+
+    Tests:
+    1. Query logs for the last 10 seconds and check if the logs are returned in the correct order
+    2. Query values of severity_text attribute from the autocomplete API
+    3. Query values of severity_text attribute from the fields API
+    4. Query values of code.file attribute from the autocomplete API
+    5. Query values of code.file attribute from the fields API
+    6. Query values of code.line attribute from the autocomplete API
+    7. Query values of code.line attribute from the fields API
+    """
+    insert_logs(
+        [
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=1),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "java",
+                    "os.type": "linux",
+                    "host.name": "linux-001",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "001",
+                    "timestamp": "2024-01-01T00:00:00Z",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/Integration.java",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": 120,
+                    "telemetry.sdk.language": "java",
+                    "id": "1",
+                },
+                body="This is a log message, coming from a java application",
+                severity_text="DEBUG",
+            ),
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "go",
+                    "os.type": "linux",
+                    "host.name": "linux-001",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "001",
+                    "id": 2,
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/integration.go",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": 120,
+                    "metric.domain_id": "d-001",
+                    "telemetry.sdk.language": "go",
+                    "timestamp": "invalid-timestamp",
+                },
+                body="This is a log message, coming from a go application",
+                severity_text="INFO",
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(seconds=10)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "disabled": False,
+                            "limit": 100,
+                            "offset": 0,
+                            "order": [
+                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                                {"key": {"name": "id"}, "direction": "desc"},
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    rows = results[0]["rows"]
+    assert len(rows) == 2
+
+    assert (
+        rows[0]["data"]["body"] == "This is a log message, coming from a go application"
+    )
+    assert rows[0]["data"]["resources_string"] == {
+        "cloud.account.id": "001",
+        "cloud.provider": "integration",
+        "deployment.environment": "production",
+        "host.name": "linux-001",
+        "os.type": "linux",
+        "service.name": "go",
+        "id": "2",
+    }
+    assert rows[0]["data"]["attributes_string"] == {
+        "code.file": "/opt/integration.go",
+        "code.function": "com.example.Integration.process",
+        "log.iostream": "stdout",
+        "logtag": "F",
+        "metric.domain_id": "d-001",
+        "telemetry.sdk.language": "go",
+        "timestamp": "invalid-timestamp",
+    }
+    assert rows[0]["data"]["attributes_number"] == {"code.line": 120}
+
+    assert (
+        rows[1]["data"]["body"]
+        == "This is a log message, coming from a java application"
+    )
+    assert rows[1]["data"]["resources_string"] == {
+        "cloud.account.id": "001",
+        "cloud.provider": "integration",
+        "deployment.environment": "production",
+        "host.name": "linux-001",
+        "os.type": "linux",
+        "service.name": "java",
+        "timestamp": "2024-01-01T00:00:00Z",
+    }
+    assert rows[1]["data"]["attributes_string"] == {
+        "code.file": "/opt/Integration.java",
+        "code.function": "com.example.Integration.process",
+        "id": "1",
         "log.iostream": "stdout",
         "logtag": "F",
         "telemetry.sdk.language": "java",
