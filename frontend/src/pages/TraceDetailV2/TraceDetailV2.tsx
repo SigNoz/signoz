@@ -17,11 +17,21 @@ import TraceWaterfall, {
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 import NoData from './NoData/NoData';
+
+type ImperativePanelHandle = {
+	collapse: () => void;
+	expand: (minSize?: number) => void;
+	getId(): string;
+	getSize(): number;
+	isCollapsed: () => boolean;
+	isExpanded: () => boolean;
+	resize: (size: number) => void;
+};
 
 function TraceDetailsV2(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
@@ -126,6 +136,8 @@ function TraceDetailsV2(): JSX.Element {
 		},
 	];
 
+	const panelRef = useRef<ImperativePanelHandle>(null);
+
 	return (
 		<ResizablePanelGroup
 			direction="horizontal"
@@ -154,11 +166,23 @@ function TraceDetailsV2(): JSX.Element {
 				)}
 			</ResizablePanel>
 
-			<ResizableHandle withHandle className="resizable-handle" />
+			<ResizableHandle
+				withHandle
+				className="resizable-handle"
+				onDragging={(): void => {
+					setIsSpanDetailsDocked(false);
+				}}
+				onPointerUp={(): void => {
+					if (panelRef.current && panelRef.current?.getSize() <= 23) {
+						setIsSpanDetailsDocked(true);
+					}
+				}}
+			/>
 
 			<ResizablePanel
-				defaultSize={20}
-				minSize={20}
+				ref={panelRef}
+				defaultSize={23}
+				minSize={21}
 				maxSize={50}
 				className={cx('span-details-drawer', {
 					'span-details-drawer-docked': isSpanDetailsDocked,
