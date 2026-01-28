@@ -194,7 +194,7 @@ type RawStream struct {
 }
 
 type DistributionData struct {
-	QueryName    string
+	QueryName    string                     `json:"queryName"`
 	Aggregations []*DistributionAggregation `json:"aggregations"`
 }
 

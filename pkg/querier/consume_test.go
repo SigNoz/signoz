@@ -85,7 +85,7 @@ func TestConsumedistribution(t *testing.T) {
 
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_bucket_query", 2)
+	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_bucket_query")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -98,11 +98,16 @@ func TestConsumedistribution(t *testing.T) {
 	agg := distData.Aggregations[0]
 	assert.Len(t, agg.Buckets, 2)
 
-	// Min 0, Max 20. 2 buckets -> [0, 10), [10, 20)
-	// Bucket 0 should have count 5 (from original [0,10,5])
-	// Bucket 1 should have count 3 (from original [10,20,3])
+	// Native bins from ClickHouse histogram: [(0,10,5), (10,20,3)]
+	// Bucket 0: lower=0, upper=10, count=5
+	// Bucket 1: lower=10, upper=20, count=3
 
+	assert.Equal(t, 0.0, agg.Buckets[0].LowerBound)
+	assert.Equal(t, 10.0, agg.Buckets[0].UpperBound)
 	assert.Equal(t, 5.0, agg.Buckets[0].Count)
+
+	assert.Equal(t, 10.0, agg.Buckets[1].LowerBound)
+	assert.Equal(t, 20.0, agg.Buckets[1].UpperBound)
 	assert.Equal(t, 3.0, agg.Buckets[1].Count)
 }
 
@@ -121,7 +126,7 @@ func TestConsumeDistributionWithEmptyBuckets(t *testing.T) {
 
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_empty_distribution", 10)
+	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_empty_distribution")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -143,7 +148,7 @@ func TestConsumeDistributionWithNoRows(t *testing.T) {
 
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_no_rows", 10)
+	result, err := consume(rows, qbtypes.RequestTypeDistribution, nil, qbtypes.Step{}, "test_no_rows")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 

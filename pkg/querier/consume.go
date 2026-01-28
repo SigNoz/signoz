@@ -32,7 +32,7 @@ var (
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, bucketCount int) (any, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
 		err     error
@@ -46,7 +46,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
 	case qbtypes.RequestTypeDistribution:
-		payload, err = readAsDistribution(rows, queryName, bucketCount)
+		payload, err = readAsDistribution(rows, queryName)
 		// TODO: add support for other request types
 	}
 
@@ -440,7 +440,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-func readAsDistribution(rows driver.Rows, queryName string, bucketCount int) (any, error) {
+func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 
@@ -464,11 +464,7 @@ func readAsDistribution(rows driver.Rows, queryName string, bucketCount int) (an
 		}
 	}
 
-	type minMax struct {
-		min, max float64
-	}
-	bucketsByIndex := make(map[int]map[float64]float64)
-	globalMinMax := make(map[int]*minMax)
+	bucketsByIndex := make(map[int][]*qbtypes.DistributionBucket)
 
 	for rows.Next() {
 		if err := rows.Scan(scan...); err != nil {
@@ -481,11 +477,10 @@ func readAsDistribution(rows driver.Rows, queryName string, bucketCount int) (an
 
 			if vHist.Kind() == reflect.Slice {
 				if vHist.Len() == 0 {
-					bucketsByIndex[resultID] = make(map[float64]float64)
 					continue
 				}
 
-				bucketMap := make(map[float64]float64)
+				var buckets []*qbtypes.DistributionBucket
 
 				for i := 0; i < vHist.Len(); i++ {
 					b := vHist.Index(i).Interface()
@@ -496,28 +491,20 @@ func readAsDistribution(rows driver.Rows, queryName string, bucketCount int) (an
 						upper := numericAsFloat(vBin.Index(1).Interface())
 						count := numericAsFloat(vBin.Index(2).Interface())
 
-						if !math.IsNaN(upper) && !math.IsInf(upper, 0) &&
+						if !math.IsNaN(lower) && !math.IsInf(lower, 0) &&
+							!math.IsNaN(upper) && !math.IsInf(upper, 0) &&
 							!math.IsNaN(count) && !math.IsInf(count, 0) {
-							bucketMap[upper] = count
-
-							// Track global min/max
-							if globalMinMax[resultID] == nil {
-								globalMinMax[resultID] = &minMax{min: math.MaxFloat64, max: -math.MaxFloat64}
-							}
-							if !math.IsNaN(lower) && !math.IsInf(lower, 0) {
-								if lower < globalMinMax[resultID].min {
-									globalMinMax[resultID].min = lower
-								}
-							}
-							if upper > globalMinMax[resultID].max {
-								globalMinMax[resultID].max = upper
-							}
+							buckets = append(buckets, &qbtypes.DistributionBucket{
+								LowerBound: lower,
+								UpperBound: upper,
+								Count:      count,
+							})
 						}
 					}
 				}
 
-				if len(bucketMap) > 0 {
-					bucketsByIndex[resultID] = bucketMap
+				if len(buckets) > 0 {
+					bucketsByIndex[resultID] = buckets
 				}
 			}
 		}
@@ -526,73 +513,24 @@ func readAsDistribution(rows driver.Rows, queryName string, bucketCount int) (an
 		return nil, err
 	}
 
-	// Create fixed bucket bounds for each result ID
-	bucketBounds := make(map[int][]float64)
-	for aggIdx, mm := range globalMinMax {
-		if mm.min <= mm.max {
-			numBins := bucketCount
-			binWidth := (mm.max - mm.min) / float64(numBins)
-			bounds := make([]float64, numBins+1)
-			for i := 0; i <= numBins; i++ {
-				bounds[i] = mm.min + float64(i)*binWidth
-			}
-			bucketBounds[aggIdx] = bounds
+	maxAgg := -1
+	for idx := range bucketsByIndex {
+		if idx > maxAgg {
+			maxAgg = idx
 		}
 	}
-
-	// Map bins to fixed bins
-	fixedBucketsByIndex := make(map[int][]*qbtypes.DistributionBucket)
-	for resultID, buckets := range bucketsByIndex {
-		binBounds := bucketBounds[resultID]
-		if len(binBounds) == 0 {
-			continue
-		}
-
-		numBins := len(binBounds) - 1
-		fixedBuckets := make([]*qbtypes.DistributionBucket, numBins)
-
-		// Initialize fixed buckets
-		for i := 0; i < numBins; i++ {
-			fixedBuckets[i] = &qbtypes.DistributionBucket{
-				LowerBound: binBounds[i],
-				UpperBound: binBounds[i+1],
-				Count:      0,
-			}
-		}
-
-		// Map buckets to fixed buckets using upper bound
-		for upper, count := range buckets {
-			assigned := false
-			for i := range numBins {
-				if upper > binBounds[i] && upper <= binBounds[i+1] {
-					fixedBuckets[i].Count += count
-					assigned = true
-					break
-				}
-			}
-
-			// Edge case: upper bound exceeds all bins
-			if !assigned && upper > binBounds[numBins] {
-				fixedBuckets[numBins-1].Count += count
-			}
-		}
-
-		fixedBucketsByIndex[resultID] = fixedBuckets
-	}
-
-	resultIDs := make([]int, 0, len(fixedBucketsByIndex))
-	for k := range fixedBucketsByIndex {
-		resultIDs = append(resultIDs, k)
-	}
-	sort.Ints(resultIDs)
 
 	var aggregations []*qbtypes.DistributionAggregation
-	for _, id := range resultIDs {
-		aggregations = append(aggregations, &qbtypes.DistributionAggregation{
-			Index:   id,
-			Alias:   fmt.Sprintf("__result_%d", id),
-			Buckets: fixedBucketsByIndex[id],
-		})
+	if maxAgg >= 0 {
+		for i := 0; i <= maxAgg; i++ {
+			if buckets, ok := bucketsByIndex[i]; ok {
+				aggregations = append(aggregations, &qbtypes.DistributionAggregation{
+					Index:   i,
+					Alias:   "__result_" + strconv.Itoa(i),
+					Buckets: buckets,
+				})
+			}
+		}
 	}
 
 	return &qbtypes.DistributionData{
