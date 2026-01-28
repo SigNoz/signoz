@@ -111,18 +111,6 @@ function AlertDetails(): JSX.Element {
 		[alertRuleDetails],
 	);
 
-	if (
-		isError ||
-		!isValidRuleId ||
-		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200)
-	) {
-		return (
-			<div className="alert-empty-card">
-				<Empty description={t('alert_rule_not_found')} />
-			</div>
-		);
-	}
-
 	const handleTabChange = (route: string): void => {
 		if (route === ROUTES.ALERT_HISTORY) {
 			logEvent('Alert History tab: Visited', { ruleId });
@@ -136,7 +124,12 @@ function AlertDetails(): JSX.Element {
 		return <Spinner />;
 	}
 
-	if (!isLoading && !alertRuleDetails) {
+	if (
+		isError ||
+		!isValidRuleId ||
+		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200) ||
+		(!isLoading && !alertRuleDetails)
+	) {
 		return <AlertNotFound isTestAlert={isTestAlert} />;
 	}
 
