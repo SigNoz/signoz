@@ -18,7 +18,7 @@ import React, {
 	useState,
 } from 'react';
 
-interface TimezoneContextType {
+export interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;

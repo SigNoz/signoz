@@ -17,7 +17,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create public dashboard",
-		Description:         "This endpoints creates public sharing config and enables public sharing of the dashboard",
+		Description:         "This endpoint creates public sharing config and enables public sharing of the dashboard",
 		Request:             new(dashboardtypes.PostablePublicDashboard),
 		RequestContentType:  "",
 		Response:            new(types.Identifiable),
@@ -34,7 +34,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "GetPublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard",
-		Description:         "This endpoints returns public sharing config for a dashboard",
+		Description:         "This endpoint returns public sharing config for a dashboard",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(dashboardtypes.GettablePublicDasbhboard),
@@ -51,7 +51,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "UpdatePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Update public dashboard",
-		Description:         "This endpoints updates the public sharing config for a dashboard",
+		Description:         "This endpoint updates the public sharing config for a dashboard",
 		Request:             new(dashboardtypes.UpdatablePublicDashboard),
 		RequestContentType:  "",
 		Response:            nil,
@@ -68,7 +68,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "DeletePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Delete public dashboard",
-		Description:         "This endpoints deletes the public sharing config and disables the public sharing of a dashboard",
+		Description:         "This endpoint deletes the public sharing config and disables the public sharing of a dashboard",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            nil,
@@ -83,7 +83,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
-		authtypes.RelationRead, authtypes.RelationRead,
+		authtypes.RelationRead,
 		dashboardtypes.TypeableMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
@@ -92,11 +92,11 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}), handler.OpenAPIDef{
+		}, []string{}), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardData",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard data",
-		Description:         "This endpoints returns the sanitized dashboard data for public access",
+		Description:         "This endpoint returns the sanitized dashboard data for public access",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(dashboardtypes.GettablePublicDashboardData),
@@ -111,7 +111,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		authtypes.RelationRead, authtypes.RelationRead,
+		authtypes.RelationRead,
 		dashboardtypes.TypeableMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
@@ -120,7 +120,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			}
 
 			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}), handler.OpenAPIDef{
+		}, []string{}), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboardWidgetQueryRange",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get query range result",
