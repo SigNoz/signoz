@@ -75,7 +75,9 @@ export class UPlotConfigBuilder {
 			// Add a hook to handle the select event
 			this.addHook('setSelect', (self: uPlot): void => {
 				const selection = self.select;
-				if (selection) {
+				// Only trigger onDragSelect when there's an actual drag range (width > 0)
+				// A click without dragging produces width === 0, which should be ignored
+				if (selection && selection.width > 0) {
 					const startTime = self.posToVal(selection.left, 'x');
 					const endTime = self.posToVal(selection.left + selection.width, 'x');
 					this.onDragSelect(startTime * 1000, endTime * 1000);

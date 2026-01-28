@@ -48,18 +48,25 @@ export default function UPlotChart({
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
 
 	/**
-	 * Initialize or reinitialize the plot
+	 * Destroy the existing plot instance if present
 	 */
-	const createPlot = useCallback(() => {
-		if (!containerRef.current || width === 0 || height === 0) {
-			return;
-		}
-
-		// Destroy existing plot
+	const destroyPlot = useCallback((): void => {
 		if (plotInstanceRef.current) {
 			onDestroy?.(plotInstanceRef.current);
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
+		}
+	}, [onDestroy]);
+
+	/**
+	 * Initialize or reinitialize the plot
+	 */
+	const createPlot = useCallback(() => {
+		// Destroy existing plot first
+		destroyPlot();
+
+		if (!containerRef.current || width === 0 || height === 0) {
+			return;
 		}
 
 		// Build configuration from builder
@@ -80,21 +87,24 @@ export default function UPlotChart({
 		}
 
 		plotInstanceRef.current = plot;
-	}, [config, data, width, height, plotRef, onDestroy]);
+	}, [config, data, width, height, plotRef, destroyPlot]);
 
 	/**
 	 * Cleanup on unmount
 	 */
-	useEffect(
-		() => (): void => {
-			if (plotInstanceRef.current) {
-				onDestroy?.(plotInstanceRef.current);
-				plotInstanceRef.current.destroy();
-				plotInstanceRef.current = null;
-			}
-		},
-		[onDestroy],
-	);
+	useEffect(() => destroyPlot, [destroyPlot]);
+
+	/**
+	 * Destroy plot when data becomes empty to prevent memory leaks.
+	 * When the "No Data" UI is shown, the container div is unmounted,
+	 * but without this effect the plot instance would remain in memory.
+	 */
+	const isDataEmpty = data && data[0] && data[0].length === 0;
+	useEffect(() => {
+		if (isDataEmpty) {
+			destroyPlot();
+		}
+	}, [isDataEmpty, destroyPlot]);
 
 	/**
 	 * Handle initialization and prop changes
