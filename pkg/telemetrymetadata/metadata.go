@@ -531,15 +531,6 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			}
 		}
 
-		// skip the keys that don't match data type
-		if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
-			}
-		}
-
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
