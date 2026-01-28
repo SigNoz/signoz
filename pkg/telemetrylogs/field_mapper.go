@@ -310,9 +310,9 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 		return "", errors.Newf(errors.TypeInternal, CodeCurrentNodeNil, "current node is nil while building arrayMap")
 	}
 
-	nextNode := currentNode.Branches[branchType]
-	if nextNode == nil {
-		return "", errors.Newf(errors.TypeInternal, CodeNextNodeNil, "next node is nil while building arrayMap")
+	childNode := currentNode.Branches[branchType]
+	if childNode == nil {
+		return "", errors.Newf(errors.TypeInternal, CodeChildNodeNil, "child node is nil while building arrayMap")
 	}
 
 	// Build the array expression for this level
@@ -328,17 +328,17 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	}
 
 	// If this is the terminal level, return the simple arrayMap
-	if nextNode.IsTerminal {
-		dynamicElementExpr := fmt.Sprintf("dynamicElement(%s, '%s')", nextNode.FieldPath(),
-			nextNode.TerminalConfig.ElemType.StringValue(),
+	if childNode.IsTerminal {
+		dynamicElementExpr := fmt.Sprintf("dynamicElement(%s, '%s')", childNode.FieldPath(),
+			childNode.TerminalConfig.ElemType.StringValue(),
 		)
 		return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), dynamicElementExpr, arrayExpr), nil
 	}
 
 	// For non-terminal nodes, we need to handle ALL possible branches at the next level
 	var nestedExpressions []string
-	for branchType := range nextNode.Branches {
-		expr, err := m.buildArrayMap(nextNode, branchType)
+	for branchType := range childNode.Branches {
+		expr, err := m.buildArrayMap(childNode, branchType)
 		if err != nil {
 			return "", err
 		}
@@ -355,5 +355,5 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
 	}
 
-	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
+	return fmt.Sprintf("arrayMap(%s->%s, %s)", childNode.Alias(), nestedExpr, arrayExpr), nil
 }
