@@ -19,12 +19,12 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import DOCLINKS from 'utils/docLinks';
 
 import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import { columnsConfig, formatDataForTable } from '../../utils';
 import DomainDetails from './DomainDetails/DomainDetails';
-import DOCLINKS from 'utils/docLinks';
 
 import '../Explorer.styles.scss';
 
@@ -146,16 +146,17 @@ function DomainList(): JSX.Element {
 									/>
 
 									<Typography.Text className="no-filtered-domains-message">
-										No External API calls detected. To automatically detect them, ensure
-										Client spans are being sent with required attributes.
+										No External API calls detected with applied filters.
 										<br />
-										Read more about <span> </span>
+										Ensure all HTTP client spans are being sent with kind as Client and
+										url set in url.full or http.url attribute.
+										<br />
 										<a
 											href={DOCLINKS.EXTERNAL_API_MONITORING}
 											target="_blank"
 											rel="noreferrer"
 										>
-											configuring External API monitoring.
+											Learn how External API monitoring works in SigNoz.
 										</a>
 									</Typography.Text>
 								</div>
