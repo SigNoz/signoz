@@ -332,6 +332,25 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
+func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	req := new(types.PostableForgotPassword)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	err := h.module.ForgotPassword(ctx, req.OrgID, req.Email, req.FrontendBaseURL)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
+}
+
 func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

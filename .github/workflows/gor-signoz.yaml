@@ -3,8 +3,8 @@ name: gor-signoz
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
 
 permissions:
   contents: write
@@ -36,8 +36,13 @@ jobs:
           echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> .env
           echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
           echo 'PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> .env
+          echo 'DOCS_BASE_URL="https://signoz.io"' >> .env
+      - name: node-setup
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
       - name: build-frontend
-        run:  make js-build
+        run: make js-build
       - name: upload-frontend-artifact
         uses: actions/upload-artifact@v4
         with:
@@ -104,7 +109,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: '~> v2'
+          version: "~> v2"
           args: release --config ${{ env.CONFIG_PATH }} --clean --split
           workdir: .
         env:
@@ -161,7 +166,7 @@ jobs:
         if: steps.cache-linux.outputs.cache-hit == 'true' && steps.cache-darwin.outputs.cache-hit == 'true' # only run if caches hit
         with:
           distribution: goreleaser-pro
-          version: '~> v2'
+          version: "~> v2"
           args: continue --merge
           workdir: .
         env:

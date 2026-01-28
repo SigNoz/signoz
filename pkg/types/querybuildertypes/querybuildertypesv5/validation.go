@@ -65,46 +65,6 @@ const (
 	MaxQueryLimit = 10000
 )
 
-// ValidateFunctionName checks if the function name is valid
-func ValidateFunctionName(name FunctionName) error {
-	validFunctions := []FunctionName{
-		FunctionNameCutOffMin,
-		FunctionNameCutOffMax,
-		FunctionNameClampMin,
-		FunctionNameClampMax,
-		FunctionNameAbsolute,
-		FunctionNameRunningDiff,
-		FunctionNameLog2,
-		FunctionNameLog10,
-		FunctionNameCumulativeSum,
-		FunctionNameEWMA3,
-		FunctionNameEWMA5,
-		FunctionNameEWMA7,
-		FunctionNameMedian3,
-		FunctionNameMedian5,
-		FunctionNameMedian7,
-		FunctionNameTimeShift,
-		FunctionNameAnomaly,
-		FunctionNameFillZero,
-	}
-
-	if slices.Contains(validFunctions, name) {
-		return nil
-	}
-
-	// Format valid functions as comma-separated string
-	var validFunctionNames []string
-	for _, fn := range validFunctions {
-		validFunctionNames = append(validFunctionNames, fn.StringValue())
-	}
-
-	return errors.NewInvalidInputf(
-		errors.CodeInvalidInput,
-		"invalid function name: %s",
-		name.StringValue(),
-	).WithAdditional(fmt.Sprintf("valid functions are: %s", strings.Join(validFunctionNames, ", ")))
-}
-
 // Validate performs preliminary validation on QueryBuilderQuery
 func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 	// Validate signal
@@ -311,7 +271,7 @@ func (q *QueryBuilderQuery[T]) validateLimitAndPagination() error {
 
 func (q *QueryBuilderQuery[T]) validateFunctions() error {
 	for i, fn := range q.Functions {
-		if err := ValidateFunctionName(fn.Name); err != nil {
+		if err := fn.Validate(); err != nil {
 			fnId := fmt.Sprintf("function #%d", i+1)
 			if q.Name != "" {
 				fnId = fmt.Sprintf("function #%d in query '%s'", i+1, q.Name)
@@ -410,7 +370,12 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	for i, order := range q.Order {
 		orderKey := order.Key.Name
 
-		if !validOrderKeys[orderKey] {
+		// Also check the context-prefixed key name for alias matching
+		// This handles cases where user specifies alias like "span.count_" and
+		// order by comes as FieldContext=span, Name=count_
+		contextPrefixedKey := fmt.Sprintf("%s.%s", order.Key.FieldContext.StringValue(), order.Key.Name)
+
+		if !validOrderKeys[orderKey] && !validOrderKeys[contextPrefixedKey] {
 			orderId := fmt.Sprintf("order by clause #%d", i+1)
 			if q.Name != "" {
 				orderId = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)

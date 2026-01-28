@@ -136,7 +136,6 @@ const useAggregateDrilldown = ({
 		query,
 		// panelType,
 		aggregateData: aggregateDataWithTimeRange,
-		widgetId,
 		onClose,
 	});
 
