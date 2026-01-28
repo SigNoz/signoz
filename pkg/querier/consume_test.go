@@ -67,7 +67,7 @@ func (m *mockRows) Err() error                { return nil }
 func (m *mockRows) Totals(dest ...any) error  { return nil }
 func (m *mockRows) ScanStruct(dest any) error { return nil }
 
-func TestConsumedistribution(t *testing.T) {
+func TestConsumeDistribution(t *testing.T) {
 	colTypes := []driver.ColumnType{
 		mockColumnType{name: "ts", scanType: reflect.TypeOf(time.Time{})},
 		mockColumnType{name: "__result_0", scanType: reflect.TypeOf([][]float64{})},
