@@ -270,7 +270,6 @@ def test_traces_list(
     )
     assert_identical_query_response(response, response_with_inline_context)
 
-
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
@@ -518,9 +517,7 @@ def test_traces_list(
         # Case 6a: count by span.count_
         pytest.param({"name": "span.count_"}, "count_", HTTPStatus.OK),
         # Case 6b: count by span.count_ with alias span.count_
-        pytest.param(
-            {"name": "span.count_"}, "span.count_", HTTPStatus.BAD_REQUEST
-        ),  # THIS SHOULD BE OK BUT FAILS DUE TO LIMITATION IN CURRENT IMPLEMENTATION
+        pytest.param({"name": "span.count_"}, "span.count_", HTTPStatus.OK),
         # Case 7a: count by span.count_ and context specified in the key [BAD REQUEST]
         pytest.param(
             {"name": "span.count_", "fieldContext": "span"},
