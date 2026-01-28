@@ -5,13 +5,14 @@ import './Onboarding.styles.scss';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -128,29 +129,41 @@ export default function Onboarding(): JSX.Element {
 		logEvent('Onboarding V2 Started', {});
 	});
 
-	const { status, data: ingestionData } = useQuery({
-		queryFn: () => getIngestionData(),
+	const {
+		status: globalConfigStatus,
+		data: globalConfig,
+	} = useGetGlobalConfig();
+	const {
+		status: ingestionKeysStatus,
+		data: ingestionKeys,
+	} = useGetAllIngestionsKeys({
+		search: '',
+		page: 1,
+		per_page: 1,
 	});
 
 	useEffect(() => {
 		if (
-			status === 'success' &&
-			ingestionData &&
-			ingestionData &&
-			Array.isArray(ingestionData.payload)
+			globalConfigStatus === 'success' &&
+			ingestionKeysStatus === 'success' &&
+			ingestionKeys?.data.data.keys
 		) {
-			const payload = ingestionData.payload[0] || {
-				ingestionKey: '',
-				dataRegion: '',
-			};
+			const ingestionKey = ingestionKeys.data.data.keys[0]?.value || '';
+			const ingestionURL = globalConfig?.data?.ingestion_url || '';
+			const region = ''; // Region not available in GlobalConfig
 
 			updateIngestionData({
-				SIGNOZ_INGESTION_KEY: payload?.ingestionKey,
-				REGION: payload?.dataRegion,
+				SIGNOZ_INGESTION_KEY: ingestionKey,
+				REGION: region,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [status, ingestionData?.payload]);
+	}, [
+		globalConfigStatus,
+		ingestionKeysStatus,
+		ingestionKeys?.data.data.keys,
+		globalConfig?.data,
+	]);
 
 	const setModuleStepsBasedOnSelectedDataSource = (
 		selectedDataSource: DataSourceType | null,

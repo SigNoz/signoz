@@ -2,18 +2,26 @@ import './IngestionSettings.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import getIngestionData from 'api/settings/getIngestionData';
-import { useAppContext } from 'providers/App/App';
-import { useQuery } from 'react-query';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { IngestionDataType } from 'types/api/settings/ingestion';
 
 export default function IngestionSettings(): JSX.Element {
-	const { user } = useAppContext();
+	const {
+		data: globalConfig,
+		isFetching: isFetchingGlobalConfig,
+	} = useGetGlobalConfig();
 
-	const { data: ingestionData, isFetching } = useQuery({
-		queryFn: getIngestionData,
-		queryKey: ['getIngestionData', user?.id],
+	const {
+		data: ingestionKeys,
+		isFetching: isFetchingIngestionKeys,
+	} = useGetAllIngestionsKeys({
+		search: '',
+		page: 1,
+		per_page: 1,
 	});
+
+	const isFetching = isFetchingGlobalConfig || isFetchingIngestionKeys;
 
 	const columns: ColumnsType<IngestionDataType> = [
 		{
@@ -40,27 +48,19 @@ export default function IngestionSettings(): JSX.Element {
 		},
 	];
 
-	const injectionDataPayload =
-		ingestionData &&
-		ingestionData.payload &&
-		Array.isArray(ingestionData.payload) &&
-		ingestionData?.payload[0];
+	const ingestionKey = ingestionKeys?.data?.data?.keys?.[0]?.value || '';
+	const ingestionURL = globalConfig?.data?.ingestion_url || '';
 
 	const data: IngestionDataType[] = [
 		{
 			key: '1',
 			name: 'Ingestion URL',
-			value: injectionDataPayload?.ingestionURL,
+			value: ingestionURL,
 		},
 		{
 			key: '2',
 			name: 'Ingestion Key',
-			value: injectionDataPayload?.ingestionKey,
-		},
-		{
-			key: '3',
-			name: 'Ingestion Region',
-			value: injectionDataPayload?.dataRegion,
+			value: ingestionKey,
 		},
 	];
 

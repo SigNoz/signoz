@@ -114,6 +114,13 @@ export const showErrorNotification = (
 	});
 };
 
+export const getErrorMessage = (err: any): string => {
+	if (err?.error?.message) return err.error.message;
+	if (typeof err?.error === 'string') return err.error;
+	if (err?.message) return err.message;
+	return 'Something went wrong';
+};
+
 type ExpiryOption = {
 	value: string;
 	label: string;
@@ -271,14 +278,14 @@ function MultiIngestionSettings(): JSX.Element {
 	});
 
 	useEffect(() => {
-		setActiveAPIKey(IngestionKeys?.data.data[0]);
+		setActiveAPIKey(IngestionKeys?.data.data.keys[0]);
 	}, [IngestionKeys]);
 
 	useEffect(() => {
-		setDataSource(IngestionKeys?.data.data || []);
-		setTotalIngestionKeys(IngestionKeys?.data?._pagination?.total || 0);
+		setDataSource(IngestionKeys?.data.data.keys || []);
+		setTotalIngestionKeys(IngestionKeys?.data?.data._pagination?.total || 0);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [IngestionKeys?.data?.data]);
+	}, [IngestionKeys?.data?.data?.keys]);
 
 	useEffect(() => {
 		if (isError) {
@@ -311,7 +318,7 @@ function MultiIngestionSettings(): JSX.Element {
 		isLoading: isLoadingCreateAPIKey,
 	} = useMutation(createIngestionKeyApi, {
 		onSuccess: (data) => {
-			setActiveAPIKey(data.payload);
+			// setActiveAPIKey(data.payload); // New API returns partial data (created key id/value), and we close modal anyway.
 			setUpdatedTags([]);
 			hideAddViewModal();
 			refetchAPIKeys();
@@ -1011,6 +1018,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					{activeSignal?.config?.day?.enabled ? (
 																						<Form.Item name="dailyLimit" key="dailyLimit">
 																							<InputNumber
+																								min={0}
 																								disabled={!activeSignal?.config?.day?.enabled}
 																								addonAfter={
 																									<Select defaultValue="GiB" disabled>
@@ -1034,6 +1042,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					{activeSignal?.config?.day?.enabled ? (
 																						<Form.Item name="dailyCount" key="dailyCount">
 																							<InputNumber
+																								min={0}
 																								placeholder="Enter max # of samples/day"
 																								addonAfter={
 																									<Form.Item
@@ -1101,6 +1110,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					{activeSignal?.config?.second?.enabled ? (
 																						<Form.Item name="secondsLimit" key="secondsLimit">
 																							<InputNumber
+																								min={0}
 																								disabled={!activeSignal?.config?.second?.enabled}
 																								addonAfter={
 																									<Select defaultValue="GiB" disabled>
@@ -1124,6 +1134,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					{activeSignal?.config?.second?.enabled ? (
 																						<Form.Item name="secondsCount" key="secondsCount">
 																							<InputNumber
+																								min={0}
 																								placeholder="Enter max # of samples/s"
 																								addonAfter={
 																									<Form.Item
@@ -1157,20 +1168,18 @@ function MultiIngestionSettings(): JSX.Element {
 																	{activeAPIKey?.id === APIKey.id &&
 																		activeSignal.signal === signalName &&
 																		!isLoadingLimitForKey &&
-																		hasCreateLimitForIngestionKeyError &&
-																		createLimitForIngestionKeyError?.error && (
+																		hasCreateLimitForIngestionKeyError && (
 																			<div className="error">
-																				{createLimitForIngestionKeyError?.error}
+																				{getErrorMessage(createLimitForIngestionKeyError)}
 																			</div>
 																		)}
 
 																	{activeAPIKey?.id === APIKey.id &&
 																		activeSignal.signal === signalName &&
 																		!isLoadingLimitForKey &&
-																		hasUpdateLimitForIngestionKeyError &&
-																		updateLimitForIngestionKeyError?.error && (
+																		hasUpdateLimitForIngestionKeyError && (
 																			<div className="error">
-																				{updateLimitForIngestionKeyError?.error}
+																				{getErrorMessage(updateLimitForIngestionKeyError)}
 																			</div>
 																		)}
 
