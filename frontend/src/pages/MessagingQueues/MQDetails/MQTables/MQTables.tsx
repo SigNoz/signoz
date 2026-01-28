@@ -9,7 +9,6 @@ import {
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
-import { isNumber } from 'chart.js/helpers';
 import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';

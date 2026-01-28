@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -109,6 +110,9 @@ type Config struct {
 
 	// Flagger config
 	Flagger flagger.Config `mapstructure:"flagger"`
+
+	// User config
+	User user.Config `mapstructure:"user"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -171,6 +175,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		tokenizer.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
 		flagger.NewConfigFactory(),
+		user.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -20,14 +21,15 @@ type AuthZ struct {
 	logger       *slog.Logger
 	orgGetter    organization.Getter
 	authzService authz.AuthZ
+	roleGetter   role.Getter
 }
 
-func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ) *AuthZ {
+func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ, roleGetter role.Getter) *AuthZ {
 	if logger == nil {
 		panic("cannot build authz middleware, logger is empty")
 	}
 
-	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService}
+	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService, roleGetter: roleGetter}
 }
 
 func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
@@ -109,9 +111,10 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		claims, err := authtypes.ClaimsFromContext(req.Context())
+		ctx := req.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -129,7 +132,18 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreation(req.Context(), claims, orgId, relation, translation, typeable, selectors)
+		roles, err := middleware.roleGetter.ListByOrgIDAndNames(req.Context(), orgId, roles)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		roleSelectors := []authtypes.Selector{}
+		for _, role := range roles {
+			selectors = append(selectors, authtypes.MustNewSelector(authtypes.TypeRole, role.ID.String()))
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(ctx, claims, orgId, relation, typeable, selectors, roleSelectors)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -139,7 +153,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 	})
 }
 
-func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, translation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn) http.HandlerFunc {
+func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)
@@ -154,7 +168,7 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 			return
 		}
 
-		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, translation, typeable, selectors)
+		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, selectors)
 		if err != nil {
 			render.Error(rw, err)
 			return

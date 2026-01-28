@@ -5,7 +5,6 @@ import { EditorView } from '@uiw/react-codemirror';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import * as UseQBModule from 'hooks/queryBuilder/useQueryBuilder';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -121,13 +120,8 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 // Note: We're NOT mocking CodeMirror here - using the real component
 // This provides integration testing with the actual CodeMirror editor
 
-const handleRunQueryMock = ((UseQBModule as unknown) as {
-	handleRunQuery: jest.MockedFunction<() => void>;
-}).handleRunQuery;
-
 const SAMPLE_KEY_TYPING = 'http.';
 const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
-const SAMPLE_VALUE_TYPING_COMPLETE = "service.name = 'frontend'";
 const SAMPLE_STATUS_QUERY = "http.status_code = '200'";
 
 describe('QuerySearch (Integration with Real CodeMirror)', () => {
