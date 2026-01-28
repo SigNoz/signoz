@@ -293,38 +293,3 @@ func parseFragment(sql string) (chparser.Expr, error) {
 	}
 	return sel.SelectItems[0].Expr, nil
 }
-
-// ParseHeatmapBucketCount extracts the bucket count from a heatmap expression.
-func ParseHeatmapBucketCount(expr string) (int, error) {
-	if !strings.Contains(expr, "heatmap(") {
-		return 0, fmt.Errorf("expression does not contain heatmap function")
-	}
-
-	start := strings.Index(expr, "heatmap(")
-	if start == -1 {
-		return 0, fmt.Errorf("heatmap function not found in expression")
-	}
-
-	start += len("heatmap(")
-
-	commaIdx := strings.Index(expr[start:], ",")
-	if commaIdx == -1 {
-		return 0, fmt.Errorf("heatmap expression missing comma separator")
-	}
-
-	bucketStart := start + commaIdx + 1
-	bucketStart += len(expr[bucketStart:]) - len(strings.TrimLeft(expr[bucketStart:], " \t"))
-
-	end := strings.Index(expr[bucketStart:], ")")
-	if end == -1 {
-		return 0, fmt.Errorf("heatmap expression missing closing parenthesis")
-	}
-
-	bucketStr := strings.TrimSpace(expr[bucketStart : bucketStart+end])
-	bucketCount, err := strconv.Atoi(bucketStr)
-	if err != nil {
-		return 0, fmt.Errorf("invalid bucket count '%s': %w", bucketStr, err)
-	}
-
-	return bucketCount, nil
-}

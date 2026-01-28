@@ -10,7 +10,6 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -248,30 +247,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	bucketCount := 0
-	if kind == qbtypes.RequestTypeHeatmap && len(q.spec.Aggregations) > 0 {
-		// Extract the maximum bucket count from all heatmap aggregations
-		for _, agg := range q.spec.Aggregations {
-			var expr string
-			switch a := any(agg).(type) {
-			case qbtypes.TraceAggregation:
-				expr = a.Expression
-			case qbtypes.LogAggregation:
-				expr = a.Expression
-			case qbtypes.MetricAggregation:
-				continue
-			}
-			count, err := querybuilder.ParseHeatmapBucketCount(expr)
-			if err != nil {
-				count = querybuilder.DefaultHeatmapBucketCount
-			}
-			if count > bucketCount {
-				bucketCount = count
-			}
-		}
-	}
-
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name, bucketCount)
+	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}

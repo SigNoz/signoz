@@ -32,7 +32,7 @@ var (
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, bucketCount int) (any, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
 		err     error
@@ -40,7 +40,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 
 	switch kind {
 	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName, bucketCount)
+		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
@@ -51,7 +51,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	return payload, err
 }
 
-func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, bucketCount int) (*qbtypes.TimeSeriesData, error) {
+func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 

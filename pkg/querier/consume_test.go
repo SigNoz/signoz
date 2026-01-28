@@ -97,7 +97,7 @@ func TestConsumeHeatmap(t *testing.T) {
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
 	// Test heatmap consumption
-	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_native_bins", 0)
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_native_bins")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -158,7 +158,7 @@ func TestConsumeHeatmapWithEmptyBuckets(t *testing.T) {
 
 	rows := &mockRows{colTypes: colTypes, values: rowsData}
 
-	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_empty_heatmap", 0)
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_empty_heatmap")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
