@@ -108,6 +108,8 @@ github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkb
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
 github.com/SigNoz/signoz-otel-collector v0.129.10-rc.9 h1:WmYDSSwzyW2yiJ3tPq5AFdjsrz3NBdtPkygtFKOsACw=
 github.com/SigNoz/signoz-otel-collector v0.129.10-rc.9/go.mod h1:4eJCRUd/P4OiCHXvGYZK8q6oyBVGJFVj/G6qKSoN/TQ=
+github.com/SigNoz/signoz-otel-collector v0.129.13-rc.2 h1:225Seh4b0tBavJ7dRTqX2BNG0egEXc4polH4Di5LJJA=
+github.com/SigNoz/signoz-otel-collector v0.129.13-rc.2/go.mod h1:4eJCRUd/P4OiCHXvGYZK8q6oyBVGJFVj/G6qKSoN/TQ=
 github.com/Yiling-J/theine-go v0.6.2 h1:1GeoXeQ0O0AUkiwj2S9Jc0Mzx+hpqzmqsJ4kIC4M9AY=
 github.com/Yiling-J/theine-go v0.6.2/go.mod h1:08QpMa5JZ2pKN+UJCRrCasWYO1IKCdl54Xa836rpmDU=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=

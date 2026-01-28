@@ -118,3 +118,30 @@ var (
 		},
 	}
 )
+
+// bodyExpression returns the core ClickHouse expression representing the
+// conceptual "body" field when JSON body querying is enabled.
+//
+// NOTE: This intentionally does NOT include an alias so it can be reused
+// both in SELECT lists (with an "AS body" suffix) and in WHERE clauses.
+func bodyExpression() string {
+	if !querybuilder.BodyJSONQueryEnabled {
+		return LogsV2BodyColumn
+	}
+
+	jsonStringExpressions := []string{}
+	for _, key := range []string{LogsV2BodyJSONColumn, LogsV2BodyPromotedColumn} {
+		jsonStringExpressions = append(jsonStringExpressions, fmt.Sprintf("toJSONString(%s)", key))
+	}
+
+	jsonMergeExpr := fmt.Sprintf("jsonMergePatch(%s)", strings.Join(jsonStringExpressions, ", "))
+	return fmt.Sprintf("if(empty(%s), %s, %s)", LogsV2BodyColumn, LogsV2BodyColumn, jsonMergeExpr)
+}
+
+func bodyAliasExpression() string {
+	if !querybuilder.BodyJSONQueryEnabled {
+		return LogsV2BodyColumn
+	}
+
+	return fmt.Sprintf("%s as body", bodyExpression())
+}
