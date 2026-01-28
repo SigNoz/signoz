@@ -256,7 +256,7 @@ export const InstalledIntegrations = Loadable(
 		),
 );
 
-export const MessagingQueuesMainPage = Loadable(
+export const MessagingQueues = Loadable(
 	() =>
 		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
 );
@@ -302,5 +302,16 @@ export const PublicDashboardPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
+		),
+);
+
+export const MeterExplorer = Loadable(
+	() => import(/* webpackChunkName: "MeterExplorer" */ 'pages/MeterExplorer'),
+);
+
+export const AlertTypeSelectionPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "AlertTypeSelection" */ 'pages/AlertTypeSelection'
 		),
 );
