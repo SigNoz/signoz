@@ -239,14 +239,10 @@ function OnboardingAddDataSource(): JSX.Element {
 		let region = globalConfig?.data?.ingestion_url;
 
 		if (region) {
-			try {
-				const parts = region.split('.');
-				if (parts[0]?.includes('ingest') && parts.length > 1) {
-					region = parts[1];
-					urlObj.searchParams.set('region', region);
-				}
-			} catch (e) {
-				// ignore
+			const parts = region.split('.');
+			if (parts?.length > 1 && parts[0]?.includes('ingest')) {
+				region = parts[1];
+				urlObj.searchParams.set('region', region);
 			}
 		}
 
