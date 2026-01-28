@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Literal
+from typing import Dict, List, Literal
 from urllib.parse import urljoin
 
 import clickhouse_connect
@@ -172,3 +172,14 @@ class AlertData:
     type: Literal["metrics", "logs", "traces"]
     # path to the data file in testdata directory
     data_path: str
+
+@dataclass(frozen=True)
+class AlertExpectation:
+    # whether we expect any alerts to be fired
+    should_alert: bool
+    # labels of alerts that we expect to be fired
+    expected_alerts: List[dict[str, str]]
+    # seconds to wait for the alerts to be fired, if no
+    # alerts are fired in the expected time, the test will fail
+    wait_time_seconds: int
+
