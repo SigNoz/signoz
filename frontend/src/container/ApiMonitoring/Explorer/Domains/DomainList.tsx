@@ -24,6 +24,7 @@ import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import { columnsConfig, formatDataForTable } from '../../utils';
 import DomainDetails from './DomainDetails/DomainDetails';
+import DOCLINKS from 'utils/docLinks';
 
 import '../Explorer.styles.scss';
 
@@ -145,7 +146,17 @@ function DomainList(): JSX.Element {
 									/>
 
 									<Typography.Text className="no-filtered-domains-message">
-										This query had no results. Edit your query and try again!
+										No External API calls detected. To automatically detect them, ensure
+										Client spans are being sent with required attributes.
+										<br />
+										Read more about <span> </span>
+										<a
+											href={DOCLINKS.EXTERNAL_API_MONITORING}
+											target="_blank"
+											rel="noreferrer"
+										>
+											configuring External API monitoring.
+										</a>
 									</Typography.Text>
 								</div>
 							</div>
