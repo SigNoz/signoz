@@ -6,7 +6,7 @@ import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
 import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
 import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -63,7 +63,9 @@ function WidgetGraph({
 
 	// Apply graph visibility when lineChartRef is available
 	useEffect(() => {
-		if (!lineChartRef.current) return;
+		if (!lineChartRef.current) {
+			return;
+		}
 
 		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);

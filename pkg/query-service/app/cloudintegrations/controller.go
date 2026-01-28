@@ -216,9 +216,9 @@ func (c *Controller) getConnectionUrlForAzure(ctx context.Context, orgId string,
 
 	// TODO: improve cli command generation
 	cliCommand := []string{"az", "stack", "sub", "create", "--name", "SigNozIntegration", "--location",
-		req.AccountConfig.PrimaryRegion, "--template-uri", "https://raw.githubusercontent.com/swagftw/signoz-pocs/refs/heads/main/template.json",
+		req.AccountConfig.DeploymentRegion, "--template-uri", "https://raw.githubusercontent.com/swagftw/signoz-pocs/refs/heads/main/template.json",
 		"--action-on-unmanage", "deleteAll", "--deny-settings-mode", "denyDelete", "--parameters", fmt.Sprintf("rgName=%s", "signoz-integration-rg"),
-		fmt.Sprintf("rgLocation=%s", req.AccountConfig.PrimaryRegion)}
+		fmt.Sprintf("rgLocation=%s", req.AccountConfig.DeploymentRegion)}
 
 	return &AzureConnectionCommandResponse{
 		AccountId:                   account.ID.String(),
@@ -257,22 +257,66 @@ type AgentCheckInRequest struct {
 	Data map[string]any `json:"data,omitempty"`
 }
 
-type AgentCheckInResponse struct {
+type AWSAgentCheckInResponse struct {
 	AccountId      string     `json:"account_id"`
 	CloudAccountId string     `json:"cloud_account_id"`
 	RemovedAt      *time.Time `json:"removed_at"`
 
-	IntegrationConfig IntegrationConfigForAgent `json:"integration_config"`
+	IntegrationConfig AWSIntegrationConfigForAgent `json:"integration_config"`
 }
 
-type IntegrationConfigForAgent struct {
+type AWSIntegrationConfigForAgent struct {
 	EnabledRegions []string `json:"enabled_regions"`
 
-	TelemetryCollectionStrategy *CompiledCollectionStrategy `json:"telemetry,omitempty"`
+	TelemetryCollectionStrategy *services.AWSCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProvider string, req AgentCheckInRequest) (*AgentCheckInResponse, error) {
+type AzureIntegrationConfigForAgent struct {
+	DeploymentRegion      string   `json:"deployment_region"`
+	EnabledResourceGroups []string `json:"enabled_resource_groups"`
+
+	TelemetryCollectionStrategy *services.AzureCollectionStrategy `json:"telemetry,omitempty"`
+}
+
+func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*AWSAgentCheckInResponse, error) {
+	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	agentConfig, err := c.getAWSAgentConfig(ctx, account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AWSAgentCheckInResponse{
+		AccountId:         account.ID.StringValue(),
+		CloudAccountId:    *account.AccountID,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: *agentConfig,
+	}, nil
+}
+
+func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*AzureIntegrationConfigForAgent, error) {
+	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	agentConfig, err := c.getAzureAgentConfig(ctx, account)
+	if err != nil {
+		return nil, err
+	}
+
+	return agentConfig, nil
+}
+
+func (c *Controller) upsertCloudIntegrationAccount(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*types.CloudIntegration, *model.ApiError) {
 	existingAccount, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, req.ID)
+	if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
+		return nil, apiErr
+	}
+
 	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
 		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in with new %s account id %s for account %s with existing %s id %s",
@@ -300,30 +344,32 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	// prepare and return integration config to be consumed by agent
-	compiledStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
-	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't init telemetry collection strategy: %w", err,
-		))
-	}
+	return account, nil
+}
 
-	agentConfig := IntegrationConfigForAgent{
-		EnabledRegions:              []string{},
-		TelemetryCollectionStrategy: compiledStrategy,
+func (c *Controller) getAWSAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AWSIntegrationConfigForAgent, error) {
+	// prepare and return integration config to be consumed by agent
+	agentConfig := &AWSIntegrationConfigForAgent{
+		EnabledRegions: []string{},
+		TelemetryCollectionStrategy: &services.AWSCollectionStrategy{
+			Provider:   types.CloudProviderAWS,
+			AWSMetrics: &services.AWSMetricsStrategy{},
+			AWSLogs:    &services.AWSLogsStrategy{},
+			S3Buckets:  map[string][]string{},
+		},
 	}
 
 	if account.Config != nil && account.Config.EnabledRegions != nil {
 		agentConfig.EnabledRegions = account.Config.EnabledRegions
 	}
 
-	services, err := services.Map(cloudProvider)
+	services, err := services.Map(types.CloudProviderAWS)
 	if err != nil {
 		return nil, err
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
-		ctx, orgId, account.ID.StringValue(),
+		ctx, account.OrgID, account.ID.StringValue(),
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -342,18 +388,25 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 		}
 		config := svcConfigs[svcType]
 
-		err := AddServiceStrategy(svcType, compiledStrategy, definition.Strategy, config)
-		if err != nil {
-			return nil, err
-		}
+		AddAWSServiceStrategy(svcType, agentConfig.TelemetryCollectionStrategy, definition.Strategy, config)
 	}
 
-	return &AgentCheckInResponse{
-		AccountId:         account.ID.StringValue(),
-		CloudAccountId:    *account.AccountID,
-		RemovedAt:         account.RemovedAt,
-		IntegrationConfig: agentConfig,
-	}, nil
+	return agentConfig, nil
+}
+
+func (c *Controller) getAzureAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AzureIntegrationConfigForAgent, error) {
+	// prepare and return integration config to be consumed by agent
+	agentConfig := &AzureIntegrationConfigForAgent{
+		DeploymentRegion:      account.Config.DeploymentRegion,
+		EnabledResourceGroups: account.Config.EnabledResourceGroups,
+		TelemetryCollectionStrategy: &services.AzureCollectionStrategy{
+			Provider:     types.CloudProviderAzure,
+			AzureMetrics: &services.AzureMetricsStrategy{},
+			AzureLogs:    &services.AzureLogsStrategy{},
+		},
+	}
+
+	return agentConfig, nil
 }
 
 type UpdateAccountConfigRequest struct {

@@ -11,7 +11,11 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
 )
-from fixtures.idputils import get_oidc_domain, get_user_by_email, perform_oidc_login, delete_keycloak_client
+from fixtures.idputils import (
+    get_oidc_domain,
+    get_user_by_email,
+    perform_oidc_login,
+)
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -196,7 +200,9 @@ def test_oidc_role_mapping_single_group_admin(
     email = "admin-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-admins"])
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -220,7 +226,9 @@ def test_oidc_role_mapping_single_group_editor(
     email = "editor-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-editors"])
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -244,9 +252,13 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     Expected: User gets ADMIN (highest of the two).
     """
     email = "multi-group-user@oidc.integration.test"
-    create_user_idp_with_groups(email, "password123", True, ["signoz-viewers", "signoz-admins"])
+    create_user_idp_with_groups(
+        email, "password123", True, ["signoz-viewers", "signoz-admins"]
+    )
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -271,7 +283,9 @@ def test_oidc_role_mapping_explicit_viewer_group(
     email = "viewer-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -295,7 +309,9 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     email = "unmapped-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["some-other-group"])
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -373,7 +389,9 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     email = "role-claim-precedence@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "ADMIN", ["signoz-editors"])
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -399,9 +417,13 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     """
     setup_user_profile()
     email = "invalid-role-user@oidc.integration.test"
-    create_user_idp_with_role(email, "password123", True, "SUPERADMIN", ["signoz-editors"])
+    create_user_idp_with_role(
+        email, "password123", True, "SUPERADMIN", ["signoz-editors"]
+    )
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -429,7 +451,9 @@ def test_oidc_role_mapping_case_insensitive(
     email = "lowercase-role-user@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "editor", [])
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
@@ -449,29 +473,25 @@ def test_oidc_name_mapping(
 ) -> None:
     """Test that user's display name is mapped from IDP name claim."""
     email = "named-user@oidc.integration.test"
-    
+
     # Create user with explicit first/last name
-    create_user_idp(
-        email, 
-        "password123", 
-        True,
-        first_name="John",
-        last_name="Doe"
+    create_user_idp(email, "password123", True, first_name="John", last_name="Doe")
+
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
-    
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    
+
     assert response.status_code == HTTPStatus.OK
     users = response.json()["data"]
     found_user = next((u for u in users if u["email"] == email), None)
-    
+
     assert found_user is not None
     # Keycloak concatenates firstName + lastName into "name" claim
     assert found_user["displayName"] == "John Doe"
@@ -489,23 +509,25 @@ def test_oidc_empty_name_uses_fallback(
 ) -> None:
     """Test that user without name in IDP still gets created (may have empty displayName)."""
     email = "no-name@oidc.integration.test"
-    
+
     # Create user without first/last name
     create_user_idp(email, "password123", True)
 
-    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
-    
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
+
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    
+
     assert response.status_code == HTTPStatus.OK
     users = response.json()["data"]
     found_user = next((u for u in users if u["email"] == email), None)
-    
+
     # User should still be created even with empty name
     assert found_user is not None
     assert found_user["role"] == "VIEWER"

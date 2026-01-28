@@ -3587,8 +3587,8 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionCommand(
 			return
 		}
 
-		if _, ok := cloudintegrations.ValidAzureRegions[azureReq.AccountConfig.PrimaryRegion]; !ok {
-			RespondError(w, model.BadRequest(fmt.Errorf("invalid azure region: %s", azureReq.AccountConfig.PrimaryRegion)), nil)
+		if _, ok := cloudintegrations.ValidAzureRegions[azureReq.AccountConfig.DeploymentRegion]; !ok {
+			RespondError(w, model.BadRequest(fmt.Errorf("invalid azure region: %s", azureReq.AccountConfig.DeploymentRegion)), nil)
 			return
 		}
 
@@ -3650,9 +3650,7 @@ func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -3664,22 +3662,32 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 		return
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, err := aH.CloudIntegrationsController.CheckInAsAgent(
-		r.Context(), claims.OrgID, cloudProvider, req,
-	)
-
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	aH.Respond(w, result)
+	switch cloudProvider {
+	case types.CloudProviderAWS:
+		result, err := aH.CloudIntegrationsController.CheckInAsAWSAgent(r.Context(), claims.OrgID, cloudProvider, req)
+		if err != nil {
+			render.Error(w, err)
+			return
+		}
+
+		aH.Respond(w, result)
+		return
+	case types.CloudProviderAzure:
+		result, err := aH.CloudIntegrationsController.CheckInAsAzureAgent(r.Context(), claims.OrgID, cloudProvider, req)
+		if err != nil {
+			render.Error(w, err)
+			return
+		}
+
+		aH.Respond(w, result)
+		return
+	}
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(

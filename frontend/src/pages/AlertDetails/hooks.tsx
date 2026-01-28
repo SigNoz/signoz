@@ -17,7 +17,7 @@ import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
-import { RelativeTimeMap } from 'container/TopNav/DateTimeSelection/config';
+import { RelativeTimeMap } from 'container/TopNav/DateTimeSelectionV2/constants';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -69,8 +69,9 @@ export const useAlertHistoryQueryParams = (): {
 	const hasStartAndEndParams = !!intStartTime && !!intEndTime;
 
 	const { maxTime, minTime } = useMemo(() => {
-		if (hasStartAndEndParams)
+		if (hasStartAndEndParams) {
 			return GetMinMax('custom', [intStartTime, intEndTime]);
+		}
 		return GetMinMax(relativeTime);
 	}, [hasStartAndEndParams, intStartTime, intEndTime, relativeTime]);
 

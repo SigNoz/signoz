@@ -28,7 +28,9 @@ function LogsTopNav(): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
 	const handleGoLive = useCallback(() => {
-		if (!stagedQuery) return;
+		if (!stagedQuery) {
+			return;
+		}
 
 		let queryHistoryState: QueryHistoryState | null = null;
 

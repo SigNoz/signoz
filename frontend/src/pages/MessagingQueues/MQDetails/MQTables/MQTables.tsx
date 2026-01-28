@@ -9,7 +9,6 @@ import {
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
-import { isNumber } from 'chart.js/helpers';
 import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -35,6 +34,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
+import { formatNumericValue } from 'utils/numericUtils';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -72,10 +72,7 @@ export function getColumns(
 			'ingestion_rate',
 			'byte_rate',
 		].includes(column.name)
-			? (value: number | string): string => {
-					if (!isNumber(value)) return value.toString();
-					return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
-			  }
+			? formatNumericValue
 			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
 					children:
 						column.name === 'service_name' ? (

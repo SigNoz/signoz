@@ -31,7 +31,9 @@ export const isFeatureKeys = (key: string): key is keyof typeof FeatureKeys =>
 
 export function isIngestionActive(data: any): boolean {
 	const table = get(data, 'data.newResult.data.result[0].table');
-	if (!table) return false;
+	if (!table) {
+		return false;
+	}
 
 	const key = get(table, 'columns[0].id');
 	const value = get(table, `rows[0].data["${key}"]`) || '0';

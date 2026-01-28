@@ -21,7 +21,7 @@ type Definition struct {
 
 	DataCollected DataCollected `json:"data_collected"`
 
-	Strategy *CollectionStrategy `json:"telemetry_collection_strategy"`
+	Strategy *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
 }
 
 type Assets struct {
@@ -51,12 +51,24 @@ type CollectedMetric struct {
 	Description string `json:"description"`
 }
 
-type CollectionStrategy struct {
+type AWSCollectionStrategy struct {
 	Provider string `json:"provider"`
 
 	AWSMetrics *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
 	AWSLogs    *AWSLogsStrategy    `json:"aws_logs,omitempty"`
 	S3Buckets  map[string][]string `json:"s3_buckets,omitempty"` // Only available in S3 Sync Service Type
+}
+
+type AzureCollectionStrategy struct {
+	Provider string `json:"provider"`
+
+	AzureMetrics *AzureMetricsStrategy `json:"azure_metrics,omitempty"`
+	AzureLogs    *AzureLogsStrategy    `json:"azure_logs,omitempty"`
+}
+
+type AzureResourceGroup struct {
+	Name   string `json:"name"`
+	Region string `json:"region"`
 }
 
 type AWSMetricsStrategy struct {
@@ -79,6 +91,14 @@ type AWSLogsStrategy struct {
 		// "" implies no filtering is required.
 		FilterPattern string `json:"filter_pattern"`
 	} `json:"cloudwatch_logs_subscriptions"`
+}
+
+type AzureMetricsStrategy struct {
+	// Future fields for Azure Metrics collection strategy can be added here
+}
+
+type AzureLogsStrategy struct {
+	// Future fields for Azure Logs collection strategy can be added here
 }
 
 type Dashboard struct {

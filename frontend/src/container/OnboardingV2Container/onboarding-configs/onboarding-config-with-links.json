@@ -295,7 +295,8 @@
 			"otel",
 			"otel collector",
 			"otlp",
-			"signoz"
+			"signoz",
+			"open telemetry"
 		],
 		"imgUrl": "/Logos/opentelemetry.svg",
 		"link": "/docs/migration/migrate-from-opentelemetry-to-signoz/"
@@ -591,6 +592,7 @@
 			"js",
 			"nestjs",
 			"nextjs",
+			"next.js",
 			"nodejs",
 			"nuxtjs",
 			"reactjs",
@@ -2212,7 +2214,11 @@
 			"observability",
 			"otel hostmetrics receiver",
 			"system metrics monitoring",
-			"vm performance metrics"
+			"vm performance metrics",
+			"ubuntu",
+			"windows",
+			"macos",
+			"linux"
 		],
 		"imgUrl": "/Logos/hostmetrics.svg",
 		"link": "/docs/userguide/hostmetrics/"
@@ -3581,6 +3587,140 @@
 		"link": "/docs/llm/opentelemetry-openai-monitoring/"
 	},
 	{
+		"dataSource": "codex-monitoring",
+		"label": "Codex",
+		"imgUrl": "/Logos/openai.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"codex",
+			"codex monitoring",
+			"codex observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel codex",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/codex-monitoring/"
+	},
+	{
+		"dataSource": "groq-observability",
+		"label": "Groq",
+		"imgUrl": "/Logos/groq.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"groq",
+			"groq monitoring",
+			"groq observability",
+			"groq api monitoring",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel groq",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/groq-observability/"
+	},
+	{
+		"dataSource": "google-adk-observability",
+		"label": "Google ADK",
+		"imgUrl": "/Logos/google-adk.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"adk",
+			"google adk",
+			"google adk monitoring",
+			"google adk observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel google adk",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/google-adk-observability/"
+	},
+	{
+		"dataSource": "openlit",
+		"label": "OpenLit",
+		"imgUrl": "/Logos/openlit.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"openlit",
+			"openlit monitoring",
+			"openlit observability",
+			"otel openlit",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/openlit/"
+	},
+	{
+		"dataSource": "langtrace",
+		"label": "Langtrace",
+		"imgUrl": "/Logos/langtrace.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"langtrace",
+			"langtrace monitoring",
+			"langtrace observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel langtrace",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/langtrace/"
+	},
+	{
+		"dataSource": "traceloop",
+		"label": "Traceloop",
+		"imgUrl": "/Logos/traceloop.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel traceloop",
+			"traces",
+			"tracing",
+			"traceloop",
+			"traceloop monitoring",
+			"traceloop observability"
+		],
+		"link": "/docs/traceloop/"
+	},
+	{
 		"dataSource": "anthropic-api",
 		"label": "Anthropic API",
 		"imgUrl": "/Logos/anthropic-api-monitoring.svg",
@@ -4446,7 +4586,8 @@
 			"nuxtjs",
 			"svelte",
 			"sveltekit",
-			"nextjs"
+			"nextjs",
+"next.js"
 		],
 		"link": "/docs/frontend-monitoring/web-vitals-with-metrics/"
 	},
@@ -4480,7 +4621,8 @@
 			"nuxtjs",
 			"svelte",
 			"sveltekit",
-			"nextjs"
+			"nextjs",
+"next.js"
 		],
 		"link": "/docs/frontend-monitoring/web-vitals-with-traces/"
 	},
@@ -4521,7 +4663,8 @@
 			"nuxtjs",
 			"svelte",
 			"sveltekit",
-			"nextjs"
+			"nextjs",
+"next.js"
 		],
 		"link": "/docs/frontend-monitoring/document-load/"
 	},
@@ -5430,7 +5573,8 @@
 			"nuxtjs",
 			"svelte",
 			"sveltekit",
-			"nextjs"
+			"nextjs",
+"next.js"
 		],
 		"link": "/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
 	},
@@ -5460,7 +5604,8 @@
 			"nuxtjs",
 			"svelte",
 			"sveltekit",
-			"nextjs"
+			"nextjs",
+"next.js"
 		],
 		"link": "/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
 	},
@@ -5490,7 +5635,8 @@
 			"nuxtjs",
 			"svelte",
 			"sveltekit",
-			"nextjs"
+			"nextjs",
+"next.js"
 		],
 		"link": "/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"
 	},
@@ -5587,6 +5733,174 @@
 					"label": "Docker",
 					"imgUrl": "/Logos/docker.svg",
 					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "python-metrics",
+		"label": "Python Metrics",
+		"imgUrl": "/Logos/python.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"opentelemetry python",
+			"otel python",
+			"python",
+			"python metrics",
+			"python monitoring",
+			"python observability",
+			"python opentelemetry",
+			"runtime metrics"
+		],
+		"id": "python-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "dotnet-metrics",
+		"label": ".NET Metrics",
+		"imgUrl": "/Logos/dotnet.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			".net",
+			".net metrics",
+			".net monitoring",
+			".net observability",
+			"dotnet",
+			"dotnet metrics",
+			"dotnet monitoring",
+			"dotnet observability",
+			"metrics",
+			"opentelemetry dotnet",
+			"otel dotnet",
+			"runtime metrics"
+		],
+		"id": "dotnet-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "nodejs-metrics",
+		"label": "Node.js Metrics",
+		"imgUrl": "/Logos/nodejs.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"node.js",
+			"node.js metrics",
+			"node.js monitoring",
+			"node.js observability",
+			"nodejs",
+			"nodejs metrics",
+			"nodejs monitoring",
+			"nodejs observability",
+			"opentelemetry nodejs",
+			"otel nodejs",
+			"runtime metrics"
+		],
+		"id": "nodejs-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
 				}
 			]
 		}

@@ -156,7 +156,9 @@ function PipelineExpandView({
 
 	const onCancelReorderProcessorRow = useCallback(
 		() => (): void => {
-			if (expandedPipelineData) setExpandedPipelineData(expandedPipelineData);
+			if (expandedPipelineData) {
+				setExpandedPipelineData(expandedPipelineData);
+			}
 		},
 		[expandedPipelineData, setExpandedPipelineData],
 	);

@@ -145,7 +145,7 @@ type AccountConfig struct {
 	EnabledRegions []string `json:"regions,omitempty"`
 
 	// Azure Config
-	PrimaryRegion         string   `json:"primary_region,omitempty"`
+	DeploymentRegion      string   `json:"deployment_region,omitempty"`
 	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
 }
 

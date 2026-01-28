@@ -25,3 +25,10 @@ jobs:
           else
             echo "No references to 'ee' packages found in 'pkg' directory"
           fi
+
+          if grep -R --include="*.go" '.*/ee/.*' cmd/community/; then
+            echo "Error: Found references to 'ee' packages in 'cmd/community' directory"
+            exit 1
+          else
+            echo "No references to 'ee' packages found in 'cmd/community' directory"
+          fi
