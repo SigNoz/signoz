@@ -610,6 +610,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           m.logger,
 		FieldMapper:      m.fieldMapper,
 		ConditionBuilder: m.condBuilder,

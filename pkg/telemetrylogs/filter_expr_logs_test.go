@@ -1,20 +1,27 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	ctx := context.Background()
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
+	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, releaseTime)
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, nil)
 
@@ -22,6 +29,7 @@ func TestFilterExprLogs(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -2386,7 +2394,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, uint64(releaseTime.Add(-5*time.Minute).UnixNano()), uint64(releaseTime.Add(5*time.Minute).UnixNano()))
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2442,6 +2450,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

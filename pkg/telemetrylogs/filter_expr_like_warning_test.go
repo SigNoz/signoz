@@ -1,21 +1,27 @@
 package telemetrylogs
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
+	ctx := context.Background()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm, nil)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -46,12 +52,15 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
+	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
+	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	cb := NewConditionBuilder(fm, storeWithMetadata)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

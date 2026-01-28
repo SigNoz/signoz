@@ -41,6 +41,9 @@ type MetadataStore interface {
 	// PromotePaths promotes the paths.
 	PromotePaths(ctx context.Context, paths ...string) error
 
+	// GetColumnEvolutionMetadataMulti returns a list of evolution entries for the given selectors.
+	GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*EvolutionSelector) (map[string][]*EvolutionEntry, error)
+
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
 }

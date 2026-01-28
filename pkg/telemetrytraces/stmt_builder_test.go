@@ -660,7 +660,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "list query with deprecated filter field",
+			name:        "list query with deprecated filter field",
 			requestType: qbtypes.RequestTypeTrace,
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal: telemetrytypes.SignalTraces,
