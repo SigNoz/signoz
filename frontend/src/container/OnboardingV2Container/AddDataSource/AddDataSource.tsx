@@ -16,6 +16,7 @@ import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
@@ -148,6 +149,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const { org } = useAppContext();
 
+	const { data: globalConfig } = useGetGlobalConfig();
+
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
 	const [searchQuery, setSearchQuery] = useState<string>('');
@@ -231,6 +234,16 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (selectedEnvironment) {
 			urlObj.searchParams.set('environment', selectedEnvironment);
+		}
+
+		let region = globalConfig?.data?.ingestion_url;
+
+		if (region) {
+			const parts = region.split('.');
+			if (parts?.length > 1 && parts[0]?.includes('ingest')) {
+				region = parts[1];
+				urlObj.searchParams.set('region', region);
+			}
 		}
 
 		// Step 3: Return the updated URL as a string
