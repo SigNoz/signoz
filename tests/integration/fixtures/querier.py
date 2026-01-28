@@ -456,3 +456,32 @@ def assert_scalar_column_order(
         f"{context}: Column {column_index} order mismatch. "
         f"Expected {expected_values}, got {actual_values}"
     )
+
+
+def make_substitute_vars_request(
+    signoz: "types.SigNoz",
+    token: str,
+    start_ms: int,
+    end_ms: int,
+    queries: List[Dict],
+    variables: Dict[str, Any],
+    timeout: int = QUERY_TIMEOUT,
+) -> requests.Response:
+    return requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/substitute_vars"),
+        timeout=timeout,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {"queries": queries},
+            "variables": variables,
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+
+def sum_series_values(series_values: List[Dict]) -> float:
+    return sum(point["value"] for point in series_values)
