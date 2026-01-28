@@ -2,6 +2,7 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
+	BucketData,
 	DistributionData,
 	MetricRangePayloadV5,
 	QueryRangeRequestV5,
@@ -334,6 +335,23 @@ function convertV5DataByType(
 				result: distributionData.map((distribution) =>
 					convertDistributionData(distribution, legendMap),
 				),
+			};
+		}
+		case 'bucket': {
+			const bucketData = v5Data.data.results as BucketData[];
+			return {
+				resultType: 'bucket',
+				result: bucketData.map((bucket) => ({
+					queryName: bucket.queryName,
+					legend: legendMap[bucket.queryName] || bucket.queryName,
+					series: null,
+					list: null,
+					bucketStarts: bucket.bucketStarts,
+					bucketBounds: bucket.bucketBounds,
+					bucketCount: bucket.bucketCount,
+					timestamps: bucket.timestamps,
+					counts: bucket.counts,
+				})),
 			};
 		}
 		default:

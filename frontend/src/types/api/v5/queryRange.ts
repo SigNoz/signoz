@@ -12,6 +12,7 @@ export type RequestType =
 	| 'trace'
 	| 'raw'
 	| 'distribution'
+	| 'bucket'
 	| '';
 
 export type QueryType =
@@ -404,6 +405,15 @@ export interface DistributionData {
 	[key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+export interface BucketData {
+	queryName: string;
+	bucketStarts?: number[];
+	bucketBounds: number[];
+	bucketCount?: number;
+	timestamps: number[];
+	counts: number[][];
+}
+
 // Response data structures with results array
 export interface TimeSeriesResponseData {
 	results: TimeSeriesData[];
@@ -421,11 +431,16 @@ export interface DistributionResponseData {
 	results: DistributionData[];
 }
 
+export interface BucketResponseData {
+	results: BucketData[];
+}
+
 export type QueryRangeDataV5 =
 	| TimeSeriesResponseData
 	| ScalarResponseData
 	| RawResponseData
-	| DistributionResponseData;
+	| DistributionResponseData
+	| BucketResponseData;
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;

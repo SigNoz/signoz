@@ -174,21 +174,21 @@ export const getLegend = (
 	if (aggregationAlias || aggregationExpression) {
 		return singleQuery
 			? getLegendForSingleAggregation(
-					queryData,
-					allQueries,
-					aggregationAlias,
-					aggregationExpression,
-					labelName,
-					singleAggregation,
-			  )
+				queryData,
+				allQueries,
+				aggregationAlias,
+				aggregationExpression,
+				labelName,
+				singleAggregation,
+			)
 			: getLegendForMultipleAggregations(
-					queryData,
-					allQueries,
-					aggregationAlias,
-					aggregationExpression,
-					labelName,
-					singleAggregation,
-			  );
+				queryData,
+				allQueries,
+				aggregationAlias,
+				aggregationExpression,
+				labelName,
+				singleAggregation,
+			);
 	}
 	return labelName || metaData?.queryName || queryData.queryName;
 };
@@ -343,7 +343,7 @@ export async function GetMetricQueryRange(
 		return response;
 	}
 
-	if (response.payload?.data?.result) {
+	if (response.payload?.data?.result && response.payload?.data?.resultType !== 'bucket') {
 		const v2Range = convertNewDataToOld(response.payload);
 
 		response.payload = v2Range;
