@@ -2,7 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -47,20 +46,10 @@ func (migration *migratePublicDashboards) Up(ctx context.Context, db *bun.DB) er
 		_ = tx.Rollback()
 	}()
 
-	// for upgrades from version where authz service wasn't introduced the store won't be present, hence we need to ensure store exists.
 	var storeID string
 	err = tx.QueryRowContext(ctx, `SELECT id FROM store WHERE name = ? LIMIT 1`, "signoz").Scan(&storeID)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return err
-	}
-	if storeID == "" {
-		// based on openfga ids to avoid any scan issues.
-		// ref: https://github.com/openfga/openfga/blob/main/pkg/server/commands/create_store.go#L45
-		storeID = ulid.Make().String()
-		_, err := tx.ExecContext(ctx, `INSERT INTO store (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)`, storeID, "signoz", time.Now().UTC(), time.Now().UTC())
-		if err != nil {
-			return err
-		}
 	}
 
 	// fetch all the orgs for which we need to insert user role grant tuples.
@@ -88,7 +77,10 @@ func (migration *migratePublicDashboards) Up(ctx context.Context, db *bun.DB) er
 
 	for _, orgID := range orgIDs {
 		publicDashboards, err := tx.QueryContext(ctx, `
-			SELECT id FROM public_dashboard WHERE org_id = ?`, orgID)
+			SELECT public_dashboard.id
+			FROM public_dashboard
+			INNER JOIN dashboard ON dashboard.id = public_dashboard.dashboard_id
+			WHERE dashboard.org_id = ?`, orgID)
 		if err != nil {
 			return err
 		}

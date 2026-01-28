@@ -91,7 +91,8 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 
 	type tuple struct {
 		OrgID    string
-		UserID   string
+		Type     string
+		ID       string
 		RoleName string
 	}
 	tuples := []tuple{}
@@ -116,14 +117,16 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			}
 			tuples = append(tuples, tuple{
 				OrgID:    orgID,
-				UserID:   id,
+				ID:       id,
+				Type:     "user",
 				RoleName: managedRole,
 			})
 		}
 
 		tuples = append(tuples, tuple{
 			OrgID:    orgID,
-			UserID:   authtypes.AnonymousUser.StringValue(),
+			ID:       authtypes.AnonymousUser.StringValue(),
+			Type:     "anonymous",
 			RoleName: "signoz-anonymous",
 		})
 
@@ -151,7 +154,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			INSERT INTO tuple (store, object_type, object_id, relation, _user, user_type, ulid, inserted_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (store, object_type, object_id, relation, _user) DO NOTHING`,
-				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", "user:organization/"+tuple.OrgID+"/user/"+tuple.UserID, "user", tupleID, now,
+				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", tuple.Type+":organization/"+tuple.OrgID+"/"+tuple.Type+"/"+tuple.ID, "user", tupleID, now,
 			)
 			if err != nil {
 				return err
@@ -170,7 +173,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			INSERT INTO changelog (store, object_type, object_id, relation, _user, operation, ulid, inserted_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (store, ulid, object_type) DO NOTHING`,
-				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", "user:organization/"+tuple.OrgID+"/user/"+tuple.UserID, "TUPLE_OPERATION_WRITE", tupleID, now,
+				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", tuple.Type+":organization/"+tuple.OrgID+"/"+tuple.Type+"/"+tuple.ID, "TUPLE_OPERATION_WRITE", tupleID, now,
 			)
 			if err != nil {
 				return err
@@ -181,7 +184,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			INSERT INTO tuple (store, object_type, object_id, relation, user_object_type, user_object_id, user_relation, user_type, ulid, inserted_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (store, object_type, object_id, relation, user_object_type, user_object_id, user_relation) DO NOTHING`,
-				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", "user", "organization/"+tuple.OrgID+"/user/"+tuple.UserID, "", "user", tupleID, now,
+				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", tuple.Type, "organization/"+tuple.OrgID+"/"+tuple.Type+"/"+tuple.ID, "", "user", tupleID, now,
 			)
 			if err != nil {
 				return err
@@ -200,7 +203,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 			INSERT INTO changelog (store, object_type, object_id, relation, user_object_type, user_object_id, user_relation, operation, ulid, inserted_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (store, ulid, object_type) DO NOTHING`,
-				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", "user", "organization/"+tuple.OrgID+"/user/"+tuple.UserID, "", 0, tupleID, now,
+				storeID, "role", "organization/"+tuple.OrgID+"/role/"+tuple.RoleName, "assignee", tuple.Type, "organization/"+tuple.OrgID+"/"+tuple.Type+"/"+tuple.ID, "", 0, tupleID, now,
 			)
 			if err != nil {
 				return err
