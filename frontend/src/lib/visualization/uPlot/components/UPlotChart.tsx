@@ -110,16 +110,26 @@ export default function UPlotChart({
 			return;
 		}
 
+		// Check if the plot instance's container has been unmounted (e.g., after "No Data" state)
+		// If so, we need to recreate the plot with the new container
+		const isPlotOrphaned =
+			plotInstanceRef.current &&
+			plotInstanceRef.current.root !== containerRef.current;
+
 		// Update dimensions without reinitializing if only size changed
-		if (!sameDimensions(prevProps, currentProps) && plotInstanceRef.current) {
+		if (
+			!sameDimensions(prevProps, currentProps) &&
+			plotInstanceRef.current &&
+			!isPlotOrphaned
+		) {
 			plotInstanceRef.current.setSize({
 				width: Math.floor(width),
 				height: Math.floor(height),
 			});
 		}
 
-		// Reinitialize if config changed
-		if (!sameConfig(prevProps, currentProps)) {
+		// Reinitialize if config changed or if the plot was orphaned (container changed)
+		if (!sameConfig(prevProps, currentProps) || isPlotOrphaned) {
 			createPlot();
 		}
 		// Update data if only data changed
