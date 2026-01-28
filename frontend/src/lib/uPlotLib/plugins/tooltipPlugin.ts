@@ -64,6 +64,8 @@ function sortTooltipContentBasedOnValue(
 	return Object.fromEntries(focusedEntries.concat(nonFocusedEntries));
 }
 
+const MAX_TOOLTIP_ITEMS = 20;
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
@@ -221,7 +223,7 @@ const generateTooltipContent = (
 
 	const sortedValues = Object.values(sortedData);
 
-	for (let i = 0; i < sortedValues.length; i++) {
+	for (let i = 0; i < Math.min(sortedValues.length, MAX_TOOLTIP_ITEMS); i++) {
 		const { textContent, color, focus } = sortedValues[i];
 
 		const div = document.createElement('div');
