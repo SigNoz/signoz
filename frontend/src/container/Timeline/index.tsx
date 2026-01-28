@@ -102,7 +102,6 @@ interface TimelineProps {
 		globalEnd: number;
 		spread: number;
 		totalSpans: number;
-		levels: number;
 	};
 	globalTraceMetadata: ITraceMetaData;
 	setIntervalUnit: Dispatch<SetStateAction<IIntervalUnit>>;

@@ -12,14 +12,12 @@ export const getSpanTreeMetadata = (
 	let globalStart = Number.POSITIVE_INFINITY;
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
-	let levels = 1;
 
 	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
 		totalSpans += 1;
-		levels = Math.max(levels, level);
 		const { startTime, value } = treeNode;
 		if (startTime !== null && value !== null) {
 			const endTime = startTime + value / 1e6;
@@ -47,7 +45,6 @@ export const getSpanTreeMetadata = (
 		globalEnd,
 		spread: globalEnd - globalStart,
 		totalSpans,
-		levels,
 		treesData,
 	};
 };
@@ -57,6 +54,5 @@ interface GetSpanTreeMetaData {
 	globalEnd: number;
 	spread: number;
 	totalSpans: number;
-	levels: number;
 	treesData: ITraceForest;
 }
