@@ -51,7 +51,12 @@ function buildTooltipContent(
 			continue;
 		}
 
-		const dataIdx = dataIdxs[idx] ?? 0;
+		const dataIdx = dataIdxs[idx];
+		// Skip series with no data at the current cursor position
+		if (dataIdx === null || dataIdx === undefined) {
+			continue;
+		}
+
 		const raw = data[idx]?.[dataIdx];
 		const value = Number(raw);
 		const isActive = idx === activeSeriesIdx;
@@ -78,7 +83,6 @@ export default function Tooltip({
 	dataIdxs,
 	uPlotInstance,
 	timezone,
-	isPinned,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const headerTitle = useMemo(() => {
