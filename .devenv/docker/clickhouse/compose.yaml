@@ -5,8 +5,8 @@ services:
     volumes:
       - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
       - ${PWD}/fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
-      - ${PWD}/fs/tmp/var/lib/clickhouse/:/var/lib/clickhouse/
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
+      - clickhouse_data:/var/lib/clickhouse/
     ports:
       - '127.0.0.1:8123:8123'
       - '127.0.0.1:9000:9000'
@@ -69,3 +69,5 @@ services:
       schema-migrator-sync:
         condition: service_completed_successfully
     restart: on-failure
+volumes:
+  clickhouse_data:
