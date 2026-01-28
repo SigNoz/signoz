@@ -314,27 +314,21 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		},
 		eventType: 'mousedown',
 	});
-
-	const spanPercentileTooltipText = useMemo(
-		() => (
-			<div className="span-percentile-tooltip-text">
-				<Typography.Text>
-					This span duration is{' '}
-					<span className="span-percentile-tooltip-text-percentile">
-						p{Math.floor(spanPercentileData?.percentile || 0)}
-					</span>{' '}
-					out of the distribution for this resource evaluated for {selectedTimeRange}{' '}
-					hour(s) since the span start time.
-				</Typography.Text>
-				<br />
-				<br />
-				<Typography.Text className="span-percentile-tooltip-text-link">
-					Click to learn more
-				</Typography.Text>
-			</div>
-		),
-		[spanPercentileData?.percentile, selectedTimeRange],
-	);
+const spanPercentileTooltipText = useMemo(
+  () => (
+    <div className="span-percentile-tooltip-text">
+      <Typography.Text>
+        p{Math.floor(spanPercentileData?.percentile || 0)} ({selectedSpan?.duration || 'N/A'}) — slower than {Math.floor(spanPercentileData?.percentile || 0)}% of recent spans for this operation in the last {selectedTimeRange}h.
+      </Typography.Text>
+      <br />
+      <br />
+      <Typography.Text className="span-percentile-tooltip-text-link">
+        Click to learn more
+      </Typography.Text>
+    </div>
+  ),
+  [spanPercentileData?.percentile, selectedTimeRange, selectedSpan?.duration],
+);
 
 	const endTime = useMemo(
 		() => Math.floor(Number(selectedSpan?.timestamp) / 1000) * 1000,
@@ -732,23 +726,22 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 											)}
 
 											<div className="span-percentile-content">
-												<Typography.Text className="span-percentile-content-title">
-													This span duration is{' '}
+													<Typography.Text className="span-percentile-content-title">
 													{!isLoadingSpanPercentilesData &&
 													!isFetchingSpanPercentilesData &&
 													spanPercentileData ? (
+														<>
 														<span className="span-percentile-value">
 															p{Math.floor(spanPercentileData?.percentile || 0)}
-														</span>
+														</span>{' '}
+														({selectedSpan?.duration ? `${(selectedSpan.duration / 1000000).toFixed(2)} ms` : 'N/A'}) — slower than {Math.floor(spanPercentileData?.percentile || 0)}% of recent spans for this operation in the last {selectedTimeRange}h.
+														</>
 													) : (
 														<span className="span-percentile-value-loader">
-															<Loader2 size={12} className="animate-spin" />
+														<Loader2 size={12} className="animate-spin" />
 														</span>
-													)}{' '}
-													out of the distribution for this resource evaluated for{' '}
-													{selectedTimeRange} hour(s) since the span start time.
-												</Typography.Text>
-
+													)}
+													</Typography.Text>
 												<div className="span-percentile-timerange">
 													<Select
 														labelInValue
