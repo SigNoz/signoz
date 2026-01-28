@@ -6,6 +6,8 @@ const DOCLINKS = {
 		'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=traces-explorer-trace-tab#traces-view',
 	METRICS_EXPLORER_EMPTY_STATE:
 		'https://signoz.io/docs/userguide/send-metrics-cloud/',
+	EXTERNAL_API_MONITORING:
+		'https://signoz.io/docs/external-api-monitoring/overview/',
 };
 
 export default DOCLINKS;
