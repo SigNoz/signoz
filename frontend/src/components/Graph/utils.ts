@@ -248,6 +248,11 @@ declare module 'chart.js' {
 	}
 }
 
+const intlNumberFormatter = new Intl.NumberFormat('en-US', {
+	useGrouping: false,
+	maximumFractionDigits: 20,
+});
+
 /**
  * Formats a number for display, preserving leading zeros after the decimal point
  * and showing up to DEFAULT_SIGNIFICANT_DIGITS digits after the first non-zero decimal digit.
@@ -270,10 +275,7 @@ export const formatDecimalWithLeadingZeros = (
 	}
 
 	// Use toLocaleString to get a full decimal representation without scientific notation.
-	const numStr = value.toLocaleString('en-US', {
-		useGrouping: false,
-		maximumFractionDigits: 20,
-	});
+	const numStr = intlNumberFormatter.format(value);
 
 	const [integerPart, decimalPart = ''] = numStr.split('.');
 
