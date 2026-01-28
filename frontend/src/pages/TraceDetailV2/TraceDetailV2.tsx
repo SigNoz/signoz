@@ -135,6 +135,7 @@ function TraceDetailsV2(): JSX.Element {
 			<ResizablePanel minSize={20} maxSize={80} className="trace-left-content">
 				<TraceMetadata
 					traceID={traceId}
+					isDataLoading={isFetchingTraceData}
 					duration={
 						(traceData?.payload?.endTimestampMillis || 0) -
 						(traceData?.payload?.startTimestampMillis || 0)
