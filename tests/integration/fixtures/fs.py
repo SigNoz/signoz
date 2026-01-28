@@ -15,7 +15,7 @@ def tmpfs(
 
     yield _tmp
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="package")
 def get_testdata_file_path() -> Callable[[str], str]:
     def _get_testdata_file_path(file: str) -> str:
         testdata_dir = os.path.join(os.path.dirname(__file__), "..", "testdata")
