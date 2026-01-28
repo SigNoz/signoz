@@ -2330,3 +2330,135 @@ def test_logs_fill_zero_formula_with_group_by(
             expected_by_ts=expectations[service_name],
             context=f"logs/fillZero/F1/{service_name}",
         )
+
+
+def test_logs_heatmap(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Test heatmap query for logs.
+    
+    Setup:
+    Insert logs with varying code.line values to create a distribution
+    
+    Tests:
+    1. Query heatmap for code.line attribute over time
+    2. Verify bucket structure and values
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    logs: List[Logs] = []
+
+    # Insert logs with different code.line values across 3 time buckets
+    # Bucket 1 (t-3): lines 10-20
+    for i in range(10):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(minutes=3, microseconds=i + 1),
+                resources={"service.name": "test-service"},
+                attributes={"code.line": 10 + i},
+                body=f"Log with line {10 + i}",
+                severity_text="INFO",
+            )
+        )
+
+    # Bucket 2 (t-2): lines 30-50
+    for i in range(20):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(minutes=2, microseconds=i + 1),
+                resources={"service.name": "test-service"},
+                attributes={"code.line": 30 + i},
+                body=f"Log with line {30 + i}",
+                severity_text="INFO",
+            )
+        )
+
+    # Bucket 3 (t-1): lines 60-80
+    for i in range(15):
+        logs.append(
+            Logs(
+                timestamp=now - timedelta(minutes=1, microseconds=i + 1),
+                resources={"service.name": "test-service"},
+                attributes={"code.line": 60 + i},
+                body=f"Log with line {60 + i}",
+                severity_text="INFO",
+            )
+        )
+
+    insert_logs(logs)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "heatmap",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "having": {"expression": ""},
+                            "aggregations": [
+                                {"expression": "heatmap(code.line, 10)"}
+                            ],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    series = aggregations[0]["series"]
+    assert len(series) >= 1
+
+    s = series[0]
+    assert "values" in s, f"Series missing 'values': {s}"
+
+    values = s["values"]
+    assert isinstance(values, list), f"Values should be a list, got {type(values)}"
+
+    # Should have exactly 3 time points (t-3, t-2, t-1)
+    assert len(values) == 3
+
+    # Verify structure and basic invariants
+    for val in values:
+        assert isinstance(val, dict)
+        assert "timestamp" in val
+        assert "bucket" in val
+        assert "values" in val
+
+        bucket = val["bucket"]
+        assert "bounds" in bucket
+        assert isinstance(bucket["bounds"], list)
+        assert len(bucket["bounds"]) == 11  # 10 bins + 1
+
+        # Verify bucket values
+        bucket_values = val["values"]
+        assert isinstance(bucket_values, list)
+        assert len(bucket_values) == 10  # 10 bins

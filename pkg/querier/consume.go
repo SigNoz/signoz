@@ -115,12 +115,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		aggBuckets map[int]map[float64]float64
 	}
 
-	type minMax struct {
-		min float64
-		max float64
-	}
-	// Track global min/max for each aggregation
-	globalMinMax := make(map[int]*minMax)
 	var allRows []histogramRow
 
 	for rows.Next() {
@@ -147,9 +141,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				if name == "ts" {
-					ts = int64(val)
-				} else if m := aggRe.FindStringSubmatch(name); m != nil {
+				if m := aggRe.FindStringSubmatch(name); m != nil {
 					id, _ := strconv.Atoi(m[1])
 					aggValues[id] = val
 				} else if numericColsCount == 1 { // classic single-value query
@@ -171,9 +163,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				tempVal := reflect.ValueOf(ptr)
 				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
 					val := numericAsFloat(tempVal.Elem().Elem().Interface())
-					if name == "ts" {
-						ts = int64(val)
-					} else if m := aggRe.FindStringSubmatch(name); m != nil {
+					if m := aggRe.FindStringSubmatch(name); m != nil {
 						id, _ := strconv.Atoi(m[1])
 						aggValues[id] = val
 					} else if numericColsCount == 1 { // classic single-value query
@@ -238,25 +228,12 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 								if item.Kind() == reflect.Slice || item.Kind() == reflect.Array {
 									if item.Len() >= 3 {
-										lower := numericAsFloat(derefValue(item.Index(0).Interface()))
 										upper := numericAsFloat(derefValue(item.Index(1).Interface()))
 										count := numericAsFloat(derefValue(item.Index(2).Interface()))
 
 										if !math.IsNaN(upper) && !math.IsInf(upper, 0) &&
 											!math.IsNaN(count) && !math.IsInf(count, 0) {
 											bucketMap[upper] = count
-
-											if globalMinMax[id] == nil {
-												globalMinMax[id] = &minMax{min: math.MaxFloat64, max: -math.MaxFloat64}
-											}
-											if !math.IsNaN(lower) && !math.IsInf(lower, 0) {
-												if lower < globalMinMax[id].min {
-													globalMinMax[id].min = lower
-												}
-											}
-											if upper > globalMinMax[id].max {
-												globalMinMax[id].max = upper
-											}
 										}
 									}
 								}
@@ -295,21 +272,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		return nil, err
 	}
 
-	bucketBounds := make(map[int][]float64)
-	for aggIdx, mm := range globalMinMax {
-		if mm.min <= mm.max {
-			numBins := bucketCount
-			// Create bins from min to max
-			binWidth := (mm.max - mm.min) / float64(numBins)
-			bounds := make([]float64, numBins+1)
-			for i := 0; i <= numBins; i++ {
-				bounds[i] = mm.min + float64(i)*binWidth
-			}
-			bucketBounds[aggIdx] = bounds
-		}
-	}
-
-	// map to fixed bins
 	for _, row := range allRows {
 		sort.Strings(row.lblVals)
 		labelsKey := strings.Join(row.lblVals, ",")
@@ -342,39 +304,42 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				seriesMap[key] = series
 			}
 
-			binBounds := bucketBounds[aggIdx]
-			if len(binBounds) == 0 {
+			if len(buckets) == 0 {
 				continue
 			}
 
-			numBins := len(binBounds) - 1
-			binCounts := make([]float64, numBins)
+			// Sort upper bounds
+			upperBounds := make([]float64, 0, len(buckets))
+			for upper := range buckets {
+				upperBounds = append(upperBounds, upper)
+			}
+			sort.Float64s(upperBounds)
 
-			for upper, count := range buckets {
-				assigned := false
-				for i := range numBins {
-					if upper > binBounds[i] && upper <= binBounds[i+1] {
-						binCounts[i] += count
-						assigned = true
-						break
-					}
+			bounds := make([]float64, 0, len(upperBounds)+1)
+			counts := make([]float64, 0, len(upperBounds))
+
+			for i, upper := range upperBounds {
+				count := buckets[upper]
+
+				// Add lower bound for first bucket only
+				if i == 0 {
+					bounds = append(bounds, 0)
 				}
 
-				// edge case: upper bound exceeds all bins
-				if !assigned && upper > binBounds[numBins] {
-					binCounts[numBins-1] += count
-				}
+				bounds = append(bounds, upper)
+				counts = append(counts, count)
 			}
 
-			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
-				Timestamp: row.ts,
-				Value:     0,
-				Values:    binCounts,
-				Bucket: &qbtypes.Bucket{
-					Bounds: binBounds,
-				},
-				Partial: isPartialValue(row.ts),
-			})
+			if len(counts) > 0 && len(bounds) == len(counts)+1 {
+				series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
+					Timestamp: row.ts,
+					Values:    counts,
+					Bucket: &qbtypes.Bucket{
+						Bounds: bounds,
+					},
+					Partial: isPartialValue(row.ts),
+				})
+			}
 		}
 	}
 
@@ -382,12 +347,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	for k := range seriesMap {
 		if k.agg > maxAgg {
 			maxAgg = k.agg
-		}
-	}
-
-	for aggIdx := range bucketBounds {
-		if aggIdx > maxAgg {
-			maxAgg = aggIdx
 		}
 	}
 
