@@ -1,8 +1,8 @@
 import './Download.styles.scss';
 
-import { CloudDownloadOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { Button, Dropdown, MenuProps, Tooltip } from 'antd';
 import { Excel } from 'antd-table-saveas-excel';
+import { DownloadIcon } from 'lucide-react';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
@@ -19,9 +19,11 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 				dataIndex: item,
 			};
 		});
+		// Excel sheet names have a 31 character limit
+		const sheetName = fileName.length > 31 ? fileName.slice(0, 31) : fileName;
 		const excel = new Excel();
 		excel
-			.addSheet(fileName)
+			.addSheet(sheetName)
 			.addColumns(headers)
 			.addDataSource(data, {
 				str2Percent: true,
@@ -56,17 +58,16 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	};
 
 	return (
-		<Dropdown menu={menu} trigger={['click']}>
-			<Button
-				className="download-button"
-				loading={isLoading}
-				size="small"
-				type="link"
-			>
-				<CloudDownloadOutlined />
-				Download
-			</Button>
-		</Dropdown>
+		<Tooltip title="Download" placement="top">
+			<Dropdown menu={menu} trigger={['click']}>
+				<Button
+					className="periscope-btn ghost"
+					loading={isLoading}
+					disabled={isLoading}
+					icon={<DownloadIcon size={18} />}
+				/>
+			</Dropdown>
+		</Tooltip>
 	);
 }
 

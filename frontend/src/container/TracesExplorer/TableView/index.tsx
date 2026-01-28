@@ -102,6 +102,10 @@ function TableView({
 					queryTableData={queryTableData as QueryDataV3[]}
 					loading={isLoading}
 					sticky
+					downloadOption={{
+						isDownloadEnabled: true,
+						fileName: 'traces-table-export',
+					}}
 				/>
 			)}
 		</Space.Compact>
