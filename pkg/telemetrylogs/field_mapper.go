@@ -355,5 +355,5 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
 	}
 
-	return fmt.Sprintf("arrayMap(%s->%s, %s)", childNode.Alias(), nestedExpr, arrayExpr), nil
+	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
 }
