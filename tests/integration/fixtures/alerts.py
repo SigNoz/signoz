@@ -112,74 +112,81 @@ def insert_alert_data(
 
     yield _insert_alert_data
 
+@pytest.fixture(name="collect_firing_alerts", scope="package")
+def collect_firing_alerts():
+    def _collect_firing_alerts(
+        test_alert_container: types.TestContainerDocker,
+        notification_channel_name: str
+    ) -> List[dict[str, str]]:
+        # Prepare the endpoint path for the channel name, for alerts tests we have
+        # used different paths for receiving alerts from each channel so that
+        # multiple rules can be tested in isolation.
+        rule_webhook_endpoint = f"/alert/{notification_channel_name}"
+
+        url = test_alert_container.host_configs["8080"].get("__admin/requests/find")
+        req = {
+            "method": "POST",
+            "url": rule_webhook_endpoint,
+        }
+        response = requests.post(url, json=req, timeout=5).json()
+        if len(response["requests"]) == 0:  # no alerts fired yet
+            return []
+        alerts = []
+        for req in response["requests"]:
+            alert_body_base64 = req["bodyAsBase64"]
+            alert_body = base64.b64decode(alert_body_base64).decode("utf-8")
+            # remove newlines from the alert body
+            alert_body = alert_body.replace("\n", "")
+            alert_dict = json.loads(
+                alert_body
+            )  # parse the alert body into a dictionary
+            for a in alert_dict["alerts"]:
+                labels = a["labels"]
+                alerts.append(labels)
+        return alerts
+    yield _collect_firing_alerts
+
 
 @pytest.fixture(name="verify_alert_expectation", scope="package")
-def verify_alert_expectation() -> (
+def verify_alert_expectation(
+    collect_firing_alerts: Callable[[types.TestContainerDocker, str], List[dict[str, str]]],
+) -> (
     Callable[[types.TestContainerDocker, str, types.AlertExpectation], bool]
 ):
+    def _verify_alerts(
+        firing_alerts: list[dict[str, str]], expected_alerts: list[dict[str, str]]
+    ) -> tuple[int, list[dict[str, str]]]:
+        """
+        Checks how many of the expected alerts have been fired.
+        Returns the count of expected alerts that have been fired.
+        """
+        fired_count = 0
+        missing_alerts = []
+
+        for alert in expected_alerts:
+            is_alert_fired = False
+
+            for fired_alert in firing_alerts:
+                # Check if current expected alert is present in the fired alerts
+                if all(
+                    key in fired_alert and fired_alert[key] == value
+                    for key, value in alert.items()
+                ):
+                    is_alert_fired = True
+                    break
+
+            if is_alert_fired:
+                fired_count += 1
+            else:
+                missing_alerts.append(alert)
+
+        return (fired_count, missing_alerts)
+        
     def _verify_alert_expectation(
         test_alert_container: types.TestContainerDocker,
         notification_channel_name: str,
         alert_expectations: types.AlertExpectation,
     ) -> bool:
-        # Prepare the endpoint path for the rule id, for alerts tests we have
-        # used different paths for receiving alerts from each rule so that
-        # multiple rules can be tested in isolation.
-        rule_webhook_endpoint = f"/alert/{notification_channel_name}"
-
-        # call the requests api for the given path to collect the alerts that have been
-        # received by the wiremock test container.
-        def _collect_alerts() -> List[dict[str, str]]:
-            url = test_alert_container.host_configs["8080"].get("__admin/requests/find")
-            req = {
-                "method": "POST",
-                "url": rule_webhook_endpoint,
-            }
-            response = requests.post(url, json=req, timeout=5).json()
-            if len(response["requests"]) == 0:  # no alerts fired yet
-                return []
-            alerts = []
-            for req in response["requests"]:
-                alert_body_base64 = req["bodyAsBase64"]
-                alert_body = base64.b64decode(alert_body_base64).decode("utf-8")
-                # remove newlines from the alert body
-                alert_body = alert_body.replace("\n", "")
-                alert_dict = json.loads(
-                    alert_body
-                )  # parse the alert body into a dictionary
-                for a in alert_dict["alerts"]:
-                    labels = a["labels"]
-                    alerts.append(labels)
-            return alerts
-
-        def _verify_alerts(
-            firing_alerts: list[dict[str, str]], expected_alerts: list[dict[str, str]]
-        ) -> tuple[int, list[dict[str, str]]]:
-            """
-            Checks how many of the expected alerts have been fired.
-            Returns the count of expected alerts that have been fired.
-            """
-            fired_count = 0
-            missing_alerts = []
-
-            for alert in expected_alerts:
-                is_alert_fired = False
-
-                for fired_alert in firing_alerts:
-                    # Check if current expected alert is present in the fired alerts
-                    if all(
-                        key in fired_alert and fired_alert[key] == value
-                        for key, value in alert.items()
-                    ):
-                        is_alert_fired = True
-                        break
-
-                if is_alert_fired:
-                    fired_count += 1
-                else:
-                    missing_alerts.append(alert)
-
-            return (fired_count, missing_alerts)
 
         # time to wait till the expected alerts are fired
         time_to_wait = datetime.now() + timedelta(
@@ -187,7 +194,7 @@ def verify_alert_expectation() -> (
         )
 
         while datetime.now() < time_to_wait:
-            firing_alerts = _collect_alerts()
+            firing_alerts = collect_firing_alerts(test_alert_container, notification_channel_name)
 
             if alert_expectations.should_alert:
                 # verify the number of alerts fired
