@@ -6,6 +6,7 @@ import PiePanelWrapper from './PiePanelWrapper';
 import TablePanelWrapper from './TablePanelWrapper';
 import UplotPanelWrapper from './UplotPanelWrapper';
 import ValuePanelWrapper from './ValuePanelWrapper';
+import DistributionPanelWrapper from './DistributionPanelWrapper';
 
 export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.TIME_SERIES]: UplotPanelWrapper,
@@ -17,6 +18,7 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.PIE]: PiePanelWrapper,
 	[PANEL_TYPES.BAR]: UplotPanelWrapper,
 	[PANEL_TYPES.HISTOGRAM]: HistogramPanelWrapper,
+	[PANEL_TYPES.DISTRIBUTION]: DistributionPanelWrapper,
 };
 
 export const DEFAULT_BUCKET_COUNT = 30;
