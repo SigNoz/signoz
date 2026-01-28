@@ -71,7 +71,6 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 	// Pass query window and step for partial value detection
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
-	// Use the consume function like builderQuery does
 	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
