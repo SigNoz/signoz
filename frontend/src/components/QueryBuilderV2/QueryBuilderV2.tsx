@@ -12,6 +12,7 @@ import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
 import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
+import { clearPreviousQuery } from './QueryV2/previousQuery.utils';
 
 export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	config,
@@ -24,6 +25,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	version,
 	onSignalSourceChange,
 	signalSourceChangeEnabled = false,
+	savePreviousQuery = false,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -60,6 +62,18 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		currentDataSource,
 		newPanelType,
 	]);
+
+	useEffect(() => {
+		// clear on mount and unmount
+		if (savePreviousQuery) {
+			clearPreviousQuery();
+		}
+		return (): void => {
+			if (savePreviousQuery) {
+				clearPreviousQuery();
+			}
+		};
+	}, [savePreviousQuery]);
 
 	const isMultiQueryAllowed = useMemo(
 		() => !isListViewPanel || showTraceOperator,
@@ -200,6 +214,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 							signalSourceChangeEnabled={signalSourceChangeEnabled}
 							queriesCount={1}
+							savePreviousQuery={savePreviousQuery}
 						/>
 					) : (
 						currentQuery.builder.queryData.map((query, index) => (
@@ -222,6 +237,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 								signalSourceChangeEnabled={signalSourceChangeEnabled}
 								queriesCount={currentQuery.builder.queryData.length}
+								savePreviousQuery={savePreviousQuery}
 							/>
 						))
 					)}
