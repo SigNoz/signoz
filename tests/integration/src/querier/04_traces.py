@@ -716,7 +716,7 @@ def test_traces_aggregate_with_mixed_field_selectors(
     topic-service: topic publish
 
     Tests:
-    1. Query traces count for spans grouped by service.name and host.name
+    1. Query traces count for spans grouped by service.name
     """
     http_service_trace_id = TraceIdGenerator.trace_id()
     http_service_span_id = TraceIdGenerator.span_id()
