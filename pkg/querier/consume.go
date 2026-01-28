@@ -477,11 +477,10 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 
 			if vHist.Kind() == reflect.Slice {
 				if vHist.Len() == 0 {
-					bucketsByIndex[resultID] = []*qbtypes.DistributionBucket{}
 					continue
 				}
 
-				buckets := make([]*qbtypes.DistributionBucket, 0, vHist.Len())
+				var buckets []*qbtypes.DistributionBucket
 
 				for i := 0; i < vHist.Len(); i++ {
 					b := vHist.Index(i).Interface()
@@ -518,19 +517,24 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 		return nil, err
 	}
 
-	resultIDs := make([]int, 0, len(bucketsByIndex))
-	for k := range bucketsByIndex {
-		resultIDs = append(resultIDs, k)
+	maxAgg := -1
+	for idx := range bucketsByIndex {
+		if idx > maxAgg {
+			maxAgg = idx
+		}
 	}
-	sort.Ints(resultIDs)
 
-	aggregations := make([]*qbtypes.DistributionAggregation, 0, len(resultIDs))
-	for _, id := range resultIDs {
-		aggregations = append(aggregations, &qbtypes.DistributionAggregation{
-			Index:   id,
-			Alias:   fmt.Sprintf("__result_%d", id),
-			Buckets: bucketsByIndex[id],
-		})
+	var aggregations []*qbtypes.DistributionAggregation
+	if maxAgg >= 0 {
+		for i := 0; i <= maxAgg; i++ {
+			if buckets, ok := bucketsByIndex[i]; ok {
+				aggregations = append(aggregations, &qbtypes.DistributionAggregation{
+					Index:   i,
+					Alias:   "__result_" + strconv.Itoa(i),
+					Buckets: buckets,
+				})
+			}
+		}
 	}
 
 	return &qbtypes.DistributionData{
