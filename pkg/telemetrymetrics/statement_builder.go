@@ -617,7 +617,7 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	query.GroupBy = slices.Clone(query.GroupBy)
+	origGroupBy := slices.Clone(query.GroupBy)
 
 	leExists := false
 	for _, g := range query.GroupBy {
@@ -658,6 +658,8 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	query.GroupBy = origGroupBy
+
 	combined := querybuilder.CombineCTEs(cteFragments)
 
 	finalArgs := []any{}
@@ -666,7 +668,6 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	}
 
 	tsExpr := "ts"
-	partitionExpr := "PARTITION BY ts"
 	finalTsExpr := "toUnixTimestamp(ts) * 1000 AS ts"
 	groupByKeys := []string{"ts", "bin_upper"}
 	orderByKeys := []string{"ts", "bin_upper"}
@@ -684,10 +685,7 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	binCTE := sqlbuilder.NewSelectBuilder()
-	lagOver := fmt.Sprintf("%s ORDER BY bin_upper", partitionExpr)
-	if partitionExpr == "" {
-		lagOver = "ORDER BY bin_upper"
-	}
+	lagOver := "PARTITION BY ts ORDER BY bin_upper"
 
 	binCTE.Select(tsExpr)
 	binCTE.SelectMore(fmt.Sprintf("lagInFrame(bin_upper, 1, toFloat64(0)) OVER (%s) AS bin_lower", lagOver))
