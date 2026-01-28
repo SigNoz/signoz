@@ -7,8 +7,6 @@ from sqlalchemy import sql
 from fixtures import types
 from fixtures.logger import setup_logger
 
-from datetime import datetime, timedelta, timezone
-
 logger = setup_logger(__name__)
 
 
