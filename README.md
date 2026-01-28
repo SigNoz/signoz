@@ -74,7 +74,8 @@ SigNoz LLM observability helps you understand how your language models are perfo
 
 [Get started with LLM Observability →](https://signoz.io/docs/llm-observability/)
 
-![llm-observability-cover]()
+![llm-observability-cover](https://github.com/user-attachments/assets/a6cc0ca3-59df-48f9-9c16-7c843fccff96)
+
 
 ### Alerts
 
