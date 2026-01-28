@@ -42,8 +42,6 @@ export class UPlotConfigBuilder {
 
 	private plugins: uPlot.Plugin[] = [];
 
-	private cachedConfig: Partial<Options> | undefined;
-
 	private padding: [number, number, number, number] | undefined;
 
 	private legend: LegendConfig | undefined;
@@ -222,10 +220,6 @@ export class UPlotConfigBuilder {
 	 * Build the final uPlot.Options configuration
 	 */
 	getConfig(): Partial<Options> {
-		if (this.cachedConfig) {
-			return this.cachedConfig;
-		}
-
 		const config: Partial<Options> = {
 			...DEFAULT_PLOT_CONFIG,
 		};
@@ -258,7 +252,6 @@ export class UPlotConfigBuilder {
 			config.focus = this.focus;
 		}
 
-		this.cachedConfig = config;
 		return config;
 	}
 }

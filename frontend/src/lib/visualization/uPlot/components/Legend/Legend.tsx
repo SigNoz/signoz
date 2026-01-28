@@ -148,8 +148,8 @@ export default function Legend({
 		[onToggleSeriesVisibility, onToggleSeriesOnOff, getLegendItemIdFromEvent],
 	);
 
-	const handleMove = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>, seriesIndex: number | null): void => {
+	const handleFocusSeries = useCallback(
+		(seriesIndex: number | null): void => {
 			if (rafId.current != null) {
 				cancelAnimationFrame(rafId.current);
 			}
@@ -167,11 +167,11 @@ export default function Legend({
 		if (seriesIndex === focusedSeriesIndex) {
 			return;
 		}
-		handleMove(e, seriesIndex);
+		handleFocusSeries(seriesIndex);
 	};
 
 	const handleLegendMouseLeave = useCallback((): void => {
-		// Cancel any pending RAF from handleMove to prevent race condition
+		// Cancel any pending RAF from handleFocusSeries to prevent race condition
 		if (rafId.current != null) {
 			cancelAnimationFrame(rafId.current);
 			rafId.current = null;
