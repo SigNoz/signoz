@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/role"
@@ -73,6 +74,11 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 		)
 		if err != nil {
 			middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
+			if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
+				render.Error(rw, errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "only viewers/editors/admins can access this resource"))
+				return
+			}
+
 			render.Error(rw, err)
 			return
 		}
@@ -119,6 +125,11 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 		)
 		if err != nil {
 			middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
+			if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
+				render.Error(rw, errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "only editors/admins can access this resource"))
+				return
+			}
+
 			render.Error(rw, err)
 			return
 		}
@@ -164,6 +175,11 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 		)
 		if err != nil {
 			middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
+			if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
+				render.Error(rw, errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "only admins can access this resource"))
+				return
+			}
+
 			render.Error(rw, err)
 			return
 		}
