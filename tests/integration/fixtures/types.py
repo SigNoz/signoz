@@ -172,5 +172,3 @@ class AlertData:
     type: Literal["metrics", "logs", "traces"]
     # path to the data file in testdata directory
     data_path: str
-
-

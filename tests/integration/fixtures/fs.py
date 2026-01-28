@@ -1,5 +1,5 @@
-from typing import Any, Callable, Generator
 import os
+from typing import Any, Callable, Generator
 
 import pytest
 
