@@ -37,6 +37,10 @@ jobs:
           echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
           echo 'PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> .env
           echo 'DOCS_BASE_URL="https://signoz.io"' >> .env
+      - name: node-setup
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
       - name: build-frontend
         run: make js-build
       - name: upload-frontend-artifact
