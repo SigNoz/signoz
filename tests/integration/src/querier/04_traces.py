@@ -873,6 +873,9 @@ def test_traces_aggregate_with_mixed_field_selectors(
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
+    aggregations = results[0]["aggregations"]
+
+    assert aggregations[0]["series"][0]["values"][0]["value"] == 2960000000
 
 
 def test_traces_fill_gaps(
