@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
