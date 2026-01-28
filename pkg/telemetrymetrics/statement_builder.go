@@ -128,7 +128,7 @@ func (b *MetricQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
 	end uint64,
-	_ qbtypes.RequestType,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
@@ -139,6 +139,10 @@ func (b *MetricQueryStatementBuilder) Build(
 	}
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
+
+	if requestType == qbtypes.RequestTypeHeatmap {
+		return b.buildHeatmapQuery(ctx, start, end, query, keys, variables)
+	}
 
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
 }
@@ -604,4 +608,107 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
+}
+
+func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
+	ctx context.Context,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	origGroupBy := slices.Clone(query.GroupBy)
+
+	leExists := false
+	for _, g := range query.GroupBy {
+		if g.TelemetryFieldKey.Name == "le" {
+			leExists = true
+			break
+		}
+	}
+
+	if !leExists {
+		query.GroupBy = append(query.GroupBy, qbtypes.GroupByKey{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "le"},
+		})
+	}
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	timeSeriesCTE, timeSeriesCTEArgs, err := b.buildTimeSeriesCTE(ctx, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	frag, args, err := b.buildTemporalAggregationCTE(ctx, start, end, query, keys, timeSeriesCTE, timeSeriesCTEArgs)
+	if err != nil {
+		return nil, err
+	}
+	if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	frag, args = b.buildSpatialAggregationCTE(ctx, start, end, query, keys)
+	if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	query.GroupBy = origGroupBy
+
+	combined := querybuilder.CombineCTEs(cteFragments)
+
+	finalArgs := []any{}
+	for _, a := range cteArgs {
+		finalArgs = append(finalArgs, a...)
+	}
+
+	tsExpr := "ts"
+	finalTsExpr := "toUnixTimestamp(ts) * 1000 AS ts"
+	groupByKeys := []string{"ts", "bin_upper"}
+	orderByKeys := []string{"ts", "bin_upper"}
+
+	inner := sqlbuilder.NewSelectBuilder()
+	inner.Select(tsExpr)
+	inner.SelectMore("toFloat64OrNull(le) AS bin_upper")
+	inner.SelectMore("sum(value) AS cumulative_value")
+	inner.From("__spatial_aggregation_cte")
+	inner.Where("le != '+Inf'")
+	inner.Where("toFloat64OrNull(le) IS NOT NULL")
+	inner.Where("isFinite(toFloat64OrNull(le))")
+	inner.GroupBy(groupByKeys...)
+	inner.OrderBy(orderByKeys...)
+	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	binCTE := sqlbuilder.NewSelectBuilder()
+	lagOver := "PARTITION BY ts ORDER BY bin_upper"
+
+	binCTE.Select(tsExpr)
+	binCTE.SelectMore(fmt.Sprintf("lagInFrame(bin_upper, 1, toFloat64(0)) OVER (%s) AS bin_lower", lagOver))
+	binCTE.SelectMore("bin_upper")
+	binCTE.SelectMore(fmt.Sprintf("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (%s), toFloat64(0)) AS value", lagOver))
+	binCTE.From("(" + innerQ + ")")
+	binCTE.OrderBy(orderByKeys...)
+	binQ, binArgs := binCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(finalTsExpr)
+	sb.SelectMore("groupArray([bin_lower, bin_upper, value]) AS __result_0")
+	sb.From("(" + binQ + ")")
+	sb.GroupBy("ts")
+	sb.Having("length(__result_0) > 0")
+	sb.OrderBy("ts")
+
+	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	finalQuery := combined + q
+
+	return &qbtypes.Statement{
+		Query: finalQuery,
+		Args:  append(finalArgs, append(innerArgs, append(binArgs, a...)...)...),
+	}, nil
 }
