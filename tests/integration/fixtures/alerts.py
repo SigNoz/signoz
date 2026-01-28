@@ -1,4 +1,7 @@
-from datetime import datetime, timezone
+import base64
+import json
+import time
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
 
@@ -108,3 +111,119 @@ def insert_alert_data(
             insert_logs(logs)
 
     yield _insert_alert_data
+
+
+@pytest.fixture(name="verify_alert_expectation", scope="package")
+def verify_alert_expectation() -> (
+    Callable[[types.TestContainerDocker, str, types.AlertExpectation], bool]
+):
+    def _verify_alert_expectation(
+        test_alert_container: types.TestContainerDocker,
+        notification_channel_name: str,
+        alert_expectations: types.AlertExpectation,
+    ) -> bool:
+        # Prepare the endpoint path for the rule id, for alerts tests we have
+        # used different paths for receiving alerts from each rule so that
+        # multiple rules can be tested in isolation.
+        rule_webhook_endpoint = f"/alert/{notification_channel_name}"
+
+        # call the requests api for the given path to collect the alerts that have been
+        # received by the wiremock test container.
+        def _collect_alerts() -> List[dict[str, str]]:
+            url = test_alert_container.host_configs["8080"].get("__admin/requests/find")
+            req = {
+                "method": "POST",
+                "url": rule_webhook_endpoint,
+            }
+            response = requests.post(url, json=req, timeout=5).json()
+            if len(response["requests"]) == 0:  # no alerts fired yet
+                return []
+            alerts = []
+            for req in response["requests"]:
+                alert_body_base64 = req["bodyAsBase64"]
+                alert_body = base64.b64decode(alert_body_base64).decode("utf-8")
+                # remove newlines from the alert body
+                alert_body = alert_body.replace("\n", "")
+                alert_dict = json.loads(
+                    alert_body
+                )  # parse the alert body into a dictionary
+                for a in alert_dict["alerts"]:
+                    labels = a["labels"]
+                    alerts.append(labels)
+            return alerts
+
+        def _verify_alerts(
+            firing_alerts: list[dict[str, str]], expected_alerts: list[dict[str, str]]
+        ) -> tuple[int, list[dict[str, str]]]:
+            """
+            Checks how many of the expected alerts have been fired.
+            Returns the count of expected alerts that have been fired.
+            """
+            fired_count = 0
+            missing_alerts = []
+
+            for alert in expected_alerts:
+                is_alert_fired = False
+
+                for fired_alert in firing_alerts:
+                    # Check if current expected alert is present in the fired alerts
+                    if all(
+                        key in fired_alert and fired_alert[key] == value
+                        for key, value in alert.items()
+                    ):
+                        is_alert_fired = True
+                        break
+
+                if is_alert_fired:
+                    fired_count += 1
+                else:
+                    missing_alerts.append(alert)
+
+            return (fired_count, missing_alerts)
+
+        # time to wait till the expected alerts are fired
+        time_to_wait = datetime.now() + timedelta(
+            seconds=alert_expectations.wait_time_seconds
+        )
+
+        while datetime.now() < time_to_wait:
+            firing_alerts = _collect_alerts()
+
+            if alert_expectations.should_alert:
+                # verify the number of alerts fired
+                (verified_count, missing_alerts) = _verify_alerts(
+                    firing_alerts, alert_expectations.expected_alerts
+                )
+
+                if verified_count == len(alert_expectations.expected_alerts):
+                    logger.info("Got expected number of alerts: %s", {"count": verified_count})
+                    return True
+            else:
+                # No alert is supposed to be fired if should_alert is False
+                if len(firing_alerts) > 0:
+                    break
+
+            # wait for some time before checking again
+            time.sleep(10)
+
+        # We've waited but we didn't get the expected number of alerts
+
+        # check if alert was expected to be fired or not, if not then we're good
+        if not alert_expectations.should_alert:
+            assert len(firing_alerts) == 0, (
+                "Expected no alerts to be fired, ",
+                f"got {len(firing_alerts)} alerts, " f"firing alerts: {firing_alerts}",
+            )
+            logger.info("No alerts fired, as expected")
+            return True
+
+        # we've waited but we didn't get the expected number of alerts, raise an exception
+        assert verified_count == len(alert_expectations.expected_alerts), (
+            f"Expected {len(alert_expectations.expected_alerts)} alerts to be fired but got {verified_count} alerts, ",
+            f"missing alerts: {missing_alerts}, ",
+            f"firing alerts: {firing_alerts}",
+        )
+
+        return True # should not reach here
+
+    yield _verify_alert_expectation
