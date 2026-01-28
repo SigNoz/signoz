@@ -1,7 +1,13 @@
 import './Legend.styles.scss';
 
 import cx from 'classnames';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react';
 import type uPlot from 'uplot';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 
@@ -165,9 +171,27 @@ export default function Legend({
 	};
 
 	const handleLegendMouseLeave = useCallback((): void => {
+		// Cancel any pending RAF from handleMove to prevent race condition
+		if (rafId.current != null) {
+			cancelAnimationFrame(rafId.current);
+			rafId.current = null;
+		}
 		setFocusedSeriesIndex(null);
 		onFocusSeries(null);
 	}, [onFocusSeries]);
+
+	// Cleanup pending animation frames on unmount
+	useEffect(
+		() => (): void => {
+			if (rafId.current != null) {
+				cancelAnimationFrame(rafId.current);
+			}
+			if (visibilityRafIdRef.current != null) {
+				cancelAnimationFrame(visibilityRafIdRef.current);
+			}
+		},
+		[],
+	);
 
 	return (
 		<div
