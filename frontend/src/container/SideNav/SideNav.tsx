@@ -167,30 +167,18 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
 	const [isHovered, setIsHovered] = useState(false);
-	const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
+	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
+		[],
+	);
 
 	const handleMouseEnter = useCallback(() => {
-		if (hoverTimeoutRef.current) {
-			clearTimeout(hoverTimeoutRef.current);
-			hoverTimeoutRef.current = null;
-		}
 		setIsHovered(true);
 	}, []);
 
 	const handleMouseLeave = useCallback(() => {
-		hoverTimeoutRef.current = setTimeout(() => {
-			setIsHovered(false);
-		}, 100); // 100ms Intent Delay
+		setIsHovered(false);
 	}, []);
-
-	useEffect(
-		() => (): void => {
-			if (hoverTimeoutRef.current) {
-				clearTimeout(hoverTimeoutRef.current);
-			}
-		},
-		[],
-	);
 
 	const checkScroll = useCallback((): void => {
 		if (navTopSectionRef.current) {
@@ -288,13 +276,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isAdmin,
 		isEditor,
 	]);
-
-	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>(
-		computedPinnedMenuItems,
-	);
-	const [secondaryMenuItems, setSecondaryMenuItems] = useState<SidebarItem[]>(
-		computedSecondaryMenuItems,
-	);
 
 	// Track if we've done the initial sync (to avoid overwriting user actions during session)
 	const hasInitializedRef = useRef(userPreferences !== null);
