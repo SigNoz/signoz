@@ -68,13 +68,12 @@ def test_root_user_signoz_admin_assignment(
     admin_role_entry = next((role for role in roles if role["name"] == "signoz-admin"), None)
     assert admin_role_entry is not None
     org_id = admin_role_entry["orgId"]
-    admin_role_id = admin_role_entry["id"]
 
     # to be super sure of authorization server, let's validate the tuples in DB as well. 
     # todo[@vikrantgupta25]: replace this with role memebers handler once built.
     with signoz.sqlstore.conn.connect() as conn:
         # verify the entry present for role assignment
-        tuple_object_id = f"organization/{org_id}/role/{admin_role_id}"
+        tuple_object_id = f"organization/{org_id}/role/signoz-admin"
         tuple_result = conn.execute(
             sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
             {"object_id": tuple_object_id},

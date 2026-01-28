@@ -78,7 +78,7 @@ def test_user_invite_accept_role_grant(
             for role in roles_response.json()["data"]
             if role["name"] == "signoz-editor"
         )
-        tuple_object_id = f"organization/{org_id}/role/{editor_role_id}"
+        tuple_object_id = f"organization/{org_id}/role/signoz-editor"
         tuple_result = conn.execute(
             sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
             {"object_id": tuple_object_id},
@@ -126,7 +126,6 @@ def test_user_update_role_grant(
     assert roles_response.status_code == HTTPStatus.OK
     roles_data = roles_response.json()["data"]
     org_id = roles_data[0]["orgId"]
-    viewer_role_id = next(role["id"] for role in roles_data if role["name"] == "signoz-viewer")
 
     # Update the user's role to viewer
     update_payload = {
@@ -142,9 +141,8 @@ def test_user_update_role_grant(
 
     # Check that user no longer has the editor role in the db
     with signoz.sqlstore.conn.connect() as conn:
-        editor_role_id = next(role["id"] for role in roles_data if role["name"] == "signoz-editor")
-        editor_tuple_object_id = f"organization/{org_id}/role/{editor_role_id}"
-        viewer_tuple_object_id = f"organization/{org_id}/role/{viewer_role_id}"
+        editor_tuple_object_id = f"organization/{org_id}/role/signoz-editor"
+        viewer_tuple_object_id = f"organization/{org_id}/role/signoz-viewer"
         # Check there is no tuple for signoz-editor assignment
         editor_tuple_result = conn.execute(
             sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"),
@@ -209,12 +207,7 @@ def test_user_delete_role_revoke(
     )
     assert roles_response.status_code == HTTPStatus.OK
     org_id = roles_response.json()["data"][0]["orgId"]
-    editor_role_id = next(
-        role["id"]
-        for role in roles_response.json()["data"]
-        if role["name"] == "signoz-editor"
-    )
-    tuple_object_id = f"organization/{org_id}/role/{editor_role_id}"
+    tuple_object_id = f"organization/{org_id}/role/signoz-editor"
 
     with signoz.sqlstore.conn.connect() as conn:
         tuple_result = conn.execute(

@@ -26,7 +26,7 @@ type Setter interface {
 	Patch(context.Context, valuer.UUID, *roletypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
+	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error

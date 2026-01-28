@@ -79,7 +79,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
 
-	err = module.roleSetter.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, []*authtypes.Object{additionObject}, nil)
+	err = module.roleSetter.PatchObjects(ctx, orgID, role.Name, authtypes.RelationRead, []*authtypes.Object{additionObject}, nil)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
 
-	err = module.roleSetter.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
+	err = module.roleSetter.PatchObjects(ctx, orgID, role.Name, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashb
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, publicDashboard.ID.String()),
 	)
 
-	err = module.roleSetter.PatchObjects(ctx, orgID, role.ID, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
+	err = module.roleSetter.PatchObjects(ctx, orgID, role.Name, authtypes.RelationRead, nil, []*authtypes.Object{deletionObject})
 	if err != nil {
 		return err
 	}
