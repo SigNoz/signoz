@@ -51,6 +51,7 @@ def test_logs_list(
                 attributes={
                     "log.iostream": "stdout",
                     "logtag": "F",
+                    "timestamp": "2024-01-01T00:00:00Z",
                     "code.file": "/opt/Integration.java",
                     "code.function": "com.example.Integration.process",
                     "code.line": 120,
@@ -71,6 +72,7 @@ def test_logs_list(
                 },
                 attributes={
                     "log.iostream": "stdout",
+                    "id": 2,
                     "logtag": "F",
                     "code.file": "/opt/integration.go",
                     "code.function": "com.example.Integration.process",
@@ -125,6 +127,7 @@ def test_logs_list(
         },
     )
 
+    print(response.text)
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
