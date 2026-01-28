@@ -85,11 +85,33 @@ func (f TelemetryFieldKey) String() string {
 	if f.FieldDataType != FieldDataTypeUnspecified {
 		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
 	}
+	if f.Materialized {
+		sb.WriteString(",materialized=true")
+	}
+	if f.JSONDataType != nil {
+		sb.WriteString(fmt.Sprintf(",jsondatatype=%s", f.JSONDataType.StringValue()))
+	}
+	if len(f.Indexes) > 0 {
+		sb.WriteString(",indexes=[")
+		for i, index := range f.Indexes {
+			if i > 0 {
+				sb.WriteString("; ")
+			}
+			sb.WriteString(fmt.Sprintf("{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression))
+		}
+		sb.WriteString("]")
+	}
 	return sb.String()
 }
 
 func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
+}
+
+func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
+	return f.Name == key.Name &&
+		f.FieldContext == key.FieldContext &&
+		f.FieldDataType == key.FieldDataType
 }
 
 // Normalize parses and normalizes a TelemetryFieldKey by extracting

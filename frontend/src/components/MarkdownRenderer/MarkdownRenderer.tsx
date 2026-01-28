@@ -45,7 +45,6 @@ function Pre({
 }
 
 function Code({
-	node,
 	inline,
 	className = 'blog-code',
 	children,
