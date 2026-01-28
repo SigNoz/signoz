@@ -73,6 +73,7 @@ import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { panelTypeToExplorerView } from 'utils/explorerUtils';
+import { genericNavigate } from 'utils/genericNavigate';
 
 import { PreservedViewsTypes } from './constants';
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
@@ -192,7 +193,7 @@ function ExplorerOptions({
 	);
 
 	const onCreateAlertsHandler = useCallback(
-		(defaultQuery: Query | null) => {
+		(defaultQuery: Query | null, event?: React.MouseEvent) => {
 			if (sourcepage === DataSource.TRACES) {
 				logEvent('Traces Explorer: Create alert', {
 					panelType,
@@ -211,10 +212,11 @@ function ExplorerOptions({
 
 			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
 
-			history.push(
+			genericNavigate(
 				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 					stringifiedQuery,
 				)}`,
+				event,
 			);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -749,7 +751,9 @@ function ExplorerOptions({
 			<Button
 				disabled={disabled}
 				shape="round"
-				onClick={(): void => onCreateAlertsHandler(query)}
+				onClick={(event: React.MouseEvent): void =>
+					onCreateAlertsHandler(query, event)
+				}
 				icon={<ConciergeBell size={16} />}
 			>
 				Create an Alert

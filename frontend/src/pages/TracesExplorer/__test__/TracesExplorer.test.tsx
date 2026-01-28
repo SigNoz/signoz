@@ -27,6 +27,7 @@ import {
 	within,
 } from 'tests/test-utils';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import * as genericNavigate from 'utils/genericNavigate';
 
 import TracesExplorer from '..';
 import { Filter } from '../Filter/Filter';
@@ -772,6 +773,12 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('create an alert btn assert', async () => {
+		const historyPush = jest.fn();
+
+		jest.spyOn(genericNavigate, 'genericNavigate').mockImplementation((link) => {
+			historyPush(link);
+		});
+
 		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);

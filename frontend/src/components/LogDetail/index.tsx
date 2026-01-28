@@ -47,6 +47,7 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
@@ -135,7 +136,7 @@ function LogDetailInner({
 	};
 
 	// Go to logs explorer page with the log data
-	const handleOpenInExplorer = (): void => {
+	const handleOpenInExplorer = (event: React.MouseEvent): void => {
 		const queryParams = {
 			[QueryParams.activeLogId]: `"${log?.id}"`,
 			[QueryParams.startTime]: minTime?.toString() || '',
@@ -148,7 +149,16 @@ function LogDetailInner({
 				),
 			),
 		};
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+
+		if (isCtrlOrMMetaKey(event)) {
+			window.open(
+				`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`,
+				'_blank',
+				'noopener,noreferrer',
+			);
+		} else {
+			safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+		}
 	};
 
 	const handleQueryExpressionChange = useCallback(

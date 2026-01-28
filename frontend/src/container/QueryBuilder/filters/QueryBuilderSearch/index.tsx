@@ -48,6 +48,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
+import { isCtrlOrMMetaKey } from 'utils/isCtrlOrMMetaKey';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
@@ -225,7 +226,7 @@ function QueryBuilderSearch({
 
 		if (
 			!disableNavigationShortcuts &&
-			(event.ctrlKey || event.metaKey) &&
+			isCtrlOrMMetaKey(event) &&
 			event.key === 'Enter'
 		) {
 			event.preventDefault();
@@ -236,7 +237,7 @@ function QueryBuilderSearch({
 
 		if (
 			!disableNavigationShortcuts &&
-			(event.ctrlKey || event.metaKey) &&
+			isCtrlOrMMetaKey(event) &&
 			event.key === '/'
 		) {
 			event.preventDefault();
