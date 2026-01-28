@@ -88,7 +88,7 @@ export default function Tooltip({
 	const headerTitle = useMemo(() => {
 		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
-		if (!cursorIdx) {
+		if (cursorIdx == null || cursorIdx === undefined) {
 			return null;
 		}
 		return dayjs(data[0][cursorIdx] * 1000)
