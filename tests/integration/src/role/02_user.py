@@ -72,12 +72,6 @@ def test_user_invite_accept_role_grant(
 
     # check role assignment tuples in DB
     with signoz.sqlstore.conn.connect() as conn:
-        # look for the tuple granting the signoz-editor role to the new user
-        editor_role_id = next(
-            role["id"]
-            for role in roles_response.json()["data"]
-            if role["name"] == "signoz-editor"
-        )
         tuple_object_id = f"organization/{org_id}/role/signoz-editor"
         tuple_result = conn.execute(
             sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
