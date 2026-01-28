@@ -12,6 +12,7 @@ import {
 	getDefaultWidgetData,
 	PANEL_TYPE_TO_QUERY_TYPES,
 } from 'container/NewWidget/utils';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 // import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -20,7 +21,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo, isUndefined } from 'lodash-es';
-import { Atom, Play, Terminal } from 'lucide-react';
+import { Atom, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -28,20 +29,14 @@ import {
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
-function QuerySection({
-	selectedGraph,
-	queryResponse,
-}: QueryProps): JSX.Element {
+function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 	const {
 		currentQuery,
 		handleRunQuery: handleRunQueryFromQueryBuilder,
@@ -243,15 +238,7 @@ function QuerySection({
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-						<Button
-							loading={queryResponse.isFetching}
-							type="primary"
-							onClick={handleRunQuery}
-							className="stage-run-query"
-							icon={<Play size={14} />}
-						>
-							Stage & Run Query
-						</Button>
+						<RunQueryBtn label="Stage & Run Query" onStageRunQuery={handleRunQuery} />
 					</span>
 				}
 				items={items}
@@ -262,10 +249,6 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
 }
 
 export default QuerySection;
