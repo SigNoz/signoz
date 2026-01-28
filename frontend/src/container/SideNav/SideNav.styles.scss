@@ -25,10 +25,6 @@
 		padding: 8px 15px;
 		max-width: 100%;
 		background: transparent;
-
-		&.scrolled {
-			background: linear-gradient(0deg, rgba(11, 12, 14, 0) 0%, #0b0c0e 27%);
-		}
 	}
 
 	.brand-company-meta {
@@ -1348,14 +1344,6 @@
 
 		.brand-container {
 			background: transparent;
-
-			&.scrolled {
-				background: linear-gradient(
-					0deg,
-					rgba(255, 255, 255, 0) 0%,
-					var(--bg-vanilla-100, #fff) 27%
-				);
-			}
 		}
 
 		.nav-wrapper {

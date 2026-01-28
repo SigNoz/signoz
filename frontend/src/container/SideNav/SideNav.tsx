@@ -162,7 +162,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	);
 
 	const [hasScroll, setHasScroll] = useState(false);
-	const [isScrolled, setIsScrolled] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -185,7 +184,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const { scrollHeight, clientHeight, scrollTop } = navTopSectionRef.current;
 			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
 			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
-			setIsScrolled(scrollTop > 0);
 		}
 	}, []);
 
@@ -951,7 +949,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 			>
-				<div className={cx('brand-container', isScrolled && 'scrolled')}>
+				<div className="brand-container">
 					<div className="brand">
 						<div className="brand-company-meta">
 							<div
