@@ -303,15 +303,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 								/>
 							);
 						case FiltersType.DURATION:
-							return (
-								<Duration
-									filter={filter}
-									onFilterChange={onFilterChange}
-									source={source}
-								/>
-							);
+							return <Duration filter={filter} onFilterChange={onFilterChange} />;
 						case FiltersType.SLIDER:
-							return <Slider filter={filter} />;
+							return <Slider />;
 						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
 							return (

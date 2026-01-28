@@ -46,6 +46,7 @@ jobs:
           - ttl
           - preference
           - logspipelines
+          - alerts
         sqlstore-provider:
           - postgres
           - sqlite

@@ -55,7 +55,7 @@ const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 				const parsedDraggedColumns = await JSON.parse(localStorageColumns);
 				nextDraggedColumns = parsedDraggedColumns;
 			} catch (e) {
-				console.log('error while parsing json');
+				console.error('error while parsing json: ', e);
 			} finally {
 				redirectWithDraggedColumns(nextDraggedColumns);
 			}
