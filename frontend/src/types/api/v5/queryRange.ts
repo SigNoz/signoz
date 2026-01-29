@@ -400,15 +400,20 @@ export interface RawData {
 }
 
 export interface DistributionBucket {
-	ts: number;
-	bucket_start: number;
-	bucket_end: number;
-	value: number;
+	lowerBound: number;
+	upperBound: number;
+	count: number;
+}
+
+export interface DistributionAggregation {
+	index: number;
+	alias: string;
+	buckets: DistributionBucket[];
 }
 
 export interface DistributionData {
 	queryName: string;
-	results: DistributionBucket[];
+	aggregations: DistributionAggregation[];
 }
 
 // Response data structures with results array

@@ -18,12 +18,6 @@ function NoDataMessage(): JSX.Element {
 	);
 }
 
-function hasDistributionData(result: any): boolean {
-	return result.some(
-		(qr: any) => qr.results && Array.isArray(qr.results) && qr.results.length > 0,
-	);
-}
-
 function shouldShowNoDataForStandardPanels(
 	selectedGraph: PANEL_TYPES,
 	queryResponse: any,
@@ -54,8 +48,13 @@ function shouldShowNoDataForDistribution(
 		selectedGraph === PANEL_TYPES.DISTRIBUTION &&
 		queryResponse.data?.payload?.data?.result
 	) {
-		const result = queryResponse.data.payload.data.result as any;
-		return !hasDistributionData(result);
+		const result = queryResponse.data.payload.data.result;
+		return !result.some(
+			(qr: any) =>
+				qr.boundValues &&
+				Array.isArray(qr.boundValues) &&
+				qr.boundValues.length > 0,
+		);
 	}
 	return false;
 }

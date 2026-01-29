@@ -1,4 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
@@ -7,8 +6,15 @@ import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
-import distributionPlugin from '../plugins/distributionPlugin';
 import onClickPlugin from '../plugins/onClickPlugin';
+import tooltipPlugin from '../plugins/tooltipPlugin';
+import getAxes from './getAxes';
+
+export type DistributionSeriesConfig = {
+	name: string;
+	legend: string;
+	queryName: string;
+};
 
 type GetUplotDistributionChartOptionsProps = {
 	id?: string;
@@ -16,57 +22,213 @@ type GetUplotDistributionChartOptionsProps = {
 	dimensions: Dimensions;
 	isDarkMode: boolean;
 	bucketLabels: string[];
-	queryName: string;
-	legend: string;
+	seriesConfigs: DistributionSeriesConfig[];
 	customLegendColors?: Record<string, string>;
 	isLogScale?: boolean;
-	onClickHandler?: (...args: any[]) => void;
-	onHover?: (
-		hoverData: { bucketIndex: number; count: number; label: string } | null,
-		mousePos: { x: number; y: number },
+	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates?: (
+		updater: boolean[] | ((prev: boolean[]) => boolean[]),
 	) => void;
+	onClickHandler?: (...args: any[]) => void;
+	onBucketZoom?: (startBucket: number, endBucket: number) => void;
 	tzDate?: (timestamp: number) => Date;
+};
+
+const { bars } = uPlot.paths;
+
+const paths = (
+	u: uPlot,
+	seriesIdx: number,
+	idx0: number,
+	idx1: number,
+): uPlot.Series.Paths | null => {
+	const renderer = bars && bars({ size: [1], align: 0 });
+	return (renderer && renderer(u, seriesIdx, idx0, idx1)) || null;
+};
+
+const createAxesConfig = (
+	isDarkMode: boolean,
+	isLogScale: boolean,
+	bucketLabels: string[],
+): uPlot.Axis[] => {
+	const baseAxes = getAxes({ isDarkMode, isLogScale });
+	return [
+		{
+			...baseAxes[0],
+			space: 60,
+			values: (_u: uPlot, vals: number[]): string[] =>
+				vals.map((v) => bucketLabels[v] || ''),
+		},
+		baseAxes[1],
+	];
+};
+
+const createSeriesConfig = (
+	seriesConfigs: DistributionSeriesConfig[],
+	isDarkMode: boolean,
+	customLegendColors?: Record<string, string>,
+	graphsVisibilityStates?: boolean[],
+): uPlot.Series[] => {
+	const bucketSeries: uPlot.Series = { label: 'Bucket' };
+
+	const dataSeries = seriesConfigs.map((config, idx) => {
+		const label = getLabelName({}, config.queryName, config.legend);
+		const color =
+			customLegendColors?.[label] ||
+			generateColor(
+				label,
+				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			);
+
+		return {
+			label,
+			stroke: color,
+			fill: `${color}40`,
+			width: 2,
+			paths,
+			show: graphsVisibilityStates ? graphsVisibilityStates[idx + 1] : true,
+			points: { show: false },
+		};
+	});
+
+	return [bucketSeries, ...dataSeries];
+};
+
+const calculateLogScaleRange = (u: uPlot): [number, number] => {
+	const allCounts: number[] = [];
+	for (let i = 1; i < u.data.length; i += 1) {
+		const sData = u.data[i] as number[];
+		if (sData) {
+			allCounts.push(...sData);
+		}
+	}
+
+	const counts = allCounts.filter((v) => v > 0);
+	if (counts.length === 0) {
+		return [0.1, 100];
+	}
+
+	const minVal = Math.min(...counts);
+	const maxVal = Math.max(...counts);
+	const minPow = Math.floor(Math.log10(minVal));
+	const maxPow = Math.ceil(Math.log10(maxVal));
+
+	return [10 ** minPow, 10 ** maxPow];
+};
+
+const createLegendClickHandler = (
+	setGraphsVisibilityStates: (
+		updater: boolean[] | ((prev: boolean[]) => boolean[]),
+	) => void,
+) => (self: uPlot): void => {
+	const legend = self.root.querySelector('.u-legend');
+	if (!legend) {
+		return;
+	}
+
+	const seriesEls = legend.querySelectorAll('.u-series');
+	const seriesArray = Array.from(seriesEls);
+
+	seriesArray.forEach((seriesEl, index) => {
+		const thElement = seriesEl.querySelector('th');
+		if (!thElement) {
+			return;
+		}
+
+		const newThElement = thElement.cloneNode(true) as HTMLElement;
+		thElement.parentNode?.replaceChild(newThElement, thElement);
+
+		newThElement.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			setGraphsVisibilityStates((prev) => {
+				const newStates = [...prev];
+				const seriesIndex = index + 1;
+
+				const isOnlyVisible =
+					newStates[seriesIndex] &&
+					newStates.every((value, i) => (i === seriesIndex ? value : !value));
+
+				if (isOnlyVisible) {
+					newStates.fill(true);
+				} else {
+					newStates.fill(false);
+					newStates[seriesIndex] = true;
+				}
+
+				return newStates;
+			});
+		});
+	});
+};
+
+const createBucketZoomHandler = (
+	onBucketZoom: (startBucket: number, endBucket: number) => void,
+) => (self: uPlot): void => {
+	const selection = self.select;
+	if (!selection) {
+		return;
+	}
+
+	const startBucket = Math.floor(self.posToVal(selection.left, 'x'));
+	const endBucket = Math.ceil(
+		self.posToVal(selection.left + selection.width, 'x'),
+	);
+
+	if (endBucket > startBucket) {
+		onBucketZoom(startBucket, endBucket);
+	}
 };
 
 export const getUplotDistributionChartOptions = ({
 	id,
+	apiResponse,
 	dimensions,
 	isDarkMode,
 	bucketLabels,
-	queryName,
-	legend,
+	seriesConfigs,
 	customLegendColors,
 	isLogScale = false,
+	graphsVisibilityStates,
+	setGraphsVisibilityStates,
 	onClickHandler,
-	onHover,
+	onBucketZoom,
 	tzDate,
 }: GetUplotDistributionChartOptionsProps): uPlot.Options => {
-	const axisColor = isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400;
-	const legendLabel = getLabelName({}, queryName, legend);
-	const barColor =
-		customLegendColors?.[legendLabel] ||
-		generateColor(
-			legendLabel,
-			isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-		);
+	const axes = createAxesConfig(isDarkMode, isLogScale, bucketLabels);
+	const series = createSeriesConfig(
+		seriesConfigs,
+		isDarkMode,
+		customLegendColors,
+		graphsVisibilityStates,
+	);
+
+	const hooks: uPlot.Hooks.Arrays = {};
+
+	if (setGraphsVisibilityStates && graphsVisibilityStates) {
+		hooks.ready = [createLegendClickHandler(setGraphsVisibilityStates)];
+	}
+
+	if (onBucketZoom) {
+		hooks.setSelect = [createBucketZoomHandler(onBucketZoom)];
+	}
 
 	return {
 		id,
 		width: dimensions.width,
 		height: dimensions.height - 30,
+		padding: [16, 16, 8, 16],
 		plugins: [
-			distributionPlugin({
-				barColor,
-				showGrid: true,
-				gridColor: isDarkMode ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)',
-				gridLineWidth: 0.5,
-				hoverStroke: isDarkMode ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.50)',
-				hoverLineWidth: 2,
-				emptyColor: isDarkMode ? 'rgb(18, 20, 22)' : 'rgb(240, 242, 245)',
-				onHover,
+			tooltipPlugin({
+				apiResponse,
+				isDarkMode,
+				isDistributionChart: true,
+				bucketLabels,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler ?? _noop,
+				apiResponse,
 			}),
 		],
 		cursor: {
@@ -74,29 +236,23 @@ export const getUplotDistributionChartOptions = ({
 			points: {
 				show: false,
 			},
+			...(onBucketZoom
+				? {
+						drag: {
+							x: true,
+							y: false,
+						},
+				  }
+				: {}),
 		},
 		legend: {
 			show: true,
 			live: false,
-			isolate: true,
 		},
-		axes: [
-			{
-				show: true,
-				stroke: axisColor,
-				space: 60,
-				values: (_u: uPlot, vals: number[]): string[] =>
-					vals.map((v) => bucketLabels[v] || ''),
-				grid: { show: false },
-			},
-			{
-				show: true,
-				stroke: axisColor,
-				grid: { show: false },
-			},
-		],
+		axes,
 		scales: {
 			x: {
+				time: false,
 				range: (_u: uPlot, dataMin: number, dataMax: number): [number, number] => [
 					dataMin - 0.5,
 					dataMax + 0.5,
@@ -106,34 +262,11 @@ export const getUplotDistributionChartOptions = ({
 				distr: isLogScale ? 3 : 1,
 				log: isLogScale ? 10 : undefined,
 				auto: !isLogScale,
-				range: isLogScale
-					? (u: uPlot, _min: number, _max: number): [number, number] => {
-							const counts = (u.data[1] as number[]).filter((v) => v > 0);
-							if (counts.length === 0) {
-								return [0.1, 100];
-							}
-
-							const minVal = Math.min(...counts);
-							const maxVal = Math.max(...counts);
-
-							const minPow = Math.floor(Math.log10(minVal));
-							const maxPow = Math.ceil(Math.log10(maxVal));
-
-							return [10 ** minPow, 10 ** maxPow];
-					  }
-					: undefined,
+				range: isLogScale ? calculateLogScaleRange : undefined,
 			},
 		},
-		series: [
-			{ label: 'Bucket' },
-			{
-				label: legendLabel,
-				stroke: barColor,
-				fill: barColor,
-				paths: (): null => null,
-				points: { show: false },
-			},
-		],
+		hooks,
+		series,
 		...(tzDate ? { tzDate } : {}),
 	};
 };

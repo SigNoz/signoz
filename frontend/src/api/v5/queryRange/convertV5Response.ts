@@ -276,9 +276,20 @@ function convertDistributionData(
 ): any {
 	// eslint-disable-line @typescript-eslint/no-explicit-any
 	// Convert V5 distribution format to legacy histogram format
+	const boundValues =
+		distributionData.aggregations?.flatMap(
+			(aggregation) =>
+				aggregation.buckets?.map((bucket) => ({
+					lowerBound: bucket.lowerBound,
+					upperBound: bucket.upperBound,
+					value: bucket.count,
+				})) || [],
+		) || [];
+
 	return {
-		...distributionData,
-		legendMap,
+		queryName: distributionData.queryName,
+		legend: legendMap[distributionData.queryName] || distributionData.queryName,
+		boundValues,
 	};
 }
 

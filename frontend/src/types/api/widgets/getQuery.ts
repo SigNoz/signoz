@@ -38,6 +38,11 @@ export interface QueryData {
 		index: number;
 		queryName: string;
 	};
+	boundValues?: {
+		lowerBound: number;
+		upperBound: number;
+		value: number;
+	}[];
 }
 
 export interface SeriesItem {
