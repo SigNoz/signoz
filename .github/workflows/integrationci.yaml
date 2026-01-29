@@ -42,10 +42,11 @@ jobs:
           - callbackauthn
           - cloudintegrations
           - dashboard
-          - querier
-          - ttl
-          - preference
           - logspipelines
+          - preference
+          - querier
+          - role
+          - ttl
         sqlstore-provider:
           - postgres
           - sqlite
