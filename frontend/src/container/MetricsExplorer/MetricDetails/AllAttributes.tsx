@@ -1,3 +1,5 @@
+import { useCallback, useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Button, Collapse, Input, Menu, Popover, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
@@ -5,8 +7,6 @@ import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
 import { Compass, Copy, Search } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';

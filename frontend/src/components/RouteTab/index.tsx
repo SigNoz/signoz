@@ -1,11 +1,11 @@
-import { Tabs, TabsProps } from 'antd';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import {
 	generatePath,
 	matchPath,
 	useLocation,
 	useParams,
 } from 'react-router-dom';
+import { Tabs, TabsProps } from 'antd';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import { RouteTabProps } from './types';
 

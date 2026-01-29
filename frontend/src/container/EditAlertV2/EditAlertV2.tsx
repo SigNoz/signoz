@@ -1,8 +1,6 @@
-import '../CreateAlertV2/CreateAlertV2.styles.scss';
-
+import { useMemo } from 'react';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { useMemo } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
@@ -12,6 +10,8 @@ import Footer from '../CreateAlertV2/Footer';
 import NotificationSettings from '../CreateAlertV2/NotificationSettings';
 import QuerySection from '../CreateAlertV2/QuerySection';
 import { Spinner } from '../CreateAlertV2/utils';
+
+import '../CreateAlertV2/CreateAlertV2.styles.scss';
 
 interface EditAlertV2Props {
 	alertType?: AlertTypes;

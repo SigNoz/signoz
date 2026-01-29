@@ -1,6 +1,15 @@
 /* eslint-disable react/no-unstable-nested-components */
-import './QueryBuilderSearch.styles.scss';
-
+import {
+	KeyboardEvent,
+	ReactElement,
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button, Select, Spin, Tag, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -27,17 +36,6 @@ import {
 	Slash,
 } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
-import {
-	KeyboardEvent,
-	ReactElement,
-	ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -67,6 +65,8 @@ import {
 	isExistsNotExistsOperator,
 	isInNInOperator,
 } from './utils';
+
+import './QueryBuilderSearch.styles.scss';
 
 function QueryBuilderSearch({
 	query,

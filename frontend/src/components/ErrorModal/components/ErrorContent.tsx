@@ -1,13 +1,13 @@
-import './ErrorContent.styles.scss';
-
+import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { ReactNode } from 'react';
 import APIError from 'types/api/error';
+
+import './ErrorContent.styles.scss';
 
 interface ErrorContentProps {
 	error: APIError;

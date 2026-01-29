@@ -1,5 +1,5 @@
-import { getFieldKeys } from 'api/dynamicVariables/getFieldKeys';
 import { useQuery, UseQueryResult } from 'react-query';
+import { getFieldKeys } from 'api/dynamicVariables/getFieldKeys';
 import { SuccessResponseV2 } from 'types/api';
 import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 

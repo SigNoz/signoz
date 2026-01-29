@@ -1,5 +1,6 @@
-import './CeleryOverviewTable.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
 import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -27,12 +28,11 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumericValue } from 'utils/numericUtils';
+
+import './CeleryOverviewTable.styles.scss';
 
 const INITIAL_PAGE_SIZE = 20;
 

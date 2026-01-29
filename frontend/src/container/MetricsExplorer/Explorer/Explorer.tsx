@@ -1,5 +1,5 @@
-import './Explorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Switch, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -15,8 +15,6 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -33,6 +31,8 @@ import {
 	splitQueryIntoOneChartPerQuery,
 	useGetMetrics,
 } from './utils';
+
+import './Explorer.styles.scss';
 
 const ONE_CHART_PER_QUERY_ENABLED_KEY = 'isOneChartPerQueryEnabled';
 

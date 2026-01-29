@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-identical-functions */
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { getNonIntegrationDashboardById } from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import DashboardDescription from '..';

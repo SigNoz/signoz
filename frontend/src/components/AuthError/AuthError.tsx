@@ -1,8 +1,8 @@
-import './AuthError.styles.scss';
-
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { CircleAlert } from 'lucide-react';
 import APIError from 'types/api/error';
+
+import './AuthError.styles.scss';
 
 interface AuthErrorProps {
 	error: APIError;

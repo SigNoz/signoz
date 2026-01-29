@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
+import { useMemo, useState } from 'react';
 import { Button, Flex, Select } from 'antd';
 import cx from 'classnames';
 import OverflowInputToolTip from 'components/OverflowInputToolTip';
@@ -11,7 +12,6 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';

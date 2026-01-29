@@ -1,5 +1,4 @@
-import './Inspect.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
@@ -10,7 +9,6 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
@@ -24,6 +22,8 @@ import {
 	MetricInspectionAction,
 } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
+
+import './Inspect.styles.scss';
 
 function Inspect({
 	metricName: defaultMetricName,

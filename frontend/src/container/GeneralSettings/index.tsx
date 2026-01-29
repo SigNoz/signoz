@@ -1,11 +1,11 @@
+import { useTranslation } from 'react-i18next';
+import { useQueries } from 'react-query';
 import { Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
 import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';
 import Spinner from 'components/Spinner';
 import { useAppContext } from 'providers/App/App';
-import { useTranslation } from 'react-i18next';
-import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';

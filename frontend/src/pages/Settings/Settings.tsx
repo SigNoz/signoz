@@ -1,5 +1,6 @@
-import './Settings.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
@@ -12,14 +13,13 @@ import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { Cog } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { USER_ROLES } from 'types/roles';
 
 import { getRoutes } from './utils';
+
+import './Settings.styles.scss';
 
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
@@ -236,7 +236,7 @@ function SettingsPage(): JSX.Element {
 					className="settings-page-header-title"
 					data-testid="settings-page-title"
 				>
-					<Cog size={16} />
+					<Wrench size={16} />
 					Settings
 				</div>
 			</header>

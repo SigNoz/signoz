@@ -1,12 +1,12 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 
-import '@testing-library/jest-dom';
-
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import store from 'store';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
+
+import '@testing-library/jest-dom';
 
 import ContextLinks from '../index';
 

@@ -1,5 +1,5 @@
-import './InfraMonitoringK8s.styles.scss';
-
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
@@ -22,8 +22,6 @@ import {
 	Workflow,
 } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { FeatureKeys } from '../../constants/features';
@@ -50,6 +48,8 @@ import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
 import K8sStatefulSetsList from './StatefulSets/K8sStatefulSetsList';
 import K8sVolumesList from './Volumes/K8sVolumesList';
+
+import './InfraMonitoringK8s.styles.scss';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);

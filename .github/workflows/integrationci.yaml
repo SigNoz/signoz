@@ -47,6 +47,7 @@ jobs:
           - querier
           - role
           - ttl
+          - alerts
         sqlstore-provider:
           - postgres
           - sqlite

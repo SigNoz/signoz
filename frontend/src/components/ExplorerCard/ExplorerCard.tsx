@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import {
 	DeleteOutlined,
 	MoreOutlined,
@@ -29,8 +31,6 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
