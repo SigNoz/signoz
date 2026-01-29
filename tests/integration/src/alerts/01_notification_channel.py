@@ -1,7 +1,7 @@
+import time
 import uuid
 from http import HTTPStatus
 from typing import Callable, List
-import time
 
 import requests
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
@@ -54,10 +54,10 @@ def test_webhook_notification_channel(
         send_resolved=True,
     )
 
-    # TODO: @abhishekhugetech
+    # TODO: @abhishekhugetech # pylint: disable=W0511
     # Time required for Org to be registered
     # in the alertmanager, default 1m.
-    # this will be fixed after https://github.com/SigNoz/engineering-pod/issues/3800
+    # this will be fixed after [https://github.com/SigNoz/engineering-pod/issues/3800]
     time.sleep(65)
 
     # Call test API for the notification channel
@@ -93,6 +93,6 @@ def test_webhook_notification_channel(
         f"Status code: {response.status_code}"
     )
     # Verify that the test notification was sent to the notification channel
-    assert response.json()["count"] == 1, (
-        f"Expected 1 test notification, got {response.json()['count']}"
-    )
+    assert (
+        response.json()["count"] == 1
+    ), f"Expected 1 test notification, got {response.json()['count']}"
