@@ -25,10 +25,12 @@ function Shortcuts(): JSX.Element {
 	}
 
 	return (
-		<div className="keyboard-shortcuts">
-			{Object.keys(ALL_SHORTCUTS).map((shortcutSection) =>
-				getShortcutTable(shortcutSection),
-			)}
+		<div className="shortcuts-page-container">
+			<div className="keyboard-shortcuts">
+				{Object.keys(ALL_SHORTCUTS).map((shortcutSection) =>
+					getShortcutTable(shortcutSection),
+				)}
+			</div>
 		</div>
 	);
 }
