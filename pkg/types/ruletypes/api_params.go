@@ -11,6 +11,7 @@ import (
 	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
@@ -30,6 +31,9 @@ const (
 
 const (
 	DefaultSchemaVersion = "v1"
+	// No schema version means the rule is not schema versioned
+	// and the rule is in the old format
+	NoSchemaVersion = ""
 )
 
 type RuleDataKind string
@@ -304,6 +308,39 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
+// isValidAlertType validates that the AlertType is one of the allowed enum values
+func isValidAlertType(alertType AlertType) bool {
+	switch alertType {
+	case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions:
+		return true
+	default:
+		return false
+	}
+}
+
+// isValidRuleType validates that the RuleType is one of the allowed enum values
+func isValidRuleType(ruleType RuleType) bool {
+	switch ruleType {
+	case RuleTypeThreshold, RuleTypeProm, RuleTypeAnomaly:
+		return true
+	default:
+		return false
+	}
+}
+
+// isValidVersion validates that the version is one of the supported versions
+func isValidVersion(version string) bool {
+	if version == "" {
+		return true // empty version is allowed (optional field)
+	}
+	switch version {
+	case "v3", "v4", "v5":
+		return true
+	default:
+		return false
+	}
+}
+
 func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
 	if compositeQuery == nil {
 		return false
@@ -357,6 +394,35 @@ func (r *PostableRule) validate() error {
 
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "all queries are disabled in rule condition"))
+	}
+
+	// Validate AlertName - required field
+	if r.AlertName == "" {
+		// errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "alert name is required"))
+		zap.L().Warn("expected validation error in PostableRule.validate: alert name is required")
+	}
+
+	// Validate AlertType - must be one of the allowed enum values
+	if !isValidAlertType(r.AlertType) {
+		// errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid alert type: %s, must be one of: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT", r.AlertType))
+		zap.L().Warn("expected validation error in PostableRule.validate: invalid alert type", zap.Any("alertType", r.AlertType))
+	}
+
+	// Validate RuleType - must be one of the allowed enum values
+	if !isValidRuleType(r.RuleType) {
+		// errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid rule type: %s, must be one of: threshold_rule, promql_rule, anomaly_rule", r.RuleType))
+		zap.L().Warn("expected validation error in PostableRule.validate: invalid rule type", zap.Any("ruleType", r.RuleType))
+	}
+
+	// Validate Version - must be one of the supported versions if provided
+	if !isValidVersion(r.Version) {
+		// errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid version: %s, must be one of: v3, v4, v5", r.Version))
+		zap.L().Warn("expected validation error in PostableRule.validate: invalid version", zap.Any("version", r.Version))
+	}
+
+	// Notification channel should be provided for older schema versions where there was no schema
+	if r.SchemaVersion == NoSchemaVersion && len(r.PreferredChannels) == 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "at least one notification channel is required"))
 	}
 
 	for k, v := range r.Labels {
