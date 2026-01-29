@@ -22,6 +22,9 @@ import {
 import AlertHeader from './AlertHeader/AlertHeader';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 import { AlertDetailsStatusRendererProps } from './types';
+import { QueryParams } from 'constants/query';
+import AlertNotFound from './AlertNotFound';
+import useUrlQuery from 'hooks/useUrlQuery';
 
 function AlertDetailsStatusRenderer({
 	isLoading,
@@ -78,6 +81,7 @@ function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
 	const { t } = useTranslation(['alerts']);
+	const params = useUrlQuery();
 
 	const {
 		isLoading,
@@ -88,10 +92,14 @@ function AlertDetails(): JSX.Element {
 		alertDetailsResponse,
 	} = useGetAlertRuleDetails();
 
+	const isTestAlert = useMemo(() => {
+		return params.get(QueryParams.isTestAlert) === 'true';
+	}, [params]);
+
 	useEffect(() => {
-		const alertTitle = alertDetailsResponse?.payload?.data.alert;
+		const alertTitle = alertDetailsResponse?.payload?.data?.alert;
 		document.title = alertTitle || document.title;
-	}, [alertDetailsResponse?.payload?.data.alert, isRefetching]);
+	}, [alertDetailsResponse?.payload?.data?.alert, isRefetching]);
 
 	const alertRuleDetails = useMemo(
 		() => alertDetailsResponse?.payload?.data as PostableAlertRuleV2 | undefined,
@@ -102,18 +110,6 @@ function AlertDetails(): JSX.Element {
 		() => getCreateAlertLocalStateFromAlertDef(alertRuleDetails),
 		[alertRuleDetails],
 	);
-
-	if (
-		isError ||
-		!isValidRuleId ||
-		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200)
-	) {
-		return (
-			<div className="alert-empty-card">
-				<Empty description={t('alert_rule_not_found')} />
-			</div>
-		);
-	}
 
 	const handleTabChange = (route: string): void => {
 		if (route === ROUTES.ALERT_HISTORY) {
@@ -126,6 +122,15 @@ function AlertDetails(): JSX.Element {
 	// Show spinner until we have alert data loaded
 	if (isLoading && !alertRuleDetails) {
 		return <Spinner />;
+	}
+
+	if (
+		isError ||
+		!isValidRuleId ||
+		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200) ||
+		(!isLoading && !alertRuleDetails)
+	) {
+		return <AlertNotFound isTestAlert={isTestAlert} />;
 	}
 
 	return (
