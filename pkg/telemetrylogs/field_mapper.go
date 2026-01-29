@@ -280,10 +280,12 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 		return "", errors.Newf(errors.TypeInternal, CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
 	}
 
-	// Build arrayMap expressions for ALL available branches at the root level
+	// Build arrayMap expressions for ALL available branches at the root level.
+	// Iterate branches in deterministic order (JSON then Dynamic) so generated SQL
+	// is stable across environments; map iteration order is random in Go.
 	var arrayMapExpressions []string
 	for _, node := range plan {
-		for branchType := range node.Branches {
+		for _, branchType := range node.BranchesInOrder() {
 			expr, err := m.buildArrayMap(node, branchType)
 			if err != nil {
 				return "", err
@@ -335,9 +337,10 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 		return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), dynamicElementExpr, arrayExpr), nil
 	}
 
-	// For non-terminal nodes, we need to handle ALL possible branches at the next level
+	// For non-terminal nodes, we need to handle ALL possible branches at the next level.
+	// Use deterministic branch order so generated SQL is stable across environments.
 	var nestedExpressions []string
-	for branchType := range childNode.Branches {
+	for _, branchType := range childNode.BranchesInOrder() {
 		expr, err := m.buildArrayMap(childNode, branchType)
 		if err != nil {
 			return "", err
