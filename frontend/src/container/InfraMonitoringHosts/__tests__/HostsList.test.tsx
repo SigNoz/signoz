@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
-import ROUTES from 'constants/routes';
 import * as useGetHostListHooks from 'hooks/infraMonitoring/useGetHostList';
 import * as appContextHooks from 'providers/App/App';
 import * as timezoneHooks from 'providers/Timezone';
@@ -46,12 +45,16 @@ jest.mock('react-redux', () => ({
 		},
 	}),
 }));
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn().mockReturnValue({
-		pathname: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
-	}),
-}));
+
+jest.mock('react-router-dom', () => {
+	const ROUTES = jest.requireActual('constants/routes').default;
+	return {
+		...jest.requireActual('react-router-dom'),
+		useLocation: jest.fn().mockReturnValue({
+			pathname: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		}),
+	};
+});
 jest.mock('react-router-dom-v5-compat', () => {
 	const actual = jest.requireActual('react-router-dom-v5-compat');
 	return {

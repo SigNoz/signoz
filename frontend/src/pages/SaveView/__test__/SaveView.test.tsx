@@ -16,12 +16,15 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn().mockReturnValue({
-		pathname: `${ROUTES.TRACES_SAVE_VIEWS}`,
-	}),
-}));
+jest.mock('react-router-dom', () => {
+	const ROUTES = jest.requireActual('constants/routes').default;
+	return {
+		...jest.requireActual('react-router-dom'),
+		useLocation: jest.fn().mockReturnValue({
+			pathname: ROUTES.TRACES_SAVE_VIEWS,
+		}),
+	};
+});
 
 describe('SaveView', () => {
 	it('should render the SaveView component', async () => {
