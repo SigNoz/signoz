@@ -1,9 +1,9 @@
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
 import store from 'store';
-import { Dashboard } from 'types/api/dashboard/getAll';
 
 export const getDashboardVariables = (
-	variables?: Dashboard['data']['variables'],
+	variables?: IDashboardVariables,
 ): Record<string, unknown> => {
 	if (!variables) {
 		return {};
