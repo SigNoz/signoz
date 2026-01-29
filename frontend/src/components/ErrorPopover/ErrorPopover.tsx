@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { Popover, PopoverProps } from 'antd';
 import { ReactNode } from 'react';
+import { Popover, PopoverProps } from 'antd';
 
 interface ErrorPopoverProps extends Omit<PopoverProps, 'content'> {
 	/** Content to display in the popover */

@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './MessagingQueues.styles.scss';
-
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -9,15 +10,14 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 
 import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,
 	MessagingQueuesViewType,
 } from './MessagingQueuesUtils';
+
+import './MessagingQueues.styles.scss';
 
 function MessagingQueues(): JSX.Element {
 	const history = useHistory();

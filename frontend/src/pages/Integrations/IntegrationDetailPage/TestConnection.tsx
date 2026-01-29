@@ -1,6 +1,6 @@
-import './IntegrationDetailPage.styles.scss';
-
 import cx from 'classnames';
+
+import './IntegrationDetailPage.styles.scss';
 
 export enum ConnectionStates {
 	Connected = 'connected',

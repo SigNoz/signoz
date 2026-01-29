@@ -690,6 +690,22 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be a field key", functionName))
 		return ""
 	}
+
+	// filter arrays from keys
+	if BodyJSONQueryEnabled && functionName != "hasToken" {
+		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
+		for _, key := range keys {
+			if key.FieldDataType.IsArray() {
+				filteredKeys = append(filteredKeys, key)
+			}
+		}
+		if len(filteredKeys) == 0 {
+			v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be an array field; no array fields found", functionName))
+			return ""
+		}
+		keys = filteredKeys
+	}
+
 	value := params[1:]
 	var conds []string
 	for _, key := range keys {
@@ -716,7 +732,16 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		} else {
 			// this is that all other functions only support array fields
 			if key.FieldContext == telemetrytypes.FieldContextBody {
-				fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+				var err error
+				if BodyJSONQueryEnabled {
+					fieldName, err = v.fieldMapper.FieldFor(context.Background(), key)
+					if err != nil {
+						v.errors = append(v.errors, fmt.Sprintf("failed to get field name for key %s: %s", key.Name, err.Error()))
+						return ""
+					}
+				} else {
+					fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+				}
 			} else {
 				// TODO(add docs for json body search)
 				if v.mainErrorURL == "" {

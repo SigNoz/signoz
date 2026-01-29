@@ -1,14 +1,14 @@
-import './QuickFiltersSettings.styles.scss';
-
+import { useMemo } from 'react';
 import { Button, Input } from 'antd';
 import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
-import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { SignalType } from '../types';
 import AddedFilters from './AddedFilters';
 import useQuickFilterSettings from './hooks/useQuickFilterSettings';
 import OtherFilters from './OtherFilters';
+
+import './QuickFiltersSettings.styles.scss';
 
 function QuickFiltersSettings({
 	signal,

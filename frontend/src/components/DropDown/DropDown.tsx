@@ -1,9 +1,9 @@
-import './DropDown.styles.scss';
-
+import { useState } from 'react';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useState } from 'react';
+
+import './DropDown.styles.scss';
 
 function DropDown({
 	element,

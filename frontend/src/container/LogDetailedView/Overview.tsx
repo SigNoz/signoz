@@ -1,5 +1,4 @@
-import './Overview.styles.scss';
-
+import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -16,13 +15,14 @@ import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronRight, Search } from 'lucide-react';
-import { ReactNode, useState } from 'react';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
 import { removeEscapeCharacters } from './utils';
+
+import './Overview.styles.scss';
 
 interface OverviewProps {
 	logData: ILog;

@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './QBEntityOptions.styles.scss';
-
+import { useLocation } from 'react-router-dom';
 import { Button, Col, Tooltip } from 'antd';
 import { noop } from 'antd/lib/_util/warning';
 import cx from 'classnames';
@@ -15,13 +14,14 @@ import {
 	EyeOff,
 	Trash2,
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
+
+import './QBEntityOptions.styles.scss';
 
 interface QBEntityOptionsProps {
 	query?: IBuilderQuery;

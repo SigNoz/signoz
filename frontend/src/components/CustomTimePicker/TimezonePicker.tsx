@@ -1,5 +1,10 @@
-import './TimezonePicker.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -8,15 +13,10 @@ import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShort
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Check, Search } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
 
 import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
+
+import './TimezonePicker.styles.scss';
 
 interface SearchBarProps {
 	value: string;

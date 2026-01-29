@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback, useEffect, useState } from 'react';
 import {
 	getPreviousQueryFromKey,
+	getQueryKey,
 	removeKeyFromPreviousQuery,
 	saveAsPreviousQuery,
 } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
@@ -30,7 +32,6 @@ import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetri
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { isEmpty, isEqual } from 'lodash-es';
-import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
@@ -56,8 +57,6 @@ import {
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
-
-import { getQueryKey } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
 
 export const useQueryOperations: UseQueryOperations = ({
 	query,

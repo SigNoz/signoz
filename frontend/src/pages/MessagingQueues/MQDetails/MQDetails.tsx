@@ -1,11 +1,9 @@
-import './MQDetails.style.scss';
-
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Radio } from 'antd';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -19,6 +17,8 @@ import {
 	SelectedTimelineQuery,
 } from '../MessagingQueuesUtils';
 import MessagingQueuesTable from './MQTables/MQTables';
+
+import './MQDetails.style.scss';
 
 const MQServiceDetailTypePerView = (
 	producerLatencyOption: ProducerLatencyOptions,

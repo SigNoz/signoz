@@ -1,5 +1,5 @@
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 
 import { TableRendererProps } from '../../types';
 

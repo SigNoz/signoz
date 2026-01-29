@@ -1,5 +1,6 @@
-import './InfraMonitoring.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -18,9 +19,6 @@ import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Filter } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -30,6 +28,8 @@ import { useAppContext } from '../../providers/App/App';
 import HostsListControls from './HostsListControls';
 import HostsListTable from './HostsListTable';
 import { getHostListsQuery, GetHostsQuickFiltersConfig } from './utils';
+
+import './InfraMonitoring.styles.scss';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
