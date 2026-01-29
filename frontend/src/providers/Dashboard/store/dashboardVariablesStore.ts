@@ -1,13 +1,13 @@
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { DashboardData } from 'types/api/dashboard/getAll';
 import createStore from './store';
 
-// TODO: CHange
-export type VARSS = Record<string, IDashboardVariable>;
-// type _asda = DashboardData['variables'];
+export type IDashboardVariables = DashboardData['variables'];
 
-export const dashboardVariablesStore = createStore<VARSS>({});
+export const dashboardVariablesStore = createStore<IDashboardVariables>({});
 
-export function updateDashboardVariablesStore(variables: Partial<VARSS>): void {
+export function updateDashboardVariablesStore(
+	variables: Partial<IDashboardVariables>,
+): void {
 	dashboardVariablesStore.update((currentVariables) => ({
 		...currentVariables,
 		...variables,

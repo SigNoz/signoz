@@ -31,9 +31,12 @@ export const useOptions = (
 	const operators = useOperators(key, keys);
 
 	// get matching dynamic variables to suggest
-	const dynamicVariables = useDashboardVariablesByType('DYNAMIC', 'values');
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
+	);
 
-	const variableName = dynamicVariables?.find(
+	const variableName = dashboardDynamicVariables?.find(
 		(variable) => variable?.dynamicVariablesAttribute === key,
 	)?.name;
 

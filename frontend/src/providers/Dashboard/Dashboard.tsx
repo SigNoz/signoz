@@ -29,7 +29,6 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	useSyncExternalStore,
 } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -52,10 +51,8 @@ import {
 	WidgetColumnWidths,
 } from './types';
 import { sortLayout } from './util';
-import {
-	updateDashboardVariablesStore,
-	dashboardVariablesStore,
-} from './store/dashboardVariablesStore';
+import { updateDashboardVariablesStore } from './store/dashboardVariablesStore';
+import { useDashboardVariables } from './store/useDashboardVariables';
 
 const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
@@ -201,10 +198,7 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
-	const dashboardVariables = useSyncExternalStore(
-		dashboardVariablesStore.subscribe,
-		dashboardVariablesStore.getSnapshot,
-	);
+	const dashboardVariables = useDashboardVariables();
 
 	useEffect(() => {
 		const existingVariables = dashboardVariables;

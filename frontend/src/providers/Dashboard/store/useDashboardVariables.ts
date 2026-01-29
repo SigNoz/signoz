@@ -1,8 +1,11 @@
 import { useSyncExternalStore } from 'react';
-import { dashboardVariablesStore, VARSS } from './dashboardVariablesStore';
+import {
+	dashboardVariablesStore,
+	IDashboardVariables,
+} from './dashboardVariablesStore';
 
 export const useDashboardVariables = (): {
-	dashboardVariables: VARSS;
+	dashboardVariables: IDashboardVariables;
 } => {
 	const dashboardVariables = useSyncExternalStore(
 		dashboardVariablesStore.subscribe,

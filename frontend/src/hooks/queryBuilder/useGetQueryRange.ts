@@ -42,7 +42,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 	headers,
 	publicQueryMeta,
 ) => {
-	const dynamicVariables = useDashboardVariablesByType('DYNAMIC', 'values');
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
+	);
 
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
@@ -150,7 +153,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 			GetMetricQueryRange(
 				modifiedRequestData,
 				version,
-				dynamicVariables,
+				dashboardDynamicVariables,
 				signal,
 				headers,
 				undefined,

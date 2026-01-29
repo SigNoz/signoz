@@ -247,7 +247,10 @@ function QueryBuilderSearchV2(
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
-	const dynamicVariables = useDashboardVariablesByType('DYNAMIC', 'values');
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
+	);
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -797,7 +800,7 @@ function QueryBuilderSearchV2(
 				values.push(...(attributeValues?.payload?.[key] || []));
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
-				const variableName = dynamicVariables?.find(
+				const variableName = dashboardDynamicVariables?.find(
 					(variable) =>
 						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
 				)?.name;
@@ -828,7 +831,7 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 		operatorConfigKey,
 		currentFilterItem?.key?.key,
-		dynamicVariables,
+		dashboardDynamicVariables,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page
