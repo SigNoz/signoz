@@ -2,7 +2,6 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -12,6 +11,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useGetQueryRange } from './useGetQueryRange';
 import { useQueryBuilder } from './useQueryBuilder';
+import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
 
 export const useGetWidgetQueryRange = (
 	{
@@ -28,7 +28,7 @@ export const useGetWidgetQueryRange = (
 
 	const { stagedQuery } = useQueryBuilder();
 
-	const { selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 
 	return useGetQueryRange(
 		{
@@ -36,7 +36,7 @@ export const useGetWidgetQueryRange = (
 			selectedTime,
 			globalSelectedInterval,
 			query: stagedQuery || initialQueriesMap.metrics,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(dashboardVariables),
 		},
 		version,
 		{
