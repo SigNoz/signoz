@@ -38,7 +38,7 @@ module.exports = {
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity
 		// TODO: Uncomment after running: yarn add -D eslint-plugin-spellcheck
-		// 'spellcheck',
+		// 'spellcheck', // Correct spellings
 	],
 	settings: {
 		react: {
@@ -60,12 +60,18 @@ module.exports = {
 		'no-debugger': 'error', // Disallows debugger statements in production code
 		curly: 'error', // Requires curly braces for all control statements
 		eqeqeq: ['error', 'always', { null: 'ignore' }], // Enforces === and !== (allows == null for null/undefined check)
-		// TODO: Enable after fixing ~15 console.log statements
-		// 'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
+		'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
 
 		// TypeScript rules
 		'@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions
-		'@typescript-eslint/no-unused-vars': 'off',
+		'@typescript-eslint/no-unused-vars': [
+			// Disallows unused variables/args
+			'error',
+			{
+				argsIgnorePattern: '^_', // Allows unused args prefixed with _ (e.g., _unusedParam)
+				varsIgnorePattern: '^_', // Allows unused vars prefixed with _ (e.g., _unusedVar)
+			},
+		],
 		'@typescript-eslint/no-explicit-any': 'warn', // Warns when using 'any' type (consider upgrading to error)
 		// TODO: Change to 'error' after fixing ~80 empty function placeholders in providers/contexts
 		'@typescript-eslint/no-empty-function': 'off', // Disallows empty function bodies
@@ -112,21 +118,20 @@ module.exports = {
 		'import/no-extraneous-dependencies': ['error', { devDependencies: true }], // Prevents importing packages not in package.json
 		// 'import/no-cycle': 'warn', // TODO: Enable later to detect circular dependencies
 
-		// TODO: Enable in separate PR with auto fixes
-		// // Import sorting rules
-		// 'simple-import-sort/imports': [
-		// 	'error',
-		// 	{
-		// 		groups: [
-		// 			['^react', '^@?\\w'], // React first, then external packages
-		// 			['^@/'], // Absolute imports with @ alias
-		// 			['^\\u0000'], // Side effect imports (import './file')
-		// 			['^\\.'], // Relative imports
-		// 			['^.+\\.s?css$'], // Style imports
-		// 		],
-		// 	},
-		// ],
-		// 'simple-import-sort/exports': 'error', // Auto-sorts exports
+		// Import sorting rules
+		'simple-import-sort/imports': [
+			'error',
+			{
+				groups: [
+					['^react', '^@?\\w'], // React first, then external packages
+					['^@/'], // Absolute imports with @ alias
+					['^\\u0000'], // Side effect imports (import './file')
+					['^\\.'], // Relative imports
+					['^.+\\.s?css$'], // Style imports
+				],
+			},
+		],
+		'simple-import-sort/exports': 'error', // Auto-sorts exports
 
 		// Prettier - code formatting
 		'prettier/prettier': [

@@ -1,13 +1,13 @@
-import './AlertPopover.styles.scss';
-
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DraftingCompass } from 'lucide-react';
-import React from 'react';
-import { Link } from 'react-router-dom';
+
+import './AlertPopover.styles.scss';
 
 type Props = {
 	children: React.ReactNode;

@@ -1,4 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter } from 'react-router-dom-v5-compat';
+// https://virtuoso.dev/mocking-in-tests/
+import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -11,9 +14,6 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-// https://virtuoso.dev/mocking-in-tests/
-import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

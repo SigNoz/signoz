@@ -16,12 +16,11 @@ import (
 )
 
 type conditionBuilder struct {
-	fm            qbtypes.FieldMapper
-	metadataStore telemetrytypes.MetadataStore
+	fm qbtypes.FieldMapper
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, metadataStore telemetrytypes.MetadataStore) *conditionBuilder {
-	return &conditionBuilder{fm: fm, metadataStore: metadataStore}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -37,7 +36,8 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
-		cond, err := c.buildJSONCondition(ctx, key, operator, value, sb)
+		valueType, value := InferDataType(value, operator, key)
+		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 		if err != nil {
 			return "", err
 		}

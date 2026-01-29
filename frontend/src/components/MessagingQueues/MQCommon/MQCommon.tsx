@@ -1,10 +1,10 @@
 /* eslint-disable react/destructuring-assignment */
-import './MQCommon.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import { Info } from 'lucide-react';
+
+import './MQCommon.styles.scss';
 
 export function ComingSoon(): JSX.Element {
 	return (

@@ -62,6 +62,11 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldContext:  telemetrytypes.FieldContextSpan,
 				FieldDataType: telemetrytypes.FieldDataTypeInt64,
 			},
+			{
+				Name:          "duration_nano",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeInt64,
+			},
 		},
 		"http.method": {
 			{
@@ -83,6 +88,20 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
+			},
+		},
+		"mixed.materialization.key": {
+			{
+				Name:          "mixed.materialization.key",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			{
+				Name:          "mixed.materialization.key",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  false,
 			},
 		},
 		"isentrypoint": {

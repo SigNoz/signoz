@@ -1,7 +1,7 @@
+import { useCallback, useMemo, useState } from 'react';
 import { Form, Select, Skeleton, Typography } from 'antd';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useMemo, useState } from 'react';
 
 const { Title } = Typography;
 

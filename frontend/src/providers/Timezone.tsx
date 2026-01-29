@@ -1,3 +1,12 @@
+import React, {
+	createContext,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from 'react';
 import {
 	getBrowserTimezone,
 	getTimezoneObjectByTimezoneString,
@@ -8,17 +17,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import useTimezoneFormatter, {
 	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-import React, {
-	createContext,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useContext,
-	useMemo,
-	useState,
-} from 'react';
 
-interface TimezoneContextType {
+export interface TimezoneContextType {
 	timezone: Timezone;
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;

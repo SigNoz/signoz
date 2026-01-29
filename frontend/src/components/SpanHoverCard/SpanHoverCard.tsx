@@ -1,12 +1,13 @@
-import './SpanHoverCard.styles.scss';
-
+import { ReactNode } from 'react';
 import { Popover, Typography } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
-import { ReactNode } from 'react';
+import { useTimezone } from 'providers/Timezone';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
+
+import './SpanHoverCard.styles.scss';
 
 interface ITraceMetadata {
 	startTime: number;
@@ -29,6 +30,8 @@ function SpanHoverCard({
 		duration,
 	);
 
+	const { timezone } = useTimezone();
+
 	// Calculate relative start time from trace start
 	const relativeStartTime = span.timestamp - traceMetadata.startTime;
 	const {
@@ -37,9 +40,9 @@ function SpanHoverCard({
 	} = convertTimeToRelevantUnit(relativeStartTime);
 
 	// Format absolute start time
-	const startTimeFormatted = dayjs(span.timestamp).format(
-		DATE_TIME_FORMATS.SPAN_POPOVER_DATE,
-	);
+	const startTimeFormatted = dayjs(span.timestamp)
+		.tz(timezone.value)
+		.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS);
 
 	const getContent = (): JSX.Element => (
 		<div className="span-hover-card">
@@ -87,7 +90,7 @@ function SpanHoverCard({
 					</Typography.Text>
 				</div>
 			}
-			mouseEnterDelay={0.5}
+			mouseEnterDelay={0.2}
 			content={getContent()}
 			trigger="hover"
 			rootClassName="span-hover-card"

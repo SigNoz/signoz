@@ -1,5 +1,4 @@
-import './PiePanelWrapper.styles.scss';
-
+import { useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
@@ -13,10 +12,11 @@ import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { isNaN } from 'lodash-es';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
-import { useRef, useState } from 'react';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
 import { lightenColor, tooltipStyles } from './utils';
+
+import './PiePanelWrapper.styles.scss';
 
 // reference: https://www.youtube.com/watch?v=bL3P9CqQkKw
 function PiePanelWrapper({

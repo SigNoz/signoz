@@ -1,3 +1,9 @@
+import {
+	useMutation,
+	UseMutationResult,
+	useQuery,
+	UseQueryResult,
+} from 'react-query';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import {
 	createFunnel,
@@ -27,12 +33,6 @@ import {
 } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import {
-	useMutation,
-	UseMutationResult,
-	useQuery,
-	UseQueryResult,
-} from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	CreateFunnelPayload,
@@ -143,7 +143,7 @@ export const useValidateFunnelSteps = ({
 			selectedTime,
 			steps.map((step) => {
 				// eslint-disable-next-line @typescript-eslint/naming-convention
-				const { latency_type, ...rest } = step;
+				const { latency_type: _latency_type, ...rest } = step;
 				return rest;
 			}),
 		],

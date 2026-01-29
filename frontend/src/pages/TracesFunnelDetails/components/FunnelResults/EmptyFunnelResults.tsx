@@ -1,6 +1,6 @@
-import './EmptyFunnelResults.styles.scss';
-
 import LearnMore from 'components/LearnMore/LearnMore';
+
+import './EmptyFunnelResults.styles.scss';
 
 function EmptyFunnelResults({
 	title,

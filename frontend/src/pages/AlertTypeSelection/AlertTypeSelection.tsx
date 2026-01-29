@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from 'react';
 import { Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
@@ -6,7 +7,6 @@ import SelectAlertType from 'container/CreateAlertRule/SelectAlertType';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 function AlertTypeSelectionPage(): JSX.Element {
@@ -34,11 +34,11 @@ function AlertTypeSelectionPage(): JSX.Element {
 				queryParams.set(QueryParams.alertType, type);
 			}
 
-			const showNewCreateAlertsPageFlag = queryParams.get(
-				QueryParams.showNewCreateAlertsPage,
+			const showClassicCreateAlertsPageFlag = queryParams.get(
+				QueryParams.showClassicCreateAlertsPage,
 			);
-			if (showNewCreateAlertsPageFlag === 'true') {
-				queryParams.set(QueryParams.showNewCreateAlertsPage, 'true');
+			if (showClassicCreateAlertsPageFlag === 'true') {
+				queryParams.set(QueryParams.showClassicCreateAlertsPage, 'true');
 			}
 
 			safeNavigate(`${ROUTES.ALERTS_NEW}?${queryParams.toString()}`);

@@ -1,5 +1,5 @@
-import './QuerySection.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -9,12 +9,11 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Play, Terminal } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Atom, Terminal } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
@@ -22,6 +21,8 @@ import { EQueryType } from 'types/common/dashboard';
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 import { FormContainer, StepHeading } from './styles';
+
+import './QuerySection.styles.scss';
 
 function QuerySection({
 	queryCategory,
@@ -165,9 +166,8 @@ function QuerySection({
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-									<Button
-										type="primary"
-										onClick={(): void => {
+									<RunQueryBtn
+										onStageRunQuery={(): void => {
 											runQuery();
 											logEvent('Alert: Stage and run query', {
 												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
@@ -176,11 +176,7 @@ function QuerySection({
 												queryType: queryCategory,
 											});
 										}}
-										className="stage-run-query"
-										icon={<Play size={14} />}
-									>
-										Stage & Run Query
-									</Button>
+									/>
 								</span>
 							}
 							items={tabs}
@@ -199,14 +195,7 @@ function QuerySection({
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-									<Button
-										type="primary"
-										onClick={runQuery}
-										className="stage-run-query"
-										icon={<Play size={14} />}
-									>
-										Stage & Run Query
-									</Button>
+									<RunQueryBtn onStageRunQuery={runQuery} />
 								</span>
 							}
 							items={items}

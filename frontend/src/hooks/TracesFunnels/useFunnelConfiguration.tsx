@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -5,8 +7,6 @@ import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
@@ -31,8 +31,8 @@ export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 			...step.filters,
 			items: step.filters.items.map((item) => {
 				const {
-					id: unusedId,
-					isIndexed,
+					id: _unusedId,
+					isIndexed: _isIndexed,
 					...keyObj
 				} = item.key as BaseAutocompleteData;
 				return {
