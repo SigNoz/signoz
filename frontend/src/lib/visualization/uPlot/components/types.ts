@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { PrecisionOption } from 'components/Graph/types';
 
 /**
  * Props for the Plot component
@@ -59,4 +60,6 @@ export interface TooltipRenderArgs {
 
 export type TooltipProps = TooltipRenderArgs & {
 	timezone: string;
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 };

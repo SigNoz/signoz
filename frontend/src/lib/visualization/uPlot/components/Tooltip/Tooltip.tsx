@@ -9,6 +9,8 @@ import { Virtuoso } from 'react-virtuoso';
 import type uPlot from 'uplot';
 
 import { TooltipProps } from '../types';
+import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { PrecisionOption } from 'components/Graph/types';
 
 const TOOLTIP_LIST_MAX_HEIGHT = 330;
 const TOOLTIP_ITEM_HEIGHT = 38;
@@ -17,6 +19,7 @@ const FALLBACK_SERIES_COLOR = 'red';
 export type TooltipContentItem = {
 	label: string;
 	value: number;
+	tooltipValue: string;
 	color: string;
 	isActive: boolean;
 };
@@ -35,13 +38,23 @@ function resolveSeriesColor(
 	return FALLBACK_SERIES_COLOR;
 }
 
-function buildTooltipContent(
-	data: uPlot.AlignedData,
-	series: uPlot.Series[],
-	dataIdxs: Array<number | null>,
-	activeSeriesIdx: number | null,
-	u: uPlot,
-): TooltipContentItem[] {
+function buildTooltipContent({
+	data,
+	series,
+	dataIdxs,
+	activeSeriesIdx,
+	u,
+	yAxisUnit,
+	decimalPrecision,
+}: {
+	data: uPlot.AlignedData;
+	series: uPlot.Series[];
+	dataIdxs: Array<number | null>;
+	activeSeriesIdx: number | null;
+	u: uPlot;
+	yAxisUnit: string;
+	decimalPrecision?: PrecisionOption;
+}): TooltipContentItem[] {
 	const active: TooltipContentItem[] = [];
 	const rest: TooltipContentItem[] = [];
 
@@ -64,6 +77,7 @@ function buildTooltipContent(
 		const item: TooltipContentItem = {
 			label: String(s.label ?? ''),
 			value: Number.isNaN(value) ? 0 : value,
+			tooltipValue: getToolTipValue(value, yAxisUnit, decimalPrecision),
 			color: resolveSeriesColor(s.stroke, u, idx),
 			isActive,
 		};
@@ -83,6 +97,8 @@ export default function Tooltip({
 	dataIdxs,
 	uPlotInstance,
 	timezone,
+	yAxisUnit = '',
+	decimalPrecision,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const headerTitle = useMemo(() => {
@@ -98,14 +114,16 @@ export default function Tooltip({
 
 	const content = useMemo(
 		(): TooltipContentItem[] =>
-			buildTooltipContent(
-				uPlotInstance.data,
-				uPlotInstance.series,
+			buildTooltipContent({
+				data: uPlotInstance.data,
+				series: uPlotInstance.series,
 				dataIdxs,
-				seriesIdx,
-				uPlotInstance,
-			),
-		[uPlotInstance, seriesIdx, dataIdxs],
+				activeSeriesIdx: seriesIdx,
+				u: uPlotInstance,
+				yAxisUnit,
+				decimalPrecision,
+			}),
+		[uPlotInstance, seriesIdx, dataIdxs, yAxisUnit, decimalPrecision],
 	);
 
 	return (
@@ -140,7 +158,7 @@ export default function Tooltip({
 									className="tooltip-item-content"
 									style={{ color: item.color, fontWeight: item.isActive ? 700 : 400 }}
 								>
-									{item.label}: {item.value}
+									{item.label}: {item.tooltipValue}
 								</div>
 							</div>
 						)}
