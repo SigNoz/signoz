@@ -1,7 +1,7 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

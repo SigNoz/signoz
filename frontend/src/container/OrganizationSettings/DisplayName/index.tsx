@@ -1,10 +1,10 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Form, Input } from 'antd';
 import editOrg from 'api/organization/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {

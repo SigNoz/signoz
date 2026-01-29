@@ -1,4 +1,3 @@
-import ErrorModal from 'components/ErrorModal/ErrorModal';
 import {
 	createContext,
 	ReactNode,
@@ -7,6 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import ErrorModal from 'components/ErrorModal/ErrorModal';
 import APIError from 'types/api/error';
 
 interface ErrorModalContextType {

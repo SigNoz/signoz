@@ -1,5 +1,5 @@
-import './HostMetricTraces.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -21,14 +21,14 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { VIEWS } from '../constants';
 import { getHostTracesQueryPayload, selectedColumns } from './constants';
 import { getListColumns } from './utils';
+
+import './HostMetricTraces.styles.scss';
 
 interface Props {
 	timeRange: {

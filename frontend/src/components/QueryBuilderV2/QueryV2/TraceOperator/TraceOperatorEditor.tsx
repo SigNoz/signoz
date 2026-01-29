@@ -1,8 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable sonarjs/no-identical-functions */
 
-import '../QuerySearch/QuerySearch.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
@@ -27,7 +26,6 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -35,6 +33,8 @@ import { validateTraceOperatorQuery } from 'utils/queryValidationUtils';
 
 import { getTraceOperatorContextAtCursor } from './utils/traceOperatorContextUtils';
 import { getInvolvedQueriesInTraceOperator } from './utils/utils';
+
+import '../QuerySearch/QuerySearch.styles.scss';
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({

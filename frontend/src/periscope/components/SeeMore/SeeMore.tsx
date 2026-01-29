@@ -1,8 +1,8 @@
-import './SeeMore.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Popover } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+
+import './SeeMore.styles.scss';
 
 type SeeMoreProps = {
 	children: JSX.Element[];

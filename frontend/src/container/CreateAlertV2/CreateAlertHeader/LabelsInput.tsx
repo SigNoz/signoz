@@ -1,6 +1,6 @@
+import React, { useCallback, useState } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useState } from 'react';
 
 import { LabelInputState, LabelsInputProps } from './types';
 

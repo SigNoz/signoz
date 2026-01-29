@@ -1,3 +1,4 @@
+import { UseQueryResult } from 'react-query';
 import userEvent from '@testing-library/user-event';
 import { FiltersType, QuickFiltersSource } from 'components/QuickFilters/types';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
@@ -5,7 +6,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { quickFiltersAttributeValuesResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import { rest, server } from 'mocks-server/server';
-import { UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { SuccessResponse } from 'types/api';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';

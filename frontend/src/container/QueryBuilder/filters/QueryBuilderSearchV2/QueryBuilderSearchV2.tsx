@@ -1,6 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QueryBuilderSearchV2.styles.scss';
-
+import {
+	KeyboardEvent,
+	ReactElement,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
@@ -33,15 +40,6 @@ import {
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import type { BaseSelectRef } from 'rc-select';
-import {
-	KeyboardEvent,
-	ReactElement,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	BaseAutocompleteData,
@@ -69,6 +67,8 @@ import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
+
+import './QueryBuilderSearchV2.styles.scss';
 
 export interface ITag {
 	id?: string;

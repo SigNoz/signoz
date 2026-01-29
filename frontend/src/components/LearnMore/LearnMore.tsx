@@ -1,8 +1,8 @@
-import './LearnMore.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { ArrowUpRight } from 'lucide-react';
+
+import './LearnMore.styles.scss';
 
 type LearnMoreProps = {
 	text?: string;

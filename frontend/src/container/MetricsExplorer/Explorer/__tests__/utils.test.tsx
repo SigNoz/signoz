@@ -1,9 +1,9 @@
+import { UseQueryResult } from 'react-query';
 import { renderHook } from '@testing-library/react';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import {
 	MetricMetadata,

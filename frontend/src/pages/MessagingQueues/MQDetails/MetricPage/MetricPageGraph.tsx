@@ -1,5 +1,6 @@
-import './MetricPage.styles.scss';
-
+import { useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -7,11 +8,10 @@ import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
+
+import './MetricPage.styles.scss';
 
 function MetricPageGridGraph({
 	widgetData,

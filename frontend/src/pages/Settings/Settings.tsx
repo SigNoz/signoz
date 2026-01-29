@@ -1,5 +1,6 @@
-import './Settings.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
@@ -14,12 +15,11 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { USER_ROLES } from 'types/roles';
 
 import { getRoutes } from './utils';
+
+import './Settings.styles.scss';
 
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();

@@ -1,16 +1,16 @@
-import './CeleryOverviewDetails.styles.scss';
-
+import { useMemo } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Typography } from 'antd';
 import { RowData } from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { X } from 'lucide-react';
-import { useMemo } from 'react';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getFiltersFromKeyValue } from '../CeleryOverviewUtils';
 import OverviewRightPanelGraph from './OverviewRightPanelGraph';
 import ValueInfo from './ValueInfo';
+
+import './CeleryOverviewDetails.styles.scss';
 
 export default function CeleryOverviewDetails({
 	details,

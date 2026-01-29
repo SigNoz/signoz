@@ -1,8 +1,8 @@
+import { ChangeEvent } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Popover, Tooltip, Typography } from 'antd';
 import { ArrowDownWideNarrow, Check, Plus, Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { ChangeEvent } from 'react';
 
 interface SearchBarProps {
 	searchQuery: string;

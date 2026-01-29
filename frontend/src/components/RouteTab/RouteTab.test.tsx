@@ -1,5 +1,5 @@
-import { createMemoryHistory } from 'history';
 import { Router } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
 import RouteTab from './index';

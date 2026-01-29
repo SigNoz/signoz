@@ -1,9 +1,7 @@
-import './LogsDownloadOptionsMenu.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
 import { Button, message, Popover, Radio, Tooltip, Typography } from 'antd';
 import { downloadExportData } from 'api/v1/download/downloadExportData';
 import { Download, DownloadIcon, Loader2 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
@@ -11,6 +9,8 @@ import {
 	DownloadFormats,
 	DownloadRowCounts,
 } from './constants';
+
+import './LogsDownloadOptionsMenu.styles.scss';
 
 function convertTelemetryFieldKeyToText(key: TelemetryFieldKey): string {
 	const prefix = key.fieldContext ? `${key.fieldContext}.` : '';

@@ -1,6 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './NewWidget.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
+import { generatePath, useParams } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -34,11 +37,6 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import {
@@ -74,6 +72,8 @@ import {
 	placeWidgetAtBottom,
 	placeWidgetBetweenRows,
 } from './utils';
+
+import './NewWidget.styles.scss';
 
 function NewWidget({
 	selectedGraph,

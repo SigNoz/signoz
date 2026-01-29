@@ -4,11 +4,11 @@ import setupCommonMocks from '../../commonMocks';
 
 setupCommonMocks();
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import NodeDetails from 'container/InfraMonitoringK8s/Nodes/NodeDetails/NodeDetails';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
+import NodeDetails from 'container/InfraMonitoringK8s/Nodes/NodeDetails/NodeDetails';
 import store from 'store';
 
 const queryClient = new QueryClient();

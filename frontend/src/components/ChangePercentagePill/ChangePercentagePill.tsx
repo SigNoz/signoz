@@ -1,8 +1,8 @@
-import './ChangePercentagePill.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import cx from 'classnames';
 import { ArrowDown, ArrowUp } from 'lucide-react';
+
+import './ChangePercentagePill.styles.scss';
 
 interface ChangePercentagePillProps {
 	percentage: number;

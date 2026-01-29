@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Button, Popover, Select } from 'antd';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -9,7 +10,6 @@ import {
 } from 'pages/Logs/config';
 import PopoverContent from 'pages/Logs/PopoverContent';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 

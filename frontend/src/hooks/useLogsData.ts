@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
@@ -6,8 +8,6 @@ import {
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
 import {

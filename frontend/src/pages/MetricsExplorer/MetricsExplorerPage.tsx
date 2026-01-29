@@ -1,16 +1,16 @@
-import './MetricsExplorerPage.styles.scss';
-
+import { useMemo } from 'react';
+import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import history from 'lib/history';
-import { useMemo } from 'react';
-import { useLocation } from 'react-use';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, Views } from './constants';
+
+import './MetricsExplorerPage.styles.scss';
 
 function MetricsExplorerPage(): JSX.Element {
 	const { pathname } = useLocation();

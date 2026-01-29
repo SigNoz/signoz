@@ -1,8 +1,3 @@
-import { theme as antdTheme } from 'antd';
-import { ThemeConfig } from 'antd/es/config-provider/context';
-import get from 'api/browser/localstorage/get';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	createContext,
 	Dispatch,
@@ -14,6 +9,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { theme as antdTheme } from 'antd';
+import { ThemeConfig } from 'antd/es/config-provider/context';
+import get from 'api/browser/localstorage/get';
+import set from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { THEME_MODE } from './constant';
 

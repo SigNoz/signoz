@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
-import './IntegrationDetailPage.styles.scss';
-
+import { useState } from 'react';
+import { useMutation } from 'react-query';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
@@ -11,12 +11,12 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
-import { useState } from 'react';
-import { useMutation } from 'react-query';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
 import TestConnection, { ConnectionStates } from './TestConnection';
+
+import './IntegrationDetailPage.styles.scss';
 
 interface IntegrationDetailHeaderProps {
 	id: string;

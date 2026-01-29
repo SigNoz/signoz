@@ -1,7 +1,7 @@
+import { useCallback, useMemo } from 'react';
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ClickedData } from 'periscope/components/ContextMenu/types';
-import { useCallback, useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getGroupContextMenuConfig } from './contextConfig';

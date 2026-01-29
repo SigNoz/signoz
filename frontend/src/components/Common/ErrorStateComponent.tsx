@@ -1,8 +1,8 @@
-import './Common.styles.scss';
-
 import { Typography } from 'antd';
 
 import APIError from '../../types/api/error';
+
+import './Common.styles.scss';
 
 interface ErrorStateComponentProps {
 	message?: string;

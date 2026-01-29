@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Spin,
@@ -9,7 +10,6 @@ import {
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import { Info } from 'lucide-react';
-import { useCallback } from 'react';
 
 import { MetricsListItemRowData, MetricsTableProps } from './types';
 import { getMetricsTableColumns } from './utils';

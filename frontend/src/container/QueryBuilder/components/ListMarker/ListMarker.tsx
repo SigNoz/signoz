@@ -1,6 +1,6 @@
+import { memo } from 'react';
 import { EyeFilled, EyeInvisibleFilled } from '@ant-design/icons';
 import { ButtonProps } from 'antd';
-import { memo } from 'react';
 
 // ** Types
 import { ListMarkerProps } from './ListMarker.interfaces';

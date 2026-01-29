@@ -1,3 +1,7 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { WarningFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
@@ -8,10 +12,6 @@ import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';

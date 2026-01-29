@@ -1,3 +1,14 @@
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
+import { UseQueryResult } from 'react-query';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
@@ -14,17 +25,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';

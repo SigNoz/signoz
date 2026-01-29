@@ -1,3 +1,6 @@
+import { useCallback, useMemo } from 'react';
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -5,9 +8,6 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useMemo } from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';

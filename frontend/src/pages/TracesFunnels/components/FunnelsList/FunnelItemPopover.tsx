@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { Button, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import DeleteFunnel from '../DeleteFunnel/DeleteFunnel';

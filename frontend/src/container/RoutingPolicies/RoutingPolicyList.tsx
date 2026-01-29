@@ -1,6 +1,6 @@
+import { useMemo } from 'react';
 import { Button, Table, TableProps, Typography } from 'antd';
 import { RotateCw } from 'lucide-react';
-import { useMemo } from 'react';
 
 import RoutingPolicyListItem from './RoutingPolicyListItem';
 import { RoutingPolicy, RoutingPolicyListProps } from './types';

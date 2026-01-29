@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { render, screen } from 'tests/test-utils';
 
 import Threshold from '../Threshold';

@@ -1,5 +1,7 @@
-import './APIKeys.styles.scss';
-
+import { ChangeEvent, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useMutation } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Avatar,
@@ -44,13 +46,11 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { ChangeEvent, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
-import { useCopyToClipboard } from 'react-use';
 import APIError from 'types/api/error';
 import { APIKeyProps } from 'types/api/pat/types';
 import { USER_ROLES } from 'types/roles';
+
+import './APIKeys.styles.scss';
 
 dayjs.extend(relativeTime);
 

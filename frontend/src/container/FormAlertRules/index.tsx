@@ -1,5 +1,8 @@
-import './FormAlertRules.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
@@ -28,11 +31,6 @@ import { isEmpty, isEqual } from 'lodash-es';
 import { BellDot, ExternalLink } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQueryClient } from 'react-query';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -60,6 +58,8 @@ import {
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
 import { getSelectedQueryOptions } from './utils';
+
+import './FormAlertRules.styles.scss';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',

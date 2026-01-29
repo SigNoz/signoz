@@ -1,3 +1,5 @@
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Button, Collapse, Input, Select, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
@@ -13,8 +15,6 @@ import { DataType } from 'container/LogDetailedView/TableView';
 import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {

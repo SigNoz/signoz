@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
@@ -15,7 +16,6 @@ import AlertLabels, {
 	AlertLabelsProps,
 } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { useMemo } from 'react';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 

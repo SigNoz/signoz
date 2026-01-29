@@ -1,5 +1,6 @@
-import './QueryBuilder.styles.scss';
-
+// ** Constants
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button, Col, Divider, Row, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import {
@@ -12,15 +13,14 @@ import ROUTES from 'constants/routes';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
-// ** Constants
-import { memo, useEffect, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 // ** Components
 import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
+
+import './QueryBuilder.styles.scss';
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,

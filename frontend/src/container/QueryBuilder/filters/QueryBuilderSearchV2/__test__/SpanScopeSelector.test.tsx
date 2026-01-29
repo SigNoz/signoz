@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	fireEvent,
 	render,
@@ -7,7 +8,6 @@ import {
 } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	IBuilderQuery,
 	Query,

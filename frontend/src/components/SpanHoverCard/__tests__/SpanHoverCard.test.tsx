@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { TimezoneContextType } from 'providers/Timezone';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import SpanHoverCard from '../SpanHoverCard';
-import { TimezoneContextType } from 'providers/Timezone';
 
 // Mock timezone provider so SpanHoverCard can use useTimezone without a real context
 jest.mock('providers/Timezone', () => ({

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { MemoryRouter, Route } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 
 import SaveView from '..';

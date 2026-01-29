@@ -1,5 +1,6 @@
-import './HostMetricsDetail.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -37,9 +38,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -60,6 +58,8 @@ import HostMetricLogsDetailedView from './HostMetricsLogs/HostMetricLogsDetailed
 import HostMetricTraces from './HostMetricTraces/HostMetricTraces';
 import Metrics from './Metrics/Metrics';
 import Processes from './Processes/Processes';
+
+import './HostMetricsDetail.styles.scss';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function HostMetricsDetails({
 	host,

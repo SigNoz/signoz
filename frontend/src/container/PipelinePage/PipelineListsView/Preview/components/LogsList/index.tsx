@@ -1,5 +1,3 @@
-import './styles.scss';
-
 import { ExpandAltOutlined } from '@ant-design/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -7,6 +5,8 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
+
+import './styles.scss';
 
 function LogsList({ logs }: LogsListProps): JSX.Element {
 	const {

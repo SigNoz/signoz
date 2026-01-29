@@ -1,8 +1,8 @@
+import { useMutation, UseMutationResult } from 'react-query';
 import updateMetricMetadata, {
 	UpdateMetricMetadataProps,
 	UpdateMetricMetadataResponse,
 } from 'api/metricsExplorer/updateMetricMetadata';
-import { useMutation, UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 export interface UseUpdateMetricMetadataProps {

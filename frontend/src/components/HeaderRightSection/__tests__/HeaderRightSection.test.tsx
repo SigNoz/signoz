@@ -2,11 +2,11 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
 // Mock dependencies before imports
+import { useLocation } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { useLocation } from 'react-router-dom';
 
 import HeaderRightSection from '../HeaderRightSection';
 

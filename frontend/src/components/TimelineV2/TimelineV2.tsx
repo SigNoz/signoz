@@ -1,14 +1,14 @@
-import './TimelineV2.styles.scss';
-
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import {
 	getIntervals,
 	getMinimumIntervalsBasedOnWidth,
 	Interval,
 } from './utils';
+
+import './TimelineV2.styles.scss';
 
 interface ITimelineV2Props {
 	startTimestamp: number;

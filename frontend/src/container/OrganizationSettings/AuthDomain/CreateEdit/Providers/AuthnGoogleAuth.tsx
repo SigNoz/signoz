@@ -1,7 +1,7 @@
-import './Providers.styles.scss';
-
 import { Callout } from '@signozhq/callout';
 import { Form, Input, Typography } from 'antd';
+
+import './Providers.styles.scss';
 
 function ConfigureGoogleAuthAuthnProvider({
 	isCreate,

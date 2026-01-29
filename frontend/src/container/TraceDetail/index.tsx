@@ -1,5 +1,4 @@
-import './TraceDetails.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Col, Layout, Typography } from 'antd';
 import cx from 'classnames';
@@ -25,7 +24,6 @@ import history from 'lib/history';
 import { map } from 'lodash-es';
 import { PanelRight } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect, useMemo, useState } from 'react';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
@@ -43,6 +41,8 @@ import {
 	INTERVAL_UNITS,
 	SPAN_DETAILS_LEFT_COL_WIDTH,
 } from './utils';
+
+import './TraceDetails.styles.scss';
 
 const { Sider } = Layout;
 

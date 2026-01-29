@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
@@ -16,8 +18,6 @@ import {
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { Info } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
 import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

@@ -2,11 +2,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable sonarjs/no-duplicate-string */
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { TraceAggregation } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import DomainMetrics from './DomainMetrics';

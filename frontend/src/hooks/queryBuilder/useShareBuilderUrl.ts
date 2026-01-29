@@ -1,5 +1,5 @@
-import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect } from 'react';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useGetCompositeQueryParam } from './useGetCompositeQueryParam';

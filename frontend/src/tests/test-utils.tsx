@@ -1,4 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import React, { ReactElement } from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
@@ -12,10 +16,6 @@ import {
 	QueryBuilderProvider,
 } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
-import React, { ReactElement } from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import store from 'store';

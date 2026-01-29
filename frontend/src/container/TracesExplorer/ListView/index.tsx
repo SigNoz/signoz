@@ -1,5 +1,14 @@
-import './ListView.styles.scss';
-
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
@@ -25,17 +34,6 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ArrowUp10, Minus } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	memo,
-	MutableRefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
@@ -46,6 +44,8 @@ import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, tableStyles } from './styles';
 import { getListColumns, transformDataWithDate } from './utils';
+
+import './ListView.styles.scss';
 
 interface ListViewProps {
 	isFilterApplied: boolean;

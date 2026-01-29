@@ -1,7 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
-import './ClientSideQBSearch.styles.scss';
-
+import {
+	KeyboardEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select, Tag, Tooltip } from 'antd';
 import {
@@ -34,14 +40,6 @@ import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
-	KeyboardEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -51,6 +49,8 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
+
+import './ClientSideQBSearch.styles.scss';
 
 export interface AttributeKey {
 	key: string;

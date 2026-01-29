@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import getTriggeredApi from 'api/alerts/getTriggered';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
@@ -5,8 +7,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
 import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 
 import { Value } from './Filter';
 import TriggerComponent from './TriggeredAlert';

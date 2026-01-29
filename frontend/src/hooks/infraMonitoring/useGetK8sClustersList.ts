@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import {
 	getK8sClustersList,
 	K8sClustersListPayload,
 	K8sClustersListResponse,
 } from 'api/infraMonitoring/getK8sClustersList';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseGetK8sClustersList = (

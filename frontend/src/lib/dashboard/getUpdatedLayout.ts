@@ -1,5 +1,5 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Layout } from 'react-grid-layout';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 export const getUpdatedLayout = (layout?: Layout[]): Layout[] => {
 	let widgetLayout = layout;

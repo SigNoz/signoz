@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
 import GraphManager from 'container/GridCardLayout/GridCard/FullView/GraphManager';
@@ -10,7 +11,6 @@ import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramCha
 import _noop from 'lodash-es/noop';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { buildHistogramData } from './histogram';
 import { PanelWrapperProps } from './panelWrapper.types';

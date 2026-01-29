@@ -1,11 +1,11 @@
-import './ErrorBoundaryFallback.styles.scss';
-
+import { useCallback } from 'react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Home, LifeBuoy } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
-import { useCallback } from 'react';
+
+import './ErrorBoundaryFallback.styles.scss';
 
 function ErrorBoundaryFallback(): JSX.Element {
 	const handleReload = (): void => {

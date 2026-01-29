@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { TelemetryFieldKey } from 'api/v5/v5';
@@ -8,7 +9,6 @@ import { formUrlParams } from 'container/TraceDetail/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
-import { Link } from 'react-router-dom';
 import { ILog } from 'types/api/logs/log';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 

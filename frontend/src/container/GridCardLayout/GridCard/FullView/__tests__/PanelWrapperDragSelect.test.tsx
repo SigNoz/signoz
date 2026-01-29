@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 
+import { MutableRefObject } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { MutableRefObject } from 'react';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

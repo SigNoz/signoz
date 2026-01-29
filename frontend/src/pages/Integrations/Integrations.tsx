@@ -1,14 +1,14 @@
-import './Integrations.styles.scss';
-
-import logEvent from 'api/common/logEvent';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import logEvent from 'api/common/logEvent';
+import useUrlQuery from 'hooks/useUrlQuery';
 
 import Header from './Header';
 import IntegrationDetailPage from './IntegrationDetailPage/IntegrationDetailPage';
 import IntegrationsList from './IntegrationsList';
 import { INTEGRATION_TELEMETRY_EVENTS } from './utils';
+
+import './Integrations.styles.scss';
 
 function Integrations(): JSX.Element {
 	const urlQuery = useUrlQuery();

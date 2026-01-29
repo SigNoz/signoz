@@ -1,6 +1,6 @@
-import { Chart, TimeUnit } from 'chart.js';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { Chart, TimeUnit } from 'chart.js';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

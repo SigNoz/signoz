@@ -1,4 +1,3 @@
-import { Form, Input, InputProps, InputRef } from 'antd';
 import {
 	ChangeEventHandler,
 	FocusEventHandler,
@@ -7,6 +6,7 @@ import {
 	ReactNode,
 	Ref,
 } from 'react';
+import { Form, Input, InputProps, InputRef } from 'antd';
 
 function InputComponent({
 	value,

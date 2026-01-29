@@ -1,5 +1,4 @@
-import './WidgetGraph.styles.scss';
-
+import { memo } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { Card } from 'container/GridCardLayout/styles';
@@ -7,13 +6,14 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { memo } from 'react';
 import { Warning } from 'types/api';
 
 import { WidgetGraphContainerProps } from '../../types';
 import PlotTag from './PlotTag';
 import { AlertIconContainer, Container } from './styles';
 import WidgetGraphComponent from './WidgetGraphContainer';
+
+import './WidgetGraph.styles.scss';
 
 function WidgetGraph({
 	selectedGraph,

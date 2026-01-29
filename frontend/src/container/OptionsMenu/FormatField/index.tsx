@@ -1,6 +1,6 @@
-import { RadioChangeEvent } from 'antd';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RadioChangeEvent } from 'antd';
 
 import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';

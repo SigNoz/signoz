@@ -1,9 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as appContextHooks from 'providers/App/App';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
 import store from 'store';
 
 import ROUTES from '../../../../constants/routes';

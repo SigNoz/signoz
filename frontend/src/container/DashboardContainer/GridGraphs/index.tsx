@@ -1,6 +1,6 @@
+import { FullScreenHandle } from 'react-full-screen';
 import GridGraphLayout from 'container/GridCardLayout';
 import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtils';
-import { FullScreenHandle } from 'react-full-screen';
 
 import { GridComponentSliderContainer } from './styles';
 

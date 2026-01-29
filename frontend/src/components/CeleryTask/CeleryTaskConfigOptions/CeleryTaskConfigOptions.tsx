@@ -1,16 +1,16 @@
-import './CeleryTaskConfigOptions.styles.scss';
-
+import { useHistory, useLocation } from 'react-router-dom';
 import { Select, Spin, Typography } from 'antd';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useHistory, useLocation } from 'react-router-dom';
 
 import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
 } from '../CeleryUtils';
 import { useCeleryFilterOptions } from '../useCeleryFilterOptions';
+
+import './CeleryTaskConfigOptions.styles.scss';
 
 function CeleryTaskConfigOptions(): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(

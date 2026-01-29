@@ -1,14 +1,14 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { Redirect, useLocation } from 'react-router-dom';
 import { Typography } from 'antd';
 import getByErrorType from 'api/errors/getByErrorTypeAndService';
 import getById from 'api/errors/getById';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import ErrorDetailsContainer from 'container/ErrorDetails';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { Redirect, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

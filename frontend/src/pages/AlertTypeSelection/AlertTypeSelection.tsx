@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from 'react';
 import { Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
@@ -6,7 +7,6 @@ import SelectAlertType from 'container/CreateAlertRule/SelectAlertType';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 function AlertTypeSelectionPage(): JSX.Element {

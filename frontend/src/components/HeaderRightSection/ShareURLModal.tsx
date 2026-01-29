@@ -1,3 +1,7 @@
+import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { matchPath, useLocation } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Switch, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -6,10 +10,6 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import { Check, Info, Link2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { matchPath, useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

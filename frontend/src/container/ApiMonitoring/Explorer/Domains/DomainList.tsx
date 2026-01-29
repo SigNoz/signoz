@@ -1,5 +1,5 @@
-import '../Explorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -14,8 +14,6 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
@@ -26,6 +24,8 @@ import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import { columnsConfig, formatDataForTable } from '../../utils';
 import DomainDetails from './DomainDetails/DomainDetails';
+
+import '../Explorer.styles.scss';
 
 function DomainList(): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();

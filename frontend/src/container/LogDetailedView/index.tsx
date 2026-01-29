@@ -1,3 +1,6 @@
+import { memo, useCallback } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ROUTES from 'constants/routes';
@@ -5,9 +8,6 @@ import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import getStep from 'lib/getStep';
 import { getIdConditions } from 'pages/Logs/utils';
-import { memo, useCallback } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';

@@ -1,5 +1,5 @@
-import './CreateAlertChannels.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import createEmail from 'api/channels/createEmail';
 import createMsTeamsApi from 'api/channels/createMsTeams';
@@ -19,8 +19,6 @@ import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
 import {
@@ -39,6 +37,8 @@ import {
 	PagerInitialConfig,
 } from './defaults';
 import { isChannelType } from './utils';
+
+import './CreateAlertChannels.styles.scss';
 
 function CreateAlertChannels({
 	preType = ChannelType.Slack,

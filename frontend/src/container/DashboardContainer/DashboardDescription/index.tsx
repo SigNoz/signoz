@@ -1,5 +1,8 @@
-import './Description.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useCopyToClipboard } from 'react-use';
 import { PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -41,11 +44,6 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useCopyToClipboard } from 'react-use';
 import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
@@ -59,6 +57,8 @@ import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import { VariablesSettingsTab } from './types';
 import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
+
+import './Description.styles.scss';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;

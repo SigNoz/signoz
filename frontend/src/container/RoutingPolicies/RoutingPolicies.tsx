@@ -1,17 +1,17 @@
-import './styles.scss';
-
+import { ChangeEvent, useMemo } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Input, Tooltip, Typography } from 'antd';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { ChangeEvent, useMemo } from 'react';
 import { USER_ROLES } from 'types/roles';
 
 import DeleteRoutingPolicy from './DeleteRoutingPolicy';
 import RoutingPolicyDetails from './RoutingPolicyDetails';
 import RoutingPolicyList from './RoutingPolicyList';
 import useRoutingPolicies from './useRoutingPolicies';
+
+import './styles.scss';
 
 function RoutingPolicies(): JSX.Element {
 	const { user } = useAppContext();

@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import {
 	getK8sNamespacesList,
 	K8sNamespacesListPayload,
 	K8sNamespacesListResponse,
 } from 'api/infraMonitoring/getK8sNamespacesList';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseGetK8sNamespacesList = (

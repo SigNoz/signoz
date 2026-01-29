@@ -1,10 +1,10 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Tooltip } from 'antd';
 import refreshPaymentStatus from 'api/v3/licenses/put';
 import cx from 'classnames';
 import { RefreshCcw } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 function RefreshPaymentStatus({
 	btnShape,

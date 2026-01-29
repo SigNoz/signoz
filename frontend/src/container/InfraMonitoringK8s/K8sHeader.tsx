@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import './InfraMonitoringK8s.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Button, Select } from 'antd';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { Filter, SlidersHorizontal } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -15,6 +13,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import { INFRA_MONITORING_K8S_PARAMS_KEYS, K8sCategory } from './constants';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
 import { IEntityColumn } from './utils';
+
+import './InfraMonitoringK8s.styles.scss';
 
 interface K8sHeaderProps {
 	selectedGroupBy: BaseAutocompleteData[];

@@ -1,12 +1,12 @@
 /* eslint-disable react/button-has-type */
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import * as useGetHostListHooks from 'hooks/infraMonitoring/useGetHostList';
 import * as appContextHooks from 'providers/App/App';
 import * as timezoneHooks from 'providers/Timezone';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 

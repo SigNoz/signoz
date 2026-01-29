@@ -1,13 +1,13 @@
-import './ColorSelector.styles.scss';
-
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { DownOutlined } from '@ant-design/icons';
 import { Button, ColorPicker, Dropdown, Space } from 'antd';
 import { Color } from 'antd/es/color-picker';
 import { MenuProps } from 'antd/lib';
 import useDebounce from 'hooks/useDebounce';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import CustomColor from './CustomColor';
+
+import './ColorSelector.styles.scss';
 
 function ColorSelector({
 	thresholdColor = 'Red',

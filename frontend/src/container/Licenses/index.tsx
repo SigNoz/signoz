@@ -1,11 +1,11 @@
-import './Licenses.styles.scss';
-
+import { useTranslation } from 'react-i18next';
 import Spinner from 'components/Spinner';
 import { Wrench } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useTranslation } from 'react-i18next';
 
 import ApplyLicenseForm from './ApplyLicenseForm';
+
+import './Licenses.styles.scss';
 
 function Licenses(): JSX.Element {
 	const { t, ready: translationsReady } = useTranslation(['licenses']);

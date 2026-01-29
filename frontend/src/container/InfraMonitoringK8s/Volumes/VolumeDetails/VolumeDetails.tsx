@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import '../../EntityDetailsUtils/entityDetails.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -13,14 +13,14 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
 import { X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import VolumeMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import { getVolumeQueryPayload, volumeWidgetInfo } from './constants';
 import { VolumeDetailsProps } from './VoumeDetails.interfaces';
+
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 function VolumeDetails({
 	volume,

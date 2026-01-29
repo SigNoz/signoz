@@ -1,6 +1,6 @@
-import './customerStoryCard.styles.scss';
-
 import { Avatar, Card, Space } from 'antd';
+
+import './customerStoryCard.styles.scss';
 
 interface CustomerStoryCardProps {
 	avatar: string;

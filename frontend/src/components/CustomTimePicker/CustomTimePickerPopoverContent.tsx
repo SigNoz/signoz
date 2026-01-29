@@ -1,5 +1,12 @@
-import './CustomTimePicker.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -16,15 +23,6 @@ import {
 import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
@@ -32,6 +30,8 @@ import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
+
+import './CustomTimePicker.styles.scss';
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 

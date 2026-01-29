@@ -1,9 +1,9 @@
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { themeColors } from 'constants/theme';
 import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {

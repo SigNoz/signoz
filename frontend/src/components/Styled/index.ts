@@ -1,3 +1,4 @@
+import { HTMLAttributes } from 'react';
 import {
 	Button,
 	ButtonProps,
@@ -14,7 +15,6 @@ import {
 } from 'antd';
 import { TextProps } from 'antd/lib/typography/Text';
 import { TitleProps } from 'antd/lib/typography/Title';
-import { HTMLAttributes } from 'react';
 import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';

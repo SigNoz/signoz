@@ -1,17 +1,18 @@
-import './ReactI18';
-import 'styles.scss';
-
+import { createRoot } from 'react-dom/client';
+import { HelmetProvider } from 'react-helmet-async';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
 import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
-import { createRoot } from 'react-dom/client';
-import { HelmetProvider } from 'react-helmet-async';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
 import store from 'store';
 import APIError from 'types/api/error';
+
+import './ReactI18';
+
+import 'styles.scss';
 
 const queryClient = new QueryClient({
 	defaultOptions: {

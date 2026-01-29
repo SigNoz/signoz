@@ -1,6 +1,14 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './Query.styles.scss';
-
+// ** Hooks
+import {
+	ChangeEvent,
+	memo,
+	ReactNode,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
+import { useLocation } from 'react-use';
 import { Col, Input, Row, Tooltip, Typography } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
@@ -26,16 +34,6 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-// ** Hooks
-import {
-	ChangeEvent,
-	memo,
-	ReactNode,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
-import { useLocation } from 'react-use';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
@@ -44,6 +42,8 @@ import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 import SpaceAggregationOptions from '../SpaceAggregationOptions/SpaceAggregationOptions';
 // ** Types
 import { QueryProps } from './Query.interfaces';
+
+import './Query.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export const Query = memo(function Query({

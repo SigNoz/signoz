@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultOptionsQuery,
@@ -5,7 +6,6 @@ import {
 } from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { Dispatch, SetStateAction } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';

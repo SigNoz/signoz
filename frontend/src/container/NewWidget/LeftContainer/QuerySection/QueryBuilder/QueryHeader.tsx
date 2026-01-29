@@ -1,5 +1,4 @@
-import './QueryHeader.styles.scss';
-
+import { ReactNode, useState } from 'react';
 import {
 	DeleteOutlined,
 	DownOutlined,
@@ -8,9 +7,10 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Row } from 'antd';
-import { ReactNode, useState } from 'react';
 
 import { QueryWrapper } from '../styles';
+
+import './QueryHeader.styles.scss';
 
 interface IQueryHeaderProps {
 	disabled: boolean;

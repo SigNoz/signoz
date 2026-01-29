@@ -1,5 +1,4 @@
-import './CreateEdit.styles.scss';
-
+import { useState } from 'react';
 import { Button, Form, Modal } from 'antd';
 import put from 'api/v1/domains/id/put';
 import post from 'api/v1/domains/post';
@@ -7,7 +6,6 @@ import { FeatureKeys } from 'constants/features';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useState } from 'react';
 import APIError from 'types/api/error';
 import { GettableAuthDomain } from 'types/api/v1/domains/list';
 import { PostableAuthDomain } from 'types/api/v1/domains/post';
@@ -16,6 +14,8 @@ import AuthnProviderSelector from './AuthnProviderSelector';
 import ConfigureGoogleAuthAuthnProvider from './Providers/AuthnGoogleAuth';
 import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
 import ConfigureSAMLAuthnProvider from './Providers/AuthnSAML';
+
+import './CreateEdit.styles.scss';
 
 interface CreateOrEditProps {
 	isCreate: boolean;

@@ -1,6 +1,5 @@
-import '../MySettings.styles.scss';
-import './UserInfo.styles.scss';
-
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Input, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
@@ -8,9 +7,10 @@ import editUser from 'api/v1/user/id/update';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, FileTerminal, MailIcon, UserIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
+
+import '../MySettings.styles.scss';
+import './UserInfo.styles.scss';
 
 function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();

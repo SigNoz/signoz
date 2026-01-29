@@ -1,7 +1,7 @@
+import { useMutation, UseMutationResult } from 'react-query';
 import updateAlertRule, {
 	UpdateAlertRuleResponse,
 } from 'api/alerts/updateAlertRule';
-import { useMutation, UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 

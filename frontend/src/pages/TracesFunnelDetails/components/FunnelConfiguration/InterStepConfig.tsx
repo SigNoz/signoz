@@ -1,10 +1,10 @@
-import './InterStepConfig.styles.scss';
-
 import { Divider } from 'antd';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
+
+import './InterStepConfig.styles.scss';
 
 function InterStepConfig({
 	index,

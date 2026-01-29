@@ -1,6 +1,6 @@
-import './NoData.styles.scss';
-
 import { Typography } from 'antd';
+
+import './NoData.styles.scss';
 
 interface INoDataProps {
 	name: string;

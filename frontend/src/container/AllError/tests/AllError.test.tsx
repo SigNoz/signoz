@@ -1,14 +1,14 @@
-import '@testing-library/jest-dom';
-
+import { Provider, useSelector } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import TimezoneProvider from 'providers/Timezone';
-import { Provider, useSelector } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
+
+import '@testing-library/jest-dom';
 
 import * as appContextHooks from '../../../providers/App/App';
 import { LicenseEvent } from '../../../types/api/licensesV3/getActive';

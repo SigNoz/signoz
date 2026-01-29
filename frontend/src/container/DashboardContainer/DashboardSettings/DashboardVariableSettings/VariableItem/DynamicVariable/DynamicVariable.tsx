@@ -1,5 +1,11 @@
-import './DynamicVariable.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select, Typography } from 'antd';
 import CustomSelect from 'components/NewSelect/CustomSelect';
@@ -9,16 +15,10 @@ import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { Info } from 'lucide-react';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
 import { FieldKey } from 'types/api/dynamicVariables/getFieldKeys';
 import { isRetryableError as checkIfRetryableError } from 'utils/errorUtils';
+
+import './DynamicVariable.styles.scss';
 
 enum AttributeSource {
 	ALL_TELEMETRY = 'All telemetry',

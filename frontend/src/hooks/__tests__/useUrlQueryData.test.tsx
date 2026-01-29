@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
+import { Router } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
-import { Router } from 'react-router-dom';
 
 import useUrlQueryData from '../useUrlQueryData';
 

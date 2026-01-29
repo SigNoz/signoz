@@ -1,3 +1,4 @@
+import { I18nextProvider } from 'react-i18next';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -5,7 +6,6 @@ import {
 	IntegrationType,
 	RequestIntegrationBtn,
 } from 'pages/Integrations/RequestIntegrationBtn';
-import { I18nextProvider } from 'react-i18next';
 import i18n from 'ReactI18';
 
 describe('Request AWS integration', () => {

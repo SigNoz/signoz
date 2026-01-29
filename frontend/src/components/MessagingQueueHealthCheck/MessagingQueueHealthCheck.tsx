@@ -1,14 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './MessagingQueueHealthCheck.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import cx from 'classnames';
 import { useOnboardingStatus } from 'hooks/messagingQueue/useOnboardingStatus';
 import { Bolt, FolderTree } from 'lucide-react';
 import { MessagingQueueHealthCheckService } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useState } from 'react';
 
 import AttributeCheckList from './AttributeCheckList';
+
+import './MessagingQueueHealthCheck.styles.scss';
 
 interface MessagingQueueHealthCheckProps {
 	serviceToInclude: string[];

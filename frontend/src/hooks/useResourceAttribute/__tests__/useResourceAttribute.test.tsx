@@ -1,8 +1,8 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Router } from 'react-router-dom';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { AppProvider } from 'providers/App/App';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Router } from 'react-router-dom';
 
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';

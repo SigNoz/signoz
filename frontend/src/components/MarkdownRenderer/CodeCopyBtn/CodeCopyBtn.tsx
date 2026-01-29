@@ -1,9 +1,9 @@
 /* eslint-disable prefer-destructuring */
-import './CodeCopyBtn.scss';
-
+import React, { useState } from 'react';
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
 import cx from 'classnames';
-import React, { useState } from 'react';
+
+import './CodeCopyBtn.scss';
 
 function CodeCopyBtn({
 	children,

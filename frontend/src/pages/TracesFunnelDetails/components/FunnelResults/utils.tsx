@@ -1,5 +1,5 @@
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Link } from 'react-router-dom';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 export const topTracesTableColumns = [
 	{

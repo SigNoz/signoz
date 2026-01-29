@@ -1,5 +1,7 @@
-import './AutoRefreshV2.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { useInterval } from 'react-use';
 import { CaretDownFilled } from '@ant-design/icons';
 import { Button, Checkbox, Popover, Typography } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -10,10 +12,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
 import { Check } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -26,6 +24,8 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { refreshIntervalOptions } from './constants';
 import { ButtonContainer } from './styles';
+
+import './AutoRefreshV2.styles.scss';
 
 const DEFAULT_REFRESH_INTERVAL = '30s';
 

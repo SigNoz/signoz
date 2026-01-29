@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import getTraceV2 from 'api/trace/getTraceV2';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	GetTraceV2PayloadProps,

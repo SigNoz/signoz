@@ -1,10 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { Card, Form, Input, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { useTranslation } from 'react-i18next';
 
 import { SaveButton } from './styles';
 import { SaveViewFormProps, SaveViewWithNameProps } from './types';

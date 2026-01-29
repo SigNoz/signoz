@@ -1,5 +1,6 @@
-import './LogsExplorerChart.styles.scss';
-
+import { memo, useCallback, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
@@ -9,15 +10,14 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
-import { memo, useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { getColorsForSeverityLabels } from './utils';
+
+import './LogsExplorerChart.styles.scss';
 
 function LogsExplorerChart({
 	data,

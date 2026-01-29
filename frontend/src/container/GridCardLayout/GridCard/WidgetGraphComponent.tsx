@@ -1,5 +1,13 @@
-import '../GridCardLayout.styles.scss';
-
+import {
+	Dispatch,
+	RefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -20,16 +28,6 @@ import {
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	RefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { EQueryType } from 'types/common/dashboard';
@@ -43,6 +41,8 @@ import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
+
+import '../GridCardLayout.styles.scss';
 
 function WidgetGraphComponent({
 	widget,

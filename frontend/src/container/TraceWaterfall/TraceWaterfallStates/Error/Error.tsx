@@ -1,7 +1,7 @@
-import './Error.styles.scss';
-
 import { Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
+
+import './Error.styles.scss';
 
 interface IErrorProps {
 	error: AxiosError;

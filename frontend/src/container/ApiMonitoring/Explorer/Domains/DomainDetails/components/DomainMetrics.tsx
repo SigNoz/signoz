@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useQueries } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -8,8 +10,6 @@ import {
 	getDomainMetricsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useMemo } from 'react';
-import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';

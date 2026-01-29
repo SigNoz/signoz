@@ -1,7 +1,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './DataSource.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -22,10 +23,9 @@ import {
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Blocks, Check } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import './DataSource.styles.scss';
 
 export interface DataSourceType {
 	id?: string;

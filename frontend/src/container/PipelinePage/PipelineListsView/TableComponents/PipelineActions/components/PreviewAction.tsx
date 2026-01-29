@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { EyeFilled } from '@ant-design/icons';
 import { Divider, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
-import { useState } from 'react';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import { iconStyle } from '../../../config';

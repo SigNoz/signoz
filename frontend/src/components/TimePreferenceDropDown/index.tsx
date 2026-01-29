@@ -1,5 +1,4 @@
-import './TimePreference.styles.scss';
-
+import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Typography } from 'antd';
 import TimeItems, {
@@ -7,9 +6,10 @@ import TimeItems, {
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
 import { Globe } from 'lucide-react';
-import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 
 import { menuItems } from './config';
+
+import './TimePreference.styles.scss';
 
 function TimePreference({
 	setSelectedTime,

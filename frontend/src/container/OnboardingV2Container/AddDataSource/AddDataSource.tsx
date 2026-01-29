@@ -1,5 +1,4 @@
-import '../OnboardingV2.styles.scss';
-
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -21,11 +20,12 @@ import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links.json';
+
+import '../OnboardingV2.styles.scss';
 
 const { Header } = Layout;
 

@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
@@ -21,10 +25,6 @@ import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

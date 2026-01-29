@@ -1,8 +1,8 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { Card, Col, Empty, Input, Row, Select, Skeleton } from 'antd';
 import { Gauge } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

@@ -1,8 +1,8 @@
+import React from 'react';
 import { CustomMultiSelect } from 'components/NewSelect';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import React from 'react';
 import { WidgetRow, Widgets } from 'types/api/dashboard/getAll';
 
 export function WidgetSelector({

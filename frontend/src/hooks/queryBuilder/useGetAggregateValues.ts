@@ -1,6 +1,6 @@
-import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	IAttributeValuesResponse,

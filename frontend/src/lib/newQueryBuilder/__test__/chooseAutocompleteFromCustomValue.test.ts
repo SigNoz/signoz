@@ -1,10 +1,11 @@
-import { chooseAutocompleteFromCustomValue } from '../chooseAutocompleteFromCustomValue';
 import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
+
 import {
-	DataTypes,
 	BaseAutocompleteData,
+	DataTypes,
 } from '../../../types/api/queryBuilder/queryAutocompleteResponse';
+import { chooseAutocompleteFromCustomValue } from '../chooseAutocompleteFromCustomValue';
 
 describe('chooseAutocompleteFromCustomValue', () => {
 	const source: BaseAutocompleteData[] = [

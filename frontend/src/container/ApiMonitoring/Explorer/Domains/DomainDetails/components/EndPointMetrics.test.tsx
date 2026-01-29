@@ -2,10 +2,10 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable sonarjs/no-duplicate-string */
+import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
 import EndPointMetrics from './EndPointMetrics';

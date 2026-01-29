@@ -1,7 +1,10 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './IngestionSettings.styles.scss';
-
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useMutation } from 'react-query';
+import { useHistory } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -63,11 +66,6 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 import { ErrorResponse } from 'types/api';
 import {
 	AddLimitProps,
@@ -81,6 +79,8 @@ import {
 import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
+
+import './IngestionSettings.styles.scss';
 
 const { Option } = Select;
 

@@ -1,3 +1,9 @@
+import { forwardRef, memo, useCallback, useMemo } from 'react';
+import {
+	TableComponents,
+	TableVirtuoso,
+	TableVirtuosoHandle,
+} from 'react-virtuoso';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
@@ -8,12 +14,6 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
-import { forwardRef, memo, useCallback, useMemo } from 'react';
-import {
-	TableComponents,
-	TableVirtuoso,
-	TableVirtuosoHandle,
-} from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 
 import { getInfinityDefaultStyles } from './config';

@@ -1,10 +1,10 @@
+import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Table, Typography } from 'antd';
 import {
 	endPointStatusCodeColumns,
 	getFormattedEndPointStatusCodeData,
 } from 'container/ApiMonitoring/utils';
-import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
 import ErrorState from './ErrorState';

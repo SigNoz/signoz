@@ -1,8 +1,8 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import '../InfraMonitoringK8s.styles.scss';
-import './K8sClustersList.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -21,9 +21,6 @@ import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -47,6 +44,9 @@ import {
 	getK8sClustersListQuery,
 	K8sClustersRowData,
 } from './utils';
+
+import '../InfraMonitoringK8s.styles.scss';
+import './K8sClustersList.styles.scss';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sClustersList({
 	isFiltersVisible,

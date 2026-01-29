@@ -1,5 +1,3 @@
-import './ComponentSlider.styles.scss';
-
 import { Card, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
@@ -13,6 +11,8 @@ import { v4 as uuid } from 'uuid';
 import { PANEL_TYPES_INITIAL_QUERY } from './constants';
 import menuItems from './menuItems';
 import { Text } from './styles';
+
+import './ComponentSlider.styles.scss';
 
 function DashboardGraphSlider(): JSX.Element {
 	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();

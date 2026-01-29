@@ -1,5 +1,5 @@
-import './entityTraces.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
@@ -23,8 +23,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -33,6 +31,8 @@ import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
 } from '../utils';
+
+import './entityTraces.styles.scss';
 
 interface Props {
 	timeRange: {

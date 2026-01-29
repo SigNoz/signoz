@@ -1,12 +1,10 @@
-import './CeleryTaskGraph.style.scss';
-
+import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Card, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -23,6 +21,8 @@ import {
 	celeryTasksByWorkerWidgetData,
 } from './CeleryTaskGraphUtils';
 import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
+
+import './CeleryTaskGraph.style.scss';
 
 export default function CeleryTaskGraphGrid({
 	onClick,

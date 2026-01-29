@@ -7,12 +7,12 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
+import { I18nextProvider } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { I18nextProvider } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import i18n from 'ReactI18';
 import {
 	fireEvent,

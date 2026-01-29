@@ -1,3 +1,5 @@
+import { HTMLAttributes } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { TableProps, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
@@ -12,8 +14,6 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import omit from 'lodash-es/omit';
-import { HTMLAttributes } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';

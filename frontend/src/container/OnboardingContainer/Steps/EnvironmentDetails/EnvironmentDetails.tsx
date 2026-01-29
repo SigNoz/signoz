@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -6,8 +8,6 @@ import { useOnboardingContext } from 'container/OnboardingContainer/context/Onbo
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, Server } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 interface SupportedEnvironmentsProps {
 	name: string;

@@ -1,3 +1,4 @@
+import React from 'react';
 import ROUTES from 'constants/routes';
 import { GlobalShortcutsName } from 'constants/shortcuts/globalShortcuts';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
@@ -17,7 +18,6 @@ import {
 	TowerControl,
 	Workflow,
 } from 'lucide-react';
-import React from 'react';
 
 export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 

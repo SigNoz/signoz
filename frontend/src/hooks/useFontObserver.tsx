@@ -1,5 +1,5 @@
-import FontFaceObserver from 'fontfaceobserver';
 import { useEffect, useState } from 'react';
+import FontFaceObserver from 'fontfaceobserver';
 
 export interface FontFace {
 	family: string;

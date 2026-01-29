@@ -1,11 +1,11 @@
-import './Integrations.styles.scss';
-
+import { useHistory } from 'react-router-dom';
 import { Button, Flex, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useHistory } from 'react-router-dom';
 import { routePermission } from 'utils/permission';
+
+import './Integrations.styles.scss';
 
 function Header(): JSX.Element {
 	const history = useHistory();

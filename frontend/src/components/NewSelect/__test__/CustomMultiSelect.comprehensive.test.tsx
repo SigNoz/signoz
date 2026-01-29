@@ -1,8 +1,8 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/no-duplicate-string */
+import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { VirtuosoMockContext } from 'react-virtuoso';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 

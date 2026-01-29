@@ -1,3 +1,13 @@
+import {
+	createContext,
+	PropsWithChildren,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
 import { QueryParams } from 'constants/query';
 import {
@@ -32,16 +42,6 @@ import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderIt
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
-import {
-	createContext,
-	PropsWithChildren,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {

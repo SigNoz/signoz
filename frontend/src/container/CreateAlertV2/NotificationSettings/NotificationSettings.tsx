@@ -1,5 +1,3 @@
-import './styles.scss';
-
 import { Input, Select, Typography } from 'antd';
 
 import { useCreateAlertState } from '../context';
@@ -11,6 +9,8 @@ import AdvancedOptionItem from '../EvaluationSettings/AdvancedOptionItem';
 import Stepper from '../Stepper';
 import MultipleNotifications from './MultipleNotifications';
 import NotificationMessage from './NotificationMessage';
+
+import './styles.scss';
 
 function NotificationSettings(): JSX.Element {
 	const {

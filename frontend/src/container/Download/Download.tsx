@@ -1,11 +1,11 @@
-import './Download.styles.scss';
-
 import { CloudDownloadOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
 import { Excel } from 'antd-table-saveas-excel';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
+
+import './Download.styles.scss';
 
 function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	const downloadExcelFile = (): void => {

@@ -1,5 +1,3 @@
-import './RunQueryBtn.scss';
-
 import { Button } from 'antd';
 import {
 	ChevronUp,
@@ -9,6 +7,8 @@ import {
 	Play,
 } from 'lucide-react';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
+
+import './RunQueryBtn.scss';
 
 interface RunQueryBtnProps {
 	label?: string;

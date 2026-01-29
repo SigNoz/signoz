@@ -1,5 +1,4 @@
-import './MetricsSelect.styles.scss';
-
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Select } from 'antd';
 import {
 	initialQueriesMap,
@@ -9,11 +8,12 @@ import {
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { memo, useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+
+import './MetricsSelect.styles.scss';
 
 export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
 	{ value: 'metrics', label: 'Metrics' },

@@ -1,5 +1,5 @@
-import './ContextLogRenderer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { Button, Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -14,13 +14,13 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { useContextLogData } from './useContextLogData';
+
+import './ContextLogRenderer.styles.scss';
 
 function ContextLogRenderer({
 	isEdit,

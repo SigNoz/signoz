@@ -1,5 +1,4 @@
-import './LogsExplorerQuerySection.styles.scss';
-
+import { memo, useCallback, useMemo } from 'react';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import {
 	initialQueriesMap,
@@ -13,8 +12,9 @@ import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQ
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
+
+import './LogsExplorerQuerySection.styles.scss';
 
 function LogExplorerQuerySection({
 	selectedView,

@@ -1,11 +1,11 @@
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMachine } from '@xstate/react';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { FeatureKeys } from '../../constants/features';
 import { useAppContext } from '../../providers/App/App';

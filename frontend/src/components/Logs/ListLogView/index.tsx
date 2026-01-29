@@ -1,5 +1,4 @@
-import './ListLogView.styles.scss';
-
+import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
 import { Typography } from 'antd';
 import cx from 'classnames';
@@ -15,7 +14,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useMemo } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -28,6 +26,8 @@ import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { Container, LogContainer, LogText } from './styles';
 import { isValidLogField } from './util';
+
+import './ListLogView.styles.scss';
 
 interface LogFieldProps {
 	fieldKey: string;

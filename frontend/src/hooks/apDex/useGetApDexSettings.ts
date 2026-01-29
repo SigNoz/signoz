@@ -1,5 +1,5 @@
-import getApDexSettings from 'api/v1/settings/apdex/services/get';
 import { useQuery, UseQueryResult } from 'react-query';
+import getApDexSettings from 'api/v1/settings/apdex/services/get';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';

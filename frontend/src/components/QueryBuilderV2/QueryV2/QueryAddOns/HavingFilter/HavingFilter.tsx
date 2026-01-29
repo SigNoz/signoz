@@ -1,5 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -18,7 +19,6 @@ import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronUp } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [

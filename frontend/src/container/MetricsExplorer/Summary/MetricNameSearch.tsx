@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import {
 	Button,
 	Empty,
@@ -12,8 +14,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetMetricsListFilterValues } from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 

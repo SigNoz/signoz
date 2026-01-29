@@ -1,5 +1,3 @@
-import './NoLogs.styles.scss';
-
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -8,6 +6,8 @@ import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
+
+import './NoLogs.styles.scss';
 
 export default function NoLogs({
 	dataSource,

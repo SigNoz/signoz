@@ -1,7 +1,7 @@
-import './VariablesDropdown.styles.scss';
-
-import { Dropdown, Typography } from 'antd';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { Dropdown, Typography } from 'antd';
+
+import './VariablesDropdown.styles.scss';
 
 interface VariablesDropdownProps {
 	onVariableSelect: (variableName: string, cursorPosition?: number) => void;

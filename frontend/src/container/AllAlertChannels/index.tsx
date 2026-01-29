@@ -1,5 +1,6 @@
-import './AllAlertChannels.styles.scss';
-
+import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { PlusOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
@@ -11,15 +12,14 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
 import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer, RightActionContainer } from './styles';
+
+import './AllAlertChannels.styles.scss';
 
 const { Paragraph } = Typography;
 

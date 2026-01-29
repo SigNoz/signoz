@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
 	CaretDownFilled,
 	CaretUpFilled,
@@ -6,8 +8,6 @@ import {
 } from '@ant-design/icons';
 import { Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';

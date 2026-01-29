@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import getActive from 'api/v3/licenses/active/get';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { LicenseResModel } from 'types/api/licensesV3/getActive';

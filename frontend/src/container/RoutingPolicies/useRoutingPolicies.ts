@@ -1,5 +1,6 @@
-import './styles.scss';
-
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { toast } from '@signozhq/sonner';
 import getAllChannels from 'api/channels/getAll';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
@@ -10,9 +11,6 @@ import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolici
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
-import { useHistory } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
@@ -28,6 +26,8 @@ import {
 	mapRoutingPolicyToCreateApiPayload,
 	mapRoutingPolicyToUpdateApiPayload,
 } from './utils';
+
+import './styles.scss';
 
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();

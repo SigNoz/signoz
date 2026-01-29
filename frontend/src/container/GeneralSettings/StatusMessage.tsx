@@ -1,8 +1,8 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { green, orange, volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card, Col } from 'antd';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';

@@ -1,9 +1,9 @@
+import { generatePath, Link } from 'react-router-dom';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
-import { generatePath, Link } from 'react-router-dom';
 import { ListItem } from 'types/api/widgets/getQuery';
 
 export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];

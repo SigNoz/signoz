@@ -1,5 +1,4 @@
-import './LogsExplorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -33,7 +32,6 @@ import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import {
@@ -42,6 +40,8 @@ import {
 } from 'utils/explorerUtils';
 
 import { ExplorerViews } from './utils';
+
+import './LogsExplorer.styles.scss';
 
 function LogsExplorer(): JSX.Element {
 	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);

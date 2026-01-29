@@ -1,8 +1,8 @@
-import './DetailsDrawer.styles.scss';
-
+import { Dispatch, SetStateAction } from 'react';
 import { Drawer, Tabs, TabsProps } from 'antd';
 import cx from 'classnames';
-import { Dispatch, SetStateAction } from 'react';
+
+import './DetailsDrawer.styles.scss';
 
 interface IDetailsDrawerProps {
 	open: boolean;

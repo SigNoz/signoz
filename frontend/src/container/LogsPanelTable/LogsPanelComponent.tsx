@@ -1,5 +1,12 @@
-import './LogsPanelComponent.styles.scss';
-
+import {
+	Dispatch,
+	HTMLAttributes,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
+import { UseQueryResult } from 'react-query';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -15,20 +22,13 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	HTMLAttributes,
-	SetStateAction,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
+
+import './LogsPanelComponent.styles.scss';
 
 function LogsPanelComponent({
 	widget,

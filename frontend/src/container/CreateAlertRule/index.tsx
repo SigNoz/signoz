@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Form } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -5,7 +6,6 @@ import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 

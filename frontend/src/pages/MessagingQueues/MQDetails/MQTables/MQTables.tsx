@@ -1,7 +1,8 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/require-default-props */
-import './MQTables.styles.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Skeleton, Table, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
@@ -28,13 +29,12 @@ import {
 	SelectedTimelineQuery,
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
-import { formatNumericValue } from 'utils/numericUtils';
+
+import './MQTables.styles.scss';
 
 const INITIAL_PAGE_SIZE = 10;
 

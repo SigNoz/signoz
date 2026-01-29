@@ -1,3 +1,6 @@
+import { useCallback, useMemo } from 'react';
+import { useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { PlayCircleFilled } from '@ant-design/icons';
 import { QueryParams } from 'constants/query';
 import {
@@ -13,9 +16,6 @@ import {
 import { QueryHistoryState } from 'container/LiveLogs/types';
 import LocalTopNav from 'container/LocalTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useCallback, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
-import { useHistory } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 

@@ -1,10 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter, Route } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import { MemoryRouter, Route } from 'react-router-dom';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';

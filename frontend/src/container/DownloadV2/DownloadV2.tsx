@@ -1,11 +1,11 @@
-import './DownloadV2.styles.scss';
-
 import { Button, Popover, Typography } from 'antd';
 import { Excel } from 'antd-table-saveas-excel';
 import { FileDigit, FileDown, Sheet } from 'lucide-react';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './DownloadV2.types';
+
+import './DownloadV2.styles.scss';
 
 function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	const downloadExcelFile = (): void => {

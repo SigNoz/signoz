@@ -1,8 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
+import { useCallback, useMemo, useRef } from 'react';
 import type { SelectProps } from 'antd';
 import { Tag, Tooltip } from 'antd';
 import { BaseOptionType } from 'antd/es/select';
-import { useCallback, useMemo, useRef } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Container, Select } from './styles';

@@ -1,6 +1,6 @@
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

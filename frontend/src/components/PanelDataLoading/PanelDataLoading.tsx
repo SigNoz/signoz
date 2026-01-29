@@ -1,6 +1,6 @@
-import './PanelDataLoading.styles.scss';
-
 import { Typography } from 'antd';
+
+import './PanelDataLoading.styles.scss';
 
 export function PanelDataLoading(): JSX.Element {
 	return (

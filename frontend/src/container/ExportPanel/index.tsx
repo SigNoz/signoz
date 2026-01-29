@@ -1,5 +1,5 @@
-import { Modal } from 'antd';
 import { useCallback, useState } from 'react';
+import { Modal } from 'antd';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

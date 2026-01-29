@@ -1,16 +1,16 @@
-import './IntegrationDetailPage.styles.scss';
-
+import { useState } from 'react';
+import { useMutation } from 'react-query';
 import { Button, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
 import { X } from 'lucide-react';
-import { useState } from 'react';
-import { useMutation } from 'react-query';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
 import { ConnectionStates } from './TestConnection';
+
+import './IntegrationDetailPage.styles.scss';
 
 interface IntergrationsUninstallBarProps {
 	integrationTitle: string;

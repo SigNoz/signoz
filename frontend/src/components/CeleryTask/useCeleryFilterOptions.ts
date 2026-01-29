@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { DefaultOptionType } from 'antd/es/select';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 

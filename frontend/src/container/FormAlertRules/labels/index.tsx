@@ -1,3 +1,5 @@
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	CloseCircleFilled,
 	ExclamationCircleOutlined,
@@ -6,8 +8,6 @@ import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
 

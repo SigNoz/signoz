@@ -1,14 +1,14 @@
-import './AddFunnelStepDetailsModal.styles.scss';
-
+import { useEffect, useState } from 'react';
 import { Input } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useEffect, useState } from 'react';
 
 import { FunnelStepPopoverProps } from './FunnelStepPopover';
+
+import './AddFunnelStepDetailsModal.styles.scss';
 
 interface AddFunnelStepDetailsModalProps {
 	isOpen: boolean;

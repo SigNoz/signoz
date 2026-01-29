@@ -1,6 +1,6 @@
-import './InfraMonitoringK8s.styles.scss';
-
 import { Skeleton } from 'antd';
+
+import './InfraMonitoringK8s.styles.scss';
 
 function LoadingContainer(): JSX.Element {
 	return (

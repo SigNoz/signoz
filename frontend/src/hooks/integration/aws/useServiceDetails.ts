@@ -1,7 +1,7 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import { getServiceDetails } from 'api/integration/aws';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ServiceData } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { useQuery, UseQueryResult } from 'react-query';
 
 export function useServiceDetails(
 	serviceId: string,

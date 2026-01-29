@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	getOperatorFromValue,
 	getTagToken,
@@ -5,8 +7,6 @@ import {
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { unparse } from 'papaparse';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,

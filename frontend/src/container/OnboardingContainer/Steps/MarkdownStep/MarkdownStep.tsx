@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { useEffect, useState } from 'react';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { QueryParams } from 'constants/query';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
@@ -12,7 +13,6 @@ import {
 } from 'container/OnboardingContainer/context/OnboardingContext';
 import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useEffect, useState } from 'react';
 
 export interface IngestionInfoProps {
 	SIGNOZ_INGESTION_KEY?: string;

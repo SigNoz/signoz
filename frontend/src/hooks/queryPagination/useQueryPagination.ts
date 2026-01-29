@@ -1,7 +1,7 @@
+import { useCallback, useEffect, useMemo } from 'react';
 import { QueryParams } from 'constants/query';
 import { ControlsProps } from 'container/Controls';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { useCallback, useEffect, useMemo } from 'react';
 
 import { DEFAULT_PER_PAGE_OPTIONS } from './config';
 import { Pagination } from './types';

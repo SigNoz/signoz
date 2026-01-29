@@ -1,8 +1,6 @@
-import './styles.scss';
-
+import { useTranslation } from 'react-i18next';
 import { Form, Input, Select, Space, Switch } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import { useTranslation } from 'react-i18next';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
@@ -10,6 +8,8 @@ import { processorFields, ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
+
+import './styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ProcessorFieldInput({

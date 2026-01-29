@@ -1,13 +1,13 @@
-import './AddFunnelDescriptionModal.styles.scss';
-
+import { useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Input } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useSaveFunnelDescription } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from 'lucide-react';
-import { useState } from 'react';
-import { useQueryClient } from 'react-query';
+
+import './AddFunnelDescriptionModal.styles.scss';
 
 interface AddFunnelDescriptionProps {
 	isOpen: boolean;

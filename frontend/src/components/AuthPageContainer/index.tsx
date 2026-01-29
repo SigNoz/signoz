@@ -1,9 +1,9 @@
-import './AuthPageContainer.styles.scss';
-
 import { PropsWithChildren } from 'react';
 
 import AuthFooter from './AuthFooter';
 import AuthHeader from './AuthHeader';
+
+import './AuthPageContainer.styles.scss';
 
 type AuthPageContainerProps = PropsWithChildren<{
 	isOnboarding?: boolean;

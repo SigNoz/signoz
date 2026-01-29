@@ -1,5 +1,5 @@
-import './ChangelogModal.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -9,12 +9,12 @@ import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { ChevronsDown, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { UserPreference } from 'types/api/preferences/preference';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
+
+import './ChangelogModal.styles.scss';
 
 interface Props {
 	changelog: ChangelogSchema;

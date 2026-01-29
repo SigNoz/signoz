@@ -1,6 +1,3 @@
-import { Col, Row, Select } from 'antd';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { find } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -10,6 +7,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Col, Row, Select } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { find } from 'lodash-es';
 import { TTTLType } from 'types/api/settings/common';
 
 import {

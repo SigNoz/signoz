@@ -1,5 +1,4 @@
-import './QuerySection.styles.scss';
-
+import { useCallback, useEffect, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -28,13 +27,14 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
+
+import './QuerySection.styles.scss';
 
 function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 	const {

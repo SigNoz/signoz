@@ -1,10 +1,10 @@
-import './styles.scss';
-
+import { useEffect, useState } from 'react';
 import { Switch, Tooltip, Typography } from 'antd';
 import { Info } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { IAdvancedOptionItemProps } from '../types';
+
+import './styles.scss';
 
 function AdvancedOptionItem({
 	title,

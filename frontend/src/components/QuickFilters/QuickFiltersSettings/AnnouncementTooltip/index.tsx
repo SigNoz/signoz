@@ -1,9 +1,9 @@
-import './AnnouncementTooltip.styles.scss';
-
+import { useState } from 'react';
 import { Button, Typography } from 'antd';
 import classNames from 'classnames';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+
+import './AnnouncementTooltip.styles.scss';
 
 type AnnouncementTooltipProps = {
 	position: { top: number; left: number };

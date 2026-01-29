@@ -1,3 +1,4 @@
+import { KeyboardEvent, useCallback, useState } from 'react';
 import { OPERATORS } from 'constants/queryBuilder';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import {
@@ -8,7 +9,6 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { parse } from 'papaparse';
-import { KeyboardEvent, useCallback, useState } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,

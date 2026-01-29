@@ -1,8 +1,8 @@
-import './AlertState.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
+
+import './AlertState.styles.scss';
 
 type AlertStateProps = {
 	state: string;

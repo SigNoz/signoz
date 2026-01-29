@@ -1,15 +1,15 @@
-import './styles.scss';
-import '../AdvancedOptionItem/styles.scss';
-
+import { useEffect, useState } from 'react';
 import { Input, Select, Tooltip, Typography } from 'antd';
 import { Info } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { useCreateAlertState } from '../../context';
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
 import EditCustomSchedule from './EditCustomSchedule';
 import EvaluationCadenceDetails from './EvaluationCadenceDetails';
 import EvaluationCadencePreview from './EvaluationCadencePreview';
+
+import './styles.scss';
+import '../AdvancedOptionItem/styles.scss';
 
 function EvaluationCadence(): JSX.Element {
 	const { advancedOptions, setAdvancedOptions } = useCreateAlertState();

@@ -1,16 +1,16 @@
-import './Attributes.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
 import { Input, Typography } from 'antd';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { flattenObject } from 'container/LogDetailedView/utils';
 import { usePinnedAttributes } from 'hooks/spanDetails/usePinnedAttributes';
 import { Pin } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
 import AttributeActions from './AttributeActions';
+
+import './Attributes.styles.scss';
 
 interface AttributeRecord {
 	field: string;

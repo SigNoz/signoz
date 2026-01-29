@@ -1,5 +1,6 @@
-import './Support.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Button, Card, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
@@ -16,12 +17,11 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
+
+import './Support.styles.scss';
 
 const { Title, Text } = Typography;
 

@@ -1,5 +1,5 @@
-import './AccountSettingsModal.style.scss';
-
+import { Dispatch, SetStateAction, useCallback } from 'react';
+import { useQueryClient } from 'react-query';
 import { Form, Select, Switch } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -9,13 +9,13 @@ import {
 } from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { Dispatch, SetStateAction, useCallback } from 'react';
-import { useQueryClient } from 'react-query';
 
 import logEvent from '../../../../api/common/logEvent';
 import { CloudAccount } from '../../ServicesSection/types';
 import { RegionSelector } from './RegionSelector';
 import RemoveIntegrationAccount from './RemoveIntegrationAccount';
+
+import './AccountSettingsModal.style.scss';
 
 interface AccountSettingsModalProps {
 	onClose: () => void;

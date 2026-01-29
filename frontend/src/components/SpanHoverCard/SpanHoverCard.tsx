@@ -1,13 +1,13 @@
-import './SpanHoverCard.styles.scss';
-
+import { ReactNode } from 'react';
 import { Popover, Typography } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
-import { ReactNode } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
+
+import './SpanHoverCard.styles.scss';
 
 interface ITraceMetadata {
 	startTime: number;

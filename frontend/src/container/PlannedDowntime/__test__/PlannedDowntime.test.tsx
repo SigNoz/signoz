@@ -1,3 +1,4 @@
+import { UseQueryResult } from 'react-query';
 import { fireEvent, screen } from '@testing-library/react';
 import { PayloadProps } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import { AxiosError, AxiosResponse } from 'axios';
@@ -5,7 +6,6 @@ import {
 	mockLocation,
 	mockQueryParams,
 } from 'container/RoutingPolicies/__tests__/testUtils';
-import { UseQueryResult } from 'react-query';
 import { render } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 

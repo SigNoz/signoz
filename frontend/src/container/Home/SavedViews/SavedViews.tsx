@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
@@ -14,8 +16,6 @@ import {
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';

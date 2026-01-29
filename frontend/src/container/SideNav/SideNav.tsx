@@ -1,8 +1,17 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './SideNav.styles.scss';
-
+import {
+	MouseEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import {
 	closestCenter,
 	DndContext,
@@ -51,17 +60,6 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import {
-	MouseEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
@@ -84,6 +82,8 @@ import {
 	SidebarItem,
 } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
+
+import './SideNav.styles.scss';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	const {

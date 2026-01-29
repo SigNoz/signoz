@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './GridTableComponent.styles.scss';
-
+import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -11,8 +11,6 @@ import { getColumnUnit, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
 import { Compass } from 'lucide-react';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
-import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { eventEmitter } from 'utils/getEventEmitter';
 
@@ -23,6 +21,8 @@ import {
 	findMatchingThreshold,
 	TableData,
 } from './utils';
+
+import './GridTableComponent.styles.scss';
 
 const ButtonWrapper = styled.div`
 	position: absolute;

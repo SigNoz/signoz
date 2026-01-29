@@ -1,8 +1,8 @@
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import { Typography } from 'antd';
 import YAxisUnitSelectorComponent from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import { Dispatch, SetStateAction, useEffect } from 'react';
 
 type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 

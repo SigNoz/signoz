@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import { getAllIngestionKeys } from 'api/IngestionKeys/getAllIngestionKeys';
 import { AxiosError, AxiosResponse } from 'axios';
-import { useQuery, UseQueryResult } from 'react-query';
 import {
 	AllIngestionKeyProps,
 	GetIngestionKeyProps,

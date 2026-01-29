@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
+import { useSelector } from 'react-redux';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 

@@ -1,9 +1,3 @@
-import { CloseCircleFilled } from '@ant-design/icons';
-import { useMachine } from '@xstate/react';
-import { Button, Select } from 'antd';
-import { RefSelectProps } from 'antd/lib/select';
-import history from 'lib/history';
-import { filter, map } from 'lodash-es';
 import {
 	MutableRefObject,
 	useCallback,
@@ -11,6 +5,12 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { CloseCircleFilled } from '@ant-design/icons';
+import { useMachine } from '@xstate/react';
+import { Button, Select } from 'antd';
+import { RefSelectProps } from 'antd/lib/select';
+import history from 'lib/history';
+import { filter, map } from 'lodash-es';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import configureStore from 'redux-mock-store';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 

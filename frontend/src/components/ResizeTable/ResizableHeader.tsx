@@ -1,10 +1,10 @@
-import './ResizeTable.styles.scss';
-
 import { SyntheticEvent, useMemo } from 'react';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { enableUserSelectHack } from './config';
 import { SpanStyle } from './styles';
+
+import './ResizeTable.styles.scss';
 
 function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;

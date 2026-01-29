@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import {
 	getK8sDaemonSetsList,
 	K8sDaemonSetsListPayload,
 	K8sDaemonSetsListResponse,
 } from 'api/infraMonitoring/getK8sDaemonSetsList';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseGetK8sDaemonSetsList = (

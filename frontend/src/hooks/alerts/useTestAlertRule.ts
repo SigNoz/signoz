@@ -1,5 +1,5 @@
-import testAlertRule, { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
 import { useMutation, UseMutationResult } from 'react-query';
+import testAlertRule, { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 

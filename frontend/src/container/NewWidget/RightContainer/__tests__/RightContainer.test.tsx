@@ -1,4 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
+import React from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -7,10 +11,6 @@ import { IAppContext } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import React from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { LegendPosition, Widgets } from 'types/api/dashboard/getAll';

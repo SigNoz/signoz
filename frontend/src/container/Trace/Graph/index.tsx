@@ -1,9 +1,9 @@
-import { Typography } from 'antd';
-import Graph from 'components/Graph';
-import Spinner from 'components/Spinner';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useMeasure } from 'react-use';
+import { Typography } from 'antd';
+import Graph from 'components/Graph';
+import Spinner from 'components/Spinner';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 

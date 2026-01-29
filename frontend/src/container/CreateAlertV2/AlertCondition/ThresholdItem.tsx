@@ -1,7 +1,7 @@
+import { useMemo, useState } from 'react';
 import { Button, Input, Select, Tooltip, Typography } from 'antd';
 import { CircleX, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';

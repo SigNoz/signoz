@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './TableViewActions.styles.scss';
-
+import React, { useCallback, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
@@ -19,8 +19,6 @@ import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
-import React, { useCallback, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -35,6 +33,8 @@ import {
 	removeEscapeCharacters,
 } from '../utils';
 import useAsyncJSONProcessing from './useAsyncJSONProcessing';
+
+import './TableViewActions.styles.scss';
 
 interface ITableViewActionsProps {
 	fieldData: Record<string, string>;

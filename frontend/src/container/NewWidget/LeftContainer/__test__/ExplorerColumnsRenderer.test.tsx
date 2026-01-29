@@ -1,14 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
+import React from 'react';
+import { DropResult } from 'react-beautiful-dnd';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import React from 'react';
-import { DropResult } from 'react-beautiful-dnd';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 

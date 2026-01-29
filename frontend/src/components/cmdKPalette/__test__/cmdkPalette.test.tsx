@@ -1,12 +1,12 @@
 /**
  * src/components/cmdKPalette/__test__/cmdkPalette.test.tsx
  */
-import '@testing-library/jest-dom/extend-expect';
-
 // ---- Mocks (must run BEFORE importing the component) ----
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { render, screen, userEvent } from 'tests/test-utils';
+
+import '@testing-library/jest-dom/extend-expect';
 
 import { CmdKPalette } from '../cmdKPalette';
 

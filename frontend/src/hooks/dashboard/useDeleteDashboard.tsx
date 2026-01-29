@@ -1,7 +1,7 @@
+import { useMutation, UseMutationResult } from 'react-query';
 import deleteDashboard from 'api/v1/dashboards/id/delete';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useMutation, UseMutationResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 

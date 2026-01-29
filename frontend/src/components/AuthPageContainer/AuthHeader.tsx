@@ -1,8 +1,8 @@
-import './AuthHeader.styles.scss';
-
+import { useCallback } from 'react';
 import { Button } from '@signozhq/button';
 import { LifeBuoy } from 'lucide-react';
-import { useCallback } from 'react';
+
+import './AuthHeader.styles.scss';
 
 function AuthHeader(): JSX.Element {
 	const handleGetHelp = useCallback((): void => {

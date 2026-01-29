@@ -1,5 +1,4 @@
-import './styles.scss';
-
+import { useCallback, useMemo } from 'react';
 import { Button } from 'antd';
 import classNames from 'classnames';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -10,7 +9,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -19,6 +17,8 @@ import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';
 import ChartPreview from './ChartPreview';
 import { buildAlertDefForChartPreview } from './utils';
+
+import './styles.scss';
 
 function QuerySection(): JSX.Element {
 	const {

@@ -1,8 +1,8 @@
+import { useCallback, useMemo } from 'react';
 import { Col } from 'antd';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
 	Query,

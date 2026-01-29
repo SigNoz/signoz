@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
@@ -12,7 +13,6 @@ import axios, {
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryClient } from 'react-query';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, {

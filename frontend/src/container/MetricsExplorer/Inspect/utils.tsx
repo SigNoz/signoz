@@ -1,4 +1,5 @@
 /* eslint-disable no-nested-ternary */
+import { useMemo, useState } from 'react';
 import { Card, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
@@ -9,7 +10,6 @@ import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { HardHat } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,

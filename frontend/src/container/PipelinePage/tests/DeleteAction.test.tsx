@@ -1,8 +1,8 @@
-import { render } from '@testing-library/react';
-import DeleteAction from 'container/PipelinePage/PipelineListsView/TableComponents/TableActions/DeleteAction';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import DeleteAction from 'container/PipelinePage/PipelineListsView/TableComponents/TableActions/DeleteAction';
 import i18n from 'ReactI18';
 import store from 'store';
 

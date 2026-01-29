@@ -1,3 +1,6 @@
+import { useMemo, useState } from 'react';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
@@ -8,9 +11,6 @@ import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';

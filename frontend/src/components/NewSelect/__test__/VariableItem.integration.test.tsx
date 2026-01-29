@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import configureStore from 'redux-mock-store';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 

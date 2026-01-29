@@ -1,5 +1,4 @@
-import './AlertsEmptyState.styles.scss';
-
+import { useCallback, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Divider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -7,12 +6,13 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
 import InfoLinkText from './InfoLinkText';
+
+import './AlertsEmptyState.styles.scss';
 
 const alertLogEvents = (
 	title: string,

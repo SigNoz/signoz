@@ -1,5 +1,5 @@
-import './ConfigureServiceModal.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Form, Switch } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -9,11 +9,11 @@ import {
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
 import { isEqual } from 'lodash-es';
-import { useCallback, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
 
 import logEvent from '../../../api/common/logEvent';
 import S3BucketsSelector from './S3BucketsSelector';
+
+import './ConfigureServiceModal.styles.scss';
 
 export interface IConfigureServiceModalProps {
 	isOpen: boolean;

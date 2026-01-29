@@ -1,3 +1,7 @@
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { QueryKey } from 'react-query';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -16,10 +20,6 @@ import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { QueryKey } from 'react-query';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import {
 	LicensePlatform,

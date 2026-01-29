@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { Skeleton } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
@@ -15,8 +17,6 @@ import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/u
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 

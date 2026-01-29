@@ -1,9 +1,9 @@
-import './AlertSeverity.styles.scss';
-
 import SeverityCriticalIcon from 'assets/AlertHistory/SeverityCriticalIcon';
 import SeverityErrorIcon from 'assets/AlertHistory/SeverityErrorIcon';
 import SeverityInfoIcon from 'assets/AlertHistory/SeverityInfoIcon';
 import SeverityWarningIcon from 'assets/AlertHistory/SeverityWarningIcon';
+
+import './AlertSeverity.styles.scss';
 
 export default function AlertSeverity({
 	severity,

@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
-import './ChannelsEdit.styles.scss';
-
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
@@ -13,11 +13,11 @@ import {
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
+
+import './ChannelsEdit.styles.scss';
 
 function ChannelsEdit(): JSX.Element {
 	const { t } = useTranslation();

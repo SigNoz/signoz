@@ -1,7 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { SearchOutlined } from '@ant-design/icons';
 import { Input, Spin, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useTranslation } from 'react-i18next';
 
 import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';

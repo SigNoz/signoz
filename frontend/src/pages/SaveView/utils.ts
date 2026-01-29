@@ -1,3 +1,4 @@
+import { UseMutateAsyncFunction } from 'react-query';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import { MenuItemLabelGeneratorProps } from 'components/ExplorerCard/types';
@@ -6,7 +7,6 @@ import {
 	MetricsExplorerEventKeys,
 	MetricsExplorerEvents,
 } from 'container/MetricsExplorer/events';
-import { UseMutateAsyncFunction } from 'react-query';
 import { DeleteViewPayloadProps } from 'types/api/saveViews/types';
 
 type DeleteViewProps = {

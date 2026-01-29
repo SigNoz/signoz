@@ -1,12 +1,13 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { ENVIRONMENT } from 'constants/env';
-import { GroupByFilter } from '../GroupByFilter';
-import { DataSource } from '../../../../../types/common/queryBuilder';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
 import { IBuilderQuery } from '../../../../../types/api/queryBuilder/queryBuilderData';
+import { DataSource } from '../../../../../types/common/queryBuilder';
+import { GroupByFilter } from '../GroupByFilter';
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const attributeKeysURL = `${BASE_URL}/api/v3/autocomplete/attribute_keys`;

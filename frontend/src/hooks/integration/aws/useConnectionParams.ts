@@ -1,7 +1,7 @@
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { getConnectionParams } from 'api/integration/aws';
 import { AxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ConnectionParams } from 'types/api/integrations/aws';
 
 export function useConnectionParams({

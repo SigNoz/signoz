@@ -1,6 +1,6 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { fireEvent, render } from '@testing-library/react';
 import ROUTES from 'constants/routes';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SaveViewWithName from '../SaveViewWithName';

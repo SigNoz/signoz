@@ -1,3 +1,7 @@
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
@@ -8,10 +12,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
-import { useCallback, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';

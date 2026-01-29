@@ -1,11 +1,11 @@
-import './AddToQueryHOC.styles.scss';
-
+import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { Popover } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import { FontSize } from 'container/OptionsMenu/types';
-import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import './AddToQueryHOC.styles.scss';
 
 function AddToQueryHOC({
 	fieldKey,

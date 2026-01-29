@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
@@ -6,7 +7,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';

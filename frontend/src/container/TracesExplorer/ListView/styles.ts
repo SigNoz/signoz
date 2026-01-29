@@ -1,5 +1,5 @@
-import { Typography } from 'antd';
 import { CSSProperties } from 'react';
+import { Typography } from 'antd';
 import styled from 'styled-components';
 
 export const tableStyles: CSSProperties = {

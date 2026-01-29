@@ -1,7 +1,7 @@
-import { Select } from 'antd';
-import { getFormattedEndPointDropDownData } from 'container/ApiMonitoring/utils';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
+import { Select } from 'antd';
+import { getFormattedEndPointDropDownData } from 'container/ApiMonitoring/utils';
 import { SuccessResponse } from 'types/api';
 
 interface EndPointsDropDownProps {

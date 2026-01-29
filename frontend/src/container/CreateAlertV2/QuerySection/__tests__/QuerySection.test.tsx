@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
@@ -7,9 +10,6 @@ import {
 	initialQueryPromQLData,
 } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';

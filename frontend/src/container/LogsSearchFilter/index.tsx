@@ -1,10 +1,10 @@
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import debounce from 'lodash-es/debounce';
 import { getIdConditions } from 'pages/Logs/utils';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetLogsFields } from 'store/actions/logs/getFields';

@@ -1,5 +1,5 @@
-import './InviteTeamMembers.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { Input } from '@signozhq/input';
@@ -17,12 +17,12 @@ import {
 	Plus,
 	Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
 import { v4 as uuid } from 'uuid';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+
+import './InviteTeamMembers.styles.scss';
 
 interface TeamMember {
 	email: string;

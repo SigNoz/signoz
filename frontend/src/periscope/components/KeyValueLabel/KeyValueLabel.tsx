@@ -1,9 +1,9 @@
-import './KeyValueLabel.styles.scss';
-
-import { Tooltip } from 'antd';
 import { useMemo } from 'react';
+import { Tooltip } from 'antd';
 
 import TrimmedText from '../TrimmedText/TrimmedText';
+
+import './KeyValueLabel.styles.scss';
 
 type KeyValueLabelProps = {
 	badgeKey: string | React.ReactNode;

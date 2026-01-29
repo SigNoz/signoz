@@ -1,10 +1,8 @@
-import './styles.scss';
-
+import { useQuery } from 'react-query';
 import { Button, Tooltip } from 'antd';
 import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
 import { ChartLine } from 'lucide-react';
-import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';
@@ -16,6 +14,8 @@ import Stepper from '../Stepper';
 import AlertThreshold from './AlertThreshold';
 import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
+
+import './styles.scss';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();

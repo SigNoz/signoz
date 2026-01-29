@@ -1,6 +1,6 @@
+import { createContext, useContext, useMemo } from 'react';
 import { notification } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { createContext, useContext, useMemo } from 'react';
 
 type Notification = {
 	notifications: NotificationInstance;

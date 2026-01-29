@@ -1,5 +1,4 @@
-import './UplotPanelWrapper.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
@@ -18,7 +17,6 @@ import _noop from 'lodash-es/noop';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
@@ -26,6 +24,8 @@ import { getTimeRange } from 'utils/getTimeRange';
 
 import { PanelWrapperProps } from './panelWrapper.types';
 import { getTimeRangeFromStepInterval, isApmMetric } from './utils';
+
+import './UplotPanelWrapper.styles.scss';
 
 function UplotPanelWrapper({
 	queryResponse,

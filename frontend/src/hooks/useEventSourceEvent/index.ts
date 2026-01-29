@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { EventListener, EventSourceEventMap } from 'event-source-polyfill';
 import { useEventSource } from 'providers/EventSource';
-import { useEffect } from 'react';
 
 type EventMap = {
 	message: MessageEvent;

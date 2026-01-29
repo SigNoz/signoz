@@ -1,5 +1,3 @@
-import { AutoComplete, Input } from 'antd';
-import getTagFilters from 'api/trace/getTagFilter';
 import {
 	Dispatch,
 	SetStateAction,
@@ -9,6 +7,8 @@ import {
 } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
+import { AutoComplete, Input } from 'antd';
+import getTagFilters from 'api/trace/getTagFilter';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';

@@ -1,10 +1,10 @@
+import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { verifyFiltersAndOrderBy } from 'container/LogsExplorerViews/tests/LogsExplorerPagination.test';
 import { logsPaginationQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	act,
 	fireEvent,

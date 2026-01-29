@@ -1,5 +1,5 @@
-import './LogsContextList.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
@@ -9,8 +9,6 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -24,6 +22,8 @@ import {
 import ShowButton from './ShowButton';
 import { EmptyText, ListContainer } from './styles';
 import { getRequestData } from './utils';
+
+import './LogsContextList.styles.scss';
 
 interface LogsContextListProps {
 	className?: string;

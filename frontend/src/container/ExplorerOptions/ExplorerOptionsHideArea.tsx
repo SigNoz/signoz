@@ -1,13 +1,13 @@
 /* eslint-disable no-nested-ternary */
-import './ExplorerOptionsHideArea.styles.scss';
-
+import { Dispatch, SetStateAction } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
 import { Disc3, X } from 'lucide-react';
-import { Dispatch, SetStateAction } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { setExplorerToolBarVisibility } from './utils';
+
+import './ExplorerOptionsHideArea.styles.scss';
 
 interface DroppableAreaProps {
 	viewName: string;

@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -13,10 +12,10 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-
-import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
+import { useQuery } from 'react-query';
 
 import { GeneratedAPIInstance } from '../../../index';
+import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 

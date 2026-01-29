@@ -1,8 +1,9 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './VariableItem.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
@@ -33,9 +34,6 @@ import {
 	X,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
@@ -56,6 +54,8 @@ import { TVariableMode } from '../types';
 import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
 import { WidgetSelector } from './WidgetSelector';
+
+import './VariableItem.styles.scss';
 
 const { Option } = Select;
 

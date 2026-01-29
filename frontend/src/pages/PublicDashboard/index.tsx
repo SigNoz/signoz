@@ -1,11 +1,11 @@
-import './PublicDashboard.styles.scss';
-
+import { useParams } from 'react-router-dom';
 import { Typography } from 'antd';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { FrownIcon } from 'lucide-react';
-import { useParams } from 'react-router-dom';
 
 import PublicDashboardContainer from '../../container/PublicDashboardContainer';
+
+import './PublicDashboard.styles.scss';
 
 function PublicDashboardPage(): JSX.Element {
 	// read the dashboard id from the url

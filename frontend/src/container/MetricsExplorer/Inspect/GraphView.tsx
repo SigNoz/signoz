@@ -1,11 +1,11 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Skeleton, Switch, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

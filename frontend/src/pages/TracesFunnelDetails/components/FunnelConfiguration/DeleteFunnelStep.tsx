@@ -1,8 +1,8 @@
-import './DeleteFunnelStep.styles.scss';
-
 import SignozModal from 'components/SignozModal/SignozModal';
 import { Trash2, X } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+
+import './DeleteFunnelStep.styles.scss';
 
 interface DeleteFunnelStepProps {
 	isOpen: boolean;

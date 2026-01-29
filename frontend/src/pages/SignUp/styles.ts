@@ -1,5 +1,5 @@
-import { Card, Form } from 'antd';
 import { CSSProperties } from 'react';
+import { Card, Form } from 'antd';
 import styled from 'styled-components';
 
 export const FormWrapper = styled(Card)`

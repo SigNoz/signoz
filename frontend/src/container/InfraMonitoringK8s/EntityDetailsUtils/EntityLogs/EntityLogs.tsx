@@ -1,6 +1,7 @@
 /* eslint-disable no-nested-ternary */
-import './entityLogs.styles.scss';
-
+import { useCallback, useEffect, useMemo } from 'react';
+import { useQuery } from 'react-query';
+import { Virtuoso } from 'react-virtuoso';
 import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -11,9 +12,6 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -21,6 +19,8 @@ import {
 	EntityDetailsEmptyContainer,
 	getEntityEventsOrLogsQueryPayload,
 } from '../utils';
+
+import './entityLogs.styles.scss';
 
 interface Props {
 	timeRange: {

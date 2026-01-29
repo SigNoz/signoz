@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { CardContainer, CardWrapper, CollapseButton } from './styles';

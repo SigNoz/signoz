@@ -1,5 +1,7 @@
-import './ChartPreview.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -32,10 +34,6 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -53,6 +51,8 @@ import { getTimeRange } from 'utils/getTimeRange';
 import { AlertDetectionTypes } from '..';
 import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
+
+import './ChartPreview.styles.scss';
 
 export interface ChartPreviewProps {
 	name: string;

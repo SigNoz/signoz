@@ -1,11 +1,3 @@
-import './TableRow.styles.scss';
-
-import { ColumnsType } from 'antd/es/table';
-import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
-import { ColumnTypeRender } from 'components/Logs/TableView/types';
-import { FontSize } from 'container/OptionsMenu/types';
-import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	cloneElement,
 	MouseEventHandler,
@@ -14,9 +6,17 @@ import {
 	useCallback,
 	useMemo,
 } from 'react';
+import { ColumnsType } from 'antd/es/table';
+import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
+import { ColumnTypeRender } from 'components/Logs/TableView/types';
+import { FontSize } from 'container/OptionsMenu/types';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ILog } from 'types/api/logs/log';
 
 import { TableCellStyled } from './styles';
+
+import './TableRow.styles.scss';
 
 interface TableRowProps {
 	tableColumns: ColumnsType<Record<string, unknown>>;

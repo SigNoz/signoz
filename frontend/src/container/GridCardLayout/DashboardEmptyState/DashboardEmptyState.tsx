@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/img-redundant-alt */
-import './DashboardEmptyState.styles.scss';
-
+import { useCallback, useRef, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -11,9 +10,10 @@ import DashboardSettings from 'container/DashboardContainer/DashboardSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useRef, useState } from 'react';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
+
+import './DashboardEmptyState.styles.scss';
 
 export default function DashboardEmptyState(): JSX.Element {
 	const {

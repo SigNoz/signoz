@@ -1,6 +1,6 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { Col, Row, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
-import { Trans, useTranslation } from 'react-i18next';
 import { EQueryType } from 'types/common/dashboard';
 
 import {

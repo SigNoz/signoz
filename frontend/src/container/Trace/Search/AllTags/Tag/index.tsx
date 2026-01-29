@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import { Dispatch, SetStateAction } from 'react';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { Container, IconContainer, SelectComponent } from './styles';

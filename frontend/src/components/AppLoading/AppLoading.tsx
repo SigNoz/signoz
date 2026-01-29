@@ -1,9 +1,9 @@
-import './AppLoading.styles.scss';
-
 import { Typography } from 'antd';
 import get from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
+
+import './AppLoading.styles.scss';
 
 function AppLoading(): JSX.Element {
 	// Get theme from localStorage directly to avoid context dependency

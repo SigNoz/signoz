@@ -1,6 +1,6 @@
-import './PlannedDowntime.styles.scss';
-import 'dayjs/locale/en';
-
+import React, { ChangeEvent, useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
@@ -16,10 +16,9 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { ChangeEvent, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useHistory } from 'react-router-dom';
 import { USER_ROLES } from 'types/roles';
+
+import 'dayjs/locale/en';
 
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
@@ -28,6 +27,8 @@ import {
 	defautlInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
+
+import './PlannedDowntime.styles.scss';
 
 dayjs.locale('en');
 

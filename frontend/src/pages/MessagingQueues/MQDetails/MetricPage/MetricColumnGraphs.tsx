@@ -1,7 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { Typography } from 'antd';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { FeatureKeys } from '../../../../constants/features';
