@@ -64,16 +64,12 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	]);
 
 	useEffect(() => {
-		// clear on mount and unmount
-		if (savePreviousQuery) {
-			clearPreviousQuery();
-		}
+		// always clear on mount and unmount to avoid stale data
+		clearPreviousQuery();
 		return (): void => {
-			if (savePreviousQuery) {
-				clearPreviousQuery();
-			}
+			clearPreviousQuery();
 		};
-	}, [savePreviousQuery]);
+	}, []);
 
 	const isMultiQueryAllowed = useMemo(
 		() => !isListViewPanel || showTraceOperator,

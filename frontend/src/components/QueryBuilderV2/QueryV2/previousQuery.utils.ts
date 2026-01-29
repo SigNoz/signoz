@@ -52,6 +52,8 @@ export const saveAsPreviousQuery = (
 ): void => {
 	const previousQuery = getPreviousQueryFromStore();
 	previousQuery[key] = query;
+	// allow only one previous query to be stored. can be removed later if needed.
+	clearPreviousQuery();
 	writePreviousQueryToStore(previousQuery);
 };
 
