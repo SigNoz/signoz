@@ -1,7 +1,11 @@
 package telemetrylogs
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -45,57 +49,66 @@ var (
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
-	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
-		"body": {
-			Name:          "body",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
+	IntrinsicFields = map[string]func() []telemetrytypes.TelemetryFieldKey{
+		"body": buildBodyIntrinsicFields,
+		"trace_id": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "trace_id",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}}
 		},
-		"trace_id": {
-			Name:          "trace_id",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
+		"span_id": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "span_id",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}}
 		},
-		"span_id": {
-			Name:          "span_id",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
+		"trace_flags": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "trace_flags",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			}}
 		},
-		"trace_flags": {
-			Name:          "trace_flags",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+		"severity_text": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "severity_text",
+				Description:   "Log level. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitytext)",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}}
 		},
-		"severity_text": {
-			Name:          "severity_text",
-			Description:   "Log level. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitytext)",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
+		"severity_number": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "severity_number",
+				Description:   "Numerical value of the severity. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber)",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			}}
 		},
-		"severity_number": {
-			Name:          "severity_number",
-			Description:   "Numerical value of the severity. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber)",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+		"scope_name": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "scope_name",
+				Description:   "Logger name. Learn more about instrumentation scope [here](https://opentelemetry.io/docs/concepts/instrumentation-scope/)",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}}
 		},
-		"scope_name": {
-			Name:          "scope_name",
-			Description:   "Logger name. Learn more about instrumentation scope [here](https://opentelemetry.io/docs/concepts/instrumentation-scope/)",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextScope,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
-		"scope_version": {
-			Name:          "scope_version",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextScope,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
+		"scope_version": func() []telemetrytypes.TelemetryFieldKey {
+			return []telemetrytypes.TelemetryFieldKey{{
+				Name:          "scope_version",
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}}
 		},
 	}
 
@@ -117,7 +130,23 @@ var (
 			Direction: qbtypes.OrderDirectionDesc,
 		},
 	}
+
+	PsuedoIntrinsicFieldsInvalidOps = map[string][]qbtypes.FilterOperator{
+		jsonMergeExpr(): {
+			qbtypes.FilterOperatorExists,
+			qbtypes.FilterOperatorNotExists,
+		},
+	}
 )
+
+func jsonMergeExpr() string {
+	jsonStringExpressions := []string{}
+	for _, key := range []string{LogsV2BodyJSONColumn, LogsV2BodyPromotedColumn} {
+		jsonStringExpressions = append(jsonStringExpressions, fmt.Sprintf("toString(%s)", key))
+	}
+
+	return fmt.Sprintf("jsonMergePatch(%s)", strings.Join(jsonStringExpressions, ", "))
+}
 
 // bodyExpression returns the core ClickHouse expression representing the
 // conceptual "body" field when JSON body querying is enabled.
@@ -128,14 +157,7 @@ func bodyExpression() string {
 	if !querybuilder.BodyJSONQueryEnabled {
 		return LogsV2BodyColumn
 	}
-
-	jsonStringExpressions := []string{}
-	for _, key := range []string{LogsV2BodyJSONColumn, LogsV2BodyPromotedColumn} {
-		jsonStringExpressions = append(jsonStringExpressions, fmt.Sprintf("toJSONString(%s)", key))
-	}
-
-	jsonMergeExpr := fmt.Sprintf("jsonMergePatch(%s)", strings.Join(jsonStringExpressions, ", "))
-	return fmt.Sprintf("if(empty(%s), %s, %s)", LogsV2BodyColumn, LogsV2BodyColumn, jsonMergeExpr)
+	return fmt.Sprintf("if(empty(%s), %s, %s)", LogsV2BodyColumn, LogsV2BodyColumn, jsonMergeExpr())
 }
 
 func bodyAliasExpression() string {
@@ -144,4 +166,40 @@ func bodyAliasExpression() string {
 	}
 
 	return fmt.Sprintf("%s as body", bodyExpression())
+}
+
+func buildBodyIntrinsicFields() []telemetrytypes.TelemetryFieldKey {
+	base := []telemetrytypes.TelemetryFieldKey{{
+		Name:          "body",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}}
+
+	if querybuilder.BodyJSONQueryEnabled {
+		base = append(base, telemetrytypes.TelemetryFieldKey{
+			Name:          LogsV2BodyJSONColumn,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeJSON,
+			LogicalName:   "body",
+		},
+			telemetrytypes.TelemetryFieldKey{
+				Name:          LogsV2BodyPromotedColumn,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeJSON,
+				LogicalName:   "body",
+			},
+			telemetrytypes.TelemetryFieldKey{
+				Name:          jsonMergeExpr(),
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				LogicalName:   "body",
+			},
+		)
+	}
+
+	return base
 }

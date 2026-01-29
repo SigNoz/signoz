@@ -35,13 +35,24 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
-		valueType, value := InferDataType(value, operator, key)
-		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
-		if err != nil {
-			return "", err
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON {
+		// If field data is Not JSON Column Itself, then we need to build a JSON condition
+		if key.FieldDataType != telemetrytypes.FieldDataTypeJSON && querybuilder.BodyJSONQueryEnabled {
+			valueType, value := InferDataType(value, operator, key)
+			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
+			if err != nil {
+				return "", err
+			}
+			return cond, nil
+		} else if !operator.IsOpValidForJSON() {
+			// Skip building condition for invalid operators on JSON columns
+			return "", nil
 		}
-		return cond, nil
+	}
+
+	if key.IsPsuedoKey() && slices.Contains(PsuedoIntrinsicFieldsInvalidOps[key.Name], operator) {
+		// Skip building a condition for psuedo intrinsic fields with invalid operators
+		return "", nil
 	}
 
 	if operator.IsStringSearchOperator() {
@@ -108,7 +119,6 @@ func (c *conditionBuilder) conditionFor(
 		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
-
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
@@ -177,9 +187,9 @@ func (c *conditionBuilder) conditionFor(
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(tblFieldName), nil
+				return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), false), nil
 			} else {
-				return sb.IsNull(tblFieldName), nil
+				return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), true), nil
 			}
 		case schema.ColumnTypeEnumLowCardinality:
 			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {

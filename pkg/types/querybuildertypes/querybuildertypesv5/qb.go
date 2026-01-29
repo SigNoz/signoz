@@ -28,6 +28,10 @@ type FieldMapper interface {
 	ColumnExpressionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
 }
 
+// ConditionForOpFunc is a function that builds the condition for a specific operator and value.
+type ConditionForOpFunc func(sb *sqlbuilder.SelectBuilder, value any) (string, error)
+type OperatorToConditionRegistry map[FilterOperator]ConditionForOpFunc
+
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.

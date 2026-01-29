@@ -159,6 +159,15 @@ func (f FilterOperator) IsStringSearchOperator() bool {
 	}
 }
 
+func (f FilterOperator) IsOpValidForJSON() bool {
+	switch f {
+	case FilterOperatorExists, FilterOperatorNotExists:
+		return true
+	default:
+		return false
+	}
+}
+
 type OrderDirection struct {
 	valuer.String
 }

@@ -27,13 +27,6 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
-		"body": {
-			{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			},
-		},
 		"http.status_code": {
 			{
 				Name:          "http.status_code",
@@ -943,6 +936,13 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 	for _, keys := range keysMap {
 		for _, key := range keys {
 			key.Signal = telemetrytypes.SignalLogs
+		}
+	}
+
+	// add intrinsic fields to the map
+	for fieldName, keys := range IntrinsicFields {
+		for _, key := range keys() {
+			keysMap[fieldName] = append(keysMap[fieldName], &key)
 		}
 	}
 	return keysMap

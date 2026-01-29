@@ -363,6 +363,3 @@ require (
 )
 
 replace github.com/expr-lang/expr => github.com/SigNoz/expr v1.17.7-beta
-replace (
-	github.com/SigNoz/signoz-otel-collector v0.129.13-rc.2 => ../signoz-otel-collector
-)

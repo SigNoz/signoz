@@ -634,191 +634,116 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	}
 }
 
-func TestAdjustKey(t *testing.T) {
+func TestStmtBuilderBodyField(t *testing.T) {
 	cases := []struct {
-		name        string
-		inputKey    telemetrytypes.TelemetryFieldKey
-		keysMap     map[string][]*telemetrytypes.TelemetryFieldKey
-		expectedKey telemetrytypes.TelemetryFieldKey
+		name                string
+		requestType         qbtypes.RequestType
+		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		enableBodyJSONQuery bool
+		expected            qbtypes.Statement
+		expectedErr         error
+		expectWarn          bool
 	}{
 		{
-			name: "intrinsic field with no other key match - use intrinsic",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_text",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			name:        "body_exists",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body Exists"},
+				Limit:  10,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: IntrinsicFields["severity_text"],
+			enableBodyJSONQuery: true,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, if(empty(body), body, jsonMergePatch(toString(body_json), toString(body_json_promoted))) as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body <> ? OR empty(body_json) = ? OR empty(body_json_promoted) = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", false, false, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+			expectWarn:  true,
 		},
 		{
-			name: "intrinsic field with other key match - no override",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			name:        "body_exists_disabled",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body Exists"},
+				Limit:  10,
 			},
-			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"body": {
-					{
-						Name:          "body",
-						FieldContext:  telemetrytypes.FieldContextBody,
-						FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-					},
-					{
-						Name:          "body",
-						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-					},
-				},
+			enableBodyJSONQuery: false,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body <> ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
+			expectedErr: nil,
+			expectWarn:  false,
 		},
 		{
-			name: "json field with no context specified",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_number",
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			name:        "body_empty",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body == ''"},
+				Limit:  10,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_number",
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			enableBodyJSONQuery: true,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, if(empty(body), body, jsonMergePatch(toString(body_json), toString(body_json_promoted))) as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (body = ? OR (empty(body_json) = ?) OR (empty(body_json_promoted) = ?) OR (jsonMergePatch(toString(body_json), toString(body_json_promoted)) = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", false, false, "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
+			expectedErr: nil,
+			expectWarn:  true,
 		},
 		{
-			name: "single matching key in metadata",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "service.name",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			name:        "body_empty_disabled",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body == ''"},
+				Limit:  10,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
+			enableBodyJSONQuery: false,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+			expectWarn:  false,
 		},
 		{
-			name: "single matching key with incorrect context specified - no override",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "service.name",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			name:        "body_contains",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body CONTAINS 'error'"},
+				Limit:  10,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "service.name",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			enableBodyJSONQuery: true,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, if(empty(body), body, jsonMergePatch(toString(body_json), toString(body_json_promoted))) as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(body) LIKE LOWER(?) OR (empty(body_json) = ?) OR (empty(body_json_promoted) = ?) OR (LOWER(jsonMergePatch(toString(body_json), toString(body_json_promoted))) LIKE LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "%error%", false, false, "%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
+			expectedErr: nil,
+			expectWarn:  true,
 		},
 		{
-			name: "single matching key with no context specified - override",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "service.name",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			name:        "body_contains_disabled",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body CONTAINS 'error'"},
+				Limit:  10,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
-		},
-		{
-			name: "multiple matching keys - all materialized",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "multi.mat.key",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			enableBodyJSONQuery: false,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND LOWER(body) LIKE LOWER(?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "multi.mat.key",
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  true,
-			},
-		},
-		{
-			name: "multiple matching keys - mixed materialization",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "mixed.materialization.key",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "mixed.materialization.key",
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Materialized:  false,
-			},
-		},
-		{
-			name: "multiple matching keys with context specified",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "mixed.materialization.key",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["mixed.materialization.key"][0],
-		},
-		{
-			name: "no matching keys - unknown field",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "unknown.field",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "unknown.field",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-				Materialized:  false,
-			},
-		},
-		{
-			name: "no matching keys with context filter",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "unknown.field",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap: buildCompleteFieldKeyMap(),
-			expectedKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "unknown.field",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-				Materialized:  false,
-			},
-		},
-		{
-			name: "materialized field",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "mat.key",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["mat.key"][0],
-		},
-		{
-			name: "non-materialized field",
-			inputKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "user.id",
-				FieldContext:  telemetrytypes.FieldContextUnspecified,
-				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["user.id"][0],
+			expectedErr: nil,
+			expectWarn:  false,
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -838,19 +763,26 @@ func TestAdjustKey(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			// Create a copy of the input key to avoid modifying the original
-			key := c.inputKey
+			if c.enableBodyJSONQuery {
+				enableBodyJSONQuery(t)
+			} else {
+				disableBodyJSONQuery(t)
+			}
+			// rebuild the key map after enabling/disabling body JSON query
+			mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
-			// Call adjustKey
-			statementBuilder.adjustKey(&key, c.keysMap)
-
-			// Verify the key was adjusted as expected
-			require.Equal(t, c.expectedKey.Name, key.Name, "key name should match")
-			require.Equal(t, c.expectedKey.FieldContext, key.FieldContext, "field context should match")
-			require.Equal(t, c.expectedKey.FieldDataType, key.FieldDataType, "field data type should match")
-			require.Equal(t, c.expectedKey.Materialized, key.Materialized, "materialized should match")
-			require.Equal(t, c.expectedKey.JSONDataType, key.JSONDataType, "json data type should match")
-			require.Equal(t, c.expectedKey.Indexes, key.Indexes, "json exists should match")
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			if c.expectedErr != nil {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+				if c.expectWarn {
+					require.True(t, len(q.Warnings) > 0)
+				}
+			}
 		})
 	}
 }

@@ -540,9 +540,11 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		if found {
-			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
-					keys = append(keys, &field)
+			if fields, exists := telemetrylogs.IntrinsicFields[key]; exists {
+				for _, field := range fields() {
+					if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+						keys = append(keys, &field)
+					}
 				}
 				continue
 			}
