@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable react/display-name */
-import '@testing-library/jest-dom';
-
 import { jest } from '@jest/globals';
 // import { within } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -15,6 +13,8 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+
+import '@testing-library/jest-dom';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
 import {

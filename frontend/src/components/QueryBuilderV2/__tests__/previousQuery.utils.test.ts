@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+
 import '@testing-library/jest-dom';
 
 import {
-	PREVIOUS_QUERY_KEY,
 	clearPreviousQuery,
 	getPreviousQueryFromKey,
 	getQueryKey,
+	PREVIOUS_QUERY_KEY,
 	removeKeyFromPreviousQuery,
 	saveAsPreviousQuery,
 } from '../QueryV2/previousQuery.utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('previousQuery.utils', () => {
 	const sampleQuery: IBuilderQuery = {
