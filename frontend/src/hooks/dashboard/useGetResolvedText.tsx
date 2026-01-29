@@ -4,7 +4,7 @@
 // also have a prop saying max length post that you should truncate the text with "..."
 // return value should be a full text string, and a truncated text string (if max length is provided)
 
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
 import { ReactNode, useCallback, useMemo } from 'react';
 
 interface UseGetResolvedTextProps {
@@ -23,23 +23,15 @@ interface ResolvedTextResult {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function useGetResolvedText({
 	text,
-	variables,
 	maxLength,
 	matcher = '$',
 	maxValues = 2, // Default to showing 2 values before +n more
 }: UseGetResolvedTextProps): ResolvedTextResult {
-	const { selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 	const isString = typeof text === 'string';
 
 	const processedDashboardVariables = useMemo(() => {
-		if (variables) {
-			return variables;
-		}
-		if (!selectedDashboard?.data.variables) {
-			return {};
-		}
-
-		return Object.entries(selectedDashboard.data.variables).reduce<
+		return Object.entries(dashboardVariables).reduce<
 			Record<string, string | number | boolean>
 		>((acc, [, value]) => {
 			if (!value.name) {
@@ -54,7 +46,7 @@ function useGetResolvedText({
 			}
 			return acc;
 		}, {});
-	}, [variables, selectedDashboard?.data.variables]);
+	}, [dashboardVariables]);
 
 	// Process array values to add +n more notation for truncated text
 	const processedVariables = useMemo(() => {
