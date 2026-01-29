@@ -464,22 +464,83 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 		}
 	}
 
-	bucketsByIndex := make(map[int][]*qbtypes.DistributionBucket)
+	type aggKey struct {
+		index    int
+		labelKey string
+	}
+	aggregationMap := make(map[aggKey]*qbtypes.DistributionAggregation)
 
 	for rows.Next() {
 		if err := rows.Scan(scan...); err != nil {
 			return nil, err
 		}
 
+		var lblVals []string
+		var lblObjs []*qbtypes.Label
+
+		for idx, ptr := range scan {
+			name := colNames[idx]
+
+			if aggRe.MatchString(name) {
+				continue
+			}
+
+			// Skip timestamp column for distributions
+			if name == "ts" {
+				continue
+			}
+
+			// Extract label values
+			switch v := ptr.(type) {
+			case *string:
+				lblVals = append(lblVals, *v)
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: *v,
+				})
+
+			case **string:
+				val := *v
+				if val == nil {
+					var empty string
+					val = &empty
+				}
+				lblVals = append(lblVals, *val)
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: *val,
+				})
+
+			case *float64, *float32, *int64, *int32, *uint64, *uint32:
+				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
+				lblVals = append(lblVals, fmt.Sprint(val))
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: val,
+				})
+
+			case **float64, **float32, **int64, **int32, **uint64, **uint32:
+				tempVal := reflect.ValueOf(ptr)
+				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
+					val := numericAsFloat(tempVal.Elem().Elem().Interface())
+					lblVals = append(lblVals, fmt.Sprint(val))
+					lblObjs = append(lblObjs, &qbtypes.Label{
+						Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+						Value: val,
+					})
+				}
+			}
+		}
+
+		sort.Strings(lblVals)
+		labelsKey := strings.Join(lblVals, ",")
+
+		// Process histogram data for each result column
 		for resultID, colIdx := range resultCols {
 			histData := derefValue(scan[colIdx])
 			vHist := reflect.ValueOf(histData)
 
 			if vHist.Kind() == reflect.Slice {
-				if vHist.Len() == 0 {
-					continue
-				}
-
 				var buckets []*qbtypes.DistributionBucket
 
 				for i := 0; i < vHist.Len(); i++ {
@@ -507,8 +568,17 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 					}
 				}
 
-				if len(buckets) > 0 {
-					bucketsByIndex[resultID] = buckets
+				key := aggKey{index: resultID, labelKey: labelsKey}
+
+				if agg, exists := aggregationMap[key]; exists {
+					agg.Buckets = append(agg.Buckets, buckets...)
+				} else {
+					aggregationMap[key] = &qbtypes.DistributionAggregation{
+						Index:   resultID,
+						Alias:   "__result_" + strconv.Itoa(resultID),
+						Labels:  lblObjs,
+						Buckets: buckets,
+					}
 				}
 			}
 		}
@@ -518,21 +588,23 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 	}
 
 	maxAgg := -1
-	for idx := range bucketsByIndex {
-		if idx > maxAgg {
-			maxAgg = idx
+	for key := range aggregationMap {
+		if key.index > maxAgg {
+			maxAgg = key.index
 		}
 	}
 
-	var aggregations []*qbtypes.DistributionAggregation
-	if maxAgg >= 0 {
-		for i := 0; i <= maxAgg; i++ {
-			if buckets, ok := bucketsByIndex[i]; ok {
-				aggregations = append(aggregations, &qbtypes.DistributionAggregation{
-					Index:   i,
-					Alias:   "__result_" + strconv.Itoa(i),
-					Buckets: buckets,
-				})
+	if maxAgg < 0 {
+		return &qbtypes.DistributionData{
+			QueryName: queryName,
+		}, nil
+	}
+
+	aggregations := make([]*qbtypes.DistributionAggregation, 0, maxAgg+1)
+	for i := 0; i <= maxAgg; i++ {
+		for key, agg := range aggregationMap {
+			if key.index == i {
+				aggregations = append(aggregations, agg)
 			}
 		}
 	}

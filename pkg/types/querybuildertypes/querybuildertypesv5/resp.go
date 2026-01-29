@@ -156,6 +156,7 @@ type DistributionData struct {
 type DistributionAggregation struct {
 	Index   int                   `json:"index"`
 	Alias   string                `json:"alias"`
+	Labels  []*Label              `json:"labels,omitempty"`
 	Buckets []*DistributionBucket `json:"buckets"`
 }
 
