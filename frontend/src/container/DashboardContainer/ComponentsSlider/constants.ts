@@ -1,8 +1,7 @@
-import { getPreviousQueryFromKey } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 export const PANEL_TYPES_INITIAL_QUERY = {
 	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
