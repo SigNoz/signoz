@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
 import { UPlotChartProps } from './types';
+import { usePlotContext } from '../context/PlotContext';
 
 /**
  * Check if dimensions have changed
@@ -43,6 +44,7 @@ export default function UPlotChart({
 	children,
 	'data-testid': testId = 'uplot-main-div',
 }: UPlotChartProps): JSX.Element {
+	const { setUPlotInstance } = usePlotContext();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
@@ -85,14 +87,10 @@ export default function UPlotChart({
 		if (plotRef) {
 			plotRef(plot);
 		}
+		setUPlotInstance(plot);
 
 		plotInstanceRef.current = plot;
-	}, [config, data, width, height, plotRef, destroyPlot]);
-
-	/**
-	 * Cleanup on unmount
-	 */
-	useEffect(() => destroyPlot, [destroyPlot]);
+	}, [config, data, width, height, plotRef, destroyPlot, setUPlotInstance]);
 
 	/**
 	 * Destroy plot when data becomes empty to prevent memory leaks.

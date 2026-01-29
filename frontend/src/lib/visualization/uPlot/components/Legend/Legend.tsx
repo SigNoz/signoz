@@ -1,27 +1,31 @@
 import './Legend.styles.scss';
 
 import cx from 'classnames';
+import { get } from 'lodash-es';
 import {
 	useCallback,
 	useEffect,
 	useLayoutEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react';
-import type uPlot from 'uplot';
+import { Virtuoso } from 'react-virtuoso';
 import { LegendPosition } from 'types/api/dashboard/getAll';
+import type uPlot from 'uplot';
 
 import { LegendItem } from '../../config/types';
 import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
-import { usePanelContext } from '../../context/PanelContext';
-import { get } from 'lodash-es';
+import { usePlotContext } from '../../context/PlotContext';
+
+const LEGENDS_PER_SET_DEFAULT = 5;
 
 interface LegendProps {
-	placement?: LegendPosition;
+	position?: LegendPosition;
 	config: UPlotConfigBuilder;
 }
 export default function Legend({
-	placement = LegendPosition.BOTTOM,
+	position: _position = LegendPosition.BOTTOM,
 	config,
 }: LegendProps): JSX.Element {
 	const [legendItemsMap, setLegendItemsMap] = useState<
@@ -30,15 +34,16 @@ export default function Legend({
 	const [focusedSeriesIndex, setFocusedSeriesIndex] = useState<number | null>(
 		null,
 	);
+	const legendContainerRef = useRef<HTMLDivElement | null>(null);
+
 	const rafId = useRef<number | null>(null); // requestAnimationFrame id
 	const visibilityUpdatesRef = useRef<Record<number, boolean>>({});
 	const visibilityRafIdRef = useRef<number | null>(null);
-
 	const {
 		onToggleSeriesVisibility,
 		onToggleSeriesOnOff,
 		onFocusSeries,
-	} = usePanelContext();
+	} = usePlotContext();
 
 	const applyVisibilityUpdates = useCallback(
 		(updates: Record<number, boolean>): void => {
@@ -193,34 +198,59 @@ export default function Legend({
 		[],
 	);
 
+	// Chunk legend items into rows of LEGENDS_PER_ROW items each
+	const legendRows = useMemo(() => {
+		const items = Object.values(legendItemsMap);
+		const rows: LegendItem[][] = [];
+
+		for (let i = 0; i < items.length; i += LEGENDS_PER_SET_DEFAULT) {
+			rows.push(items.slice(i, i + LEGENDS_PER_SET_DEFAULT));
+		}
+
+		return rows;
+	}, [legendItemsMap]);
+
+	const renderLegendRow = useCallback(
+		(rowIndex: number, row: LegendItem[]): JSX.Element => (
+			<div key={rowIndex} className="legend-row">
+				{row.map((item) => (
+					<div
+						key={item.seriesIndex}
+						data-legend-item-id={item.seriesIndex}
+						className={cx('legend-item', {
+							'legend-item-off': !item.visible,
+							'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
+						})}
+					>
+						<div
+							className="legend-marker"
+							style={{ borderColor: String(item.color) }}
+							data-is-legend-marker={true}
+						/>
+						<span className="legend-label">{item.label}</span>
+					</div>
+				))}
+			</div>
+		),
+		[focusedSeriesIndex],
+	);
+
 	return (
 		<div
-			style={{
-				flexDirection: placement === LegendPosition.RIGHT ? 'column' : 'row',
-				flexWrap: placement === LegendPosition.RIGHT ? 'nowrap' : 'wrap',
-			}}
+			ref={legendContainerRef}
 			className="legend-container"
 			onClick={handleLegendClick}
 			onMouseMove={handleLegendMouseMove}
 			onMouseLeave={handleLegendMouseLeave}
 		>
-			{Object.values(legendItemsMap).map((item) => (
-				<div
-					key={item.seriesIndex}
-					data-legend-item-id={item.seriesIndex}
-					className={cx('legend-item', {
-						'legend-item-off': !item.visible,
-						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
-					})}
-				>
-					<div
-						className="legend-marker"
-						style={{ borderColor: String(item.color) }}
-						data-is-legend-marker={true}
-					/>
-					<span className="legend-label">{item.label}</span>
-				</div>
-			))}
+			<Virtuoso
+				style={{
+					height: '100%',
+					width: '100%',
+				}}
+				data={legendRows}
+				itemContent={(index, row): JSX.Element => renderLegendRow(index, row)}
+			/>
 		</div>
 	);
 }

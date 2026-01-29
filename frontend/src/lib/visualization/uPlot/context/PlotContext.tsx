@@ -7,16 +7,16 @@ import {
 } from 'react';
 import uPlot from 'uplot';
 
-export interface IPanelContext {
+export interface IPlotContext {
 	setUPlotInstance: (uPlotInstance: uPlot | null) => void;
 	onToggleSeriesVisibility: (seriesIndex: number) => void;
 	onToggleSeriesOnOff: (seriesIndex: number) => void;
 	onFocusSeries: (seriesIndex: number | null) => void;
 }
 
-export const PanelContext = createContext<IPanelContext | null>(null);
+export const PlotContext = createContext<IPlotContext | null>(null);
 
-export const PanelContextProvider = ({
+export const PlotContextProvider = ({
 	children,
 }: PropsWithChildren): JSX.Element => {
 	const uPlotInstanceRef = useRef<uPlot | null>(null);
@@ -78,7 +78,7 @@ export const PanelContextProvider = ({
 	}, []);
 
 	return (
-		<PanelContext.Provider
+		<PlotContext.Provider
 			value={{
 				onToggleSeriesVisibility,
 				setUPlotInstance,
@@ -87,12 +87,12 @@ export const PanelContextProvider = ({
 			}}
 		>
 			{children}
-		</PanelContext.Provider>
+		</PlotContext.Provider>
 	);
 };
 
-export const usePanelContext = (): IPanelContext => {
-	const context = useContext(PanelContext);
+export const usePlotContext = (): IPlotContext => {
+	const context = useContext(PlotContext);
 
 	if (!context) {
 		throw new Error('Should be used inside the context');
