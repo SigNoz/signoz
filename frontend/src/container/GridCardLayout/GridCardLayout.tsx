@@ -51,6 +51,7 @@ import {
 } from './utils';
 import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
+import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
 
 interface GraphLayoutProps {
 	handle: FullScreenHandle;
@@ -79,7 +80,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 
-	const { widgets, variables } = data || {};
+	const { widgets } = data || {};
+
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { user } = useAppContext();
 
@@ -100,9 +103,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	>({});
 
 	const widgetsHavingDynamicVariables = useMemo(() => {
-		const dynamicVariables = Object.values(
-			selectedDashboard?.data?.variables || {},
-		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
+		const dynamicVariables = Object.values(dashboardVariables)?.filter(
+			(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+		);
 
 		const widgets =
 			selectedDashboard?.data?.widgets?.filter(
@@ -113,7 +116,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			dynamicVariables,
 			widgets as Widgets[],
 		);
-	}, [selectedDashboard]);
+	}, [selectedDashboard, dashboardVariables]);
 
 	useEffect(() => {
 		setCurrentPanelMap(panelMap);
@@ -178,11 +181,11 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				dashboardId: selectedDashboard?.id,
 				dashboardName: data.title,
 				numberOfPanels: data.widgets?.length,
-				numberOfVariables: Object.keys(data?.variables || {}).length || 0,
+				numberOfVariables: Object.keys(dashboardVariables).length || 0,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [data, selectedDashboard?.id]);
+	}, [dashboardVariables, data, selectedDashboard?.id]);
 
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) {
@@ -622,7 +625,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 								<GridCard
 									widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
 									headerMenuList={widgetActions}
-									variables={variables}
+									variables={dashboardVariables}
 									// version={selectedDashboard?.data?.version}
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}

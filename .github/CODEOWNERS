@@ -110,6 +110,7 @@
 # Dashboard Owners
 
 /frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/providers/Dashboard/ @SigNoz/pulse-frontend
 
 ## Dashboard Types
 
@@ -131,3 +132,4 @@
 
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
+

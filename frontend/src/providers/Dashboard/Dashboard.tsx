@@ -51,6 +51,8 @@ import {
 	WidgetColumnWidths,
 } from './types';
 import { sortLayout } from './util';
+import { updateDashboardVariablesStore } from './store/dashboardVariablesStore';
+import { useDashboardVariables } from './store/useDashboardVariables';
 
 const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
@@ -196,6 +198,16 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
+	const dashboardVariables = useDashboardVariables();
+
+	useEffect(() => {
+		const existingVariables = dashboardVariables;
+		const updatedVariables = selectedDashboard?.data.variables || {};
+
+		if (!isEqual(existingVariables, updatedVariables)) {
+			updateDashboardVariablesStore(updatedVariables);
+		}
+	}, [selectedDashboard]);
 
 	const {
 		currentDashboard,

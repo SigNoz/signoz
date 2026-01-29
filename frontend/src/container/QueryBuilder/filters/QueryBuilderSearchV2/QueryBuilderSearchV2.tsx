@@ -31,7 +31,6 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -42,7 +41,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -69,6 +67,7 @@ import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
+import { useDashboardVariablesByType } from 'providers/Dashboard/store/useDashboardVariablesByType';
 
 export interface ITag {
 	id?: string;
@@ -248,14 +247,9 @@ function QueryBuilderSearchV2(
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
-	const { selectedDashboard } = useDashboard();
-
-	const dynamicVariables = useMemo(
-		() =>
-			Object.values(selectedDashboard?.data?.variables || {})?.filter(
-				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
 	);
 
 	const { data, isFetching } = useGetAggregateKeys(
@@ -806,7 +800,7 @@ function QueryBuilderSearchV2(
 				values.push(...(attributeValues?.payload?.[key] || []));
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
-				const variableName = dynamicVariables?.find(
+				const variableName = dashboardDynamicVariables?.find(
 					(variable) =>
 						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
 				)?.name;
@@ -837,7 +831,7 @@ function QueryBuilderSearchV2(
 		suggestionsData?.payload?.attributes,
 		operatorConfigKey,
 		currentFilterItem?.key?.key,
-		dynamicVariables,
+		dashboardDynamicVariables,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page
