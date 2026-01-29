@@ -54,7 +54,12 @@ export const PanelContextProvider = ({
 			return;
 		}
 
-		plot.setSeries(seriesIndex, { show: !plot.series[seriesIndex].show });
+		const series = plot.series[seriesIndex];
+		if (!series) {
+			return;
+		}
+
+		plot.setSeries(seriesIndex, { show: !series.show });
 	}, []);
 
 	const onFocusSeries = useCallback((seriesIndex: number | null): void => {
