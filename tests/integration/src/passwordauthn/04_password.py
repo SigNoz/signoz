@@ -7,8 +7,6 @@ from sqlalchemy import sql
 from fixtures import types
 from fixtures.logger import setup_logger
 
-from datetime import datetime, timedelta, timezone
-
 logger = setup_logger(__name__)
 
 
@@ -243,6 +241,7 @@ def test_reset_password_with_no_password(
     token = get_token("admin+password@integration.test", "FINALPASSword123!#[")
     assert token is not None
 
+
 def test_forgot_password_returns_204_for_nonexistent_email(
     signoz: types.SigNoz,
 ) -> None:
@@ -292,7 +291,11 @@ def test_forgot_password_creates_reset_token(
     # Create a user specifically for testing forgot password
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "forgot@integration.test", "role": "EDITOR", "name": "forgotpassword user"},
+        json={
+            "email": "forgot@integration.test",
+            "role": "EDITOR",
+            "name": "forgotpassword user",
+        },
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -360,11 +363,7 @@ def test_forgot_password_creates_reset_token(
     assert response.status_code == HTTPStatus.OK
     user_response = response.json()["data"]
     found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "forgot@integration.test"
-        ),
+        (user for user in user_response if user["email"] == "forgot@integration.test"),
         None,
     )
     assert found_user is not None
@@ -374,16 +373,20 @@ def test_forgot_password_creates_reset_token(
     # First get the password_id from factor_password, then get the token
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
-            sql.text("""
+            sql.text(
+                """
                 SELECT rpt.token 
                 FROM reset_password_token rpt
                 JOIN factor_password fp ON rpt.password_id = fp.id
                 WHERE fp.user_id = :user_id
-            """),
+            """
+            ),
             {"user_id": found_user["id"]},
         )
         row = result.fetchone()
-        assert row is not None, "Reset password token should exist after calling forgotPassword"
+        assert (
+            row is not None
+        ), "Reset password token should exist after calling forgotPassword"
         reset_token = row[0]
 
     assert reset_token is not None
@@ -426,11 +429,7 @@ def test_reset_password_with_expired_token(
     assert response.status_code == HTTPStatus.OK
     user_response = response.json()["data"]
     found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "forgot@integration.test"
-        ),
+        (user for user in user_response if user["email"] == "forgot@integration.test"),
         None,
     )
     assert found_user is not None
@@ -464,12 +463,14 @@ def test_reset_password_with_expired_token(
     with signoz.sqlstore.conn.connect() as conn:
         # First get the token
         result = conn.execute(
-            sql.text("""
+            sql.text(
+                """
                 SELECT rpt.token, rpt.id
                 FROM reset_password_token rpt
                 JOIN factor_password fp ON rpt.password_id = fp.id
                 WHERE fp.user_id = :user_id
-            """),
+            """
+            ),
             {"user_id": found_user["id"]},
         )
         row = result.fetchone()
@@ -479,11 +480,13 @@ def test_reset_password_with_expired_token(
 
         # Now expire the token by setting expires_at to a past time
         conn.execute(
-            sql.text("""
+            sql.text(
+                """
                 UPDATE reset_password_token 
                 SET expires_at = :expired_time 
                 WHERE id = :token_id
-            """),
+            """
+            ),
             {
                 "expired_time": "2020-01-01 00:00:00",
                 "token_id": token_id,

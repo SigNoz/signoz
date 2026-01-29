@@ -98,7 +98,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			async () =>
 				getAggregateKeys({
 					aggregateAttribute: query.aggregateAttribute?.key || '',
-					dataSource: query.dataSource,
+					dataSource: dataSource,
 					aggregateOperator: query.aggregateOperator || '',
 					searchText,
 				}),
@@ -109,7 +109,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		isFocused,
 		query.aggregateAttribute?.key,
 		query.aggregateOperator,
-		query.dataSource,
+		dataSource,
 		queryClient,
 		searchText,
 	]);
