@@ -1,16 +1,16 @@
-import './Version.styles.scss';
-
-import { Button, Form } from 'antd';
-import { CheckCircle, CloudUpload, InfoIcon, Wrench } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import { Button, Form } from 'antd';
+import { CheckCircle, CloudUpload, InfoIcon, Wrench } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
 
 import { githubReleaseURL } from './constant';
 import { InputComponent } from './styles';
+
+import './Version.styles.scss';
 
 function Version(): JSX.Element {
 	const [form] = Form.useForm();

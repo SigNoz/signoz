@@ -1,5 +1,6 @@
-import './EditRules.styles.scss';
-
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { Button, Card } from 'antd';
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
@@ -11,9 +12,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
@@ -24,6 +22,8 @@ import {
 	improvedErrorMessage,
 	returnToAlertsPage,
 } from './constants';
+
+import './EditRules.styles.scss';
 
 function EditRules(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();

@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import {
 	getRelatedMetrics,
 	RelatedMetricsPayload,
 	RelatedMetricsResponse,
 } from 'api/metricsExplorer/getRelatedMetrics';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseGetRelatedMetrics = (

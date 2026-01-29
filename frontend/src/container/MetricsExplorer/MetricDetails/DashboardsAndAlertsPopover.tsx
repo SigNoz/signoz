@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Typography } from 'antd';
 import { QueryParams } from 'constants/query';
@@ -6,8 +8,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { Bell, Grid } from 'lucide-react';
-import { useMemo } from 'react';
-import { generatePath } from 'react-router-dom';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 

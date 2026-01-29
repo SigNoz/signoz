@@ -1,8 +1,8 @@
+import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import MessagingQueues from 'pages/MessagingQueues';
 import MeterExplorer from 'pages/MeterExplorer';
-import { RouteProps } from 'react-router-dom';
 
 import {
 	AlertHistory,

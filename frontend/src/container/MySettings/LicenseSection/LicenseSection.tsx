@@ -1,11 +1,11 @@
-import './LicenseSection.styles.scss';
-
+import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Typography } from 'antd';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCopyToClipboard } from 'react-use';
+
+import './LicenseSection.styles.scss';
 
 function LicenseSection(): JSX.Element | null {
 	const { activeLicense } = useAppContext();

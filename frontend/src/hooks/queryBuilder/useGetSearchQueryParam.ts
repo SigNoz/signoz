@@ -1,6 +1,6 @@
+import { useMemo } from 'react';
 import { QuerySearchParamNames } from 'components/ExplorerCard/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
 
 export const useGetSearchQueryParam = (
 	searchParams: QuerySearchParamNames,

@@ -1,7 +1,7 @@
-import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
-import { Button, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
+import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
+import { Button, Space, Typography } from 'antd';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';

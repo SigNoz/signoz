@@ -1,9 +1,9 @@
-import './InputWithLabel.styles.scss';
-
+import { useState } from 'react';
 import { Button, Input, Typography } from 'antd';
 import cx from 'classnames';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+
+import './InputWithLabel.styles.scss';
 
 function InputWithLabel({
 	label,

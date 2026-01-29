@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -18,7 +19,6 @@ import {
 	Diff,
 	Gauge,
 } from 'lucide-react';
-import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';

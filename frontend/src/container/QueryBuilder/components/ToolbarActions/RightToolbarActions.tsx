@@ -1,11 +1,11 @@
-import './ToolbarActions.styles.scss';
-
-import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { MutableRefObject, useEffect } from 'react';
 import { useQueryClient } from 'react-query';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 
 import RunQueryBtn from '../RunQueryBtn/RunQueryBtn';
+
+import './ToolbarActions.styles.scss';
 
 interface RightToolbarActionsProps {
 	onStageRunQuery: () => void;

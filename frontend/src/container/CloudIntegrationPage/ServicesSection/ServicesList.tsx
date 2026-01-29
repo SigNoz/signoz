@@ -1,8 +1,8 @@
+import { useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 import Spinner from 'components/Spinner';
 import { useGetAccountServices } from 'hooks/integration/aws/useGetAccountServices';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import ServiceItem from './ServiceItem';
 

@@ -1,7 +1,7 @@
-import './AttributeWithExpandablePopover.styles.scss';
-
 import { Button, Popover, Tooltip, Typography } from 'antd';
 import { Fullscreen } from 'lucide-react';
+
+import './AttributeWithExpandablePopover.styles.scss';
 
 interface AttributeWithExpandablePopoverProps {
 	attributeKey: string;

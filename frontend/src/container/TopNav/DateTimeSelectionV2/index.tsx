@@ -1,5 +1,7 @@
-import './DateTimeSelectionV2.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
 import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -19,10 +21,6 @@ import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
 import { Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
@@ -50,6 +48,8 @@ import {
 	Time,
 	TimeRange,
 } from './types';
+
+import './DateTimeSelectionV2.styles.scss';
 
 function DateTimeSelection({
 	showAutoRefresh,

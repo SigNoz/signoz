@@ -1,5 +1,3 @@
-import './TraceDetailV2.styles.scss';
-
 import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -7,6 +5,8 @@ import history from 'lib/history';
 import { Compass, Cone, TowerControl } from 'lucide-react';
 
 import TraceDetailsV2 from './TraceDetailV2';
+
+import './TraceDetailV2.styles.scss';
 
 interface INewTraceDetailProps {
 	items: {

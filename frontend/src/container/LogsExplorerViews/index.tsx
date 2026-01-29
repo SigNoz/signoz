@@ -1,6 +1,16 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './LogsExplorerViews.styles.scss';
-
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -31,18 +41,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
-import {
-	Dispatch,
-	memo,
-	MutableRefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -58,6 +56,8 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 } from 'uuid';
 
 import LogsActionsContainer from './LogsActionsContainer';
+
+import './LogsExplorerViews.styles.scss';
 
 function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
