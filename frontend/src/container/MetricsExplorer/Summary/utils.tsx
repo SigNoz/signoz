@@ -157,9 +157,12 @@ function ValidateRowValueWrapper({
 }
 
 export const formatNumberIntoHumanReadableFormat = (
-	num: number,
+	num: number | undefined,
 	addPlusSign = true,
 ): string => {
+	if (!num) {
+		return '-';
+	}
 	function format(num: number, divisor: number, suffix: string): string {
 		const value = num / divisor;
 		return value % 1 === 0

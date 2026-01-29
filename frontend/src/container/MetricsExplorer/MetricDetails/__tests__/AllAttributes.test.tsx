@@ -1,11 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 import * as reactUseHooks from 'react-use';
+import { userEvent } from 'tests/test-utils';
 
-import { MetricDetailsAttribute } from '../../../../api/metricsExplorer/getMetricDetails';
 import ROUTES from '../../../../constants/routes';
 import AllAttributes, { AllAttributesValue } from '../AllAttributes';
+import { getMockMetricAttributesData } from './testUtlls';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -22,32 +24,30 @@ jest
 
 const mockMetricName = 'test-metric';
 const mockMetricType = MetricType.GAUGE;
-const mockAttributes: MetricDetailsAttribute[] = [
-	{
-		key: 'attribute1',
-		value: ['value1', 'value2'],
-		valueCount: 2,
-	},
-	{
-		key: 'attribute2',
-		value: ['value3'],
-		valueCount: 1,
-	},
-];
 
 const mockUseCopyToClipboard = jest.fn();
 jest
 	.spyOn(reactUseHooks, 'useCopyToClipboard')
 	.mockReturnValue([{ value: 'value1' }, mockUseCopyToClipboard] as any);
 
+const useGetMetricAttributesMock = jest.spyOn(
+	metricsExplorerHooks,
+	'useGetMetricAttributes',
+);
+
+const mockUseGetMetricAttributes = jest.fn();
+
 describe('AllAttributes', () => {
+	beforeEach(() => {
+		useGetMetricAttributesMock.mockReturnValue({
+			...getMockMetricAttributesData(),
+			mutate: mockUseGetMetricAttributes,
+		});
+	});
+
 	it('renders attributes section with title', () => {
 		render(
-			<AllAttributes
-				metricName={mockMetricName}
-				attributes={mockAttributes}
-				metricType={mockMetricType}
-			/>,
+			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);
 
 		expect(screen.getByText('All Attributes')).toBeInTheDocument();
@@ -55,11 +55,7 @@ describe('AllAttributes', () => {
 
 	it('renders all attribute keys and values', () => {
 		render(
-			<AllAttributes
-				metricName={mockMetricName}
-				attributes={mockAttributes}
-				metricType={mockMetricType}
-			/>,
+			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);
 
 		// Check attribute keys are rendered
@@ -74,11 +70,7 @@ describe('AllAttributes', () => {
 
 	it('renders value counts correctly', () => {
 		render(
-			<AllAttributes
-				metricName={mockMetricName}
-				attributes={mockAttributes}
-				metricType={mockMetricType}
-			/>,
+			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);
 
 		expect(screen.getByText('2')).toBeInTheDocument(); // For attribute1
@@ -86,41 +78,36 @@ describe('AllAttributes', () => {
 	});
 
 	it('handles empty attributes array', () => {
+		useGetMetricAttributesMock.mockReturnValue({
+			...getMockMetricAttributesData({
+				data: {
+					attributes: [],
+					totalKeys: 0,
+				},
+			}),
+			mutate: mockUseGetMetricAttributes,
+		});
 		render(
-			<AllAttributes
-				metricName={mockMetricName}
-				attributes={[]}
-				metricType={mockMetricType}
-			/>,
+			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);
 
 		expect(screen.getByText('All Attributes')).toBeInTheDocument();
-		expect(screen.queryByText('No data')).toBeInTheDocument();
+		expect(screen.getByText('No attributes found')).toBeInTheDocument();
 	});
 
-	it('clicking on an attribute key opens the explorer with the attribute filter applied', () => {
+	it('clicking on an attribute key opens the explorer with the attribute filter applied', async () => {
 		render(
-			<AllAttributes
-				metricName={mockMetricName}
-				attributes={mockAttributes}
-				metricType={mockMetricType}
-			/>,
+			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);
-		fireEvent.click(screen.getByText('attribute1'));
+		await userEvent.click(screen.getByText('attribute1'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
 	});
 
-	it('filters attributes based on search input', () => {
+	it('filters attributes based on search input', async () => {
 		render(
-			<AllAttributes
-				metricName={mockMetricName}
-				attributes={mockAttributes}
-				metricType={mockMetricType}
-			/>,
+			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
 		);
-		fireEvent.change(screen.getByPlaceholderText('Search'), {
-			target: { value: 'value1' },
-		});
+		await userEvent.type(screen.getByPlaceholderText('Search'), 'value1');
 
 		expect(screen.getByText('attribute1')).toBeInTheDocument();
 		expect(screen.getByText('value1')).toBeInTheDocument();
@@ -144,7 +131,7 @@ describe('AllAttributesValue', () => {
 		expect(screen.getByText('value2')).toBeInTheDocument();
 	});
 
-	it('loads more attributes when show more button is clicked', () => {
+	it('loads more attributes when show more button is clicked', async () => {
 		render(
 			<AllAttributesValue
 				filterKey="attribute1"
@@ -155,7 +142,7 @@ describe('AllAttributesValue', () => {
 			/>,
 		);
 		expect(screen.queryByText('value6')).not.toBeInTheDocument();
-		fireEvent.click(screen.getByText('Show More'));
+		await userEvent.click(screen.getByText('Show More'));
 		expect(screen.getByText('value6')).toBeInTheDocument();
 	});
 
@@ -172,7 +159,7 @@ describe('AllAttributesValue', () => {
 		expect(screen.queryByText('Show More')).not.toBeInTheDocument();
 	});
 
-	it('copy button should copy the attribute value to the clipboard', () => {
+	it('copy button should copy the attribute value to the clipboard', async () => {
 		render(
 			<AllAttributesValue
 				filterKey="attribute1"
@@ -183,13 +170,13 @@ describe('AllAttributesValue', () => {
 			/>,
 		);
 		expect(screen.getByText('value1')).toBeInTheDocument();
-		fireEvent.click(screen.getByText('value1'));
+		await userEvent.click(screen.getByText('value1'));
 		expect(screen.getByText('Copy Attribute')).toBeInTheDocument();
-		fireEvent.click(screen.getByText('Copy Attribute'));
+		await userEvent.click(screen.getByText('Copy Attribute'));
 		expect(mockUseCopyToClipboard).toHaveBeenCalledWith('value1');
 	});
 
-	it('explorer button should go to metrics explore with the attribute filter applied', () => {
+	it('explorer button should go to metrics explore with the attribute filter applied', async () => {
 		render(
 			<AllAttributesValue
 				filterKey="attribute1"
@@ -200,10 +187,10 @@ describe('AllAttributesValue', () => {
 			/>,
 		);
 		expect(screen.getByText('value1')).toBeInTheDocument();
-		fireEvent.click(screen.getByText('value1'));
+		await userEvent.click(screen.getByText('value1'));
 
 		expect(screen.getByText('Open in Explorer')).toBeInTheDocument();
-		fireEvent.click(screen.getByText('Open in Explorer'));
+		await userEvent.click(screen.getByText('Open in Explorer'));
 		expect(mockGoToMetricsExploreWithAppliedAttribute).toHaveBeenCalledWith(
 			'attribute1',
 			'value1',
