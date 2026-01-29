@@ -1,4 +1,3 @@
-// @ts-nocheck
 import './DashboardVariableSelection.styles.scss';
 
 import { Row } from 'antd';

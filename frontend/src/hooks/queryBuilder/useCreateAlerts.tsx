@@ -12,13 +12,11 @@ import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariab
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
-import { useDashboardVariablesByType } from 'providers/Dashboard/store/useDashboardVariablesByType';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
@@ -34,10 +32,12 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { selectedDashboard } = useDashboard();
 
-	const { dashboardVariables } = useDashboardVariables();
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
 	);
 
 	return useCallback(() => {
@@ -68,9 +68,9 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			globalSelectedInterval,
 			graphType: getGraphType(widget.panelTypes),
 			selectedTime: widget.timePreferance,
-			variables: getDashboardVariables(dashboardVariables),
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 			originalGraphType: widget.panelTypes,
-			dynamicVariables: dashboardDynamicVariables,
+			dynamicVariables,
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
@@ -104,10 +104,10 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		globalSelectedInterval,
 		notifications,
 		queryRangeMutation,
-		dashboardVariables,
-		dashboardDynamicVariables,
+		selectedDashboard?.data.variables,
 		selectedDashboard?.data.version,
 		widget,
+		dynamicVariables,
 	]);
 };
 
