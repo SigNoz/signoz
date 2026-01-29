@@ -44,7 +44,7 @@ export default function UPlotChart({
 	children,
 	'data-testid': testId = 'uplot-main-div',
 }: UPlotChartProps): JSX.Element {
-	const { setUPlotInstance } = usePlotContext();
+	const { setPlotContextInitialState } = usePlotContext();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
@@ -87,10 +87,21 @@ export default function UPlotChart({
 		if (plotRef) {
 			plotRef(plot);
 		}
-		setUPlotInstance(plot);
+		setPlotContextInitialState({
+			uPlotInstance: plot,
+			widgetId: config.getWidgetId(),
+		});
 
 		plotInstanceRef.current = plot;
-	}, [config, data, width, height, plotRef, destroyPlot, setUPlotInstance]);
+	}, [
+		config,
+		data,
+		width,
+		height,
+		plotRef,
+		destroyPlot,
+		setPlotContextInitialState,
+	]);
 
 	/**
 	 * Destroy plot when data becomes empty to prevent memory leaks.

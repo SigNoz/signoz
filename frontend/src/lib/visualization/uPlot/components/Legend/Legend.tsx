@@ -1,4 +1,5 @@
 import './Legend.styles.scss';
+import { Tooltip as AntdTooltip } from 'antd';
 
 import cx from 'classnames';
 import { get } from 'lodash-es';
@@ -20,6 +21,9 @@ import { usePlotContext } from '../../context/PlotContext';
 
 const LEGENDS_PER_SET_DEFAULT = 5;
 
+export interface LegendConfig {
+	position: LegendPosition;
+}
 interface LegendProps {
 	position?: LegendPosition;
 	config: UPlotConfigBuilder;
@@ -214,21 +218,22 @@ export default function Legend({
 		(rowIndex: number, row: LegendItem[]): JSX.Element => (
 			<div key={rowIndex} className="legend-row">
 				{row.map((item) => (
-					<div
-						key={item.seriesIndex}
-						data-legend-item-id={item.seriesIndex}
-						className={cx('legend-item', {
-							'legend-item-off': !item.visible,
-							'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
-						})}
-					>
+					<AntdTooltip key={item.seriesIndex} title={item.label}>
 						<div
-							className="legend-marker"
-							style={{ borderColor: String(item.color) }}
-							data-is-legend-marker={true}
-						/>
-						<span className="legend-label">{item.label}</span>
-					</div>
+							data-legend-item-id={item.seriesIndex}
+							className={cx('legend-item', {
+								'legend-item-off': !item.visible,
+								'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
+							})}
+						>
+							<div
+								className="legend-marker"
+								style={{ borderColor: String(item.color) }}
+								data-is-legend-marker={true}
+							/>
+							<span className="legend-label">{item.label}</span>
+						</div>
+					</AntdTooltip>
 				))}
 			</div>
 		),

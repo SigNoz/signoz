@@ -1,3 +1,5 @@
+import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
+import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/utils';
 import {
 	createContext,
 	PropsWithChildren,
@@ -7,8 +9,12 @@ import {
 } from 'react';
 import uPlot from 'uplot';
 
+export interface PlotContextInitialState {
+	uPlotInstance: uPlot | null;
+	widgetId?: string;
+}
 export interface IPlotContext {
-	setUPlotInstance: (uPlotInstance: uPlot | null) => void;
+	setPlotContextInitialState: (state: PlotContextInitialState) => void;
 	onToggleSeriesVisibility: (seriesIndex: number) => void;
 	onToggleSeriesOnOff: (seriesIndex: number) => void;
 	onFocusSeries: (seriesIndex: number | null) => void;
@@ -21,10 +27,15 @@ export const PlotContextProvider = ({
 }: PropsWithChildren): JSX.Element => {
 	const uPlotInstanceRef = useRef<uPlot | null>(null);
 	const activeSeriesIndex = useRef<number | undefined>(undefined);
+	const widgetIdRef = useRef<string | undefined>(undefined);
 
-	const setUPlotInstance = useCallback((uPlotInstance: uPlot | null): void => {
-		uPlotInstanceRef.current = uPlotInstance;
-	}, []);
+	const setPlotContextInitialState = useCallback(
+		({ uPlotInstance, widgetId }: PlotContextInitialState): void => {
+			uPlotInstanceRef.current = uPlotInstance;
+			widgetIdRef.current = widgetId;
+		},
+		[],
+	);
 
 	const onToggleSeriesVisibility = useCallback((seriesIndex: number): void => {
 		const plot = uPlotInstanceRef.current;
@@ -45,6 +56,15 @@ export const PlotContextProvider = ({
 					show: isReset || currentSeriesIndex === seriesIndex,
 				});
 			});
+			if (widgetIdRef.current) {
+				const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
+					(series) => ({
+						label: series.label ?? '',
+						show: series.show ?? true,
+					}),
+				);
+				updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
+			}
 		});
 	}, []);
 
@@ -57,6 +77,15 @@ export const PlotContextProvider = ({
 		const series = plot.series[seriesIndex];
 		if (!series) {
 			return;
+		}
+		if (widgetIdRef.current) {
+			const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
+				(series) => ({
+					label: series.label ?? '',
+					show: series.show ?? true,
+				}),
+			);
+			updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
 		}
 
 		plot.setSeries(seriesIndex, { show: !series.show });
@@ -81,7 +110,7 @@ export const PlotContextProvider = ({
 		<PlotContext.Provider
 			value={{
 				onToggleSeriesVisibility,
-				setUPlotInstance,
+				setPlotContextInitialState,
 				onToggleSeriesOnOff,
 				onFocusSeries,
 			}}

@@ -6,7 +6,7 @@
 	width: 100%;
 
 	&:has(.legend-item-focused) .legend-item {
-		opacity: 0.5;
+		opacity: 0.3;
 	}
 
 	&:has(.legend-item-focused) .legend-item.legend-item-focused {
@@ -32,7 +32,7 @@
 	cursor: pointer;
 
 	&.legend-item-off {
-		opacity: 0.5;
+		opacity: 0.3;
 		text-decoration: line-through;
 		text-decoration-thickness: 1px;
 	}
