@@ -5,8 +5,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { isEmpty } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { useDashboardVariablesByType } from 'providers/Dashboard/store/useDashboardVariablesByType';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';
@@ -32,16 +31,12 @@ export const useOptions = (
 	const operators = useOperators(key, keys);
 
 	// get matching dynamic variables to suggest
-	const { selectedDashboard } = useDashboard();
-
-	const dynamicVariables = useMemo(
-		() =>
-			Object.values(selectedDashboard?.data?.variables || {})?.filter(
-				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
 	);
-	const variableName = dynamicVariables?.find(
+
+	const variableName = dashboardDynamicVariables?.find(
 		(variable) => variable?.dynamicVariablesAttribute === key,
 	)?.name;
 

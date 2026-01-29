@@ -15,7 +15,6 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -32,9 +31,11 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
+import { useWidgetsByDynamicVariableId } from 'providers/Dashboard/store/useWidgetsByDynamicVariableId';
 import { sortLayout } from 'providers/Dashboard/util';
 import { UpdateTimeInterval } from 'store/actions';
-import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
@@ -79,7 +80,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 
-	const { widgets, variables } = data || {};
+	const { widgets } = data || {};
+
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { user } = useAppContext();
 
@@ -99,21 +102,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
 
-	const widgetsHavingDynamicVariables = useMemo(() => {
-		const dynamicVariables = Object.values(
-			selectedDashboard?.data?.variables || {},
-		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
-
-		const widgets =
-			selectedDashboard?.data?.widgets?.filter(
-				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
-			) || [];
-
-		return createDynamicVariableToWidgetsMap(
-			dynamicVariables,
-			widgets as Widgets[],
-		);
-	}, [selectedDashboard]);
+	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
 		setCurrentPanelMap(panelMap);
@@ -178,11 +167,11 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				dashboardId: selectedDashboard?.id,
 				dashboardName: data.title,
 				numberOfPanels: data.widgets?.length,
-				numberOfVariables: Object.keys(data?.variables || {}).length || 0,
+				numberOfVariables: Object.keys(dashboardVariables).length || 0,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [data, selectedDashboard?.id]);
+	}, [dashboardVariables, data, selectedDashboard?.id]);
 
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) {
@@ -622,13 +611,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 								<GridCard
 									widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
 									headerMenuList={widgetActions}
-									variables={variables}
+									variables={dashboardVariables}
 									// version={selectedDashboard?.data?.version}
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
 									enableDrillDown={enableDrillDown}
-									widgetsHavingDynamicVariables={widgetsHavingDynamicVariables}
+									widgetsByDynamicVariableId={widgetsByDynamicVariableId}
 								/>
 							</Card>
 						</CardContainer>

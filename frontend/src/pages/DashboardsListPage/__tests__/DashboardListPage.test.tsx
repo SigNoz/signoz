@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import * as dashboardUtils from 'container/DashboardContainer/DashboardDescription';
+import { sanitizeDashboardData } from 'container/DashboardContainer/DashboardDescription/utils';
 import DashboardsList from 'container/ListOfDashboard';
 import {
 	dashboardEmptyState,
@@ -232,7 +232,7 @@ describe('dashboard list page', () => {
 		expect(exportJsonBtn).toBeInTheDocument();
 		fireEvent.click(exportJsonBtn);
 		const firstDashboardData = dashboardSuccessResponse.data[0];
-		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalledWith(
+		expect(sanitizeDashboardData).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: firstDashboardData.data.title,
 				createdAt: firstDashboardData.createdAt,

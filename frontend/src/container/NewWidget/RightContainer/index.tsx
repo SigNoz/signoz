@@ -35,7 +35,7 @@ import {
 	Spline,
 	SquareArrowOutUpRight,
 } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
@@ -131,7 +131,7 @@ function RightContainer({
 	enableDrillDown = false,
 	isNewDashboard,
 }: RightContainerProps): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 	const [inputValue, setInputValue] = useState(title);
 	const [autoCompleteOpen, setAutoCompleteOpen] = useState(false);
 	const [cursorPos, setCursorPos] = useState(0);
@@ -173,16 +173,12 @@ function RightContainer({
 
 	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
 
-	// Get dashboard variables
-	const dashboardVariables = useMemo<VariableOption[]>(() => {
-		if (!selectedDashboard?.data?.variables) {
-			return [];
-		}
-		return Object.entries(selectedDashboard.data.variables).map(([, value]) => ({
+	const dashboardVariableOptions = useMemo<VariableOption[]>(() => {
+		return Object.entries(dashboardVariables).map(([, value]) => ({
 			value: value.name || '',
 			label: value.name || '',
 		}));
-	}, [selectedDashboard?.data?.variables]);
+	}, [dashboardVariables]);
 
 	const updateCursorAndDropdown = (value: string, pos: number): void => {
 		setCursorPos(pos);
@@ -274,7 +270,7 @@ function RightContainer({
 			<section className="name-description">
 				<Typography.Text className="typography">Name</Typography.Text>
 				<AutoComplete
-					options={dashboardVariables}
+					options={dashboardVariableOptions}
 					value={inputValue}
 					onChange={onInputChange}
 					onSelect={onSelect}
