@@ -80,7 +80,7 @@ def get_session_context(signoz: types.SigNoz) -> Callable[[str, str], str]:
     return _get_session_context
 
 
-@pytest.fixture(name="get_token", scope="function")
+@pytest.fixture(name="get_token", scope="package")
 def get_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
     def _get_token(email: str, password: str) -> str:
         response = requests.get(

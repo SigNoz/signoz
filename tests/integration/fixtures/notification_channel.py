@@ -71,15 +71,13 @@ def notification_channel(
     )
 
 
-@pytest.fixture(name="create_webhook_notification_channel", scope="function")
+@pytest.fixture(name="create_webhook_notification_channel", scope="package")
 def create_webhook_notification_channel(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> Callable[[str, str, dict, bool], str]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    channel_ids = []
 
     # function to create notification channel
     def _create_webhook_notification_channel(
@@ -110,27 +108,6 @@ def create_webhook_notification_channel(
         )
 
         channel_id = response.json()["data"]["id"]
-        channel_ids.append(channel_id)
         return channel_id
 
-    def _delete_webhook_notification_channel(channel_id: str):
-        logger.info("Deleting channel: %s", {"channel_id": channel_id})
-        response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=5,
-        )
-        if response.status_code != HTTPStatus.NO_CONTENT:
-            raise Exception( # pylint: disable=broad-exception-raised
-                f"Failed to delete channel, api returned {response.status_code} with response: {response.text}"
-            )
-
-    yield _create_webhook_notification_channel
-    # delete the channel after the test
-    for channel_id in channel_ids:
-        try:
-            _delete_webhook_notification_channel(channel_id)
-        except Exception as e: # pylint: disable=broad-exception-caught
-            logger.error(
-                "Error deleting channel: %s", {"channel_id": channel_id, "error": e}
-            )
+    return _create_webhook_notification_channel
