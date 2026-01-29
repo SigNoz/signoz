@@ -12,6 +12,7 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { thresholdsDrawHook } from './UPlotThresolds';
+import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils';
 
 /**
  * Type definitions for uPlot option objects
@@ -200,20 +201,37 @@ export class UPlotConfigBuilder {
 	}
 
 	/**
-	 * Get legend items
+	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		// Check if the widgetId is set and if it is, then get the legend items from the localstorage
+		const visibilityMap = this.widgetId
+			? getStoredSeriesVisibility(this.widgetId)
+			: null;
+
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
-			acc[index + 1] = {
-				seriesIndex: index + 1, // +1 because the first series is the timestamp
+			const label = seriesConfig.label ?? '';
+			const seriesIndex = index + 1; // +1 because the first series is the timestamp
+
+			// Priority: stored visibility > series config > default (true)
+			const visible = visibilityMap?.get(label) ?? seriesConfig.show ?? true;
+
+			acc[seriesIndex] = {
+				seriesIndex,
 				color: seriesConfig.stroke,
-				label: seriesConfig.label,
-				visible: seriesConfig.show ?? true,
+				label,
+				visible,
 			};
+
 			return acc;
 		}, {} as Record<number, LegendItem>);
+	}
+
+	/**
+	 * Get the widget id
+	 */
+	getWidgetId(): string | undefined {
+		return this.widgetId;
 	}
 
 	/**

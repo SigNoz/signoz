@@ -16,11 +16,6 @@ import {
  * Handles creation of series settings
  */
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
-	/**
-	 * Build line configuration
-	 */
-	private cachedConfig: Partial<Series> | undefined;
-
 	private buildLineConfig(
 		lineColor: string,
 		lineWidth?: number,
@@ -65,10 +60,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 					idx0: number,
 					idx1: number,
 				): Series.Paths | null => {
-					const pathsBuilder = mapDrawStyleToPathBuilder(
-						drawStyle,
-						lineInterpolation,
-					);
+					const pathsBuilder = getPathBuilder(drawStyle, lineInterpolation);
 
 					return pathsBuilder(self, seriesIdx, idx0, idx1);
 				},
@@ -126,10 +118,6 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}
 
 	getConfig(): Series {
-		if (this.cachedConfig) {
-			return this.cachedConfig;
-		}
-
 		const {
 			drawStyle,
 			pathBuilder,
@@ -164,7 +152,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			showPoints,
 		);
 
-		this.cachedConfig = {
+		return {
 			scale: scaleKey,
 			label,
 			spanGaps: typeof spanGaps === 'boolean' ? spanGaps : false,
@@ -175,7 +163,6 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
 		};
-		return this.cachedConfig;
 	}
 }
 
@@ -190,9 +177,9 @@ interface PathBuilders {
 let builders: PathBuilders | undefined = undefined;
 
 /**
- * Map draw style and interpolation to path builder
+ * Get path builder based on draw style and interpolation
  */
-function mapDrawStyleToPathBuilder(
+function getPathBuilder(
 	style: DrawStyle,
 	lineInterpolation?: LineInterpolation,
 ): Series.PathBuilder {
