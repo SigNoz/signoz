@@ -8,7 +8,6 @@ import { useHistory, useLocation } from 'react-router-dom';
 import Header from './Header';
 import IntegrationDetailPage from './IntegrationDetailPage/IntegrationDetailPage';
 import IntegrationsList from './IntegrationsList';
-import { RequestIntegrationBtn } from './RequestIntegrationBtn';
 import { INTEGRATION_TELEMETRY_EVENTS } from './utils';
 
 function Integrations(): JSX.Element {
@@ -45,7 +44,6 @@ function Integrations(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const [searchTerm, setSearchTerm] = useState<string>('');
 	return (
 		<div className="integrations-container">
 			<div className="integrations-content">
@@ -58,13 +56,11 @@ function Integrations(): JSX.Element {
 					/>
 				) : (
 					<>
-						<Header setSearchTerm={setSearchTerm} searchTerm={searchTerm} />
+						<Header />
 						<IntegrationsList
 							setSelectedIntegration={setSelectedIntegration}
-							searchTerm={searchTerm}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
-						<RequestIntegrationBtn />
 					</>
 				)}
 			</div>
