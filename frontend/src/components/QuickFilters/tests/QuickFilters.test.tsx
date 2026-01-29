@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 
 import { ENVIRONMENT } from 'constants/env';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import {
 	otherFiltersResponse,
 	quickFiltersAttributeValuesResponse,
@@ -19,17 +20,21 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 
+jest.mock('hooks/querySuggestions/useGetQueryKeyValueSuggestions');
+
 const handleFilterVisibilityChange = jest.fn();
 const redirectWithQueryBuilderData = jest.fn();
 const putHandler = jest.fn();
+
+const mockUseGetQueryKeyValueSuggestions = jest.mocked(
+	useGetQueryKeyValueSuggestions,
+);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
 const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/${SIGNAL}`;
 const saveQuickFiltersURL = `${BASE_URL}/api/v1/orgs/me/filters`;
 const quickFiltersSuggestionsURL = `${BASE_URL}/api/v3/filter_suggestions`;
-const quickFiltersAttributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
-const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
 const FILTER_OS_DESCRIPTION = 'os.description';
 const FILTER_K8S_DEPLOYMENT_NAME = 'k8s.deployment.name';
@@ -53,10 +58,7 @@ const setupServer = (): void => {
 			putHandler(await req.json());
 			return res(ctx.status(200), ctx.json({}));
 		}),
-		rest.get(quickFiltersAttributeValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
-		),
-		rest.get(fieldsValuesURL, (_req, res, ctx) =>
+		rest.get('*/api/v1/fields/values*', (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
 		),
 	);
@@ -104,14 +106,24 @@ beforeEach(() => {
 				queryData: [
 					{
 						queryName: QUERY_NAME,
-						filters: { items: [{ key: 'test', value: 'value' }] },
+						filters: { items: [], op: 'AND' },
+						filter: { expression: '' },
 					},
 				],
 			},
 		},
 		lastUsedQuery: 0,
+		panelType: 'logs',
 		redirectWithQueryBuilderData,
 	});
+
+	// Mock the hook to return data with mq-kafka
+	mockUseGetQueryKeyValueSuggestions.mockReturnValue({
+		data: quickFiltersAttributeValuesResponse,
+		isLoading: false,
+		refetch: jest.fn(),
+	} as any);
+
 	setupServer();
 });
 
@@ -224,8 +236,12 @@ describe('Quick Filters', () => {
 
 		render(<TestQuickFilters />);
 
-		// Prefer role if possible; if label text isn’t wired to input, clicking the label text is OK
-		const target = await screen.findByText('mq-kafka');
+		// Wait for the filter to load with data
+		const target = await screen.findByText('mq-kafka', {}, { timeout: 5000 });
+
+		// DEBUG: Print the DOM to see what's rendered
+		screen.debug();
+
 		await user.click(target);
 
 		await waitFor(() => {
