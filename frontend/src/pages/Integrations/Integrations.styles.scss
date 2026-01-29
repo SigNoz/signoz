@@ -9,6 +9,15 @@
 		max-width: 920px;
 
 		.integrations-header {
+			.integrations-header__subrow {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 16px;
+				flex-wrap: wrap;
+				margin-top: 4px;
+			}
+
 			.title {
 				color: var(--bg-vanilla-100);
 				font-size: var(--font-size-lg);
@@ -16,6 +25,7 @@
 				line-height: 28px; /* 155.556% */
 				letter-spacing: -0.09px;
 				font-weight: 500;
+				margin: 0;
 			}
 
 			.subtitle {
@@ -25,17 +35,16 @@
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 				font-weight: 400;
+				display: block;
 			}
 
-			.integrations-search-input {
-				margin-top: 1rem;
-				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
-
-				.ant-input {
-					background-color: unset;
-				}
+			.view-data-sources-btn {
+				gap: 8px;
+				padding: 6px 14px;
+				height: 32px;
+				font-size: 12px;
+				font-weight: 500;
+				white-space: nowrap;
 			}
 		}
 
@@ -205,10 +214,6 @@
 				}
 				.subtitle {
 					color: var(--bg-slate-200);
-				}
-				.integrations-search-input {
-					border: 1px solid rgba(53, 59, 76, 0.2);
-					background: var(--bg-vanilla-100);
 				}
 			}
 

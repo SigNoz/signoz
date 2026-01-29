@@ -71,7 +71,7 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
-	b.adjustKeys(ctx, keys, query)
+	query = b.adjustKeys(ctx, keys, query, requestType)
 
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
@@ -104,8 +104,22 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
-		keySelectors = append(keySelectors, selectors...)
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          groupBy.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  groupBy.FieldContext,
+			FieldDataType: groupBy.FieldDataType,
+		})
+	}
+
+	for idx := range query.SelectFields {
+		selectField := query.SelectFields[idx]
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          selectField.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  selectField.FieldContext,
+			FieldDataType: selectField.FieldDataType,
+		})
 	}
 
 	for idx := range query.Order {
@@ -125,99 +139,80 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 	return keySelectors
 }
 
-func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) {
-	// for group by / order by, if there is a key
-	// that exactly matches the name of intrinsic field but has
-	// a field context or data type that doesn't match the field context or data type of the
-	// intrinsic field,
-	// and there is no additional key present in the data with the incoming key match,
-	// then override the given context with
-	// intrinsic field context and data type
-	// Why does that happen? Because we have a lot of dashboards created by users and shared over web
-	// that has incorrect context or data type populated so we fix it
-	// note: this override happens only when there is no match; if there is a match,
-	// we can't make decision on behalf of users so we let it use unmodified
+func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {
 
-	// example: {"key": "severity_text","type": "tag","dataType": "string"}
-	// This is sent as "tag", when it's not, this was earlier managed with
-	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
-	// Such requests as-is look for attributes, the following code exists to handle them
-	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
-		var overallMatch bool
+	// Always ensure timestamp and id are present in keys map
+	keys["id"] = append([]*telemetrytypes.TelemetryFieldKey{{
+		Name:          "id",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}}, keys["id"]...)
 
-		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
-			// for a given key `k`, iterate over the metadata keys `keys`
-			// and see if there is any exact match
-			match := false
-			for _, mapKey := range keys[k.Name] {
-				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
-					match = true
-				}
-			}
-			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
-			// use the intrinsic/calculated field
-			if !match {
-				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
-				k.FieldContext = staticKeys[k.Name].FieldContext
-				k.FieldDataType = staticKeys[k.Name].FieldDataType
-			}
-			return match
-		}
+	keys["timestamp"] = append([]*telemetrytypes.TelemetryFieldKey{{
+		Name:          "timestamp",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	}}, keys["timestamp"]...)
 
-		if _, ok := IntrinsicFields[k.Name]; ok {
-			overallMatch = overallMatch || findMatch(IntrinsicFields)
-		}
+	/*
+		Adjust keys for alias expressions in aggregations
+	*/
+	actions := querybuilder.AdjustKeysForAliasExpressions(&query, requestType)
 
-		if strings.HasPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-			k.Name = strings.TrimPrefix(k.Name, telemetrytypes.BodyJSONStringSearchPrefix)
-			fieldKeys, found := keys[k.Name]
-			if found && len(fieldKeys) > 0 {
-				k.FieldContext = fieldKeys[0].FieldContext
-				k.FieldDataType = fieldKeys[0].FieldDataType
-				// only attach the JSON data type if there is only one key for the field so incase there are multiple keys.
-				// it's handled by the fallback expr logic
-				if len(fieldKeys) == 1 {
-					k.JSONDataType = fieldKeys[0].JSONDataType
-					k.Materialized = fieldKeys[0].Materialized
-					k.JSONPlan = fieldKeys[0].JSONPlan
-				}
-				k.Indexes = fieldKeys[0].Indexes
+	/*
+		Check if user is using multiple contexts or data types for same field name
+		Idea is to use a super set of keys that can satisfy all the usages
 
-				overallMatch = true // because we found a match
-			} else {
-				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
-				k.FieldContext = telemetrytypes.FieldContextBody
-				k.FieldDataType = telemetrytypes.FieldDataTypeString
-				k.JSONDataType = &telemetrytypes.String
-			}
-		}
+		For example, lets consider model_id exists in both attributes and resources
+		And user is trying to use `attribute.model_id` and `model_id`.
 
-		if !overallMatch {
-			// check if all the key for the given field have been materialized, if so
-			// set the key to materialized
-			materilized := true
-			for _, key := range keys[k.Name] {
-				materilized = materilized && key.Materialized
-			}
-			k.Materialized = materilized
-		}
+		In this case, we'll remove the context from `attribute.model_id`
+		and make it just `model_id` and remove the duplicate entry.
+
+		Same goes with data types.
+		Consider user is using http.status_code:number and http.status_code
+		In this case, we'll remove the data type from http.status_code:number
+		and make it just http.status_code and remove the duplicate entry.
+	*/
+
+	actions = append(actions, querybuilder.AdjustDuplicateKeys(&query)...)
+
+	/*
+		Now adjust each key to have correct context and data type
+		Here we try to make intelligent guesses which work for all users (not just majority)
+		Reason for doing this is to not create an unexpected behavior for users
+	*/
+	for idx := range query.SelectFields {
+		actions = append(actions, b.adjustKey(&query.SelectFields[idx], keys)...)
 	}
-
 	for idx := range query.GroupBy {
-		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+		actions = append(actions, b.adjustKey(&query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
+		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
-	keys["id"] = []*telemetrytypes.TelemetryFieldKey{
-		{
-			Name:          "id",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
+	for _, action := range actions {
+		// TODO: change to debug level once we are confident about the behavior
+		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
 	}
+
+	return query
+}
+
+func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
+
+	// First check if it matches with any intrinsic fields
+	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
+	if _, ok := IntrinsicFields[key.Name]; ok {
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
+		return querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)
+	}
+
+	return querybuilder.AdjustKey(key, keys, nil)
+
 }
 
 // buildListQuery builds a query for list panel type

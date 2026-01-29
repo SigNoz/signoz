@@ -2,6 +2,7 @@ package telemetrytypes
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -89,6 +90,12 @@ func (n *JSONAccessNode) FieldPath() string {
 	return n.Parent.Alias() + "." + key
 }
 
+func (n *JSONAccessNode) BranchesInOrder() []JSONAccessBranchType {
+	return slices.SortedFunc(maps.Keys(n.Branches), func(a, b JSONAccessBranchType) int {
+		return strings.Compare(b.StringValue(), a.StringValue())
+	})
+}
+
 type planBuilder struct {
 	key        *TelemetryFieldKey
 	paths      []string // cumulative paths for type cache lookups
@@ -103,7 +110,7 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
 	}
 
-	pathSoFar := pb.paths[index]           // cumulative path for type cache lookup
+	pathSoFar := pb.paths[index]      // cumulative path for type cache lookup
 	segmentName := pb.segments[index] // segment name for node
 	isTerminal := index == len(pb.paths)-1
 

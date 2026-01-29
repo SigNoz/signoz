@@ -73,7 +73,7 @@ export function sanitizeDashboardData(
 
 	const updatedVariables = Object.entries(selectedData.variables).reduce(
 		(acc, [key, value]) => {
-			const { selectedValue, ...rest } = value;
+			const { selectedValue: _selectedValue, ...rest } = value;
 			acc[key] = rest;
 			return acc;
 		},

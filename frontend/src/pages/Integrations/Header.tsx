@@ -1,37 +1,42 @@
 import './Integrations.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
-import { Flex, Input, Typography } from 'antd';
-import { Search } from 'lucide-react';
-import { Dispatch, SetStateAction } from 'react';
+import { Button, Flex, Typography } from 'antd';
+import ROUTES from 'constants/routes';
+import { ArrowRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
+import { useHistory } from 'react-router-dom';
+import { routePermission } from 'utils/permission';
 
-interface HeaderProps {
-	searchTerm: string;
-	setSearchTerm: Dispatch<SetStateAction<string>>;
-}
+function Header(): JSX.Element {
+	const history = useHistory();
+	const { user } = useAppContext();
 
-function Header(props: HeaderProps): JSX.Element {
-	const { searchTerm, setSearchTerm } = props;
+	const isGetStartedWithCloudAllowed = routePermission.GET_STARTED_WITH_CLOUD.includes(
+		user.role,
+	);
 
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setSearchTerm(e.target.value);
-	};
 	return (
 		<div className="integrations-header">
 			<Typography.Title className="title">Integrations</Typography.Title>
-			<Flex justify="space-between" align="center">
+			<Flex
+				justify="space-between"
+				align="center"
+				className="integrations-header__subrow"
+			>
 				<Typography.Text className="subtitle">
-					Manage Integrations for this workspace
+					Manage a curated list of one-click workspace integrations.
 				</Typography.Text>
+				{isGetStartedWithCloudAllowed && (
+					<Button
+						className="periscope-btn primary view-data-sources-btn"
+						type="primary"
+						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
+					>
+						<span>View 150+ Data Sources</span>
+						<ArrowRight size={14} />
+					</Button>
+				)}
 			</Flex>
-
-			<Input
-				placeholder="Search for an integration..."
-				prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-				value={searchTerm}
-				onChange={handleSearch}
-				className="integrations-search-input"
-			/>
 		</div>
 	);
 }

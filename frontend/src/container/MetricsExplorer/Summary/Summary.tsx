@@ -91,7 +91,7 @@ function Summary(): JSX.Element {
 	const queryFiltersWithoutId = useMemo(() => {
 		const filtersWithoutId = {
 			...queryFilters,
-			items: queryFilters.items.map(({ id, ...rest }) => rest),
+			items: queryFilters.items.map(({ id: _id, ...rest }) => rest),
 		};
 		return JSON.stringify(filtersWithoutId);
 	}, [queryFilters]);

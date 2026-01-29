@@ -4,7 +4,6 @@
 import './CustomTimePicker.styles.scss';
 
 import { Input, InputRef, Popover, Tooltip } from 'antd';
-import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
@@ -22,9 +21,7 @@ import {
 	ChangeEvent,
 	Dispatch,
 	SetStateAction,
-	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -113,22 +110,8 @@ function CustomTimePicker({
 
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
-	const { timezone, browserTimezone } = useTimezone();
+	const { timezone } = useTimezone();
 	const activeTimezoneOffset = timezone.offset;
-	const isTimezoneOverridden = useMemo(
-		() => timezone.offset !== browserTimezone.offset,
-		[timezone, browserTimezone],
-	);
-
-	const handleViewChange = useCallback(
-		(newView: 'timezone' | 'datetime'): void => {
-			if (activeView !== newView) {
-				setActiveView(newView);
-			}
-			setOpen(true);
-		},
-		[activeView, setOpen],
-	);
 
 	const [isOpenedFromFooter, setIsOpenedFromFooter] = useState(false);
 
@@ -371,6 +354,7 @@ function CustomTimePicker({
 			startTime,
 			endTime,
 			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
+			timezone.value,
 		);
 
 		if (!isValidTimeRange) {
@@ -422,8 +406,8 @@ function CustomTimePicker({
 		</div>
 	);
 
-	const handleOpen = (e: React.SyntheticEvent): void => {
-		e.stopPropagation();
+	const handleOpen = (e?: React.SyntheticEvent): void => {
+		e?.stopPropagation?.();
 
 		if (showLiveLogs) {
 			setOpen(true);
@@ -436,12 +420,12 @@ function CustomTimePicker({
 		// reset the input status and error message as we reset the time to previous correct value
 		resetErrorStatus();
 
-		const startTime = dayjs(minTime / 1000_000).format(
-			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
-		);
-		const endTime = dayjs(maxTime / 1000_000).format(
-			DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
-		);
+		const startTime = dayjs(minTime / 1000_000)
+			.tz(timezone.value)
+			.format(DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
+		const endTime = dayjs(maxTime / 1000_000)
+			.tz(timezone.value)
+			.format(DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
 
 		setInputValue(`${startTime} - ${endTime}`);
 	};
@@ -468,18 +452,6 @@ function CustomTimePicker({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname]);
 
-	const handleTimezoneHintClick = (e: React.MouseEvent): void => {
-		e.stopPropagation();
-		handleViewChange('timezone');
-		setIsOpenedFromFooter(false);
-		logEvent(
-			'DateTimePicker: Timezone picker opened from time range input badge',
-			{
-				page: location.pathname,
-			},
-		);
-	};
-
 	const handleInputBlur = (): void => {
 		resetErrorStatus();
 	};
@@ -498,19 +470,27 @@ function CustomTimePicker({
 		return '';
 	};
 
+	const focusInput = (): void => {
+		// Use setTimeout to wait for React to update the DOM and make input editable
+		setTimeout(() => {
+			const inputElement = inputRef.current?.input;
+			if (inputElement) {
+				inputElement.focus();
+				inputElement.select();
+			}
+		}, 100);
+	};
+
 	// Focus and select input text when popover opens
 	useEffect(() => {
 		if (open && inputRef.current) {
-			// Use setTimeout to wait for React to update the DOM and make input editable
-			setTimeout(() => {
-				const inputElement = inputRef.current?.input;
-				if (inputElement) {
-					inputElement.focus();
-					inputElement.select();
-				}
-			}, 0);
+			focusInput();
 		}
 	}, [open]);
+
+	const handleTimezoneChange = (): void => {
+		focusInput();
+	};
 
 	return (
 		<div className="custom-time-picker">
@@ -532,6 +512,7 @@ function CustomTimePicker({
 								customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
 								onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
 								onSelectHandler={handleSelect}
+								onTimezoneChange={handleTimezoneChange}
 								onGoLive={defaultTo(onGoLive, noop)}
 								onExitLiveLogs={defaultTo(onExitLiveLogs, noop)}
 								options={items}
@@ -583,8 +564,8 @@ function CustomTimePicker({
 						prefix={getInputPrefix()}
 						suffix={
 							<div className="time-input-suffix">
-								{!!isTimezoneOverridden && activeTimezoneOffset && (
-									<div className="timezone-badge" onClick={handleTimezoneHintClick}>
+								{activeTimezoneOffset && (
+									<div className="timezone-badge">
 										<span>{activeTimezoneOffset}</span>
 									</div>
 								)}

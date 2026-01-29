@@ -13,22 +13,22 @@ import (
 
 var (
 	CodeCurrentNodeNil           = errors.MustNewCode("current_node_nil")
-	CodeNextNodeNil              = errors.MustNewCode("next_node_nil")
+	CodeChildNodeNil             = errors.MustNewCode("child_node_nil")
 	CodeNestedExpressionsEmpty   = errors.MustNewCode("nested_expressions_empty")
 	CodeGroupByPlanEmpty         = errors.MustNewCode("group_by_plan_empty")
 	CodeArrayMapExpressionsEmpty = errors.MustNewCode("array_map_expressions_empty")
 	CodePromotedPlanMissing      = errors.MustNewCode("promoted_plan_missing")
 	CodeArrayNavigationFailed    = errors.MustNewCode("array_navigation_failed")
 )
+
 type jsonConditionBuilder struct {
-	key *telemetrytypes.TelemetryFieldKey
+	key       *telemetrytypes.TelemetryFieldKey
 	valueType telemetrytypes.JSONDataType
 }
 
-func NewJSONConditionBuilder( key *telemetrytypes.TelemetryFieldKey,  valueType telemetrytypes.FieldDataType) *jsonConditionBuilder {
+func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType telemetrytypes.FieldDataType) *jsonConditionBuilder {
 	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType]}
 }
-
 
 // BuildCondition builds the full WHERE condition for body_json JSON paths
 func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
