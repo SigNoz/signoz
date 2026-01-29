@@ -145,7 +145,7 @@ type TimeSeriesValue struct {
 }
 
 type Bucket struct {
-	Step float64 `json:"step"`
+	Bounds []float64 `json:"bounds,omitempty"`
 }
 
 type ColumnType struct {
