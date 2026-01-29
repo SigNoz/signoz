@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './RangePickerModal.styles.scss';
-
+import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { DatePicker } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
@@ -11,10 +11,10 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
-import { Dispatch, SetStateAction, useMemo } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+
+import './RangePickerModal.styles.scss';
 
 interface RangePickerModalProps {
 	setCustomDTPickerVisible: Dispatch<SetStateAction<boolean>>;

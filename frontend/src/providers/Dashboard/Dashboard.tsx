@@ -1,4 +1,18 @@
 /* eslint-disable no-nested-ternary */
+import {
+	createContext,
+	PropsWithChildren,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useMutation, useQuery, UseQueryResult } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRouteMatch } from 'react-router-dom';
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
@@ -21,20 +35,6 @@ import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import {
-	createContext,
-	PropsWithChildren,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery, UseQueryResult } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

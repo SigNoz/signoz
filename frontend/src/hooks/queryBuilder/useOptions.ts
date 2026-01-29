@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	checkCommaInValue,
 	getTagToken,
@@ -5,7 +6,6 @@ import {
 import { Option } from 'container/QueryBuilder/type';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 

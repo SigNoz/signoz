@@ -1,5 +1,5 @@
-import { Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
+import { Tooltip } from 'antd';
 
 function TrimmedText({
 	text,

@@ -1,11 +1,11 @@
-import './AlertStatus.styles.scss';
-
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { CircleCheck, Siren } from 'lucide-react';
-import { useMemo } from 'react';
 import { getDurationFromNow } from 'utils/timeUtils';
 
 import { AlertStatusProps, StatusConfig } from './types';
+
+import './AlertStatus.styles.scss';
 
 export default function AlertStatus({
 	status,

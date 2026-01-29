@@ -1,11 +1,11 @@
-import '@testing-library/jest-dom';
-
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { message } from 'antd';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+
+import '@testing-library/jest-dom';
 
 import { DownloadFormats, DownloadRowCounts } from './constants';
 import LogsDownloadOptionsMenu from './LogsDownloadOptionsMenu';

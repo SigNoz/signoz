@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { orange } from '@ant-design/colors';
 import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
@@ -8,8 +10,6 @@ import {
 } from 'constants/antlrQueryConstants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useNotifications } from 'hooks/useNotifications';
-import { useCallback } from 'react';
-import { useCopyToClipboard } from 'react-use';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { DROPDOWN_KEY } from './constant';

@@ -1,7 +1,7 @@
-import './IntegrationDetailContentTabs.styles.scss';
-
 import { Typography } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+
+import './IntegrationDetailContentTabs.styles.scss';
 
 interface OverviewProps {
 	categories: string[];

@@ -1,5 +1,6 @@
-import './LaunchChatSupport.styles.scss';
-
+import { useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
@@ -10,12 +11,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CreditCard, HelpCircle, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
+
+import './LaunchChatSupport.styles.scss';
 
 export interface LaunchChatSupportProps {
 	eventName: string;

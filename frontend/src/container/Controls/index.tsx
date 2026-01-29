@@ -1,7 +1,7 @@
+import { memo, useMemo } from 'react';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
-import { memo, useMemo } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';

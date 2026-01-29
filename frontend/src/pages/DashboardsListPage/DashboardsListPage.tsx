@@ -1,9 +1,9 @@
-import './DashboardsListPage.styles.scss';
-
 import { Space, Typography } from 'antd';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ListOfAllDashboard from 'container/ListOfDashboard';
 import { LayoutGrid } from 'lucide-react';
+
+import './DashboardsListPage.styles.scss';
 
 function DashboardsListPage(): JSX.Element {
 	return (

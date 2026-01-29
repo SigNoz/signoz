@@ -1,5 +1,5 @@
-import getUser from 'api/v1/user/id/get';
 import { useQuery, UseQueryResult } from 'react-query';
+import getUser from 'api/v1/user/id/get';
 import { SuccessResponseV2 } from 'types/api';
 import { UserResponse } from 'types/api/user/getUser';
 

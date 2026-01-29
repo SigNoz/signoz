@@ -1,5 +1,10 @@
-import './TableV3.styles.scss';
-
+import React, {
+	Dispatch,
+	MutableRefObject,
+	SetStateAction,
+	useEffect,
+	useMemo,
+} from 'react';
 import {
 	ColumnDef,
 	flexRender,
@@ -9,13 +14,8 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import React, {
-	Dispatch,
-	MutableRefObject,
-	SetStateAction,
-	useEffect,
-	useMemo,
-} from 'react';
+
+import './TableV3.styles.scss';
 
 // here we are manually rendering the table body so that we can memoize the same for performant re-renders
 function TableBody<T>({

@@ -1,7 +1,7 @@
+import * as reactUseHooks from 'react-use';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
-import * as reactUseHooks from 'react-use';
 
 import { MetricDetailsAttribute } from '../../../../api/metricsExplorer/getMetricDetails';
 import ROUTES from '../../../../constants/routes';

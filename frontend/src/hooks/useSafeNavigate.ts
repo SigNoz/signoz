@@ -1,6 +1,6 @@
-import { cloneDeep, isEqual } from 'lodash-es';
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { cloneDeep, isEqual } from 'lodash-es';
 
 interface NavigateOptions {
 	replace?: boolean;

@@ -1,3 +1,5 @@
+import { memo, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { FastBackwardOutlined } from '@ant-design/icons';
 import { Button, Divider } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -9,8 +11,6 @@ import { Pagination } from 'hooks/queryPagination';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { OrderPreferenceItems } from 'pages/Logs/config';
-import { memo, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

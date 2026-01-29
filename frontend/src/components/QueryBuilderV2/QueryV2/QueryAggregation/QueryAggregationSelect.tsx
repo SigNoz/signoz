@@ -4,8 +4,8 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable react/no-this-in-sfc */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QueryAggregation.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import {
 	autocompletion,
 	closeCompletion,
@@ -34,12 +34,12 @@ import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Info, TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import './QueryAggregation.styles.scss';
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
