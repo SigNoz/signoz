@@ -1,8 +1,3 @@
-import { CopyOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Space, Tooltip } from 'antd';
-import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
-import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
 import {
 	ChangeEventHandler,
 	Dispatch,
@@ -13,6 +8,11 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Input, Select, Space, Tooltip } from 'antd';
+import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
+import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 

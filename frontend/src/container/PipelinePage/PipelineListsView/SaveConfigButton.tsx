@@ -1,5 +1,5 @@
-import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Button } from 'antd';
 
 import { SaveConfigWrapper } from './styles';
 

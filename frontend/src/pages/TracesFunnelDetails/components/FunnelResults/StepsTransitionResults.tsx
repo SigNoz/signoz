@@ -1,12 +1,12 @@
-import './StepsTransitionResults.styles.scss';
-
+import { useMemo, useState } from 'react';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo, useState } from 'react';
 
 import StepsTransitionMetrics from './StepsTransitionMetrics';
 import TopSlowestTraces from './TopSlowestTraces';
 import TopTracesWithErrors from './TopTracesWithErrors';
+
+import './StepsTransitionResults.styles.scss';
 
 export interface StepTransition {
 	value: string;

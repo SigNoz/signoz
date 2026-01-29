@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import { isAxiosError } from 'axios';
@@ -12,9 +15,6 @@ import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
-import { useMemo } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';

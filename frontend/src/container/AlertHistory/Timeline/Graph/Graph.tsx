@@ -1,3 +1,5 @@
+import { useMemo, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
@@ -9,8 +11,6 @@ import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { useTimezone } from 'providers/Timezone';
-import { useMemo, useRef } from 'react';
-import { useDispatch } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 import uPlot, { AlignedData } from 'uplot';

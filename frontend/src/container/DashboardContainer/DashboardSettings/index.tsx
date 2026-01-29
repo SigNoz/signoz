@@ -1,5 +1,3 @@
-import './DashboardSettingsContent.styles.scss';
-
 import { Button, Tabs, Tooltip } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Braces, Globe, Table } from 'lucide-react';
@@ -10,6 +8,8 @@ import { VariablesSettingsTabHandle } from '../DashboardDescription/types';
 import DashboardVariableSettings from './DashboardVariableSettings';
 import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
+
+import './DashboardSettingsContent.styles.scss';
 
 function DashboardSettings({
 	variablesSettingsTabHandle,

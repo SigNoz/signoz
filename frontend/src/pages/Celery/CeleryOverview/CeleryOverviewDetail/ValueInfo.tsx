@@ -1,5 +1,6 @@
-import './ValueInfo.styles.scss';
-
+import { useCallback, useMemo } from 'react';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
 import { FileSearchOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -7,9 +8,6 @@ import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplor
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useMemo } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -25,6 +23,8 @@ import {
 	celeryOverviewRequestRateWidgetData,
 } from '../CeleryOverviewGraphUtils';
 import { getQueryPayloadFromWidgetsData } from '../CeleryOverviewUtils';
+
+import './ValueInfo.styles.scss';
 
 export default function ValueInfo({
 	filters,

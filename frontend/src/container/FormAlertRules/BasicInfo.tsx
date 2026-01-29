@@ -1,5 +1,6 @@
-import './FormAlertRules.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Select, Switch, Tooltip } from 'antd';
 import getAll from 'api/channels/getAll';
@@ -8,9 +9,6 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
@@ -29,6 +27,8 @@ import {
 	StepHeading,
 	TextareaMedium,
 } from './styles';
+
+import './FormAlertRules.styles.scss';
 
 const { Option } = Select;
 

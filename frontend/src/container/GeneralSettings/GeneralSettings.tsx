@@ -1,4 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
+import { useInterval } from 'react-use';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
@@ -11,10 +15,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
 import { useAppContext } from 'providers/App/App';
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
-import { useInterval } from 'react-use';
 import {
 	ErrorResponse,
 	ErrorResponseV2,

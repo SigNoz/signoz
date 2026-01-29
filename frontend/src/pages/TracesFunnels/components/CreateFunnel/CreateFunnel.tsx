@@ -1,5 +1,6 @@
-import '../RenameFunnel/RenameFunnel.styles.scss';
-
+import { useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { generatePath, matchPath, useLocation } from 'react-router-dom';
 import { Input } from 'antd';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
@@ -10,9 +11,8 @@ import { useCreateFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, X } from 'lucide-react';
-import { useState } from 'react';
-import { useQueryClient } from 'react-query';
-import { generatePath, matchPath, useLocation } from 'react-router-dom';
+
+import '../RenameFunnel/RenameFunnel.styles.scss';
 
 interface CreateFunnelProps {
 	isOpen: boolean;

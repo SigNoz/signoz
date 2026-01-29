@@ -1,9 +1,9 @@
+import { Dispatch } from 'react';
+import { UseMutateFunction } from 'react-query';
 import { CreateAlertRuleResponse } from 'api/alerts/createAlertRule';
 import { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
 import { UpdateAlertRuleResponse } from 'api/alerts/updateAlertRule';
 import { Dayjs } from 'dayjs';
-import { Dispatch } from 'react';
-import { UseMutateFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';

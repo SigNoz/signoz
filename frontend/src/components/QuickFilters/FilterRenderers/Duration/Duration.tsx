@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import './Duration.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Collapse } from 'antd';
 import {
 	IQuickFiltersConfig,
@@ -18,10 +17,11 @@ import {
 	HandleRunProps,
 	unionTagFilterItems,
 } from 'pages/TracesExplorer/Filter/filterUtils';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
+
+import './Duration.styles.scss';
 
 export type FilterType = Record<
 	AllTraceFilterKeys,

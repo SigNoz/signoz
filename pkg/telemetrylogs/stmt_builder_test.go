@@ -743,6 +743,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 	}
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 

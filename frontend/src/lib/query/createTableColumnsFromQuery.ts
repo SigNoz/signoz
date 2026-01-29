@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
 import {
@@ -10,7 +11,6 @@ import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
-import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,

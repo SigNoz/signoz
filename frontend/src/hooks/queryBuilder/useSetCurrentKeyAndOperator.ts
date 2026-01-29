@@ -1,8 +1,8 @@
+import { useMemo } from 'react';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 type ICurrentKeyAndOperator = [string, string, string[]];

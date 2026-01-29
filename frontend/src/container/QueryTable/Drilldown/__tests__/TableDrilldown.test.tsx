@@ -1,13 +1,13 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 
+import React from 'react';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';

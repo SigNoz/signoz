@@ -1,3 +1,4 @@
+import { Layout } from 'react-grid-layout';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { StatusCodes } from 'http-status-codes';
@@ -6,7 +7,6 @@ import {
 	publicDashboardWidgetData,
 } from 'mocks-server/__mockdata__/publicDashboard';
 import { rest, server } from 'mocks-server/server';
-import { Layout } from 'react-grid-layout';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
