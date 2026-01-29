@@ -271,9 +271,17 @@ type AWSIntegrationConfigForAgent struct {
 	TelemetryCollectionStrategy *services.AWSCollectionStrategy `json:"telemetry,omitempty"`
 }
 
+type AzureAgentCheckInResponse struct {
+	AccountId      string     `json:"account_id"`
+	CloudAccountId string     `json:"cloud_account_id"`
+	RemovedAt      *time.Time `json:"removed_at"`
+
+	IntegrationConfig AzureIntegrationConfigForAgent `json:"integration_config"`
+}
+
 type AzureIntegrationConfigForAgent struct {
 	DeploymentRegion      string   `json:"deployment_region"`
-	EnabledResourceGroups []string `json:"enabled_resource_groups"`
+	EnabledResourceGroups []string `json:"resource_groups"`
 
 	TelemetryCollectionStrategy *services.AzureCollectionStrategy `json:"telemetry,omitempty"`
 }
@@ -297,7 +305,7 @@ func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider
 	}, nil
 }
 
-func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*AzureIntegrationConfigForAgent, error) {
+func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*AzureAgentCheckInResponse, error) {
 	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
 	if apiErr != nil {
 		return nil, apiErr
@@ -308,7 +316,12 @@ func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvid
 		return nil, err
 	}
 
-	return agentConfig, nil
+	return &AzureAgentCheckInResponse{
+		AccountId:         account.ID.StringValue(),
+		CloudAccountId:    *account.AccountID,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: *agentConfig,
+	}, nil
 }
 
 func (c *Controller) upsertCloudIntegrationAccount(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*types.CloudIntegration, *model.ApiError) {
@@ -397,13 +410,16 @@ func (c *Controller) getAWSAgentConfig(ctx context.Context, account *types.Cloud
 func (c *Controller) getAzureAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AzureIntegrationConfigForAgent, error) {
 	// prepare and return integration config to be consumed by agent
 	agentConfig := &AzureIntegrationConfigForAgent{
-		DeploymentRegion:      account.Config.DeploymentRegion,
-		EnabledResourceGroups: account.Config.EnabledResourceGroups,
 		TelemetryCollectionStrategy: &services.AzureCollectionStrategy{
 			Provider:     types.CloudProviderAzure,
 			AzureMetrics: &services.AzureMetricsStrategy{},
 			AzureLogs:    &services.AzureLogsStrategy{},
 		},
+	}
+
+	if account.Config != nil {
+		agentConfig.DeploymentRegion = account.Config.DeploymentRegion
+		agentConfig.EnabledResourceGroups = account.Config.EnabledResourceGroups
 	}
 
 	return agentConfig, nil
