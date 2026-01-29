@@ -156,8 +156,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items,
 	);
 
-	// Refetch when filters.items changes (query_range API call)
-	// Watch for when filters.items is different from previous value, indicating query run
+	// Refetch when other filters change (not this filter)
+	// Watch for when filters.items is different from previous value, indicating other filters changed
 	useEffect(() => {
 		const currentFiltersItems =
 			currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items;
@@ -165,11 +165,33 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		const previousFiltersItems = previousFiltersItemsRef.current;
 
 		// Check if filters items have changed (not the same)
-		const filtersWereReset = !isEqual(previousFiltersItems, currentFiltersItems);
+		const filtersChanged = !isEqual(previousFiltersItems, currentFiltersItems);
 
-		if (isOpen && filtersWereReset) {
-			previousFiltersItemsRef.current = currentFiltersItems;
-			refetchKeyValueSuggestions();
+		if (isOpen && filtersChanged) {
+			// Check if OTHER filters (not this filter) have changed
+			const currentOtherFilters = currentFiltersItems?.filter(
+				(item) => !isEqual(item.key?.key, filter.attributeKey.key),
+			);
+			const previousOtherFilters = previousFiltersItems?.filter(
+				(item) => !isEqual(item.key?.key, filter.attributeKey.key),
+			);
+
+			// Refetch if other filters changed (not just this filter's values)
+			const otherFiltersChanged = !isEqual(
+				currentOtherFilters,
+				previousOtherFilters,
+			);
+
+			// Only update ref if we have valid API data or if filters actually changed
+			// Don't update if search returned 0 results to preserve unchecked values
+			const hasValidData = keyValueSuggestions && !isLoadingKeyValueSuggestions;
+			if (otherFiltersChanged || hasValidData) {
+				previousFiltersItemsRef.current = currentFiltersItems;
+			}
+
+			if (otherFiltersChanged) {
+				refetchKeyValueSuggestions();
+			}
 		} else {
 			previousFiltersItemsRef.current = currentFiltersItems;
 		}
@@ -179,6 +201,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		refetchKeyValueSuggestions,
 		filter.attributeKey.key,
 		currentQuery.builder.queryData,
+		keyValueSuggestions,
+		isLoadingKeyValueSuggestions,
 	]);
 
 	const handleSearchPromptClick = useCallback((): void => {
@@ -202,6 +226,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		return false;
 	}, [keyValueSuggestions]);
 
+	const previousAttributeValuesRef = useRef<string[]>([]);
+
 	const attributeValues: string[] = useMemo(() => {
 		// const dataType = filter.attributeKey.dataType || DataTypes.String;
 
@@ -214,7 +240,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			const stringValues = values.stringValues || [];
 			const numberValues = values.numberValues || [];
 
-			// Use relatedValues if present, otherwise fallback to stringValues
+			// Use relatedValues if present (these are the checked/selected values)
+			// Otherwise fallback to stringValues
 			const valuesToUse = relatedValues.length > 0 ? relatedValues : stringValues;
 
 			// Generate options from string values - explicitly handle empty strings
@@ -233,8 +260,23 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				)
 				.map((value: number) => value.toString());
 
-			// Combine all options and make sure we don't have duplicate labels
-			return [...stringOptions, ...numberOptions];
+			// Combine checked values with previously visible unchecked values
+			let finalValues = [...stringOptions, ...numberOptions];
+
+			// When we have search results (relatedValues or stringValues), preserve previously visible unchecked values
+			// Only update ref if we have actual valid data (not empty search results)
+			if (finalValues.length > 0) {
+				const previousValues = previousAttributeValuesRef.current || [];
+				// Keep values that were previously visible but not in new results (checked items)
+				const preservedValues = previousValues.filter(
+					(val) => !relatedValues.includes(val),
+				);
+				finalValues = Array.from(new Set([...finalValues, ...preservedValues]));
+				// Store current values for next refetch only if we have valid data
+				previousAttributeValuesRef.current = finalValues;
+			}
+
+			return finalValues;
 		}
 		return [];
 	}, [keyValueSuggestions]);
