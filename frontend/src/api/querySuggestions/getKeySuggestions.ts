@@ -26,7 +26,14 @@ export const getKeySuggestions = (
 	const encodedFieldDataType = encodeURIComponent(fieldDataType);
 	const encodedSource = encodeURIComponent(signalSource);
 
-	return axios.get(
-		`/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}&source=${encodedSource}&startUnixMilli=${startUnixMilli}&endUnixMilli=${endUnixMilli}`,
-	);
+	let url = `/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}&source=${encodedSource}`;
+
+	if (startUnixMilli !== undefined) {
+		url += `&startUnixMilli=${startUnixMilli}`;
+	}
+	if (endUnixMilli !== undefined) {
+		url += `&endUnixMilli=${endUnixMilli}`;
+	}
+
+	return axios.get(url);
 };

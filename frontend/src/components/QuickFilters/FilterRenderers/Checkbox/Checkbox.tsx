@@ -267,9 +267,9 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			// Only update ref if we have actual valid data (not empty search results)
 			if (finalValues.length > 0) {
 				const previousValues = previousAttributeValuesRef.current || [];
-				// Keep values that were previously visible but not in new results (checked items)
+				// Keep values that were previously visible but not in new results
 				const preservedValues = previousValues.filter(
-					(val) => !relatedValues.includes(val),
+					(val) => !finalValues.includes(val),
 				);
 				finalValues = Array.from(new Set([...finalValues, ...preservedValues]));
 				// Store current values for next refetch only if we have valid data

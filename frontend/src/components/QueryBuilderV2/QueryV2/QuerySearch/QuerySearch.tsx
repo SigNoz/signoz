@@ -462,7 +462,7 @@ function QuerySearch({
 			}
 
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
-			const existingQuery = queryData.filter?.expression || ''; // getCurrentExpression();
+			const existingQuery = queryData.filter?.expression || '';
 
 			try {
 				const response = await getValueSuggestions({
