@@ -483,7 +483,7 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 		for i, p := range paths {
 			pathArgs[i] = p
 		}
-		conditions = append(conditions, sb.In("field_name", pathArgs...))
+		conditions = append(conditions, sb.In("field_name", pathArgs))
 	}
 	sb.Where(sb.And(conditions...))
 
@@ -523,13 +523,13 @@ func (t *telemetryMetaStore) PromotePaths(ctx context.Context, paths ...string) 
 		return errors.WrapInternalf(err, CodeFailedToPrepareBatch, "failed to prepare batch")
 	}
 
-	releaseTime := float64(time.Now().UnixNano())
+	releaseTime := time.Now().UnixNano()
 	for _, p := range paths {
 		trimmed := strings.TrimSpace(p)
 		if trimmed == "" {
 			continue
 		}
-		if err := batch.Append(telemetrytypes.SignalLogs, telemetrylogs.LogsV2BodyPromotedColumn, "JSON()", telemetrytypes.FieldContextBody, trimmed, uint32(0), releaseTime); err != nil {
+		if err := batch.Append(telemetrytypes.SignalLogs, telemetrylogs.LogsV2BodyPromotedColumn, "JSON()", telemetrytypes.FieldContextBody, trimmed, 0, releaseTime); err != nil {
 			_ = batch.Abort()
 			return errors.WrapInternalf(err, CodeFailedToAppendPath, "failed to append path")
 		}
