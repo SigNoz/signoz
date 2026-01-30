@@ -2,8 +2,15 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Checkbox.styles.scss';
-
+import {
+	Fragment,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useSelector } from 'react-redux';
 import { Button, Checkbox, Input, InputRef, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
@@ -20,15 +27,6 @@ import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQue
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import {
-	Fragment,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';

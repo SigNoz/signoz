@@ -1,14 +1,12 @@
-import './ListViewOrderBy.styles.scss';
-
-import { Select, Spin } from 'antd';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
+import { Select, Spin } from 'antd';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import './ListViewOrderBy.styles.scss';
 

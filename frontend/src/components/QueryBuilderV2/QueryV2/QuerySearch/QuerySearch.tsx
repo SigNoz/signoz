@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
@@ -33,8 +34,6 @@ import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { Info, TriangleAlert } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
 	IDetailedError,
