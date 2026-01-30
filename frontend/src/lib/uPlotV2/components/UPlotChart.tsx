@@ -1,13 +1,13 @@
+import { useCallback, useEffect, useRef } from 'react';
 import * as Sentry from '@sentry/react';
 import { Typography } from 'antd';
 import { isEqual } from 'lodash-es';
 import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
-import { UPlotChartProps } from './types';
 import { usePlotContext } from '../context/PlotContext';
+import { UPlotChartProps } from './types';
 
 /**
  * Check if dimensions have changed

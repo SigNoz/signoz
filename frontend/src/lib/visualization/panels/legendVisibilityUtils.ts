@@ -1,4 +1,5 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
+
 import { GraphVisibilityState, SeriesVisibilityItem } from './types';
 
 /**

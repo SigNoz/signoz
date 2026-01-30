@@ -2,8 +2,8 @@ import uPlot, { Range, Scale } from 'uplot';
 
 import { DistributionType, ScaleProps } from '../config/types';
 import { Threshold } from '../hooks/types';
-import { LogScaleLimits, RangeFunctionParams } from './types';
 import { findMinMaxThresholdValues } from './threshold';
+import { LogScaleLimits, RangeFunctionParams } from './types';
 
 export function incrRoundDn(num: number, incr: number): number {
 	return Math.floor(num / incr) * incr;

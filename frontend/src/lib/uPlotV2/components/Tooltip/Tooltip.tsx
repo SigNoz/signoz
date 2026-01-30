@@ -1,14 +1,14 @@
-import './Tooltip.styles.scss';
-
+import { useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 
 import { TooltipContentItem, TooltipProps } from '../types';
 import { buildTooltipContent } from './utils';
+
+import './Tooltip.styles.scss';
 
 const TOOLTIP_LIST_MAX_HEIGHT = 330;
 const TOOLTIP_ITEM_HEIGHT = 38;

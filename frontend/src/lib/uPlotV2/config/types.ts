@@ -1,6 +1,7 @@
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot, { Cursor, Options, Series } from 'uplot';
+
 import { ThresholdsDrawHookOptions } from '../hooks/types';
 
 /**

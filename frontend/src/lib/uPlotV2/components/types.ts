@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
+import { PrecisionOption } from 'components/Graph/types';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { PrecisionOption } from 'components/Graph/types';
 
 /**
  * Props for the Plot component

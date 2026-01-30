@@ -1,5 +1,3 @@
-import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
-import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/legendVisibilityUtils';
 import {
 	createContext,
 	PropsWithChildren,
@@ -7,6 +5,8 @@ import {
 	useContext,
 	useRef,
 } from 'react';
+import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/legendVisibilityUtils';
+import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
 import uPlot from 'uplot';
 
 export interface PlotContextInitialState {

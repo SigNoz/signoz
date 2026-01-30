@@ -1,14 +1,15 @@
-import './Legend.styles.scss';
-import { Tooltip as AntdTooltip } from 'antd';
-
-import cx from 'classnames';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { Tooltip as AntdTooltip } from 'antd';
+import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
+import { LegendPosition } from 'types/api/dashboard/getAll';
+
 import { LegendProps } from '../types';
+
+import './Legend.styles.scss';
 
 const LEGENDS_PER_SET_DEFAULT = 5;
 

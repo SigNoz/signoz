@@ -1,4 +1,3 @@
-import { LegendItem } from 'lib/uPlotV2/config/types';
 import {
 	Dispatch,
 	SetStateAction,
@@ -8,9 +7,19 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { LegendItem } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
 
+/**
+ * Syncs legend UI state with the uPlot chart: which series is focused and each series' visibility.
+ * Subscribes to the config's setSeries hook so legend items stay in sync when series are toggled
+ * from the chart or from the Legend component.
+ *
+ * @param config - UPlot config builder; used to read legend items and to register the setSeries hook
+ * @param subscribeToFocusChange - When true, updates focusedSeriesIndex when a series gains focus via setSeries
+ * @returns focusedSeriesIndex, setFocusedSeriesIndex, and legendItemsMap for the Legend component
+ */
 export default function useLegendsSync({
 	config,
 	subscribeToFocusChange = true,
@@ -29,9 +38,15 @@ export default function useLegendsSync({
 		null,
 	);
 
+	/** Pending visibility updates (series index -> show) to apply in the next RAF. */
 	const visibilityUpdatesRef = useRef<Record<number, boolean>>({});
+	/** RAF id for the batched visibility update; null when no update is scheduled. */
 	const visibilityRafIdRef = useRef<number | null>(null);
 
+	/**
+	 * Applies a batch of visibility updates to legendItemsMap.
+	 * Only updates entries that exist and whose show value changed; returns prev state if nothing changed.
+	 */
 	const applyVisibilityUpdates = useCallback(
 		(updates: Record<number, boolean>): void => {
 			setLegendItemsMap(
@@ -56,12 +71,14 @@ export default function useLegendsSync({
 		[],
 	);
 
+	/**
+	 * Queues a single series visibility update and schedules at most one state update per frame.
+	 * Batches multiple visibility changes (e.g. from setSeries) into one setLegendItemsMap call.
+	 */
 	const queueVisibilityUpdate = useCallback(
 		(seriesIndex: number, show: boolean): void => {
-			// Accumulate visibility updates
 			visibilityUpdatesRef.current[seriesIndex] = show;
 
-			// Schedule a single state update per frame
 			if (visibilityRafIdRef.current !== null) {
 				return;
 			}
@@ -77,14 +94,16 @@ export default function useLegendsSync({
 		[applyVisibilityUpdates],
 	);
 
+	/**
+	 * Handler for uPlot's setSeries hook. Updates focused series when opts.focus is set,
+	 * and queues legend visibility updates when opts.show changes so the legend stays in sync.
+	 */
 	const handleSetSeries = useCallback(
 		(_u: uPlot, seriesIndex: number | null, opts: uPlot.Series): void => {
-			// Using get because focus is not a property of uPlot.Series, but it's present in the opts.
 			if (subscribeToFocusChange && get(opts, 'focus', false)) {
 				setFocusedSeriesIndex(seriesIndex);
 			}
 
-			// Keep legend visibility in sync with uPlot series visibility.
 			if (!seriesIndex || typeof opts.show !== 'boolean') {
 				return;
 			}
@@ -94,6 +113,7 @@ export default function useLegendsSync({
 		[queueVisibilityUpdate, subscribeToFocusChange],
 	);
 
+	// Initialize legend items from config and subscribe to setSeries; cleanup on unmount or config change.
 	useLayoutEffect(() => {
 		setLegendItemsMap(config.getLegendItems());
 
@@ -104,6 +124,7 @@ export default function useLegendsSync({
 		};
 	}, [config, handleSetSeries]);
 
+	// Cancel any pending RAF on unmount to avoid state updates after unmount.
 	useEffect(
 		() => (): void => {
 			if (visibilityRafIdRef.current != null) {

@@ -1,7 +1,7 @@
 import { convertValue } from 'lib/getConvertedValue';
 import uPlot, { Hooks } from 'uplot';
 
-import { ThresholdsDrawHookOptions, Threshold } from './types';
+import { Threshold, ThresholdsDrawHookOptions } from './types';
 
 export function thresholdsDrawHook(
 	options: ThresholdsDrawHookOptions,
