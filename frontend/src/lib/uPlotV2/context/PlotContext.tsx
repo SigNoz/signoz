@@ -6,9 +6,9 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
-import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
-import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/utils/legendVisibilityUtils';
-import uPlot from 'uplot';
+import type { SeriesVisibilityItem } from 'container/DashboardContainer/visualization/panels/types';
+import { updateSeriesVisibilityToLocalStorage } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
+import type uPlot from 'uplot';
 
 export interface PlotContextInitialState {
 	uPlotInstance: uPlot | null;
