@@ -1,6 +1,6 @@
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
-import { getStoredSeriesVisibility } from 'lib/visualization/panels/legendVisibilityUtils';
+import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
 import { merge } from 'lodash-es';
 import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';

@@ -18,6 +18,19 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 	ScaleProps,
 	Record<string, Scale>
 > {
+	private softMin: number | null;
+	private softMax: number | null;
+	private min: number | null;
+	private max: number | null;
+
+	constructor(props: ScaleProps) {
+		super(props);
+		this.softMin = props.softMin ?? null;
+		this.softMax = props.softMax ?? null;
+		this.min = props.min ?? null;
+		this.max = props.max ?? null;
+	}
+
 	getConfig(): Record<string, Scale> {
 		const {
 			scaleKey,
@@ -31,8 +44,8 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 
 		// Special handling for time scales (X axis)
 		if (time) {
-			let minTime = this.props.min ?? 0;
-			let maxTime = this.props.max ?? 0;
+			let minTime = this.min ?? 0;
+			let maxTime = this.max ?? 0;
 
 			// Fallback when min/max are not provided
 			if (!minTime || !maxTime) {
@@ -70,24 +83,28 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			softMin: adjustedSoftMin,
 			softMax: adjustedSoftMax,
 		} = adjustSoftLimitsWithThresholds(
-			this.props.softMin,
-			this.props.softMax,
+			this.softMin,
+			this.softMax,
 			thresholdList,
 			thresholds?.yAxisUnit,
 		);
 
-		const { min, max, softMin, softMax } = normalizeLogScaleLimits(
+		const { min, max, softMin, softMax } = normalizeLogScaleLimits({
 			distr,
 			logBase,
-			{
-				min: this.props.min,
-				max: this.props.max,
+			limits: {
+				min: this.min,
+				max: this.max,
 				softMin: adjustedSoftMin,
 				softMax: adjustedSoftMax,
 			},
-		);
+		});
 
-		const distribution = getDistributionConfig(time, distr, logBase);
+		const distribution = getDistributionConfig({
+			time,
+			distr,
+			logBase,
+		});
 
 		const {
 			rangeConfig,

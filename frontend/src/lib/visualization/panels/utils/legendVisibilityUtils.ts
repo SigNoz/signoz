@@ -1,6 +1,6 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import { GraphVisibilityState, SeriesVisibilityItem } from './types';
+import { GraphVisibilityState, SeriesVisibilityItem } from '../types';
 
 /**
  * Retrieves the visibility map for a specific widget from localStorage

@@ -27,6 +27,8 @@
 
 	&.legend-row-right {
 		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
 	}
 	&.legend-row-bottom {
 		flex-direction: row;

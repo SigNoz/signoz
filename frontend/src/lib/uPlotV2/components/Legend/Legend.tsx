@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Tooltip as AntdTooltip } from 'antd';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
-import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
-import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 
 import { LegendProps } from '../types';
+import { useLegendActions } from './useLegendActions';
 
 import './Legend.styles.scss';
 
@@ -18,101 +17,13 @@ export default function Legend({
 	config,
 }: LegendProps): JSX.Element {
 	const {
+		onLegendClick,
+		onLegendMouseMove,
+		onLegendMouseLeave,
 		legendItemsMap,
 		focusedSeriesIndex,
-		setFocusedSeriesIndex,
-	} = useLegendsSync({ config });
+	} = useLegendActions({ config });
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
-
-	const rafId = useRef<number | null>(null); // requestAnimationFrame id
-	const {
-		onToggleSeriesVisibility,
-		onToggleSeriesOnOff,
-		onFocusSeries,
-	} = usePlotContext();
-
-	const getLegendItemIdFromEvent = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>): string | undefined => {
-			const target = e.target as HTMLElement | null;
-			if (!target) {
-				return undefined;
-			}
-
-			const legendItemElement = target.closest<HTMLElement>(
-				'[data-legend-item-id]',
-			);
-
-			return legendItemElement?.dataset.legendItemId;
-		},
-		[],
-	);
-
-	const handleLegendClick = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>): void => {
-			const legendItemId = getLegendItemIdFromEvent(e);
-			if (!legendItemId) {
-				return;
-			}
-			const isLegendMarker = (e.target as HTMLElement).dataset.isLegendMarker;
-			const seriesIndex = Number(legendItemId);
-
-			if (isLegendMarker) {
-				onToggleSeriesOnOff(seriesIndex);
-				return;
-			}
-
-			onToggleSeriesVisibility(seriesIndex);
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[onToggleSeriesVisibility, onToggleSeriesOnOff, getLegendItemIdFromEvent],
-	);
-
-	const handleFocusSeries = useCallback(
-		(seriesIndex: number | null): void => {
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-			}
-			rafId.current = requestAnimationFrame(() => {
-				setFocusedSeriesIndex(seriesIndex);
-				onFocusSeries(seriesIndex);
-			});
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[onFocusSeries],
-	);
-
-	const handleLegendMouseMove = (e: React.MouseEvent<HTMLDivElement>): void => {
-		const legendItemId = getLegendItemIdFromEvent(e);
-		const seriesIndex = legendItemId ? Number(legendItemId) : null;
-		if (seriesIndex === focusedSeriesIndex) {
-			return;
-		}
-		handleFocusSeries(seriesIndex);
-	};
-
-	const handleLegendMouseLeave = useCallback(
-		(): void => {
-			// Cancel any pending RAF from handleFocusSeries to prevent race condition
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-				rafId.current = null;
-			}
-			setFocusedSeriesIndex(null);
-			onFocusSeries(null);
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[onFocusSeries],
-	);
-
-	// Cleanup pending animation frames on unmount
-	useEffect(
-		() => (): void => {
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-			}
-		},
-		[],
-	);
 
 	// Chunk legend items into rows of LEGENDS_PER_ROW items each
 	const legendRows = useMemo(() => {
@@ -137,7 +48,9 @@ export default function Legend({
 				className={cx(
 					'legend-row',
 					`legend-row-${position.toLowerCase()}`,
-					legendRows.length === 1 ? 'legend-single-row' : '',
+					legendRows.length === 1 && position === LegendPosition.BOTTOM
+						? 'legend-single-row'
+						: '',
 				)}
 			>
 				{row.map((item) => (
@@ -167,9 +80,9 @@ export default function Legend({
 		<div
 			ref={legendContainerRef}
 			className="legend-container"
-			onClick={handleLegendClick}
-			onMouseMove={handleLegendMouseMove}
-			onMouseLeave={handleLegendMouseLeave}
+			onClick={onLegendClick}
+			onMouseMove={onLegendMouseMove}
+			onMouseLeave={onLegendMouseLeave}
 		>
 			<Virtuoso
 				style={{

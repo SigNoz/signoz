@@ -1,3 +1,9 @@
+/**
+ * Scale utilities for uPlot Y-axis configuration.
+ * Handles linear/log distribution, range computation (with padding and soft/hard limits),
+ * log-scale snapping, and threshold-aware soft limits.
+ */
+
 import uPlot, { Range, Scale } from 'uplot';
 
 import { DistributionType, ScaleProps } from '../config/types';
@@ -5,19 +11,36 @@ import { Threshold } from '../hooks/types';
 import { findMinMaxThresholdValues } from './threshold';
 import { LogScaleLimits, RangeFunctionParams } from './types';
 
+/**
+ * Rounds a number down to the nearest multiple of incr.
+ * Used for linear scale min so the axis starts on a clean tick.
+ */
 export function incrRoundDn(num: number, incr: number): number {
 	return Math.floor(num / incr) * incr;
 }
 
+/**
+ * Rounds a number up to the nearest multiple of incr.
+ * Used for linear scale max so the axis ends on a clean tick.
+ */
 export function incrRoundUp(num: number, incr: number): number {
 	return Math.ceil(num / incr) * incr;
 }
 
-export function normalizeLogScaleLimits(
-	distr: DistributionType | undefined,
-	logBase: number,
-	limits: LogScaleLimits,
-): LogScaleLimits {
+/**
+ * Snaps min/max/softMin/softMax to valid log-scale values (powers of logBase).
+ * Only applies when distribution is logarithmic; otherwise returns limits unchanged.
+ * Ensures axis bounds align to log "magnitude" for readable tick labels.
+ */
+export function normalizeLogScaleLimits({
+	distr,
+	logBase,
+	limits,
+}: {
+	distr?: DistributionType;
+	logBase: number;
+	limits: LogScaleLimits;
+}): LogScaleLimits {
 	if (distr !== DistributionType.Logarithmic) {
 		return limits;
 	}
@@ -32,25 +55,38 @@ export function normalizeLogScaleLimits(
 	};
 }
 
+/**
+ * Converts a single limit value to the nearest valid log-scale value.
+ * Rounds the log(value) with roundFn, then returns logBase^exp.
+ * Values <= 0 or null are returned as-is (log scale requires positive values).
+ */
 function normalizeLogLimit(
-	value: number | null | undefined,
+	value: number | null,
 	logBase: number,
 	logFn: (v: number) => number,
 	roundFn: (v: number) => number,
-): number | null | undefined {
+): number | null {
 	if (value == null || value <= 0) {
-		return value == null ? value : null;
+		return value;
 	}
 
 	const exp = roundFn(logFn(value));
 	return logBase ** exp;
 }
 
-export function getDistributionConfig(
-	time: ScaleProps['time'],
-	distr: DistributionType | undefined,
-	logBase: number,
-): Partial<Scale> {
+/**
+ * Returns uPlot scale distribution options for the Y axis.
+ * Time (X) scale gets no distr/log; Y scale gets distr 1 (linear) or 3 (log) and log base 2 or 10.
+ */
+export function getDistributionConfig({
+	time,
+	distr,
+	logBase,
+}: {
+	time: ScaleProps['time'];
+	distr?: DistributionType;
+	logBase?: number;
+}): Partial<Scale> {
 	if (time) {
 		return {};
 	}
@@ -63,11 +99,17 @@ export function getDistributionConfig(
 	};
 }
 
+/**
+ * Builds uPlot range config and flags for the range function.
+ * - rangeConfig: pad, hard, soft, mode for min and max (used by uPlot.rangeNum / rangeLog).
+ * - hardMinOnly / hardMaxOnly: true when only a hard limit is set (no soft), so range uses that bound.
+ * - hasFixedRange: true when both min and max are hard-only (fully fixed axis).
+ */
 export function getRangeConfig(
-	min: number | null | undefined,
-	max: number | null | undefined,
-	softMin: number | null | undefined,
-	softMax: number | null | undefined,
+	min: number | null,
+	max: number | null,
+	softMin: number | null,
+	softMax: number | null,
 	padMinBy: number,
 	padMaxBy: number,
 ): {
@@ -76,7 +118,7 @@ export function getRangeConfig(
 	hardMaxOnly: boolean;
 	hasFixedRange: boolean;
 } {
-	// uPlot's default ranging config for both min & max is {pad: 0.1, hard: null, soft: 0, mode: 3}
+	// uPlot: mode 3 = auto pad from data; mode 1 = respect soft limit
 	const softMinMode: Range.SoftMode = softMin == null ? 3 : 1;
 	const softMaxMode: Range.SoftMode = softMax == null ? 3 : 1;
 
@@ -84,13 +126,13 @@ export function getRangeConfig(
 		min: {
 			pad: padMinBy,
 			hard: min ?? -Infinity,
-			soft: softMin || 0,
+			soft: softMin !== null ? softMin : undefined,
 			mode: softMinMode,
 		},
 		max: {
 			pad: padMaxBy,
 			hard: max ?? Infinity,
-			soft: softMax || 0,
+			soft: softMax !== null ? softMax : undefined,
 			mode: softMaxMode,
 		},
 	};
@@ -107,6 +149,10 @@ export function getRangeConfig(
 	};
 }
 
+/**
+ * Initial [min, max] for the range pipeline. Returns null when we have no data and no fixed range
+ * (so the caller can bail and return [dataMin, dataMax] unchanged).
+ */
 function getInitialMinMax(
 	dataMin: number | null,
 	dataMax: number | null,
@@ -119,6 +165,10 @@ function getInitialMinMax(
 	return [dataMin, dataMax];
 }
 
+/**
+ * Computes the linear-scale range using uPlot.rangeNum.
+ * Uses hard min/max when hardMinOnly/hardMaxOnly; otherwise uses data min/max. Applies padding via rangeConfig.
+ */
 function getLinearScaleRange(
 	minMax: Range.MinMax,
 	params: RangeFunctionParams,
@@ -136,12 +186,16 @@ function getLinearScaleRange(
 	return uPlot.rangeNum(resolvedMin, resolvedMax, rangeConfig);
 }
 
+/**
+ * Computes the log-scale range using uPlot.rangeLog.
+ * Resolves min/max from params or data, then delegates to uPlot's log range helper.
+ */
 function getLogScaleRange(
 	minMax: Range.MinMax,
 	params: RangeFunctionParams,
 	dataMin: number | null,
 	dataMax: number | null,
-	logBase: uPlot.Scale['log'] | undefined,
+	logBase?: uPlot.Scale['log'],
 ): Range.MinMax {
 	const { min, max } = params;
 	const resolvedMin = min ?? dataMin;
@@ -159,6 +213,9 @@ function getLogScaleRange(
 	);
 }
 
+/**
+ * Snaps linear scale min down and max up to whole numbers so axis bounds are clean.
+ */
 function roundLinearRange(minMax: Range.MinMax): Range.MinMax {
 	const [currentMin, currentMax] = minMax;
 	let roundedMin = currentMin;
@@ -175,6 +232,10 @@ function roundLinearRange(minMax: Range.MinMax): Range.MinMax {
 	return [roundedMin, roundedMax];
 }
 
+/**
+ * Snaps log-scale [min, max] to exact powers of logBase (nearest magnitude below/above).
+ * If min and max would be equal after snapping, max is increased by one magnitude so the range is valid.
+ */
 function adjustLogRange(
 	minMax: Range.MinMax,
 	logBase: number,
@@ -183,17 +244,14 @@ function adjustLogRange(
 	let [currentMin, currentMax] = minMax;
 
 	if (currentMin != null) {
-		// snap min to nearest mag below
 		const minExp = Math.floor(logFn(currentMin));
 		currentMin = logBase ** minExp;
 	}
 
 	if (currentMax != null) {
-		// snap max to nearest mag above
 		const maxExp = Math.ceil(logFn(currentMax));
 		currentMax = logBase ** maxExp;
 
-		// inflate max by mag if same
 		if (currentMin === currentMax) {
 			currentMax *= logBase;
 		}
@@ -202,6 +260,10 @@ function adjustLogRange(
 	return [currentMin, currentMax];
 }
 
+/**
+ * For linear scales (distr === 1), clamps the computed range to the configured hard min/max when
+ * hardMinOnly/hardMaxOnly are set. No-op for log scales.
+ */
 function applyHardLimits(
 	minMax: Range.MinMax,
 	params: RangeFunctionParams,
@@ -225,6 +287,9 @@ function applyHardLimits(
 	return [currentMin, currentMax];
 }
 
+/**
+ * If the range is invalid (min >= max), returns a safe default: [1, 100] for log (distr 3), [0, 100] for linear.
+ */
 function enforceValidRange(minMax: Range.MinMax, distr: number): Range.MinMax {
 	const [currentMin, currentMax] = minMax;
 
@@ -235,6 +300,10 @@ function enforceValidRange(minMax: Range.MinMax, distr: number): Range.MinMax {
 	return minMax;
 }
 
+/**
+ * Creates the uPlot range function for a scale. Called by uPlot with (u, dataMin, dataMax, scaleKey).
+ * Pipeline: initial min/max -> linear or log range (with padding) -> rounding/snapping -> hard limits -> valid range.
+ */
 export function createRangeFunction(
 	params: RangeFunctionParams,
 ): Range.Function {
@@ -275,17 +344,18 @@ export function createRangeFunction(
 }
 
 /**
- * Adjust softMin/softMax to include threshold values
- * Thresholds should be visible in the scale, so we expand softMin/softMax to include them
+ * Expands softMin/softMax so that all threshold lines fall within the soft range and stay visible.
+ * Converts threshold values to yAxisUnit, then takes the min/max; softMin is lowered (or set) to
+ * include the smallest threshold, softMax is raised (or set) to include the largest.
  */
 export function adjustSoftLimitsWithThresholds(
-	softMin: number | null | undefined,
-	softMax: number | null | undefined,
-	thresholds: Threshold[] | undefined,
-	yAxisUnit: string | undefined,
+	softMin: number | null,
+	softMax: number | null,
+	thresholds?: Threshold[],
+	yAxisUnit?: string,
 ): {
-	softMin: number | null | undefined;
-	softMax: number | null | undefined;
+	softMin: number | null;
+	softMax: number | null;
 } {
 	if (!thresholds || thresholds.length === 0) {
 		return { softMin, softMax };
@@ -300,18 +370,16 @@ export function adjustSoftLimitsWithThresholds(
 		return { softMin, softMax };
 	}
 
-	// Adjust softMin to include minimum threshold value
 	const adjustedSoftMin =
 		minThresholdValue !== null
-			? softMin !== null && softMin !== undefined
+			? softMin !== null
 				? Math.min(softMin, minThresholdValue)
 				: minThresholdValue
 			: softMin;
 
-	// Adjust softMax to include maximum threshold value
 	const adjustedSoftMax =
 		maxThresholdValue !== null
-			? softMax !== null && softMax !== undefined
+			? softMax !== null
 				? Math.max(softMax, maxThresholdValue)
 				: maxThresholdValue
 			: softMax;

@@ -74,10 +74,10 @@ export enum DistributionType {
 export interface ScaleProps {
 	scaleKey: string;
 	time?: boolean;
-	min?: number | null;
-	max?: number | null;
-	softMin?: number | null;
-	softMax?: number | null;
+	min?: number;
+	max?: number;
+	softMin?: number;
+	softMax?: number;
 	thresholds?: ThresholdsDrawHookOptions;
 	padMinBy?: number;
 	padMaxBy?: number;

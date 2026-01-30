@@ -1,10 +1,10 @@
 import { Range } from 'uplot';
 
 export type LogScaleLimits = {
-	min: number | null | undefined;
-	max: number | null | undefined;
-	softMin: number | null | undefined;
-	softMax: number | null | undefined;
+	min: number | null;
+	max: number | null;
+	softMin: number | null;
+	softMax: number | null;
 };
 
 export type RangeFunctionParams = {
@@ -12,6 +12,6 @@ export type RangeFunctionParams = {
 	hardMinOnly: boolean;
 	hardMaxOnly: boolean;
 	hasFixedRange: boolean;
-	min: number | null | undefined;
-	max: number | null | undefined;
+	min: number | null;
+	max: number | null;
 };
