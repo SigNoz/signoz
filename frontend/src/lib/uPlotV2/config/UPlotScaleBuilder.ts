@@ -1,10 +1,10 @@
-import { getFallbackMinMaxTimeStamp } from 'lib/uPlotLib/utils/getXAxisScale';
 import { Scale } from 'uplot';
 
 import {
 	adjustSoftLimitsWithThresholds,
 	createRangeFunction,
 	getDistributionConfig,
+	getFallbackMinMaxTimeStamp,
 	getRangeConfig,
 	normalizeLogScaleLimits,
 } from '../utils/scale';

@@ -1,4 +1,4 @@
-export function getFallbackMinMaxTimeStamp(): {
+function getFallbackMinMaxTimeStamp(): {
 	fallbackMin: number;
 	fallbackMax: number;
 } {
