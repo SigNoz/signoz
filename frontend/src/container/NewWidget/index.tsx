@@ -72,6 +72,7 @@ import {
 	placeWidgetAtBottom,
 	placeWidgetBetweenRows,
 } from './utils';
+import { useDashboardVariables } from 'providers/Dashboard/store/useDashboardVariables';
 
 import './NewWidget.styles.scss';
 
@@ -88,6 +89,8 @@ function NewWidget({
 		setSelectedRowWidgetId,
 		columnWidths,
 	} = useDashboard();
+
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { t } = useTranslation(['dashboard']);
 
@@ -377,7 +380,7 @@ function NewWidget({
 					graphType: PANEL_TYPES.LIST,
 					selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 					globalSelectedInterval: customGlobalSelectedInterval,
-					variables: getDashboardVariables(selectedDashboard?.data.variables),
+					variables: getDashboardVariables(dashboardVariables),
 					tableParams: {
 						pagination: {
 							offset: 0,
@@ -394,7 +397,7 @@ function NewWidget({
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
-				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				variables: getDashboardVariables(dashboardVariables),
 				originalGraphType: selectedGraph || selectedWidget?.panelTypes,
 			};
 		}
@@ -408,7 +411,7 @@ function NewWidget({
 			graphType: selectedGraph,
 			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 			globalSelectedInterval: customGlobalSelectedInterval,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(dashboardVariables),
 		};
 	});
 

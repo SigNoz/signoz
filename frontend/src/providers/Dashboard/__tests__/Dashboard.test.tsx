@@ -10,6 +10,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { initializeDefaultVariables } from '../initializeDefaultVariables';
 import { normalizeUrlValueForVariable } from '../normalizeUrlValue';
+import { useDashboardVariables } from '../store/useDashboardVariables';
 
 // Mock the dashboard API
 jest.mock('api/v1/dashboards/id/get');
@@ -55,6 +56,7 @@ jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 
 function TestComponent(): JSX.Element {
 	const { dashboardResponse, dashboardId, selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 
 	return (
 		<div>
@@ -65,9 +67,7 @@ function TestComponent(): JSX.Element {
 				{dashboardResponse.isFetching.toString()}
 			</div>
 			<div data-testid="dashboard-variables">
-				{selectedDashboard?.data?.variables
-					? JSON.stringify(selectedDashboard.data.variables)
-					: 'null'}
+				{dashboardVariables ? JSON.stringify(dashboardVariables) : 'null'}
 			</div>
 			<div data-testid="dashboard-data">
 				{selectedDashboard?.data?.title || 'No Title'}
