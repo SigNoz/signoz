@@ -13,6 +13,7 @@ import { get } from 'lodash-es';
 
 export default function useLegendsSync(
 	config: UPlotConfigBuilder,
+	subscribeToFocusChange = true,
 ): {
 	focusedSeriesIndex: number | null;
 	setFocusedSeriesIndex: Dispatch<SetStateAction<number | null>>;
@@ -35,13 +36,13 @@ export default function useLegendsSync(
 					let hasChanges = false;
 					const next = { ...prev };
 
-					for (const [idxStr, visible] of Object.entries(updates)) {
+					for (const [idxStr, show] of Object.entries(updates)) {
 						const idx = Number(idxStr);
 						const current = next[idx];
-						if (!current || current.visible === visible) {
+						if (!current || current.show === show) {
 							continue;
 						}
-						next[idx] = { ...current, visible };
+						next[idx] = { ...current, show };
 						hasChanges = true;
 					}
 
@@ -76,7 +77,7 @@ export default function useLegendsSync(
 	const handleSetSeries = useCallback(
 		(_u: uPlot, seriesIndex: number | null, opts: uPlot.Series): void => {
 			// Using get because focus is not a property of uPlot.Series, but it's present in the opts.
-			if (get(opts, 'focus', false)) {
+			if (subscribeToFocusChange && get(opts, 'focus', false)) {
 				setFocusedSeriesIndex(seriesIndex);
 			}
 
@@ -87,7 +88,7 @@ export default function useLegendsSync(
 
 			queueVisibilityUpdate(seriesIndex, opts.show);
 		},
-		[queueVisibilityUpdate],
+		[queueVisibilityUpdate, subscribeToFocusChange],
 	);
 
 	useLayoutEffect(() => {
