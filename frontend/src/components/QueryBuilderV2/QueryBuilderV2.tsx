@@ -1,10 +1,8 @@
-import './QueryBuilderV2.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -12,6 +10,8 @@ import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
 import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
+
+import './QueryBuilderV2.styles.scss';
 
 export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	config,

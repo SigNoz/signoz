@@ -1,13 +1,3 @@
-import './TimeSeriesView.styles.scss';
-
-import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
-import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
-import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
-import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	Dispatch,
 	MutableRefObject,
@@ -17,11 +7,21 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
+import { ENTITY_VERSION_V5 } from 'constants/app';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
+import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+
+import './TimeSeriesView.styles.scss';
 
 function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,

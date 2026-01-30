@@ -1,5 +1,5 @@
-import './ServicesTabs.style.scss';
-
+import { useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import type { SelectProps, TabsProps } from 'antd';
 import { Select, Tabs } from 'antd';
@@ -7,11 +7,11 @@ import { getAwsServices } from 'api/integration/aws';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
+
+import './ServicesTabs.style.scss';
 
 export enum ServiceFilterType {
 	ALL_SERVICES = 'all_services',

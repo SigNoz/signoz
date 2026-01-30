@@ -1,3 +1,7 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
@@ -8,10 +12,6 @@ import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as appContextHooks from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import * as timezoneHooks from 'providers/Timezone';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';

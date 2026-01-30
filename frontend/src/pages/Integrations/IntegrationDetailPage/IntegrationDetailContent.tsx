@@ -1,5 +1,3 @@
-import './IntegrationDetailPage.styles.scss';
-
 import { Button, Tabs, TabsProps, Typography } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { CableCar, Group } from 'lucide-react';
@@ -8,6 +6,8 @@ import { IntegrationDetailedProps } from 'types/api/integrations/types';
 import Configure from './IntegrationDetailContentTabs/Configure';
 import DataCollected from './IntegrationDetailContentTabs/DataCollected';
 import Overview from './IntegrationDetailContentTabs/Overview';
+
+import './IntegrationDetailPage.styles.scss';
 
 interface IntegrationDetailContentProps {
 	activeDetailTab: string;

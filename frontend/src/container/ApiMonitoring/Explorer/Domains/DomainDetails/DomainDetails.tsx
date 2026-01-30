@@ -1,5 +1,5 @@
-import './DomainDetails.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -11,8 +11,6 @@ import {
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -23,6 +21,8 @@ import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
 import EndPointDetails from './EndPointDetails';
 import TopErrors from './TopErrors';
+
+import './DomainDetails.styles.scss';
 
 const TimeRangeOffset = 1000000000;
 

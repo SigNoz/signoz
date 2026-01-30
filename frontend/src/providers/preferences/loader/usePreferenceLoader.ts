@@ -1,8 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-empty */
+import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { has } from 'lodash-es';
-import { useEffect, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';

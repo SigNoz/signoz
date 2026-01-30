@@ -1,6 +1,9 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
+import React from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import * as ReactRedux from 'react-redux';
 import {
 	act,
 	fireEvent,
@@ -10,9 +13,6 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
-import React from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import * as ReactRedux from 'react-redux';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import DynamicVariableSelection from '../DashboardVariablesSelection/DynamicVariableSelection';

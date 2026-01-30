@@ -1,8 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable sonarjs/no-duplicate-string */
-import { fireEvent, render, screen } from '@testing-library/react';
 import * as ReactQuery from 'react-query';
 import * as ReactRedux from 'react-redux';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import DynamicVariableSelection from '../DynamicVariableSelection';

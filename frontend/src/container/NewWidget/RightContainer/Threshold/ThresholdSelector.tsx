@@ -1,18 +1,18 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './ThresholdSelector.styles.scss';
-
+import { useCallback } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { Antenna, Plus } from 'lucide-react';
-import { useCallback } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { v4 as uuid } from 'uuid';
 
 import Threshold from './Threshold';
 import { ThresholdSelectorProps } from './types';
+
+import './ThresholdSelector.styles.scss';
 
 function ThresholdSelector({
 	thresholds,

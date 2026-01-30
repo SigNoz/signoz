@@ -1,6 +1,6 @@
+import { useQueries, UseQueryOptions, UseQueryResult } from 'react-query';
 import { getMetricMetadata } from 'api/metricsExplorer/v2/getMetricMetadata';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQueries, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { MetricMetadataResponse } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 

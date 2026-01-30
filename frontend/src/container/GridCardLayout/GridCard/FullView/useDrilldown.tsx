@@ -1,8 +1,3 @@
-import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import {
 	Dispatch,
 	SetStateAction,
@@ -11,6 +6,11 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';

@@ -1,16 +1,16 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Integrations.styles.scss';
-
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';
-import { Dispatch, SetStateAction, useMemo } from 'react';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
+
+import './Integrations.styles.scss';
 
 export const AWS_INTEGRATION = {
 	id: INTEGRATION_TYPES.AWS_INTEGRATION,

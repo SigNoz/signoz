@@ -1,3 +1,5 @@
+import { useCallback, useState } from 'react';
+import { useMutation } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import updateCustomFiltersAPI from 'api/quickFilters/updateCustomFilters';
 import axios, { AxiosError } from 'axios';
@@ -5,8 +7,6 @@ import { SignalType } from 'components/QuickFilters/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { useCallback, useState } from 'react';
-import { useMutation } from 'react-query';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 interface UseQuickFilterSettingsProps {

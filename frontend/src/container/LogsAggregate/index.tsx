@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { blue } from '@ant-design/colors';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import dayjs from 'dayjs';
 import useInterval from 'hooks/useInterval';
 import getStep from 'lib/getStep';
-import { useMemo } from 'react';
-import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
