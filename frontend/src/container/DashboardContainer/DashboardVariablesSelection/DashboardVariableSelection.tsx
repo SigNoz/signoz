@@ -1,13 +1,11 @@
-import './DashboardVariableSelection.styles.scss';
-
+import { memo, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
-import { memo, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -21,6 +19,8 @@ import {
 	onUpdateVariableNode,
 } from './util';
 import VariableItem from './VariableItem';
+
+import './DashboardVariableSelection.styles.scss';
 
 function DashboardVariableSelection(): JSX.Element | null {
 	const {

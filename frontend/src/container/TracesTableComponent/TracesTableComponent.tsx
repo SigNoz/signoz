@@ -1,5 +1,13 @@
-import './TracesTableComponent.styles.scss';
-
+import {
+	Dispatch,
+	HTMLAttributes,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { UseQueryResult } from 'react-query';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -17,19 +25,11 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	HTMLAttributes,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+
+import './TracesTableComponent.styles.scss';
 
 function TracesTableComponent({
 	widget,

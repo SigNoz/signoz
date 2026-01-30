@@ -1,9 +1,9 @@
+import React, { createContext, useContext, useMemo } from 'react';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	PreferenceContextValue,
 	PreferenceMode,
 } from 'providers/preferences/types';
-import React, { createContext, useContext, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceSync } from '../sync/usePreferenceSync';

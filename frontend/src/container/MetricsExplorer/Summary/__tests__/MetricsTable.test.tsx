@@ -1,8 +1,8 @@
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as useGetMetricsListFilterValues from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 

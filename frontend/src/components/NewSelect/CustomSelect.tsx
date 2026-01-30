@@ -2,8 +2,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/function-component-definition */
-import './styles.scss';
-
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import {
 	CloseOutlined,
 	DownOutlined,
@@ -19,13 +24,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
 import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomSelectProps, OptionData } from './types';
@@ -35,6 +33,8 @@ import {
 	prioritizeOrAddOptionForSingleSelect,
 	SPACEKEY,
 } from './utils';
+
+import './styles.scss';
 
 /**
  * CustomSelect Component

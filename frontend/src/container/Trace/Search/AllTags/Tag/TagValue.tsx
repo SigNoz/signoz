@@ -1,6 +1,3 @@
-import { Select } from 'antd';
-import { BaseOptionType } from 'antd/es/select';
-import getTagValue from 'api/trace/getTagValue';
 import {
 	Dispatch,
 	memo,
@@ -11,6 +8,9 @@ import {
 } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
+import { Select } from 'antd';
+import { BaseOptionType } from 'antd/es/select';
+import getTagValue from 'api/trace/getTagValue';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';

@@ -1,5 +1,6 @@
-import './BreakDown.styles.scss';
-
+import { useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Alert, Typography } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -13,9 +14,6 @@ import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -32,6 +30,8 @@ import {
 	getTotalMetricDatapointCountWidgetData,
 	getTotalTraceSizeWidgetData,
 } from './graphs';
+
+import './BreakDown.styles.scss';
 
 type MetricSection = {
 	id: string;

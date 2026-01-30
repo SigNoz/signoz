@@ -1,5 +1,4 @@
-import './MetricsAggregateSection.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
@@ -7,11 +6,12 @@ import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggregationOptions/SpaceAggregationOptions';
 import { GroupByFilter, OperatorsSelect } from 'container/QueryBuilder/filters';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { memo, useCallback, useEffect, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import './MetricsAggregateSection.styles.scss';
 
 const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	query,

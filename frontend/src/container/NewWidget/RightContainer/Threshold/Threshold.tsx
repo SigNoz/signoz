@@ -1,14 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './Threshold.styles.scss';
-
+import { useMemo, useRef, useState } from 'react';
+import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getColumnUnit } from 'lib/query/createTableColumnsFromQuery';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
-import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
 import {
 	operatorOptions,
@@ -20,6 +18,8 @@ import ColorSelector from './ColorSelector';
 import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
 import { ThresholdProps } from './types';
+
+import './Threshold.styles.scss';
 
 const wrapStyle = {
 	flexWrap: 'wrap',

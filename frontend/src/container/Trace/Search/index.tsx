@@ -1,7 +1,7 @@
-import { CaretRightFilled } from '@ant-design/icons';
-import { Popover } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
+import { CaretRightFilled } from '@ant-design/icons';
+import { Popover } from 'antd';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';

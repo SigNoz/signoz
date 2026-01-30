@@ -1,8 +1,8 @@
-import './PlannedDowntime.styles.scss';
-
+import { SetStateAction } from 'react';
 import { Button, Modal, Typography } from 'antd';
 import { Trash2, X } from 'lucide-react';
-import { SetStateAction } from 'react';
+
+import './PlannedDowntime.styles.scss';
 
 interface PlannedDowntimeDeleteModalProps {
 	isDeleteModalOpen: boolean;

@@ -1,7 +1,7 @@
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import axios from 'api';
 import { AxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 
 export function useAccountStatus(

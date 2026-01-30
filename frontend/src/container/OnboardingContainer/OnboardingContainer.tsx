@@ -1,7 +1,9 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Onboarding.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { useEffectOnce } from 'react-use';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -15,10 +17,6 @@ import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingIn
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { useEffectOnce } from 'react-use';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -43,6 +41,8 @@ import {
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
 } from './utils/getSteps';
+
+import './Onboarding.styles.scss';
 
 export enum ModulesMap {
 	APM = 'APM',

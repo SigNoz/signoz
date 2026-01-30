@@ -1,12 +1,12 @@
-import './ValueGraph.styles.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
+
+import './ValueGraph.styles.scss';
 
 function Unit({
 	type,
