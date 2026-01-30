@@ -1,10 +1,16 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { findByText, fireEvent, render, waitFor } from 'tests/test-utils';
+import {
+	findByText,
+	fireEvent,
+	render,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
@@ -289,6 +295,7 @@ describe('PipelinePage container test', () => {
 	});
 
 	it('should have populated form fields when edit pipeline is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -355,11 +362,10 @@ describe('PipelinePage container test', () => {
 		);
 
 		// Open Filter input and type to trigger suggestions
-		const input = document.querySelector(
-			'.ant-select-selector .ant-select-selection-search',
-		) as HTMLInputElement;
+		const filterSelect = screen.getByTestId('qb-search-select');
+		const input = within(filterSelect).getByRole('combobox') as HTMLInputElement;
 
-		await fireEvent.click(input);
+		await user.click(input);
 		await waitFor(() =>
 			expect(screen.getByText('otelServiceName')).toBeInTheDocument(),
 		);

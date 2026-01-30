@@ -374,6 +374,7 @@ function QueryBuilderSearch({
 	return (
 		<div className="query-builder-search-container">
 			<Select
+				data-testid={'qb-search-select'}
 				ref={selectRef}
 				getPopupContainer={popupContainer}
 				transitionName=""
