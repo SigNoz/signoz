@@ -1,4 +1,4 @@
-import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization-temp/panels/utils/legendVisibilityUtils';
+import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { merge } from 'lodash-es';
