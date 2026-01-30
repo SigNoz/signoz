@@ -2,8 +2,8 @@ import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot, { Axis } from 'uplot';
 
-import { uPlotXAxisValuesFormat } from '../../../uPlotLib/utils/constants';
-import getGridColor from '../../../uPlotLib/utils/getGridColor';
+import { uPlotXAxisValuesFormat } from '../../uPlotLib/utils/constants';
+import getGridColor from '../../uPlotLib/utils/getGridColor';
 import { AxisProps, ConfigBuilder } from './types';
 
 const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
