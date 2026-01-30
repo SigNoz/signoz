@@ -41,7 +41,7 @@ def create_alert_rule(
             timeout=5,
         )
         if response.status_code != HTTPStatus.OK:
-            raise Exception( # pylint: disable=broad-exception-raised
+            raise Exception(  # pylint: disable=broad-exception-raised
                 f"Failed to delete rule, api returned {response.status_code} with response: {response.text}"
             )
 
@@ -50,5 +50,5 @@ def create_alert_rule(
     for rule_id in rule_ids:
         try:
             _delete_alert_rule(rule_id)
-        except Exception as e: # pylint: disable=broad-exception-caught
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Error deleting rule: %s", {"rule_id": rule_id, "error": e})
