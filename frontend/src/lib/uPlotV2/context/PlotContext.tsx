@@ -3,6 +3,7 @@ import {
 	PropsWithChildren,
 	useCallback,
 	useContext,
+	useMemo,
 	useRef,
 } from 'react';
 import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
@@ -105,18 +106,22 @@ export const PlotContextProvider = ({
 		);
 	}, []);
 
-	return (
-		<PlotContext.Provider
-			value={{
-				onToggleSeriesVisibility,
-				setPlotContextInitialState,
-				onToggleSeriesOnOff,
-				onFocusSeries,
-			}}
-		>
-			{children}
-		</PlotContext.Provider>
+	const value = useMemo(
+		() => ({
+			onToggleSeriesVisibility,
+			setPlotContextInitialState,
+			onToggleSeriesOnOff,
+			onFocusSeries,
+		}),
+		[
+			onToggleSeriesVisibility,
+			setPlotContextInitialState,
+			onToggleSeriesOnOff,
+			onFocusSeries,
+		],
 	);
+
+	return <PlotContext.Provider value={value}>{children}</PlotContext.Provider>;
 };
 
 export const usePlotContext = (): IPlotContext => {
