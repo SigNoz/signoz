@@ -74,7 +74,6 @@ export interface LegendConfig {
 export interface LegendProps {
 	position?: LegendPosition;
 	config: UPlotConfigBuilder;
-	legendsPerSet?: number;
 }
 
 export interface TooltipContentItem {

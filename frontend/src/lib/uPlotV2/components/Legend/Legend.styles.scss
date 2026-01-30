@@ -20,6 +20,17 @@
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 8px 16px;
+
+	&.legend-single-row {
+		justify-content: center;
+	}
+
+	&.legend-row-right {
+		flex-direction: column;
+	}
+	&.legend-row-bottom {
+		flex-direction: row;
+	}
 }
 
 .legend-item {

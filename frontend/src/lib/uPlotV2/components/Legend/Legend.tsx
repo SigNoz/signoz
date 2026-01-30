@@ -13,7 +13,7 @@ import { LegendProps } from '../types';
 const LEGENDS_PER_SET_DEFAULT = 5;
 
 export default function Legend({
-	position: _position = LegendPosition.BOTTOM,
+	position = LegendPosition.BOTTOM,
 	config,
 }: LegendProps): JSX.Element {
 	const {
@@ -131,7 +131,14 @@ export default function Legend({
 
 	const renderLegendRow = useCallback(
 		(rowIndex: number, row: LegendItem[]): JSX.Element => (
-			<div key={rowIndex} className="legend-row">
+			<div
+				key={rowIndex}
+				className={cx(
+					'legend-row',
+					`legend-row-${position.toLowerCase()}`,
+					legendRows.length === 1 ? 'legend-single-row' : '',
+				)}
+			>
 				{row.map((item) => (
 					<AntdTooltip key={item.seriesIndex} title={item.label}>
 						<div
@@ -152,7 +159,7 @@ export default function Legend({
 				))}
 			</div>
 		),
-		[focusedSeriesIndex],
+		[focusedSeriesIndex, position, legendRows],
 	);
 
 	return (
