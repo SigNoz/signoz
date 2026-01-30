@@ -1,4 +1,4 @@
-import { LegendItem } from 'lib/visualization/uPlot/config/types';
+import { LegendItem } from 'lib/uPlotV2/config/types';
 import {
 	Dispatch,
 	SetStateAction,
@@ -8,13 +8,16 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { UPlotConfigBuilder } from 'lib/visualization/uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
 
-export default function useLegendsSync(
-	config: UPlotConfigBuilder,
+export default function useLegendsSync({
+	config,
 	subscribeToFocusChange = true,
-): {
+}: {
+	config: UPlotConfigBuilder;
+	subscribeToFocusChange?: boolean;
+}): {
 	focusedSeriesIndex: number | null;
 	setFocusedSeriesIndex: Dispatch<SetStateAction<number | null>>;
 	legendItemsMap: Record<number, LegendItem>;

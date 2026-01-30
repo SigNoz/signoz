@@ -5,9 +5,9 @@ import cx from 'classnames';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { LegendPosition } from 'types/api/dashboard/getAll';
-import { LegendItem } from '../../config/types';
-import { usePlotContext } from '../../context/PlotContext';
-import useLegendsSync from 'lib/visualization/hooks/useLegendsSync';
+import { LegendItem } from 'lib/uPlotV2/config/types';
+import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
+import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { LegendProps } from '../types';
 
 const LEGENDS_PER_SET_DEFAULT = 5;

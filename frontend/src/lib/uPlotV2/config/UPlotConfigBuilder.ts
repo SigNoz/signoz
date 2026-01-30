@@ -12,9 +12,9 @@ import {
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { thresholdsDrawHook } from '../hooks/thresholdsDrawHook';
+import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { getStoredSeriesVisibility } from 'lib/visualization/panels/legendVisibilityUtils';
-import { ThresholdsDrawHookOptions } from '../hooks/types';
+import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 
 /**
  * Type definitions for uPlot option objects
