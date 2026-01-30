@@ -36,7 +36,7 @@ type MetadataStore interface {
 	ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error)
 
 	// ListPromotedPaths lists the promoted paths.
-	ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error)
+	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
 
 	// PromotePaths promotes the paths.
 	PromotePaths(ctx context.Context, paths ...string) error
