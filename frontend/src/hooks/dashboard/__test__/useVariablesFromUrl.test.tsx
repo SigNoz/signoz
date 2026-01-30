@@ -1,7 +1,7 @@
+import { Router } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
 import { createMemoryHistory } from 'history';
-import { Router } from 'react-router-dom';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import useVariablesFromUrl, {

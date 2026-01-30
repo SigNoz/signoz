@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/mocks"
+	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"

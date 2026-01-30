@@ -1,8 +1,8 @@
-import './FunnelBreadcrumb.styles.scss';
-
+import { Link } from 'react-router-dom';
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
-import { Link } from 'react-router-dom';
+
+import './FunnelBreadcrumb.styles.scss';
 
 interface FunnelBreadcrumbProps {
 	funnelName: string;

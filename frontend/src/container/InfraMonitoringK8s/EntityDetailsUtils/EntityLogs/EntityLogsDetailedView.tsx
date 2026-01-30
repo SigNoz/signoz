@@ -1,5 +1,4 @@
-import './entityLogs.styles.scss';
-
+import { useMemo } from 'react';
 import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
@@ -7,14 +6,15 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { filterOutPrimaryFilters } from '../utils';
 import EntityLogs from './EntityLogs';
+
+import './entityLogs.styles.scss';
 
 interface Props {
 	timeRange: {

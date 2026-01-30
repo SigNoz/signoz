@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -8,8 +10,6 @@ import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtil
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect, useState } from 'react';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {

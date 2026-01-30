@@ -1,7 +1,7 @@
-import './CreateEdit.styles.scss';
-
 import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
+
+import './CreateEdit.styles.scss';
 
 interface AuthNProvider {
 	key: string;

@@ -1,10 +1,10 @@
+import { Provider } from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import { Provider } from 'react-redux';
 import store from 'store';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';

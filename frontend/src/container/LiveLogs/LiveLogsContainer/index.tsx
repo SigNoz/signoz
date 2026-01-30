@@ -1,5 +1,5 @@
-import './LiveLogsContainer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Switch, Typography } from 'antd';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
@@ -12,8 +12,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useEventSourceEvent } from 'hooks/useEventSourceEvent';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
@@ -21,6 +19,8 @@ import LiveLogsList from '../LiveLogsList';
 import { ILiveLogsLog } from '../LiveLogsList/types';
 import LiveLogsListChart from '../LiveLogsListChart';
 import { QueryHistoryState } from '../types';
+
+import './LiveLogsContainer.styles.scss';
 
 interface LiveLogsContainerProps {
 	handleChangeSelectedView?: ChangeViewFunctionType;
@@ -37,7 +37,9 @@ function LiveLogsContainer({
 	);
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);

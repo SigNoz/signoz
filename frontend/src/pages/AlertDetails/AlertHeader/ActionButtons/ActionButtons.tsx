@@ -1,5 +1,4 @@
-import './ActionButtons.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -12,13 +11,14 @@ import {
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
-import { useCallback, useEffect, useState } from 'react';
 import { CSSProperties } from 'styled-components';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { AlertHeaderProps } from '../AlertHeader';
 import RenameModal from './RenameModal';
+
+import './ActionButtons.styles.scss';
 
 const menuItemStyle: CSSProperties = {
 	fontSize: '14px',

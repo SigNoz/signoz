@@ -46,6 +46,7 @@ jobs:
           - ttl
           - preference
           - logspipelines
+          - alerts
         sqlstore-provider:
           - postgres
           - sqlite
@@ -84,8 +85,11 @@ jobs:
           sudo rm /etc/apt/sources.list.d/google-chrome.list
           export CHROMEDRIVER_VERSION=`curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION%%.*}`
           curl -L -O "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
-          unzip chromedriver-linux64.zip && chmod +x chromedriver && sudo mv chromedriver /usr/local/bin
+          unzip chromedriver-linux64.zip
+          chmod +x chromedriver-linux64/chromedriver
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
           chromedriver -version
+          google-chrome-stable --version
       - name: run
         run: |
           cd tests/integration && \

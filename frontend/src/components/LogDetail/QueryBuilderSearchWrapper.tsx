@@ -1,10 +1,10 @@
-import './QueryBuilderSearchWrapper.styles.scss';
-
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
-import { Dispatch, SetStateAction, useEffect } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+
+import './QueryBuilderSearchWrapper.styles.scss';
 
 function QueryBuilderSearchWrapper({
 	log,
@@ -29,8 +29,9 @@ function QueryBuilderSearchWrapper({
 			(!tagFiltersLength && (!filters || !filters.items.length)) ||
 			tagFiltersLength === filters?.items.length ||
 			!contextQuery
-		)
+		) {
 			return;
+		}
 
 		const nextQuery: Query = {
 			...contextQuery,
@@ -48,7 +49,9 @@ function QueryBuilderSearchWrapper({
 	};
 
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	if (!contextQuery || !isEdit) return <></>;
+	if (!contextQuery || !isEdit) {
+		return <></>;
+	}
 
 	return (
 		<QueryBuilderSearch

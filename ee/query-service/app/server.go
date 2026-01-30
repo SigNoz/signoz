@@ -172,6 +172,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		FluxInterval:                  config.Querier.FluxInterval,
 		Gateway:                       gatewayProxy,
 		GatewayUrl:                    config.Gateway.URL.String(),
+		GlobalConfig:                  config.Global,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts, signoz)
@@ -210,7 +211,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
 	r := baseapp.NewRouter()
-	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz, s.signoz.Modules.RoleGetter)
 
 	r.Use(otelmux.Middleware(
 		"apiserver",

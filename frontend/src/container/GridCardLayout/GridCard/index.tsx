@@ -1,9 +1,11 @@
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -12,8 +14,6 @@ import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import APIError from 'types/api/error';
@@ -318,7 +318,9 @@ function GridCardGraph({
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
-					isFetchingResponse={queryResponse.isFetching}
+					isFetchingResponse={
+						queryResponse.isFetching || variablesToGetUpdated.length > 0
+					}
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}

@@ -24,7 +24,7 @@ The configuration file is a JSON array containing data source objects. Each obje
 | `label` | `string` | Display name shown to users (e.g., `"AWS EC2"`) |
 | `tags` | `string[]` | Array of category tags for grouping (e.g., `["AWS"]`, `["database"]`) |
 | `module` | `string` | Destination module after onboarding completion |
-| `imgUrl` | `string` | Path to the logo/icon (e.g., `"/Logos/ec2.svg"`) |
+| `imgUrl` | `string` | Path to the logo/icon **(SVG required)** (e.g., `"/Logos/ec2.svg"`) |
 
 ### Optional Keys
 

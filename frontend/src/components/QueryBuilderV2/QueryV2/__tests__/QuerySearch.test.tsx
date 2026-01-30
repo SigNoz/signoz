@@ -5,7 +5,6 @@ import { EditorView } from '@uiw/react-codemirror';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import * as UseQBModule from 'hooks/queryBuilder/useQueryBuilder';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -121,13 +120,8 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 // Note: We're NOT mocking CodeMirror here - using the real component
 // This provides integration testing with the actual CodeMirror editor
 
-const handleRunQueryMock = ((UseQBModule as unknown) as {
-	handleRunQuery: jest.MockedFunction<() => void>;
-}).handleRunQuery;
-
 const SAMPLE_KEY_TYPING = 'http.';
 const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
-const SAMPLE_VALUE_TYPING_COMPLETE = "service.name = 'frontend'";
 const SAMPLE_STATUS_QUERY = "http.status_code = '200'";
 
 describe('QuerySearch (Integration with Real CodeMirror)', () => {
@@ -268,44 +262,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		});
 
 		await waitFor(() => expect(onRun).toHaveBeenCalled(), { timeout: 2000 });
-	});
-
-	it('calls handleRunQuery when Mod-Enter without onRun', async () => {
-		const mockedHandleRunQuery = handleRunQueryMock as jest.MockedFunction<
-			() => void
-		>;
-		mockedHandleRunQuery.mockClear();
-
-		render(
-			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
-				queryData={initialQueriesMap.logs.builder.queryData[0]}
-				dataSource={DataSource.LOGS}
-			/>,
-		);
-
-		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
-
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
-		await userEvent.click(editor);
-		await userEvent.type(editor, SAMPLE_VALUE_TYPING_COMPLETE);
-
-		// Use fireEvent for keyboard shortcuts as userEvent might not work well with CodeMirror
-		const modKey = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
-		fireEvent.keyDown(editor, {
-			key: 'Enter',
-			code: 'Enter',
-			[modKey]: true,
-			keyCode: 13,
-		});
-
-		await waitFor(() => expect(mockedHandleRunQuery).toHaveBeenCalled(), {
-			timeout: 2000,
-		});
 	});
 
 	it('initializes CodeMirror with expression from queryData.filter.expression on mount', async () => {

@@ -1,10 +1,10 @@
+import { useMemo } from 'react';
+import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip, Typography } from 'antd';
 import { stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from 'lucide-react';
-import { useMemo } from 'react';
-import { useWindowSize } from 'react-use';
 
 import {
 	TREEMAP_HEIGHT,

@@ -1,9 +1,9 @@
+import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
+import { UseQueryResult } from 'react-query';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

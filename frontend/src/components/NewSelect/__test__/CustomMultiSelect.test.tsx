@@ -1,3 +1,4 @@
+import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	fireEvent,
 	render,
@@ -5,7 +6,6 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react';
-import { VirtuosoMockContext } from 'react-virtuoso';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -204,7 +204,9 @@ describe('CustomMultiSelect Component', () => {
 
 			options.forEach((option) => {
 				const text = option.textContent || '';
-				if (text.includes('Option 2')) foundOption2 = true;
+				if (text.includes('Option 2')) {
+					foundOption2 = true;
+				}
 			});
 
 			expect(foundOption2).toBe(true);

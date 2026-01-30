@@ -2,8 +2,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Checkbox.styles.scss';
-
+import { Fragment, useMemo, useState } from 'react';
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
@@ -12,7 +11,10 @@ import {
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/antlrQueryConstants';
-import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
+import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
@@ -21,13 +23,14 @@ import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQue
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Fragment, useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
+
+import './Checkbox.styles.scss';
 
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
@@ -62,26 +65,44 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		lastUsedQuery,
 		currentQuery,
 		redirectWithQueryBuilderData,
+		panelType,
 	} = useQueryBuilder();
+
+	// Determine if we're in ListView mode
+	const isListView = panelType === PANEL_TYPES.LIST;
+	// In ListView mode, use index 0 for most sources; for TRACES_EXPLORER, use lastUsedQuery
+	// Otherwise use lastUsedQuery for non-ListView modes
+	const activeQueryIndex = useMemo(() => {
+		if (isListView) {
+			return source === QuickFiltersSource.TRACES_EXPLORER
+				? lastUsedQuery || 0
+				: 0;
+		}
+		return lastUsedQuery || 0;
+	}, [isListView, source, lastUsedQuery]);
 
 	// Check if this filter has active filters in the query
 	const isSomeFilterPresentForCurrentAttribute = useMemo(
 		() =>
 			currentQuery.builder.queryData?.[
-				lastUsedQuery || 0
+				activeQueryIndex
 			]?.filters?.items?.some((item) =>
 				isEqual(item.key?.key, filter.attributeKey.key),
 			),
-		[currentQuery.builder.queryData, lastUsedQuery, filter.attributeKey.key],
+		[currentQuery.builder.queryData, activeQueryIndex, filter.attributeKey.key],
 	);
 
 	// Derive isOpen from filter state + user action
 	const isOpen = useMemo(() => {
 		// If user explicitly toggled, respect that
-		if (userToggleState !== null) return userToggleState;
+		if (userToggleState !== null) {
+			return userToggleState;
+		}
 
 		// Auto-open if this filter has active filters in the query
-		if (isSomeFilterPresentForCurrentAttribute) return true;
+		if (isSomeFilterPresentForCurrentAttribute) {
+			return true;
+		}
 
 		// Otherwise use default behavior (first 2 filters open)
 		return filter.defaultOpen;
@@ -169,7 +190,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			false,
 		);
 		const filterSync = currentQuery?.builder.queryData?.[
-			lastUsedQuery || 0
+			activeQueryIndex
 		]?.filters?.items.find((item) =>
 			isEqual(item.key?.key, filter.attributeKey.key),
 		);
@@ -209,19 +230,19 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		attributeValues,
 		currentQuery?.builder.queryData,
 		filter.attributeKey,
-		lastUsedQuery,
+		activeQueryIndex,
 	]);
 
 	// disable the filter when there are multiple entries of the same attribute key present in the filter bar
 	const isFilterDisabled = useMemo(
 		() =>
 			(currentQuery?.builder?.queryData?.[
-				lastUsedQuery || 0
+				activeQueryIndex
 			]?.filters?.items?.filter((item) =>
 				isEqual(item.key?.key, filter.attributeKey.key),
 			)?.length || 0) > 1,
 
-		[currentQuery?.builder?.queryData, lastUsedQuery, filter.attributeKey],
+		[currentQuery?.builder?.queryData, activeQueryIndex, filter.attributeKey],
 	);
 
 	// variable to check if the current filter has multiple values to its name in the key op value section
@@ -260,7 +281,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					filters: {
 						...item.filters,
 						items:
-							idx === lastUsedQuery
+							idx === activeQueryIndex
 								? item.filters?.items?.filter(
 										(fil) => !isEqual(fil.key?.key, filter.attributeKey.key),
 								  ) || []
@@ -284,7 +305,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		isOnlyOrAllClicked: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
-		const query = cloneDeep(currentQuery.builder.queryData?.[lastUsedQuery || 0]);
+		const query = cloneDeep(currentQuery.builder.queryData?.[activeQueryIndex]);
 
 		// if only or all are clicked we do not need to worry about anything just override whatever we have
 		// by either adding a new IN operator value clause in case of ONLY or remove everything we have for ALL.
@@ -515,7 +536,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				...currentQuery.builder,
 				queryData: [
 					...currentQuery.builder.queryData.map((q, idx) => {
-						if (idx === lastUsedQuery) {
+						if (idx === activeQueryIndex) {
 							return query;
 						}
 						return q;

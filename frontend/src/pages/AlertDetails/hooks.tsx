@@ -1,3 +1,6 @@
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { generatePath, useLocation } from 'react-router-dom';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { TablePaginationConfig, TableProps } from 'antd/lib';
 import deleteAlerts from 'api/alerts/delete';
@@ -17,7 +20,7 @@ import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
-import { RelativeTimeMap } from 'container/TopNav/DateTimeSelection/config';
+import { RelativeTimeMap } from 'container/TopNav/DateTimeSelectionV2/constants';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -31,9 +34,6 @@ import { OrderPreferenceItems } from 'pages/Logs/config';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useAlertRule } from 'providers/Alert';
-import { useCallback, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertDef,
@@ -69,8 +69,9 @@ export const useAlertHistoryQueryParams = (): {
 	const hasStartAndEndParams = !!intStartTime && !!intEndTime;
 
 	const { maxTime, minTime } = useMemo(() => {
-		if (hasStartAndEndParams)
+		if (hasStartAndEndParams) {
 			return GetMinMax('custom', [intStartTime, intEndTime]);
+		}
 		return GetMinMax(relativeTime);
 	}, [hasStartAndEndParams, intStartTime, intEndTime, relativeTime]);
 

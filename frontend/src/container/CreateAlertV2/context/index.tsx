@@ -1,10 +1,3 @@
-import { QueryParams } from 'constants/query';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
-import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
-import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import {
 	createContext,
 	useCallback,
@@ -15,6 +8,13 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import { QueryParams } from 'constants/query';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
+import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
+import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import {
@@ -63,12 +63,13 @@ export function CreateAlertProvider(
 		initialAlertType,
 	} = props;
 
-	const [alertState, setAlertState] = useReducer(
-		alertCreationReducer,
-		INITIAL_ALERT_STATE,
-	);
-
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+
+	const [alertState, setAlertState] = useReducer(alertCreationReducer, {
+		...INITIAL_ALERT_STATE,
+		yAxisUnit: currentQuery.unit,
+	});
+
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);

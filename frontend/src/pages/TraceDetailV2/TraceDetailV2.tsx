@@ -1,5 +1,5 @@
-import './TraceDetailV2.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -17,11 +17,11 @@ import TraceWaterfall, {
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 import NoData from './NoData/NoData';
+
+import './TraceDetailV2.styles.scss';
 
 function TraceDetailsV2(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
@@ -135,6 +135,7 @@ function TraceDetailsV2(): JSX.Element {
 			<ResizablePanel minSize={20} maxSize={80} className="trace-left-content">
 				<TraceMetadata
 					traceID={traceId}
+					isDataLoading={isFetchingTraceData}
 					duration={
 						(traceData?.payload?.endTimestampMillis || 0) -
 						(traceData?.payload?.startTimestampMillis || 0)

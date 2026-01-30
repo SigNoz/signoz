@@ -1,9 +1,9 @@
-import '@testing-library/jest-dom/extend-expect';
-
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import React, { useEffect } from 'react';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+
+import '@testing-library/jest-dom/extend-expect';
 
 import VariableItem from './VariableItem';
 
@@ -80,10 +80,12 @@ describe('VariableItem', () => {
 				/>
 			</MockQueryClientProvider>,
 		);
-		expect(screen.getByPlaceholderText('Enter value')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('variable-textbox-test_variable'),
+		).toBeInTheDocument();
 	});
 
-	test('calls onChange event handler when Input value changes', async () => {
+	test('calls onValueUpdate when Input value changes and blurs', async () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -102,13 +104,19 @@ describe('VariableItem', () => {
 			</MockQueryClientProvider>,
 		);
 
+		const inputElement = screen.getByTestId('variable-textbox-test_variable');
+
+		// Change the value
 		act(() => {
-			const inputElement = screen.getByPlaceholderText('Enter value');
 			fireEvent.change(inputElement, { target: { value: 'newValue' } });
 		});
 
+		// Blur the input to trigger the update
+		act(() => {
+			fireEvent.blur(inputElement);
+		});
+
 		await waitFor(() => {
-			// expect(mockOnValueUpdate).toHaveBeenCalledTimes(1);
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
 				'testVariable',
 				'test_variable',

@@ -1,13 +1,13 @@
 // This component is not been used in the application as we support only metrics for ApDex as of now.
 // This component is been kept for future reference.
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 

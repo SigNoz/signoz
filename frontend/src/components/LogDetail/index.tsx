@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './LogDetails.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -40,9 +41,6 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useCopyToClipboard, useLocation } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -50,6 +48,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
+
+import './LogDetails.styles.scss';
 
 function LogDetailInner({
 	log,
@@ -75,7 +75,9 @@ function LogDetailInner({
 	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
@@ -153,7 +155,9 @@ function LogDetailInner({
 		(value: string, queryIndex: number) => {
 			// update the query at the given index
 			setContextQuery((prev) => {
-				if (!prev) return prev;
+				if (!prev) {
+					return prev;
+				}
 
 				return {
 					...prev,

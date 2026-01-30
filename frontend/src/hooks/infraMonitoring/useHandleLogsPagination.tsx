@@ -1,7 +1,3 @@
-import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { isEqual } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
@@ -10,6 +6,10 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { isEqual } from 'lodash-es';
 import { ILog } from 'types/api/logs/log';
 import {
 	IBuilderQuery,
@@ -137,7 +137,9 @@ export const useHandleLogsPagination = ({
 	}, [shouldResetPage, timeRange]);
 
 	const loadMoreLogs = useCallback(() => {
-		if (!logs.length) return;
+		if (!logs.length) {
+			return;
+		}
 		setPage((prev) => prev + 1);
 		setIsPaginating(true);
 	}, [logs]);

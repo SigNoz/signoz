@@ -1,3 +1,4 @@
+import { UseMutateAsyncFunction } from 'react-query';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { DefaultOptionType } from 'antd/es/select';
 import createDowntimeSchedule from 'api/plannedDowntime/createDowntimeSchedule';
@@ -14,7 +15,6 @@ import { showErrorNotification } from 'components/ExplorerCard/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { isEmpty, isEqual } from 'lodash-es';
-import { UseMutateAsyncFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type DateTimeString = string | null | undefined;

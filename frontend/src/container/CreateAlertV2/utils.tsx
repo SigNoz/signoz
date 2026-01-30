@@ -1,9 +1,9 @@
+import { createPortal } from 'react-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
-import { createPortal } from 'react-dom';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
@@ -30,7 +30,9 @@ import { GetCreateAlertLocalStateFromAlertDefReturn } from './types';
 export function Spinner(): JSX.Element | null {
 	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
 
-	if (!isCreatingAlertRule && !isUpdatingAlertRule) return null;
+	if (!isCreatingAlertRule && !isUpdatingAlertRule) {
+		return null;
+	}
 
 	return createPortal(
 		<div className="sticky-page-spinner">

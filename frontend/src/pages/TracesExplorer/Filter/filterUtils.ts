@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -145,7 +145,7 @@ export const removeFilter = (
 		const updatedValues = prevValue.filter((item: any) => item !== value);
 
 		if (updatedValues.length === 0) {
-			const { [filterType]: item, ...remainingFilters } = prevFilters;
+			const { [filterType]: _item, ...remainingFilters } = prevFilters;
 			return Object.keys(remainingFilters).length > 0
 				? (remainingFilters as FilterType)
 				: undefined;
@@ -175,7 +175,7 @@ export const removeAllFilters = (
 			return prevFilters;
 		}
 
-		const { [filterType]: item, ...remainingFilters } = prevFilters;
+		const { [filterType]: _item, ...remainingFilters } = prevFilters;
 
 		return Object.keys(remainingFilters).length > 0
 			? (remainingFilters as Record<

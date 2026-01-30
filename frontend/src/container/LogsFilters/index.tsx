@@ -1,9 +1,9 @@
+import { ChangeEvent, useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Col, Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
-import { ChangeEvent, useCallback, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 

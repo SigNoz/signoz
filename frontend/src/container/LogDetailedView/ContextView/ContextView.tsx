@@ -1,9 +1,9 @@
-import './ContextView.styles.scss';
-
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import ContextLogRenderer from './ContextLogRenderer';
+
+import './ContextView.styles.scss';
 
 interface LogContextProps {
 	log: ILog;
@@ -19,7 +19,9 @@ function ContextView({
 	isEdit,
 }: LogContextProps): JSX.Element {
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	if (!contextQuery) return <></>;
+	if (!contextQuery) {
+		return <></>;
+	}
 
 	return (
 		<div className="log-context-container">

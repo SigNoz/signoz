@@ -1,10 +1,3 @@
-import './Filter.styles.scss';
-
-import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isArray, isEmpty } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -13,6 +6,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { isArray, isEmpty } from 'lodash-es';
 
 import {
 	addFilter,
@@ -24,6 +22,8 @@ import {
 	statusFilterOption,
 	useGetAggregateValues,
 } from './filterUtils';
+
+import './Filter.styles.scss';
 
 interface SectionBodyProps {
 	type: AllTraceFilterKeys;

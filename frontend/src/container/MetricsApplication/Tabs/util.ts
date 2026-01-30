@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -10,7 +11,6 @@ import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribut
 import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
-import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
