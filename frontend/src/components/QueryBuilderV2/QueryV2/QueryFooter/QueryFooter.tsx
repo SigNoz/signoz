@@ -1,5 +1,4 @@
-import './QueryFooter.styles.scss';
-
+import { useMemo } from 'react';
 /* eslint-disable react/require-default-props */
 import { Button, Tooltip, Typography } from 'antd';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -7,7 +6,8 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DraftingCompass, Plus, Sigma } from 'lucide-react';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
-import { useMemo } from 'react';
+
+import './QueryFooter.styles.scss';
 
 function TraceOperatorSection({
 	addTraceOperator,

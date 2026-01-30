@@ -1,9 +1,9 @@
-import './SpanLineActionButtons.styles.scss';
-
 import { LinkOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { Span } from 'types/api/trace/getTraceV2';
+
+import './SpanLineActionButtons.styles.scss';
 
 export interface SpanLineActionButtonsProps {
 	span: Span;

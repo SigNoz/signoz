@@ -1,5 +1,5 @@
-import './OnboardingQuestionaire.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery } from 'react-query';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
@@ -14,8 +14,6 @@ import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingIn
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
 
 import {
 	AboutSigNozQuestions,
@@ -26,6 +24,8 @@ import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
 import OrgQuestions, { OrgData, OrgDetails } from './OrgQuestions/OrgQuestions';
+
+import './OnboardingQuestionaire.styles.scss';
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,

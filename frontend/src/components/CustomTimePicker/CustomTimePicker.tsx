@@ -1,8 +1,15 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import './CustomTimePicker.styles.scss';
-
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -17,20 +24,13 @@ import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { defaultTo, isFunction, noop } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import {
-	ChangeEvent,
-	Dispatch,
-	SetStateAction,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
+
+import './CustomTimePicker.styles.scss';
 
 const maxAllowedMinTimeInMonths = 15;
 type ViewType = 'datetime' | 'timezone';

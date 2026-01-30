@@ -1,5 +1,5 @@
-import { Select } from 'antd';
 import { memo } from 'react';
+import { Select } from 'antd';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 // ** Helpers

@@ -1,6 +1,6 @@
+import { memo } from 'react';
 import { Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { memo } from 'react';
 
 // ** Types
 import { FilterLabelProps } from './FilterLabel.interfaces';

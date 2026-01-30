@@ -1,3 +1,4 @@
+import { UseMutationResult } from 'react-query';
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
@@ -5,7 +6,6 @@ import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { UpdateMetricMetadataResponse } from 'api/metricsExplorer/updateMetricMetadata';
 import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { UseUpdateMetricMetadataProps } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
-import { UseMutationResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 

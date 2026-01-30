@@ -1,3 +1,12 @@
+import {
+	KeyboardEvent,
+	memo,
+	MouseEvent,
+	MouseEventHandler,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { DrawerProps, Tooltip } from 'antd';
 import LogDetail from 'components/LogDetail';
@@ -11,15 +20,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { isEmpty, isNumber, isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import {
-	KeyboardEvent,
-	memo,
-	MouseEvent,
-	MouseEventHandler,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';

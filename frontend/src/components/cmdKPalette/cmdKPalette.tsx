@@ -1,5 +1,4 @@
-import './cmdKPalette.scss';
-
+import React, { useEffect } from 'react';
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -12,10 +11,11 @@ import {
 import logEvent from 'api/common/logEvent';
 import { useThemeMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
-import React, { useEffect } from 'react';
 
 import { createShortcutActions } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
+
+import './cmdKPalette.scss';
 
 type CmdAction = {
 	id: string;

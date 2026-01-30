@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { LinkOutlined, LoadingOutlined } from '@ant-design/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
@@ -10,8 +12,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
