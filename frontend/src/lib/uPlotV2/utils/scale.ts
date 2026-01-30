@@ -1,8 +1,9 @@
-import { convertValue } from 'lib/getConvertedValue';
 import uPlot, { Range, Scale } from 'uplot';
 
 import { DistributionType, ScaleProps } from '../config/types';
 import { Threshold } from '../hooks/types';
+import { LogScaleLimits, RangeFunctionParams } from './types';
+import { findMinMaxThresholdValues } from './threshold';
 
 export function incrRoundDn(num: number, incr: number): number {
 	return Math.floor(num / incr) * incr;
@@ -11,13 +12,6 @@ export function incrRoundDn(num: number, incr: number): number {
 export function incrRoundUp(num: number, incr: number): number {
 	return Math.ceil(num / incr) * incr;
 }
-
-export type LogScaleLimits = {
-	min: number | null | undefined;
-	max: number | null | undefined;
-	softMin: number | null | undefined;
-	softMax: number | null | undefined;
-};
 
 export function normalizeLogScaleLimits(
 	distr: DistributionType | undefined,
@@ -112,15 +106,6 @@ export function getRangeConfig(
 		hasFixedRange,
 	};
 }
-
-type RangeFunctionParams = {
-	rangeConfig: Range.Config;
-	hardMinOnly: boolean;
-	hardMaxOnly: boolean;
-	hasFixedRange: boolean;
-	min: number | null | undefined;
-	max: number | null | undefined;
-};
 
 function getInitialMinMax(
 	dataMin: number | null,
@@ -287,42 +272,6 @@ export function createRangeFunction(
 
 		return enforceValidRange(minMax, scale.distr ?? 1);
 	};
-}
-
-/**
- * Find min and max threshold values after converting to the target unit
- */
-export function findMinMaxThresholdValues(
-	thresholds: Threshold[],
-	yAxisUnit?: string,
-): [number | null, number | null] {
-	if (!thresholds || thresholds.length === 0) {
-		return [null, null];
-	}
-
-	let minThresholdValue: number | null = null;
-	let maxThresholdValue: number | null = null;
-
-	thresholds.forEach((threshold) => {
-		const { thresholdValue, thresholdUnit } = threshold;
-		if (thresholdValue === undefined) {
-			return;
-		}
-
-		const compareValue = convertValue(thresholdValue, thresholdUnit, yAxisUnit);
-		if (compareValue === null) {
-			return;
-		}
-
-		if (minThresholdValue === null || compareValue < minThresholdValue) {
-			minThresholdValue = compareValue;
-		}
-		if (maxThresholdValue === null || compareValue > maxThresholdValue) {
-			maxThresholdValue = compareValue;
-		}
-	});
-
-	return [minThresholdValue, maxThresholdValue];
 }
 
 /**

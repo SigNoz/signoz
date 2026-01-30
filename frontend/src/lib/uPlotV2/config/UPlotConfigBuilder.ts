@@ -1,5 +1,5 @@
 import { merge } from 'lodash-es';
-import _noop from 'lodash-es/noop';
+import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
@@ -70,7 +70,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			this.widgetId = widgetId;
 		}
 
-		this.onDragSelect = _noop;
+		this.onDragSelect = noop;
 
 		if (onDragSelect) {
 			this.onDragSelect = onDragSelect;
