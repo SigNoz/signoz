@@ -1,7 +1,7 @@
 package types
 
 import (
-	"bytes"
+	"database/sql/driver"
 	"encoding/json"
 	"time"
 
@@ -26,7 +26,7 @@ func NewTextDuration(d time.Duration) TextDuration {
 func ParseTextDuration(s string) (TextDuration, error) {
 	d, err := time.ParseDuration(s)
 	if err != nil {
-		return TextDuration{}, err
+		return TextDuration{}, errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse duration text")
 	}
 	return TextDuration{text: s, value: d}, nil
 }
@@ -59,13 +59,15 @@ func (d TextDuration) String() string {
 	return d.value.String()
 }
 
-// MarshalJSON serializes the duration value in a human-readable format (2h45m10s).
-// If the raw text was provided, it is returned as-is. Example: 90m is not normalized to 1h30m0s.
+// MarshalJSON implements the [encoding/json.Marshaler] interface.
+// It serializes the duration value in a human-readable format (1h30m0s).
+// If the original text is available, it is returned as-is. Example: 90m is not normalized to 1h30m0s.
 func (d TextDuration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.String())
 }
 
-// UnmarshalJSON parses string or numeric durations.
+// UnmarshalJSON implements the [encoding/json.Unmarshaler] interface.
+// It parses string or numeric durations, and stores the string representation.
 func (d *TextDuration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -74,7 +76,9 @@ func (d *TextDuration) UnmarshalJSON(b []byte) error {
 	switch value := v.(type) {
 	case float64:
 		d.value = time.Duration(value)
+		d.text = ""
 		return nil
+
 	case string:
 		tmp, err := time.ParseDuration(value)
 		if err != nil {
@@ -82,9 +86,54 @@ func (d *TextDuration) UnmarshalJSON(b []byte) error {
 		}
 		d.value = tmp
 		d.text = value
-
 		return nil
+
 	default:
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid duration")
+	}
+}
+
+// MarshalText implements [encoding.TextMarshaler].
+func (d TextDuration) MarshalText() ([]byte, error) {
+	return []byte(d.String()), nil
+}
+
+// UnmarshalText implements [encoding.TextUnmarshaler].
+func (d *TextDuration) UnmarshalText(text []byte) error {
+	s := string(text)
+	tmp, err := time.ParseDuration(s)
+	if err != nil {
+		return errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse duration text")
+	}
+	d.value = tmp
+	d.text = s
+	return nil
+}
+
+// Value implements [driver.Valuer] by delegating to the underlying duration.
+func (d TextDuration) Value() (driver.Value, error) {
+	return int64(d.value), nil
+}
+
+// Scan implements [database/sql.Scanner] to read the duration from the database.
+func (d *TextDuration) Scan(value any) error {
+	if value == nil {
+		d.value = 0
+		d.text = ""
+		return nil
+	}
+
+	switch v := value.(type) {
+	case []byte:
+		return d.UnmarshalText(v)
+	case string:
+		return d.UnmarshalText([]byte(v))
+	case int64:
+		d.value = time.Duration(v)
+		d.text = ""
+		return nil
+	default:
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+			"cannot scan type %T into TextDuration", value)
 	}
 }
