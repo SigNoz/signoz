@@ -137,6 +137,18 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 
 	merge(props: Partial<ScaleProps>): void {
 		this.props = { ...this.props, ...props };
+		if (props.softMin !== undefined) {
+			this.softMin = props.softMin ?? null;
+		}
+		if (props.softMax !== undefined) {
+			this.softMax = props.softMax ?? null;
+		}
+		if (props.min !== undefined) {
+			this.min = props.min ?? null;
+		}
+		if (props.max !== undefined) {
+			this.max = props.max ?? null;
+		}
 	}
 }
 
