@@ -12,7 +12,7 @@ import (
 // It keeps the raw JSON bytes so serialization does not normalize values like
 // "90m" into "1h30m0s".
 type TextDuration struct {
-	raw   []byte
+	text  string
 	value time.Duration
 }
 
@@ -21,7 +21,27 @@ func NewTextDuration(d time.Duration) TextDuration {
 	return TextDuration{value: d}
 }
 
-// Duration returns the parsed duration value.
+// ParseTextDuration parses a human-readable duration string.
+// This preserves the raw text so that it can be serialized back to JSON.
+func ParseTextDuration(s string) (TextDuration, error) {
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return TextDuration{}, err
+	}
+	return TextDuration{text: s, value: d}, nil
+}
+
+// MustParseTextDuration parses a human-readable duration string, preserving
+// the raw text and panics if an error occurs.
+func MustParseTextDuration(s string) TextDuration {
+	d, err := ParseTextDuration(s)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
+
+// Duration returns the [time.Duration] type.
 func (d TextDuration) Duration() time.Duration {
 	return d.value
 }
@@ -33,8 +53,8 @@ func (d TextDuration) IsZero() bool {
 
 // String implements the fmt.Stringer interface.
 func (d TextDuration) String() string {
-	if len(d.raw) > 0 {
-		return string(bytes.Trim(d.raw, `"`))
+	if len(d.text) > 0 {
+		return d.text
 	}
 	return d.value.String()
 }
@@ -42,10 +62,7 @@ func (d TextDuration) String() string {
 // MarshalJSON serializes the duration value in a human-readable format (2h45m10s).
 // If the raw text was provided, it is returned as-is. Example: 90m is not normalized to 1h30m0s.
 func (d TextDuration) MarshalJSON() ([]byte, error) {
-	if len(d.raw) == 0 {
-		return json.Marshal(d.value.String())
-	}
-	return d.raw, nil
+	return json.Marshal(d.String())
 }
 
 // UnmarshalJSON parses string or numeric durations.
@@ -64,7 +81,7 @@ func (d *TextDuration) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		d.value = tmp
-		d.raw = bytes.TrimSpace(b)
+		d.text = value
 
 		return nil
 	default:
