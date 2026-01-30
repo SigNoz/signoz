@@ -1,3 +1,6 @@
+import { useMemo, useState } from 'react';
+import { QueryKey } from 'react-query';
+import { useSelector } from 'react-redux';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import Spinner from 'components/Spinner';
@@ -5,9 +8,6 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { useMemo, useState } from 'react';
-import { QueryKey } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';

@@ -10,6 +10,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
+import './ListViewOrderBy.styles.scss';
+
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;

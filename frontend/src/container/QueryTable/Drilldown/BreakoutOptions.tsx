@@ -1,18 +1,18 @@
-import './Breakoutoptions.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { Input, Skeleton } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import useDebounce from 'hooks/useDebounce';
 import { ContextMenu } from 'periscope/components/ContextMenu';
-import { useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { BreakoutOptionsProps } from './contextConfig';
 import { BreakoutAttributeType } from './types';
+
+import './Breakoutoptions.styles.scss';
 
 function OptionsSkeleton(): JSX.Element {
 	return (

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LIVE_TAIL_GRAPH_INTERVAL } from 'constants/liveTail';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -5,7 +6,6 @@ import LogsExplorerChart from 'container/LogsExplorerChart';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
-import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';

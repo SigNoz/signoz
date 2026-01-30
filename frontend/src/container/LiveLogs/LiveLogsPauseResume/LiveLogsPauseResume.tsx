@@ -1,8 +1,8 @@
+import { useCallback, useEffect } from 'react';
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback, useEffect } from 'react';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 function LiveLogsPauseResume(): JSX.Element {

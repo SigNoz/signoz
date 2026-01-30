@@ -1,5 +1,5 @@
-import { Input, InputProps } from 'antd';
 import { ChangeEventHandler, useState } from 'react';
+import { Input, InputProps } from 'antd';
 
 function CSVInput({ value, onChange, ...otherProps }: InputProps): JSX.Element {
 	const [inputValue, setInputValue] = useState(

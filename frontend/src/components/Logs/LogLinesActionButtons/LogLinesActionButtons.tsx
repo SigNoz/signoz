@@ -1,9 +1,9 @@
-import './LogLinesActionButtons.styles.scss';
-
+import { memo, MouseEventHandler } from 'react';
 import { LinkOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import { TextSelect } from 'lucide-react';
-import { memo, MouseEventHandler } from 'react';
+
+import './LogLinesActionButtons.styles.scss';
 
 export interface LogLinesActionButtonsProps {
 	handleShowContext: MouseEventHandler<HTMLElement>;

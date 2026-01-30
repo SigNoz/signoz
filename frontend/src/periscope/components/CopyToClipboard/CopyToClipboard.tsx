@@ -1,11 +1,11 @@
-import './CopyToClipboard.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { CircleCheck, Link2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
+
+import './CopyToClipboard.styles.scss';
 
 function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 	const [state, copyToClipboard] = useCopyToClipboard();

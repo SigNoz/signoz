@@ -1,10 +1,10 @@
-import './QueryBuilderSearchWrapper.styles.scss';
-
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
-import { Dispatch, SetStateAction, useEffect } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+
+import './QueryBuilderSearchWrapper.styles.scss';
 
 function QueryBuilderSearchWrapper({
 	log,

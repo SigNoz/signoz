@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 import { ENVIRONMENT } from 'constants/env';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
@@ -11,6 +9,8 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
+import '@testing-library/jest-dom';
 
 import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';

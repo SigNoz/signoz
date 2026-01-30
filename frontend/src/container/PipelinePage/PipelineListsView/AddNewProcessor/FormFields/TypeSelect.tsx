@@ -1,5 +1,5 @@
-import { Select } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd';
 
 import { DEFAULT_PROCESSOR_TYPE, processorTypes } from '../config';
 import {

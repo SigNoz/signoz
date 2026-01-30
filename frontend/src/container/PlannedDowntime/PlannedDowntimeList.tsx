@@ -1,6 +1,6 @@
 /* eslint-disable react/require-default-props */
-import './PlannedDowntime.styles.scss';
-
+import { ReactNode, useEffect } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Collapse, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
@@ -16,8 +16,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { ReactNode, useEffect } from 'react';
-import { UseQueryResult } from 'react-query';
 import { USER_ROLES } from 'types/roles';
 
 import {
@@ -27,6 +25,8 @@ import {
 	getEndTime,
 	recurrenceInfo,
 } from './PlannedDowntimeutils';
+
+import './PlannedDowntime.styles.scss';
 
 const { Panel } = Collapse;
 

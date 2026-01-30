@@ -1,5 +1,5 @@
-import './AuthDomain.styles.scss';
-
+import { useState } from 'react';
+import { useQuery } from 'react-query';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
@@ -8,13 +8,13 @@ import listAllDomain from 'api/v1/domains/list';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useState } from 'react';
-import { useQuery } from 'react-query';
 import APIError from 'types/api/error';
 import { GettableAuthDomain, SSOType } from 'types/api/v1/domains/list';
 
 import CreateEdit from './CreateEdit/CreateEdit';
 import Toggle from './Toggle';
+
+import './AuthDomain.styles.scss';
 
 const columns: ColumnsType<GettableAuthDomain> = [
 	{

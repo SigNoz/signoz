@@ -1,4 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounce } from 'react-use';
 import { getMetricsListFilterValues } from 'api/metricsExplorer/getMetricsListFilterValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
@@ -15,8 +17,6 @@ import {
 import { useGetMetricsListFilterKeys } from 'hooks/metricsExplorer/useGetMetricsListFilterKeys';
 import useDebounceValue from 'hooks/useDebounce';
 import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDebounce } from 'react-use';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
 	BaseAutocompleteData,

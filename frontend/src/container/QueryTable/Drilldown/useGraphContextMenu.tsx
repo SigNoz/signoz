@@ -1,7 +1,7 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { SuccessResponse } from 'types/api';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

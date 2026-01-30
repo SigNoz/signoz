@@ -1,6 +1,6 @@
-import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
 import store from 'store';
 
 import NotFound from './index';

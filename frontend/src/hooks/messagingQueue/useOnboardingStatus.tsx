@@ -1,7 +1,7 @@
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import getOnboardingStatus, {
 	OnboardingStatusResponse,
 } from 'api/messagingQueues/onboarding/getOnboardingStatus';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseOnboardingStatus = (

@@ -1,3 +1,14 @@
+import {
+	createContext,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from 'react';
+import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -13,17 +24,6 @@ import {
 	createInitialStepsData,
 	createSingleStepData,
 } from 'pages/TracesFunnelDetails/constants';
-import {
-	createContext,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useContext,
-	useMemo,
-	useState,
-} from 'react';
-import { useQueryClient } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';

@@ -1,9 +1,9 @@
 import {
-	initialAutocompleteData,
 	baseAutoCompleteIdKeysOrder,
+	initialAutocompleteData,
 } from 'constants/queryBuilder';
-import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import {
 	BaseAutocompleteData,
 	DataTypes,

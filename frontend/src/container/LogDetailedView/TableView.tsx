@@ -1,7 +1,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './TableView.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { generatePath } from 'react-router-dom';
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Space, Tooltip, Typography } from 'antd';
@@ -22,9 +23,6 @@ import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { Pin } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
@@ -41,6 +39,8 @@ import {
 	flattenObject,
 	getFieldAttributes,
 } from './utils';
+
+import './TableView.styles.scss';
 
 interface TableViewProps {
 	logData: ILog;

@@ -1,10 +1,10 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Row, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { getOptionList } from './config';

@@ -1,5 +1,6 @@
-import './ResetPassword.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { Form, Input as AntdInput, Typography } from 'antd';
@@ -13,12 +14,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight, CircleAlert, KeyRound } from 'lucide-react';
 import { Label } from 'pages/SignUp/styles';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-use';
 import APIError from 'types/api/error';
 
 import { FormContainer } from './styles';
+
+import './ResetPassword.styles.scss';
 
 type FormValues = { password: string; confirmPassword: string };
 

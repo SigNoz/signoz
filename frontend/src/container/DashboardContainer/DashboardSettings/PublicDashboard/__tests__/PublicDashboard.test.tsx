@@ -1,3 +1,4 @@
+import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/sonner';
 import { fireEvent, within } from '@testing-library/react';
 import { StatusCodes } from 'http-status-codes';
@@ -7,7 +8,6 @@ import {
 } from 'mocks-server/__mockdata__/publicDashboard';
 import { rest, server } from 'mocks-server/server';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCopyToClipboard } from 'react-use';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
