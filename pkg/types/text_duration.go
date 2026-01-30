@@ -124,14 +124,14 @@ func (d *TextDuration) Scan(value any) error {
 	}
 
 	switch v := value.(type) {
-	case []byte:
-		return d.UnmarshalText(v)
-	case string:
-		return d.UnmarshalText([]byte(v))
 	case int64:
 		d.value = time.Duration(v)
 		d.text = ""
 		return nil
+	case []byte:
+		return d.UnmarshalText(v)
+	case string:
+		return d.UnmarshalText([]byte(v))
 	default:
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"cannot scan type %T into TextDuration", value)
