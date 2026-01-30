@@ -1,5 +1,5 @@
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';

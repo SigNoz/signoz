@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
@@ -10,7 +11,6 @@ import {
 	Ellipsis,
 	Pin,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
 
 interface AttributeRecord {
 	field: string;

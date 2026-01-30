@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -10,7 +11,6 @@ import {
 import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
-import { useCallback, useMemo } from 'react';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {

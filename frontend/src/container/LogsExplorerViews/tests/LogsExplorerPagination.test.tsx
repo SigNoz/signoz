@@ -1,3 +1,5 @@
+import React from 'react';
+import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -7,8 +9,6 @@ import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
-import React from 'react';
-import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	act,
 	AllTheProviders,

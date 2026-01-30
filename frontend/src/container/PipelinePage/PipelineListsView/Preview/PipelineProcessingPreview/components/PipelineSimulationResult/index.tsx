@@ -1,10 +1,10 @@
-import './styles.scss';
-
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import LogsList from '../../../components/LogsList';
 import usePipelinePreview from '../../../hooks/usePipelinePreview';
+
+import './styles.scss';
 
 function PipelineSimulationResult({
 	inputLogs,

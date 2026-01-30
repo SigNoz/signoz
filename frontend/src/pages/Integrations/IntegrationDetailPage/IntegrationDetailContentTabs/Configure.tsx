@@ -1,11 +1,11 @@
-import './IntegrationDetailContentTabs.styles.scss';
-
+import { useEffect, useState } from 'react';
 import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { INTEGRATION_TELEMETRY_EVENTS } from 'pages/Integrations/utils';
-import { useEffect, useState } from 'react';
+
+import './IntegrationDetailContentTabs.styles.scss';
 
 interface ConfigurationProps {
 	configuration: Array<{ title: string; instructions: string }>;

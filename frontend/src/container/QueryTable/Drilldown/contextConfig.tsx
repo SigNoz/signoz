@@ -1,9 +1,9 @@
+import { ReactNode } from 'react';
 import {
 	PANEL_TYPES,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
 import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
-import { ReactNode } from 'react';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getBaseMeta } from './drilldownUtils';

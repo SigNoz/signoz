@@ -1,13 +1,13 @@
-import './NewExplorerCTA.styles.scss';
-
+import { useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Undo } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { buttonText, RIBBON_STYLES } from './config';
+
+import './NewExplorerCTA.styles.scss';
 
 function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();

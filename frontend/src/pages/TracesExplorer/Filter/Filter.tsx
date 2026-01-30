@@ -1,6 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import './Filter.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import {
 	FilterOutlined,
 	SyncOutlined,
@@ -12,14 +18,6 @@ import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -33,6 +31,8 @@ import {
 	unionTagFilterItems,
 } from './filterUtils';
 import { Section } from './Section';
+
+import './Filter.styles.scss';
 
 interface FilterProps {
 	setOpen: Dispatch<SetStateAction<boolean>>;

@@ -1,8 +1,6 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable sonarjs/no-identical-functions */
-import './PlannedDowntime.styles.scss';
-import 'dayjs/locale/en';
-
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -33,8 +31,9 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
+
+import 'dayjs/locale/en';
 
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
@@ -48,6 +47,8 @@ import {
 	recurrenceOptionWithSubmenu,
 	recurrenceWeeklyOptions,
 } from './PlannedDowntimeutils';
+
+import './PlannedDowntime.styles.scss';
 
 dayjs.locale('en');
 dayjs.extend(utc);

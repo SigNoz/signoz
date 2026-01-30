@@ -1,11 +1,9 @@
 /* eslint-disable no-nested-ternary */
-import './CeleryTaskGraph.style.scss';
-
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Dispatch, SetStateAction, useMemo } from 'react';
 
 import {
 	applyCeleryFilterOnWidgetData,
@@ -18,6 +16,8 @@ import {
 	celerySuccessStateCountWidgetData,
 } from './CeleryTaskGraphUtils';
 import { useGetValueFromWidget } from './useGetValueFromWidget';
+
+import './CeleryTaskGraph.style.scss';
 
 interface TabData {
 	label: string;

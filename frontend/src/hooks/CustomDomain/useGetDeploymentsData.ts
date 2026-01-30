@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import { getDeploymentsData } from 'api/customDomain/getDeploymentsData';
 import { AxiosError, AxiosResponse } from 'axios';
-import { useQuery, UseQueryResult } from 'react-query';
 import { DeploymentsDataProps } from 'types/api/customDomain/types';
 
 export const useGetDeploymentsData = (

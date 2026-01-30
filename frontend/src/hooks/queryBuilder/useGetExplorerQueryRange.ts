@@ -1,10 +1,10 @@
+import { MutableRefObject, useMemo } from 'react';
+import { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { MutableRefObject, useMemo } from 'react';
-import { UseQueryOptions, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

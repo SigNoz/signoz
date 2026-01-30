@@ -1,7 +1,7 @@
-import './DropRateView.styles.scss';
-
-import { Input, Select, Typography } from 'antd';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Input, Select, Typography } from 'antd';
+
+import './DropRateView.styles.scss';
 
 const { Option } = Select;
 

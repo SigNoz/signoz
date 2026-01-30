@@ -1,6 +1,3 @@
-import './Filter.styles.scss';
-
-import { Button, Collapse, Divider } from 'antd';
 import {
 	Dispatch,
 	MouseEvent,
@@ -9,6 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Button, Collapse, Divider } from 'antd';
 
 import { DurationSection } from './DurationSection';
 import {
@@ -18,6 +16,8 @@ import {
 	HandleRunProps,
 } from './filterUtils';
 import { SectionBody } from './SectionContent';
+
+import './Filter.styles.scss';
 
 interface SectionProps {
 	panelName: AllTraceFilterKeys;

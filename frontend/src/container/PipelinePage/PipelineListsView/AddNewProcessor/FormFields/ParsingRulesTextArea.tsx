@@ -1,6 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../config';
 import { Container, FormWrapper, PipelineIndexIcon } from '../styles';

@@ -1,8 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable no-nested-ternary */
-import './IntegrationDetailPage.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
@@ -17,6 +15,8 @@ import IntegrationDetailHeader from './IntegrationDetailHeader';
 import IntergrationsUninstallBar from './IntegrationsUninstallBar';
 import { ConnectionStates } from './TestConnection';
 import { getConnectionStatesFromConnectionStatus } from './utils';
+
+import './IntegrationDetailPage.styles.scss';
 
 interface IntegrationDetailPageProps {
 	selectedIntegration: string;

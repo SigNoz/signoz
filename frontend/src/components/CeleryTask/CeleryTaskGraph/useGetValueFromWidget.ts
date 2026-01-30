@@ -1,10 +1,10 @@
+import { useCallback } from 'react';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getQueryPayloadFromWidgetsData } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
-import { useCallback } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';

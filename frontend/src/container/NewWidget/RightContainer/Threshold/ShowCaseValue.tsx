@@ -1,9 +1,9 @@
-import './ShowCaseValue.styles.scss';
-
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { ShowCaseValueProps } from './types';
+
+import './ShowCaseValue.styles.scss';
 
 function ShowCaseValue({
 	width,

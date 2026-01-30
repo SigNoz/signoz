@@ -1,10 +1,10 @@
-import './AddTags.styles.scss';
-
+import { Dispatch, SetStateAction, useState } from 'react';
 import { Col, Tooltip } from 'antd';
 import Input from 'components/Input';
-import { Dispatch, SetStateAction, useState } from 'react';
 
 import { InputContainer, NewTagContainer, TagsContainer } from './styles';
+
+import './AddTags.styles.scss';
 
 function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');

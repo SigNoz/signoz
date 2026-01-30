@@ -1,12 +1,12 @@
-import './styles.scss';
-
+import { useState } from 'react';
 import { Button, Popover } from 'antd';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
 
 import { useCreateAlertState } from '../context';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
+
+import './styles.scss';
 
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();

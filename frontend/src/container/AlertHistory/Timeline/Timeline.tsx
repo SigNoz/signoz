@@ -1,8 +1,8 @@
-import './Timeline.styles.scss';
-
 import GraphWrapper from './GraphWrapper/GraphWrapper';
 import TimelineTable from './Table/Table';
 import TabsAndFilters from './TabsAndFilters/TabsAndFilters';
+
+import './Timeline.styles.scss';
 
 function TimelineTableRenderer(): JSX.Element {
 	return <TimelineTable />;

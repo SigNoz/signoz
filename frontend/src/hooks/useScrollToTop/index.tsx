@@ -1,5 +1,5 @@
-import throttle from 'lodash-es/throttle';
 import { useEffect, useState } from 'react';
+import throttle from 'lodash-es/throttle';
 
 import { UseScrollToTop } from './types';
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -8,7 +9,6 @@ import {
 	Space,
 	Typography,
 } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import { InviteMemberFormValues } from '../PendingInvitesContainer/index';

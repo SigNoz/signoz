@@ -1,5 +1,4 @@
-import './styles.scss';
-
+import { useMemo } from 'react';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import {
 	initialFilters,
@@ -9,9 +8,10 @@ import {
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
+
+import './styles.scss';
 
 function LogsCountInInterval({
 	filter,

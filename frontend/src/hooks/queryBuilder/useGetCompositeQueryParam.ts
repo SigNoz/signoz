@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
 	convertAggregationToExpression,
 	convertFiltersToExpressionWithExistingQuery,
@@ -5,7 +6,6 @@ import {
 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
