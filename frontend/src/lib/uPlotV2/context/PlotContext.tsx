@@ -78,6 +78,7 @@ export const PlotContextProvider = ({
 		if (!series) {
 			return;
 		}
+		plot.setSeries(seriesIndex, { show: !series.show });
 		if (widgetIdRef.current) {
 			const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
 				(series) => ({
@@ -87,8 +88,6 @@ export const PlotContextProvider = ({
 			);
 			updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
 		}
-
-		plot.setSeries(seriesIndex, { show: !series.show });
 	}, []);
 
 	const onFocusSeries = useCallback((seriesIndex: number | null): void => {

@@ -38,11 +38,17 @@ export function updateSeriesVisibilityToLocalStorage(
 	try {
 		const storedData = localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
 
-		if (!storedData) {
-			return;
-		}
+		let visibilityStates: GraphVisibilityState[] = [];
 
-		let visibilityStates: GraphVisibilityState[] = JSON.parse(storedData);
+		if (!storedData) {
+			visibilityStates = [
+				{
+					name: widgetId,
+					dataIndex: seriesVisibility,
+				},
+			];
+		}
+		visibilityStates = JSON.parse(storedData || '[]');
 		const widgetState = visibilityStates.find((state) => state.name === widgetId);
 
 		if (!widgetState) {
@@ -63,6 +69,7 @@ export function updateSeriesVisibilityToLocalStorage(
 				}
 			});
 		}
+
 		localStorage.setItem(
 			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
 			JSON.stringify(visibilityStates),
