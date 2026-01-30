@@ -28,7 +28,7 @@ export default function Legend({
 		legendItemsMap,
 		focusedSeriesIndex,
 		setFocusedSeriesIndex,
-	} = useLegendsSync(config);
+	} = useLegendsSync({ config });
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 
 	const rafId = useRef<number | null>(null); // requestAnimationFrame id

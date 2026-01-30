@@ -3,16 +3,18 @@ import _noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
+	ConfigBuilder,
+	ConfigBuilderProps,
 	DEFAULT_CURSOR_CONFIG,
 	DEFAULT_PLOT_CONFIG,
 	LegendItem,
-	UPlotThresholdOptions,
 } from './types';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { thresholdsDrawHook } from './UPlotThresolds';
+import { thresholdsDrawHook } from '../hooks/thresholdsDrawHook';
 import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils';
+import { ThresholdsDrawHookOptions } from '../hooks/types';
 
 /**
  * Type definitions for uPlot option objects
@@ -28,7 +30,10 @@ type LegendConfig = {
  * Main builder orchestrator for uPlot configuration
  * Manages axes, scales, series, and hooks in a composable way
  */
-export class UPlotConfigBuilder {
+export class UPlotConfigBuilder extends ConfigBuilder<
+	ConfigBuilderProps,
+	Partial<Options>
+> {
 	series: UPlotSeriesBuilder[] = [];
 
 	private axes: Record<string, UPlotAxisBuilder> = {};
@@ -51,17 +56,15 @@ export class UPlotConfigBuilder {
 
 	private select: uPlot.Select | undefined;
 
-	private thresholds: Record<string, UPlotThresholdOptions> = {};
+	private thresholds: Record<string, ThresholdsDrawHookOptions> = {};
 
 	private tzDate: ((timestamp: number) => Date) | undefined;
 
 	private widgetId: string | undefined;
 	private onDragSelect: (startTime: number, endTime: number) => void;
 
-	constructor(args?: {
-		widgetId?: string;
-		onDragSelect?: (startTime: number, endTime: number) => void;
-	}) {
+	constructor(args?: ConfigBuilderProps) {
+		super(args ?? {});
 		const { widgetId, onDragSelect } = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
@@ -144,7 +147,7 @@ export class UPlotConfigBuilder {
 	/**
 	 * Add thresholds configuration
 	 */
-	addThresholds(options: UPlotThresholdOptions): void {
+	addThresholds(options: ThresholdsDrawHookOptions): void {
 		if (!this.thresholds[options.scaleKey]) {
 			this.thresholds[options.scaleKey] = options;
 			this.addHook('draw', thresholdsDrawHook(options));

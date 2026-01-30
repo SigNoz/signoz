@@ -1,10 +1,10 @@
 import { convertValue } from 'lib/getConvertedValue';
 import uPlot, { Hooks } from 'uplot';
 
-import { Threshold, UPlotThresholdOptions } from './types';
+import { ThresholdsDrawHookOptions, Threshold } from './types';
 
 export function thresholdsDrawHook(
-	options: UPlotThresholdOptions,
+	options: ThresholdsDrawHookOptions,
 ): Hooks.Defs['draw'] {
 	const dashSegments = [10, 5];
 

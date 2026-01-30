@@ -1,6 +1,7 @@
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot, { Cursor, Options, Series } from 'uplot';
+import { ThresholdsDrawHookOptions } from '../hooks/types';
 
 /**
  * Base abstract class for all configuration builders
@@ -18,6 +19,14 @@ export abstract class ConfigBuilder<P, T> {
 	 * Merges additional properties into the existing configuration
 	 */
 	merge?(props: Partial<P>): void;
+}
+
+/**
+ * Props for configuring the uPlot config builder
+ */
+export interface ConfigBuilderProps {
+	widgetId?: string;
+	onDragSelect?: (startTime: number, endTime: number) => void;
 }
 
 /**
@@ -68,7 +77,7 @@ export interface ScaleProps {
 	max?: number | null;
 	softMin?: number | null;
 	softMax?: number | null;
-	thresholds?: UPlotThresholdOptions;
+	thresholds?: ThresholdsDrawHookOptions;
 	padMinBy?: number;
 	padMaxBy?: number;
 	range?: uPlot.Scale.Range;
@@ -135,19 +144,6 @@ export interface SeriesProps {
 	pointColor?: string;
 	pointSize?: number;
 	showPoints?: VisibilityMode;
-}
-
-export interface Threshold {
-	thresholdValue: number;
-	thresholdColor?: string;
-	thresholdUnit?: string;
-	thresholdLabel?: string;
-}
-
-export interface UPlotThresholdOptions {
-	scaleKey: string;
-	thresholds: Threshold[];
-	yAxisUnit?: string;
 }
 
 export interface LegendItem {

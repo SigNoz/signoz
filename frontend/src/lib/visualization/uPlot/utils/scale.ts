@@ -1,7 +1,8 @@
 import { convertValue } from 'lib/getConvertedValue';
 import uPlot, { Range, Scale } from 'uplot';
 
-import { DistributionType, ScaleProps, Threshold } from '../config/types';
+import { DistributionType, ScaleProps } from '../config/types';
+import { Threshold } from '../hooks/types';
 
 export function incrRoundDn(num: number, incr: number): number {
 	return Math.floor(num / incr) * incr;
