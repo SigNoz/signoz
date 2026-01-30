@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from fixtures import types
+from fixtures.utils import parse_timestamp
 
 
 class MetricsTimeSeries(ABC):
@@ -341,10 +342,7 @@ class Metrics(ABC):
             metric_name_override: If provided, overrides the metric_name from data
         """
         # parse timestamp from iso format
-        ts_str = data["timestamp"]
-        if ts_str.endswith("Z"):
-            ts_str = ts_str[:-1] + "+00:00"
-        timestamp = datetime.datetime.fromisoformat(ts_str)
+        timestamp = parse_timestamp(data["timestamp"])
 
         return cls(
             metric_name=metric_name_override or data["metric_name"],
@@ -397,10 +395,7 @@ class Metrics(ABC):
             # Find earliest timestamp
             earliest = None
             for data in data_list:
-                ts_str = data["timestamp"]
-                if ts_str.endswith("Z"):
-                    ts_str = ts_str[:-1] + "+00:00"
-                ts = datetime.datetime.fromisoformat(ts_str)
+                ts = parse_timestamp(data["timestamp"])
                 if earliest is None or ts < earliest:
                     earliest = ts
             if earliest is not None:
@@ -408,10 +403,7 @@ class Metrics(ABC):
 
         metrics = []
         for data in data_list:
-            ts_str = data["timestamp"]
-            if ts_str.endswith("Z"):
-                ts_str = ts_str[:-1] + "+00:00"
-            original_ts = datetime.datetime.fromisoformat(ts_str)
+            original_ts = parse_timestamp(data["timestamp"])
             adjusted_ts = original_ts + time_offset
             data["timestamp"] = adjusted_ts.isoformat()
             metrics.append(
