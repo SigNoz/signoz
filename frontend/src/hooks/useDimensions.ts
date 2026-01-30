@@ -1,5 +1,5 @@
-import debounce from 'lodash-es/debounce';
 import { useEffect, useState } from 'react';
+import debounce from 'lodash-es/debounce';
 
 export type Dimensions = {
 	width: number;
@@ -31,7 +31,9 @@ export function useResizeObserver<T extends HTMLElement>(
 		}
 
 		return (): void => {
-			if (referenceNode) ro.disconnect();
+			if (referenceNode) {
+				ro.disconnect();
+			}
 		};
 	}, [ref, debounceTime]);
 

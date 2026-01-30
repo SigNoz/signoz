@@ -1,9 +1,9 @@
+import { Dispatch, SetStateAction } from 'react';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
-import { Dispatch, SetStateAction } from 'react';
 
 import { FormattingOptions, PreferenceMode, Preferences } from '../types';
 
@@ -23,7 +23,7 @@ const getLogsUpdaterConfig = (
 					return {
 						columns: newColumns,
 						formatting: {
-							maxLines: 2,
+							maxLines: 1,
 							format: 'table',
 							fontSize: 'small' as FontSize,
 							version: 1,
@@ -57,7 +57,9 @@ const getLogsUpdaterConfig = (
 	updateFormatting: (newFormatting: FormattingOptions, mode: string): void => {
 		if (mode === PreferenceMode.SAVED_VIEW) {
 			setSavedViewPreferences((prev) => {
-				if (!prev) return { columns: [], formatting: newFormatting };
+				if (!prev) {
+					return { columns: [], formatting: newFormatting };
+				}
 				return {
 					...prev,
 					formatting: newFormatting,

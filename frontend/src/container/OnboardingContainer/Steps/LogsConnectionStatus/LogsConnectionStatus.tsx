@@ -1,5 +1,4 @@
-import './LogsConnectionStatus.styles.scss';
-
+import { useEffect, useState } from 'react';
 import {
 	CheckCircleTwoTone,
 	CloseCircleTwoTone,
@@ -11,14 +10,15 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import { useEffect, useState } from 'react';
 import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+
+import './LogsConnectionStatus.styles.scss';
 
 const enum ApplicationLogsType {
 	FROM_LOG_FILE = 'from-log-file',
@@ -68,7 +68,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'sum',
+					reduceTo: ReduceOperators.SUM,
 					offset: 0,
 					pageSize: 100,
 					timeAggregation: '',

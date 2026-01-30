@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './WidgetFullView.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
 	LoadingOutlined,
 	SearchOutlined,
@@ -37,8 +37,6 @@ import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -50,6 +48,8 @@ import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import PanelTypeSelector from './PanelTypeSelector';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
+
+import './WidgetFullView.styles.scss';
 
 function FullView({
 	widget,
@@ -120,7 +120,6 @@ function FullView({
 				originalGraphType: selectedPanelType,
 			};
 		}
-		updatedQuery.builder.queryData[0].pageSize = 10;
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,

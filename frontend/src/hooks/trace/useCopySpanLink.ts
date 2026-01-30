@@ -1,8 +1,8 @@
-import { useNotifications } from 'hooks/useNotifications';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { MouseEventHandler, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Span } from 'types/api/trace/getTraceV2';
 
 export const useCopySpanLink = (
@@ -15,7 +15,9 @@ export const useCopySpanLink = (
 
 	const onSpanCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
-			if (!span) return;
+			if (!span) {
+				return;
+			}
 
 			event.preventDefault();
 			event.stopPropagation();

@@ -6,13 +6,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -21,17 +26,24 @@ import (
 )
 
 type provider struct {
-	config            apiserver.Config
-	settings          factory.ScopedProviderSettings
-	router            *mux.Router
-	authZ             *middleware.AuthZ
-	orgHandler        organization.Handler
-	userHandler       user.Handler
-	sessionHandler    session.Handler
-	authDomainHandler authdomain.Handler
-	preferenceHandler preference.Handler
-	globalHandler     global.Handler
-	promoteHandler    promote.Handler
+	config                 apiserver.Config
+	settings               factory.ScopedProviderSettings
+	router                 *mux.Router
+	authZ                  *middleware.AuthZ
+	orgHandler             organization.Handler
+	userHandler            user.Handler
+	sessionHandler         session.Handler
+	authDomainHandler      authdomain.Handler
+	preferenceHandler      preference.Handler
+	globalHandler          global.Handler
+	promoteHandler         promote.Handler
+	flaggerHandler         flagger.Handler
+	dashboardModule        dashboard.Module
+	dashboardHandler       dashboard.Handler
+	metricsExplorerHandler metricsexplorer.Handler
+	gatewayHandler         gateway.Handler
+	roleGetter             role.Getter
+	roleHandler            role.Handler
 }
 
 func NewFactory(
@@ -44,9 +56,16 @@ func NewFactory(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
+	metricsExplorerHandler metricsexplorer.Handler,
+	gatewayHandler gateway.Handler,
+	roleGetter role.Getter,
+	roleHandler role.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler)
+		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, gatewayHandler, roleGetter, roleHandler)
 	})
 }
 
@@ -63,24 +82,38 @@ func newProvider(
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
+	flaggerHandler flagger.Handler,
+	dashboardModule dashboard.Module,
+	dashboardHandler dashboard.Handler,
+	metricsExplorerHandler metricsexplorer.Handler,
+	gatewayHandler gateway.Handler,
+	roleGetter role.Getter,
+	roleHandler role.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
-		config:            config,
-		settings:          settings,
-		router:            router,
-		orgHandler:        orgHandler,
-		userHandler:       userHandler,
-		sessionHandler:    sessionHandler,
-		authDomainHandler: authDomainHandler,
-		preferenceHandler: preferenceHandler,
-		globalHandler:     globalHandler,
-		promoteHandler:    promoteHandler,
+		config:                 config,
+		settings:               settings,
+		router:                 router,
+		orgHandler:             orgHandler,
+		userHandler:            userHandler,
+		sessionHandler:         sessionHandler,
+		authDomainHandler:      authDomainHandler,
+		preferenceHandler:      preferenceHandler,
+		globalHandler:          globalHandler,
+		promoteHandler:         promoteHandler,
+		flaggerHandler:         flaggerHandler,
+		dashboardModule:        dashboardModule,
+		dashboardHandler:       dashboardHandler,
+		metricsExplorerHandler: metricsExplorerHandler,
+		gatewayHandler:         gatewayHandler,
+		roleGetter:             roleGetter,
+		roleHandler:            roleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
+	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleGetter)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
@@ -122,6 +155,26 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addFlaggerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addMetricsExplorerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addGatewayRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRoleRoutes(router); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -129,5 +182,11 @@ func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{role.String()}},
 		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
+	}
+}
+
+func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: ctxtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
 	}
 }

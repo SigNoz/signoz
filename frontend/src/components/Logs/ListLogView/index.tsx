@@ -1,11 +1,11 @@
-import './ListLogView.styles.scss';
-
+import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
 import { Typography } from 'antd';
 import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -14,7 +14,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useMemo, useState } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -27,6 +26,8 @@ import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { Container, LogContainer, LogText } from './styles';
 import { isValidLogField } from './util';
+
+import './ListLogView.styles.scss';
 
 interface LogFieldProps {
 	fieldKey: string;
@@ -108,6 +109,7 @@ type ListLogViewProps = {
 	activeLog?: ILog | null;
 	linesPerRow: number;
 	fontSize: FontSize;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 };
 
 function ListLogView({
@@ -118,19 +120,20 @@ function ListLogView({
 	activeLog,
 	linesPerRow,
 	fontSize,
+	handleChangeSelectedView,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
-	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
 	);
+	const isReadOnlyLog = !isLogsExplorerPage;
+
 	const {
 		activeLog: activeContextLog,
 		onAddToQuery: handleAddToQuery,
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const isDarkMode = useIsDarkMode();
@@ -180,14 +183,6 @@ function ListLogView({
 
 	const logType = getLogIndicatorType(logData);
 
-	const handleMouseEnter = (): void => {
-		setHasActionButtons(true);
-	};
-
-	const handleMouseLeave = (): void => {
-		setHasActionButtons(false);
-	};
-
 	return (
 		<>
 			<Container
@@ -198,8 +193,6 @@ function ListLogView({
 				}
 				$isDarkMode={isDarkMode}
 				$logType={logType}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
 				fontSize={fontSize}
 			>
@@ -251,7 +244,7 @@ function ListLogView({
 					</div>
 				</div>
 
-				{hasActionButtons && isLogsExplorerPage && (
+				{!isReadOnlyLog && (
 					<LogLinesActionButtons
 						handleShowContext={handleShowContext}
 						onLogCopy={onLogCopy}
@@ -264,7 +257,7 @@ function ListLogView({
 					onAddToQuery={handleAddToQuery}
 					selectedTab={VIEW_TYPES.CONTEXT}
 					onClose={handlerClearActiveContextLog}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</>
@@ -273,10 +266,11 @@ function ListLogView({
 
 ListLogView.defaultProps = {
 	activeLog: null,
+	handleChangeSelectedView: undefined,
 };
 
 LogGeneralField.defaultProps = {
 	linesPerRow: 1,
 };
 
-export default ListLogView;
+export default memo(ListLogView);

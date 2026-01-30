@@ -1,12 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
-import { Table } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
-import cx from 'classnames';
-import { dragColumnParams } from 'hooks/useDragColumns/configs';
-import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
-import { debounce, set } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	SyntheticEvent,
 	useCallback,
@@ -17,6 +10,13 @@ import {
 } from 'react';
 import ReactDragListView from 'react-drag-listview';
 import { ResizeCallbackData } from 'react-resizable';
+import { Table } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
+import cx from 'classnames';
+import { dragColumnParams } from 'hooks/useDragColumns/configs';
+import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
+import { debounce, set } from 'lodash-es';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import ResizableHeader from './ResizableHeader';
@@ -43,7 +43,9 @@ function ResizeTable({
 
 	const updateAllColumnWidths = useRef(
 		debounce((widthsConfig: Record<string, number>) => {
-			if (!widgetId || !shouldPersistColumnWidths) return;
+			if (!widgetId || !shouldPersistColumnWidths) {
+				return;
+			}
 			setColumnWidths?.((prev) => ({
 				...prev,
 				[widgetId]: widthsConfig,
@@ -127,7 +129,9 @@ function ResizeTable({
 	}, [columns, columnWidths]);
 
 	useEffect(() => {
-		if (!shouldPersistColumnWidths) return;
+		if (!shouldPersistColumnWidths) {
+			return;
+		}
 		// Collect all column widths in a single object
 		const newColumnWidths: Record<string, number> = {};
 

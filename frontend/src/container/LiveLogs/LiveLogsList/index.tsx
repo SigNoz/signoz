@@ -1,5 +1,5 @@
-import './LiveLogsList.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -17,15 +17,19 @@ import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useEventSource } from 'providers/EventSource';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { LiveLogsListProps } from './types';
 
-function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
+import './LiveLogsList.styles.scss';
+
+function LiveLogsList({
+	logs,
+	isLoading,
+	handleChangeSelectedView,
+}: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
 	const { isConnectionLoading } = useEventSource();
@@ -36,7 +40,6 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -72,6 +75,7 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				);
 			}
@@ -85,10 +89,12 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 					fontSize={options.fontSize}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			);
 		},
 		[
+			handleChangeSelectedView,
 			onAddToQuery,
 			onSetActiveLog,
 			options.fontSize,
@@ -99,7 +105,9 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (!activeLogId || activeLogIndex < 0) return;
+		if (!activeLogId || activeLogIndex < 0) {
+			return;
+		}
 
 		ref?.current?.scrollToIndex({
 			index: activeLogIndex,
@@ -147,6 +155,7 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 								appendTo: 'end',
 								activeLogIndex,
 							}}
+							handleChangeSelectedView={handleChangeSelectedView}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
@@ -170,12 +179,11 @@ function LiveLogsList({ logs, isLoading }: LiveLogsListProps): JSX.Element {
 					log={activeLog}
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
 					onClickActionItem={onAddToQuery}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</div>
 	);
 }
-
 export default memo(LiveLogsList);

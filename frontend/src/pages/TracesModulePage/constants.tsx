@@ -1,3 +1,4 @@
+import { matchPath } from 'react-router-dom';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { Compass, Cone, TowerControl } from 'lucide-react';
@@ -5,7 +6,6 @@ import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
 import TracesFunnelDetails from 'pages/TracesFunnelDetails';
 import TracesFunnels from 'pages/TracesFunnels';
-import { matchPath } from 'react-router-dom';
 
 export const tracesExplorer: TabRoutes = {
 	Component: (): JSX.Element => <TracesExplorer />,

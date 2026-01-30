@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback, useEffect, useState } from 'react';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { LEGEND } from 'constants/global';
 import {
@@ -19,13 +20,12 @@ import {
 import {
 	listViewInitialLogQuery,
 	listViewInitialTraceQuery,
-} from 'container/NewDashboard/ComponentsSlider/constants';
+} from 'container/DashboardContainer/ComponentsSlider/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { isEmpty, isEqual } from 'lodash-es';
-import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
@@ -43,7 +43,11 @@ import {
 	HandleChangeQueryDataV5,
 	UseQueryOperations,
 } from 'types/common/operations.types';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 
@@ -317,7 +321,8 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: MetricAggregateOperator.RATE,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: '',
+									spaceAggregation: MetricAggregateOperator.SUM,
+									reduceTo: ReduceOperators.SUM,
 								},
 							];
 						} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
@@ -326,7 +331,22 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: MetricAggregateOperator.AVG,
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: '',
+									spaceAggregation: MetricAggregateOperator.AVG,
+									reduceTo: ReduceOperators.AVG,
+								},
+							];
+						} else if (
+							newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+							newQuery.aggregateAttribute?.type ===
+								ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+						) {
+							newQuery.aggregations = [
+								{
+									timeAggregation: '',
+									metricName: newQuery.aggregateAttribute?.key || '',
+									temporality: '',
+									spaceAggregation: MetricAggregateOperator.P90,
+									reduceTo: ReduceOperators.AVG,
 								},
 							];
 						} else {
@@ -336,6 +356,7 @@ export const useQueryOperations: UseQueryOperations = ({
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
 									spaceAggregation: '',
+									reduceTo: ReduceOperators.AVG,
 								},
 							];
 						}
@@ -510,7 +531,9 @@ export const useQueryOperations: UseQueryOperations = ({
 	const isTracePanelType = panelType === PANEL_TYPES.TRACE;
 
 	useEffect(() => {
-		if (initialDataSource && dataSource !== initialDataSource) return;
+		if (initialDataSource && dataSource !== initialDataSource) {
+			return;
+		}
 
 		if (
 			dataSource === DataSource.METRICS &&

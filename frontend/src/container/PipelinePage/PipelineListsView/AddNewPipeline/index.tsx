@@ -1,7 +1,7 @@
-import { Button, Divider, Form, FormInstance, Modal } from 'antd';
-import { useAppContext } from 'providers/App/App';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button, Divider, Form, FormInstance, Modal } from 'antd';
+import { useAppContext } from 'providers/App/App';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
@@ -60,7 +60,9 @@ function AddNewPipeline({
 		}
 		if (isAdd) {
 			setCurrPipelineData((prevState) => {
-				if (prevState) return [...prevState, newPipeLineData];
+				if (prevState) {
+					return [...prevState, newPipeLineData];
+				}
 				return [newPipeLineData];
 			});
 		}

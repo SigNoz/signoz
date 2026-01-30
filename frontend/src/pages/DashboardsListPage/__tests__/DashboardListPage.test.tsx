@@ -1,7 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import * as dashboardUtils from 'container/DashboardContainer/DashboardDescription';
 import DashboardsList from 'container/ListOfDashboard';
-import * as dashboardUtils from 'container/NewDashboard/DashboardDescription';
 import {
 	dashboardEmptyState,
 	dashboardSuccessResponse,
@@ -9,10 +10,9 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
-jest.mock('container/NewDashboard/DashboardDescription', () => ({
+jest.mock('container/DashboardContainer/DashboardDescription', () => ({
 	sanitizeDashboardData: jest.fn(),
 }));
 

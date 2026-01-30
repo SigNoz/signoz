@@ -34,11 +34,11 @@ func TestProviderStartStop(t *testing.T) {
 	sqlstore.Mock().ExpectQuery("SELECT authorization_model_id, schema_version, type, type_definition, serialized_protobuf FROM authorization_model WHERE authorization_model_id = (.+)  AND store = (.+)").WithArgs("01K44QQKXR6F729W160NFCJT58", "01K3V0NTN47MPTMEV1PD5ST6ZC").WillReturnRows(modelRows)
 
 	sqlstore.Mock().ExpectExec("INSERT INTO authorization_model (.+) VALUES (.+)").WillReturnResult(sqlmock.NewResult(1, 1))
+
 	go func() {
 		err := provider.Start(context.Background())
 		require.NoError(t, err)
 	}()
-
 	// wait for the service to start
 	time.Sleep(time.Second * 2)
 

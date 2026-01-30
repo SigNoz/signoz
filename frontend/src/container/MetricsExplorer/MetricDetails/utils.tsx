@@ -4,22 +4,26 @@ import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 export function formatTimestampToReadableDate(timestamp: string): string {
 	const date = new Date(timestamp);
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-	if (diffInSeconds < 60) return 'Few seconds ago';
+	if (diffInSeconds < 60) {
+		return 'Few seconds ago';
+	}
 
 	const diffInMinutes = Math.floor(diffInSeconds / 60);
-	if (diffInMinutes < 60)
+	if (diffInMinutes < 60) {
 		return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+	}
 
 	const diffInHours = Math.floor(diffInMinutes / 60);
-	if (diffInHours < 24)
+	if (diffInHours < 24) {
 		return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+	}
 
 	const diffInDays = Math.floor(diffInHours / 24);
 	if (diffInDays === 1) {
@@ -28,7 +32,9 @@ export function formatTimestampToReadableDate(timestamp: string): string {
 			.toString()
 			.padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 	}
-	if (diffInDays < 7) return `${diffInDays} days ago`;
+	if (diffInDays < 7) {
+		return `${diffInDays} days ago`;
+	}
 
 	return date.toLocaleDateString();
 }
@@ -114,7 +120,7 @@ export function getMetricDetailsQuery(
 							metricName,
 							timeAggregation: timeAggregation as TimeAggregation,
 							spaceAggregation: spaceAggregation as SpaceAggregation,
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							temporality: '',
 						},
 					],

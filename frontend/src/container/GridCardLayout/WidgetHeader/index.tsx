@@ -1,5 +1,5 @@
-import './WidgetHeader.styles.scss';
-
+import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import {
 	AlertOutlined,
 	CloudDownloadOutlined,
@@ -26,11 +26,9 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, X } from 'lucide-react';
+import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
@@ -41,6 +39,8 @@ import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
+
+import './WidgetHeader.styles.scss';
 
 interface IWidgetHeaderProps {
 	title: ReactNode;
@@ -185,7 +185,18 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.CreateAlerts,
 				icon: <AlertOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				label: (
+					<span
+						style={{
+							display: 'flex',
+							alignItems: 'baseline',
+							justifyContent: 'space-between',
+						}}
+					>
+						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
+						<SquareArrowOutUpRight size={10} />
+					</span>
+				),
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},

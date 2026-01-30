@@ -32,7 +32,6 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 		cb,
 		mockMetadataStore,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 }
@@ -196,12 +195,12 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -213,7 +212,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -317,12 +315,12 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -334,7 +332,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -426,12 +423,12 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -443,9 +440,10 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
+
+	//
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -491,7 +489,8 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 				GroupBy: []qbtypes.GroupByKey{
 					{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "body.status",
+							Name:         "status",
+							FieldContext: telemetrytypes.FieldContextBody,
 						},
 					},
 				},
@@ -500,12 +499,12 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -517,7 +516,6 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -596,12 +594,12 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 
@@ -613,7 +611,6 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
-		BodyJSONStringSearchPrefix,
 		GetBodyJSONKey,
 	)
 
@@ -633,6 +630,227 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 					require.True(t, len(q.Warnings) > 0)
 				}
 			}
+		})
+	}
+}
+
+func TestAdjustKey(t *testing.T) {
+	cases := []struct {
+		name        string
+		inputKey    telemetrytypes.TelemetryFieldKey
+		keysMap     map[string][]*telemetrytypes.TelemetryFieldKey
+		expectedKey telemetrytypes.TelemetryFieldKey
+	}{
+		{
+			name: "intrinsic field with no other key match - use intrinsic",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "severity_text",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap:     buildCompleteFieldKeyMap(),
+			expectedKey: IntrinsicFields["severity_text"],
+		},
+		{
+			name: "intrinsic field with other key match - no override",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"body": {
+					{
+						Name:          "body",
+						FieldContext:  telemetrytypes.FieldContextBody,
+						FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+					},
+					{
+						Name:          "body",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+					},
+				},
+			},
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+		},
+		{
+			name: "json field with no context specified",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+		},
+		{
+			name: "single matching key in metadata",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap:     buildCompleteFieldKeyMap(),
+			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
+		},
+		{
+			name: "single matching key with incorrect context specified - no override",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+		},
+		{
+			name: "single matching key with no context specified - override",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap:     buildCompleteFieldKeyMap(),
+			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
+		},
+		{
+			name: "multiple matching keys - all materialized",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "multi.mat.key",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "multi.mat.key",
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+		},
+		{
+			name: "multiple matching keys - mixed materialization",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "mixed.materialization.key",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "mixed.materialization.key",
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  false,
+			},
+		},
+		{
+			name: "multiple matching keys with context specified",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "mixed.materialization.key",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap:     buildCompleteFieldKeyMap(),
+			expectedKey: *buildCompleteFieldKeyMap()["mixed.materialization.key"][0],
+		},
+		{
+			name: "no matching keys - unknown field",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "unknown.field",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "unknown.field",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				Materialized:  false,
+			},
+		},
+		{
+			name: "no matching keys with context filter",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "unknown.field",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap: buildCompleteFieldKeyMap(),
+			expectedKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "unknown.field",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				Materialized:  false,
+			},
+		},
+		{
+			name: "materialized field",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "mat.key",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap:     buildCompleteFieldKeyMap(),
+			expectedKey: *buildCompleteFieldKeyMap()["mat.key"][0],
+		},
+		{
+			name: "non-materialized field",
+			inputKey: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextUnspecified,
+				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+			},
+			keysMap:     buildCompleteFieldKeyMap(),
+			expectedKey: *buildCompleteFieldKeyMap()["user.id"][0],
+		},
+	}
+
+	fm := NewFieldMapper()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+	cb := NewConditionBuilder(fm)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+
+	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
+
+	statementBuilder := NewLogQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		fm,
+		cb,
+		resourceFilterStmtBuilder,
+		aggExprRewriter,
+		DefaultFullTextColumn,
+		GetBodyJSONKey,
+	)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// Create a copy of the input key to avoid modifying the original
+			key := c.inputKey
+
+			// Call adjustKey
+			statementBuilder.adjustKey(&key, c.keysMap)
+
+			// Verify the key was adjusted as expected
+			require.Equal(t, c.expectedKey.Name, key.Name, "key name should match")
+			require.Equal(t, c.expectedKey.FieldContext, key.FieldContext, "field context should match")
+			require.Equal(t, c.expectedKey.FieldDataType, key.FieldDataType, "field data type should match")
+			require.Equal(t, c.expectedKey.Materialized, key.Materialized, "materialized should match")
+			require.Equal(t, c.expectedKey.JSONDataType, key.JSONDataType, "json data type should match")
+			require.Equal(t, c.expectedKey.Indexes, key.Indexes, "json exists should match")
 		})
 	}
 }

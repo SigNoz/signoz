@@ -593,19 +593,31 @@ func (q *querier) run(
 		return nil, err
 	}
 
+	// attach step interval to metadata so client can make informed decisions, ex: width of the bar
+	// or go to related logs/traces from a point in line/bar chart with correct time range
+	stepIntervals := make(map[string]uint64, len(steps))
+	for name, step := range steps {
+		stepIntervals[name] = uint64(step.Duration.Seconds())
+	}
+	for _, query := range req.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeFormula {
+			if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok {
+				formulaStepMs := q.calculateFormulaStep(formula.Expression, req)
+				stepIntervals[formula.Name] = uint64(formulaStepMs / 1000) // convert ms to seconds
+			}
+		}
+	}
+
 	resp := &qbtypes.QueryRangeResponse{
 		Type: req.RequestType,
 		Data: qbtypes.QueryData{
 			Results: maps.Values(processedResults),
 		},
-		Meta: struct {
-			RowsScanned  uint64 `json:"rowsScanned"`
-			BytesScanned uint64 `json:"bytesScanned"`
-			DurationMS   uint64 `json:"durationMs"`
-		}{
-			RowsScanned:  stats.RowsScanned,
-			BytesScanned: stats.BytesScanned,
-			DurationMS:   stats.DurationMS,
+		Meta: qbtypes.ExecStats{
+			RowsScanned:   stats.RowsScanned,
+			BytesScanned:  stats.BytesScanned,
+			DurationMS:    stats.DurationMS,
+			StepIntervals: stepIntervals,
 		},
 	}
 

@@ -1,5 +1,6 @@
-import './logsTable.styles.scss';
-
+import { memo, useCallback, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Virtuoso } from 'react-virtuoso';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -13,9 +14,6 @@ import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import { memo, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { Virtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 // interfaces
@@ -23,6 +21,8 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 // styles
 import { Container, Heading } from './styles';
+
+import './logsTable.styles.scss';
 
 export type LogViewMode = 'raw' | 'table' | 'list';
 
@@ -38,7 +38,6 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -157,7 +156,6 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
-				onGroupByAttribute={onGroupByAttribute}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
 			/>

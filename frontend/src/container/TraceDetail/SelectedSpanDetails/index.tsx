@@ -1,3 +1,6 @@
+import { Dispatch, SetStateAction, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { Button, Modal, Row, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
@@ -7,9 +10,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { PanelRight } from 'lucide-react';
-import { Dispatch, SetStateAction, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { GlobalReducer } from 'types/reducer/globalTime';

@@ -1,11 +1,11 @@
-import './TimezoneAdaptation.styles.scss';
-
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Delete } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import { useMemo } from 'react';
+
+import './TimezoneAdaptation.styles.scss';
 
 function TimezoneAdaptation(): JSX.Element {
 	const {

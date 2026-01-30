@@ -1,6 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './NewWidget.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
+import { generatePath, useParams } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -34,11 +37,6 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import {
@@ -74,6 +72,8 @@ import {
 	placeWidgetAtBottom,
 	placeWidgetBetweenRows,
 } from './utils';
+
+import './NewWidget.styles.scss';
 
 function NewWidget({
 	selectedGraph,
@@ -370,10 +370,6 @@ function NewWidget({
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
-		if (updatedQuery?.builder?.queryData?.[0]) {
-			updatedQuery.builder.queryData[0].pageSize = 10;
-		}
-
 		if (selectedWidget) {
 			if (selectedGraph === PANEL_TYPES.LIST) {
 				return {
@@ -419,16 +415,12 @@ function NewWidget({
 	useEffect(() => {
 		if (stagedQuery) {
 			setIsLoadingPanelData(false);
-			const updatedStagedQuery = cloneDeep(stagedQuery);
-			if (updatedStagedQuery?.builder?.queryData?.[0]) {
-				updatedStagedQuery.builder.queryData[0].pageSize = 10;
-			}
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
 				globalSelectedInterval: customGlobalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
-				query: updatedStagedQuery,
+				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
 				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
@@ -726,7 +718,9 @@ function NewWidget({
 		enableDrillDown && !isNewDashboard && !!query.get('widgetId');
 
 	const handleSwitchToViewMode = useCallback(() => {
-		if (!query.get('widgetId')) return;
+		if (!query.get('widgetId')) {
+			return;
+		}
 		const widgetId = query.get('widgetId') || '';
 		const graphType = query.get('graphType') || '';
 		const queryParams = {
@@ -868,6 +862,7 @@ function NewWidget({
 							contextLinks={contextLinks}
 							setContextLinks={setContextLinks}
 							enableDrillDown={enableDrillDown}
+							isNewDashboard={isNewDashboard}
 						/>
 					</OverlayScrollbar>
 				</RightContainerWrapper>

@@ -73,6 +73,43 @@ func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Validate checks if the QueryBuilderFormula fields are valid
+func (f QueryBuilderFormula) Validate() error {
+	// Validate name is not blank
+	if strings.TrimSpace(f.Name) == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"formula name cannot be blank",
+		)
+	}
+
+	// Validate expression is not blank
+	if strings.TrimSpace(f.Expression) == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"formula expression cannot be blank",
+		)
+	}
+
+	// Validate functions if present
+	for i, fn := range f.Functions {
+		if err := fn.Validate(); err != nil {
+			fnId := fmt.Sprintf("function #%d", i+1)
+			if f.Name != "" {
+				fnId = fmt.Sprintf("function #%d in formula '%s'", i+1, f.Name)
+			}
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid %s: %s",
+				fnId,
+				err.Error(),
+			)
+		}
+	}
+
+	return nil
+}
+
 // small container to store the query name and index or alias reference
 // for a variable in the formula expression
 // read below for more details on aggregation references
@@ -153,10 +190,28 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression")
 	}
 
+	// Normalize canDefaultZero keys to match variable casing from expression
+	normalizedCanDefaultZero := make(map[string]bool)
+	vars := expression.Vars()
+	for _, variable := range vars {
+		// If exact match exists, use it
+		if val, ok := canDefaultZero[variable]; ok {
+			normalizedCanDefaultZero[variable] = val
+			continue
+		}
+		// Otherwise try case-insensitive lookup
+		for k, v := range canDefaultZero {
+			if strings.EqualFold(k, variable) {
+				normalizedCanDefaultZero[variable] = v
+				break
+			}
+		}
+	}
+
 	evaluator := &FormulaEvaluator{
 		expression:     expression,
-		variables:      expression.Vars(),
-		canDefaultZero: canDefaultZero,
+		variables:      vars,
+		canDefaultZero: normalizedCanDefaultZero,
 		aggRefs:        make(map[string]aggregationRef),
 	}
 
@@ -281,6 +336,16 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		// We are only interested in the time series data for the queries that are
 		// involved in the formula expression.
 		data, exists := timeSeriesData[aggRef.QueryName]
+		if !exists {
+			// try case-insensitive lookup
+			for k, v := range timeSeriesData {
+				if strings.EqualFold(k, aggRef.QueryName) {
+					data = v
+					exists = true
+					break
+				}
+			}
+		}
 		if !exists {
 			continue
 		}

@@ -1,8 +1,8 @@
+import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -208,6 +208,7 @@ export enum QueryFunctionsTypes {
 	MEDIAN_5 = 'median5',
 	MEDIAN_7 = 'median7',
 	TIME_SHIFT = 'timeShift',
+	FILL_ZERO = 'fillZero',
 }
 
 export type PanelTypeKeys =
@@ -218,7 +219,13 @@ export type PanelTypeKeys =
 	| 'TRACE'
 	| 'EMPTY_WIDGET';
 
-export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
+export enum ReduceOperators {
+	LAST = 'last',
+	SUM = 'sum',
+	AVG = 'avg',
+	MAX = 'max',
+	MIN = 'min',
+}
 
 export type QueryBuilderData = {
 	queryData: IBuilderQuery[];

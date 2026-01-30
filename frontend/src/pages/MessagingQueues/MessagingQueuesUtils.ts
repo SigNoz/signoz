@@ -15,7 +15,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 export const KAFKA_SETUP_DOC_LINK =
@@ -94,8 +94,10 @@ export function getFiltersFromConfigOptions(
 
 export function getWidgetQuery({
 	filterItems,
+	dotMetricsEnabled,
 }: {
 	filterItems: TagFilterItem[];
+	dotMetricsEnabled: boolean;
 }): GetWidgetQueryBuilderProps {
 	return {
 		title: 'Consumer Lag',
@@ -110,8 +112,14 @@ export function getWidgetQuery({
 					{
 						aggregateAttribute: {
 							dataType: DataTypes.Float64,
-							id: 'kafka_consumer_group_lag--float64--Gauge--true',
-							key: 'kafka_consumer_group_lag',
+							id: `${
+								dotMetricsEnabled
+									? 'kafka.consumer_group.lag'
+									: 'kafka_consumer_group_lag'
+							}--float64--Gauge--true`,
+							key: dotMetricsEnabled
+								? 'kafka.consumer_group.lag'
+								: 'kafka_consumer_group_lag',
 							type: 'Gauge',
 						},
 						aggregateOperator: 'max',
@@ -148,7 +156,7 @@ export function getWidgetQuery({
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'avg',
 						stepInterval: 60,
 						timeAggregation: 'max',
@@ -267,7 +275,7 @@ export function setConfigDetail(
 	},
 ): void {
 	// remove "key" and its value from the paramsToSet object
-	const { key, ...restParamsToSet } = paramsToSet || {};
+	const { key: _key, ...restParamsToSet } = paramsToSet || {};
 
 	if (!isEmpty(restParamsToSet)) {
 		const configDetail = {

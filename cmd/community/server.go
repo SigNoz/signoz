@@ -5,21 +5,27 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/cmd"
-	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
-	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
-	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/authz/openfgaauthz"
+	"github.com/SigNoz/signoz/pkg/authz/openfgaschema"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/gateway/noopgateway"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -52,13 +58,6 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	// print the version
 	version.Info.PrettyPrint(config.Version)
 
-	// add enterprise sqlstore factories to the community sqlstore factories
-	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
-	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
-		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", "error", err)
-		return err
-	}
-
 	signoz, err := signoz.New(
 		ctx,
 		config,
@@ -81,6 +80,15 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(ctx context.Context, sqlstore sqlstore.SQLStore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx))
+		},
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, _ role.Setter, _ role.Granter, queryParser queryparser.QueryParser, _ querier.Querier, _ licensing.Licensing) dashboard.Module {
+			return impldashboard.NewModule(impldashboard.NewStore(store), settings, analytics, orgGetter, queryParser)
+		},
+		func(_ licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
+			return noopgateway.NewProviderFactory()
+		},
+		func(store sqlstore.SQLStore, authz authz.AuthZ, licensing licensing.Licensing, _ []role.RegisterTypeable) role.Setter {
+			return implrole.NewSetter(implrole.NewStore(store), authz)
 		},
 	)
 	if err != nil {

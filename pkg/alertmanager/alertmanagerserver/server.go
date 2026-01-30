@@ -157,7 +157,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, server.orgID, storableSilences)
+			return c, server.stateStore.Set(ctx, storableSilences)
 		})
 
 	}()
@@ -186,7 +186,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, server.orgID, storableNFLog)
+			return c, server.stateStore.Set(ctx, storableNFLog)
 		})
 	}()
 

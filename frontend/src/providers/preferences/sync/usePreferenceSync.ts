@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
-import { useEffect, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -38,7 +38,9 @@ export function usePreferenceSync({
 	const updateExtraDataSelectColumns = (
 		columns: TelemetryFieldKey[],
 	): TelemetryFieldKey[] | null => {
-		if (!columns) return null;
+		if (!columns) {
+			return null;
+		}
 		return columns.map((column) => ({
 			...column,
 			name: column.name ?? column.key,
@@ -58,7 +60,7 @@ export function usePreferenceSync({
 				updateExtraDataSelectColumns(parsedExtraData?.selectColumns) ||
 				defaultLogsSelectedColumns;
 			formatting = {
-				maxLines: parsedExtraData?.maxLines ?? 2,
+				maxLines: parsedExtraData?.maxLines ?? 1,
 				format: parsedExtraData?.format ?? 'table',
 				fontSize: parsedExtraData?.fontSize ?? 'small',
 				version: parsedExtraData?.version ?? 1,

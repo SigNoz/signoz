@@ -1,5 +1,4 @@
-import './Overview.styles.scss';
-
+import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -12,24 +11,25 @@ import {
 	Typography,
 } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronRight, Search } from 'lucide-react';
-import { ReactNode, useState } from 'react';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
 import { removeEscapeCharacters } from './utils';
+
+import './Overview.styles.scss';
 
 interface OverviewProps {
 	logData: ILog;
 	isListViewPanel?: boolean;
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 type Props = OverviewProps &
@@ -42,8 +42,8 @@ function Overview({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
-	onGroupByAttribute,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -208,11 +208,11 @@ function Overview({
 									logData={logData}
 									onAddToQuery={onAddToQuery}
 									fieldSearchInput={fieldSearchInput}
-									onGroupByAttribute={onGroupByAttribute}
 									onClickActionItem={onClickActionItem}
 									isListViewPanel={isListViewPanel}
 									selectedOptions={selectedOptions}
 									listViewPanelSelectedFields={listViewPanelSelectedFields}
+									handleChangeSelectedView={handleChangeSelectedView}
 								/>
 							</>
 						),
@@ -227,7 +227,7 @@ function Overview({
 Overview.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
-	onGroupByAttribute: undefined,
+	handleChangeSelectedView: undefined,
 };
 
 export default Overview;

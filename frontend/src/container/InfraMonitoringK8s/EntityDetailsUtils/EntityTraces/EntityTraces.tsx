@@ -1,5 +1,5 @@
-import './entityTraces.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
@@ -15,7 +15,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
@@ -23,8 +23,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -33,6 +31,8 @@ import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
 } from '../utils';
+
+import './entityTraces.styles.scss';
 
 interface Props {
 	timeRange: {
@@ -188,6 +188,8 @@ function EntityTraces({
 						onTimeChange={handleTimeChange}
 						defaultRelativeTime="5m"
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

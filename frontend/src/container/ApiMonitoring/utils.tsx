@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -18,7 +19,6 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
-import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
@@ -37,7 +37,7 @@ import {
 } from 'types/api/v5/queryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { domainNameKey } from './constants';
@@ -208,9 +208,15 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					: rowB.endpointCount;
 
 			// Handle cases where one or both values are empty
-			if (!endpointA && !endpointB) return 0;
-			if (!endpointA) return 1;
-			if (!endpointB) return -1;
+			if (!endpointA && !endpointB) {
+				return 0;
+			}
+			if (!endpointA) {
+				return 1;
+			}
+			if (!endpointB) {
+				return -1;
+			}
 
 			return Number(endpointA) - Number(endpointB);
 		},
@@ -288,8 +294,12 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					size="small"
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
-						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						if (errorRatePercent >= 90) {
+							return Color.BG_SAKURA_500;
+						}
+						if (errorRatePercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
 						return Color.BG_FOREST_500;
 					})()}
 					className="progress-bar error-rate"
@@ -401,7 +411,7 @@ export const getDomainMetricsQueryPayload = (
 						orderBy: [],
 						groupBy: [],
 						legend: '',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 					{
 						dataSource: DataSource.TRACES,
@@ -429,7 +439,7 @@ export const getDomainMetricsQueryPayload = (
 						orderBy: [],
 						groupBy: [],
 						legend: '',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 					{
 						dataSource: DataSource.TRACES,
@@ -457,7 +467,7 @@ export const getDomainMetricsQueryPayload = (
 						orderBy: [],
 						groupBy: [],
 						legend: '',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 					{
 						dataSource: DataSource.TRACES,
@@ -485,7 +495,7 @@ export const getDomainMetricsQueryPayload = (
 						orderBy: [],
 						groupBy: [],
 						legend: '',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 				queryFormulas: [
@@ -653,7 +663,7 @@ export const getEndPointsQueryPayload = (
 							limit: 1000,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'count',
@@ -700,7 +710,7 @@ export const getEndPointsQueryPayload = (
 							limit: 1000,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'p99',
@@ -748,7 +758,7 @@ export const getEndPointsQueryPayload = (
 							limit: 1000,
 							orderBy: [],
 							queryName: 'C',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'max',
@@ -805,7 +815,7 @@ export const getEndPointsQueryPayload = (
 							limit: 1000,
 							orderBy: [],
 							queryName: 'D',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'count',
@@ -992,7 +1002,9 @@ export const getEndPointsColumnsConfig = (
 			return (
 				<div className="endpoint-name-value">
 					{((): React.ReactNode => {
-						if (!isGroupedByAttribute) return null;
+						if (!isGroupedByAttribute) {
+							return null;
+						}
 						return expandedRowKeys.includes(record.key) ? (
 							<ChevronDown size={14} />
 						) : (
@@ -1065,8 +1077,12 @@ export const getEndPointsColumnsConfig = (
 				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
 				string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
-					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					if (errorRatePercent >= 90) {
+						return Color.BG_SAKURA_500;
+					}
+					if (errorRatePercent >= 60) {
+						return Color.BG_AMBER_500;
+					}
 					return Color.BG_FOREST_500;
 				})()}
 				className="progress-bar error-rate"
@@ -1108,7 +1124,9 @@ export const formatEndPointsDataForTable = (
 	orderBy?: OrderByPayload | null,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): EndPointsTableRowData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	const isGroupedByAttribute = groupBy.length > 0;
 
 	let formattedData: EndPointsTableRowData[] = [];
@@ -1229,7 +1247,9 @@ export interface TopErrorsTableRowData {
 export const formatTopErrorsDataForTable = (
 	scalarResult: TopErrorsResponseRow | undefined,
 ): TopErrorsTableRowData[] => {
-	if (!scalarResult?.data) return [];
+	if (!scalarResult?.data) {
+		return [];
+	}
 
 	const columns = scalarResult.columns || [];
 	const rows = scalarResult.data || [];
@@ -1368,7 +1388,9 @@ export const createFiltersForSelectedRowData = (
 		op: 'and',
 	};
 
-	if (!selectedRowData) return baseFilters;
+	if (!selectedRowData) {
+		return baseFilters;
+	}
 
 	const { groupedByMeta = {} } = selectedRowData;
 
@@ -1431,7 +1453,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'rate',
@@ -1461,7 +1483,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'B',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'p99',
@@ -1491,7 +1513,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'C',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'count',
@@ -1521,7 +1543,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'D',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'max',
@@ -1551,7 +1573,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'E',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'count',
@@ -1629,7 +1651,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'count',
@@ -1665,7 +1687,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'B',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'p99',
@@ -1705,7 +1727,7 @@ export const getEndPointDetailsQueryPayload = (
 							},
 						],
 						legend: 'rate',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 				queryFormulas: [],
@@ -1781,7 +1803,7 @@ export const getEndPointDetailsQueryPayload = (
 								type: 'attribute',
 							},
 						],
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 				queryFormulas: [],
@@ -1850,7 +1872,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'count',
@@ -1887,7 +1909,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'B',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'p99',
@@ -1924,7 +1946,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'C',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'rate',
@@ -1961,7 +1983,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'D',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: 60,
 						timeAggregation: 'count',
@@ -2039,7 +2061,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: null,
 						timeAggregation: 'rate',
@@ -2110,7 +2132,7 @@ export const getEndPointDetailsQueryPayload = (
 						limit: null,
 						orderBy: [],
 						queryName: 'A',
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						stepInterval: null,
 						timeAggregation: 'p99',
@@ -2208,7 +2230,7 @@ export const getEndPointZeroStateQueryPayload = (
 								type: 'tag',
 							},
 						],
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 					},
 				],
 				queryFormulas: [],
@@ -2313,7 +2335,9 @@ export const getFormattedEndPointMetricsData = (
 export const getFormattedEndPointStatusCodeData = (
 	data: EndPointStatusCodeResponseRow[],
 ): EndPointStatusCodeData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	return data.map((row) => ({
 		key: v4(),
 		statusCode: getDisplayValue(row.data.response_status_code),
@@ -2410,7 +2434,9 @@ interface EndPointDropDownData {
 export const getFormattedEndPointDropDownData = (
 	data: EndPointDropDownResponseRow[],
 ): EndPointDropDownData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	return data.map((row) => ({
 		key: v4(),
 		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
@@ -2447,7 +2473,9 @@ export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): DependentServicesData[] => {
-	if (!data) return [];
+	if (!data) {
+		return [];
+	}
 	const totalCount = data?.reduce((acc, row) => acc + Number(row.data.A), 0);
 	return data?.map((row) => ({
 		key: v4(),
@@ -2548,8 +2576,12 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
 						);
-						if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
-						if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
+						if (errorPercentagePercent >= 90) {
+							return Color.BG_SAKURA_500;
+						}
+						if (errorPercentagePercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
 						return Color.BG_FOREST_500;
 					})()}
 					className="progress-bar error-rate"
@@ -2651,7 +2683,9 @@ export const groupStatusCodes = (
 	// First pass: collect all series and timestamps
 	result.forEach((series) => {
 		const statusCode = series.metric?.response_status_code;
-		if (!statusCode) return;
+		if (!statusCode) {
+			return;
+		}
 
 		const statusClass = getStatusCodeClass(statusCode);
 
@@ -2691,7 +2725,9 @@ export const groupStatusCodes = (
 	// Second pass: aggregate values by status class and timestamp
 	result.forEach((series) => {
 		const statusCode = series.metric?.response_status_code;
-		if (!statusCode) return;
+		if (!statusCode) {
+			return;
+		}
 
 		const statusClass = getStatusCodeClass(statusCode);
 
@@ -2787,7 +2823,7 @@ export const getStatusCodeBarChartWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -2909,7 +2945,7 @@ export const getAllEndpointsWidgetData = (
 					limit: 1000,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'count',
@@ -2941,7 +2977,7 @@ export const getAllEndpointsWidgetData = (
 					limit: 1000,
 					orderBy: [],
 					queryName: 'B',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'p99',
@@ -2973,7 +3009,7 @@ export const getAllEndpointsWidgetData = (
 					limit: 1000,
 					orderBy: [],
 					queryName: 'C',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'max',
@@ -3005,7 +3041,7 @@ export const getAllEndpointsWidgetData = (
 					limit: 1000,
 					orderBy: [],
 					queryName: 'D',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'count',
@@ -3082,8 +3118,12 @@ export const getAllEndpointsWidgetData = (
 							? 0
 							: errorRate) as number).toFixed(2),
 					);
-					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					if (errorRatePercent >= 90) {
+						return Color.BG_SAKURA_500;
+					}
+					if (errorRatePercent >= 60) {
+						return Color.BG_AMBER_500;
+					}
 					return Color.BG_FOREST_500;
 				})()}
 				className="progress-bar error-rate"
@@ -3123,7 +3163,7 @@ export const getAllEndpointsWidgetData = (
 	return widget;
 };
 
-const keysToRemove = ['http.url', 'url.full', 'B', 'C', 'F1'];
+const keysToRemove = ['http.url', 'url.full', 'A', 'B', 'C', 'F1'];
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,
@@ -3191,7 +3231,7 @@ export const getRateOverTimeWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: null,
 					timeAggregation: 'rate',
@@ -3242,7 +3282,7 @@ export const getLatencyOverTimeWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: null,
 					timeAggregation: 'p99',

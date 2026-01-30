@@ -1,8 +1,9 @@
+import { useCallback, useMemo } from 'react';
 import { Select, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from 'lucide-react';
-import { useMemo } from 'react';
 
+import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
 
 function MultipleNotifications(): JSX.Element {
@@ -11,6 +12,12 @@ function MultipleNotifications(): JSX.Element {
 		setNotificationSettings,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
+
+	const isAllOptionSelected = useMemo(
+		() =>
+			notificationSettings.multipleNotifications?.includes(ALL_SELECTED_VALUE),
+		[notificationSettings.multipleNotifications],
+	);
 
 	const spaceAggregationOptions = useMemo(() => {
 		const allGroupBys = currentQuery.builder.queryData?.reduce<string[]>(
@@ -21,14 +28,59 @@ function MultipleNotifications(): JSX.Element {
 			[],
 		);
 		const uniqueGroupBys = [...new Set(allGroupBys)];
-		return uniqueGroupBys.map((key) => ({
+		const options = uniqueGroupBys.map((key) => ({
 			label: key,
 			value: key,
+			disabled: isAllOptionSelected,
 			'data-testid': 'multiple-notifications-select-option',
 		}));
-	}, [currentQuery.builder.queryData]);
+		if (options.length > 0) {
+			return [
+				{
+					label: 'All',
+					value: ALL_SELECTED_VALUE,
+					'data-testid': 'multiple-notifications-select-option',
+				},
+				...options,
+			];
+		}
+		return options;
+	}, [currentQuery.builder.queryData, isAllOptionSelected]);
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
+
+	const onSelectChange = useCallback(
+		(newSelectedOptions: string[]): void => {
+			const currentSelectedOptions = notificationSettings.multipleNotifications;
+			const allOptionLastSelected =
+				!currentSelectedOptions?.includes(ALL_SELECTED_VALUE) &&
+				newSelectedOptions.includes(ALL_SELECTED_VALUE);
+			if (allOptionLastSelected) {
+				setNotificationSettings({
+					type: 'SET_MULTIPLE_NOTIFICATIONS',
+					payload: [ALL_SELECTED_VALUE],
+				});
+			} else {
+				setNotificationSettings({
+					type: 'SET_MULTIPLE_NOTIFICATIONS',
+					payload: newSelectedOptions,
+				});
+			}
+		},
+		[setNotificationSettings, notificationSettings.multipleNotifications],
+	);
+
+	const groupByDescription = useMemo(() => {
+		if (isAllOptionSelected) {
+			return 'All = grouping of alerts is disabled';
+		}
+		if (notificationSettings.multipleNotifications?.length) {
+			return `Alerts with same ${notificationSettings.multipleNotifications?.join(
+				', ',
+			)} will be grouped`;
+		}
+		return 'Empty = all matching alerts combined into one notification';
+	}, [isAllOptionSelected, notificationSettings.multipleNotifications]);
 
 	const multipleNotificationsInput = useMemo(() => {
 		const placeholder = isMultipleNotificationsEnabled
@@ -38,12 +90,7 @@ function MultipleNotifications(): JSX.Element {
 			<div>
 				<Select
 					options={spaceAggregationOptions}
-					onChange={(value): void => {
-						setNotificationSettings({
-							type: 'SET_MULTIPLE_NOTIFICATIONS',
-							payload: value,
-						});
-					}}
+					onChange={onSelectChange}
 					value={notificationSettings.multipleNotifications}
 					mode="multiple"
 					placeholder={placeholder}
@@ -54,11 +101,7 @@ function MultipleNotifications(): JSX.Element {
 				/>
 				{isMultipleNotificationsEnabled && (
 					<Typography.Paragraph className="multiple-notifications-select-description">
-						{notificationSettings.multipleNotifications?.length
-							? `Alerts with same ${notificationSettings.multipleNotifications?.join(
-									', ',
-							  )} will be grouped`
-							: 'Empty = all matching alerts combined into one notification'}
+						{groupByDescription}
 					</Typography.Paragraph>
 				)}
 			</div>
@@ -72,9 +115,10 @@ function MultipleNotifications(): JSX.Element {
 		}
 		return input;
 	}, [
+		groupByDescription,
 		isMultipleNotificationsEnabled,
 		notificationSettings.multipleNotifications,
-		setNotificationSettings,
+		onSelectChange,
 		spaceAggregationOptions,
 	]);
 

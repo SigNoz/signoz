@@ -1,3 +1,4 @@
+import { UseQueryResult } from 'react-query';
 import userEvent from '@testing-library/user-event';
 import { FiltersType, QuickFiltersSource } from 'components/QuickFilters/types';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
@@ -5,7 +6,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import { quickFiltersAttributeValuesResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import { rest, server } from 'mocks-server/server';
-import { UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { SuccessResponse } from 'types/api';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -43,6 +43,12 @@ interface MockFilterConfig {
 }
 
 const SERVICE_NAME_KEY = 'service.name';
+const OTEL_DEMO = 'otel-demo';
+const SAMPLE_FLASK = 'sample-flask';
+const OTLP_PYTHON = 'otlp-python';
+const MQ_KAFKA = 'mq-kafka';
+
+const MOCK_SERVICE_NAMES = [MQ_KAFKA, OTEL_DEMO, OTLP_PYTHON, SAMPLE_FLASK];
 
 const createMockFilter = (
 	overrides: Partial<MockFilterConfig> = {},
@@ -76,7 +82,7 @@ const createMockQueryBuilderData = (hasActiveFilters = false): any => ({
 											type: 'resource',
 										},
 										op: 'in',
-										value: ['otel-demo', 'sample-flask'],
+										value: [OTEL_DEMO, SAMPLE_FLASK],
 									},
 							  ]
 							: [],
@@ -93,24 +99,32 @@ describe('CheckboxFilter - User Flows', () => {
 		// Reset all mocks
 		jest.clearAllMocks();
 
-		// Default mock implementations using the same structure as existing tests
-		mockUseGetAggregateValues.mockReturnValue({
+		// Default mock implementations for useGetAggregateValues
+		mockUseGetAggregateValues.mockReturnValue(({
 			data: {
 				payload: {
-					stringAttributeValues: [
-						'mq-kafka',
-						'otel-demo',
-						'otlp-python',
-						'sample-flask',
-					],
+					stringAttributeValues: MOCK_SERVICE_NAMES,
 				},
 			},
 			isLoading: false,
-		} as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
+			refetch: jest.fn(),
+		} as unknown) as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
 
+		// Default mock implementations for useGetQueryKeyValueSuggestions
+		// Returns data in the format expected by the hook
 		mockUseGetQueryKeyValueSuggestions.mockReturnValue({
-			data: null,
+			data: {
+				data: {
+					data: {
+						values: {
+							stringValues: MOCK_SERVICE_NAMES,
+							numberValues: [],
+						},
+					},
+				},
+			},
 			isLoading: false,
+			refetch: jest.fn(),
 		} as any);
 
 		// Setup MSW server for API calls

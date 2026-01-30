@@ -1,9 +1,9 @@
+import { useQueries } from 'react-query';
 import { renderHook } from '@testing-library/react';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { useQueries } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 
 import useOptionsMenu from '../useOptionsMenu';
@@ -37,7 +37,7 @@ describe('useOptionsMenu', () => {
 					columns: [],
 					formatting: {
 						format: 'raw',
-						maxLines: 2,
+						maxLines: 1,
 						fontSize: 'small',
 					},
 				},
@@ -49,7 +49,7 @@ describe('useOptionsMenu', () => {
 					columns: [],
 					formatting: {
 						format: 'raw',
-						maxLines: 2,
+						maxLines: 1,
 						fontSize: 'small',
 					},
 				},

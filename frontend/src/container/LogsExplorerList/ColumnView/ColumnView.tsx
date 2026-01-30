@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react-hooks/exhaustive-deps */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ColumnDef, DataTable, Row } from '@signozhq/table';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -16,7 +17,6 @@ import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isEqual } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 interface ColumnViewProps {
@@ -47,7 +47,6 @@ function ColumnView({
 		onSetActiveLog: handleSetActiveLog,
 		onClearActiveLog: handleClearActiveLog,
 		onAddToQuery: handleAddToQuery,
-		onGroupByAttribute: handleGroupByAttribute,
 	} = useActiveLog();
 
 	const [showActiveLog, setShowActiveLog] = useState<boolean>(false);
@@ -208,7 +207,9 @@ function ColumnView({
 	);
 
 	const handleColumnOrderChange = (newColumns: ColumnDef<any>[]): void => {
-		if (isEmpty(newColumns) || isEqual(newColumns, selectedColumns)) return;
+		if (isEmpty(newColumns) || isEqual(newColumns, selectedColumns)) {
+			return;
+		}
 
 		const formattedColumns = newColumns.map((column) => ({
 			id: column.id,
@@ -271,7 +272,6 @@ function ColumnView({
 					onClose={handleLogDetailClose}
 					onAddToQuery={handleAddToQuery}
 					onClickActionItem={handleAddToQuery}
-					onGroupByAttribute={handleGroupByAttribute}
 				/>
 			)}
 		</div>

@@ -1,16 +1,17 @@
-import './LogLinesActionButtons.styles.scss';
-
+import { memo, MouseEventHandler } from 'react';
 import { LinkOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import { TextSelect } from 'lucide-react';
-import { MouseEventHandler } from 'react';
+
+import './LogLinesActionButtons.styles.scss';
 
 export interface LogLinesActionButtonsProps {
 	handleShowContext: MouseEventHandler<HTMLElement>;
 	onLogCopy: MouseEventHandler<HTMLElement>;
 	customClassName?: string;
 }
-export default function LogLinesActionButtons({
+
+function LogLinesActionButtons({
 	handleShowContext,
 	onLogCopy,
 	customClassName = '',
@@ -40,3 +41,5 @@ export default function LogLinesActionButtons({
 LogLinesActionButtons.defaultProps = {
 	customClassName: '',
 };
+
+export default memo(LogLinesActionButtons);

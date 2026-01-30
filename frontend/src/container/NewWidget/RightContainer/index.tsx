@@ -1,7 +1,15 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './RightContainer.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { UseQueryResult } from 'react-query';
 import type { InputRef } from 'antd';
 import {
 	AutoComplete,
@@ -17,21 +25,17 @@ import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
 	ItemsProps,
-} from 'container/NewDashboard/ComponentsSlider/menuItems';
+} from 'container/DashboardContainer/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ConciergeBell, LineChart, Plus, Spline } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
+	ConciergeBell,
+	LineChart,
+	Plus,
+	Spline,
+	SquareArrowOutUpRight,
+} from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
@@ -61,11 +65,13 @@ import {
 	panelTypeVsYAxisUnit,
 } from './constants';
 import ContextLinks from './ContextLinks';
+import DashboardYAxisUnitSelectorWrapper from './DashboardYAxisUnitSelectorWrapper';
 import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
-import YAxisUnitSelector from './YAxisUnitSelector';
+
+import './RightContainer.styles.scss';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -123,6 +129,7 @@ function RightContainer({
 	contextLinks,
 	setContextLinks,
 	enableDrillDown = false,
+	isNewDashboard,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -140,11 +147,7 @@ function RightContainer({
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
 
-	const onCreateAlertsHandler = useCreateAlerts(
-		selectedWidget,
-		'panelView',
-		thresholds,
-	);
+	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
@@ -172,7 +175,9 @@ function RightContainer({
 
 	// Get dashboard variables
 	const dashboardVariables = useMemo<VariableOption[]>(() => {
-		if (!selectedDashboard?.data?.variables) return [];
+		if (!selectedDashboard?.data?.variables) {
+			return [];
+		}
 		return Object.entries(selectedDashboard.data.variables).map(([, value]) => ({
 			value: value.name || '',
 			label: value.name || '',
@@ -225,7 +230,9 @@ function RightContainer({
 		const pos = cursorPos;
 		const value = inputValue;
 		const lastDollar = value.lastIndexOf('$', pos - 1);
-		if (lastDollar === -1) return false;
+		if (lastDollar === -1) {
+			return false;
+		}
 		const afterDollar = value.substring(lastDollar + 1, pos).toLowerCase();
 		return option?.value.toLowerCase().startsWith(afterDollar) || false;
 	};
@@ -346,11 +353,12 @@ function RightContainer({
 					<ColumnUnitSelector
 						columnUnits={columnUnits}
 						setColumnUnits={setColumnUnits}
+						isNewDashboard={isNewDashboard}
 					/>
 				)}
 
 				{allowYAxisUnit && (
-					<YAxisUnitSelector
+					<DashboardYAxisUnitSelectorWrapper
 						onSelect={setYAxisUnit}
 						value={yAxisUnit || ''}
 						fieldLabel={
@@ -359,6 +367,8 @@ function RightContainer({
 								? 'Unit'
 								: 'Y Axis Unit'
 						}
+						// Only update the y-axis unit value automatically in create mode
+						shouldUpdateYAxisUnit={isNewDashboard}
 					/>
 				)}
 
@@ -530,6 +540,7 @@ function RightContainer({
 					<div className="left-section">
 						<ConciergeBell size={14} className="bell-icon" />
 						<Typography.Text className="alerts-text">Alerts</Typography.Text>
+						<SquareArrowOutUpRight size={10} className="info-icon" />
 					</div>
 					<Plus size={14} className="plus-icon" />
 				</section>
@@ -560,7 +571,7 @@ function RightContainer({
 	);
 }
 
-interface RightContainerProps {
+export interface RightContainerProps {
 	title: string;
 	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
@@ -609,6 +620,7 @@ interface RightContainerProps {
 	contextLinks: ContextLinksData;
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
+	isNewDashboard: boolean;
 }
 
 RightContainer.defaultProps = {

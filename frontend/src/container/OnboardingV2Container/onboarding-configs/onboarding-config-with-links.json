@@ -20,7 +20,7 @@
 			"tracing"
 		],
 		"imgUrl": "/Logos/quickstart.svg",
-		"link": "https://signoz.io/docs/cloud/quickstart/"
+		"link": "/docs/cloud/quickstart/"
 	},
 	{
 		"dataSource": "migrate-from-datadog",
@@ -49,25 +49,25 @@
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/metrics.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-datadog/metrics/"
+					"link": "/docs/migration/migrate-from-datadog/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/traces.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-datadog/traces/"
+					"link": "/docs/migration/migrate-from-datadog/traces/"
 				},
 				{
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/logs.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-datadog/logs/"
+					"link": "/docs/migration/migrate-from-datadog/logs/"
 				},
 				{
 					"key": "dashboards",
 					"label": "Dashboards",
 					"imgUrl": "/Logos/dashboards.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-datadog/dashboards/"
+					"link": "/docs/migration/migrate-from-datadog/dashboards/"
 				}
 			]
 		}
@@ -104,19 +104,19 @@
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/metrics.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-grafana/metrics/"
+					"link": "/docs/migration/migrate-from-grafana/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/traces.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-grafana/traces/"
+					"link": "/docs/migration/migrate-from-grafana/traces/"
 				},
 				{
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/logs.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-grafana/logs/"
+					"link": "/docs/migration/migrate-from-grafana/logs/"
 				}
 			]
 		}
@@ -154,19 +154,19 @@
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/metrics.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-elk/metrics/"
+					"link": "/docs/migration/migrate-from-elk/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/traces.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-elk/traces/"
+					"link": "/docs/migration/migrate-from-elk/traces/"
 				},
 				{
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/logs.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-elk/logs/"
+					"link": "/docs/migration/migrate-from-elk/logs/"
 				}
 			]
 		}
@@ -204,19 +204,19 @@
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/metrics.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-newrelic/metrics/"
+					"link": "/docs/migration/migrate-from-newrelic/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/traces.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-newrelic/traces/"
+					"link": "/docs/migration/migrate-from-newrelic/traces/"
 				},
 				{
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/logs.svg",
-					"link": "https://signoz.io/docs/migration/migrate-from-newrelic/logs/"
+					"link": "/docs/migration/migrate-from-newrelic/logs/"
 				}
 			]
 		}
@@ -243,7 +243,7 @@
 			"signoz"
 		],
 		"imgUrl": "/Logos/honeycomb.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-honeycomb/data/"
+		"link": "/docs/migration/migrate-from-honeycomb/data/"
 	},
 	{
 		"dataSource": "migrate-signoz-self-host-to-cloud",
@@ -271,7 +271,7 @@
 			"signoz self-hosted"
 		],
 		"imgUrl": "/Logos/signoz-brand-logo.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/"
+		"link": "/docs/migration/migrate-from-signoz-self-host-to-signoz-cloud/"
 	},
 	{
 		"dataSource": "migrate-from-existing-opentelemetry",
@@ -295,10 +295,11 @@
 			"otel",
 			"otel collector",
 			"otlp",
-			"signoz"
+			"signoz",
+			"open telemetry"
 		],
 		"imgUrl": "/Logos/opentelemetry.svg",
-		"link": "https://signoz.io/docs/migration/migrate-from-opentelemetry-to-signoz/"
+		"link": "/docs/migration/migrate-from-opentelemetry-to-signoz/"
 	},
 	{
 		"dataSource": "java",
@@ -316,6 +317,7 @@
 			"application performance monitoring",
 			"java",
 			"java agent",
+			"java-agent",
 			"java apm",
 			"java application",
 			"java instrumentation",
@@ -352,7 +354,7 @@
 					"key": "springboot",
 					"label": "Spring Boot",
 					"imgUrl": "/Logos/springboot.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/",
+					"link": "/docs/instrumentation/opentelemetry-springboot/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -362,19 +364,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/"
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/"
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/"
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
 							}
 						]
 					}
@@ -383,7 +385,7 @@
 					"key": "tomcat",
 					"label": "Tomcat",
 					"imgUrl": "/Logos/tomcat.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/",
+					"link": "/docs/instrumentation/opentelemetry-tomcat/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -393,19 +395,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/"
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/"
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/"
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
 							}
 						]
 					}
@@ -414,7 +416,7 @@
 					"key": "jboss",
 					"label": "JBoss",
 					"imgUrl": "/Logos/jboss.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/",
+					"link": "/docs/instrumentation/opentelemetry-jboss/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -424,19 +426,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/"
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/"
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/"
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
 							}
 						]
 					}
@@ -445,7 +447,7 @@
 					"key": "opentelemetry-quarkus",
 					"label": "Quarkus",
 					"imgUrl": "/Logos/quarkus.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/",
+					"link": "/docs/instrumentation/opentelemetry-quarkus/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -455,19 +457,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
 							}
 						]
 					}
@@ -476,7 +478,7 @@
 					"key": "Others",
 					"label": "Others",
 					"imgUrl": "/Logos/java-others.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/",
+					"link": "/docs/instrumentation/opentelemetry-java/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -486,13 +488,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/"
+								"link": "/docs/instrumentation/opentelemetry-java/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/"
+								"link": "/docs/instrumentation/opentelemetry-java/"
 							}
 						]
 					}
@@ -550,25 +552,25 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
+					"link": "/docs/instrumentation/opentelemetry-python/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
+					"link": "/docs/instrumentation/opentelemetry-python/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
+					"link": "/docs/instrumentation/opentelemetry-python/"
 				},
 				{
 					"key": "docker",
 					"label": "Docker",
 					"imgUrl": "/Logos/docker.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
+					"link": "/docs/instrumentation/opentelemetry-python/"
 				}
 			]
 		}
@@ -590,13 +592,15 @@
 			"js",
 			"nestjs",
 			"nextjs",
+			"next.js",
 			"nodejs",
 			"nuxtjs",
 			"reactjs",
 			"traces",
 			"tracing",
 			"ts",
-			"typescript"
+			"typescript",
+			"react native"
 		],
 		"id": "javascript",
 		"imgUrl": "/Logos/javascript.svg",
@@ -609,7 +613,7 @@
 					"key": "nodejs",
 					"label": "NodeJs",
 					"imgUrl": "/Logos/nodejs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/",
+					"link": "/docs/instrumentation/opentelemetry-javascript/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -619,19 +623,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/"
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/"
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/"
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
 							}
 						]
 					}
@@ -640,7 +644,7 @@
 					"key": "express",
 					"label": "Express",
 					"imgUrl": "/Logos/express.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/",
+					"link": "/docs/instrumentation/opentelemetry-express/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -650,19 +654,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/"
+								"link": "/docs/instrumentation/opentelemetry-express/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/"
+								"link": "/docs/instrumentation/opentelemetry-express/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/"
+								"link": "/docs/instrumentation/opentelemetry-express/"
 							}
 						]
 					}
@@ -671,7 +675,7 @@
 					"key": "nestjs",
 					"label": "NestJS",
 					"imgUrl": "/Logos/nestjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/",
+					"link": "/docs/instrumentation/opentelemetry-nestjs/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -681,19 +685,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/"
+								"link": "/docs/instrumentation/opentelemetry-nestjs/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/"
+								"link": "/docs/instrumentation/opentelemetry-nestjs/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/"
+								"link": "/docs/instrumentation/opentelemetry-nestjs/"
 							}
 						]
 					}
@@ -702,7 +706,7 @@
 					"key": "angular",
 					"label": "Angular",
 					"imgUrl": "/Logos/angular.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/",
+					"link": "/docs/instrumentation/opentelemetry-angular/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -712,19 +716,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/"
+								"link": "/docs/instrumentation/opentelemetry-angular/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/"
+								"link": "/docs/instrumentation/opentelemetry-angular/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/"
+								"link": "/docs/instrumentation/opentelemetry-angular/"
 							}
 						]
 					}
@@ -733,7 +737,7 @@
 					"key": "nextjs",
 					"label": "NextJS",
 					"imgUrl": "/Logos/nextjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/",
+					"link": "/docs/instrumentation/opentelemetry-nextjs/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -743,19 +747,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
 							}
 						]
 					}
@@ -764,7 +768,7 @@
 					"key": "reactjs",
 					"label": "ReactJS",
 					"imgUrl": "/Logos/reactjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/",
+					"link": "/docs/instrumentation/opentelemetry-reactjs/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -774,19 +778,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+								"link": "/docs/instrumentation/opentelemetry-reactjs/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+								"link": "/docs/instrumentation/opentelemetry-reactjs/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+								"link": "/docs/instrumentation/opentelemetry-reactjs/"
 							}
 						]
 					}
@@ -795,7 +799,7 @@
 					"key": "nuxtjs",
 					"label": "NuxtJS",
 					"imgUrl": "/Logos/nuxtjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/",
+					"link": "/docs/instrumentation/opentelemetry-nuxtjs/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -805,19 +809,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
 							}
 						]
 					}
@@ -826,7 +830,7 @@
 					"key": "react-native",
 					"label": "React Native",
 					"imgUrl": "/Logos/reactjs.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/",
+					"link": "/docs/instrumentation/opentelemetry-react-native/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -836,19 +840,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/"
+								"link": "/docs/instrumentation/opentelemetry-react-native/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/"
+								"link": "/docs/instrumentation/opentelemetry-react-native/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-react-native/"
+								"link": "/docs/instrumentation/opentelemetry-react-native/"
 							}
 						]
 					}
@@ -899,7 +903,7 @@
 			"tracing"
 		],
 		"id": "golang",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/",
+		"link": "/docs/instrumentation/opentelemetry-golang/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -909,25 +913,25 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
+					"link": "/docs/instrumentation/opentelemetry-golang/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
+					"link": "/docs/instrumentation/opentelemetry-golang/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
+					"link": "/docs/instrumentation/opentelemetry-golang/"
 				},
 				{
 					"key": "docker",
 					"label": "Docker",
 					"imgUrl": "/Logos/docker.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
+					"link": "/docs/instrumentation/opentelemetry-golang/"
 				}
 			]
 		}
@@ -988,7 +992,7 @@
 					"key": "laravel",
 					"label": "Laravel",
 					"imgUrl": "/Logos/laravel.svg",
-					"link": "https://signoz.io/docs/instrumentation/laravel/",
+					"link": "/docs/instrumentation/laravel/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -998,13 +1002,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/laravel/"
+								"link": "/docs/instrumentation/laravel/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/laravel/"
+								"link": "/docs/instrumentation/laravel/"
 							}
 						]
 					}
@@ -1013,7 +1017,7 @@
 					"key": "Others",
 					"label": "Others",
 					"imgUrl": "/Logos/php-others.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/",
+					"link": "/docs/instrumentation/opentelemetry-php/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -1023,19 +1027,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/"
+								"link": "/docs/instrumentation/opentelemetry-php/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/"
+								"link": "/docs/instrumentation/opentelemetry-php/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/"
+								"link": "/docs/instrumentation/opentelemetry-php/"
 							}
 						]
 					}
@@ -1095,7 +1099,7 @@
 			"web api .net"
 		],
 		"id": "dotnet",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/",
+		"link": "/docs/instrumentation/opentelemetry-dotnet/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -1105,19 +1109,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/"
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/"
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/"
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
 				}
 			]
 		}
@@ -1167,7 +1171,7 @@
 			"tracing"
 		],
 		"id": "ruby-on-rails",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/",
+		"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -1177,19 +1181,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/"
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/"
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/"
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				}
 			]
 		}
@@ -1232,7 +1236,7 @@
 			"tracing"
 		],
 		"id": "elixir",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/",
+		"link": "/docs/instrumentation/opentelemetry-elixir/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -1242,19 +1246,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/"
+					"link": "/docs/instrumentation/opentelemetry-elixir/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/"
+					"link": "/docs/instrumentation/opentelemetry-elixir/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/"
+					"link": "/docs/instrumentation/opentelemetry-elixir/"
 				}
 			]
 		}
@@ -1291,7 +1295,7 @@
 			"tracing"
 		],
 		"id": "rust",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/",
+		"link": "/docs/instrumentation/opentelemetry-rust/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -1301,19 +1305,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/"
+					"link": "/docs/instrumentation/opentelemetry-rust/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/"
+					"link": "/docs/instrumentation/opentelemetry-rust/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/"
+					"link": "/docs/instrumentation/opentelemetry-rust/"
 				}
 			]
 		}
@@ -1363,7 +1367,7 @@
 			"urlsession instrumentation"
 		],
 		"id": "swift",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/",
+		"link": "/docs/instrumentation/opentelemetry-swift/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -1373,19 +1377,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/"
+					"link": "/docs/instrumentation/opentelemetry-swift/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/"
+					"link": "/docs/instrumentation/opentelemetry-swift/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/"
+					"link": "/docs/instrumentation/opentelemetry-swift/"
 				}
 			]
 		}
@@ -1439,7 +1443,7 @@
 			"tracing"
 		],
 		"id": "opentelemetry-cpp",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cpp/"
+		"link": "/docs/instrumentation/opentelemetry-cpp/"
 	},
 	{
 		"dataSource": "nginx-tracing",
@@ -1462,7 +1466,7 @@
 			"tracing"
 		],
 		"id": "nginx-tracing",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-nginx/"
+		"link": "/docs/instrumentation/opentelemetry-nginx/"
 	},
 	{
 		"dataSource": "opentelemetry-wordpress",
@@ -1497,7 +1501,7 @@
 			"wordpress tracing"
 		],
 		"id": "opentelemetry-wordpress",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-wordpress/"
+		"link": "/docs/instrumentation/opentelemetry-wordpress/"
 	},
 	{
 		"dataSource": "opentelemetry-cloudflare",
@@ -1531,7 +1535,7 @@
 			"tracing"
 		],
 		"id": "opentelemetry-cloudflare",
-		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cloudflare/"
+		"link": "/docs/instrumentation/opentelemetry-cloudflare/"
 	},
 	{
 		"dataSource": "opentelemetry-cloudflare-logs",
@@ -1561,7 +1565,7 @@
 			"otel cloudflare"
 		],
 		"id": "opentelemetry-cloudflare-logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/cloudflare-logs/"
+		"link": "/docs/logs-management/send-logs/cloudflare-logs/"
 	},
 	{
 		"dataSource": "kubernetes-pod-logs",
@@ -1590,7 +1594,7 @@
 			"pod stdout stderr logs"
 		],
 		"id": "kubernetes-pod-logs",
-		"link": "https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/"
+		"link": "/docs/userguide/collect_kubernetes_pod_logs/"
 	},
 	{
 		"dataSource": "docker-container-logs",
@@ -1618,7 +1622,7 @@
 			"logs"
 		],
 		"id": "docker-container-logs",
-		"link": "https://signoz.io/docs/userguide/collect_docker_logs/"
+		"link": "/docs/userguide/collect_docker_logs/"
 	},
 	{
 		"dataSource": "vercel-logs",
@@ -1645,7 +1649,7 @@
 			"vercel-logs"
 		],
 		"id": "vercel-logs",
-		"link": "https://signoz.io/docs/userguide/vercel_logs_to_signoz/"
+		"link": "/docs/userguide/vercel_logs_to_signoz/"
 	},
 	{
 		"dataSource": "heroku-logs",
@@ -1672,7 +1676,7 @@
 			"logs"
 		],
 		"id": "heroku-logs",
-		"link": "https://signoz.io/docs/userguide/heroku_logs_to_signoz/"
+		"link": "/docs/userguide/heroku_logs_to_signoz/"
 	},
 	{
 		"dataSource": "http-logs",
@@ -1701,7 +1705,7 @@
 			"send logs via http"
 		],
 		"id": "http-logs",
-		"link": "https://signoz.io/docs/userguide/send-logs-http/"
+		"link": "/docs/userguide/send-logs-http/"
 	},
 	{
 		"dataSource": "syslogs",
@@ -1726,7 +1730,7 @@
 			"syslogs"
 		],
 		"id": "syslogs",
-		"link": "https://signoz.io/docs/userguide/collecting_syslogs/"
+		"link": "/docs/userguide/collecting_syslogs/"
 	},
 	{
 		"dataSource": "systemd-logs",
@@ -1755,7 +1759,7 @@
 			"systemd-logs"
 		],
 		"id": "systemd-logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/collect-systemd-logs/"
+		"link": "/docs/logs-management/send-logs/collect-systemd-logs/"
 	},
 	{
 		"dataSource": "fluentd",
@@ -1781,7 +1785,7 @@
 			"logs"
 		],
 		"id": "fluentd",
-		"link": "https://signoz.io/docs/userguide/fluentd_to_signoz/"
+		"link": "/docs/userguide/fluentd_to_signoz/"
 	},
 	{
 		"dataSource": "fluentbit",
@@ -1807,7 +1811,7 @@
 			"logs"
 		],
 		"id": "fluentbit",
-		"link": "https://signoz.io/docs/userguide/fluentbit_to_signoz/"
+		"link": "/docs/userguide/fluentbit_to_signoz/"
 	},
 	{
 		"dataSource": "logstash",
@@ -1833,7 +1837,7 @@
 			"logstash to signoz"
 		],
 		"id": "logstash",
-		"link": "https://signoz.io/docs/userguide/logstash_to_signoz/"
+		"link": "/docs/userguide/logstash_to_signoz/"
 	},
 	{
 		"dataSource": "tomcat-logs",
@@ -1860,7 +1864,7 @@
 			"tomcat-logs"
 		],
 		"id": "tomcat-logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/"
+		"link": "/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/"
 	},
 	{
 		"dataSource": "vector-logs",
@@ -1887,7 +1891,7 @@
 			"vector-logs"
 		],
 		"id": "vector-logs",
-		"link": "https://signoz.io/docs/logs-management/send-logs/vector-logs-to-signoz/"
+		"link": "/docs/logs-management/send-logs/vector-logs-to-signoz/"
 	},
 	{
 		"dataSource": "windows-events-logs",
@@ -1915,7 +1919,7 @@
 			"windows server logs",
 			"windows-events-logs"
 		],
-		"link": "https://signoz.io/docs/logs-management/send-logs/windows-events-log/"
+		"link": "/docs/logs-management/send-logs/windows-events-log/"
 	},
 	{
 		"dataSource": "cloudwatch-logs",
@@ -1942,7 +1946,7 @@
 			"logs",
 			"send logs to signoz"
 		],
-		"link": "https://signoz.io/docs/userguide/send-cloudwatch-logs-to-signoz/"
+		"link": "/docs/userguide/send-cloudwatch-logs-to-signoz/"
 	},
 	{
 		"dataSource": "from-log-file",
@@ -1971,7 +1975,7 @@
 			"logs",
 			"otel file logs"
 		],
-		"link": "https://signoz.io/docs/userguide/collect_logs_from_file/"
+		"link": "/docs/userguide/collect_logs_from_file/"
 	},
 	{
 		"dataSource": "aws-lambda-nodejs-logs",
@@ -1982,6 +1986,7 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws lambda logs",
 			"aws lambda nodejs logs",
@@ -2000,35 +2005,44 @@
 			"nodejs",
 			"otel lambda nodejs"
 		],
-		"link": "https://signoz.io/docs/logs-management/send-logs/aws-lambda-nodejs/"
+		"link": "/docs/logs-management/send-logs/aws-lambda-nodejs/"
 	},
 	{
-		"dataSource": "python-logs-auto-instrumentation",
-		"label": "Python logs",
+		"dataSource": "python-logs",
+		"label": "Python Logs",
 		"imgUrl": "/Logos/python.svg",
 		"tags": [
 			"logs"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
-			"auto",
 			"auto collect python logs",
-			"instrumentation",
+			"collect python logs using sdk",
+			"docker python logs",
+			"kubernetes python logs",
 			"logging",
 			"logs",
 			"opentelemetry python logging",
 			"otel python logs",
+			"otel python sdk logs",
 			"python",
 			"python app logs",
+			"python application logs",
+			"python containers",
+			"python docker",
+			"python k8s",
 			"python log auto instrumentation",
+			"python logging opentelemetry",
 			"python logging sdk",
 			"python logs",
 			"python logs to signoz",
 			"python observability",
+			"python on kubernetes",
+			"python on windows",
 			"python structured logging",
 			"python-logs-auto-instrumentation"
 		],
-		"link": "https://signoz.io/docs/userguide/python-logs-auto-instrumentation/"
+		"link": "/docs/userguide/python-logs-auto-instrumentation/"
 	},
 	{
 		"dataSource": "otel-java-sdk",
@@ -2048,6 +2062,8 @@
 			"java logs to signoz",
 			"java observability",
 			"logging",
+			"java-agent",
+			"java agent",
 			"logs",
 			"opentelemetry",
 			"otel",
@@ -2055,37 +2071,11 @@
 			"otel logs java",
 			"otel-java-sdk",
 			"sdk",
-			"structured logging java"
+			"structured logging java",
+			"Logback",
+			"log4j"
 		],
-		"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/"
-	},
-	{
-		"dataSource": "otel-python-sdk",
-		"label": "Python logs",
-		"imgUrl": "/Logos/python.svg",
-		"tags": [
-			"logs"
-		],
-		"module": "logs",
-		"relatedSearchKeywords": [
-			"collect python logs using sdk",
-			"python",
-			"python application logs",
-			"python logging opentelemetry",
-			"python logs",
-			"python logs to signoz",
-			"python observability",
-			"logging",
-			"logs",
-			"opentelemetry",
-			"otel",
-			"otel python sdk logs",
-			"otel logs python",
-			"otel-python-sdk",
-			"structured logging python"
-		],
-		"id": "otel-python-sdk",
-		"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_python/"
+		"link": "/docs/userguide/collecting_application_logs_otel_sdk_java/"
 	},
 	{
 		"dataSource": "nodejs-logs",
@@ -2123,25 +2113,25 @@
 					"key": "nodejs-default-logger",
 					"label": "Default Logger",
 					"imgUrl": "/Logos/nodejs.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-logs/"
+					"link": "/docs/logs-management/send-logs/nodejs-logs/"
 				},
 				{
 					"key": "nodejs-bunyan-logs",
 					"label": "Bunyan",
 					"imgUrl": "/Logos/logs.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/opentelemetry-nodejs-bunyan-logs/"
+					"link": "/docs/logs-management/send-logs/opentelemetry-nodejs-bunyan-logs/"
 				},
 				{
 					"key": "nodejs-winston-logs",
 					"label": "Winston",
 					"imgUrl": "/Logos/winston.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
+					"link": "/docs/logs-management/send-logs/nodejs-winston-logs/"
 				},
 				{
 					"key": "nodejs-pino-logs",
 					"label": "Pino",
 					"imgUrl": "/Logos/pino.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-pino-logs/"
+					"link": "/docs/logs-management/send-logs/nodejs-pino-logs/"
 				}
 			]
 		}
@@ -2181,19 +2171,19 @@
 					"key": "golang-zerolog-logs",
 					"label": "Zerolog",
 					"imgUrl": "/Logos/logs.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/zerolog-to-signoz/"
+					"link": "/docs/logs-management/send-logs/zerolog-to-signoz/"
 				},
 				{
 					"key": "golang-logrus-logs",
 					"label": "Logrus",
 					"imgUrl": "/Logos/logrus.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/logrus-to-signoz/"
+					"link": "/docs/logs-management/send-logs/logrus-to-signoz/"
 				},
 				{
 					"key": "golang-zap-logs",
 					"label": "Zap",
 					"imgUrl": "/Logos/zap.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/zap-to-signoz/"
+					"link": "/docs/logs-management/send-logs/zap-to-signoz/"
 				}
 			]
 		}
@@ -2224,10 +2214,14 @@
 			"observability",
 			"otel hostmetrics receiver",
 			"system metrics monitoring",
-			"vm performance metrics"
+			"vm performance metrics",
+			"ubuntu",
+			"windows",
+			"macos",
+			"linux"
 		],
 		"imgUrl": "/Logos/hostmetrics.svg",
-		"link": "https://signoz.io/docs/userguide/hostmetrics/"
+		"link": "/docs/userguide/hostmetrics/"
 	},
 	{
 		"dataSource": "k8s-metrics",
@@ -2261,7 +2255,7 @@
 			"telemetry"
 		],
 		"imgUrl": "/Logos/kubernetes.svg",
-		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
+		"link": "/docs/userguide/k8s-metrics/"
 	},
 	{
 		"dataSource": "docker-container-metrics",
@@ -2289,192 +2283,214 @@
 			"telemetry"
 		],
 		"imgUrl": "/Logos/docker.svg",
-		"link": "https://signoz.io/docs/metrics-management/docker-container-metrics/"
+		"link": "/docs/metrics-management/docker-container-metrics/"
 	},
 	{
-		"dataSource": "ec2-application-logs",
-		"label": "EC2 Application Logs",
+		"dataSource": "aws-ec2",
+		"label": "AWS EC2",
 		"tags": [
-			"AWS",
-			"logs"
+			"AWS"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
-			"application",
+			"amazon",
 			"aws",
+			"aws ec2",
 			"aws ec2 log collection",
 			"aws logs otel",
 			"collect ec2 logs",
 			"ec2",
 			"ec2 application logs",
+			"ec2 infra metrics",
+			"ec2 infrastructure metrics",
 			"ec2 log ingestion",
-			"ec2 log monitoring",
-			"ec2 logs to signoz",
-			"ec2 observability",
-			"ec2 structured logging",
-			"ec2-application-logs",
+			"ec2 metrics",
+			"ec2 monitoring",
 			"logging",
 			"logs",
-			"opentelemetry ec2 logs"
+			"metrics",
+			"opentelemetry ec2",
+			"vm monitoring"
 		],
 		"imgUrl": "/Logos/ec2.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/ec2-logs/"
+		"question": {
+			"desc": "What would you like to monitor for AWS EC2?",
+			"type": "select",
+			"helpText": "Choose the type of telemetry data you want to collect from your EC2 instances.",
+			"options": [
+				{
+					"key": "aws-ec2-logs",
+					"label": "Logs",
+					"imgUrl": "/Logos/ec2.svg",
+					"link": "/docs/userguide/collect_logs_from_file/"
+				},
+				{
+					"key": "aws-ec2-metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/ec2.svg",
+					"question": {
+						"desc": "How would you like to set up EC2 Metrics monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-ec2-metrics-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/ec2.svg",
+								"link": "/integrations?integration=aws-integration&service=ec2",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-ec2-metrics-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/ec2.svg",
+								"link": "/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/"
+							}
+						]
+					}
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "ec2-infrastructure-metrics",
-		"label": "EC2 Infra Metrics",
+		"dataSource": "aws-ecs",
+		"label": "AWS ECS",
 		"tags": [
 			"AWS"
 		],
 		"module": "infra-monitoring-hosts",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
-			"aws infrastructure observability",
-			"aws vm monitoring",
-			"collect ec2 cpu memory",
-			"ec2",
-			"ec2 infra metrics",
-			"ec2 infrastructure metrics",
-			"ec2 metrics to signoz",
-			"ec2 performance monitoring",
-			"ec2 system metrics",
-			"ec2 telemetry",
-			"ec2-infrastructure-metrics",
-			"hosts",
-			"infra",
-			"infra-monitoring-hosts",
-			"infrastructure",
-			"metrics",
-			"monitor aws ec2",
-			"monitoring",
-			"observability",
-			"opentelemetry ec2 metrics",
-			"telemetry"
-		],
-		"imgUrl": "/Logos/ec2.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/ec2-infra-metrics/"
-	},
-	{
-		"dataSource": "ecs-ec2",
-		"label": "ECS EC2",
-		"tags": [
-			"AWS"
-		],
-		"module": "dashboards",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws container service ec2",
-			"aws ecs ec2 observability",
-			"collect ecs ec2 logs",
-			"dashboards",
+			"aws container service",
+			"aws ecs",
+			"container",
 			"ec2",
 			"ecs",
 			"ecs ec2",
-			"ecs ec2 logs and metrics",
-			"ecs ec2 monitoring",
-			"ecs ec2 opentelemetry",
-			"ecs ec2 to signoz",
-			"ecs instance metrics",
-			"ecs telemetry ec2",
-			"ecs-ec2",
-			"monitor ecs tasks on ec2"
-		],
-		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/userguide/collecting-ecs-logs-and-metrics/"
-	},
-	{
-		"dataSource": "ecs-external",
-		"label": "ECS External",
-		"tags": [
-			"AWS"
-		],
-		"module": "dashboards",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws ecs external setup",
-			"dashboards",
-			"ecs",
 			"ecs external",
-			"ecs external logs metrics",
-			"ecs external monitoring",
-			"ecs external node integration",
-			"ecs external tasks",
-			"ecs external to signoz",
-			"ecs telemetry external",
-			"ecs-external",
+			"ecs fargate",
+			"ecs monitoring",
 			"external",
-			"external ecs observability",
-			"monitor ecs external workloads",
-			"opentelemetry ecs external"
+			"fargate"
 		],
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/userguide/collecting-ecs-logs-and-metrics/"
+		"link": "/docs/aws-monitoring/ecs/",
+		"question": {
+			"desc": "What type of ECS deployment do you have?",
+			"type": "select",
+			"helpText": "Choose your ECS launch type to see the appropriate setup options.",
+			"options": [
+				{
+					"key": "aws-ecs-ec2-external",
+					"label": "EC2/External",
+					"imgUrl": "/Logos/ecs.svg",
+					"question": {
+						"desc": "How would you like to set up ECS EC2/External monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-ecs-ec2-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/ecs.svg",
+								"link": "/integrations?integration=aws-integration&service=ecs",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-ecs-ec2-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/ecs.svg",
+								"link": "/docs/opentelemetry-collection-agents/ecs/ec2/install/"
+							}
+						]
+					}
+				},
+				{
+					"key": "aws-ecs-fargate",
+					"label": "Fargate",
+					"imgUrl": "/Logos/ecs.svg",
+					"link": "/docs/opentelemetry-collection-agents/ecs/sidecar/install/"
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "ecs-fargate",
-		"label": "ECS Fargate",
+		"dataSource": "aws-eks",
+		"label": "AWS EKS",
 		"tags": [
 			"AWS"
 		],
-		"module": "dashboards",
+		"module": "infra-monitoring-k8s",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
-			"aws fargate tracing",
-			"collect logs from fargate",
-			"dashboards",
-			"ecs",
-			"ecs fargate",
-			"ecs fargate integration",
-			"ecs fargate monitoring",
-			"ecs fargate observability",
-			"ecs-fargate",
-			"fargate",
-			"fargate logs and metrics",
-			"fargate telemetry",
-			"fargate to signoz",
-			"monitor fargate containers",
-			"opentelemetry fargate"
-		],
-		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/userguide/collecting-ecs-sidecar-infra/"
-	},
-	{
-		"dataSource": "eks",
-		"label": "EKS",
-		"tags": [
-			"AWS",
-			"logs"
-		],
-		"module": "logs",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws eks logs",
-			"collect eks pod logs",
+			"aws eks",
+			"aws kubernetes",
+			"ec2 nodes",
 			"eks",
-			"eks cloudwatch logs",
-			"eks log collection",
-			"eks log monitoring",
-			"eks logging setup",
+			"eks fargate",
 			"eks logs",
-			"eks logs to signoz",
-			"eks observability",
-			"eks with opentelemetry",
-			"logging",
-			"logs"
+			"eks metrics",
+			"eks monitoring",
+			"fargate",
+			"kubernetes"
 		],
 		"imgUrl": "/Logos/eks.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/eks/"
+		"link": "/docs/aws-monitoring/eks/",
+		"question": {
+			"desc": "What type of EKS deployment do you have?",
+			"type": "select",
+			"helpText": "Choose your EKS node type to see the appropriate setup options.",
+			"options": [
+				{
+					"key": "aws-eks-ec2-nodes",
+					"label": "EC2 Nodes",
+					"imgUrl": "/Logos/eks.svg",
+					"question": {
+						"desc": "How would you like to set up EKS EC2 Nodes monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-eks-ec2-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/eks.svg",
+								"link": "/integrations?integration=aws-integration&service=eks",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-eks-ec2-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/eks.svg",
+								"link": "/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/"
+							}
+						]
+					}
+				},
+				{
+					"key": "aws-eks-fargate",
+					"label": "Fargate",
+					"imgUrl": "/Logos/eks.svg",
+					"link": "/docs/opentelemetry-collection-agents/k8s/serverless/install/"
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "elb-logs",
-		"label": "ELB Logs",
+		"dataSource": "aws-elb",
+		"label": "AWS ELB",
 		"tags": [
-			"AWS",
-			"logs"
+			"AWS"
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
+			"aws elb",
 			"aws elb logs",
 			"collect elb logs",
 			"elb",
@@ -2482,16 +2498,18 @@
 			"elb log monitoring",
 			"elb logs",
 			"elb logs opentelemetry",
-			"elb logs to signoz",
+			"elb metrics",
+			"elb monitoring",
 			"elb observability",
-			"elb request tracing",
 			"elb-logs",
+			"elastic load balancer",
+			"load balancer",
 			"logging",
 			"logs",
-			"otel elb logs"
+			"metrics"
 		],
 		"imgUrl": "/Logos/elb.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/elb-logs/"
+		"link": "/docs/aws-monitoring/elb/"
 	},
 	{
 		"dataSource": "vpc-logs",
@@ -2502,6 +2520,7 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
 			"aws vpc logs",
 			"collect vpc logs",
@@ -2520,64 +2539,175 @@
 			"vpc-logs"
 		],
 		"imgUrl": "/Logos/vpc.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/vpc-logs/"
+		"link": "/docs/aws-monitoring/vpc-logs/"
 	},
 	{
-		"dataSource": "rds-logs",
-		"label": "RDS Logs",
+		"dataSource": "aws-rds",
+		"label": "AWS RDS",
+		"imgUrl": "/Logos/rds.svg",
 		"tags": [
 			"AWS",
-			"logs"
+			"database"
 		],
-		"module": "logs",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
+			"amazon rds",
 			"aws",
+			"aws database",
+			"aws rds",
 			"aws rds logs",
+			"aws rds metrics",
+			"aws rds mysql",
+			"aws rds one click",
+			"aws rds postgresql",
+			"aws-rds",
 			"collect rds logs",
-			"logging",
-			"logs",
+			"database",
+			"integrations",
+			"mysql",
+			"postgresql",
 			"rds",
-			"rds log monitoring otel",
 			"rds logs",
 			"rds logs to signoz",
+			"rds metrics",
 			"rds mysql logs",
 			"rds observability",
 			"rds performance monitoring",
 			"rds postgres logs",
-			"rds slow query logs",
-			"rds-logs"
+			"rds slow query logs"
 		],
-		"imgUrl": "/Logos/rds.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS RDS monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-rds-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/rds.svg",
+					"link": "/integrations?integration=aws-integration&service=rds",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-rds-mysql-manual",
+					"label": "MySQL Manual",
+					"imgUrl": "/Logos/rds.svg",
+					"link": "/integrations?integration=builtin-aws_rds_mysql",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-rds-postgresql-manual",
+					"label": "PostgreSQL Manual",
+					"imgUrl": "/Logos/rds.svg",
+					"link": "/integrations?integration=builtin-aws_rds_postgresql",
+					"internalRedirect": true
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "aws-lambda",
-		"label": "Lambda Logs",
+		"label": "AWS Lambda",
 		"tags": [
-			"AWS",
-			"logs"
+			"AWS"
 		],
-		"module": "logs",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
 			"aws",
+			"aws lambda",
 			"aws lambda insights",
 			"aws lambda logs",
 			"aws-lambda",
 			"collect lambda telemetry",
+			"function",
 			"lambda",
 			"lambda logs",
+			"lambda metrics",
 			"lambda monitoring otel",
 			"lambda observability",
 			"lambda to signoz",
 			"lambda tracing",
 			"logging",
 			"logs",
+			"metrics",
 			"opentelemetry aws lambda",
-			"serverless monitoring"
+			"serverless",
+			"serverless monitoring",
+			"traces",
+			"tracing"
 		],
 		"imgUrl": "/Logos/lambda.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/lambda-logs/"
+		"link": "/docs/aws-monitoring/lambda/",
+		"question": {
+			"desc": "What would you like to monitor for AWS Lambda?",
+			"type": "select",
+			"helpText": "Choose the type of telemetry data you want to collect from your Lambda functions.",
+			"options": [
+				{
+					"key": "aws-lambda-logs",
+					"label": "Logs",
+					"imgUrl": "/Logos/lambda.svg",
+					"question": {
+						"desc": "How would you like to set up Lambda Logs monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-lambda-logs-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/integrations?integration=aws-integration&service=lambda",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-lambda-logs-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/docs/aws-monitoring/lambda/lambda-logs/"
+							}
+						]
+					}
+				},
+				{
+					"key": "aws-lambda-traces",
+					"label": "Traces",
+					"imgUrl": "/Logos/lambda.svg",
+					"link": "/docs/aws-monitoring/lambda/lambda-traces/"
+				},
+				{
+					"key": "aws-lambda-metrics",
+					"label": "Metrics",
+					"imgUrl": "/Logos/lambda.svg",
+					"question": {
+						"desc": "How would you like to set up Lambda Metrics monitoring?",
+						"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry for more control.",
+						"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+						"helpLinkText": "Read the comparison guide \u2192",
+						"options": [
+							{
+								"key": "aws-lambda-metrics-one-click",
+								"label": "One Click AWS",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/integrations?integration=aws-integration&service=lambda",
+								"internalRedirect": true
+							},
+							{
+								"key": "aws-lambda-metrics-manual",
+								"label": "Manual Setup",
+								"imgUrl": "/Logos/lambda.svg",
+								"link": "/docs/aws-monitoring/lambda/lambda-metrics/"
+							}
+						]
+					}
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "vm-metrics-and-logging",
@@ -2611,7 +2741,7 @@
 			"vm-metrics-and-logging"
 		],
 		"imgUrl": "/Logos/azure-vm.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/virtual-machines/vm-metrics/"
+		"link": "/docs/azure-monitoring/virtual-machines/vm-metrics/"
 	},
 	{
 		"dataSource": "app-service",
@@ -2650,19 +2780,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-vm.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/app-service/logging/"
+					"link": "/docs/azure-monitoring/app-service/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-vm.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/app-service/metrics/"
+					"link": "/docs/azure-monitoring/app-service/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-vm.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/app-service/tracing/"
+					"link": "/docs/azure-monitoring/app-service/tracing/"
 				}
 			]
 		}
@@ -2696,7 +2826,7 @@
 			"tracing"
 		],
 		"imgUrl": "/Logos/azure-app-service.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/aks/"
+		"link": "/docs/azure-monitoring/aks/"
 	},
 	{
 		"dataSource": "azure-container-apps",
@@ -2735,19 +2865,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-container-apps.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-container-apps/logging/"
+					"link": "/docs/azure-monitoring/az-container-apps/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-container-apps.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-container-apps/metrics/"
+					"link": "/docs/azure-monitoring/az-container-apps/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-container-apps.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-container-apps/tracing/"
+					"link": "/docs/azure-monitoring/az-container-apps/tracing/"
 				}
 			]
 		}
@@ -2788,19 +2918,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-functions.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-fns/logging/"
+					"link": "/docs/azure-monitoring/az-fns/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-functions.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-fns/metrics/"
+					"link": "/docs/azure-monitoring/az-fns/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-functions.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-fns/tracing/"
+					"link": "/docs/azure-monitoring/az-fns/tracing/"
 				}
 			]
 		}
@@ -2832,7 +2962,7 @@
 			"telemetry"
 		],
 		"imgUrl": "/Logos/azure-sql-database-metrics.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/db-metrics/"
+		"link": "/docs/azure-monitoring/db-metrics/"
 	},
 	{
 		"dataSource": "azure-blob-storage",
@@ -2871,13 +3001,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-blob-storage.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/logging/"
+					"link": "/docs/azure-monitoring/az-blob-storage/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-blob-storage.svg",
-					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/metrics/"
+					"link": "/docs/azure-monitoring/az-blob-storage/metrics/"
 				}
 			]
 		}
@@ -2909,7 +3039,7 @@
 			"telemetry"
 		],
 		"imgUrl": "/Logos/azure-mysql.svg",
-		"link": "https://signoz.io/docs/azure-monitoring/mysql-flexible-server/"
+		"link": "/docs/azure-monitoring/mysql-flexible-server/"
 	},
 	{
 		"dataSource": "cloud-functions",
@@ -2948,25 +3078,25 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/logging/"
+					"link": "/docs/gcp-monitoring/gcp-fns/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Cloud Function Metrics",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/fns-metrics/"
+					"link": "/docs/gcp-monitoring/gcp-fns/fns-metrics/"
 				},
 				{
 					"key": "metrics",
 					"label": "Custom Metrics",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/custom-metrics/"
+					"link": "/docs/gcp-monitoring/gcp-fns/custom-metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/tracing/"
+					"link": "/docs/gcp-monitoring/gcp-fns/tracing/"
 				}
 			]
 		}
@@ -3008,19 +3138,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-app-engine.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/app-engine/logging/"
+					"link": "/docs/gcp-monitoring/app-engine/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-app-engine.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/app-engine/metrics/"
+					"link": "/docs/gcp-monitoring/app-engine/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-app-engine.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/app-engine/tracing/"
+					"link": "/docs/gcp-monitoring/app-engine/tracing/"
 				}
 			]
 		}
@@ -3062,19 +3192,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-compute-engine.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/logging/"
+					"link": "/docs/gcp-monitoring/compute-engine/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-compute-engine.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/metrics/"
+					"link": "/docs/gcp-monitoring/compute-engine/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-compute-engine.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/tracing/"
+					"link": "/docs/gcp-monitoring/compute-engine/tracing/"
 				}
 			]
 		}
@@ -3116,13 +3246,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-storage.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcs/logging/"
+					"link": "/docs/gcp-monitoring/gcs/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-storage.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcs/metrics/"
+					"link": "/docs/gcp-monitoring/gcs/metrics/"
 				}
 			]
 		}
@@ -3164,13 +3294,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-sql.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/cloud-sql/logging/"
+					"link": "/docs/gcp-monitoring/cloud-sql/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-sql.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/cloud-sql/metrics/"
+					"link": "/docs/gcp-monitoring/cloud-sql/metrics/"
 				}
 			]
 		}
@@ -3213,13 +3343,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcp-clb/logging/"
+					"link": "/docs/gcp-monitoring/gcp-clb/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gcp-clb/metrics/"
+					"link": "/docs/gcp-monitoring/gcp-clb/metrics/"
 				}
 			]
 		}
@@ -3258,13 +3388,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-vpc.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/vpc/logging/"
+					"link": "/docs/gcp-monitoring/vpc/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-vpc.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/vpc/metrics/"
+					"link": "/docs/gcp-monitoring/vpc/metrics/"
 				}
 			]
 		}
@@ -3308,19 +3438,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-gke.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
+					"link": "/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-gke.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
+					"link": "/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-gke.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/gke/gke-tracing/"
+					"link": "/docs/gcp-monitoring/gke/gke-tracing/"
 				}
 			]
 		}
@@ -3362,19 +3492,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-run.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/logging/"
+					"link": "/docs/gcp-monitoring/cloud-run/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-run.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/metrics/"
+					"link": "/docs/gcp-monitoring/cloud-run/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-cloud-run.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/tracing/"
+					"link": "/docs/gcp-monitoring/cloud-run/tracing/"
 				}
 			]
 		}
@@ -3417,7 +3547,7 @@
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-monitoring.svg",
-					"link": "https://signoz.io/docs/gcp-monitoring/cloud-monitoring/metrics/"
+					"link": "/docs/gcp-monitoring/cloud-monitoring/metrics/"
 				}
 			]
 		}
@@ -3454,7 +3584,141 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/llm/opentelemetry-openai-monitoring/"
+		"link": "/docs/llm/opentelemetry-openai-monitoring/"
+	},
+	{
+		"dataSource": "codex-monitoring",
+		"label": "Codex",
+		"imgUrl": "/Logos/openai.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"codex",
+			"codex monitoring",
+			"codex observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel codex",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/codex-monitoring/"
+	},
+	{
+		"dataSource": "groq-observability",
+		"label": "Groq",
+		"imgUrl": "/Logos/groq.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"groq",
+			"groq monitoring",
+			"groq observability",
+			"groq api monitoring",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel groq",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/groq-observability/"
+	},
+	{
+		"dataSource": "google-adk-observability",
+		"label": "Google ADK",
+		"imgUrl": "/Logos/google-adk.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"adk",
+			"google adk",
+			"google adk monitoring",
+			"google adk observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel google adk",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/google-adk-observability/"
+	},
+	{
+		"dataSource": "openlit",
+		"label": "OpenLit",
+		"imgUrl": "/Logos/openlit.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"openlit",
+			"openlit monitoring",
+			"openlit observability",
+			"otel openlit",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/openlit/"
+	},
+	{
+		"dataSource": "langtrace",
+		"label": "Langtrace",
+		"imgUrl": "/Logos/langtrace.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"langtrace",
+			"langtrace monitoring",
+			"langtrace observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel langtrace",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/langtrace/"
+	},
+	{
+		"dataSource": "traceloop",
+		"label": "Traceloop",
+		"imgUrl": "/Logos/traceloop.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel traceloop",
+			"traces",
+			"tracing",
+			"traceloop",
+			"traceloop monitoring",
+			"traceloop observability"
+		],
+		"link": "/docs/traceloop/"
 	},
 	{
 		"dataSource": "anthropic-api",
@@ -3486,7 +3750,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/anthropic-monitoring/"
+		"link": "/docs/anthropic-monitoring/"
 	},
 	{
 		"dataSource": "claude-code",
@@ -3520,7 +3784,7 @@
 			"otel claude integration",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/claude-code-monitoring/"
+		"link": "/docs/claude-code-monitoring/"
 	},
 	{
 		"dataSource": "deepseek-api",
@@ -3554,7 +3818,7 @@
 			"otel deepseek integration",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/deepseek-monitoring/"
+		"link": "/docs/deepseek-monitoring/"
 	},
 	{
 		"dataSource": "google-gemini-api",
@@ -3589,7 +3853,7 @@
 			"otel google gemini integration",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/google-gemini-monitoring/"
+		"link": "/docs/google-gemini-monitoring/"
 	},
 	{
 		"dataSource": "langchain",
@@ -3620,7 +3884,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/langchain-observability/"
+		"link": "/docs/langchain-observability/"
 	},
 	{
 		"dataSource": "llamaindex",
@@ -3651,7 +3915,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/llamaindex-observability/"
+		"link": "/docs/llamaindex-observability/"
 	},
 	{
 		"dataSource": "vercel-ai-sdk",
@@ -3686,7 +3950,7 @@
 			"vercel ai sdk response time",
 			"vercel-ai-sdk"
 		],
-		"link": "https://signoz.io/docs/vercel-ai-sdk-observability/"
+		"link": "/docs/vercel-ai-sdk-observability/"
 	},
 	{
 		"dataSource": "amazon-bedrock",
@@ -3709,7 +3973,7 @@
 			"amazon bedrock debugging",
 			"traces"
 		],
-		"link": "https://signoz.io/docs/amazon-bedrock-monitoring/"
+		"link": "/docs/amazon-bedrock-monitoring/"
 	},
 	{
 		"dataSource": "autogen",
@@ -3732,7 +3996,7 @@
 			"autogen debugging",
 			"traces"
 		],
-		"link": "https://signoz.io/docs/autogen-observability/"
+		"link": "/docs/autogen-observability/"
 	},
 	{
 		"dataSource": "azure-openai",
@@ -3755,7 +4019,7 @@
 			"azure open ai debugging",
 			"traces"
 		],
-		"link": "https://signoz.io/docs/azure-openai-monitoring/"
+		"link": "/docs/azure-openai-monitoring/"
 	},
 	{
 		"dataSource": "crew-ai",
@@ -3778,7 +4042,7 @@
 			"crew ai debugging",
 			"traces"
 		],
-		"link": "https://signoz.io/docs/crewai-observability/"
+		"link": "/docs/crewai-observability/"
 	},
 	{
 		"dataSource": "litellm",
@@ -3801,7 +4065,7 @@
 			"litellm debugging",
 			"traces"
 		],
-		"link": "https://signoz.io/docs/litellm-observability/"
+		"link": "/docs/litellm-observability/"
 	},
 	{
 		"dataSource": "pydantic-ai",
@@ -3824,7 +4088,7 @@
 			"pydantic ai debugging",
 			"traces"
 		],
-		"link": "https://signoz.io/docs/pydantic-ai-observability/"
+		"link": "/docs/pydantic-ai-observability/"
 	},
 	{
 		"dataSource": "mastra-monitoring",
@@ -3849,7 +4113,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/mastra-observability/"
+		"link": "/docs/mastra-observability/"
 	},
 	{
 		"dataSource": "http-endpoints-monitoring",
@@ -3879,7 +4143,7 @@
 			"uptime monitoring",
 			"website monitoring"
 		],
-		"link": "https://signoz.io/docs/monitor-http-endpoints/"
+		"link": "/docs/monitor-http-endpoints/"
 	},
 	{
 		"dataSource": "external-api-monitoring-setup",
@@ -3914,7 +4178,7 @@
 			"setup",
 			"third party api monitoring"
 		],
-		"link": "https://signoz.io/docs/external-api-monitoring/setup/"
+		"link": "/docs/external-api-monitoring/setup/"
 	},
 	{
 		"dataSource": "github-metrics",
@@ -3941,7 +4205,7 @@
 			"monitor github repos",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/cicd/github/github-metrics/"
+		"link": "/docs/cicd/github/github-metrics/"
 	},
 	{
 		"dataSource": "github-actions-traces",
@@ -3971,7 +4235,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/cicd/github/github-actions-traces/"
+		"link": "/docs/cicd/github/github-actions-traces/"
 	},
 	{
 		"dataSource": "jenkins-agent-node-monitoring",
@@ -4003,7 +4267,7 @@
 			"observability",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/cicd/jenkins/agent-node-monitoring/"
+		"link": "/docs/cicd/jenkins/agent-node-monitoring/"
 	},
 	{
 		"dataSource": "jenkins-tracing",
@@ -4032,7 +4296,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/cicd/jenkins/jenkins-tracing/"
+		"link": "/docs/cicd/jenkins/jenkins-tracing/"
 	},
 	{
 		"dataSource": "argocd-metrics",
@@ -4060,7 +4324,7 @@
 			"monitor argocd",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/cicd/argocd/argocd-metrics/"
+		"link": "/docs/cicd/argocd/argocd-metrics/"
 	},
 	{
 		"dataSource": "self-hosted-kafka",
@@ -4086,32 +4350,7 @@
 			"self-hosted kafka",
 			"self-hosted-kafka"
 		],
-		"link": "https://signoz.io/docs/messaging-queues/kafka/"
-	},
-	{
-		"dataSource": "amazon-msk",
-		"label": "Amazon MSK",
-		"imgUrl": "/Logos/amazon-msk.svg",
-		"tags": [
-			"Messaging Queues"
-		],
-		"module": "messaging-queues-kafka",
-		"relatedSearchKeywords": [
-			"amazon",
-			"amazon msk",
-			"amazon-msk",
-			"aws kafka",
-			"kafka",
-			"messaging",
-			"messaging queues",
-			"messaging-queues-kafka",
-			"msk",
-			"msk kafka",
-			"msk monitoring",
-			"msk tracing",
-			"queues"
-		],
-		"link": "https://signoz.io/docs/messaging-queues/msk/"
+		"link": "/docs/messaging-queues/kafka/"
 	},
 	{
 		"dataSource": "confluent-kafka",
@@ -4135,7 +4374,7 @@
 			"messaging-queues-kafka",
 			"queues"
 		],
-		"link": "https://signoz.io/docs/messaging-queues/confluent-kafka/"
+		"link": "/docs/messaging-queues/confluent-kafka/"
 	},
 	{
 		"dataSource": "strimzi-kafka",
@@ -4159,7 +4398,7 @@
 			"strimzi operator",
 			"strimzi-kafka"
 		],
-		"link": "https://signoz.io/docs/messaging-queues/strimzi/"
+		"link": "/docs/messaging-queues/strimzi/"
 	},
 	{
 		"dataSource": "celery",
@@ -4181,7 +4420,7 @@
 			"queues",
 			"task queue tracing"
 		],
-		"link": "https://signoz.io/docs/messaging-queues/celery-setup/"
+		"link": "/docs/messaging-queues/celery-setup/"
 	},
 	{
 		"dataSource": "android-java",
@@ -4216,7 +4455,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
 	},
 	{
 		"dataSource": "android-kotlin",
@@ -4251,7 +4490,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
 	},
 	{
 		"dataSource": "flutter",
@@ -4283,7 +4522,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
 	},
 	{
 		"dataSource": "swift",
@@ -4317,7 +4556,7 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
+		"link": "/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
 	},
 	{
 		"dataSource": "frontend-web-vitals-metrics",
@@ -4346,9 +4585,11 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
-			"nextjs"
+			"sveltekit",
+			"nextjs",
+"next.js"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/web-vitals-with-metrics/"
+		"link": "/docs/frontend-monitoring/web-vitals-with-metrics/"
 	},
 	{
 		"dataSource": "frontend-web-vitals-traces",
@@ -4379,9 +4620,11 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
-			"nextjs"
+			"sveltekit",
+			"nextjs",
+"next.js"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/web-vitals-with-traces/"
+		"link": "/docs/frontend-monitoring/web-vitals-with-traces/"
 	},
 	{
 		"dataSource": "document-load",
@@ -4419,18 +4662,19 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
-			"nextjs"
+			"sveltekit",
+			"nextjs",
+"next.js"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
+		"link": "/docs/frontend-monitoring/document-load/"
 	},
 	{
 		"dataSource": "redis",
 		"label": "Redis",
 		"tags": [
-			"integrations",
 			"database"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"database",
 			"integrations",
@@ -4446,10 +4690,9 @@
 		"dataSource": "postgresql",
 		"label": "PostgreSQL",
 		"tags": [
-			"integrations",
 			"database"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"database",
 			"integrations",
@@ -4465,9 +4708,9 @@
 		"dataSource": "nginx",
 		"label": "Nginx",
 		"tags": [
-			"integrations"
+			"infrastructure monitoring"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"integrations",
 			"nginx",
@@ -4483,10 +4726,9 @@
 		"dataSource": "mongo",
 		"label": "MongoDB (Self-Hosted)",
 		"tags": [
-			"integrations",
 			"database"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"database",
 			"hosted",
@@ -4507,10 +4749,9 @@
 		"dataSource": "clickhouse",
 		"label": "ClickHouse",
 		"tags": [
-			"integrations",
 			"database"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"clickhouse",
 			"clickhouse logs",
@@ -4528,7 +4769,6 @@
 		"dataSource": "snowflake",
 		"label": "Snowflake",
 		"tags": [
-			"integrations",
 			"metrics"
 		],
 		"module": "metrics",
@@ -4546,339 +4786,196 @@
 			"telemetry"
 		],
 		"imgUrl": "/Logos/snowflake.svg",
-		"link": "https://signoz.io/docs/integrations/snowflake/"
-	},
-	{
-		"dataSource": "aws-rds-postgresql",
-		"label": "AWS RDS (PostgreSQL)",
-		"tags": [
-			"integrations",
-			"database"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws database",
-			"aws rds (postgresql)",
-			"aws rds postgresql",
-			"aws-rds-postgresql",
-			"database",
-			"integrations",
-			"postgresql",
-			"rds",
-			"rds logs",
-			"rds metrics"
-		],
-		"imgUrl": "/Logos/rds.svg",
-		"link": "/integrations?integration=builtin-aws_rds_postgresql",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "aws-rds-mysql",
-		"label": "AWS RDS (MySQL)",
-		"tags": [
-			"integrations",
-			"database"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws database",
-			"aws rds (mysql)",
-			"aws rds mysql",
-			"aws-rds-mysql",
-			"database",
-			"integrations",
-			"mysql",
-			"rds",
-			"rds logs",
-			"rds metrics"
-		],
-		"imgUrl": "/Logos/rds.svg",
-		"link": "/integrations?integration=builtin-aws_rds_mysql",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "aws-elasticache-redis",
-		"label": "AWS ElastiCache (redis)",
-		"tags": [
-			"integrations"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws cache",
-			"aws elasticache (redis)",
-			"aws elasticache redis",
-			"aws-elasticache-redis",
-			"cache metrics",
-			"elasticache",
-			"integrations",
-			"redis"
-		],
-		"imgUrl": "/Logos/elasticache.svg",
-		"link": "/integrations?integration=builtin-aws_elasticache_redis",
-		"internalRedirect": true
+		"link": "/docs/integrations/snowflake/"
 	},
 	{
 		"dataSource": "aws-alb",
-		"label": "AWS ALB - One Click",
+		"label": "AWS ALB",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"alb",
-			"alb logs",
-			"alb metrics",
-			"application load balancer",
+			"amazon",
+			"amazon alb",
 			"aws",
 			"aws alb",
-			"aws alb - one click",
 			"aws-alb",
-			"click",
-			"integrations",
-			"load balancer",
-			"one"
+			"balancer",
+			"elastic load balancer",
+			"load",
+			"load balancer"
 		],
 		"imgUrl": "/Logos/aws-alb.svg",
-		"link": "/integrations?integration=aws-integration&service=alb",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS ALB monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-alb-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/aws-alb.svg",
+					"link": "/integrations?integration=aws-integration&service=alb",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-alb-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/aws-alb.svg",
+					"link": "/docs/aws-monitoring/alb/"
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "api-gateway",
-		"label": "AWS API Gateway - One Click",
+		"dataSource": "aws-api-gateway",
+		"label": "AWS API Gateway",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
+			"amazon api gateway",
 			"api",
 			"api gateway",
-			"api monitoring",
 			"api-gateway",
-			"apigateway logs",
-			"apigateway metrics",
 			"aws",
 			"aws api gateway",
-			"aws api gateway - one click",
-			"click",
-			"gateway",
-			"integrations",
-			"one"
+			"gateway"
 		],
 		"imgUrl": "/Logos/api-gateway.svg",
-		"link": "/integrations?integration=aws-integration&service=api-gateway",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS API Gateway monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-api-gateway-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/api-gateway.svg",
+					"link": "/integrations?integration=aws-integration&service=api-gateway",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-api-gateway-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/api-gateway.svg",
+					"link": "/docs/aws-monitoring/api-gateway/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "aws-dynamodb",
-		"label": "DynamoDB - One Click",
+		"label": "AWS DynamoDB",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
+			"amazon dynamo db",
+			"amazon dynamodb",
 			"aws",
+			"aws dynamo db",
 			"aws dynamodb",
 			"aws-dynamodb",
-			"click",
+			"database",
+			"dynamo",
+			"dynamo db",
 			"dynamodb",
-			"dynamodb - one click",
-			"dynamodb logs",
-			"dynamodb metrics",
-			"dynamodb monitoring",
-			"integrations",
-			"nosql database",
-			"one"
+			"nosql"
 		],
 		"imgUrl": "/Logos/dynamodb.svg",
-		"link": "/integrations?integration=aws-integration&service=dynamodb",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS DynamoDB monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-dynamodb-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/dynamodb.svg",
+					"link": "/integrations?integration=aws-integration&service=dynamodb",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-dynamodb-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/dynamodb.svg",
+					"link": "/docs/aws-monitoring/dynamodb/"
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "ec2",
-		"label": "EC2 - One Click",
-		"tags": [
-			"integrations",
-			"AWS"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws ec2",
-			"click",
-			"compute instance",
-			"ec2",
-			"ec2 - one click",
-			"ec2 logs",
-			"ec2 metrics",
-			"integrations",
-			"one"
-		],
-		"imgUrl": "/Logos/ec2.svg",
-		"link": "/integrations?integration=aws-integration&service=ec2",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "aws-ecs-one-click",
-		"label": "ECS - One Click",
-		"tags": [
-			"integrations",
-			"AWS"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws ecs",
-			"aws-ecs-one-click",
-			"click",
-			"container service",
-			"ecs",
-			"ecs - one click",
-			"ecs logs",
-			"ecs metrics",
-			"ecs monitoring",
-			"integrations",
-			"one"
-		],
-		"imgUrl": "/Logos/ecs.svg",
-		"link": "/integrations?integration=aws-integration&service=ecs",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "aws-eks-one-click",
-		"label": "EKS - One Click",
-		"tags": [
-			"integrations",
-			"AWS"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws eks",
-			"aws-eks-one-click",
-			"click",
-			"eks",
-			"eks - one click",
-			"eks logs",
-			"eks metrics",
-			"eks monitoring",
-			"integrations",
-			"kubernetes service",
-			"one"
-		],
-		"imgUrl": "/Logos/eks.svg",
-		"link": "/integrations?integration=aws-integration&service=eks",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "aws-ecs",
-		"label": "AWS ECS",
+		"dataSource": "aws-elasticache",
+		"label": "AWS ElastiCache",
 		"tags": [
 			"AWS"
 		],
 		"module": "dashboards",
 		"relatedSearchKeywords": [
-			"aws",
-			"aws ecs",
-			"aws ecs observability",
-			"aws-ecs",
-			"container service monitoring",
-			"dashboards",
-			"ecs",
-			"ecs metrics",
-			"ecs monitoring",
-			"ecs telemetry"
-		],
-		"imgUrl": "/Logos/ecs.svg",
-		"link": "https://signoz.io/docs/integrations/aws/ecs"
-	},
-	{
-		"dataSource": "aws-ec2",
-		"label": "AWS EC2",
-		"tags": [
-			"AWS"
-		],
-		"module": "dashboards",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws ec2",
-			"aws ec2 observability",
-			"aws-ec2",
-			"dashboards",
-			"ec2",
-			"ec2 metrics",
-			"ec2 monitoring",
-			"ec2 telemetry",
-			"vm monitoring"
-		],
-		"imgUrl": "/Logos/ec2.svg",
-		"link": "https://signoz.io/docs/opentelemetry-collection-agents/ecs/ec2/overview/"
-	},
-	{
-		"dataSource": "aws-elasticache-one-click",
-		"label": "ElastiCache - One Click",
-		"tags": [
-			"integrations",
-			"AWS"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
+			"amazon",
+			"amazon elasticache",
 			"aws",
 			"aws elasticache",
-			"aws-elasticache-one-click",
-			"cache service",
-			"click",
+			"aws-elasticache",
+			"cache",
 			"elasticache",
 			"elasticache - one click",
 			"elasticache logs",
 			"elasticache metrics",
 			"elasticache monitoring",
 			"integrations",
-			"one"
+			"one click",
+			"redis"
 		],
 		"imgUrl": "/Logos/elasticache.svg",
-		"link": "/integrations?integration=aws-integration&service=elasticache",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS ElastiCache monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-elasticache-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/elasticache.svg",
+					"link": "/integrations?integration=aws-integration&service=elasticache",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-elasticache-redis-manual",
+					"label": "Redis Manual",
+					"imgUrl": "/Logos/elasticache.svg",
+					"link": "/integrations?integration=builtin-aws_elasticache_redis",
+					"internalRedirect": true
+				}
+			]
+		}
 	},
 	{
-		"dataSource": "aws-lambda",
-		"label": "AWS Lambda - One Click",
+		"dataSource": "aws-msk",
+		"label": "AWS MSK",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"aws",
-			"aws lambda",
-			"aws lambda - one click",
-			"aws-lambda",
-			"click",
-			"function logs",
-			"integrations",
-			"lambda",
-			"lambda logs",
-			"lambda metrics",
-			"one",
-			"serverless monitoring"
-		],
-		"imgUrl": "/Logos/lambda.svg",
-		"link": "/integrations?integration=aws-integration&service=lambda",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "amazon-msk",
-		"label": "Amazon MSK - One Click",
-		"tags": [
-			"integrations",
-			"AWS"
-		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
 			"amazon",
 			"amazon msk",
@@ -4888,129 +4985,172 @@
 			"aws msk",
 			"click",
 			"integrations",
-			"kafka",
 			"msk",
 			"msk logs",
 			"msk metrics",
 			"one"
 		],
 		"imgUrl": "/Logos/amazon-msk.svg",
-		"link": "/integrations?integration=aws-integration&service=msk",
-		"internalRedirect": true
-	},
-	{
-		"dataSource": "amazon-rds",
-		"label": "Amazon RDS - One Click",
-		"tags": [
-			"integrations",
-			"AWS"
-		],
-		"module": "integrations",
-		"relatedSearchKeywords": [
-			"amazon",
-			"amazon rds",
-			"amazon rds - one click",
-			"amazon-rds",
-			"aws",
-			"aws rds",
-			"click",
-			"database",
-			"integrations",
-			"one",
-			"rds",
-			"rds logs",
-			"rds metrics"
-		],
-		"imgUrl": "/Logos/rds.svg",
-		"link": "/integrations?integration=aws-integration&service=rds",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS MSK monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-msk-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/amazon-msk.svg",
+					"link": "/integrations?integration=aws-integration&service=msk",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-msk-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/amazon-msk.svg",
+					"link": "/docs/messaging-queues/msk/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "aws-s3-sync",
-		"label": "S3 Sync - One Click",
+		"label": "AWS S3",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
+			"amazon s3",
 			"aws",
 			"aws s3",
 			"aws-s3-sync",
-			"click",
-			"integrations",
+			"bucket",
 			"object storage",
-			"one",
 			"s3",
-			"s3 logs",
-			"s3 metrics",
-			"s3 monitoring",
-			"s3 sync",
-			"s3 sync - one click",
-			"sync"
+			"simple storage service",
+			"storage"
 		],
 		"imgUrl": "/Logos/s3.svg",
-		"link": "/integrations?integration=aws-integration&service=s3sync",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS S3 monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-s3-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/s3.svg",
+					"link": "/integrations?integration=aws-integration&service=s3sync",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-s3-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/s3.svg",
+					"link": "/docs/aws-monitoring/s3/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "aws-sns",
-		"label": "SNS - One Click",
+		"label": "AWS SNS",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
+			"amazon sns",
 			"aws",
 			"aws sns",
 			"aws-sns",
-			"click",
-			"integrations",
-			"notification service",
-			"one",
-			"sns",
-			"sns - one click",
-			"sns logs",
-			"sns metrics",
-			"sns monitoring"
+			"messaging",
+			"notification",
+			"simple notification service",
+			"sns"
 		],
 		"imgUrl": "/Logos/sns.svg",
-		"link": "/integrations?integration=aws-integration&service=sns",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS SNS monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-sns-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/sns.svg",
+					"link": "/integrations?integration=aws-integration&service=sns",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-sns-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/sns.svg",
+					"link": "/docs/aws-monitoring/sns/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "aws-sqs",
-		"label": "SQS - One Click",
+		"label": "AWS SQS",
 		"tags": [
-			"integrations",
 			"AWS"
 		],
-		"module": "integrations",
+		"module": "dashboards",
 		"relatedSearchKeywords": [
+			"amazon",
+			"amazon sqs",
 			"aws",
 			"aws sqs",
 			"aws-sqs",
-			"click",
-			"integrations",
-			"one",
-			"queue service",
-			"sqs",
-			"sqs - one click",
-			"sqs logs",
-			"sqs metrics",
-			"sqs monitoring"
+			"messaging",
+			"queue",
+			"simple queue service",
+			"sqs"
 		],
 		"imgUrl": "/Logos/sqs.svg",
-		"link": "/integrations?integration=aws-integration&service=sqs",
-		"internalRedirect": true
+		"link": "/docs/aws-monitoring/one-click-vs-manual/",
+		"question": {
+			"desc": "How would you like to set up AWS SQS monitoring?",
+			"type": "select",
+			"helpText": "One Click uses AWS CloudWatch integration for automated setup. Manual setup uses OpenTelemetry receivers for more control.",
+			"helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
+			"helpLinkText": "Read the comparison guide \u2192",
+			"options": [
+				{
+					"key": "aws-sqs-one-click",
+					"label": "One Click AWS",
+					"imgUrl": "/Logos/sqs.svg",
+					"link": "/integrations?integration=aws-integration&service=sqs",
+					"internalRedirect": true
+				},
+				{
+					"key": "aws-sqs-manual",
+					"label": "Manual Setup",
+					"imgUrl": "/Logos/sqs.svg",
+					"link": "/docs/aws-monitoring/sqs/"
+				}
+			]
+		}
 	},
 	{
 		"dataSource": "temporal",
 		"label": "Temporal",
 		"imgUrl": "/Logos/temporal.svg",
 		"tags": [
-			"integrations"
+			"apm/traces"
 		],
 		"module": "apm",
 		"relatedSearchKeywords": [
@@ -5033,19 +5173,19 @@
 					"key": "temporal-cloud",
 					"label": "Cloud Metrics",
 					"imgUrl": "/Logos/temporal.svg",
-					"link": "https://signoz.io/docs/integrations/temporal-cloud-metrics/"
+					"link": "/docs/integrations/temporal-cloud-metrics/"
 				},
 				{
 					"key": "temporal-golang",
 					"label": "Go",
 					"imgUrl": "/Logos/go.svg",
-					"link": "https://signoz.io/docs/integrations/temporal-golang-opentelemetry/"
+					"link": "/docs/integrations/temporal-golang-opentelemetry/"
 				},
 				{
 					"key": "temporal-typescript",
 					"label": "TypeScript",
 					"imgUrl": "/Logos/javascript.svg",
-					"link": "https://signoz.io/docs/integrations/temporal-typescript-opentelemetry/"
+					"link": "/docs/integrations/temporal-typescript-opentelemetry/"
 				}
 			]
 		}
@@ -5055,7 +5195,7 @@
 		"label": "Microsoft SQL Server",
 		"imgUrl": "/Logos/microsoft-sql-server.svg",
 		"tags": [
-			"integrations"
+			"database"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5076,14 +5216,14 @@
 			"telemetry"
 		],
 		"id": "microsoft-sql-server",
-		"link": "https://signoz.io/docs/integrations/sql-server/"
+		"link": "/docs/integrations/sql-server/"
 	},
 	{
 		"dataSource": "supabase",
 		"label": "Supabase",
 		"imgUrl": "/Logos/supabase.svg",
 		"tags": [
-			"integrations"
+			"database"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5097,14 +5237,14 @@
 			"telemetry"
 		],
 		"id": "supabase",
-		"link": "https://signoz.io/docs/integrations/supabase/"
+		"link": "/docs/integrations/supabase/"
 	},
 	{
 		"dataSource": "nomad",
 		"label": "Nomad",
 		"imgUrl": "/Logos/nomad.svg",
 		"tags": [
-			"integrations"
+			"infrastructure monitoring"
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
@@ -5118,7 +5258,7 @@
 			"telemetry"
 		],
 		"id": "nomad",
-		"link": "https://signoz.io/docs/integrations/nomad/"
+		"link": "/docs/integrations/nomad/"
 	},
 	{
 		"dataSource": "traefik",
@@ -5136,7 +5276,7 @@
 			"traefik observability",
 			"traefik tracing"
 		],
-		"link": "https://signoz.io/docs/tutorial/traefik-observability/"
+		"link": "/docs/tutorial/traefik-observability/"
 	},
 	{
 		"dataSource": "mongodb-atlas",
@@ -5157,7 +5297,7 @@
 			"mongodb cloud",
 			"mongodb-atlas"
 		],
-		"link": "https://signoz.io/docs/integrations/mongodb-atlas/"
+		"link": "/docs/integrations/mongodb-atlas/"
 	},
 	{
 		"dataSource": "mysql",
@@ -5174,7 +5314,7 @@
 			"mysql monitoring",
 			"mysql observability"
 		],
-		"link": "https://signoz.io/docs/metrics-management/mysql-metrics/"
+		"link": "/docs/metrics-management/mysql-metrics/"
 	},
 	{
 		"dataSource": "jvm",
@@ -5191,7 +5331,7 @@
 			"jvm monitoring",
 			"runtime"
 		],
-		"link": "https://signoz.io/docs/tutorial/jvm-metrics/"
+		"link": "/docs/tutorial/jvm-metrics/"
 	},
 	{
 		"dataSource": "jmx",
@@ -5208,7 +5348,7 @@
 			"jmx monitoring",
 			"runtime"
 		],
-		"link": "https://signoz.io/docs/tutorial/jmx-metrics/"
+		"link": "/docs/tutorial/jmx-metrics/"
 	},
 	{
 		"dataSource": "prometheus-metrics",
@@ -5229,7 +5369,7 @@
 			"scrape prometheus",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/userguide/prometheus-metrics/"
+		"link": "/docs/userguide/prometheus-metrics/"
 	},
 	{
 		"dataSource": "otel-receivers",
@@ -5253,38 +5393,7 @@
 			"receivers",
 			"telemetry"
 		],
-		"link": "https://signoz.io/docs/userguide/otel-metrics-receivers/"
-	},
-	{
-		"dataSource": "llm-community-integrations",
-		"label": "LLM Community Integrations",
-		"imgUrl": "/Logos/llm-monitoring.svg",
-		"tags": [
-			"LLM Monitoring"
-		],
-		"module": "apm",
-		"relatedSearchKeywords": [
-			"apm",
-			"application performance monitoring",
-			"large language model observability",
-			"llm",
-			"llm community integrations",
-			"llm inference monitoring",
-			"llm latency metrics",
-			"llm monitoring",
-			"llm monitoring with signoz",
-			"llm performance tracking",
-			"llm response time tracing",
-			"llm-community-integrations",
-			"monitor openai",
-			"monitoring",
-			"observability",
-			"openai telemetry",
-			"otel llm integration",
-			"traces",
-			"tracing"
-		],
-		"link": "https://signoz.io/docs/llm-community-integrations"
+		"link": "/docs/userguide/otel-metrics-receivers/"
 	},
 	{
 		"dataSource": "semantic-kernel",
@@ -5315,7 +5424,128 @@
 			"traces",
 			"tracing"
 		],
-		"link": "https://signoz.io/docs/semantic-kernel-observability"
+		"link": "/docs/semantic-kernel-observability"
+	},
+	{
+		"dataSource": "inkeep",
+		"label": "Inkeep",
+		"imgUrl": "/Logos/inkeep.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"application performance monitoring",
+			"inkeep",
+			"inkeep monitoring",
+			"inkeep observability",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"traces",
+			"tracing"
+		],
+		"link": "/docs/inkeep-monitoring/"
+	},
+	{
+		"dataSource": "agno",
+		"label": "Agno",
+		"imgUrl": "/Logos/agno.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"agno",
+			"agno monitoring",
+			"agentic ai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/agno-monitoring/"
+	},
+	{
+		"dataSource": "pipecat",
+		"label": "Pipecat",
+		"imgUrl": "/Logos/pipecat.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"pipecat",
+			"pipecat monitoring",
+			"real-time ai",
+			"voice ai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/pipecat-monitoring/"
+	},
+	{
+		"dataSource": "livekit",
+		"label": "Livekit",
+		"imgUrl": "/Logos/livekit.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"livekit",
+			"livekit observability",
+			"real-time video",
+			"webrtc",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/livekit-observability/"
+	},
+	{
+		"dataSource": "temporal-llm",
+		"label": "Temporal LLM",
+		"imgUrl": "/Logos/temporal.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"temporal",
+			"temporal llm",
+			"temporal observability",
+			"workflow",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/temporal-observability/"
+	},
+	{
+		"dataSource": "grok",
+		"label": "Grok",
+		"imgUrl": "/Logos/grok.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"grok",
+			"grok monitoring",
+			"xai",
+			"apm",
+			"llm",
+			"monitoring",
+			"observability"
+		],
+		"link": "/docs/grok-monitoring/"
 	},
 	{
 		"dataSource": "frontend-logs",
@@ -5342,9 +5572,11 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
-			"nextjs"
+			"sveltekit",
+			"nextjs",
+"next.js"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
+		"link": "/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
 	},
 	{
 		"dataSource": "frontend-traces",
@@ -5371,9 +5603,11 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
-			"nextjs"
+			"sveltekit",
+			"nextjs",
+"next.js"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
+		"link": "/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
 	},
 	{
 		"dataSource": "frontend-metrics",
@@ -5400,9 +5634,11 @@
 			"vuejs",
 			"nuxtjs",
 			"svelte",
-			"nextjs"
+			"sveltekit",
+			"nextjs",
+"next.js"
 		],
-		"link": "https://signoz.io/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"
+		"link": "/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"
 	},
 	{
 		"dataSource": "fly-io",
@@ -5421,7 +5657,7 @@
 			"cloud",
 			"monitoring"
 		],
-		"link": "https://signoz.io/docs/metrics-management/fly-metrics/"
+		"link": "/docs/metrics-management/fly-metrics/"
 	},
 	{
 		"dataSource": "envoy",
@@ -5440,6 +5676,233 @@
 			"service mesh",
 			"monitoring"
 		],
-		"link": "https://signoz.io/docs/userguide/envoy-metrics/"
+		"link": "/docs/userguide/envoy-metrics/"
+	},
+	{
+		"dataSource": "golang-metrics",
+		"label": "Golang Metrics",
+		"imgUrl": "/Logos/go.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"go",
+			"go metrics",
+			"go monitoring",
+			"go observability",
+			"go opentelemetry",
+			"golang",
+			"golang metrics",
+			"golang monitoring",
+			"golang observability",
+			"golang opentelemetry",
+			"metrics",
+			"opentelemetry go",
+			"otel go",
+			"runtime metrics"
+		],
+		"id": "golang-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/golang/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/golang/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "python-metrics",
+		"label": "Python Metrics",
+		"imgUrl": "/Logos/python.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"opentelemetry python",
+			"otel python",
+			"python",
+			"python metrics",
+			"python monitoring",
+			"python observability",
+			"python opentelemetry",
+			"runtime metrics"
+		],
+		"id": "python-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-python/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "dotnet-metrics",
+		"label": ".NET Metrics",
+		"imgUrl": "/Logos/dotnet.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			".net",
+			".net metrics",
+			".net monitoring",
+			".net observability",
+			"dotnet",
+			"dotnet metrics",
+			"dotnet monitoring",
+			"dotnet observability",
+			"metrics",
+			"opentelemetry dotnet",
+			"otel dotnet",
+			"runtime metrics"
+		],
+		"id": "dotnet-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-dotnet/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "nodejs-metrics",
+		"label": "Node.js Metrics",
+		"imgUrl": "/Logos/nodejs.svg",
+		"tags": [
+			"apm/traces",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"node.js",
+			"node.js metrics",
+			"node.js monitoring",
+			"node.js observability",
+			"nodejs",
+			"nodejs metrics",
+			"nodejs monitoring",
+			"nodejs observability",
+			"opentelemetry nodejs",
+			"otel nodejs",
+			"runtime metrics"
+		],
+		"id": "nodejs-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-nodejs/"
+				}
+			]
+		}
 	}
 ]

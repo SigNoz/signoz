@@ -278,3 +278,25 @@ tokenizer:
     token:
       # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
       max_per_user: 5
+
+##################### Flagger #####################
+flagger:
+  # Config are the overrides for the feature flags which come directly from the config file.
+  config:
+    boolean:
+      use_span_metrics: true
+      interpolation_enabled: false
+      kafka_span_eval: false
+    string:
+    float:
+    integer:
+    object:
+
+##################### User #####################
+user:
+  password:
+    reset:
+      # Whether to allow users to reset their password themselves.
+      allow_self: true
+      # The duration within which a user can reset their password.
+      max_token_lifetime: 6h

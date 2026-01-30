@@ -132,7 +132,7 @@ func SignozLogsToPLogs(logs []model.SignozLog) []plog.Logs {
 		slRecord.SetSeverityText(log.SeverityText)
 		slRecord.SetSeverityNumber(plog.SeverityNumber(log.SeverityNumber))
 
-		slRecord.Body().SetStr(log.Body)
+		slRecord.Body().FromRaw(log.Body)
 
 		slAttribs := slRecord.Attributes()
 		for k, v := range log.Attributes_int64 {

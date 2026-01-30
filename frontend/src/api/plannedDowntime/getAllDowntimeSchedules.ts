@@ -1,7 +1,7 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import axios from 'api';
 import { AxiosError, AxiosResponse } from 'axios';
 import { Option } from 'container/PlannedDowntime/PlannedDowntimeutils';
-import { useQuery, UseQueryResult } from 'react-query';
 
 export type Recurrence = {
 	startTime?: string | null;

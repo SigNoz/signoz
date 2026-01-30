@@ -14,9 +14,11 @@ pytest_plugins = [
     "fixtures.signoz",
     "fixtures.logs",
     "fixtures.traces",
+    "fixtures.metrics",
     "fixtures.driver",
     "fixtures.idp",
     "fixtures.idputils",
+    "fixtures.notification_channel",
 ]
 
 

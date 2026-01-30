@@ -1,5 +1,5 @@
-import './Metrics.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
@@ -12,7 +12,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -20,13 +20,13 @@ import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
+
+import './Metrics.styles.scss';
 
 interface MetricsTabProps {
 	timeRange: {
@@ -211,6 +211,8 @@ function Metrics({
 						defaultRelativeTime="5m"
 						isModalTimeSelection={isModalTimeSelection}
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

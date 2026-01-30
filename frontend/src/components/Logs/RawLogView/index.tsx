@@ -1,10 +1,18 @@
+import {
+	KeyboardEvent,
+	memo,
+	MouseEvent,
+	MouseEventHandler,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { DrawerProps, Tooltip } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
-import LogsExplorerContext from 'container/LogsExplorerContext';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
@@ -12,14 +20,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { isEmpty, isNumber, isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import {
-	KeyboardEvent,
-	MouseEvent,
-	MouseEventHandler,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -39,6 +39,7 @@ function RawLogView({
 	selectedFields = [],
 	fontSize,
 	onLogClick,
+	handleChangeSelectedView,
 }: RawLogViewProps): JSX.Element {
 	const {
 		isHighlighted: isUrlHighlighted,
@@ -48,18 +49,12 @@ function RawLogView({
 	const flattenLogData = useMemo(() => FlatLogData(data), [data]);
 
 	const {
-		activeLog: activeContextLog,
-		onClearActiveLog: handleClearActiveContextLog,
-	} = useActiveLog();
-	const {
 		activeLog,
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 	} = useActiveLog();
 
-	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
 
 	const isDarkMode = useIsDarkMode();
@@ -132,7 +127,9 @@ function RawLogView({
 
 	const handleClickExpand = useCallback(
 		(event: MouseEvent) => {
-			if (activeContextLog || isReadOnly) return;
+			if (isReadOnly) {
+				return;
+			}
 
 			// Use custom click handler if provided, otherwise use default behavior
 			if (onLogClick) {
@@ -142,7 +139,7 @@ function RawLogView({
 				setSelectedTab(VIEW_TYPES.OVERVIEW);
 			}
 		},
-		[activeContextLog, isReadOnly, data, onSetActiveLog, onLogClick],
+		[isReadOnly, data, onSetActiveLog, onLogClick],
 	);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
@@ -157,18 +154,6 @@ function RawLogView({
 		},
 		[onClearActiveLog],
 	);
-
-	const handleMouseEnter = useCallback(() => {
-		if (isReadOnlyLog) return;
-
-		setHasActionButtons(true);
-	}, [isReadOnlyLog]);
-
-	const handleMouseLeave = useCallback(() => {
-		if (isReadOnlyLog) return;
-
-		setHasActionButtons(false);
-	}, [isReadOnlyLog]);
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
@@ -196,13 +181,9 @@ function RawLogView({
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isHightlightedLog={isUrlHighlighted}
-			$isActiveLog={
-				activeLog?.id === data.id || activeContextLog?.id === data.id || isActiveLog
-			}
+			$isActiveLog={activeLog?.id === data.id || isActiveLog}
 			$isCustomHighlighted={isHighlighted}
 			$logType={logType}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
 			fontSize={fontSize}
 		>
 			<LogStateIndicator
@@ -231,19 +212,13 @@ function RawLogView({
 				dangerouslySetInnerHTML={html}
 			/>
 
-			{hasActionButtons && (
+			{!isReadOnlyLog && (
 				<LogLinesActionButtons
 					handleShowContext={handleShowContext}
 					onLogCopy={onLogCopy}
 				/>
 			)}
 
-			{activeContextLog && (
-				<LogsExplorerContext
-					log={activeContextLog}
-					onClose={handleClearActiveContextLog}
-				/>
-			)}
 			{selectedTab && (
 				<LogDetail
 					selectedTab={selectedTab}
@@ -251,13 +226,12 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</RawLogViewContainer>
 	);
 }
-
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,
@@ -265,4 +239,4 @@ RawLogView.defaultProps = {
 	isHighlighted: false,
 };
 
-export default RawLogView;
+export default memo(RawLogView);

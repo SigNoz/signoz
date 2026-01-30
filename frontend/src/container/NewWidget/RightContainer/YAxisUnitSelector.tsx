@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { AutoComplete, Input, Typography } from 'antd';
 import { find } from 'lodash-es';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import { flattenedCategories } from './dataFormatCategories';
 
@@ -15,6 +15,9 @@ const findCategoryByName = (
 
 type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 
+/**
+ * @deprecated Use DashboardYAxisUnitSelectorWrapper instead.
+ */
 function YAxisUnitSelector({
 	value,
 	onSelect,

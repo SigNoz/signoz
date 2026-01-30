@@ -1,3 +1,5 @@
+import React from 'react';
+import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -7,8 +9,6 @@ import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
-import React from 'react';
-import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	act,
 	AllTheProviders,
@@ -518,15 +518,15 @@ describe('Logs Explorer -> stage and run query', () => {
 		const initialStart = initialPayload.start;
 		const initialEnd = initialPayload.end;
 
-		// Click the Stage & Run Query button
+		// Click the Run Query button
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await user.click(
 			screen.getByRole('button', {
-				name: /stage & run query/i,
+				name: /run query/i,
 			}),
 		);
 
-		// Wait for additional API calls to be made after clicking Stage & Run Query
+		// Wait for additional API calls to be made after clicking Run Query
 		await waitFor(
 			() => {
 				expect(capturedPayloads.length).toBeGreaterThan(1);

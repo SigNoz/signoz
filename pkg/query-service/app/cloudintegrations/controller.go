@@ -116,7 +116,7 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	agentVersion := "v0.0.7"
+	agentVersion := "v0.0.8"
 	if req.AgentConfig.Version != "" {
 		agentVersion = req.AgentConfig.Version
 	}

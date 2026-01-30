@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import {
 	getDisplayValue,
 	getFormattedEndPointMetricsData,
 } from 'container/ApiMonitoring/utils';
-import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
 import ErrorState from './ErrorState';
@@ -104,8 +104,12 @@ function EndPointMetrics({
 											const errorRatePercent = Number(
 												Number(metricsData?.errorRate ?? 0).toFixed(2),
 											);
-											if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-											if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+											if (errorRatePercent >= 90) {
+												return Color.BG_SAKURA_500;
+											}
+											if (errorRatePercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"

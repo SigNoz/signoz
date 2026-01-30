@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
 import {
@@ -10,7 +11,6 @@ import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
-import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -125,7 +125,9 @@ const addLabels = (
 	dynamicColumns: DynamicColumns,
 	columnId?: string,
 ): void => {
-	if (isValueExist('dataIndex', label, dynamicColumns)) return;
+	if (isValueExist('dataIndex', label, dynamicColumns)) {
+		return;
+	}
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -290,7 +292,9 @@ const processSeriesColumns = (
 	series.forEach((seria) => {
 		seria.labelsArray?.forEach((lab) => {
 			Object.keys(lab).forEach((label) => {
-				if (label === currentQuery?.queryName) return;
+				if (label === currentQuery?.queryName) {
+					return;
+				}
 
 				addLabels(currentStagedQuery, label, dynamicColumns);
 			});
@@ -362,7 +366,9 @@ const findSeriaValueFromAnotherQuery = (
 	currentLabels: Record<string, string>,
 	nextQuery: QueryDataV3 | null,
 ): SeriesItem | null => {
-	if (!nextQuery || !nextQuery.series) return null;
+	if (!nextQuery || !nextQuery.series) {
+		return null;
+	}
 
 	let value = null;
 
@@ -370,7 +376,9 @@ const findSeriaValueFromAnotherQuery = (
 
 	nextQuery.series.forEach((seria) => {
 		const localLabelEntries = Object.entries(seria.labels);
-		if (localLabelEntries.length !== labelEntries.length) return;
+		if (localLabelEntries.length !== labelEntries.length) {
+			return;
+		}
 
 		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
@@ -446,7 +454,9 @@ const fillDataFromSeries = (
 	const { series, queryName } = currentQuery;
 	const isEqualQuery = isEqualQueriesByLabel(equalQueriesByLabels, queryName);
 
-	if (!series) return;
+	if (!series) {
+		return;
+	}
 
 	series.forEach((seria) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
@@ -455,7 +465,9 @@ const fillDataFromSeries = (
 
 		columns.forEach((column) => {
 			if (queryName === column.field) {
-				if (seria.values.length === 0) return;
+				if (seria.values.length === 0) {
+					return;
+				}
 
 				fillAggregationData(
 					column,
@@ -478,7 +490,9 @@ const fillDataFromSeries = (
 				return;
 			}
 
-			if (isEqualQuery) return;
+			if (isEqualQuery) {
+				return;
+			}
 
 			fillLabelsData(column, seria, unusedColumnsKeys);
 
@@ -491,16 +505,20 @@ const fillDataFromList = (
 	listItem: ListItem,
 	columns: DynamicColumns,
 ): void => {
+	const listData = listItem.data || {};
 	columns.forEach((column) => {
-		if (isFormula(column.field)) return;
+		if (isFormula(column.field)) {
+			return;
+		}
 
-		Object.keys(listItem.data).forEach((label) => {
+		Object.keys(listData).forEach((label) => {
 			if (column.dataIndex === label) {
-				if (listItem.data[label as ListItemKey] !== '') {
-					if (isObject(listItem.data[label as ListItemKey])) {
-						column.data.push(JSON.stringify(listItem.data[label as ListItemKey]));
+				const listValue = listData[label as ListItemKey];
+				if (listValue !== '') {
+					if (isObject(listValue)) {
+						column.data.push(JSON.stringify(listValue));
 					} else {
-						column.data.push(listItem.data[label as ListItemKey].toString());
+						column.data.push(listValue?.toString() ?? '');
 					}
 				} else {
 					column.data.push('N/A');
@@ -530,7 +548,9 @@ const fillDataFromTable = (
 ): void => {
 	const { table } = currentQuery;
 
-	if (!table || !table.rows) return;
+	if (!table || !table.rows) {
+		return;
+	}
 
 	table.rows.forEach((row) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
@@ -538,7 +558,7 @@ const fillDataFromTable = (
 		);
 
 		columns.forEach((column) => {
-			const rowData = row.data;
+			const rowData = row.data || {};
 			const columnField = column.id || column.title || column.field;
 
 			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {

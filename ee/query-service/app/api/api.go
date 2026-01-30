@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -21,10 +22,6 @@ import (
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -40,6 +37,7 @@ type APIHandlerOptions struct {
 	GatewayUrl                    string
 	// Querier Influx Interval
 	FluxInterval time.Duration
+	GlobalConfig global.Config
 }
 
 type APIHandler struct {
@@ -100,39 +98,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.LicensingAPI.Checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.LicensingAPI.Portal)).Methods(http.MethodPost)
-
-	// dashboards
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.CreatePublic)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.GetPublic)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.UpdatePublic)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{id}/public", am.AdminAccess(ah.Signoz.Handlers.Dashboard.DeletePublic)).Methods(http.MethodDelete)
-
-	// public access for dashboards
-	router.HandleFunc("/api/v1/public/dashboards/{id}", am.CheckWithoutClaims(
-		ah.Signoz.Handlers.Dashboard.GetPublicData,
-		authtypes.RelationRead, authtypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
-			id, err := valuer.NewUUID(mux.Vars(req)["id"])
-			if err != nil {
-				return nil, valuer.UUID{}, err
-			}
-
-			return ah.Signoz.Modules.Dashboard.GetPublicDashboardOrgAndSelectors(req.Context(), id, orgs)
-		})).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/public/dashboards/{id}/widgets/{index}/query_range", am.CheckWithoutClaims(
-		ah.Signoz.Handlers.Dashboard.GetPublicWidgetQueryRange,
-		authtypes.RelationRead, authtypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
-			id, err := valuer.NewUUID(mux.Vars(req)["id"])
-			if err != nil {
-				return nil, valuer.UUID{}, err
-			}
-
-			return ah.Signoz.Modules.Dashboard.GetPublicDashboardOrgAndSelectors(req.Context(), id, orgs)
-		})).Methods(http.MethodGet)
 
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Activate)).Methods(http.MethodPost)

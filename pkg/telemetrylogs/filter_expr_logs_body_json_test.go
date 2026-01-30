@@ -15,7 +15,6 @@ import (
 func TestFilterExprLogsBodyJSON(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
 

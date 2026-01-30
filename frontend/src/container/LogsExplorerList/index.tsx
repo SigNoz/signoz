@@ -1,5 +1,5 @@
-import './LogsExplorerList.style.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -19,8 +19,6 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import APIError from 'types/api/error';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -36,6 +34,8 @@ import {
 	isTraceToLogsQuery,
 } from './utils';
 
+import './LogsExplorerList.style.scss';
+
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
 }
@@ -48,6 +48,7 @@ function LogsExplorerList({
 	isError,
 	error,
 	isFilterApplied,
+	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { activeLogId } = useCopyLogLink();
@@ -56,7 +57,6 @@ function LogsExplorerList({
 		activeLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 		onSetActiveLog,
 	} = useActiveLog();
 
@@ -100,6 +100,7 @@ function LogsExplorerList({
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				);
 			}
@@ -114,11 +115,13 @@ function LogsExplorerList({
 					activeLog={activeLog}
 					fontSize={options.fontSize}
 					linesPerRow={options.maxLines}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			);
 		},
 		[
 			activeLog,
+			handleChangeSelectedView,
 			onAddToQuery,
 			onSetActiveLog,
 			options.fontSize,
@@ -149,10 +152,10 @@ function LogsExplorerList({
 						activeLogIndex,
 					}}
 					infitiyTableProps={{ onEndReached }}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			);
 		}
-
 		function getMarginTop(): string {
 			switch (options.fontSize) {
 				case FontSize.SMALL:
@@ -195,10 +198,13 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		selectedFields,
+		handleChangeSelectedView,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {
-		if (!currentStagedQueryData) return false;
+		if (!currentStagedQueryData) {
+			return false;
+		}
 		return isTraceToLogsQuery(currentStagedQueryData);
 	}, [currentStagedQueryData]);
 
@@ -206,7 +212,9 @@ function LogsExplorerList({
 		const queryIndex = lastUsedQuery ?? 0;
 		const updatedQuery = currentQuery?.builder.queryData?.[queryIndex];
 
-		if (!updatedQuery) return;
+		if (!updatedQuery) {
+			return;
+		}
 
 		if (updatedQuery?.filters?.items) {
 			updatedQuery.filters.items = [];
@@ -231,7 +239,9 @@ function LogsExplorerList({
 	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
 
 	const getEmptyStateMessage = useMemo(() => {
-		if (!isTraceToLogsNavigation) return;
+		if (!isTraceToLogsNavigation) {
+			return;
+		}
 
 		return getEmptyLogsListConfig(handleClearFilters);
 	}, [isTraceToLogsNavigation, handleClearFilters]);
@@ -273,8 +283,8 @@ function LogsExplorerList({
 						log={activeLog}
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}
-						onGroupByAttribute={onGroupByAttribute}
 						onClickActionItem={onAddToQuery}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				</>
 			)}

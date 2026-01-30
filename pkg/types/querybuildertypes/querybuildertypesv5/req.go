@@ -47,19 +47,19 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		switch header.Signal {
 		case telemetrytypes.SignalTraces:
 			var spec QueryBuilderQuery[TraceAggregation]
-			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 				return wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
 			}
 			q.Spec = spec
 		case telemetrytypes.SignalLogs:
 			var spec QueryBuilderQuery[LogAggregation]
-			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 				return wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
 			}
 			q.Spec = spec
 		case telemetrytypes.SignalMetrics:
 			var spec QueryBuilderQuery[MetricAggregation]
-			if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "query spec"); err != nil {
+			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 				return wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
 			}
 			q.Spec = spec
@@ -75,6 +75,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
+		// TODO: use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderFormula
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "formula spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid formula spec: %v", err)
 		}
@@ -82,6 +83,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeJoin:
 		var spec QueryBuilderJoin
+		// TODO: use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderJoin
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "join spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid join spec: %v", err)
 		}
@@ -89,13 +91,14 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeTraceOperator:
 		var spec QueryBuilderTraceOperator
-		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "trace operator spec"); err != nil {
+		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 			return wrapUnmarshalError(err, "invalid trace operator spec: %v", err)
 		}
 		q.Spec = spec
 
 	case QueryTypePromQL:
 		var spec PromQuery
+		// TODO: use json.Unmarshal here after implementing custom unmarshaler for PromQuery
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "PromQL spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid PromQL spec: %v", err)
 		}
@@ -103,6 +106,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeClickHouseSQL:
 		var spec ClickHouseQuery
+		// TODO: use json.Unmarshal here after implementing custom unmarshaler for ClickHouseQuery
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "ClickHouse SQL spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid ClickHouse SQL spec: %v", err)
 		}
@@ -218,13 +222,13 @@ func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
 	for _, query := range r.CompositeQuery.Queries {
 		switch spec := query.Spec.(type) {
 		case QueryBuilderQuery[TraceAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case QueryBuilderQuery[LogAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case QueryBuilderQuery[MetricAggregation]:
-			stepsMap[spec.Name] = int64(spec.StepInterval.Seconds())
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case PromQuery:
-			stepsMap[spec.Name] = int64(spec.Step.Seconds())
+			stepsMap[spec.Name] = spec.Step.Milliseconds()
 		}
 	}
 
@@ -274,6 +278,31 @@ func (r *QueryRangeRequest) NumAggregationForQuery(name string) int64 {
 		}
 	}
 	return int64(numAgg)
+}
+
+// HasOrderSpecified returns true if any query has an explicit order provided.
+func (r *QueryRangeRequest) HasOrderSpecified() bool {
+	for _, query := range r.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case QueryBuilderQuery[TraceAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case QueryBuilderQuery[LogAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case QueryBuilderQuery[MetricAggregation]:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		case QueryBuilderFormula:
+			if len(spec.Order) > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (r *QueryRangeRequest) FuncsForQuery(name string) []Function {

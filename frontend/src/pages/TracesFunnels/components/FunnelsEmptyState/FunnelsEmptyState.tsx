@@ -1,9 +1,9 @@
-import './FunnelsEmptyState.styles.scss';
-
 import { Button } from 'antd';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { Plus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+
+import './FunnelsEmptyState.styles.scss';
 
 interface FunnelsEmptyStateProps {
 	onCreateFunnel?: () => void;
