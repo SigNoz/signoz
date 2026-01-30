@@ -259,8 +259,9 @@ describe('Quick Filters', () => {
 
 		render(<TestQuickFilters />);
 
-		// Prefer role if possible; if label text isn’t wired to input, clicking the label text is OK
-		const target = await screen.findByText('mq-kafka');
+		// Wait for the filter to load with data
+		const target = await screen.findByText('mq-kafka', {}, { timeout: 5000 });
+
 		await user.click(target);
 
 		await waitFor(() => {
