@@ -1,9 +1,7 @@
-import './AlertHeader.styles.scss';
-
+import { useMemo, useState } from 'react';
 import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useAlertRule } from 'providers/Alert';
-import { useMemo, useState } from 'react';
 import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
@@ -14,6 +12,8 @@ import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
 import AlertState from './AlertState/AlertState';
+
+import './AlertHeader.styles.scss';
 
 export type AlertHeaderProps = {
 	alertDetails: GettableAlert | PostableAlertRuleV2;

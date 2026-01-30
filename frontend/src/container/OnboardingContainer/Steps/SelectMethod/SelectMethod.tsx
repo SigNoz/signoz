@@ -1,9 +1,9 @@
+import { useState } from 'react';
 import { Radio, RadioChangeEvent, Space, Typography } from 'antd';
 import {
 	OnboardingMethods,
 	useOnboardingContext,
 } from 'container/OnboardingContainer/context/OnboardingContext';
-import { useState } from 'react';
 
 export default function SelectMethod(): JSX.Element {
 	const { selectedMethod, updateSelectedMethod } = useOnboardingContext();

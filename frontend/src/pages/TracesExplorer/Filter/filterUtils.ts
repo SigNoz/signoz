@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,

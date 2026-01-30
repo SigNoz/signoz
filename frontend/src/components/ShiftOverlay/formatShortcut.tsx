@@ -1,7 +1,7 @@
-import './shiftOverlay.scss';
-
-import { ArrowUp, ChevronUp, Command, Option } from 'lucide-react';
 import { ReactNode } from 'react';
+import { ArrowUp, ChevronUp, Command, Option } from 'lucide-react';
+
+import './shiftOverlay.scss';
 
 export function formatShortcut(shortcut?: string[]): ReactNode {
 	if (!shortcut || shortcut.length === 0) {

@@ -1,15 +1,15 @@
-import './InfraMetrics.styles.scss';
-
+import { useMemo, useState } from 'react';
 import { Empty } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { History, Table } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { VIEW_TYPES } from './constants';
 import NodeMetrics from './NodeMetrics';
 import PodMetrics from './PodMetrics';
+
+import './InfraMetrics.styles.scss';
 
 interface MetricsDataProps {
 	podName: string;

@@ -1,5 +1,8 @@
-import './GridCardLayout.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FullScreen, FullScreenHandle } from 'react-full-screen';
+import { ItemCallback, Layout } from 'react-grid-layout';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
@@ -30,11 +33,6 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FullScreen, FullScreenHandle } from 'react-full-screen';
-import { ItemCallback, Layout } from 'react-grid-layout';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
@@ -51,6 +49,8 @@ import {
 } from './utils';
 import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
+
+import './GridCardLayout.styles.scss';
 
 interface GraphLayoutProps {
 	handle: FullScreenHandle;

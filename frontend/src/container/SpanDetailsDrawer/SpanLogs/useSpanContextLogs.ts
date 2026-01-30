@@ -1,11 +1,11 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { OPERATORS } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Filter } from 'types/api/v5/queryRange';

@@ -1,11 +1,11 @@
-import './WorkspaceAccessRestricted.styles.scss';
-
+import { useEffect } from 'react';
 import { Button, Col, Modal, Row, Skeleton, Space, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useEffect } from 'react';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+
+import './WorkspaceAccessRestricted.styles.scss';
 
 function WorkspaceAccessRestricted(): JSX.Element {
 	const { activeLicense, isFetchingActiveLicense } = useAppContext();

@@ -1,10 +1,8 @@
-import './styles.scss';
-
+import { useMemo } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { Select, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import classNames from 'classnames';
-import { useMemo } from 'react';
 
 import { UniversalYAxisUnitMappings } from './constants';
 import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
@@ -13,6 +11,8 @@ import {
 	getYAxisCategories,
 	mapMetricUnitToUniversalUnit,
 } from './utils';
+
+import './styles.scss';
 
 function YAxisUnitSelector({
 	value,

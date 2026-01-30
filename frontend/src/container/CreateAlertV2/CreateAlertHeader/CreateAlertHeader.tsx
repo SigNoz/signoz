@@ -1,5 +1,4 @@
-import './styles.scss';
-
+import { useCallback, useMemo } from 'react';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
@@ -9,11 +8,12 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RotateCcw } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
 import { Labels } from 'types/api/alerts/def';
 
 import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
+
+import './styles.scss';
 
 function CreateAlertHeader(): JSX.Element {
 	const { alertState, setAlertState, isEditMode } = useCreateAlertState();

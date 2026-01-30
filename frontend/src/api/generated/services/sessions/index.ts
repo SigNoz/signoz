@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -16,7 +15,9 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
+import { GeneratedAPIInstance } from '../../../index';
 import type {
 	AuthtypesPostableEmailPasswordSessionDTO,
 	AuthtypesPostableRotateTokenDTO,
@@ -30,8 +31,6 @@ import type {
 	RenderErrorResponseDTO,
 	RotateSession200,
 } from '../sigNoz.schemas';
-
-import { GeneratedAPIInstance } from '../../../index';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 

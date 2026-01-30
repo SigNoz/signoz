@@ -1,9 +1,9 @@
-import './SuccessView.style.scss';
-
-import { Alert } from 'antd';
-import integrationsSuccess from 'assets/Lotties/integrations-success.json';
 import { useState } from 'react';
 import Lottie from 'react-lottie';
+import { Alert } from 'antd';
+import integrationsSuccess from 'assets/Lotties/integrations-success.json';
+
+import './SuccessView.style.scss';
 
 export function SuccessView(): JSX.Element {
 	const [isAnimationComplete, setIsAnimationComplete] = useState(false);

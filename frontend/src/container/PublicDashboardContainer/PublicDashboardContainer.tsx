@@ -1,5 +1,5 @@
-import './PublicDashboardContainer.styles.scss';
-
+import { useMemo, useState } from 'react';
+import RGL, { WidthProvider } from 'react-grid-layout';
 import { Typography } from 'antd';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -13,13 +13,13 @@ import {
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
-import { useMemo, useState } from 'react';
-import RGL, { WidthProvider } from 'react-grid-layout';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
 import Panel from './Panel';
+
+import './PublicDashboardContainer.styles.scss';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
