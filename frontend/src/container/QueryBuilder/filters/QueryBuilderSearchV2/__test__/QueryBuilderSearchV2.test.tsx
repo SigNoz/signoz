@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	act,
 	fireEvent,
@@ -12,7 +13,6 @@ import {
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 

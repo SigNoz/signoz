@@ -1,5 +1,4 @@
-import './SpanRelatedSignals.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -16,7 +15,6 @@ import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BarChart2, Compass, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
@@ -25,6 +23,8 @@ import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
 import { useSpanContextLogs } from '../SpanLogs/useSpanContextLogs';
 import { hasInfraMetadata } from '../utils';
+
+import './SpanRelatedSignals.styles.scss';
 
 const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 

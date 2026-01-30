@@ -1,7 +1,7 @@
-import './AlertLabels.styles.scss';
-
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import SeeMore from 'periscope/components/SeeMore';
+
+import './AlertLabels.styles.scss';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AlertLabelsProps = {

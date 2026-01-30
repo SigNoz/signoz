@@ -1,8 +1,8 @@
-import './HeroSection.style.scss';
-
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import AccountActions from './components/AccountActions';
+
+import './HeroSection.style.scss';
 
 function HeroSection(): JSX.Element {
 	const isDarkMode = useIsDarkMode();

@@ -1,5 +1,4 @@
-import './TextToolTip.style.scss';
-
+import { ReactNode, useMemo } from 'react';
 import { blue, grey } from '@ant-design/colors';
 import {
 	QuestionCircleFilled,
@@ -8,9 +7,10 @@ import {
 import { Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ReactNode, useMemo } from 'react';
 
 import { style } from './constant';
+
+import './TextToolTip.style.scss';
 
 function TextToolTip({
 	text,

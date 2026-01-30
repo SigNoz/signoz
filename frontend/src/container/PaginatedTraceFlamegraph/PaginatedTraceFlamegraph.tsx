@@ -1,5 +1,5 @@
-import './PaginatedTraceFlamegraph.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
@@ -7,8 +7,6 @@ import { themeColors } from 'constants/theme';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -16,6 +14,8 @@ import { TraceFlamegraphStates } from './constants';
 import Error from './TraceFlamegraphStates/Error/Error';
 import NoData from './TraceFlamegraphStates/NoData/NoData';
 import Success from './TraceFlamegraphStates/Success/Success';
+
+import './PaginatedTraceFlamegraph.styles.scss';
 
 interface ITraceFlamegraphProps {
 	serviceExecTime: Record<string, number>;

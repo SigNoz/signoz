@@ -1,5 +1,6 @@
-import './AlertDetails.styles.scss';
-
+import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Breadcrumb, Button, Divider, Empty } from 'antd';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
@@ -10,9 +11,6 @@ import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
 import history from 'lib/history';
-import { useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	NEW_ALERT_SCHEMA_VERSION,
@@ -22,6 +20,8 @@ import {
 import AlertHeader from './AlertHeader/AlertHeader';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 import { AlertDetailsStatusRendererProps } from './types';
+
+import './AlertDetails.styles.scss';
 
 function AlertDetailsStatusRenderer({
 	isLoading,

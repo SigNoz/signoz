@@ -4,8 +4,8 @@
 // also have a prop saying max length post that you should truncate the text with "..."
 // return value should be a full text string, and a truncated text string (if max length is provided)
 
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 
 interface UseGetResolvedTextProps {
 	text: string | ReactNode;

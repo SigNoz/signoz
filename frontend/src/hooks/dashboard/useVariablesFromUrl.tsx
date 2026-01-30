@@ -1,8 +1,8 @@
+import { useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export interface LocalStoreDashboardVariables {

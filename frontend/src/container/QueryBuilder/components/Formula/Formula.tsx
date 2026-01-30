@@ -1,5 +1,4 @@
-import './Formula.styles.scss';
-
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { LEGEND } from 'constants/global';
@@ -11,7 +10,6 @@ import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderB
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import {
 	IBuilderFormula,
 	OrderByPayload,
@@ -23,6 +21,8 @@ import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
 import { FormulaProps } from './Formula.interfaces';
+
+import './Formula.styles.scss';
 
 export function Formula({
 	index,

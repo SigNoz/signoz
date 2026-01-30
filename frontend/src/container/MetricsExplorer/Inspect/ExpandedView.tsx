@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
+import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Card, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
@@ -10,7 +11,6 @@ import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {

@@ -1,5 +1,5 @@
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { UseQueryResult } from 'react-query';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import store from 'store';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

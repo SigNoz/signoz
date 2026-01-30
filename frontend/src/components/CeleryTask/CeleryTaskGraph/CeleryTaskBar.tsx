@@ -1,5 +1,6 @@
-import './CeleryTaskGraph.style.scss';
-
+import { useCallback, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -10,9 +11,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useCallback, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -38,6 +36,8 @@ import {
 	CeleryTaskState,
 	CeleryTaskStateGraphConfig,
 } from './CeleryTaskStateGraphConfig';
+
+import './CeleryTaskGraph.style.scss';
 
 function CeleryTaskBar({
 	onClick,

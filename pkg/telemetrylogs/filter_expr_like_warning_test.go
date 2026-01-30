@@ -11,7 +11,7 @@ import (
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	cb := NewConditionBuilder(fm)
 
 	keys := buildCompleteFieldKeyMap()
 
@@ -47,7 +47,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	cb := NewConditionBuilder(fm)
 
 	keys := buildCompleteFieldKeyMap()
 

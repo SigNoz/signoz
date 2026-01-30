@@ -1,12 +1,12 @@
-import './Toolbar.styles.scss';
-
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { noop } from 'lodash-es';
-import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+
+import './Toolbar.styles.scss';
 
 interface ToolbarProps {
 	showAutoRefresh: boolean;

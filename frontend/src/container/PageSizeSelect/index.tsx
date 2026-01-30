@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Col, Row, Select } from 'antd';
 import { QueryParams } from 'constants/query';
 import {
@@ -5,7 +6,6 @@ import {
 	ITEMS_PER_PAGE_OPTIONS,
 } from 'container/Controls/config';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { useCallback } from 'react';
 
 import { PageSizeSelectProps } from './PageSizeSelect.interfaces';
 

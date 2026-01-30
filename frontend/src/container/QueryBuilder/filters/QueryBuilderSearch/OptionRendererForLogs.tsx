@@ -1,12 +1,12 @@
-import './QueryBuilderSearch.styles.scss';
-
+import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Zap } from 'lucide-react';
-import { useState } from 'react';
 
 import { getOptionType } from './utils';
+
+import './QueryBuilderSearch.styles.scss';
 
 function OptionRendererForLogs({
 	label,

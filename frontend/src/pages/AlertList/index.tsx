@@ -1,5 +1,5 @@
-import './AlertList.styles.scss';
-
+import { useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Tabs } from 'antd';
 import { TabsProps } from 'antd/lib';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
@@ -13,10 +13,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
-import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { AlertListSubTabs, AlertListTabs } from './types';
+
+import './AlertList.styles.scss';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();

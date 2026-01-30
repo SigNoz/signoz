@@ -1,5 +1,5 @@
-import './TracesExplorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -37,8 +37,6 @@ import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -51,6 +49,8 @@ import {
 import { v4 } from 'uuid';
 
 import TimeSeriesView from './TimeSeriesView';
+
+import './TracesExplorer.styles.scss';
 
 function TracesExplorer(): JSX.Element {
 	const {

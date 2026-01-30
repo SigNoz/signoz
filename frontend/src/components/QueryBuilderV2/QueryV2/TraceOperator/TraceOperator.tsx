@@ -1,14 +1,12 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable sonarjs/no-duplicate-string */
 
-import './TraceOperator.styles.scss';
-
+import { useCallback } from 'react';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Trash2 } from 'lucide-react';
-import { useCallback } from 'react';
 import {
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -18,6 +16,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import QueryAddOns from '../QueryAddOns/QueryAddOns';
 import QueryAggregation from '../QueryAggregation/QueryAggregation';
 import TraceOperatorEditor from './TraceOperatorEditor';
+
+import './TraceOperator.styles.scss';
 
 export default function TraceOperator({
 	traceOperator,

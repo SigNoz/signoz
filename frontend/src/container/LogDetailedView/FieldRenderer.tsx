@@ -1,10 +1,10 @@
-import './FieldRenderer.styles.scss';
-
 import { Divider, Tooltip, Typography } from 'antd';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
 import { getFieldAttributes } from './utils';
+
+import './FieldRenderer.styles.scss';
 
 function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 	const { dataType, newField, logType } = getFieldAttributes(field);

@@ -1,13 +1,11 @@
-import './MetricPage.styles.scss';
-
+import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { FeatureKeys } from '../../../../constants/features';
@@ -24,6 +22,8 @@ import {
 	getOldestOffsetWidgetData,
 	getPartitionCountPerTopicWidgetData,
 } from './MetricPageUtil';
+
+import './MetricPage.styles.scss';
 
 interface CollapsibleMetricSectionProps {
 	title: string;
