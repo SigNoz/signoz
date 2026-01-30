@@ -61,12 +61,25 @@ export function updateSeriesVisibilityToLocalStorage(
 				},
 			];
 		} else {
+			const storedLabels = new Set(
+				widgetState.dataIndex.map((item) => item.label),
+			);
+
+			// Update visibility for existing series
 			widgetState.dataIndex.forEach((item) => {
 				const seriesVisibilityItem = seriesVisibility.find(
 					(s) => s.label === item.label,
 				);
 				if (seriesVisibilityItem) {
 					item.show = seriesVisibilityItem.show;
+				}
+			});
+
+			// Add newly added series (e.g. after query change) that weren't in storage
+			seriesVisibility.forEach((item) => {
+				if (!storedLabels.has(item.label)) {
+					widgetState.dataIndex.push({ label: item.label, show: item.show });
+					storedLabels.add(item.label);
 				}
 			});
 		}
