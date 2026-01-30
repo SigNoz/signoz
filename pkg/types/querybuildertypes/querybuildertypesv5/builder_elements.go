@@ -161,7 +161,7 @@ func (f FilterOperator) IsStringSearchOperator() bool {
 
 func (f FilterOperator) IsOpValidForJSON() bool {
 	switch f {
-	case FilterOperatorExists, FilterOperatorNotExists:
+	case FilterOperatorExists, FilterOperatorNotExists, FilterOperatorContains, FilterOperatorNotContains:
 		return true
 	default:
 		return false
