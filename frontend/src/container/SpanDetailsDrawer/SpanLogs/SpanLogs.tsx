@@ -1,5 +1,5 @@
-import './spanLogs.styles.scss';
-
+import { useCallback, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { Button } from '@signozhq/button';
 import { Typography } from 'antd';
 import cx from 'classnames';
@@ -21,8 +21,6 @@ import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
 import { Compass } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,
@@ -31,6 +29,8 @@ import {
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
+
+import './spanLogs.styles.scss';
 
 interface SpanLogsProps {
 	traceId: string;

@@ -1,5 +1,5 @@
-import { addTagFiltersToDashboard } from 'container/DashboardContainer/DashboardSettings/DashboardVariableSettings/addTagFiltersToDashboard';
 import { useCallback } from 'react';
+import { addTagFiltersToDashboard } from 'container/DashboardContainer/DashboardSettings/DashboardVariableSettings/addTagFiltersToDashboard';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 

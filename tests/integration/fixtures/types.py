@@ -166,6 +166,7 @@ class Network:
 
 # Alerts related types
 
+
 @dataclass(frozen=True)
 class AlertData:
     # type of the alert data, one of 'metrics', 'logs', 'traces'

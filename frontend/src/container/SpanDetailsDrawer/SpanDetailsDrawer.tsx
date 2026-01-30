@@ -1,5 +1,13 @@
-import './SpanDetailsDrawer.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useMutation, useQuery } from 'react-query';
 import {
 	Button,
 	Checkbox,
@@ -39,16 +47,6 @@ import {
 	Search,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useMutation, useQuery } from 'react-query';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
@@ -59,6 +57,8 @@ import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
 import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
 import { hasInfraMetadata } from './utils';
+
+import './SpanDetailsDrawer.styles.scss';
 
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;

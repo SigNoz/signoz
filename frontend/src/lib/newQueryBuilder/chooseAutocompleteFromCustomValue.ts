@@ -1,5 +1,9 @@
-import { initialAutocompleteData } from 'constants/queryBuilder';
+import {
+	baseAutoCompleteIdKeysOrder,
+	initialAutocompleteData,
+} from 'constants/queryBuilder';
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -37,11 +41,16 @@ export const chooseAutocompleteFromCustomValue = (
 	);
 
 	if (!firstBaseAutoCompleteValue) {
-		return {
-			...initialAutocompleteData,
+		const baseFieldsForId = {
 			key: value,
 			dataType: dataTypeToUse,
 			type: fieldType || '',
+		};
+
+		return {
+			...initialAutocompleteData,
+			...baseFieldsForId,
+			id: createIdFromObjectFields(baseFieldsForId, baseAutoCompleteIdKeysOrder),
 		};
 	}
 

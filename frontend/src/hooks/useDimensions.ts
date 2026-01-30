@@ -1,5 +1,5 @@
-import debounce from 'lodash-es/debounce';
 import { useEffect, useState } from 'react';
+import debounce from 'lodash-es/debounce';
 
 export type Dimensions = {
 	width: number;

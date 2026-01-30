@@ -1,3 +1,5 @@
+import { QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
 import {
 	act,
 	fireEvent,
@@ -8,8 +10,6 @@ import {
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
 
 import {
 	createMockStore,

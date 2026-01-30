@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
-import { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import ExapandableRow from './ExapandableRow';

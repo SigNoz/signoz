@@ -1,5 +1,5 @@
-import './QuerySection.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -14,8 +14,6 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
 import { Atom, Terminal } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
@@ -23,6 +21,8 @@ import { EQueryType } from 'types/common/dashboard';
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 import { FormContainer, StepHeading } from './styles';
+
+import './QuerySection.styles.scss';
 
 function QuerySection({
 	queryCategory,

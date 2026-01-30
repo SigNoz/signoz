@@ -1,5 +1,5 @@
-import list from 'api/v1/pats/list';
 import { useQuery, UseQueryResult } from 'react-query';
+import list from 'api/v1/pats/list';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { APIKeyProps } from 'types/api/pat/types';

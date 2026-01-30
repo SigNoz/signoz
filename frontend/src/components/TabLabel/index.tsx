@@ -1,5 +1,5 @@
-import { Tooltip } from 'antd';
 import { memo } from 'react';
+import { Tooltip } from 'antd';
 
 import { TabLabelProps } from './TabLabel.interfaces';
 

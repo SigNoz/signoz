@@ -1,5 +1,6 @@
-import './WorkspaceSuspended.styles.scss';
-
+import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useMutation } from 'react-query';
 import {
 	Alert,
 	Button,
@@ -18,12 +19,11 @@ import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
+
+import './WorkspaceSuspended.styles.scss';
 
 function WorkspaceSuspended(): JSX.Element {
 	const { user } = useAppContext();

@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import { getMetricMeta } from 'api/metrics/ApDex/getMetricMeta';
 import { AxiosError, AxiosResponse } from 'axios';
-import { useQuery, UseQueryResult } from 'react-query';
 import { MetricMetaProps } from 'types/api/metrics/getApDex';
 
 export const useGetMetricMeta = (

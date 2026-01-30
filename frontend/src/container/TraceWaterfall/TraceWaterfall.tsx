@@ -1,9 +1,7 @@
-import './TraceWaterfall.styles.scss';
-
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Skeleton } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
-import { Dispatch, SetStateAction, useMemo } from 'react';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GetTraceV2SuccessResponse, Span } from 'types/api/trace/getTraceV2';
 
@@ -11,6 +9,8 @@ import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
 import NoData from './TraceWaterfallStates/NoData/NoData';
 import Success from './TraceWaterfallStates/Success/Success';
+
+import './TraceWaterfall.styles.scss';
 
 export interface IInterestedSpan {
 	spanId: string;

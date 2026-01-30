@@ -1,5 +1,5 @@
-import { FormInstance } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
+import { FormInstance } from 'antd';
 import { ConnectionParams } from 'types/api/integrations/aws';
 
 export enum ActiveViewEnum {

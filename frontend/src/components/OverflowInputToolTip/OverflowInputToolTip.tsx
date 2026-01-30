@@ -1,11 +1,11 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable react/jsx-props-no-spreading */
 
-import './OverflowInputToolTip.scss';
-
+import { useEffect, useRef, useState } from 'react';
 import { Input, InputProps, InputRef, Tooltip } from 'antd';
 import cx from 'classnames';
-import { useEffect, useRef, useState } from 'react';
+
+import './OverflowInputToolTip.scss';
 
 export interface OverflowTooltipInputProps extends InputProps {
 	tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';

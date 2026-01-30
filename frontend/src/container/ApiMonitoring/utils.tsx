@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -18,7 +19,6 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
-import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {

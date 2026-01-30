@@ -1,6 +1,6 @@
+import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { useMemo } from 'react';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 

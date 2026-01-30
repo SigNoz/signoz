@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import {
 	getDisplayValue,
 	getFormattedEndPointMetricsData,
 } from 'container/ApiMonitoring/utils';
-import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
 import ErrorState from './ErrorState';

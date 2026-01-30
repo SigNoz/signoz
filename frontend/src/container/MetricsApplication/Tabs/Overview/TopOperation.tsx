@@ -1,11 +1,11 @@
-import getTopOperations from 'api/metrics/getTopOperations';
-import TopOperationsTable from 'container/MetricsApplication/TopOperationsTable';
-import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import getTopOperations from 'api/metrics/getTopOperations';
+import TopOperationsTable from 'container/MetricsApplication/TopOperationsTable';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/metrics/getTopOperations';
 import { GlobalReducer } from 'types/reducer/globalTime';
