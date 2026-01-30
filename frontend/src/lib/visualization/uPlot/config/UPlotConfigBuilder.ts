@@ -207,20 +207,19 @@ export class UPlotConfigBuilder {
 		const visibilityMap = this.widgetId
 			? getStoredSeriesVisibility(this.widgetId)
 			: null;
-
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
 			const label = seriesConfig.label ?? '';
 			const seriesIndex = index + 1; // +1 because the first series is the timestamp
 
 			// Priority: stored visibility > series config > default (true)
-			const visible = visibilityMap?.get(label) ?? seriesConfig.show ?? true;
+			const show = visibilityMap?.get(label) ?? seriesConfig.show ?? true;
 
 			acc[seriesIndex] = {
 				seriesIndex,
 				color: seriesConfig.stroke,
 				label,
-				visible,
+				show,
 			};
 
 			return acc;

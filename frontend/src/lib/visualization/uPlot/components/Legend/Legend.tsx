@@ -145,7 +145,7 @@ export default function Legend({
 						<div
 							data-legend-item-id={item.seriesIndex}
 							className={cx('legend-item', {
-								'legend-item-off': !item.visible,
+								'legend-item-off': !item.show,
 								'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
 							})}
 						>

@@ -154,7 +154,7 @@ export interface LegendItem {
 	seriesIndex: number;
 	label: uPlot.Series['label'];
 	color: uPlot.Series['stroke'];
-	visible: boolean;
+	show: boolean;
 }
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {

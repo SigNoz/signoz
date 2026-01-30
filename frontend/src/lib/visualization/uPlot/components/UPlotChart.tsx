@@ -161,7 +161,13 @@ export default function UPlotChart({
 
 	if (data && data[0] && data[0]?.length === 0) {
 		return (
-			<div className="uplot-no-data not-found">
+			<div
+				className="uplot-no-data not-found"
+				style={{
+					width: `${width}px`,
+					height: `${height}px`,
+				}}
+			>
 				<LineChart size={48} strokeWidth={0.5} />
 				<Typography>No Data</Typography>
 			</div>
