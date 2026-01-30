@@ -239,9 +239,6 @@ describe('Quick Filters', () => {
 		// Wait for the filter to load with data
 		const target = await screen.findByText('mq-kafka', {}, { timeout: 5000 });
 
-		// DEBUG: Print the DOM to see what's rendered
-		screen.debug();
-
 		await user.click(target);
 
 		await waitFor(() => {

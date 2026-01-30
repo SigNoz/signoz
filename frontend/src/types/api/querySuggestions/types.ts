@@ -28,7 +28,7 @@ export interface QueryKeyRequestProps {
 	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	metricName?: string;
-	signalSource?: string;
+	signalSource?: 'meter' | '';
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 }
@@ -47,7 +47,7 @@ export interface QueryKeyValueRequestProps {
 	signal: 'traces' | 'logs' | 'metrics';
 	key: string;
 	searchText: string;
-	signalSource?: string;
+	signalSource?: 'meter' | '';
 	metricName?: string;
 	startUnixMilli?: number;
 	endUnixMilli?: number;

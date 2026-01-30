@@ -139,7 +139,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	} = useGetQueryKeyValueSuggestions({
 		key: filter.attributeKey.key,
 		signal: filter.dataSource || DataSource.LOGS,
-		signalSource: source || '',
+		signalSource: source === QuickFiltersSource.METER_EXPLORER ? 'meter' : '',
 		startUnixMilli,
 		endUnixMilli,
 		searchText: searchText || '',

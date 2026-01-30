@@ -292,7 +292,7 @@ function QuerySearch({
 				signal: dataSource,
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
-				signalSource: signalSource || '',
+				signalSource: signalSource as 'meter' | '',
 				startUnixMilli: timeRange.startUnixMilli,
 				endUnixMilli: timeRange.endUnixMilli,
 			});
@@ -469,7 +469,7 @@ function QuerySearch({
 					key,
 					searchText: sanitizedSearchText,
 					signal: dataSource,
-					signalSource: signalSource || '',
+					signalSource: signalSource as 'meter' | '',
 					metricName: debouncedMetricName ?? undefined,
 					startUnixMilli: timeRange.startUnixMilli,
 					endUnixMilli: timeRange.endUnixMilli,
