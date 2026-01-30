@@ -236,12 +236,12 @@ function OnboardingAddDataSource(): JSX.Element {
 			urlObj.searchParams.set('environment', selectedEnvironment);
 		}
 
-		let region = globalConfig?.data?.ingestion_url;
+		const ingestionUrl = globalConfig?.data?.ingestion_url;
 
-		if (region) {
-			const parts = region.split('.');
+		if (ingestionUrl) {
+			const parts = ingestionUrl.split('.');
 			if (parts?.length > 1 && parts[0]?.includes('ingest')) {
-				region = parts[1];
+				const region = parts[1];
 				urlObj.searchParams.set('region', region);
 			}
 		}
