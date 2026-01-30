@@ -127,9 +127,9 @@ export interface SeriesProps {
 
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
-	pathBuilder?: Series.PathBuilder | null;
-	pointsFilter?: Series.Points.Filter | null;
-	pointsBuilder?: Series.Points.Show | null;
+	pathBuilder?: Series.PathBuilder;
+	pointsFilter?: Series.Points.Filter;
+	pointsBuilder?: Series.Points.Show;
 	show?: boolean;
 	spanGaps?: boolean;
 

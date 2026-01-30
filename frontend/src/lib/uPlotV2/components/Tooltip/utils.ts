@@ -23,17 +23,17 @@ export function resolveSeriesColor(
 export function buildTooltipContent({
 	data,
 	series,
-	dataIdxs,
+	dataIndexes,
 	activeSeriesIdx,
-	u,
+	uPlotInstance,
 	yAxisUnit,
 	decimalPrecision,
 }: {
 	data: AlignedData;
 	series: Series[];
-	dataIdxs: Array<number | null>;
+	dataIndexes: Array<number | null>;
 	activeSeriesIdx: number | null;
-	u: uPlot;
+	uPlotInstance: uPlot;
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
 }): TooltipContentItem[] {
@@ -46,9 +46,9 @@ export function buildTooltipContent({
 			continue;
 		}
 
-		const dataIdx = dataIdxs[idx];
+		const dataIdx = dataIndexes[idx];
 		// Skip series with no data at the current cursor position
-		if (dataIdx === null || dataIdx === undefined) {
+		if (dataIdx === null) {
 			continue;
 		}
 
@@ -61,7 +61,7 @@ export function buildTooltipContent({
 			label: String(s.label ?? ''),
 			value: displayValue,
 			tooltipValue: getToolTipValue(displayValue, yAxisUnit, decimalPrecision),
-			color: resolveSeriesColor(s.stroke, u, idx),
+			color: resolveSeriesColor(s.stroke, uPlotInstance, idx),
 			isActive,
 		};
 

@@ -39,12 +39,16 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	/**
 	 * Build path configuration
 	 */
-	private buildPathConfig(
-		pathBuilder: Series.PathBuilder | null | undefined,
-		drawStyle: DrawStyle,
-		lineInterpolation?: LineInterpolation,
-	): Partial<Series> {
-		if (pathBuilder !== null && pathBuilder !== undefined) {
+	private buildPathConfig({
+		pathBuilder,
+		drawStyle,
+		lineInterpolation,
+	}: {
+		pathBuilder?: Series.PathBuilder | null;
+		drawStyle: DrawStyle;
+		lineInterpolation?: LineInterpolation;
+	}): Partial<Series> {
+		if (pathBuilder) {
 			return { paths: pathBuilder };
 		}
 
@@ -73,15 +77,23 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	/**
 	 * Build points configuration
 	 */
-	private buildPointsConfig(
-		lineColor: string,
-		lineWidth: number | undefined,
-		pointSize: number | undefined,
-		pointsBuilder: Series.Points.Show | null | undefined,
-		pointsFilter: Series.Points.Filter | null | undefined,
-		drawStyle: DrawStyle,
-		showPoints: VisibilityMode | undefined,
-	): Partial<Series.Points> {
+	private buildPointsConfig({
+		lineColor,
+		lineWidth,
+		pointSize,
+		pointsBuilder,
+		pointsFilter,
+		drawStyle,
+		showPoints,
+	}: {
+		lineColor: string;
+		lineWidth?: number;
+		pointSize?: number;
+		pointsBuilder: Series.Points.Show | null;
+		pointsFilter: Series.Points.Filter | null;
+		drawStyle: DrawStyle;
+		showPoints?: VisibilityMode;
+	}): Partial<Series.Points> {
 		const pointsConfig: Partial<Series.Points> = {
 			stroke: lineColor,
 			fill: lineColor,
@@ -89,7 +101,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			filter: pointsFilter || undefined,
 		};
 
-		if (pointsBuilder !== null && pointsBuilder !== undefined) {
+		if (pointsBuilder) {
 			pointsConfig.show = pointsBuilder;
 		} else if (drawStyle === DrawStyle.Points) {
 			pointsConfig.show = true;
@@ -137,20 +149,20 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		const lineColor = this.getLineColor();
 
 		const lineConfig = this.buildLineConfig(lineColor, lineWidth, lineStyle);
-		const pathConfig = this.buildPathConfig(
+		const pathConfig = this.buildPathConfig({
 			pathBuilder,
 			drawStyle,
 			lineInterpolation,
-		);
-		const pointsConfig = this.buildPointsConfig(
+		});
+		const pointsConfig = this.buildPointsConfig({
 			lineColor,
 			lineWidth,
 			pointSize,
-			pointsBuilder,
-			pointsFilter,
+			pointsBuilder: pointsBuilder ?? null,
+			pointsFilter: pointsFilter ?? null,
 			drawStyle,
 			showPoints,
-		);
+		});
 
 		return {
 			scale: scaleKey,
@@ -174,7 +186,7 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
-let builders: PathBuilders | undefined = undefined;
+let builders: PathBuilders | null = null;
 
 /**
  * Get path builder based on draw style and interpolation

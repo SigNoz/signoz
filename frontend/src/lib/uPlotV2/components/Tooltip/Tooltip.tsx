@@ -14,8 +14,8 @@ const TOOLTIP_LIST_MAX_HEIGHT = 330;
 const TOOLTIP_ITEM_HEIGHT = 38;
 
 export default function Tooltip({
-	seriesIdx,
-	dataIdxs,
+	seriesIndex,
+	dataIndexes,
 	uPlotInstance,
 	timezone,
 	yAxisUnit = '',
@@ -38,13 +38,13 @@ export default function Tooltip({
 			buildTooltipContent({
 				data: uPlotInstance.data,
 				series: uPlotInstance.series,
-				dataIdxs,
-				activeSeriesIdx: seriesIdx,
-				u: uPlotInstance,
+				dataIndexes,
+				activeSeriesIdx: seriesIndex,
+				uPlotInstance,
 				yAxisUnit,
 				decimalPrecision,
 			}),
-		[uPlotInstance, seriesIdx, dataIdxs, yAxisUnit, decimalPrecision],
+		[uPlotInstance, seriesIndex, dataIndexes, yAxisUnit, decimalPrecision],
 	);
 
 	return (

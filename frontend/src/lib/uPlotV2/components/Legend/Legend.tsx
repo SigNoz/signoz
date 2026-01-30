@@ -3,6 +3,7 @@ import { Virtuoso } from 'react-virtuoso';
 import { Tooltip as AntdTooltip } from 'antd';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
+import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 
 import { LegendProps } from '../types';
@@ -16,12 +17,11 @@ export default function Legend({
 	position = LegendPosition.BOTTOM,
 	config,
 }: LegendProps): JSX.Element {
+	const { legendItemsMap, focusedSeriesIndex } = useLegendsSync({ config });
 	const {
 		onLegendClick,
 		onLegendMouseMove,
 		onLegendMouseLeave,
-		legendItemsMap,
-		focusedSeriesIndex,
 	} = useLegendActions({ config });
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 

@@ -52,8 +52,8 @@ export interface UPlotChartProps {
 
 export interface TooltipRenderArgs {
 	uPlotInstance: uPlot;
-	dataIdxs: Array<number | null>;
-	seriesIdx: number | null;
+	dataIndexes: Array<number | null>;
+	seriesIndex: number | null;
 	isPinned: boolean;
 	dismiss: () => void;
 	viaSync: boolean;

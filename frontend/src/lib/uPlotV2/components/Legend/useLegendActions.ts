@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { LegendItem } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
@@ -13,8 +12,6 @@ export function useLegendActions({
 	onFocusSeries: (seriesIndex: number | null) => void;
 	onLegendMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
 	onLegendMouseLeave: () => void;
-	legendItemsMap: Record<number, LegendItem>;
-	focusedSeriesIndex: number | null;
 } {
 	const {
 		onFocusSeries: onFocusSeriesPlot,
@@ -22,11 +19,7 @@ export function useLegendActions({
 		onToggleSeriesVisibility,
 	} = usePlotContext();
 
-	const {
-		setFocusedSeriesIndex,
-		focusedSeriesIndex,
-		legendItemsMap,
-	} = useLegendsSync({
+	const { setFocusedSeriesIndex, focusedSeriesIndex } = useLegendsSync({
 		config,
 	});
 
@@ -119,7 +112,5 @@ export function useLegendActions({
 		onFocusSeries,
 		onLegendMouseMove,
 		onLegendMouseLeave,
-		legendItemsMap,
-		focusedSeriesIndex,
 	};
 }
