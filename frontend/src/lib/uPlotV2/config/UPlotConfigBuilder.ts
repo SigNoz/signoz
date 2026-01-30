@@ -13,7 +13,7 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { thresholdsDrawHook } from '../hooks/thresholdsDrawHook';
-import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils';
+import { getStoredSeriesVisibility } from 'lib/visualization/panels/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from '../hooks/types';
 
 /**

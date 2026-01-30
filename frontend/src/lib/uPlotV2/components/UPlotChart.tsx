@@ -50,15 +50,19 @@ export default function UPlotChart({
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
 
 	/**
-	 * Destroy the existing plot instance if present
+	 * Destroy the existing plot instance if present.
+	 * Clears context and notifies plotRef(null) so external consumers
+	 * (e.g. Legend's onToggleSeriesVisibility) don't hold a reference to the destroyed instance.
 	 */
 	const destroyPlot = useCallback((): void => {
 		if (plotInstanceRef.current) {
 			onDestroy?.(plotInstanceRef.current);
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
+			setPlotContextInitialState({ uPlotInstance: null });
+			plotRef?.(null);
 		}
-	}, [onDestroy]);
+	}, [onDestroy, plotRef, setPlotContextInitialState]);
 
 	/**
 	 * Initialize or reinitialize the plot

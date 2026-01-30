@@ -29,9 +29,10 @@ export interface UPlotChartProps {
 	height: number;
 
 	/**
-	 * Optional callback when plot instance is created
+	 * Optional callback when plot instance is created or destroyed.
+	 * Called with the uPlot instance on create, and with null when the plot is destroyed.
 	 */
-	plotRef?: (u: uPlot) => void;
+	plotRef?: (u: uPlot | null) => void;
 
 	/**
 	 * Optional callback when plot is destroyed

@@ -1,5 +1,5 @@
 import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
-import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/utils';
+import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/legendVisibilityUtils';
 import {
 	createContext,
 	PropsWithChildren,
