@@ -155,7 +155,6 @@ export interface LegendItem {
 }
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
-	ms: 1,
 	focus: {
 		alpha: 0.3,
 	},
