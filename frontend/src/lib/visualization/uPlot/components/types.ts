@@ -63,3 +63,24 @@ export type TooltipProps = TooltipRenderArgs & {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 };
+
+export enum LegendPosition {
+	BOTTOM = 'bottom',
+	RIGHT = 'right',
+}
+export interface LegendConfig {
+	position: LegendPosition;
+}
+export interface LegendProps {
+	position?: LegendPosition;
+	config: UPlotConfigBuilder;
+	legendsPerSet?: number;
+}
+
+export interface TooltipContentItem {
+	label: string;
+	value: number;
+	tooltipValue: string;
+	color: string;
+	isActive: boolean;
+}

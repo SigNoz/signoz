@@ -6,20 +6,12 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 import { LegendItem } from '../../config/types';
-import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import { usePlotContext } from '../../context/PlotContext';
 import useLegendsSync from 'lib/visualization/hooks/useLegendsSync';
+import { LegendProps } from '../types';
 
 const LEGENDS_PER_SET_DEFAULT = 5;
 
-export interface LegendConfig {
-	position: LegendPosition;
-}
-interface LegendProps {
-	position?: LegendPosition;
-	config: UPlotConfigBuilder;
-	legendsPerSet?: number;
-}
 export default function Legend({
 	position: _position = LegendPosition.BOTTOM,
 	config,
