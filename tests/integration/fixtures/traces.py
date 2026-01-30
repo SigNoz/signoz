@@ -688,6 +688,7 @@ class Traces(ABC):
 
         return traces
 
+
 @pytest.fixture(name="insert_traces", scope="function")
 def insert_traces(
     clickhouse: types.TestContainerClickhouse,
