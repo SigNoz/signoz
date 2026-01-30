@@ -54,12 +54,13 @@ export function buildTooltipContent({
 
 		const raw = data[idx]?.[dataIdx];
 		const value = Number(raw);
+		const displayValue = Number.isNaN(value) ? 0 : value;
 		const isActive = idx === activeSeriesIdx;
 
 		const item: TooltipContentItem = {
 			label: String(s.label ?? ''),
-			value: Number.isNaN(value) ? 0 : value,
-			tooltipValue: getToolTipValue(value, yAxisUnit, decimalPrecision),
+			value: displayValue,
+			tooltipValue: getToolTipValue(displayValue, yAxisUnit, decimalPrecision),
 			color: resolveSeriesColor(s.stroke, u, idx),
 			isActive,
 		};
