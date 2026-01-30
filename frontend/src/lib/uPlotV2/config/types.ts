@@ -171,6 +171,8 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 	hooks: {},
 };
 
+const POINTS_FILL_COLOR = '#FFFFFF';
+
 export const DEFAULT_CURSOR_CONFIG: Cursor = {
 	drag: { setScale: true },
 	points: {
@@ -189,7 +191,7 @@ export const DEFAULT_CURSOR_CONFIG: Cursor = {
 					: '';
 			return `${strokeValue}90`;
 		},
-		fill: (): string => '#fff',
+		fill: (): string => POINTS_FILL_COLOR,
 	},
 	focus: {
 		prox: 30,
