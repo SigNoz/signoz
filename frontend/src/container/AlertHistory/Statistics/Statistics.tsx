@@ -1,9 +1,9 @@
-import './Statistics.styles.scss';
-
 import { AlertRuleStats } from 'types/api/alerts/def';
 
 import StatsCardsRenderer from './StatsCardsRenderer/StatsCardsRenderer';
 import TopContributorsRenderer from './TopContributorsRenderer/TopContributorsRenderer';
+
+import './Statistics.styles.scss';
 
 function Statistics({
 	setTotalCurrentTriggers,

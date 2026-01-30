@@ -1,9 +1,9 @@
-import { render } from '@testing-library/react';
-import TimezoneProvider from 'providers/Timezone';
 import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import TimezoneProvider from 'providers/Timezone';
 import i18n from 'ReactI18';
 import store from 'store';
 

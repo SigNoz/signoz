@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
 import { Card, InputNumber } from 'antd';
 import Spinner from 'components/Spinner';
@@ -10,7 +11,6 @@ import {
 import { themeColors } from 'constants/theme';
 import { useSetApDexSettings } from 'hooks/apDex/useSetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
-import { useState } from 'react';
 
 import { APPLICATION_SETTINGS } from '../constants';
 import {

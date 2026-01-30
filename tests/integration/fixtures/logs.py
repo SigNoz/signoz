@@ -383,6 +383,7 @@ class Logs(ABC):
 
         return logs
 
+
 @pytest.fixture(name="insert_logs", scope="function")
 def insert_logs(
     clickhouse: types.TestContainerClickhouse,

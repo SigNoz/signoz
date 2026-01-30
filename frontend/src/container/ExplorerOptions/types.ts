@@ -1,11 +1,11 @@
+import { Dispatch, SetStateAction } from 'react';
+import { UseMutateAsyncFunction } from 'react-query';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { SaveViewWithNameProps } from 'components/ExplorerCard/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { Dispatch, SetStateAction } from 'react';
-import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { SaveViewPayloadProps, SaveViewProps } from 'types/api/saveViews/types';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';

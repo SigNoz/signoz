@@ -1,7 +1,7 @@
+import { useParams } from 'react-router-dom';
 import Spinner from 'components/Spinner';
 import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import useErrorNotification from 'hooks/useErrorNotification';
-import { useParams } from 'react-router-dom';
 
 import { FeatureKeys } from '../../../../../constants/features';
 import { useAppContext } from '../../../../../providers/App/App';

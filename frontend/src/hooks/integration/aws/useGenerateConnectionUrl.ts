@@ -1,6 +1,6 @@
+import { useMutation, UseMutationResult } from 'react-query';
 import { generateConnectionUrl } from 'api/integration/aws';
 import { AxiosError } from 'axios';
-import { useMutation, UseMutationResult } from 'react-query';
 import {
 	ConnectionUrlResponse,
 	GenerateConnectionUrlPayload,

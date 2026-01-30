@@ -1,13 +1,13 @@
-import './EmptyLogsSearch.styles.scss';
-
+import { useEffect, useRef } from 'react';
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { Delete } from 'lucide-react';
-import { useEffect, useRef } from 'react';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
+
+import './EmptyLogsSearch.styles.scss';
 
 interface EmptyLogsSearchProps {
 	dataSource: DataSource;

@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './MessagingQueueHealthCheck.styles.scss';
-
+import { ReactNode, useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
 	Modal,
@@ -22,9 +22,9 @@ import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { ReactNode, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
+
+import './MessagingQueueHealthCheck.styles.scss';
 
 interface AttributeCheckListProps {
 	visible: boolean;

@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction } from 'react';
 import { Form, Input, Select } from 'antd';
 import { LabelFilterStatement } from 'container/CreateAlertChannels/config';
-import { Dispatch, SetStateAction } from 'react';
 
 const { Option } = Select;
 

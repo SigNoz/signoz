@@ -1,5 +1,4 @@
-import './AddSpanToFunnelModal.styles.scss';
-
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
@@ -20,9 +19,10 @@ import {
 	useFunnelContext,
 } from 'pages/TracesFunnels/FunnelContext';
 import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { FunnelData } from 'types/api/traceFunnels';
+
+import './AddSpanToFunnelModal.styles.scss';
 
 enum ModalView {
 	LIST = 'list',

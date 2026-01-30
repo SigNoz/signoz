@@ -166,6 +166,7 @@ class Network:
 
 # Alerts related types
 
+
 @dataclass(frozen=True)
 class AlertData:
     # type of the alert data, one of 'metrics', 'logs', 'traces'
@@ -174,11 +175,17 @@ class AlertData:
     data_path: str
 
 @dataclass(frozen=True)
+class FiringAlert:
+    # labels of the alert that is firing
+    labels: dict[str, str]
+    # annotations and other fields can be added later as per need
+
+@dataclass(frozen=True)
 class AlertExpectation:
     # whether we expect any alerts to be fired
     should_alert: bool
-    # labels of alerts that we expect to be fired
-    expected_alerts: List[dict[str, str]]
+    # alerts that we expect to be fired
+    expected_alerts: List[FiringAlert]
     # seconds to wait for the alerts to be fired, if no
     # alerts are fired in the expected time, the test will fail
     wait_time_seconds: int

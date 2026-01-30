@@ -1,5 +1,6 @@
-import './ServiceTopLevelOperations.styles.scss';
-
+import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Link, useParams } from 'react-router-dom';
 import { SyncOutlined } from '@ant-design/icons';
 import { Alert, Table, Typography } from 'antd';
 import ROUTES from 'constants/routes';
@@ -9,12 +10,11 @@ import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { BarChart2 } from 'lucide-react';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
+
+import './ServiceTopLevelOperations.styles.scss';
 
 export default function ServiceTopLevelOperations(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();

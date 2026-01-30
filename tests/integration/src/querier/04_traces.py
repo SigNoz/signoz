@@ -703,6 +703,183 @@ def test_traces_aggergate_order_by_count(
     assert series[0]["values"][0]["value"] == 4
 
 
+def test_traces_aggregate_with_mixed_field_selectors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+) -> None:
+    """
+    Setup:
+    Insert 4 traces with different attributes.
+    http-service: POST /integration -> SELECT, HTTP PATCH
+    topic-service: topic publish
+
+    Tests:
+    1. Query traces count for spans grouped by service.name
+    """
+    http_service_trace_id = TraceIdGenerator.trace_id()
+    http_service_span_id = TraceIdGenerator.span_id()
+    http_service_db_span_id = TraceIdGenerator.span_id()
+    http_service_patch_span_id = TraceIdGenerator.span_id()
+    topic_service_trace_id = TraceIdGenerator.trace_id()
+    topic_service_span_id = TraceIdGenerator.span_id()
+
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(seconds=4),
+                duration=timedelta(seconds=3),
+                trace_id=http_service_trace_id,
+                span_id=http_service_span_id,
+                parent_span_id="",
+                name="POST /integration",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "http-service",
+                    "os.type": "linux",
+                    "host.name": "linux-000",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "000",
+                },
+                attributes={
+                    "net.transport": "IP.TCP",
+                    "http.scheme": "http",
+                    "http.user_agent": "Integration Test",
+                    "http.request.method": "POST",
+                    "http.response.status_code": "200",
+                },
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=3.5),
+                duration=timedelta(seconds=0.5),
+                trace_id=http_service_trace_id,
+                span_id=http_service_db_span_id,
+                parent_span_id=http_service_span_id,
+                name="SELECT",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "http-service",
+                    "os.type": "linux",
+                    "host.name": "linux-000",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "000",
+                },
+                attributes={
+                    "db.name": "integration",
+                    "db.operation": "SELECT",
+                    "db.statement": "SELECT * FROM integration",
+                },
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=3),
+                duration=timedelta(seconds=1),
+                trace_id=http_service_trace_id,
+                span_id=http_service_patch_span_id,
+                parent_span_id=http_service_span_id,
+                name="HTTP PATCH",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "http-service",
+                    "os.type": "linux",
+                    "host.name": "linux-000",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "000",
+                },
+                attributes={
+                    "http.request.method": "PATCH",
+                    "http.status_code": "404",
+                },
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=1),
+                duration=timedelta(seconds=4),
+                trace_id=topic_service_trace_id,
+                span_id=topic_service_span_id,
+                parent_span_id="",
+                name="topic publish",
+                kind=TracesKind.SPAN_KIND_PRODUCER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "topic-service",
+                    "os.type": "linux",
+                    "host.name": "linux-001",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "001",
+                },
+                attributes={
+                    "message.type": "SENT",
+                    "messaging.operation": "publish",
+                    "messaging.message.id": "001",
+                },
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "traces",
+            "groupBy": [
+                {
+                    "name": "service.name",
+                    "fieldContext": "resource",
+                    "fieldDataType": "string",
+                }
+            ],
+            "aggregations": [
+                {"expression": "p99(duration_nano)", "alias": "p99"},
+                {"expression": "avg(duration_nano)", "alias": "avgDuration"},
+                {"expression": "count()", "alias": "numCalls"},
+                {"expression": "countIf(status_code = 2)", "alias": "numErrors"},
+                {
+                    "expression": "countIf(response_status_code >= 400 AND response_status_code < 500)",
+                    "alias": "num4XX",
+                },
+            ],
+            "order": [{"key": {"name": "count()"}, "direction": "desc"}],
+        },
+    }
+
+    # Query traces count for spans
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="time_series",
+        queries=[query],
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+    aggregations = results[0]["aggregations"]
+
+    assert (
+        aggregations[0]["series"][0]["values"][0]["value"] >= 2.5 * 1e9
+    )  # p99 for http-service
+
+
 def test_traces_fill_gaps(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

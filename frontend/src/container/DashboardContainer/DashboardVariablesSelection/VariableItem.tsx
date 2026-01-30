@@ -4,8 +4,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
-import './DashboardVariableSelection.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { Input, InputRef, Popover, Tooltip, Typography } from 'antd';
@@ -15,9 +16,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isEmpty, isString } from 'lodash-es';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
@@ -27,6 +25,8 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { ALL_SELECT_VALUE, variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
 import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
+
+import './DashboardVariableSelection.styles.scss';
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;

@@ -1,14 +1,14 @@
-import './LogsExplorerTable.styles.scss';
-
+import { memo } from 'react';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { QueryTable } from 'container/QueryTable';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo } from 'react';
 import APIError from 'types/api/error';
 
 import { LogsExplorerTableProps } from './LogsExplorerTable.interfaces';
+
+import './LogsExplorerTable.styles.scss';
 
 function LogsExplorerTable({
 	data,

@@ -192,6 +192,7 @@ def verify_alert_expectation(
         time_to_wait = datetime.now() + timedelta(
             seconds=alert_expectations.wait_time_seconds
         )
+        expected_alerts_labels = [alert.labels for alert in alert_expectations.expected_alerts]
 
         while datetime.now() < time_to_wait:
             firing_alerts = collect_firing_alerts(test_alert_container, notification_channel_name)
@@ -199,7 +200,7 @@ def verify_alert_expectation(
             if alert_expectations.should_alert:
                 # verify the number of alerts fired
                 (verified_count, missing_alerts) = _verify_alerts(
-                    firing_alerts, alert_expectations.expected_alerts
+                    firing_alerts, expected_alerts_labels
                 )
 
                 if verified_count == len(alert_expectations.expected_alerts):

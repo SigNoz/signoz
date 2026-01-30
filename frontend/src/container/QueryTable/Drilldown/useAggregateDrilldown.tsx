@@ -1,7 +1,7 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import useDashboardVarConfig from 'container/QueryTable/Drilldown/useDashboardVarConfig';
 import { SuccessResponse } from 'types/api';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

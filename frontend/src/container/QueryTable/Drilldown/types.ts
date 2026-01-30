@@ -1,5 +1,5 @@
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { ReactNode } from 'react';
+import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 

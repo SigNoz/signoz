@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import getTraceFlamegraph from 'api/trace/getTraceFlamegraph';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	GetTraceFlamegraphPayloadProps,

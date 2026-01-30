@@ -1,3 +1,4 @@
+import { I18nextProvider } from 'react-i18next';
 import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import NewWidget from 'container/NewWidget';
@@ -6,7 +7,6 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { I18nextProvider } from 'react-i18next';
 import i18n from 'ReactI18';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';

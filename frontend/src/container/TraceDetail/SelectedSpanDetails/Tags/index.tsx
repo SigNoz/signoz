@@ -1,6 +1,3 @@
-import { Input, List, Typography } from 'antd';
-import ROUTES from 'constants/routes';
-import { formUrlParams } from 'container/TraceDetail/utils';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -10,6 +7,9 @@ import {
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Input, List, Typography } from 'antd';
+import ROUTES from 'constants/routes';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
 
 import { ModalText } from '..';
