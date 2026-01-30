@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import * as Sentry from '@sentry/react';
 import { Typography } from 'antd';
 import { isEqual } from 'lodash-es';
@@ -112,7 +112,10 @@ export default function UPlotChart({
 	 * When the "No Data" UI is shown, the container div is unmounted,
 	 * but without this effect the plot instance would remain in memory.
 	 */
-	const isDataEmpty = data && data[0] && data[0].length === 0;
+	const isDataEmpty = useMemo(() => {
+		return !!(data && data[0] && data[0].length === 0);
+	}, [data]);
+
 	useEffect(() => {
 		if (isDataEmpty) {
 			destroyPlot();
@@ -163,7 +166,7 @@ export default function UPlotChart({
 		prevPropsRef.current = currentProps;
 	}, [config, data, width, height, createPlot]);
 
-	if (data && data[0] && data[0]?.length === 0) {
+	if (isDataEmpty) {
 		return (
 			<div
 				className="uplot-no-data not-found"
