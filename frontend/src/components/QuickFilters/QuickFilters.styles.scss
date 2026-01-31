@@ -114,8 +114,11 @@
 	}
 
 	.quick-filters-skeleton {
+		overflow: hidden;
+
 		.ant-skeleton-input {
 			width: 236px;
+			max-width: calc(100% - 24px);
 			margin: 8px 12px;
 		}
 	}
