@@ -1,4 +1,5 @@
 import { memo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -25,7 +26,6 @@ function LeftContainer({
 	selectedWidget,
 	requestData,
 	setRequestData,
-	isLoadingPanelData,
 	setQueryResponse,
 	enableDrillDown = false,
 }: WidgetGraphProps): JSX.Element {
@@ -35,15 +35,20 @@ function LeftContainer({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
-		enabled: !!stagedQuery,
-		queryKey: [
+	const queryRangeKey = useMemo(
+		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,
 			globalSelectedInterval,
 			requestData,
 			minTime,
 			maxTime,
 		],
+		[globalSelectedInterval, requestData, minTime, maxTime],
+	);
+	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
+		enabled: !!stagedQuery,
+		queryKey: queryRangeKey,
+		keepPreviousData: true,
 	});
 
 	// Update parent component with query response for legend colors
@@ -60,11 +65,15 @@ function LeftContainer({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
-				isLoadingPanelData={isLoadingPanelData}
+				isLoadingPanelData={queryResponse.isFetching}
 				enableDrillDown={enableDrillDown}
 			/>
 			<QueryContainer className="query-section-left-container">
-				<QuerySection selectedGraph={selectedGraph} />
+				<QuerySection
+					selectedGraph={selectedGraph}
+					queryRangeKey={queryRangeKey}
+					isLoadingQueries={queryResponse.isFetching}
+				/>
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer
 						selectedLogFields={selectedLogFields}
