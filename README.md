@@ -68,7 +68,7 @@ Read [more](https://signoz.io/metrics-and-dashboards/).
 
 ### LLM Observability
 
-Monitor and debug your LLM applications with comprehensive observability. Track LLM calls, analyze toke nsuage, monitor performance, and gain insights into your AI application's behavior in production.
+Monitor and debug your LLM applications with comprehensive observability. Track LLM calls, analyze token usage, monitor performance, and gain insights into your AI application's behavior in production.
 
 SigNoz LLM observability helps you understand how your language models are performing, identify issues with prompts and responses, track token usage and costs, and optimize your AI applications for better performance and reliability.
 
