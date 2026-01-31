@@ -907,21 +907,15 @@ func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
 }
 
 func (b *traceOperatorCTEBuilder) buildHeatmapQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-
-	sb.Select(fmt.Sprintf(
-		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
-		int64(b.operator.StepInterval.Seconds()),
-	))
-
 	keySelectors := b.getKeySelectors()
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
 
-	// Process all aggregations
-	var allChArgs []any
+	fieldExprs := make([]string, 0, len(b.operator.Aggregations))
+	allHistArgs := make([][]any, 0, len(b.operator.Aggregations))
+
 	for i, aggExpr := range b.operator.Aggregations {
 		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
@@ -938,16 +932,108 @@ func (b *traceOperatorCTEBuilder) buildHeatmapQuery(ctx context.Context, selectF
 			)
 		}
 
-		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
-		allChArgs = append(allChArgs, chArgs...)
+		// Extract the field expression from rewritten histogram
+		var fieldExpr string
+		if strings.HasPrefix(rewritten, "histogram(") {
+			startIdx := strings.Index(rewritten, ")(")
+			if startIdx != -1 {
+				fieldExpr = rewritten[startIdx+2 : len(rewritten)-1]
+			}
+		}
+		fieldExprs = append(fieldExprs, fieldExpr)
+		allHistArgs = append(allHistArgs, chArgs)
+
+		// Build histogram CTE directly
+		histSB := sqlbuilder.NewSelectBuilder()
+		histSB.Select(fmt.Sprintf("%s AS buckets_%d", rewritten, i))
+		histSB.From(selectFromCTE)
+
+		histSQL, histArgs := histSB.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
+		b.addCTE(fmt.Sprintf("__histogram_op_%d", i), histSQL, histArgs, []string{selectFromCTE})
 	}
 
-	sb.From(selectFromCTE)
+	mainSB := sqlbuilder.NewSelectBuilder()
+	mainSB.Select(fmt.Sprintf(
+		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
+		int64(b.operator.StepInterval.Seconds()),
+	))
 
-	sb.GroupBy("ts")
-	sb.OrderBy("ts")
+	// Add GroupBy fields
+	var allGroupByArgs []any
+	fieldNames := make([]string, 0, len(b.operator.GroupBy))
+	for _, gb := range b.operator.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(
+			ctx,
+			&gb.TelemetryFieldKey,
+			b.stmtBuilder.fm,
+			b.stmtBuilder.cb,
+			keys,
+			telemetrytypes.FieldDataTypeString,
+			nil,
+		)
+		if err != nil {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"failed to map group by field '%s': %v",
+				gb.TelemetryFieldKey.Name,
+				err,
+			)
+		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		mainSB.SelectMore(colExpr)
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	}
 
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, allChArgs...)
+	// Add result for each aggregation
+	for i, fieldExpr := range fieldExprs {
+		mainSB.SelectMore(fmt.Sprintf(
+			"arrayMap(i -> tuple(buckets_%d[i].1, buckets_%d[i].2, length(arrayFilter(d -> d >= buckets_%d[i].1 AND d < buckets_%d[i].2, groupArray(%s)))), range(1, length(buckets_%d) + 1)) AS __result_%d",
+			i, i, i, i, fieldExpr, i, i,
+		))
+	}
+
+	// FROM base CTE with CROSS JOIN to histogram CTEs
+	mainSB.From(selectFromCTE)
+	for i := range b.operator.Aggregations {
+		mainSB.SQL(fmt.Sprintf("CROSS JOIN __histogram_op_%d", i))
+	}
+
+	// Build GROUP BY clause
+	mainSB.GroupBy("ts")
+	if len(b.operator.GroupBy) > 0 {
+		groupByKeys := make([]string, len(b.operator.GroupBy))
+		for i, gb := range b.operator.GroupBy {
+			groupByKeys[i] = fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name)
+		}
+		mainSB.GroupBy(groupByKeys...)
+	}
+	for i := range b.operator.Aggregations {
+		mainSB.GroupBy(fmt.Sprintf("buckets_%d", i))
+	}
+
+	// Add HAVING clause
+	b.addHavingClause(mainSB)
+
+	// Add ORDER BY
+	for _, orderBy := range b.operator.Order {
+		idx, ok := b.aggOrderBy(orderBy)
+		if ok {
+			mainSB.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+		} else {
+			mainSB.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		}
+	}
+	mainSB.OrderBy("ts")
+
+	// Collect all args from histograms and group by
+	var flatHistArgs []any
+	for _, args := range allHistArgs {
+		flatHistArgs = append(flatHistArgs, args...)
+	}
+	combinedArgs := append(allGroupByArgs, flatHistArgs...)
+
+	sql, args := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
 		Query: sql,
 		Args:  args,

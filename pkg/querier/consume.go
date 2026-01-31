@@ -308,36 +308,24 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				continue
 			}
 
-			// Sort upper bounds
 			upperBounds := make([]float64, 0, len(buckets))
 			for upper := range buckets {
 				upperBounds = append(upperBounds, upper)
 			}
 			sort.Float64s(upperBounds)
 
-			bounds := make([]float64, 0, len(upperBounds)+1)
+			series.Bounds = append([]float64{0}, upperBounds...)
+
 			counts := make([]float64, 0, len(upperBounds))
-
-			for i, upper := range upperBounds {
-				count := buckets[upper]
-
-				// Add lower bound for first bucket only
-				if i == 0 {
-					bounds = append(bounds, 0)
-				}
-
-				bounds = append(bounds, upper)
-				counts = append(counts, count)
+			for _, upper := range upperBounds {
+				counts = append(counts, buckets[upper])
 			}
 
-			if len(counts) > 0 && len(bounds) == len(counts)+1 {
+			if len(counts) > 0 {
 				series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 					Timestamp: row.ts,
 					Values:    counts,
-					Bucket: &qbtypes.Bucket{
-						Bounds: bounds,
-					},
-					Partial: isPartialValue(row.ts),
+					Partial:   isPartialValue(row.ts),
 				})
 			}
 		}

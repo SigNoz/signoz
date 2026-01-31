@@ -82,6 +82,7 @@ func TestConsumeHeatmap(t *testing.T) {
 			[][]*float64{
 				{floatPtr(0), floatPtr(10), floatPtr(5)},  // 5 observations in [0, 10)
 				{floatPtr(10), floatPtr(20), floatPtr(3)}, // 3 observations in [10, 20)
+				{floatPtr(20), floatPtr(30), floatPtr(0)}, // 0 observations in [20, 30)
 			},
 		},
 		{
@@ -114,29 +115,21 @@ func TestConsumeHeatmap(t *testing.T) {
 	series := agg.Series[0]
 	assert.Len(t, series.Values, 2) // 2 timestamps
 
-	// First timestamp: CH bins [0, 10), [10, 20)
-	firstBounds := series.Values[0].Bucket.Bounds
-	require.NotNil(t, firstBounds)
-	assert.Equal(t, 3, len(firstBounds), "should have 3 boundary points for 2 bins")
-	assert.Equal(t, 0.0, firstBounds[0])
-	assert.Equal(t, 10.0, firstBounds[1])
-	assert.Equal(t, 20.0, firstBounds[2])
+	// Bounds
+	require.NotNil(t, series.Bounds, "bounds should be at series level")
+	assert.Equal(t, 4, len(series.Bounds), "should have 4 boundary points for 3 bins")
+	assert.Equal(t, 0.0, series.Bounds[0])
+	assert.Equal(t, 10.0, series.Bounds[1])
+	assert.Equal(t, 20.0, series.Bounds[2])
+	assert.Equal(t, 30.0, series.Bounds[3])
 
-	// First timestamp counts: [0-10): 5, [10-20): 3
-	assert.Equal(t, 2, len(series.Values[0].Values))
+	// First timestamp counts
+	assert.Equal(t, 3, len(series.Values[0].Values))
 	assert.Equal(t, 5.0, series.Values[0].Values[0], "first bin should have 5 counts")
 	assert.Equal(t, 3.0, series.Values[0].Values[1], "second bin should have 3 counts")
+	assert.Equal(t, 0.0, series.Values[0].Values[2], "third bin should have 0 counts")
 
-	// Second timestamp: CH bins [0, 10), [10, 20), [20, 30)
-	secondBounds := series.Values[1].Bucket.Bounds
-	require.NotNil(t, secondBounds)
-	assert.Equal(t, 4, len(secondBounds), "should have 4 boundary points for 3 bins")
-	assert.Equal(t, 0.0, secondBounds[0])
-	assert.Equal(t, 10.0, secondBounds[1])
-	assert.Equal(t, 20.0, secondBounds[2])
-	assert.Equal(t, 30.0, secondBounds[3])
-
-	// Second timestamp counts: [0-10): 2, [10-20): 6, [20-30): 4
+	// Second timestamp counts
 	assert.Equal(t, 3, len(series.Values[1].Values))
 	assert.Equal(t, 2.0, series.Values[1].Values[0], "first bin should have 2 counts")
 	assert.Equal(t, 6.0, series.Values[1].Values[1], "second bin should have 6 counts")
