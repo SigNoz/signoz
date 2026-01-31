@@ -5,6 +5,7 @@ import (
 	"time"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -40,8 +41,8 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: types.NewTextDuration(5 * time.Minute),
+			Frequency:  types.NewTextDuration(1 * time.Minute),
 		}},
 		Labels: map[string]string{
 			"service.name": "frontend",
@@ -99,8 +100,8 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: types.NewTextDuration(5 * time.Minute),
+			Frequency:  types.NewTextDuration(1 * time.Minute),
 		}},
 		Labels: map[string]string{
 			"service.name": "frontend",
