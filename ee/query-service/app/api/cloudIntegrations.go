@@ -42,11 +42,9 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	}
 
 	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if cloudProvider != "aws" {
-		RespondError(w, basemodel.BadRequest(fmt.Errorf(
-			"cloud provider not supported: %s", cloudProvider,
-		)), nil)
-		return
+
+	if err = types.ValidateCloudProvider(cloudProvider); err != nil {
+		RespondError(w, basemodel.BadRequest(err), nil)
 	}
 
 	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
