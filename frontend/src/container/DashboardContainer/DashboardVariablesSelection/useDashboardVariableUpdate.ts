@@ -3,7 +3,8 @@ import { useCallback } from 'react';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 
 import { convertVariablesToDbFormat } from './util';
@@ -27,7 +28,7 @@ interface UseDashboardVariableUpdateReturn {
 		widgetId?: string,
 	) => void;
 	updateVariables: (
-		updatedVariablesData: Dashboard['data']['variables'],
+		updatedVariablesData: IDashboardVariables,
 		currentRequestedId?: string,
 		widgetIds?: string[],
 		applyToAll?: boolean,
@@ -106,7 +107,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 
 	const updateVariables = useCallback(
 		(
-			updatedVariablesData: Dashboard['data']['variables'],
+			updatedVariablesData: IDashboardVariables,
 			currentRequestedId?: string,
 			widgetIds?: string[],
 			applyToAll?: boolean,
