@@ -292,7 +292,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		icon: <Cog size={16} />,
 	};
 
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
+	const shouldMouseEventOpenInNewTab = useCallback(
+		(e: MouseEvent | null): boolean =>
+			e !== null && (e.ctrlKey || e.metaKey || e.button === 1),
+		[],
+	);
 
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
@@ -424,7 +428,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			? ROUTES.GET_STARTED_WITH_CLOUD
 			: ROUTES.GET_STARTED;
 
-		if (isCtrlMetaKey(event)) {
+		if (shouldMouseEventOpenInNewTab(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
 			history.push(onboaringRoute);
@@ -439,7 +443,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== key) {
-				if (event && isCtrlMetaKey(event)) {
+				if (shouldMouseEventOpenInNewTab(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
 					history.push(`${key}?${queryString.join('&')}`, {
@@ -448,7 +452,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				}
 			}
 		},
-		[pathname, search],
+		[pathname, search, shouldMouseEventOpenInNewTab],
 	);
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
@@ -634,7 +638,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
 		if (item.key === ROUTES.SETTINGS) {
-			if (isCtrlMetaKey(event)) {
+			if (shouldMouseEventOpenInNewTab(event)) {
 				openInNewTab(settingsRoute);
 			} else {
 				history.push(settingsRoute);
