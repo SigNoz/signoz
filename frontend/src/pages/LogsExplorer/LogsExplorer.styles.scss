@@ -1,15 +1,21 @@
 .logs-module-page {
 	display: flex;
 	height: 100%;
+
 	.log-quick-filter-left-section {
 		width: 0%;
 		flex-shrink: 0;
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		overflow-y: auto;
 	}
 
 	.log-module-right-section {
 		display: flex;
 		flex-direction: column;
 		width: 100%;
+
 		.log-explorer-query-container {
 			display: flex;
 			flex-direction: column;
