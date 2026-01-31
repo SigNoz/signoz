@@ -26,7 +26,6 @@ function LeftContainer({
 	selectedWidget,
 	requestData,
 	setRequestData,
-	isLoadingPanelData,
 	setQueryResponse,
 	enableDrillDown = false,
 }: WidgetGraphProps): JSX.Element {
@@ -49,6 +48,7 @@ function LeftContainer({
 	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
 		enabled: !!stagedQuery,
 		queryKey: queryRangeKey,
+		keepPreviousData: true,
 	});
 
 	// Update parent component with query response for legend colors
@@ -65,11 +65,15 @@ function LeftContainer({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
-				isLoadingPanelData={isLoadingPanelData}
+				isLoadingPanelData={queryResponse.isFetching}
 				enableDrillDown={enableDrillDown}
 			/>
 			<QueryContainer className="query-section-left-container">
-				<QuerySection selectedGraph={selectedGraph} queryRangeKey={queryRangeKey} />
+				<QuerySection
+					selectedGraph={selectedGraph}
+					queryRangeKey={queryRangeKey}
+					isLoadingQueries={queryResponse.isFetching}
+				/>
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer
 						selectedLogFields={selectedLogFields}

@@ -39,6 +39,7 @@ import './QuerySection.styles.scss';
 function QuerySection({
 	selectedGraph,
 	queryRangeKey,
+	isLoadingQueries,
 }: QueryProps): JSX.Element {
 	const {
 		currentQuery,
@@ -244,6 +245,7 @@ function QuerySection({
 							className="run-query-dashboard-btn"
 							label="Stage & Run Query"
 							onStageRunQuery={handleRunQuery}
+							isLoadingQueries={isLoadingQueries}
 							queryRangeKey={queryRangeKey}
 						/>
 					</span>
@@ -257,6 +259,7 @@ function QuerySection({
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
 	queryRangeKey?: QueryKey;
+	isLoadingQueries?: boolean;
 }
 
 export default QuerySection;
