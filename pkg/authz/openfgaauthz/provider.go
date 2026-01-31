@@ -152,7 +152,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 		}
 	}
 
-	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "none of the subjects are allowed for requested access")
+	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 
 }
 
