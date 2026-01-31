@@ -105,6 +105,10 @@
 				background: rgba(255, 255, 255, 0.04);
 			}
 
+			.ant-table-tbody > tr {
+				cursor: pointer;
+			}
+
 			.ant-table-cell:first-child {
 				text-align: justify;
 			}
@@ -206,6 +210,10 @@
 
 			.ant-table-tbody > tr:hover > td {
 				background: rgba(0, 0, 0, 0.04);
+			}
+
+			.ant-table-tbody > tr {
+				cursor: pointer;
 			}
 
 			.table-row-light {
