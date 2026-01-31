@@ -39,7 +39,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	)
 
 	switch kind {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
@@ -107,6 +107,16 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		lblValsCapacity = 0
 	}
 
+	type histogramRow struct {
+		ts         int64
+		lblVals    []string
+		lblObjs    []*qbtypes.Label
+		aggValues  map[int]float64
+		aggBuckets map[int]map[float64]float64
+	}
+
+	var allRows []histogramRow
+
 	for rows.Next() {
 		if err := rows.Scan(slots...); err != nil {
 			return nil, err
@@ -117,7 +127,8 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			lblVals       = make([]string, 0, lblValsCapacity)
 			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
 			aggValues     = map[int]float64{} // all __result_N in this row
-			fallbackValue float64             // value when NO __result_N columns exist
+			aggBuckets    = map[int]map[float64]float64{}
+			fallbackValue float64 // value when NO __result_N columns exist
 			fallbackSeen  bool
 		)
 
@@ -190,25 +201,82 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
+			case *[][]*float64, *[][]any:
+				if m := aggRe.FindStringSubmatch(name); m != nil {
+					id, _ := strconv.Atoi(m[1])
+
+					vPtr := reflect.ValueOf(ptr)
+					if vPtr.Kind() == reflect.Ptr && !vPtr.IsNil() {
+						vSlice := vPtr.Elem()
+						if vSlice.Kind() == reflect.Slice {
+							if vSlice.Len() == 0 {
+								aggBuckets[id] = make(map[float64]float64)
+								continue
+							}
+
+							bucketMap := make(map[float64]float64)
+
+							for i := 0; i < vSlice.Len(); i++ {
+								item := vSlice.Index(i)
+
+								if item.Kind() == reflect.Ptr {
+									if item.IsNil() {
+										continue
+									}
+									item = item.Elem()
+								}
+
+								if item.Kind() == reflect.Slice || item.Kind() == reflect.Array {
+									if item.Len() >= 3 {
+										upper := numericAsFloat(derefValue(item.Index(1).Interface()))
+										count := numericAsFloat(derefValue(item.Index(2).Interface()))
+
+										if !math.IsNaN(upper) && !math.IsInf(upper, 0) &&
+											!math.IsNaN(count) && !math.IsInf(count, 0) {
+											bucketMap[upper] = count
+										}
+									}
+								}
+							}
+
+							if len(bucketMap) > 0 {
+								aggBuckets[id] = bucketMap
+							}
+						}
+					}
+				}
 			default:
 				continue
 			}
 		}
 
 		// Edge-case: no __result_N columns, but a single numeric column present
-		if len(aggValues) == 0 && fallbackSeen {
+		if len(aggValues) == 0 && len(aggBuckets) == 0 && fallbackSeen {
 			aggValues[0] = fallbackValue
 		}
 
-		if ts == 0 || len(aggValues) == 0 {
+		if ts == 0 || len(aggValues) == 0 && len(aggBuckets) == 0 {
 			continue // nothing useful
 		}
 
-		sort.Strings(lblVals)
-		labelsKey := strings.Join(lblVals, ",")
+		// Store row data
+		allRows = append(allRows, histogramRow{
+			ts:         ts,
+			lblVals:    lblVals,
+			lblObjs:    lblObjs,
+			aggValues:  aggValues,
+			aggBuckets: aggBuckets,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-		// one point per aggregation in this row
-		for aggIdx, val := range aggValues {
+	for _, row := range allRows {
+		sort.Strings(row.lblVals)
+		labelsKey := strings.Join(row.lblVals, ",")
+
+		for aggIdx, val := range row.aggValues {
 			if math.IsNaN(val) || math.IsInf(val, 0) {
 				continue
 			}
@@ -217,18 +285,50 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			series, ok := seriesMap[key]
 			if !ok {
-				series = &qbtypes.TimeSeries{Labels: lblObjs}
+				series = &qbtypes.TimeSeries{Labels: row.lblObjs}
 				seriesMap[key] = series
 			}
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
-				Timestamp: ts,
+				Timestamp: row.ts,
 				Value:     val,
-				Partial:   isPartialValue(ts),
+				Partial:   isPartialValue(row.ts),
 			})
 		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
+
+		for aggIdx, buckets := range row.aggBuckets {
+			key := sKey{agg: aggIdx, key: labelsKey}
+
+			series, ok := seriesMap[key]
+			if !ok {
+				series = &qbtypes.TimeSeries{Labels: row.lblObjs}
+				seriesMap[key] = series
+			}
+
+			if len(buckets) == 0 {
+				continue
+			}
+
+			upperBounds := make([]float64, 0, len(buckets))
+			for upper := range buckets {
+				upperBounds = append(upperBounds, upper)
+			}
+			sort.Float64s(upperBounds)
+
+			series.Bounds = append([]float64{0}, upperBounds...)
+
+			counts := make([]float64, 0, len(upperBounds))
+			for _, upper := range upperBounds {
+				counts = append(counts, buckets[upper])
+			}
+
+			if len(counts) > 0 {
+				series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
+					Timestamp: row.ts,
+					Values:    counts,
+					Partial:   isPartialValue(row.ts),
+				})
+			}
+		}
 	}
 
 	maxAgg := -1
@@ -237,6 +337,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			maxAgg = k.agg
 		}
 	}
+
 	if maxAgg < 0 {
 		return &qbtypes.TimeSeriesData{
 			QueryName: queryName,

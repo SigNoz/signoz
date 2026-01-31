@@ -83,6 +83,8 @@ func (b *logQueryStatementBuilder) Build(
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+	case qbtypes.RequestTypeHeatmap:
+		return b.buildHeatmapQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -683,4 +685,170 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 		query,
 		variables,
 	)
+}
+
+func (b *logQueryStatementBuilder) buildHeatmapQuery(
+	ctx context.Context,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+
+	var (
+		cteFragments []string
+		cteArgs      [][]any
+	)
+
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+	}
+
+	fieldExprs := make([]string, 0, len(query.Aggregations))
+	allHistArgs := make([][]any, 0, len(query.Aggregations))
+
+	for i, aggExpr := range query.Aggregations {
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			ctx, aggExpr.Expression,
+			uint64(query.StepInterval.Seconds()),
+			keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Extract the field expression from rewritten histogram
+		var fieldExpr string
+		if strings.HasPrefix(rewritten, "histogram(") {
+			startIdx := strings.Index(rewritten, ")(")
+			if startIdx != -1 {
+				fieldExpr = rewritten[startIdx+2 : len(rewritten)-1]
+			}
+		}
+		fieldExprs = append(fieldExprs, fieldExpr)
+		allHistArgs = append(allHistArgs, chArgs)
+
+		// histogram CTE
+		histSB := sqlbuilder.NewSelectBuilder()
+		histSB.Select(fmt.Sprintf("%s AS buckets_%d", rewritten, i))
+		histSB.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+
+		// Add filter conditions to histogram CTE
+		_, err = b.addFilterCondition(ctx, histSB, start, end, query, keys, variables)
+		if err != nil {
+			return nil, err
+		}
+
+		histSQL, histArgs := histSB.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
+		cteFragments = append(cteFragments, fmt.Sprintf("__histogram_%d AS (%s)", i, histSQL))
+		cteArgs = append(cteArgs, histArgs)
+	}
+
+	sb.Select(fmt.Sprintf(
+		"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts",
+		int64(query.StepInterval.Seconds()),
+	))
+
+	var allGroupByArgs []any
+	fieldNames := make([]string, 0, len(query.GroupBy))
+	for _, gb := range query.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return nil, err
+		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		sb.SelectMore(colExpr)
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	}
+
+	// Add result for each aggregation
+	for i, fieldExpr := range fieldExprs {
+		sb.SelectMore(fmt.Sprintf(
+			"arrayMap(i -> tuple(buckets_%d[i].1, buckets_%d[i].2, length(arrayFilter(d -> d >= buckets_%d[i].1 AND d < buckets_%d[i].2, groupArray(%s)))), range(1, length(buckets_%d) + 1)) AS __result_%d",
+			i, i, i, i, fieldExpr, i, i,
+		))
+	}
+
+	// FROM base table with CROSS JOIN to histogram CTEs
+	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	for i := range query.Aggregations {
+		sb.SQL(fmt.Sprintf("CROSS JOIN __histogram_%d", i))
+	}
+
+	// Add filter conditions to main query
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle Limit with GroupBy - build a limit CTE if needed
+	if query.Limit > 0 && len(query.GroupBy) > 0 {
+		limitSB := sqlbuilder.NewSelectBuilder()
+		limitStmt, err := b.buildScalarQuery(ctx, limitSB, query, start, end, keys, true, variables)
+		if err != nil {
+			return nil, err
+		}
+
+		cteFragments = append(cteFragments, fmt.Sprintf("__limit_cte AS (%s)", limitStmt.Query))
+		cteArgs = append(cteArgs, limitStmt.Args)
+
+		// Constrain to limit CTE
+		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
+		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+	}
+
+	// Build GROUP BY clause
+	sb.GroupBy("ts")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	for i := range query.Aggregations {
+		sb.GroupBy(fmt.Sprintf("buckets_%d", i))
+	}
+
+	// Add HAVING clause support
+	if query.Having != nil && query.Having.Expression != "" {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		sb.Having(rewrittenExpr)
+	}
+
+	// Add ORDER BY support
+	if len(query.Order) > 0 {
+		for _, orderBy := range query.Order {
+			idx, ok := aggOrderBy(orderBy, query)
+			if ok {
+				sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+			} else {
+				sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			}
+		}
+	}
+	sb.OrderBy("ts")
+
+	// Collect all args from histograms and group by
+	var flatHistArgs []any
+	for _, args := range allHistArgs {
+		flatHistArgs = append(flatHistArgs, args...)
+	}
+	combinedArgs := append(allGroupByArgs, flatHistArgs...)
+
+	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }

@@ -546,8 +546,11 @@ func (q *querier) run(
 	}
 
 	for name, query := range qs {
-		// Skip cache if NoCache is set, or if cache is not available
-		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
+		// Skip cache if NoCache is set, cache is not available, or it's a heatmap query
+		skipCache := req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" ||
+			req.RequestType == qbtypes.RequestTypeHeatmap
+
+		if skipCache {
 			if req.NoCache {
 				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", "query", name)
 			} else {
