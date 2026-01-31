@@ -343,7 +343,7 @@ export async function GetMetricQueryRange(
 		return response;
 	}
 
-	if (response.payload?.data?.result) {
+	if (response.payload?.data?.result && response.payload?.data?.resultType !== 'distribution') {
 		const v2Range = convertNewDataToOld(response.payload);
 
 		response.payload = v2Range;

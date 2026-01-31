@@ -79,6 +79,8 @@ const generateTooltipContent = (
 	timezone?: string,
 	colorMapping?: Record<string, string>,
 	query?: Query,
+	isDistributionChart?: boolean,
+	bucketLabels?: string[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -109,11 +111,13 @@ const generateTooltipContent = (
 			const item = series[index];
 
 			if (index === 0) {
-				if (isBillingUsageGraphs) {
+				if (isDistributionChart && bucketLabels) {
+					tooltipTitle = bucketLabels[idx] || `Bucket ${idx}`;
+				} else if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
 						.format(DATE_TIME_FORMATS.MONTH_YEAR);
-				} else {
+				} else if (!isHistogramGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
 						.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
@@ -213,7 +217,7 @@ const generateTooltipContent = (
 
 	const headerDiv = document.createElement('div');
 	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
-	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
+	headerDiv.textContent = tooltipTitle;
 	container.appendChild(headerDiv);
 
 	// Use DocumentFragment for better performance when adding multiple elements
@@ -257,6 +261,8 @@ type ToolTipPluginProps = {
 	yAxisUnit?: string;
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
+	isDistributionChart?: boolean;
+	bucketLabels?: string[];
 	isMergedSeries?: boolean;
 	decimalPrecision?: PrecisionOption;
 	stackBarChart?: boolean;
@@ -272,6 +278,8 @@ const tooltipPlugin = ({
 	yAxisUnit,
 	isBillingUsageGraphs,
 	isHistogramGraphs,
+	isDistributionChart,
+	bucketLabels,
 	isMergedSeries,
 	stackBarChart,
 	isDarkMode,
@@ -407,6 +415,8 @@ ToolTipPluginProps): any => {
 					timezone,
 					colorMapping,
 					query,
+					isDistributionChart,
+					bucketLabels,
 				);
 
 				// Only show tooltip if there's actual content

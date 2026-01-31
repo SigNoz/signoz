@@ -359,6 +359,7 @@ export enum PANEL_TYPES {
 	BAR = 'bar',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
+	DISTRIBUTION = 'distribution',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
@@ -509,6 +510,7 @@ export enum PanelDisplay {
 	LIST = 'List',
 	BAR = 'Bar',
 	PIE = 'Pie',
+	DISTRIBUTION = 'Distribution',
 	HISTOGRAM = 'Histogram',
 }
 

@@ -68,8 +68,16 @@ function LegendColors({
 
 	// Get legend labels from query response or current query
 	const legendLabels = useMemo(() => {
-		if (queryResponse?.data?.payload?.data?.result) {
-			return queryResponse.data.payload.data.result.map((item: any) =>
+		const payload = queryResponse?.data?.payload as any;
+
+		if (payload?.data?.newResult?.data?.result) {
+			return payload.data.newResult.data.result.map((item: any) =>
+				getLabelName({}, item.queryName || '', item.legend || ''),
+			);
+		}
+
+		if (payload?.data?.result) {
+			return payload.data.result.map((item: any) =>
 				getLegend(
 					item,
 					currentQuery,

@@ -223,11 +223,12 @@ export const useQueryOperations: UseQueryOperations = ({
 					break;
 
 				case ATTRIBUTE_TYPES.HISTOGRAM:
-					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
-					break;
-
 				case ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM:
-					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(
+						panelType === PANEL_TYPES.DISTRIBUTION
+							? metricsSumSpaceAggregateOperatorOptions
+							: metricsHistogramSpaceAggregateOperatorOptions,
+					);
 					break;
 				default:
 					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
@@ -342,10 +343,16 @@ export const useQueryOperations: UseQueryOperations = ({
 						) {
 							newQuery.aggregations = [
 								{
-									timeAggregation: '',
+									timeAggregation:
+										panelType === PANEL_TYPES.DISTRIBUTION
+											? MetricAggregateOperator.INCREASE
+											: '',
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: MetricAggregateOperator.P90,
+									spaceAggregation:
+										panelType === PANEL_TYPES.DISTRIBUTION
+											? MetricAggregateOperator.SUM
+											: MetricAggregateOperator.P90,
 									reduceTo: ReduceOperators.AVG,
 								},
 							];
@@ -412,6 +419,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			index,
 			handleMetricAggregateAtributeTypes,
 			previousMetricInfo,
+			panelType,
 		],
 	);
 
@@ -442,6 +450,13 @@ export const useQueryOperations: UseQueryOperations = ({
 				dataSource: nextSource,
 				aggregateOperator: newOperators[0].value,
 			};
+
+			if (
+				panelType === PANEL_TYPES.DISTRIBUTION &&
+				(nextSource === DataSource.LOGS || nextSource === DataSource.TRACES)
+			) {
+				newQuery.aggregations = [{ expression: 'distribution(' }];
+			}
 
 			setOperators(newOperators);
 			handleSetQueryData(index, newQuery);
