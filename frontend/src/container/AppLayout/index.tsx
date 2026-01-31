@@ -467,6 +467,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [manageCreditCard]);
 
 	useEffect(() => {
+		// Set data-theme attribute (for signoz default theme) (for any future themes add theme name accordingly)
+		document.body.setAttribute('data-theme', 'default');
+
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
 			document.body.classList.add('dark');

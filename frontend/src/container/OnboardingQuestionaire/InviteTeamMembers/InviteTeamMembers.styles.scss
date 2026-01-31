@@ -31,7 +31,7 @@
 	}
 
 	.table-header-cell {
-		color: var(--levels-l1-foreground, #eceef2);
+		color: var(--l1-foreground, #eceef2);
 		font-family: Inter;
 		font-size: 13px;
 		font-style: normal;
@@ -111,9 +111,9 @@
 
 	height: 32px !important;
 	border-radius: 2px;
-	background: var(--levels-l3-background, #23262e);
-	border: 1px solid var(--levels-l3-border, #2c303a);
-	color: var(--levels-l1-foreground, #eceef2);
+	background: var(--l3-background);
+	border: 1px solid var(--l3-border);
+	color: var(--l1-foreground);
 	font-family: Inter, sans-serif;
 	font-size: 13px;
 	font-weight: 400;
@@ -123,11 +123,11 @@
 	box-sizing: border-box;
 
 	&::placeholder {
-		color: var(--levels-l3-foreground, #747b8b);
+		color: var(--l3-foreground);
 	}
 
 	&:hover {
-		border-color: var(--levels-l3-border, #2c303a);
+		border-color: var(--l3-border);
 	}
 
 	&:focus {
@@ -142,9 +142,9 @@
 	.ant-select-selector {
 		height: 32px !important;
 		border-radius: 2px !important;
-		background: var(--levels-l3-background, #23262e) !important;
-		border: 1px solid var(--levels-l3-border, #2c303a) !important;
-		color: var(--levels-l1-foreground, #eceef2) !important;
+		background: var(--l3-background, #23262e) !important;
+		border: 1px solid var(--l3-border, #2c303a) !important;
+		color: var(--l1-foreground, #eceef2) !important;
 		font-family: Inter, sans-serif !important;
 		font-size: 13px !important;
 		font-weight: 400 !important;
@@ -154,17 +154,17 @@
 		box-sizing: border-box !important;
 
 		.ant-select-selection-placeholder {
-			color: var(--levels-l3-foreground, #747b8b) !important;
+			color: var(--l3-foreground, #747b8b) !important;
 		}
 
 		.ant-select-selection-item {
-			color: var(--levels-l1-foreground, #eceef2) !important;
+			color: var(--l1-foreground, #eceef2) !important;
 			line-height: 30px !important;
 		}
 	}
 
 	.ant-select-arrow {
-		color: var(--levels-l3-foreground, #747b8b) !important;
+		color: var(--l3-foreground, #747b8b) !important;
 	}
 
 	&.ant-select-focused .ant-select-selector {
@@ -277,12 +277,12 @@
 	&:hover {
 		border-color: var(--semantic-primary-background, #4e74f8) !important;
 		border-style: dashed !important;
-		color: var(--levels-l1-foreground, #eceef2);
+		color: var(--l1-foreground, #eceef2);
 		background: rgba(78, 116, 248, 0.1) !important;
 
 		svg,
 		[class*='icon'] {
-			color: var(--levels-l1-foreground, #eceef2) !important;
+			color: var(--l1-foreground, #eceef2) !important;
 		}
 
 		button,
@@ -396,21 +396,21 @@
 
 	.team-member-role-select {
 		.ant-select-selector {
-			background: var(--levels-l3-background, #ffffff) !important;
-			border: 1px solid var(--levels-l3-border, #e9e9e9) !important;
-			color: var(--levels-l1-foreground, #1a1d26) !important;
+			background: var(--l3-background, #ffffff) !important;
+			border: 1px solid var(--l3-border, #e9e9e9) !important;
+			color: var(--l1-foreground, #1a1d26) !important;
 
 			.ant-select-selection-placeholder {
-				color: var(--levels-l3-foreground, #747b8b) !important;
+				color: var(--l3-foreground, #747b8b) !important;
 			}
 
 			.ant-select-selection-item {
-				color: var(--levels-l1-foreground, #1a1d26) !important;
+				color: var(--l1-foreground, #1a1d26) !important;
 			}
 		}
 
 		.ant-select-arrow {
-			color: var(--levels-l3-foreground, #747b8b) !important;
+			color: var(--l3-foreground, #747b8b) !important;
 		}
 
 		&.ant-select-focused .ant-select-selector {
@@ -456,12 +456,12 @@
 		&:hover {
 			border-color: var(--semantic-primary-background, #4e74f8) !important;
 			border-style: dashed !important;
-			color: var(--levels-l1-foreground, #1a1d26);
+			color: var(--l1-foreground, #1a1d26);
 			background: rgba(78, 116, 248, 0.1) !important;
 
 			svg,
 			[class*='icon'] {
-				color: var(--levels-l1-foreground, #1a1d26) !important;
+				color: var(--l1-foreground, #1a1d26) !important;
 			}
 		}
 	}
