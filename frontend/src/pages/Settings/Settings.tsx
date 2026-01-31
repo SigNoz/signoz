@@ -270,6 +270,7 @@ function SettingsPage(): JSX.Element {
 						activeKey={pathname}
 						history={history}
 						tabBarStyle={{ display: 'none' }}
+                                                showRightSection={false}
 					/>
 				</div>
 			</div>
