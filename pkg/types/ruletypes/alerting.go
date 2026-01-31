@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
+	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"go.uber.org/zap"
 )
 
 // this file contains common structs and methods used by
@@ -94,6 +97,30 @@ const (
 	ValueOutsideBounds CompareOp = "7"
 )
 
+func (co CompareOp) Validate() error {
+	validCompareOps := []CompareOp{
+		CompareOpNone,
+		ValueIsAbove,
+		ValueIsBelow,
+		ValueIsEq,
+		ValueIsNotEq,
+		ValueAboveOrEq,
+		ValueBelowOrEq,
+		ValueOutsideBounds,
+	}
+
+	if slices.Contains(validCompareOps, co) {
+		return nil
+	}
+
+	validCompareOpValues := []string{}
+	for _, co := range validCompareOps {
+		validCompareOpValues = append(validCompareOpValues, string(co))
+	}
+
+	return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid compare operator: %s", string(co)).WithAdditional(fmt.Sprintf("valid compare operations are: %s", strings.Join(validCompareOpValues, ", ")))
+}
+
 type MatchType string
 
 const (
@@ -104,6 +131,26 @@ const (
 	InTotal       MatchType = "4"
 	Last          MatchType = "5"
 )
+
+func (mt MatchType) Validate() error {
+	validMatchTypes := []MatchType{
+		MatchTypeNone,
+		AtleastOnce,
+		AllTheTimes,
+		OnAverage,
+		InTotal,
+		Last,
+	}
+	if slices.Contains(validMatchTypes, mt) {
+		return nil
+	}
+
+	validMatchTypeValues := []string{}
+	for _, mt := range validMatchTypes {
+		validMatchTypeValues = append(validMatchTypeValues, string(mt))
+	}
+	return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid match type: %s", string(mt)).WithAdditional(fmt.Sprintf("valid match types are: %s", strings.Join(validMatchTypeValues, ", ")))
+}
 
 type RuleCondition struct {
 	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty"`
@@ -119,6 +166,122 @@ type RuleCondition struct {
 	RequireMinPoints  bool               `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints int                `json:"requiredNumPoints,omitempty"`
 	Thresholds        *RuleThresholdData `json:"thresholds,omitempty"`
+}
+
+func (rc *RuleCondition) UnmarshalJSON(data []byte) error {
+	type Alias RuleCondition
+	aux := (*Alias)(rc)
+	if err := json.Unmarshal(data, aux); err != nil {
+		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse rule condition json: %v", err)
+	}
+
+	var errs []error
+
+	// Validate CompositeQuery - must be non-nil and pass validation
+	if rc.CompositeQuery == nil {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
+	}
+
+	// Validate AlertOnAbsent + AbsentFor - if AlertOnAbsent is true, AbsentFor must be > 0
+	if rc.AlertOnAbsent && rc.AbsentFor == 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "absentFor must be greater than 0 when alertOnAbsent is true"))
+	}
+
+	// Validate Seasonality - must be one of the allowed values when provided
+	if !isValidSeasonality(rc.Seasonality) {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid seasonality: %s, supported values: hourly, daily, weekly", rc.Seasonality))
+	}
+
+	// Only validate CompareOp and MatchType if they are provided
+	// as in new rule condition, these are not present in rule condition
+	if rc.CompareOp != "" {
+		if err := rc.CompareOp.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if rc.MatchType != "" {
+		if err := rc.MatchType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	// Validate SelectedQueryName - must match one of the query names from CompositeQuery
+	if rc.SelectedQuery != "" && rc.CompositeQuery != nil {
+		queryNames := getAllQueryNames(rc.CompositeQuery)
+		if _, exists := queryNames[rc.SelectedQuery]; !exists {
+			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "selected query name '%s' does not match any query in composite query", rc.SelectedQuery))
+		}
+	}
+
+	// Validate RequireMinPoints + RequiredNumPoints - if RequireMinPoints is true, RequiredNumPoints must be > 0
+	if rc.RequireMinPoints && rc.RequiredNumPoints <= 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "requiredNumPoints must be greater than 0 when requireMinPoints is true"))
+	}
+
+	if len(errs) > 0 {
+		// return signozError.Join(errs...)
+		zap.L().Warn("expected validation errors in rule condition", zap.Errors("errors", errs))
+		return nil
+	}
+
+	return nil
+}
+
+// getAllQueryNames extracts all query names from CompositeQuery across all query types
+// Returns a map of query names for quick lookup
+func getAllQueryNames(compositeQuery *v3.CompositeQuery) map[string]struct{} {
+	queryNames := make(map[string]struct{})
+
+	// Extract names from Queries (v5 envelopes)
+	if compositeQuery != nil && compositeQuery.Queries != nil {
+		for _, query := range compositeQuery.Queries {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderFormula:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.QueryBuilderTraceOperator:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.PromQuery:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			case qbtypes.ClickHouseQuery:
+				if spec.Name != "" {
+					queryNames[spec.Name] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return queryNames
+}
+
+// isValidSeasonality validates that Seasonality is one of the allowed values
+func isValidSeasonality(seasonality string) bool {
+	if seasonality == "" {
+		return true // empty seasonality is allowed (optional field)
+	}
+	switch seasonality {
+	case "hourly", "daily", "weekly":
+		return true
+	default:
+		return false
+	}
 }
 
 func (rc *RuleCondition) GetSelectedQueryName() string {
