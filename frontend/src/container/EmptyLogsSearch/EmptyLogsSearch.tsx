@@ -4,6 +4,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
+import { CombinedFilterSuggestion } from 'hooks/queryBuilder/useFilterValueSuggestions';
 import { Delete } from 'lucide-react';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 
@@ -13,12 +14,16 @@ interface EmptyLogsSearchProps {
 	dataSource: DataSource;
 	panelType: PanelTypeKeys;
 	customMessage?: EmptyLogsListConfig;
+	combinedSuggestion?: CombinedFilterSuggestion | null;
+	onApplyCombinedSuggestion?: (suggestion: CombinedFilterSuggestion) => void;
 }
 
 export default function EmptyLogsSearch({
 	dataSource,
 	panelType,
 	customMessage,
+	combinedSuggestion,
+	onApplyCombinedSuggestion,
 }: EmptyLogsSearchProps): JSX.Element {
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -89,12 +94,30 @@ export default function EmptyLogsSearch({
 							)}
 						</>
 					) : (
-						<Typography.Text>
-							<span className="empty-logs-search__sub-text">
-								This query had no results.{' '}
-							</span>
-							Edit your query and try again!
-						</Typography.Text>
+						<>
+							<Typography.Text>
+								<span className="empty-logs-search__sub-text">
+									This query had no results.{' '}
+								</span>
+								Edit your query and try again!
+							</Typography.Text>
+							{combinedSuggestion && (
+								<div className="empty-logs-search__suggestions">
+									<Typography.Text className="empty-logs-search__suggestions-title">
+										Did you mean?
+									</Typography.Text>
+									<div className="empty-logs-search__suggestions-list">
+										<button
+											type="button"
+											className="empty-logs-search__suggestion-btn"
+											onClick={(): void => onApplyCombinedSuggestion?.(combinedSuggestion)}
+										>
+											{combinedSuggestion.suggestedExpression}
+										</button>
+									</div>
+								</div>
+							)}
+						</>
 					)}
 				</div>
 				{customMessage?.documentationLinks && (
