@@ -42,10 +42,12 @@ export const QueryV2 = forwardRef(function QueryV2(
 		onSignalSourceChange,
 		signalSourceChangeEnabled = false,
 		queriesCount = 1,
+		savePreviousQuery = false,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
 		queriesCount: number;
+		savePreviousQuery: boolean;
 	},
 	ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
@@ -67,6 +69,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		filterConfigs,
 		isListViewPanel,
 		entityVersion: version,
+		savePreviousQuery,
 	});
 
 	const handleToggleDisableQuery = useCallback(() => {
@@ -234,6 +237,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										signalSource={signalSource as 'meter' | ''}
 										onSignalSourceChange={onSignalSourceChange}
 										signalSourceChangeEnabled={signalSourceChangeEnabled}
+										savePreviousQuery={savePreviousQuery}
 									/>
 								</div>
 							)}

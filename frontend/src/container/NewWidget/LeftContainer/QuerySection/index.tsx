@@ -164,6 +164,7 @@ function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 							queryComponents={queryComponents}
 							signalSourceChangeEnabled
+							savePreviousQuery
 						/>
 					</div>
 				),
