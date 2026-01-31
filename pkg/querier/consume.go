@@ -12,9 +12,14 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/bytedance/sonic"
+)
+
+const (
+	diagnosticColumnIndexBase = 1000000
 )
 
 var (
@@ -23,6 +28,7 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target)
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+	diagnosticColumnAliases           = []string{telemetrymetrics.DiagnosticColumnCumulativeHistLeCount, telemetrymetrics.DiagnosticColumnCumulativeHistLeSum}
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -69,6 +75,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		key string // deterministic join of label values
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
+	diagnosticSeriesMap := map[string]*qbtypes.TimeSeries{}
 
 	stepMs := uint64(step.Duration.Milliseconds())
 
@@ -113,12 +120,13 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		}
 
 		var (
-			ts            int64
-			lblVals       = make([]string, 0, lblValsCapacity)
-			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
-			aggValues     = map[int]float64{} // all __result_N in this row
-			fallbackValue float64             // value when NO __result_N columns exist
-			fallbackSeen  bool
+			ts               int64
+			lblVals          = make([]string, 0, lblValsCapacity)
+			lblObjs          = make([]*qbtypes.Label, 0, lblValsCapacity)
+			aggValues        = map[int]float64{}    // all __result_N in this row
+			diagnosticValues = map[string]float64{} // all diagnostic columns in this row
+			fallbackValue    float64                // value when NO __result_N columns exist
+			fallbackSeen     bool
 		)
 
 		for idx, ptr := range slots {
@@ -130,7 +138,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				if m := aggRe.FindStringSubmatch(name); m != nil {
+				if slices.Contains(diagnosticColumnAliases, name) {
+					diagnosticValues[name] = val
+				} else if m := aggRe.FindStringSubmatch(name); m != nil {
 					id, _ := strconv.Atoi(m[1])
 					aggValues[id] = val
 				} else if numericColsCount == 1 { // classic single-value query
@@ -152,7 +162,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				tempVal := reflect.ValueOf(ptr)
 				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
 					val := numericAsFloat(tempVal.Elem().Elem().Interface())
-					if m := aggRe.FindStringSubmatch(name); m != nil {
+					if slices.Contains(diagnosticColumnAliases, name) {
+						diagnosticValues[name] = val
+					} else if m := aggRe.FindStringSubmatch(name); m != nil {
 						id, _ := strconv.Atoi(m[1])
 						aggValues[id] = val
 					} else if numericColsCount == 1 { // classic single-value query
@@ -195,6 +207,23 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			}
 		}
 
+		// fetch and store diagnostic values in diagnosticSeriesMap
+		for diagnosticColName, val := range diagnosticValues {
+			if math.IsNaN(val) || math.IsInf(val, 0) {
+				continue
+			}
+			diagSeries, ok := diagnosticSeriesMap[diagnosticColName]
+			if !ok {
+				diagSeries = &qbtypes.TimeSeries{}
+				diagnosticSeriesMap[diagnosticColName] = diagSeries
+			}
+			diagSeries.Values = append(diagSeries.Values, &qbtypes.TimeSeriesValue{
+				Timestamp: ts,
+				Value:     val,
+				Partial:   isPartialValue(ts),
+			})
+		}
+
 		// Edge-case: no __result_N columns, but a single numeric column present
 		if len(aggValues) == 0 && fallbackSeen {
 			aggValues[0] = fallbackValue
@@ -231,6 +260,20 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		return nil, err
 	}
 
+	diagnosticBuckets := make([]*qbtypes.AggregationBucket, 0)
+	// TODO(nikhilmantri0902, srikanthccv): below HACK - this is a temporary index introduced becausing caching grouping and merging happens on index
+	// Should we improve the caching grouping and merging to not depend on index?
+	diagNosticTemporayIndex := diagnosticColumnIndexBase
+	for diagColName, diagSeries := range diagnosticSeriesMap {
+		diagnosticBucket := &qbtypes.AggregationBucket{
+			Index: diagNosticTemporayIndex,
+			Alias: diagColName,
+		}
+		diagnosticBucket.Series = append(diagnosticBucket.Series, diagSeries)
+		diagnosticBuckets = append(diagnosticBuckets, diagnosticBucket)
+		diagNosticTemporayIndex++
+	}
+
 	maxAgg := -1
 	for k := range seriesMap {
 		if k.agg > maxAgg {
@@ -240,6 +283,8 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	if maxAgg < 0 {
 		return &qbtypes.TimeSeriesData{
 			QueryName: queryName,
+			// return with diagNostic buckets
+			Aggregations: diagnosticBuckets,
 		}, nil
 	}
 
@@ -260,6 +305,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			nonEmpty = append(nonEmpty, b)
 		}
 	}
+
+	// add diagNostic buckets
+	nonEmpty = append(nonEmpty, diagnosticBuckets...)
 
 	return &qbtypes.TimeSeriesData{
 		QueryName:    queryName,

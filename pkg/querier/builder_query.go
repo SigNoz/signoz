@@ -200,7 +200,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		return nil, err
 	}
 
-	result.Warnings = stmt.Warnings
+	result.Warnings = append(result.Warnings, stmt.Warnings...)
 	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
 }
