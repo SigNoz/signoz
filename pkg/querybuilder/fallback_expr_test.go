@@ -153,6 +153,57 @@ func TestDataTypeCollisionHandledFieldName(t *testing.T) {
 			expectedFieldName: "toString(attribute_bool_feature$$flags)",
 			expectedValue:     []any{"true", "enabled", "false"},
 		},
+		// signal-specific numeric casting for metrics vs others
+		{
+			name: "numeric_field_float_value_metrics_signal_uses_or_null",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:          "process.pid",
+				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+				Signal:        telemetrytypes.SignalMetrics,
+			},
+			value:             float64(42),
+			tblFieldName:      "attribute_float64_process$$pid",
+			expectedFieldName: "toFloat64OrNull(attribute_float64_process$$pid)",
+			expectedValue:     float64(42),
+		},
+		{
+			name: "numeric_field_float_value_trace_signal_uses_plain_cast",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:          "process.pid",
+				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+			value:             float64(42),
+			tblFieldName:      "attribute_float64_process$$pid",
+			expectedFieldName: "toFloat64(attribute_float64_process$$pid)",
+			expectedValue:     float64(42),
+		},
+		{
+			name: "numeric_field_string_number_metrics_signal_comparison_uses_or_null",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:          "http.request.duration",
+				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+				Signal:        telemetrytypes.SignalMetrics,
+			},
+			value:             "9.5",
+			tblFieldName:      "attribute_float64_http$$request$$duration",
+			expectedFieldName: "toFloat64OrNull(attribute_float64_http$$request$$duration)",
+			expectedValue:     "9.5",
+			operator:          qbtypes.FilterOperatorGreaterThan,
+		},
+		{
+			name: "numeric_field_string_number_trace_signal_comparison_uses_plain_cast",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:          "http.request.duration",
+				FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+				Signal:        telemetrytypes.SignalTraces,
+			},
+			value:             "9.5",
+			tblFieldName:      "attribute_float64_http$$request$$duration",
+			expectedFieldName: "toFloat64(attribute_float64_http$$request$$duration)",
+			expectedValue:     "9.5",
+			operator:          qbtypes.FilterOperatorGreaterThan,
+		},
 	}
 
 	for _, tt := range tests {
