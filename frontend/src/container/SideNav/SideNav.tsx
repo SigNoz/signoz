@@ -276,7 +276,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	]);
 
 	// Track if we've done the initial sync (to avoid overwriting user actions during session)
-	const hasInitializedRef = useRef(userPreferences !== null);
+	const hasInitializedRef = useRef(false);
 
 	// Sync state only on initial load when userPreferences first becomes available
 	useEffect(() => {
