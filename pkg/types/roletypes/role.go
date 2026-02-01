@@ -20,6 +20,7 @@ var (
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
+	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 )
 
 var (
@@ -32,8 +33,22 @@ var (
 )
 
 var (
-	AnonymousUserRoleName        = "signoz-anonymous"
-	AnonymousUserRoleDescription = "Role assigned to anonymous users for access to public resources."
+	SigNozAnonymousRoleName        = "signoz-anonymous"
+	SigNozAnonymousRoleDescription = "Role assigned to anonymous users for access to public resources."
+	SigNozAdminRoleName            = "signoz-admin"
+	SigNozAdminRoleDescription     = "Role assigned to users who have full administrative access to SigNoz resources."
+	SigNozEditorRoleName           = "signoz-editor"
+	SigNozEditorRoleDescription    = "Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges."
+	SigNozViewerRoleName           = "signoz-viewer"
+	SigNozViewerRoleDescription    = "Role assigned to users who have read-only access to SigNoz resources."
+)
+
+var (
+	ExistingRoleToSigNozManagedRoleMap = map[types.Role]string{
+		types.RoleAdmin:  SigNozAdminRoleName,
+		types.RoleEditor: SigNozEditorRoleName,
+		types.RoleViewer: SigNozViewerRoleName,
+	}
 )
 
 var (
@@ -54,10 +69,10 @@ type StorableRole struct {
 type Role struct {
 	types.Identifiable
 	types.TimeAuditable
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Type        string      `json:"type"`
-	OrgID       valuer.UUID `json:"org_id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Type        valuer.String `json:"type"`
+	OrgID       valuer.UUID   `json:"orgId"`
 }
 
 type PostableRole struct {
@@ -81,7 +96,7 @@ func NewStorableRoleFromRole(role *Role) *StorableRole {
 		TimeAuditable: role.TimeAuditable,
 		Name:          role.Name,
 		Description:   role.Description,
-		Type:          role.Type,
+		Type:          role.Type.String(),
 		OrgID:         role.OrgID.StringValue(),
 	}
 }
@@ -92,12 +107,12 @@ func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
 		TimeAuditable: storableRole.TimeAuditable,
 		Name:          storableRole.Name,
 		Description:   storableRole.Description,
-		Type:          storableRole.Type,
+		Type:          valuer.NewString(storableRole.Type),
 		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
 	}
 }
 
-func NewRole(name, description string, roleType string, orgID valuer.UUID) *Role {
+func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -113,7 +128,38 @@ func NewRole(name, description string, roleType string, orgID valuer.UUID) *Role
 	}
 }
 
-func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
+func NewManagedRoles(orgID valuer.UUID) []*Role {
+	return []*Role{
+		NewRole(SigNozAdminRoleName, SigNozAdminRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozEditorRoleName, SigNozEditorRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozViewerRoleName, SigNozViewerRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID),
+	}
+
+}
+
+func (role *Role) PatchMetadata(name, description *string) error {
+	err := role.CanEditDelete()
+	if err != nil {
+		return err
+	}
+
+	if name != nil {
+		role.Name = *name
+	}
+	if description != nil {
+		role.Description = *description
+	}
+	role.UpdatedAt = time.Now()
+	return nil
+}
+
+func (role *Role) NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
+	err := role.CanEditDelete()
+	if err != nil {
+		return nil, err
+	}
+
 	if len(additions) == 0 && len(deletions) == 0 {
 		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request received, at least one of additions or deletions must be present")
 	}
@@ -133,14 +179,12 @@ func NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.O
 	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
 }
 
-func (role *Role) PatchMetadata(name, description *string) {
-	if name != nil {
-		role.Name = *name
+func (role *Role) CanEditDelete() error {
+	if role.Type == RoleTypeManaged {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot edit/delete managed role: %s", role.Name)
 	}
-	if description != nil {
-		role.Description = *description
-	}
-	role.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
@@ -245,4 +289,13 @@ func GetDeletionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Rel
 	}
 
 	return tuples, nil
+}
+
+func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
+	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
+	if !ok {
+		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))
+	}
+
+	return managedRole
 }

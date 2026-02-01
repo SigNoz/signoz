@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import '../MQDetails.style.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
 import { Table, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
@@ -16,9 +17,6 @@ import {
 	MessagingQueuesViewType,
 	RowData,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -28,6 +26,8 @@ import {
 	DropRateResponse,
 } from './dropRateViewUtils';
 import EvaluationTimeSelector from './EvaluationTimeSelector';
+
+import '../MQDetails.style.scss';
 
 export function getTableData(data: DropRateResponse[]): RowData[] {
 	if (data?.length === 0) {
@@ -132,8 +132,9 @@ export function getColumns(
 			}
 
 			if (column === 'breach_percentage' && text) {
-				if (!isNumber(text))
+				if (!isNumber(text)) {
 					return <Typography.Text>{text.toString()}</Typography.Text>;
+				}
 				return (
 					<Typography.Text>
 						{(typeof text === 'string' ? parseFloat(text) : text).toFixed(2)} %

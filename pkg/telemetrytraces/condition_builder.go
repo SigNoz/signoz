@@ -281,7 +281,7 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
 
-	isTrue := false
+	var isTrue bool
 	switch v := value.(type) {
 	case bool:
 		isTrue = v

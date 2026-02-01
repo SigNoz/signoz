@@ -1,15 +1,15 @@
-import './StepsContent.styles.scss';
-
+import { memo, useCallback } from 'react';
 import { Button, Steps, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { PlusIcon, Undo2 } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { memo, useCallback } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
+
+import './StepsContent.styles.scss';
 
 const { Step } = Steps;
 
@@ -24,7 +24,9 @@ function StepsContent({
 	const { hasEditPermission } = useAppContext();
 
 	const handleAddForNewStep = useCallback(() => {
-		if (!span || !hasEditPermission) return;
+		if (!span || !hasEditPermission) {
+			return;
+		}
 
 		const stepWasAdded = handleAddStep();
 		if (stepWasAdded) {

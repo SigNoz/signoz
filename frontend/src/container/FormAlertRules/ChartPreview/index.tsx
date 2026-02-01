@@ -1,5 +1,7 @@
-import './ChartPreview.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -15,11 +17,10 @@ import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -33,10 +34,6 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -55,12 +52,14 @@ import { AlertDetectionTypes } from '..';
 import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 
+import './ChartPreview.styles.scss';
+
 export interface ChartPreviewProps {
 	name: string;
 	query: Query | null;
 	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
-	selectedInterval?: Time | TimeV2 | CustomTimeType;
+	selectedInterval?: Time | CustomTimeType;
 	headline?: JSX.Element;
 	alertDef?: AlertDef;
 	userQueryKey?: string;
@@ -200,7 +199,9 @@ function ChartPreview({
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
-		if (setQueryStatus) setQueryStatus(queryResponse.status);
+		if (setQueryStatus) {
+			setQueryStatus(queryResponse.status);
+		}
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);

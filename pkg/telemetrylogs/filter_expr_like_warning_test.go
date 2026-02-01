@@ -3,12 +3,9 @@ package telemetrylogs
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +13,7 @@ import (
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, nil)
+	cb := NewConditionBuilder(fm)
 
 	keys := buildCompleteFieldKeyMap()
 
@@ -52,10 +49,8 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
-	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, storeWithMetadata)
+	cb := NewConditionBuilder(fm)
 
 	keys := buildCompleteFieldKeyMap()
 

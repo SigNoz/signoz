@@ -1,8 +1,8 @@
-import './SettingsDrawer.styles.scss';
-
+import { memo, PropsWithChildren, ReactElement } from 'react';
 import { Drawer } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { memo, PropsWithChildren, ReactElement } from 'react';
+
+import './SettingsDrawer.styles.scss';
 
 type SettingsDrawerProps = PropsWithChildren<{
 	drawerTitle: string;

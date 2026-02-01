@@ -1,6 +1,6 @@
+import { useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { useLocation } from 'react-router-dom';
 import { render } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
@@ -73,6 +73,7 @@ const compositeQueryParam = {
 		},
 	],
 	id: '12e1d311-cb47-4b76-af68-65d8e85c9e0d',
+	unit: '',
 };
 
 jest.mock('react-router-dom', () => ({

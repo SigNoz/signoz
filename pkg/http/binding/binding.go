@@ -9,10 +9,12 @@ import (
 var (
 	ErrCodeInvalidRequestBody  = errors.MustNewCode("invalid_request_body")
 	ErrCodeInvalidRequestField = errors.MustNewCode("invalid_request_field")
+	ErrCodeInvalidRequestQuery = errors.MustNewCode("invalid_request_query")
 )
 
 var (
-	JSON Binding = &jsonBinding{}
+	JSON  BindingBody  = &jsonBinding{}
+	Query BindingQuery = &queryBinding{}
 )
 
 type bindBodyOptions struct {
@@ -34,6 +36,10 @@ func WithUseNumber(useNumber bool) BindBodyOption {
 	}
 }
 
-type Binding interface {
+type BindingBody interface {
 	BindBody(body io.Reader, obj any, opts ...BindBodyOption) error
+}
+
+type BindingQuery interface {
+	BindQuery(query map[string][]string, obj any) error
 }

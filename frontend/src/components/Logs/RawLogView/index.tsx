@@ -1,3 +1,12 @@
+import {
+	KeyboardEvent,
+	memo,
+	MouseEvent,
+	MouseEventHandler,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { DrawerProps, Tooltip } from 'antd';
 import LogDetail from 'components/LogDetail';
@@ -11,15 +20,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { isEmpty, isNumber, isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import {
-	KeyboardEvent,
-	memo,
-	MouseEvent,
-	MouseEventHandler,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -39,6 +39,7 @@ function RawLogView({
 	selectedFields = [],
 	fontSize,
 	onLogClick,
+	handleChangeSelectedView,
 }: RawLogViewProps): JSX.Element {
 	const {
 		isHighlighted: isUrlHighlighted,
@@ -52,7 +53,6 @@ function RawLogView({
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
@@ -127,7 +127,9 @@ function RawLogView({
 
 	const handleClickExpand = useCallback(
 		(event: MouseEvent) => {
-			if (isReadOnly) return;
+			if (isReadOnly) {
+				return;
+			}
 
 			// Use custom click handler if provided, otherwise use default behavior
 			if (onLogClick) {
@@ -224,13 +226,12 @@ function RawLogView({
 					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</RawLogViewContainer>
 	);
 }
-
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,

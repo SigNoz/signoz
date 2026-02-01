@@ -55,16 +55,18 @@ export const executeSearchQueries = (
 			try {
 				const searchSpace =
 					flattenDeep([searchPayload[categoryLowercase]]).filter(Boolean) || null;
-				if (!searchSpace || !searchSpace.length)
+				if (!searchSpace || !searchSpace.length) {
 					return resolveOperator(false, operator);
+				}
 
 				for (const searchSpaceItem of searchSpace) {
-					if (searchSpaceItem)
+					if (searchSpaceItem) {
 						for (const queryValue of value) {
 							if (searchSpaceItem.match(escapeRegExp(queryValue))) {
 								return resolveOperator(true, operator);
 							}
 						}
+					}
 				}
 			} catch (error) {
 				console.error(error);

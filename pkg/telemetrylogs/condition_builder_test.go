@@ -122,9 +122,8 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 			expectedError: nil,
 		},
 	}
-	mockMetadataStore := buildTestTelemetryMetadataStore()
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
+	conditionBuilder := NewConditionBuilder(fm)
 	ctx := context.Background()
 
 	for _, tc := range testCases {
@@ -513,10 +512,8 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
 	}
-	mockMetadataStore := buildTestTelemetryMetadataStore()
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
-
+	conditionBuilder := NewConditionBuilder(fm)
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
@@ -569,8 +566,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	mockMetadataStore := buildTestTelemetryMetadataStore()
-	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
+	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -829,8 +825,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	mockMetadataStore := buildTestTelemetryMetadataStore()
-	conditionBuilder := NewConditionBuilder(fm, mockMetadataStore)
+	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()

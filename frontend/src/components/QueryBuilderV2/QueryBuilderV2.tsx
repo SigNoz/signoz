@@ -1,10 +1,8 @@
-import './QueryBuilderV2.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useEffect, useMemo, useRef } from 'react';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -12,6 +10,8 @@ import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
 import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
+
+import './QueryBuilderV2.styles.scss';
 
 export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	config,
@@ -33,6 +33,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		addTraceOperator,
 		panelType,
 		initialDataSource,
+		handleRunQuery,
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
@@ -157,10 +158,29 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>): void => {
+			const target = e.target as HTMLElement | null;
+			const tagName = target?.tagName || '';
+
+			const isInputElement =
+				['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) ||
+				(target?.getAttribute('contenteditable') || '').toLowerCase() === 'true';
+
+			// Allow input elements in qb to run the query when Cmd/Ctrl + Enter is pressed
+			if (isInputElement && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+				e.preventDefault();
+				e.stopPropagation();
+				handleRunQuery();
+			}
+		},
+		[handleRunQuery],
+	);
+
 	return (
 		<QueryBuilderV2Provider>
 			<div className="query-builder-v2">
-				<div className="qb-content-container">
+				<div className="qb-content-container" onKeyDownCapture={handleKeyDown}>
 					{!isMultiQueryAllowed ? (
 						<QueryV2
 							ref={containerRef}

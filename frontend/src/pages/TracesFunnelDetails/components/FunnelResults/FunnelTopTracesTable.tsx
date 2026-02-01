@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import {
 	ErrorTraceData,
 	FunnelOverviewPayload,
 	SlowTraceData,
 } from 'api/traceFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
@@ -55,7 +55,9 @@ function FunnelTopTracesTable({
 	);
 
 	const data = useMemo(() => {
-		if (!response?.payload?.data) return [];
+		if (!response?.payload?.data) {
+			return [];
+		}
 		return response.payload.data.map((item) => ({
 			trace_id: item.data.trace_id,
 			duration_ms: item.data.duration_ms,

@@ -1,6 +1,16 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './LogsExplorerViews.styles.scss';
-
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -31,18 +41,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
-import {
-	Dispatch,
-	memo,
-	MutableRefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -58,6 +56,8 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 } from 'uuid';
 
 import LogsActionsContainer from './LogsActionsContainer';
+
+import './LogsExplorerViews.styles.scss';
 
 function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
@@ -118,8 +118,12 @@ function LogsExplorerViewsContainer({
 	]);
 
 	const isLimit: boolean = useMemo(() => {
-		if (!listQuery) return false;
-		if (!listQuery.limit) return false;
+		if (!listQuery) {
+			return false;
+		}
+		if (!listQuery.limit) {
+			return false;
+		}
 
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
@@ -213,10 +217,16 @@ function LogsExplorerViewsContainer({
 	}, [data?.payload, data?.warning]);
 
 	const handleEndReached = useCallback(() => {
-		if (!listQuery) return;
+		if (!listQuery) {
+			return;
+		}
 
-		if (isLimit) return;
-		if (logs.length < pageSize) return;
+		if (isLimit) {
+			return;
+		}
+		if (logs.length < pageSize) {
+			return;
+		}
 
 		const { limit, filters, filter } = listQuery;
 
@@ -225,7 +235,9 @@ function LogsExplorerViewsContainer({
 		const nextPageSize =
 			limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
 
-		if (!stagedQuery) return;
+		if (!stagedQuery) {
+			return;
+		}
 
 		const newRequestData = getRequestData(stagedQuery, {
 			filters: filters || { items: [], op: 'AND' },
@@ -258,7 +270,9 @@ function LogsExplorerViewsContainer({
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null, isNewDashboard?: boolean): void => {
-			if (!dashboard || !selectedPanelType) return;
+			if (!dashboard || !selectedPanelType) {
+				return;
+			}
 
 			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(
 				selectedPanelType,
@@ -268,7 +282,9 @@ function LogsExplorerViewsContainer({
 
 			const widgetId = v4();
 
-			if (!exportDefaultQuery) return;
+			if (!exportDefaultQuery) {
+				return;
+			}
 
 			logEvent('Logs Explorer: Add to dashboard successful', {
 				panelType: selectedPanelType,
@@ -358,7 +374,9 @@ function LogsExplorerViewsContainer({
 	}, []);
 
 	const chartData = useMemo(() => {
-		if (!stagedQuery) return [];
+		if (!stagedQuery) {
+			return [];
+		}
 
 		if (selectedPanelType === PANEL_TYPES.LIST) {
 			if (listChartData && listChartData.payload.data?.result.length > 0) {
@@ -367,7 +385,9 @@ function LogsExplorerViewsContainer({
 			return [];
 		}
 
-		if (!data || data.payload.data?.result.length === 0) return [];
+		if (!data || data.payload.data?.result.length === 0) {
+			return [];
+		}
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
 			(queryData) => queryData.groupBy.length > 0,
@@ -447,8 +467,9 @@ function LogsExplorerViewsContainer({
 					)}
 
 				<div className="logs-explorer-views-type-content">
-					{showLiveLogs && <LiveLogs />}
-
+					{showLiveLogs && (
+						<LiveLogs handleChangeSelectedView={handleChangeSelectedView} />
+					)}
 					{selectedPanelType === PANEL_TYPES.LIST && !showLiveLogs && (
 						<LogsExplorerList
 							isLoading={isLoading}
@@ -460,9 +481,9 @@ function LogsExplorerViewsContainer({
 							isError={isError}
 							error={error as APIError}
 							isFilterApplied={!isEmpty(listQuery?.filters?.items)}
+							handleChangeSelectedView={handleChangeSelectedView}
 						/>
 					)}
-
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
 							<div className="time-series-view-container-header">
@@ -483,7 +504,6 @@ function LogsExplorerViewsContainer({
 							/>
 						</div>
 					)}
-
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
 						<LogsExplorerTable
 							data={

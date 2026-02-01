@@ -28,14 +28,13 @@ def test_create_and_delete_dashboard_without_license(
     dashboard_id = data["id"]
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/dashboards/{dashboard_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
+
 
 def test_apply_license(
     signoz: SigNoz,
@@ -47,7 +46,6 @@ def test_apply_license(
     This applies a license to the signoz instance.
     """
     add_license(signoz, make_http_mocks, get_token)
-
 
 
 def test_create_and_delete_dashboard_with_license(
@@ -70,9 +68,7 @@ def test_create_and_delete_dashboard_with_license(
     dashboard_id = data["id"]
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/dashboards/{dashboard_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Button, Popover, Select } from 'antd';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -9,7 +10,6 @@ import {
 } from 'pages/Logs/config';
 import PopoverContent from 'pages/Logs/PopoverContent';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -27,7 +27,9 @@ function ListViewPanel(): JSX.Element {
 	const isFormatButtonVisible = logsOptions.includes(config.format?.value);
 
 	const renderPopoverContent = useCallback(() => {
-		if (!config.maxLines) return null;
+		if (!config.maxLines) {
+			return null;
+		}
 		const linedPerRow = config.maxLines.value as number;
 		const handleLinesPerRowChange = config.maxLines.onChange as (
 			value: unknown,

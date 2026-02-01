@@ -1,10 +1,10 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import {
 	getMetricsListFilterValues,
 	MetricsListFilterValuesPayload,
 	MetricsListFilterValuesResponse,
 } from 'api/metricsExplorer/getMetricsListFilterValues';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseGetMetricsListFilterValues = (

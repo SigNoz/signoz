@@ -2,10 +2,13 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
+dayjs.extend(utc);
 dayjs.extend(customParseFormat);
-
 dayjs.extend(duration);
+dayjs.extend(timezone);
 
 export function toUTCEpoch(time: number): number {
 	const x = new Date();
@@ -59,10 +62,18 @@ export const getDurationFromNow = (epochTimestamp: number): string => {
 	const seconds = duration.seconds();
 
 	let result = '';
-	if (days > 0) result += `${days}d `;
-	if (hours > 0) result += `${hours}h `;
-	if (minutes > 0) result += `${minutes}m `;
-	if (seconds > 0) result += `${seconds}s`;
+	if (days > 0) {
+		result += `${days}d `;
+	}
+	if (hours > 0) {
+		result += `${hours}h `;
+	}
+	if (minutes > 0) {
+		result += `${minutes}m `;
+	}
+	if (seconds > 0) {
+		result += `${seconds}s`;
+	}
 
 	return result.trim();
 };
@@ -167,7 +178,9 @@ export const hasDatePassed = (expiresAt: string): boolean => {
 
 export const getDaysUntilExpiry = (expiresAt: string): number => {
 	const date = dayjs(expiresAt);
-	if (!date.isValid()) return 0;
+	if (!date.isValid()) {
+		return 0;
+	}
 	return date.diff(dayjs(), 'day');
 };
 
@@ -203,10 +216,11 @@ export const validateTimeRange = (
 	startTime: string,
 	endTime: string,
 	format: string,
+	timezone: string,
 ): TimeRangeValidationResult => {
-	const start = dayjs(startTime, format, true);
-	const end = dayjs(endTime, format, true);
-	const now = dayjs();
+	const start = dayjs.tz(startTime, format, timezone);
+	const end = dayjs.tz(endTime, format, timezone);
+	const now = dayjs().tz(timezone);
 	const startTimeMs = start.valueOf();
 	const endTimeMs = end.valueOf();
 

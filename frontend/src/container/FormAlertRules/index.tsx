@@ -1,5 +1,8 @@
-import './FormAlertRules.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
@@ -28,11 +31,6 @@ import { isEmpty, isEqual } from 'lodash-es';
 import { BellDot, ExternalLink } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQueryClient } from 'react-query';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -60,6 +58,8 @@ import {
 } from './styles';
 import { usePrefillAlertConditions } from './usePrefillAlertConditions';
 import { getSelectedQueryOptions } from './utils';
+
+import './FormAlertRules.styles.scss';
 
 export enum AlertDetectionTypes {
 	THRESHOLD_ALERT = 'threshold_rule',
@@ -364,7 +364,9 @@ function FormAlertRules({
 
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
-		if (currentQuery.queryType !== EQueryType.PROM) return retval;
+		if (currentQuery.queryType !== EQueryType.PROM) {
+			return retval;
+		}
 
 		if (!currentQuery.promql || currentQuery.promql.length === 0) {
 			notifications.error({
@@ -389,7 +391,9 @@ function FormAlertRules({
 
 	const validateChQueryParams = useCallback((): boolean => {
 		let retval = true;
-		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) return retval;
+		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) {
+			return retval;
+		}
 
 		if (
 			!currentQuery.clickhouse_sql ||
@@ -416,7 +420,9 @@ function FormAlertRules({
 	}, [t, currentQuery, notifications]);
 
 	const validateQBParams = useCallback((): boolean => {
-		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) return true;
+		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) {
+			return true;
+		}
 
 		if (
 			!currentQuery.builder.queryData ||
@@ -788,11 +794,18 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
+	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
+		urlQuery,
+	]);
+
 	// Only update automatically when creating a new metrics-based alert rule
-	const shouldUpdateYAxisUnit = useMemo(
-		() => isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT,
-		[isNewRule, alertType],
-	);
+	const shouldUpdateYAxisUnit = useMemo(() => {
+		// Do not update if we are coming to the page from dashboards (we still show warning)
+		if (source === YAxisSource.DASHBOARDS) {
+			return false;
+		}
+		return isNewRule && alertType === AlertTypes.METRICS_BASED_ALERT;
+	}, [isNewRule, alertType, source]);
 
 	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
 		alertDef.condition.selectedQueryName,
@@ -907,6 +920,7 @@ function FormAlertRules({
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 							queryOptions={queryOptions}
+							yAxisUnit={yAxisUnit || ''}
 						/>
 
 						{renderBasicInfo()}

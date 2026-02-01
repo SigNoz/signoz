@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
@@ -35,14 +36,17 @@ func TestNewHandlers(t *testing.T) {
 	require.NoError(t, err)
 	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
 	require.NoError(t, err)
-	tokenizer := tokenizertest.New()
+	tokenizer := tokenizertest.NewMockTokenizer(t)
 	emailing := emailingtest.New()
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
 	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule)
+	roleSetter := implrole.NewSetter(implrole.NewStore(sqlstore), nil)
+	roleGetter := implrole.NewGetter(implrole.NewStore(sqlstore))
+	grantModule := implrole.NewGranter(implrole.NewStore(sqlstore), nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, roleSetter, roleGetter, grantModule)
 
-	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil)
+	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil, nil)
 
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {

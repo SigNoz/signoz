@@ -1,86 +1,85 @@
-## 📄 Summary
-
-<!-- Describe the purpose of the PR in a few sentences. What does it fix/add/update? -->
+## Pull Request
 
 ---
 
-## ✅ Changes
-
-- [ ] Feature: Brief description
-- [ ] Bug fix: Brief description
-
----
+### 📄 Summary
+> Why does this change exist?  
+> What problem does it solve, and why is this the right approach?
 
 
-## 📝 Changelog 
 
-> Fill this only if the change affects users, APIs, UI, or documented behavior.
-Mention as N/A for internal refactors or non-user-visible changes.
+#### Screenshots / Screen Recordings (if applicable)
+> Include screenshots or screen recordings that clearly show the behavior before the change and the result after the change. This helps reviewers quickly understand the impact and verify the update.
 
-**Deployment Type:** Cloud / OSS / Enterprise
 
-**Type:** Feature / Bug Fix / Maintenance
-
-**Description:** Short, user-facing summary of the change
+#### Issues closed by this PR
+> Reference issues using `Closes #issue-number` to enable automatic closure on merge.
 
 ---
 
-## 🏷️ Required: Add Relevant Labels
+### ✅ Change Type
+_Select all that apply_
 
-> ⚠️ **Manually add appropriate labels in the PR sidebar**  
-Please select one or more labels (as applicable):
-
-ex:
-
-- `frontend`
-- `backend`
-- `devops`
-- `bug`
-- `enhancement`
-- `ui`
-- `test`
+- [ ] ✨ Feature
+- [ ] 🐛 Bug fix
+- [ ] ♻️ Refactor
+- [ ] 🛠️ Infra / Tooling
+- [ ] 🧪 Test-only
 
 ---
 
-## 👥 Reviewers
+### 🐛 Bug Context
+> Required if this PR fixes a bug
 
-> Tag the relevant teams for review:
+#### Root Cause
+> What caused the issue?  
+> Regression, faulty assumption, edge case, refactor, etc.
 
-- frontend / backend / devops
-
----
-
-## 🧪 How to Test
-
-<!-- Describe how reviewers can test this PR -->
-1. ...
-2. ...
-3. ...
+#### Fix Strategy
+> How does this PR address the root cause?
 
 ---
 
-## 🔍 Related Issues
+### 🧪 Testing Strategy
+> How was this change validated?
 
-<!-- Reference any related issues (e.g. Fixes #123, Closes #456) -->
-Closes #
-
----
-
-## 📸 Screenshots / Screen Recording (if applicable / mandatory for UI related changes)
-
-<!-- Add screenshots or GIFs to help visualize changes -->
+- Tests added/updated:
+- Manual verification:
+- Edge cases covered:
 
 ---
 
-## 📋 Checklist
+### ⚠️ Risk & Impact Assessment
+> What could break? How do we recover?
 
-- [ ] Dev Review
-- [ ] Test cases added (Unit/ Integration / E2E)
-- [ ] Manually tested the changes
+- Blast radius:
+- Potential regressions:
+- Rollback plan:
 
+---
+
+### 📝 Changelog
+> Fill only if this affects users, APIs, UI, or documented behavior  
+> Use **N/A** for internal or non-user-facing changes
+
+| Field | Value |
+|------|-------|
+| Deployment Type | Cloud / OSS / Enterprise |
+| Change Type | Feature / Bug Fix / Maintenance |
+| Description | User-facing summary |
+
+---
+
+### 📋 Checklist
+- [ ] Tests added or explicitly not required
+- [ ] Manually tested
+- [ ] Breaking changes documented
+- [ ] Backward compatibility considered
 
 ---
 
 ## 👀 Notes for Reviewers
 
 <!-- Anything reviewers should keep in mind while reviewing -->
+
+---

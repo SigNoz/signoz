@@ -1,5 +1,4 @@
-import './LogsExplorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -33,7 +32,6 @@ import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import {
@@ -42,6 +40,8 @@ import {
 } from 'utils/explorerUtils';
 
 import { ExplorerViews } from './utils';
+
+import './LogsExplorer.styles.scss';
 
 function LogsExplorer(): JSX.Element {
 	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);
@@ -79,21 +79,19 @@ function LogsExplorer(): JSX.Element {
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			handleSetConfig(
-				defaultTo(explorerViewToPanelType[view], PANEL_TYPES.LIST),
-				DataSource.LOGS,
+			const nextPanelType = defaultTo(
+				explorerViewToPanelType[view],
+				PANEL_TYPES.LIST,
 			);
 
+			handleSetConfig(nextPanelType, DataSource.LOGS);
 			setSelectedView(view);
 
 			if (view !== ExplorerViews.LIST) {
 				setShowLiveLogs(false);
 			}
 
-			handleExplorerTabChange(
-				explorerViewToPanelType[view],
-				querySearchParameters,
-			);
+			handleExplorerTabChange(nextPanelType, querySearchParameters);
 		},
 		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
@@ -114,7 +112,9 @@ function LogsExplorer(): JSX.Element {
 	const logListOptionsFromLocalStorage = useMemo(() => {
 		const data = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
 
-		if (!data) return null;
+		if (!data) {
+			return null;
+		}
 
 		try {
 			return JSON.parse(data);
@@ -126,7 +126,9 @@ function LogsExplorer(): JSX.Element {
 	// Check if the columns have the required columns (timestamp, body)
 	const hasRequiredColumns = useCallback(
 		(columns?: TelemetryFieldKey[] | null): boolean => {
-			if (!columns?.length) return false;
+			if (!columns?.length) {
+				return false;
+			}
 
 			const hasTimestamp = columns.some((col) => col.name === 'timestamp');
 			const hasBody = columns.some((col) => col.name === 'body');
@@ -150,7 +152,9 @@ function LogsExplorer(): JSX.Element {
 	const migrateOptionsQuery = useCallback(
 		(query: OptionsQuery): OptionsQuery => {
 			// Skip if already migrated
-			if (query.version) return query;
+			if (query.version) {
+				return query;
+			}
 
 			if (logListOptionsFromLocalStorage?.version) {
 				return logListOptionsFromLocalStorage;

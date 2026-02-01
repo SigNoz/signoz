@@ -1,5 +1,5 @@
-import { Select } from 'antd';
 import { memo } from 'react';
+import { Select } from 'antd';
 
 // ** Types
 import { selectStyle } from '../QueryBuilderSearch/config';

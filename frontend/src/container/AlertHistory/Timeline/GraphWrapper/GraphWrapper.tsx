@@ -1,10 +1,10 @@
-import '../Graph/Graph.styles.scss';
-
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useGetAlertRuleDetailsTimelineGraphData } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
 
 import Graph from '../Graph/Graph';
+
+import '../Graph/Graph.styles.scss';
 
 function GraphWrapper({
 	totalCurrentTriggers,

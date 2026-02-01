@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -54,8 +53,9 @@ type telemetryMetaStore struct {
 	relatedMetadataTblName         string
 	columnEvolutionMetadataTblName string
 
-	fm               qbtypes.FieldMapper
-	conditionBuilder qbtypes.ConditionBuilder
+	fm                 qbtypes.FieldMapper
+	conditionBuilder   qbtypes.ConditionBuilder
+	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 }
 
 func escapeForLike(s string) string {
@@ -103,6 +103,14 @@ func NewTelemetryMetaStore(
 		relatedMetadataDBName:          relatedMetadataDBName,
 		relatedMetadataTblName:         relatedMetadataTblName,
 		columnEvolutionMetadataTblName: columnEvolutionMetadataTblName,
+		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
+			telemetrytypes.SignalLogs: {
+				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
+					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
+				},
+			},
+		},
 	}
 
 	fm := NewFieldMapper()
@@ -282,23 +290,6 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			if v == "" || strings.Contains(key, v) {
 				found = true
 				break
-			}
-		}
-
-		// skip the keys that don't match data type
-		if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
-			}
-		}
-
-		if field, exists := telemetrytraces.CalculatedFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
 			}
 		}
 
@@ -554,15 +545,6 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			}
 		}
 
-		// skip the keys that don't match data type
-		if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
-			}
-		}
-
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
@@ -580,7 +562,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	if querybuilder.BodyJSONQueryEnabled {
-		bodyJSONPaths, finished, err := t.getBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
+		bodyJSONPaths, finished, err := t.buildBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
 			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", "error", err)
 		}

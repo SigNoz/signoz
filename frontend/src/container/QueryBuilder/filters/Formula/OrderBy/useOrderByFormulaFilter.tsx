@@ -1,10 +1,10 @@
+import { useMemo, useState } from 'react';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import isEqual from 'lodash-es/isEqual';
 import uniqWith from 'lodash-es/uniqWith';
 import { parse } from 'papaparse';
-import { useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -80,7 +80,9 @@ export const useOrderByFormulaFilter = ({
 		mapLabelValuePairs(data).flat();
 
 	const customValue: IOption[] = useMemo(() => {
-		if (!searchText) return [];
+		if (!searchText) {
+			return [];
+		}
 
 		return [
 			{

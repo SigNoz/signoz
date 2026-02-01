@@ -1,7 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
-import './ClientSideQBSearch.styles.scss';
-
+import {
+	KeyboardEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select, Tag, Tooltip } from 'antd';
 import {
@@ -34,14 +40,6 @@ import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {
-	KeyboardEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -51,6 +49,8 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
+
+import './ClientSideQBSearch.styles.scss';
 
 export interface AttributeKey {
 	key: string;
@@ -440,9 +440,12 @@ function ClientSideQBSearch(
 			const values: Array<string | number | boolean> = [];
 			const { tagValue } = getTagToken(searchValue);
 			if (isArray(tagValue)) {
-				if (!isEmpty(tagValue[tagValue.length - 1]))
+				if (!isEmpty(tagValue[tagValue.length - 1])) {
 					values.push(tagValue[tagValue.length - 1]);
-			} else if (!isEmpty(tagValue)) values.push(tagValue);
+				}
+			} else if (!isEmpty(tagValue)) {
+				values.push(tagValue);
+			}
 
 			const currentAttributeValues =
 				attributeValues?.stringAttributeValues ||
@@ -556,7 +559,9 @@ function ClientSideQBSearch(
 							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
-								if (!isDisabled) tagEditHandler(value);
+								if (!isDisabled) {
+									tagEditHandler(value);
+								}
 							}}
 						>
 							{chipValue}

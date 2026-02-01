@@ -1,7 +1,4 @@
 /* eslint-disable react/no-unstable-nested-components */
-import Color from 'color';
-import { ITraceMetaData } from 'container/GantChart';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	Dispatch,
 	SetStateAction,
@@ -9,6 +6,9 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import Color from 'color';
+import { ITraceMetaData } from 'container/GantChart';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import {
@@ -57,8 +57,11 @@ function SpanItem({
 	const handleHover = (hoverState: boolean): void => {
 		// setIsLocalHover(hoverState);
 
-		if (hoverState) onSpanHover(spanData.id);
-		else onSpanHover('');
+		if (hoverState) {
+			onSpanHover(spanData.id);
+		} else {
+			onSpanHover('');
+		}
 	};
 
 	const handleClick = (): void => {

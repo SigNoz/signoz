@@ -1,9 +1,9 @@
+import { UseMutateAsyncFunction } from 'react-query';
 import { FormInstance } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {

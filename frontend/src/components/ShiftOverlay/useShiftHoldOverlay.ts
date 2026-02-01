@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 const HOLD_DELAY_MS = 500;
 
 function isTypingContext(target: EventTarget | null): boolean {
-	if (!(target instanceof HTMLElement)) return false;
+	if (!(target instanceof HTMLElement)) {
+		return false;
+	}
 
 	const tag = target.tagName;
 	return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable;
@@ -24,7 +26,9 @@ export function useShiftHoldOverlay({
 	const isHoldingRef = useRef<boolean>(false);
 
 	useEffect((): (() => void) | void => {
-		if (disabled) return;
+		if (disabled) {
+			return;
+		}
 
 		function cleanup(): void {
 			isHoldingRef.current = false;
@@ -38,8 +42,12 @@ export function useShiftHoldOverlay({
 		}
 
 		function onKeyDown(e: KeyboardEvent): void {
-			if (e.key !== 'Shift') return;
-			if (e.repeat) return;
+			if (e.key !== 'Shift') {
+				return;
+			}
+			if (e.repeat) {
+				return;
+			}
 
 			// Suppress in bad contexts
 			if (
@@ -62,7 +70,9 @@ export function useShiftHoldOverlay({
 		}
 
 		function onKeyUp(e: KeyboardEvent): void {
-			if (e.key !== 'Shift') return;
+			if (e.key !== 'Shift') {
+				return;
+			}
 			cleanup();
 		}
 

@@ -1,5 +1,6 @@
-import './DeleteButton.styles.scss';
-
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from 'react-query';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -8,13 +9,12 @@ import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQueryClient } from 'react-query';
 import { USER_ROLES } from 'types/roles';
 
 import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
+
+import './DeleteButton.styles.scss';
 
 interface DeleteButtonProps {
 	createdBy: string;
