@@ -183,7 +183,13 @@ export default function QueryFunctions({
 				functions && functions.length > 0 ? 'hasFunctions' : '',
 			)}
 		>
-			<Button className="periscope-btn function-btn">
+			<Button
+				className="periscope-btn function-btn"
+				disabled={functions && functions.length > 0}
+				onClick={
+					functions && functions.length === 0 ? handleAddNewFunction : undefined
+				}
+			>
 				<FunctionIcon
 					className="function-icon"
 					fillColor={!isDarkMode ? '#0B0C0E' : 'white'}
