@@ -148,7 +148,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 
 // addConditions adds both filter and time conditions to the query
 func (b *resourceFilterStatementBuilder[T]) addConditions(
-	_ context.Context,
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
@@ -160,6 +160,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 
 		// warnings would be encountered as part of the main condition already
 		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:            ctx,
 			Logger:             b.logger,
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,

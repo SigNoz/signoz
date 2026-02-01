@@ -33,47 +33,48 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return attributeMetadataColumns["resource_attributes"], nil
+		return []*schema.Column{attributeMetadataColumns["resource_attributes"]}, nil
 	case telemetrytypes.FieldContextAttribute:
-		return attributeMetadataColumns["attributes"], nil
+		return []*schema.Column{attributeMetadataColumns["attributes"]}, nil
 	}
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-	column, err := m.getColumn(ctx, key)
+func (m *fieldMapper) ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
 	if err != nil {
 		return nil, err
 	}
-	return column, nil
+	return columns, nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := m.getColumn(ctx, key)
+func (m *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
-	switch column.Type {
+	switch columns[0].Type {
 	case schema.MapColumnType{
 		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		ValueType: schema.ColumnTypeString,
 	}:
-		return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
+		return fmt.Sprintf("%s['%s']", columns[0].Name, key.Name), nil
 	}
-	return column.Name, nil
+	return columns[0].Name, nil
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, field)
+	colName, err := m.FieldFor(ctx, startNs, endNs, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -83,7 +84,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if _, ok := attributeMetadataColumns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextSpan
-				colName, _ = m.FieldFor(ctx, field)
+				colName, _ = m.FieldFor(ctx, startNs, endNs, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -101,12 +102,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, keysForField[0])
+			colName, _ = m.FieldFor(ctx, startNs, endNs, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, key)
+				colName, _ = m.FieldFor(ctx, startNs, endNs, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))

@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -19,6 +20,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

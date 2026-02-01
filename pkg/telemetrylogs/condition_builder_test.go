@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"testing"
+	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -11,14 +12,148 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestExistsConditionForWithEvolutions(t *testing.T) {
+	testCases := []struct {
+		name          string
+		startTs       uint64
+		endTs         uint64
+		key           telemetrytypes.TelemetryFieldKey
+		operator      qbtypes.FilterOperator
+		value         any
+		expectedSQL   string
+		expectedArgs  []any
+		expectedError error
+	}{
+		{
+			name:    "New column",
+			startTs: uint64(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC).UnixNano()),
+			endTs:   uint64(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC).UnixNano()),
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions: []*telemetrytypes.EvolutionEntry{
+					{
+						Signal:       telemetrytypes.SignalLogs,
+						ColumnName:   "resources_string",
+						FieldContext: telemetrytypes.FieldContextResource,
+						ColumnType:   "Map(LowCardinality(String), String)",
+						FieldName:    "__all__",
+						ReleaseTime:  time.Unix(0, 0),
+					},
+					{
+						Signal:       telemetrytypes.SignalLogs,
+						ColumnName:   "resource",
+						ColumnType:   "JSON()",
+						FieldContext: telemetrytypes.FieldContextResource,
+						FieldName:    "__all__",
+						ReleaseTime:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					},
+				},
+			},
+			operator:      qbtypes.FilterOperatorExists,
+			value:         nil,
+			expectedSQL:   "WHERE resource.`service.name`::String IS NOT NULL",
+			expectedError: nil,
+		},
+		{
+			name:    "Old column",
+			startTs: uint64(time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC).UnixNano()),
+			endTs:   uint64(time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC).UnixNano()),
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions: []*telemetrytypes.EvolutionEntry{
+					{
+						Signal:       telemetrytypes.SignalLogs,
+						ColumnName:   "resources_string",
+						FieldContext: telemetrytypes.FieldContextResource,
+						ColumnType:   "Map(LowCardinality(String), String)",
+						FieldName:    "__all__",
+						ReleaseTime:  time.Unix(0, 0),
+					},
+					{
+						Signal:       telemetrytypes.SignalLogs,
+						ColumnName:   "resource",
+						ColumnType:   "JSON()",
+						FieldContext: telemetrytypes.FieldContextResource,
+						FieldName:    "__all__",
+						ReleaseTime:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					},
+				},
+			},
+			operator:      qbtypes.FilterOperatorExists,
+			value:         nil,
+			expectedSQL:   "WHERE mapContains(resources_string, 'service.name') = ?",
+			expectedArgs:  []any{true},
+			expectedError: nil,
+		},
+		{
+			name:    "Both Old column and new - empty filter",
+			startTs: uint64(time.Date(2023, 1, 15, 10, 0, 0, 0, time.UTC).UnixNano()),
+			endTs:   uint64(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC).UnixNano()),
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions: []*telemetrytypes.EvolutionEntry{
+					{
+						Signal:       telemetrytypes.SignalLogs,
+						ColumnName:   "resources_string",
+						FieldContext: telemetrytypes.FieldContextResource,
+						ColumnType:   "Map(LowCardinality(String), String)",
+						FieldName:    "__all__",
+						ReleaseTime:  time.Unix(0, 0),
+					},
+					{
+						Signal:       telemetrytypes.SignalLogs,
+						ColumnName:   "resource",
+						ColumnType:   "JSON()",
+						FieldContext: telemetrytypes.FieldContextResource,
+						FieldName:    "__all__",
+						ReleaseTime:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					},
+				},
+			},
+			operator:      qbtypes.FilterOperatorExists,
+			value:         nil,
+			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedError: nil,
+		},
+	}
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+	ctx := context.Background()
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			cond, err := conditionBuilder.ConditionFor(ctx, tc.startTs, tc.endTs, &tc.key, tc.operator, tc.value, sb)
+			sb.Where(cond)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				assert.Contains(t, sql, tc.expectedSQL)
+				assert.Equal(t, tc.expectedArgs, args)
+			}
+		})
+	}
+}
+
 func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
 
+	mockEvolution := mockEvolutionData(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey
 		operator      qbtypes.FilterOperator
 		value         any
+		evolutions    []*telemetrytypes.EvolutionEntry
 		expectedSQL   string
 		expectedArgs  []any
 		expectedError error
@@ -240,9 +375,11 @@ func TestConditionFor(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedSQL:   "mapContains(resources_string, 'service.name') = ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -252,9 +389,11 @@ func TestConditionFor(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
+			expectedSQL:   "mapContains(resources_string, 'service.name') <> ?",
+			expectedArgs:  []any{true},
 			expectedError: nil,
 		},
 		{
@@ -315,10 +454,11 @@ func TestConditionFor(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "frontend-.*",
-			expectedSQL:   "(match(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL), ?) AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL) IS NOT NULL)",
-			expectedArgs:  []any{"frontend-.*"},
+			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists` = ?)",
+			expectedArgs:  []any{"frontend-.*", true},
 			expectedError: nil,
 		},
 		{
@@ -329,9 +469,10 @@ func TestConditionFor(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
 			},
+			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorNotRegexp,
 			value:         "test-.*",
-			expectedSQL:   "WHERE NOT match(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL), ?)",
+			expectedSQL:   "WHERE NOT match(`resource_string_service$$name`, ?)",
 			expectedArgs:  []any{"test-.*"},
 			expectedError: nil,
 		},
@@ -371,14 +512,13 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
 	}
-
 	fm := NewFieldMapper()
 	conditionBuilder := NewConditionBuilder(fm)
-
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			tc.key.Evolutions = tc.evolutions
+			cond, err := conditionBuilder.ConditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -433,7 +573,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
+				cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &key, tc.operator, tc.value, sb)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -690,7 +830,7 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.conditionFor(ctx, 0, 0, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {

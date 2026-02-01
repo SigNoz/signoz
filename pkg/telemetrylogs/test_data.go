@@ -2,6 +2,7 @@ package telemetrylogs
 
 import (
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -1006,4 +1007,39 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
+}
+
+func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
+}
+
+// mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
+func mockKeyEvolutionMetadata(signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext, releaseTime time.Time) map[string][]*telemetrytypes.EvolutionEntry {
+	metadata := make(map[string][]*telemetrytypes.EvolutionEntry)
+
+	newKeyEvolutionMetadataEntry := mockEvolutionData(releaseTime)
+	uniqueKey := telemetrytypes.GetEvolutionMetadataUniqueKey(&telemetrytypes.EvolutionSelector{
+		Signal:       signal,
+		FieldContext: fieldContext,
+		FieldName:    "__all__",
+	})
+	metadata[uniqueKey] = newKeyEvolutionMetadataEntry
+	return metadata
 }

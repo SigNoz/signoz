@@ -1,6 +1,7 @@
 package telemetrylogs
 
 import (
+	"context"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -10,12 +11,14 @@ import (
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
+	ctx := context.Background()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -52,6 +55,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	keys := buildCompleteFieldKeyMap()
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,

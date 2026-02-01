@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
@@ -68,35 +69,36 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return logsV2Columns["resource"], nil
+		columns := []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]}
+		return columns, nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
-			return logsV2Columns["scope_name"], nil
+			return []*schema.Column{logsV2Columns["scope_name"]}, nil
 		case "version", "scope.version", "scope_version":
-			return logsV2Columns["scope_version"], nil
+			return []*schema.Column{logsV2Columns["scope_version"]}, nil
 		}
-		return logsV2Columns["scope_string"], nil
+		return []*schema.Column{logsV2Columns["scope_string"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return logsV2Columns["attributes_string"], nil
+			return []*schema.Column{logsV2Columns["attributes_string"]}, nil
 		case telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeNumber:
-			return logsV2Columns["attributes_number"], nil
+			return []*schema.Column{logsV2Columns["attributes_number"]}, nil
 		case telemetrytypes.FieldDataTypeBool:
-			return logsV2Columns["attributes_bool"], nil
+			return []*schema.Column{logsV2Columns["attributes_bool"]}, nil
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields
 		// Use body_json if feature flag is enabled
 		if querybuilder.BodyJSONQueryEnabled {
-			return logsV2Columns[LogsV2BodyJSONColumn], nil
+			return []*schema.Column{logsV2Columns[LogsV2BodyJSONColumn]}, nil
 		}
 		// Fall back to legacy body column
-		return logsV2Columns["body"], nil
+		return []*schema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
@@ -104,96 +106,241 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_json if feature flag is enabled and we have a body condition builder
 				if querybuilder.BodyJSONQueryEnabled {
-					return logsV2Columns[LogsV2BodyJSONColumn], nil
+					return []*schema.Column{logsV2Columns[LogsV2BodyJSONColumn]}, nil
 				}
 				// Fall back to legacy body column
-				return logsV2Columns["body"], nil
+				return []*schema.Column{logsV2Columns["body"]}, nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		return col, nil
+		return []*schema.Column{col}, nil
 	}
 
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := m.getColumn(ctx, key)
+// selectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
+// Assumes: evolutions are sorted and there's exactly one evolution per column.
+// Logic:
+//   - Finds the latest base evolution (<= tsStartTime) across ALL columns
+//   - Rejects all evolutions before this latest base evolution
+//   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
+//   - Results are sorted by ReleaseTime descending (newest first)
+func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64, fieldName string) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
+
+	tsStartTime := time.Unix(0, int64(tsStart))
+	tsEndTime := time.Unix(0, int64(tsEnd))
+
+	// Build evolution map: column name -> evolution (one evolution per column)
+	evolutionMap := make(map[string]*telemetrytypes.EvolutionEntry)
+	for _, evolution := range evolutions {
+		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName]; exists {
+			// since if there is duplicate we would just use the oldest one.
+			continue
+		}
+		evolutionMap[evolution.ColumnName+":"+evolution.FieldName] = evolution
+	}
+
+	// Find the latest base evolution (<= tsStartTime) across ALL columns
+	// Evolutions are sorted, so we can break early
+	var latestBaseEvolutionAcrossAll *telemetrytypes.EvolutionEntry
+	for _, evolution := range evolutions {
+		if evolution.ReleaseTime.After(tsStartTime) {
+			break
+		}
+		latestBaseEvolutionAcrossAll = evolution
+	}
+
+	if latestBaseEvolutionAcrossAll == nil {
+		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
+	}
+
+	// Collect column-evolution pairs
+	type colEvoPair struct {
+		column    *schema.Column
+		evolution *telemetrytypes.EvolutionEntry
+	}
+	pairs := []colEvoPair{}
+
+	for _, column := range columns {
+		var evolution *telemetrytypes.EvolutionEntry
+		var exists bool
+
+		// First, try to find evolution with the specific fieldName
+		evolution, exists = evolutionMap[column.Name+":"+fieldName]
+
+		// If not found and fieldName is not "__all__", fall back to "__all__"
+		if !exists && fieldName != "__all__" {
+			evolution, exists = evolutionMap[column.Name+":__all__"]
+		}
+
+		if !exists {
+			continue
+		}
+
+		// skip evolutions after tsEndTime
+		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
+			continue
+		}
+
+		// Reject evolutions before the latest base evolution
+		if evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
+			continue
+		}
+
+		pairs = append(pairs, colEvoPair{column, evolution})
+	}
+
+	// If no pairs found, fall back to latestBaseEvolutionAcrossAll for matching columns
+	if len(pairs) == 0 {
+		for _, column := range columns {
+			// Use latestBaseEvolutionAcrossAll if this column name matches its column name
+			if column.Name == latestBaseEvolutionAcrossAll.ColumnName {
+				pairs = append(pairs, colEvoPair{column, latestBaseEvolutionAcrossAll})
+			}
+		}
+	}
+
+	// Sort by ReleaseTime descending (newest first)
+	for i := 0; i < len(pairs)-1; i++ {
+		for j := i + 1; j < len(pairs); j++ {
+			if pairs[i].evolution.ReleaseTime.Before(pairs[j].evolution.ReleaseTime) {
+				pairs[i], pairs[j] = pairs[j], pairs[i]
+			}
+		}
+	}
+
+	// Extract results
+	newColumns := make([]*schema.Column, len(pairs))
+	evolutionsEntries := make([]*telemetrytypes.EvolutionEntry, len(pairs))
+	for i, pair := range pairs {
+		newColumns[i] = pair.column
+		evolutionsEntries[i] = pair.evolution
+	}
+
+	return newColumns, evolutionsEntries, nil
+}
+
+func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
 	}
 
-	switch column.Type.GetType() {
-	case schema.ColumnTypeEnumJSON:
-		// json is only supported for resource context as of now
-		switch key.FieldContext {
-		case telemetrytypes.FieldContextResource:
-			oldColumn := logsV2Columns["resources_string"]
-			oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
-
-			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
-			// once clickHouse dependency is updated, we need to check if we can remove it.
-			if key.Materialized {
-				oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
-				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
-			}
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
-		case telemetrytypes.FieldContextBody:
-			if key.JSONDataType == nil {
-				return "", qbtypes.ErrColumnNotFound
-			}
-
-			if key.KeyNameContainsArray() && !key.JSONDataType.IsArray {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
-			}
-
-			return m.buildFieldForJSON(key)
-		default:
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
+	var newColumns []*schema.Column
+	var evolutionsEntries []*telemetrytypes.EvolutionEntry
+	if len(key.Evolutions) > 0 {
+		// hardcoded for now, make it dynamic while supporting JSON
+		fieldName := "__all__"
+		// we will use the corresponding column and its evolution entry for the query
+		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd, fieldName)
+		if err != nil {
+			return "", err
 		}
-	case schema.ColumnTypeEnumLowCardinality:
-		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-		case schema.ColumnTypeEnumString:
+	} else {
+		newColumns = columns
+	}
+
+	exprs := []string{}
+	existExpr := []string{}
+	for i, column := range newColumns {
+		// Use evolution column name if available, otherwise use the column name
+		columnName := column.Name
+		if evolutionsEntries != nil && evolutionsEntries[i] != nil {
+			columnName = evolutionsEntries[i].ColumnName
+		}
+
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
+			switch key.FieldContext {
+			case telemetrytypes.FieldContextResource:
+				switch column.Type.GetType() {
+				case schema.ColumnTypeEnumJSON:
+					// TODO: Update here to support multiple types
+					exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
+					existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+				case schema.ColumnTypeEnumMap:
+					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
+					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+				}
+			case telemetrytypes.FieldContextBody:
+				if key.JSONDataType == nil {
+					return "", qbtypes.ErrColumnNotFound
+				}
+
+				if key.KeyNameContainsArray() && !key.JSONDataType.IsArray {
+					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
+				}
+				expr, err := m.buildFieldForJSON(key)
+				if err != nil {
+					return "", err
+				}
+
+				exprs = append(exprs, expr)
+			default:
+				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
+			}
+
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				exprs = append(exprs, column.Name)
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+			}
+		case schema.ColumnTypeEnumString,
+			schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
 			return column.Name, nil
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
-		}
-	case schema.ColumnTypeEnumString,
-		schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
-		return column.Name, nil
-	case schema.ColumnTypeEnumMap:
-		keyType := column.Type.(schema.MapColumnType).KeyType
-		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
-		}
-
-		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-			// a key could have been materialized, if so return the materialized column name
-			if key.Materialized {
-				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
-			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+				// a key could have been materialized, if so return the materialized column name
+				if key.Materialized {
+					return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+				}
+				exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
+				existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+			}
 		}
 	}
+
+	if len(exprs) == 1 {
+		return exprs[0], nil
+	} else if len(exprs) > 1 {
+		// Ensure existExpr has the same length as exprs
+		if len(existExpr) != len(exprs) {
+			return "", errors.New(errors.TypeInternal, errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
+		}
+		finalExprs := []string{}
+		for i, expr := range exprs {
+			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
+		}
+		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
+	}
+
 	// should not reach here
-	return column.Name, nil
+	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	return m.getColumn(ctx, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, field)
+	colName, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -203,7 +350,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextLog
-				colName, _ = m.FieldFor(ctx, field)
+				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -221,12 +368,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, keysForField[0])
+			colName, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, key)
+				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, key)
 				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
 			}
 			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))

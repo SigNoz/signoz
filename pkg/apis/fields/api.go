@@ -44,6 +44,7 @@ func NewAPI(
 		telemetrylogs.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
 	)
 
 	return &API{
