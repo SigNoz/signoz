@@ -11,6 +11,12 @@ import { Alerts } from 'types/api/alerts/getTriggered';
 import { Value } from './Filter';
 import { FilterAlerts } from './utils';
 
+const severitySorter = (a: Alerts, b: Alerts): number => {
+	const severityLengthOfA = a.labels?.severity?.length || 0;
+	const severityLengthOfB = b.labels?.severity?.length || 0;
+	return severityLengthOfB - severityLengthOfA;
+};
+
 function NoFilterTable({
 	allAlerts,
 	selectedFilter,
@@ -25,8 +31,7 @@ function NoFilterTable({
 			dataIndex: 'status',
 			width: 80,
 			key: 'status',
-			sorter: (a, b): number =>
-				b.labels.severity.length - a.labels.severity.length,
+			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => <AlertStatus severity={value.state} />,
 		},
 		{
@@ -65,11 +70,7 @@ function NoFilterTable({
 			dataIndex: 'labels',
 			key: 'severity',
 			width: 100,
-			sorter: (a, b): number => {
-				const severityValueA = a.labels.severity;
-				const severityValueB = b.labels.severity;
-				return severityValueA.length - severityValueB.length;
-			},
+			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';

@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import VariableItem from '../DashboardSettings/Variables/VariableItem/VariableItem';
+import VariableItem from '../DashboardSettings/DashboardVariableSettings/VariableItem/VariableItem';
 
 // Mock dependencies
 jest.mock('api/dashboard/variables/dashboardVariablesQuery');
