@@ -45,7 +45,10 @@ export interface SeriesItem {
 		[key: string]: string;
 	};
 	labelsArray: { [key: string]: string }[];
-	values: { timestamp: number; value: string }[];
+	values:
+		| { timestamp: number; value: string }[]
+		| { timestamp: number; values: number[] }[];
+	bounds?: number[];
 	metaData?: {
 		alias: string;
 		index: number;

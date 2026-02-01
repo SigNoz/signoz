@@ -10,10 +10,12 @@ function findMinMaxValues(data: QueryDataV3[]): [number, number] {
 	data?.forEach((entry) => {
 		entry.series?.forEach((series) => {
 			series.values.forEach((valueObj) => {
-				const value = parseFloat(valueObj.value);
-				if (isFinite(value)) {
-					min = Math.min(min, value);
-					max = Math.max(max, value);
+				if ('value' in valueObj) {
+					const value = parseFloat(valueObj.value);
+					if (isFinite(value)) {
+						min = Math.min(min, value);
+						max = Math.max(max, value);
+					}
 				}
 			});
 		});

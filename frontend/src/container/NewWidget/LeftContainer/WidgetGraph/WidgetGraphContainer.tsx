@@ -10,6 +10,37 @@ import { NotFoundContainer } from './styles';
 import { populateMultipleResults } from './util';
 import WidgetGraph from './WidgetGraphs';
 
+function NoDataMessage(): JSX.Element {
+	return (
+		<NotFoundContainer>
+			<Typography>No Data</Typography>
+		</NotFoundContainer>
+	);
+}
+
+function shouldShowNoDataForStandardPanels(
+	selectedGraph: PANEL_TYPES,
+	queryResponse: any,
+): boolean {
+	return (
+		selectedGraph !== PANEL_TYPES.LIST &&
+		selectedGraph !== PANEL_TYPES.VALUE &&
+		queryResponse.data?.payload.data?.result?.length === 0
+	);
+}
+
+function shouldShowNoDataForListOrValue(
+	selectedGraph: PANEL_TYPES,
+	queryResponse: any,
+): boolean {
+	return (
+		(selectedGraph === PANEL_TYPES.LIST ||
+			selectedGraph === PANEL_TYPES.VALUE ||
+			selectedGraph === PANEL_TYPES.HEATMAP) &&
+		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
+	);
+}
+
 function WidgetGraphContainer({
 	selectedGraph,
 	queryResponse,
@@ -52,33 +83,11 @@ function WidgetGraphContainer({
 	}
 
 	if (
-		selectedGraph !== PANEL_TYPES.LIST &&
-		selectedGraph !== PANEL_TYPES.VALUE &&
-		queryResponse.data?.payload.data?.result?.length === 0
+		shouldShowNoDataForStandardPanels(selectedGraph, queryResponse) ||
+		shouldShowNoDataForListOrValue(selectedGraph, queryResponse) ||
+		queryResponse.isIdle
 	) {
-		return (
-			<NotFoundContainer>
-				<Typography>No Data</Typography>
-			</NotFoundContainer>
-		);
-	}
-	if (
-		(selectedGraph === PANEL_TYPES.LIST || selectedGraph === PANEL_TYPES.VALUE) &&
-		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
-	) {
-		return (
-			<NotFoundContainer>
-				<Typography>No Data</Typography>
-			</NotFoundContainer>
-		);
-	}
-
-	if (queryResponse.isIdle) {
-		return (
-			<NotFoundContainer>
-				<Typography>No Data</Typography>
-			</NotFoundContainer>
-		);
+		return <NoDataMessage />;
 	}
 
 	return (

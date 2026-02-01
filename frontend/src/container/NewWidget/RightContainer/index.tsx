@@ -50,6 +50,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
 	panelTypeVsBucketConfig,
+	panelTypeVsColorPalette,
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
@@ -130,6 +131,8 @@ function RightContainer({
 	setContextLinks,
 	enableDrillDown = false,
 	isNewDashboard,
+	heatmapColorPalette,
+	setHeatmapColorPalette,
 }: RightContainerProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 	const [inputValue, setInputValue] = useState(title);
@@ -168,6 +171,7 @@ function RightContainer({
 	const allowContextLinks =
 		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
 	const allowDecimalPrecision = panelTypeVsDecimalPrecision[selectedGraph];
+	const allowColorPalette = panelTypeVsColorPalette[selectedGraph];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -370,6 +374,27 @@ function RightContainer({
 						// Only update the y-axis unit value automatically in create mode
 						shouldUpdateYAxisUnit={isNewDashboard}
 					/>
+				)}
+
+				{allowColorPalette && (
+					<section className="heatmap-color-palette-selector">
+						<Typography.Text className="typography">Color Palette</Typography.Text>
+						<Select
+							options={[
+								{ label: 'Default', value: 'default' },
+								{ label: 'Viridis', value: 'viridis' },
+								{ label: 'Plasma', value: 'plasma' },
+								{ label: 'Inferno', value: 'inferno' },
+								{ label: 'Cool', value: 'cool' },
+								{ label: 'Magma', value: 'magma' },
+								{ label: 'Spectral', value: 'spectral' },
+							]}
+							value={heatmapColorPalette}
+							style={{ width: '100%' }}
+							className="panel-type-select"
+							onChange={(val: string): void => setHeatmapColorPalette(val)}
+						/>
+					</section>
 				)}
 
 				{allowDecimalPrecision && (
@@ -621,6 +646,8 @@ export interface RightContainerProps {
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
 	isNewDashboard: boolean;
+	heatmapColorPalette: string;
+	setHeatmapColorPalette: Dispatch<SetStateAction<string>>;
 }
 
 RightContainer.defaultProps = {

@@ -78,4 +78,18 @@ describe('handleQueryChange', () => {
 		expect(q.orderBy).toBeUndefined();
 		expect(q.queryName).toBe('A');
 	});
+
+	test('resets aggregation when switching from HEATMAP for Logs/Traces', () => {
+		const superset = buildSupersetQuery({
+			dataSource: DataSource.LOGS,
+			aggregations: [{ expression: 'heatmap(duration)' }],
+		});
+		const output = handleQueryChange(
+			PANEL_TYPES.TIME_SERIES as keyof PartialPanelTypes,
+			superset as Query,
+			PANEL_TYPES.HEATMAP,
+		);
+		const q = output.builder.queryData[0];
+		expect(q.aggregations?.[0]).toEqual({ expression: 'count() ' });
+	});
 });
