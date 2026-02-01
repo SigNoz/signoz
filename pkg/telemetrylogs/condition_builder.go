@@ -184,9 +184,13 @@ func (c *conditionBuilder) conditionFor(
 			if err != nil {
 				return "", err
 			}
-			// this means the exists conditions are already taken care off, we don't need to add it
+			// This mean tblFieldName has multiIf already present so I can just return exists or not exists
 			if len(newColumns) > 1 {
-				return "", nil
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(tblFieldName), nil
+				} else {
+					return sb.IsNull(tblFieldName), nil
+				}
 			}
 			column = newColumns[0]
 		}

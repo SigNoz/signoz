@@ -117,20 +117,12 @@ func CollisionHandledFinalExpr(
 		stmts = append(stmts, colName)
 	}
 
-	// Remove empty strings from stmts and escape each one
-	escapedStmts := make([]string, 0, len(stmts))
 	for idx := range stmts {
-		if stmts[idx] != "" {
-			escapedStmts = append(escapedStmts, sqlbuilder.Escape(stmts[idx]))
-		}
+		stmts[idx] = sqlbuilder.Escape(stmts[idx])
 	}
-	stmts = escapedStmts
-	var multiIfStmt string
-	if len(stmts) > 1 {
-		multiIfStmt = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", "))
-	} else {
-		multiIfStmt = stmts[0]
-	}
+
+	multiIfStmt := fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", "))
+
 	return multiIfStmt, allArgs, nil
 }
 
