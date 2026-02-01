@@ -166,12 +166,58 @@ export const getAggregateColumnHeader = (
 	};
 };
 
-const getFiltersFromMetric = (metric: any): FilterData[] =>
-	Object.keys(metric).map((key) => ({
-		filterKey: key,
-		filterValue: metric[key],
-		operator: OPERATORS['='],
-	}));
+const getFiltersFromMetric = (metric: any): FilterData[] => {
+	const filters: FilterData[] = [];
+
+	// Keys that should not be used as filters
+	const excludedKeys = new Set(['clickedTimestamp']);
+
+	const minMaxPairs: Map<string, { min?: string; max?: string }> = new Map();
+
+	Object.keys(metric).forEach((key) => {
+		if (excludedKeys.has(key)) {
+			return;
+		}
+		if (key.endsWith('_min')) {
+			const fieldName = key.slice(0, -4); // Remove '_min' suffix
+			if (!minMaxPairs.has(fieldName)) {
+				minMaxPairs.set(fieldName, {});
+			}
+			minMaxPairs.get(fieldName)!.min = metric[key];
+		} else if (key.endsWith('_max')) {
+			const fieldName = key.slice(0, -4); // Remove '_max' suffix
+			if (!minMaxPairs.has(fieldName)) {
+				minMaxPairs.set(fieldName, {});
+			}
+			minMaxPairs.get(fieldName)!.max = metric[key];
+		} else {
+			// Regular filter
+			filters.push({
+				filterKey: key,
+				filterValue: metric[key],
+				operator: OPERATORS['='],
+			});
+		}
+	});
+
+	// Add range filters for fields that have both min and max
+	minMaxPairs.forEach((range, fieldName) => {
+		if (range.min !== undefined && range.max !== undefined) {
+			filters.push({
+				filterKey: fieldName,
+				filterValue: range.min,
+				operator: OPERATORS['>='],
+			});
+			filters.push({
+				filterKey: fieldName,
+				filterValue: range.max,
+				operator: OPERATORS['<'],
+			});
+		}
+	});
+
+	return filters;
+};
 
 export const getUplotClickData = ({
 	metric,
@@ -309,13 +355,23 @@ export const getViewQuery = (
 	const filters = filtersToAdd.reduce((acc: any[], filter) => {
 		// use existing query to get baseMeta
 		const baseMeta = getBaseMeta(query, filter.filterKey);
-		if (!baseMeta) {
+
+		const isRangeFilter =
+			filter.operator === OPERATORS['>='] || filter.operator === OPERATORS['<'];
+
+		if (!baseMeta && !isRangeFilter) {
 			return acc;
 		}
 
+		const filterKey: BaseAutocompleteData = baseMeta || {
+			key: filter.filterKey,
+			dataType: DataTypes.Float64,
+			type: 'tag',
+		};
+
 		acc.push({
 			id: uuid(),
-			key: baseMeta,
+			key: filterKey,
 			op: filter.operator,
 			value: filter.filterValue,
 		});

@@ -381,11 +381,13 @@ function RightContainer({
 						<Typography.Text className="typography">Color Palette</Typography.Text>
 						<Select
 							options={[
-								{ label: 'Purple', value: 'default' },
-								{ label: 'Blue', value: 'blue' },
-								{ label: 'Green', value: 'green' },
-								{ label: 'Orange', value: 'orange' },
-								{ label: 'Red', value: 'red' },
+								{ label: 'Default', value: 'default' },
+								{ label: 'Viridis', value: 'viridis' },
+								{ label: 'Plasma', value: 'plasma' },
+								{ label: 'Inferno', value: 'inferno' },
+								{ label: 'Cool', value: 'cool' },
+								{ label: 'Magma', value: 'magma' },
+								{ label: 'Spectral', value: 'spectral' },
 							]}
 							value={heatmapColorPalette}
 							style={{ width: '100%' }}

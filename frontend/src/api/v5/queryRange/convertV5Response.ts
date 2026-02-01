@@ -2,7 +2,6 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
-	BucketData,
 	DistributionData,
 	MetricRangePayloadV5,
 	QueryRangeRequestV5,
@@ -69,6 +68,7 @@ function getColId(
 function convertTimeSeriesData(
 	timeSeriesData: TimeSeriesData,
 	legendMap: Record<string, string>,
+	isHeatmap = false,
 ): QueryDataV3 {
 	// Convert V5 time series format to legacy QueryDataV3 format
 
@@ -99,10 +99,13 @@ function convertTimeSeriesData(
 				labelsArray: series.labels
 					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
 					: [],
-				values: series.values.map((value: any) => ({
-					timestamp: value.timestamp,
-					value: String(value.value),
-				})),
+				values: isHeatmap
+					? series.values
+					: series.values.map((value: any) => ({
+							timestamp: value.timestamp,
+							value: String(value.value),
+					  })),
+				bounds: isHeatmap ? series.bounds : undefined,
 				metaData: {
 					alias,
 					index,
@@ -337,21 +340,13 @@ function convertV5DataByType(
 				),
 			};
 		}
-		case 'bucket': {
-			const bucketData = v5Data.data.results as BucketData[];
+		case 'heatmap': {
+			const heatmapData = v5Data.data.results as TimeSeriesData[];
 			return {
-				resultType: 'bucket',
-				result: bucketData.map((bucket) => ({
-					queryName: bucket.queryName,
-					legend: legendMap[bucket.queryName] || bucket.queryName,
-					series: null,
-					list: null,
-					bucketStarts: bucket.bucketStarts,
-					bucketBounds: bucket.bucketBounds,
-					bucketCount: bucket.bucketCount,
-					timestamps: bucket.timestamps,
-					counts: bucket.counts,
-				})),
+				resultType: 'heatmap',
+				result: heatmapData.map((heatmap) =>
+					convertTimeSeriesData(heatmap, legendMap, true),
+				),
 			};
 		}
 		default:

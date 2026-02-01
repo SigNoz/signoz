@@ -12,7 +12,7 @@ export type RequestType =
 	| 'trace'
 	| 'raw'
 	| 'distribution'
-	| 'bucket'
+	| 'heatmap'
 	| '';
 
 export type QueryType =
@@ -342,21 +342,18 @@ export interface Label {
 	value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-export interface Bucket {
-	step: number;
-}
-
 export interface TimeSeriesValue {
 	timestamp: number; // Unix timestamp in milliseconds
 	value: number;
-	values?: number[]; // For heatmap type charts
-	bucket?: Bucket;
+	values?: number[]; // For heatmap type charts - counts per bucket
+	bounds?: number[]; // For heatmap type charts - bucket boundaries
 	partial?: boolean;
 }
 
 export interface TimeSeries {
 	labels?: Label[];
 	values: TimeSeriesValue[];
+	bounds?: number[];
 }
 
 export interface AggregationBucket {
@@ -405,15 +402,6 @@ export interface DistributionData {
 	[key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-export interface BucketData {
-	queryName: string;
-	bucketStarts?: number[];
-	bucketBounds: number[];
-	bucketCount?: number;
-	timestamps: number[];
-	counts: number[][];
-}
-
 // Response data structures with results array
 export interface TimeSeriesResponseData {
 	results: TimeSeriesData[];
@@ -431,16 +419,11 @@ export interface DistributionResponseData {
 	results: DistributionData[];
 }
 
-export interface BucketResponseData {
-	results: BucketData[];
-}
-
 export type QueryRangeDataV5 =
 	| TimeSeriesResponseData
 	| ScalarResponseData
 	| RawResponseData
-	| DistributionResponseData
-	| BucketResponseData;
+	| DistributionResponseData;
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;

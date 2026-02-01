@@ -95,7 +95,6 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 
 	const disableOperatorSelector =
 		!queryAggregation.metricName || queryAggregation.metricName === '';
-	const disableHeatmapAggregate = isHeatmapPanel && isHistogramMetric;
 
 	return (
 		<div
@@ -129,7 +128,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										value={queryAggregation.timeAggregation || ''}
 										onChange={handleChangeOperator}
 										operators={operators}
-										disabled={disableOperatorSelector || disableHeatmapAggregate}
+										disabled={disableOperatorSelector}
 										className="metrics-operators-select"
 									/>
 								</div>
@@ -202,7 +201,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 											query?.aggregateAttribute?.type as ATTRIBUTE_TYPES
 										}
 										selectedValue={queryAggregation.spaceAggregation || ''}
-										disabled={disableOperatorSelector || disableHeatmapAggregate}
+										disabled={disableOperatorSelector}
 										onSelect={handleSpaceAggregationChange}
 										operators={spaceAggregationOptions}
 										qbVersion="v3"
