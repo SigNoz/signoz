@@ -1,4 +1,13 @@
 import {
+	forwardRef,
+	memo,
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useMemo,
+	useRef,
+} from 'react';
+import {
 	_adapters,
 	BarController,
 	BarElement,
@@ -24,15 +33,6 @@ import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
 import { useTimezone } from 'providers/Timezone';
-import {
-	forwardRef,
-	memo,
-	useCallback,
-	useEffect,
-	useImperativeHandle,
-	useMemo,
-	useRef,
-} from 'react';
 
 import { hasData } from './hasData';
 import { legend } from './Plugin';

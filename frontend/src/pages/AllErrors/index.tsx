@@ -1,5 +1,5 @@
-import './AllErrors.styles.scss';
-
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -17,10 +17,10 @@ import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { routes } from './config';
+
+import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();

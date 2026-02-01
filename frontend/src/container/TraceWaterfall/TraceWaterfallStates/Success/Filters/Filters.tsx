@@ -1,5 +1,5 @@
-import './Filters.styles.scss';
-
+import { useCallback, useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Button, Spin, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
@@ -9,13 +9,13 @@ import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { BASE_FILTER_QUERY } from './constants';
+
+import './Filters.styles.scss';
 
 function prepareQuery(filters: TagFilter, traceID: string): Query {
 	return {

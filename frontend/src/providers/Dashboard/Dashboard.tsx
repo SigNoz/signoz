@@ -1,4 +1,18 @@
 /* eslint-disable no-nested-ternary */
+import {
+	createContext,
+	PropsWithChildren,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useMutation, useQuery, UseQueryResult } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRouteMatch } from 'react-router-dom';
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
@@ -21,20 +35,6 @@ import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import {
-	createContext,
-	PropsWithChildren,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery, UseQueryResult } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -45,6 +45,8 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
+import { useDashboardVariables } from '../../hooks/dashboard/useDashboardVariables';
+import { updateDashboardVariablesStore } from './store/dashboardVariablesStore';
 import {
 	DashboardSortOrder,
 	IDashboardContext,
@@ -196,6 +198,16 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
+	const dashboardVariables = useDashboardVariables();
+
+	useEffect(() => {
+		const existingVariables = dashboardVariables;
+		const updatedVariables = selectedDashboard?.data.variables || {};
+
+		if (!isEqual(existingVariables, updatedVariables)) {
+			updateDashboardVariablesStore(updatedVariables);
+		}
+	}, [selectedDashboard]);
 
 	const {
 		currentDashboard,

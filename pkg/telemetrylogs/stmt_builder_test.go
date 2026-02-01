@@ -195,10 +195,10 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -315,10 +315,10 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -423,10 +423,10 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -499,10 +499,10 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -594,10 +594,10 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
@@ -819,7 +819,7 @@ func TestAdjustKey(t *testing.T) {
 	fm := NewFieldMapper()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
-	cb := NewConditionBuilder(fm, mockMetadataStore)
+	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 

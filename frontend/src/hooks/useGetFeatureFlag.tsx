@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import list from 'api/v1/features/list';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryResult } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';

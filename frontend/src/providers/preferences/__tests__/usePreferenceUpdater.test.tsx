@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
+import { act } from 'react-dom/test-utils';
 import { renderHook } from '@testing-library/react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LogViewMode } from 'container/LogsTable';
@@ -8,7 +9,6 @@ import {
 	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
-import { act } from 'react-dom/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 

@@ -1,3 +1,5 @@
+// ** Helpers
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -11,8 +13,6 @@ import {
 	transformFromStringToHaving,
 	transformHavingToStringValue,
 } from 'lib/query/transformQueryBuilderData';
-// ** Helpers
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';

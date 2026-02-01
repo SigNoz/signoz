@@ -1,15 +1,15 @@
-import '../GantChart.styles.scss';
-
+import { useEffect } from 'react';
 import { Popover, Typography } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect } from 'react';
 import { toFixed } from 'utils/toFixed';
 
 import { SpanBorder, SpanLine, SpanText, SpanWrapper } from './styles';
+
+import '../GantChart.styles.scss';
 
 interface SpanLengthProps {
 	globalStart: number;

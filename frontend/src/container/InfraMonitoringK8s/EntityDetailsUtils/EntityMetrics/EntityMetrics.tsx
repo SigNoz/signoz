@@ -1,5 +1,5 @@
-import './entityMetrics.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
@@ -24,8 +24,6 @@ import {
 } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
@@ -33,6 +31,8 @@ import { Options } from 'uplot';
 import { FeatureKeys } from '../../../../constants/features';
 import { useMultiIntersectionObserver } from '../../../../hooks/useMultiIntersectionObserver';
 import { useAppContext } from '../../../../providers/App/App';
+
+import './entityMetrics.styles.scss';
 
 interface EntityMetricsProps<T> {
 	timeRange: {

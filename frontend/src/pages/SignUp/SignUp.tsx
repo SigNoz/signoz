@@ -1,5 +1,6 @@
-import './SignUp.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { Input } from '@signozhq/input';
@@ -14,14 +15,13 @@ import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CircleAlert } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
 
 import { FormContainer, Label } from './styles';
+
+import './SignUp.styles.scss';
 
 type FormValues = {
 	email: string;

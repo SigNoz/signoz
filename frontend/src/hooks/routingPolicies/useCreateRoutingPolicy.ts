@@ -1,8 +1,8 @@
+import { useMutation, UseMutationResult } from 'react-query';
 import createRoutingPolicy, {
 	CreateRoutingPolicyBody,
 	CreateRoutingPolicyResponse,
 } from 'api/routingPolicies/createRoutingPolicy';
-import { useMutation, UseMutationResult } from 'react-query';
 import { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
 
 interface UseCreateRoutingPolicyProps {

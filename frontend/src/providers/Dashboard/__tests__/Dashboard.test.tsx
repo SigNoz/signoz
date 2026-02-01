@@ -1,13 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import getDashboard from 'api/v1/dashboards/id/get';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { DashboardProvider, useDashboard } from 'providers/Dashboard/Dashboard';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
+import { useDashboardVariables } from '../../../hooks/dashboard/useDashboardVariables';
 import { initializeDefaultVariables } from '../initializeDefaultVariables';
 import { normalizeUrlValueForVariable } from '../normalizeUrlValue';
 
@@ -55,6 +56,7 @@ jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 
 function TestComponent(): JSX.Element {
 	const { dashboardResponse, dashboardId, selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 
 	return (
 		<div>
@@ -65,9 +67,7 @@ function TestComponent(): JSX.Element {
 				{dashboardResponse.isFetching.toString()}
 			</div>
 			<div data-testid="dashboard-variables">
-				{selectedDashboard?.data?.variables
-					? JSON.stringify(selectedDashboard.data.variables)
-					: 'null'}
+				{dashboardVariables ? JSON.stringify(dashboardVariables) : 'null'}
 			</div>
 			<div data-testid="dashboard-data">
 				{selectedDashboard?.data?.title || 'No Title'}

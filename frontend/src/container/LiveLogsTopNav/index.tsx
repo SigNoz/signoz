@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from 'react';
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import { Space } from 'antd';
 import BackButton from 'container/LiveLogs/BackButton';
@@ -5,7 +6,6 @@ import { getQueryWithoutFilterId } from 'container/LiveLogs/utils';
 import LocalTopNav from 'container/LocalTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
-import { memo, useCallback, useMemo } from 'react';
 
 import { LiveButtonStyled } from './styles';
 
