@@ -3,6 +3,8 @@ import { SeriesItem } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 import { AlignedData } from 'uplot';
 
+import { HEATMAP_COLOR_GRADIENTS } from './constants';
+
 const { round } = Math;
 
 export interface HeatmapProcessedData {
@@ -347,15 +349,7 @@ export function generateHeatmapPalette(
 	numColors: number,
 	gradientStops?: Array<{ position: number; color: [number, number, number] }>,
 ): string[] {
-	const defaultStops = [
-		{ position: 0.0, color: [68, 1, 84] as [number, number, number] },
-		{ position: 0.25, color: [59, 82, 139] as [number, number, number] },
-		{ position: 0.5, color: [33, 145, 140] as [number, number, number] },
-		{ position: 0.75, color: [253, 231, 37] as [number, number, number] },
-		{ position: 1.0, color: [255, 87, 51] as [number, number, number] },
-	];
-
-	const stops = gradientStops || defaultStops;
+	const stops = gradientStops || HEATMAP_COLOR_GRADIENTS.default;
 	const palette: string[] = [];
 
 	for (let i = 0; i < numColors; i++) {
@@ -529,104 +523,4 @@ export function getHeatmapColors(
 	}
 
 	return generateHeatmapPalette(100);
-}
-
-/**
- * Transform heatmap cursor position into standard tooltip series format
- */
-export function transformHeatmapTooltipData(
-	cursorX: number,
-	cursorY: number,
-	heatmapTimeSeriesData: any,
-	bucketLabels: string[],
-	timeBucketIntervalMs: number,
-	formatDate: (ms: number) => string,
-	colorMapping: Record<string, string> | undefined,
-	heatmapColors: string[] | undefined,
-): {
-	seriesList: any[];
-	data: any[];
-	idx: number;
-	customTitle: string;
-	colorMapping: Record<string, string>;
-} | null {
-	const series = heatmapTimeSeriesData.aggregations?.[0]?.series?.[0];
-	if (!series?.values?.length || !series.bounds) {
-		return null;
-	}
-
-	const bucketIdx = Math.floor(cursorY);
-	if (bucketIdx < 0 || bucketIdx >= series.bounds.length) {
-		return null;
-	}
-
-	// Find closest timestamp
-	const timestamps = series.values.map((v: any) => v.timestamp / 1000);
-	let closestTimestampIdx = 0;
-	let minTimeDiff = Math.abs(timestamps[0] - cursorX);
-
-	for (let i = 1; i < timestamps.length; i++) {
-		const diff = Math.abs(timestamps[i] - cursorX);
-		if (diff < minTimeDiff) {
-			minTimeDiff = diff;
-			closestTimestampIdx = i;
-		}
-	}
-
-	const clickedValue = series.values[closestTimestampIdx];
-	const count = clickedValue.values?.[bucketIdx] || 0;
-
-	if (count <= 0) {
-		return null;
-	}
-
-	// Calculate time range
-	const timestamp = clickedValue.timestamp;
-	const nextTimestamp = timestamp + timeBucketIntervalMs * 1000;
-	const timeRange = `${formatDate(timestamp)} → ${formatDate(nextTimestamp)}`;
-	const valueRange = bucketLabels[bucketIdx] || '';
-
-	// Calculate percentage over entire time range
-	let totalCountOverTime = 0;
-	for (let i = 0; i < series.values.length; i++) {
-		const values = series.values[i].values || [];
-		for (let j = 0; j < values.length; j++) {
-			totalCountOverTime += values[j] > 0 ? values[j] : 0;
-		}
-	}
-	const percentage =
-		totalCountOverTime > 0 ? (count / totalCountOverTime) * 100 : 0;
-
-	const color =
-		colorMapping?.['_heatmap'] ||
-		(heatmapColors && heatmapColors[heatmapColors.length - 1]) ||
-		'#6347D9';
-
-	// Transform into standard series format
-	const seriesList = [
-		{
-			metric: {},
-			queryName: '',
-			legend: `${valueRange} (${percentage.toFixed(2)}%)`,
-			values: [[count, String(count)]],
-			quantity: [],
-			unit: '',
-		},
-	];
-
-	const data = [
-		[0], // timestamps (not used for heatmap)
-		[count], // values
-	];
-
-	const updatedColorMapping = { ...colorMapping };
-	updatedColorMapping[`${valueRange} (${percentage.toFixed(2)}%)`] = color;
-
-	return {
-		seriesList,
-		data,
-		idx: 0,
-		customTitle: timeRange,
-		colorMapping: updatedColorMapping,
-	};
 }

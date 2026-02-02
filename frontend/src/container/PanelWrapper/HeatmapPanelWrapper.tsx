@@ -110,17 +110,13 @@ function HeatmapPanelWrapper({
 		const {
 			graphVisibilityStates: localStoredVisibilityState,
 		} = getLocalStorageGraphVisibilityState({
-			apiResponse: queryResponse.data?.payload.data.result || [],
+			apiResponse: queryResponse.data?.payload?.data?.result || [],
 			name: widget.id,
 		});
 		if (setGraphVisibility) {
 			setGraphVisibility(localStoredVisibilityState);
 		}
-	}, [
-		queryResponse?.data?.payload?.data?.result,
-		setGraphVisibility,
-		widget.id,
-	]);
+	}, [queryResponse.data?.payload?.data?.result, setGraphVisibility, widget.id]);
 
 	// Extract and process heatmap data
 	const heatmapData = useMemo(

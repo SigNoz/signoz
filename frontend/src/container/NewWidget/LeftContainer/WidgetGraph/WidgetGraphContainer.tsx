@@ -25,11 +25,12 @@ function shouldShowNoDataForStandardPanels(
 	return (
 		selectedGraph !== PANEL_TYPES.LIST &&
 		selectedGraph !== PANEL_TYPES.VALUE &&
+		selectedGraph !== PANEL_TYPES.HEATMAP &&
 		queryResponse.data?.payload.data?.result?.length === 0
 	);
 }
 
-function shouldShowNoDataForListOrValue(
+function shouldShowNoDataForNewResultPanels(
 	selectedGraph: PANEL_TYPES,
 	queryResponse: any,
 ): boolean {
@@ -84,7 +85,7 @@ function WidgetGraphContainer({
 
 	if (
 		shouldShowNoDataForStandardPanels(selectedGraph, queryResponse) ||
-		shouldShowNoDataForListOrValue(selectedGraph, queryResponse) ||
+		shouldShowNoDataForNewResultPanels(selectedGraph, queryResponse) ||
 		queryResponse.isIdle
 	) {
 		return <NoDataMessage />;
