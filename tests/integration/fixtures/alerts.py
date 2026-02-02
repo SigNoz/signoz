@@ -150,7 +150,7 @@ def collect_firing_alerts():
 
 @pytest.fixture(name="verify_alert_expectation", scope="package")
 def verify_alert_expectation(
-    collect_firing_alerts: Callable[
+    collect_firing_alerts: Callable[  # pylint: disable=redefined-outer-name
         [types.TestContainerDocker, str], List[dict[str, str]]
     ],
 ) -> Callable[[types.TestContainerDocker, str, types.AlertExpectation], bool]:

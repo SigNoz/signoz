@@ -643,7 +643,8 @@ def test_basic_alert_rule_conditions(
 
     # Create Alert Rule
     rule_path = get_testdata_file_path(alert_test_case.rule_path)
-    rule_data = json.loads(open(rule_path, "r").read())
+    with open(rule_path, "r", encoding="utf-8") as f:
+        rule_data = json.loads(f.read())
     # Update the channel name in the rule data
     _update_rule_channel_name(rule_data, notification_channel_name)
     rule_id = create_alert_rule(rule_data)
