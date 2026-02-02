@@ -266,7 +266,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email.String())) {
+	if slices.Contains(types.AllIntegrationUserEmails, user.Email) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 

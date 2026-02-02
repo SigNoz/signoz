@@ -166,8 +166,8 @@ type AzureAgentCheckInResponse struct {
 	IntegrationConfig AzureAgentIntegrationConfig `json:"integration_config"`
 }
 
-func (c *Controller) GetAccountStatus(ctx context.Context, orgId, cloudProvider, accountId string) (*AccountStatusResponse, *model.ApiError) {
-	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
+func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider valuer.String, accountId string) (*AccountStatusResponse, *model.ApiError) {
+	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider.String(), accountId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -183,7 +183,7 @@ func (c *Controller) GetAccountStatus(ctx context.Context, orgId, cloudProvider,
 
 func (c *Controller) GetAWSConnectionUrl(ctx context.Context, req *GetAWSConnectionUrlReq) (*GetAWSConnectionUrlRes, *model.ApiError) {
 	account, apiErr := c.accountsRepo.upsert(
-		ctx, req.OrgID, types.CloudProviderAWS, nil, req.AccountConfig,
+		ctx, req.OrgID, types.CloudProviderAWS.String(), nil, req.AccountConfig,
 		nil, nil, nil,
 	)
 	if apiErr != nil {
@@ -224,7 +224,7 @@ func (c *Controller) GetAWSConnectionUrl(ctx context.Context, req *GetAWSConnect
 
 func (c *Controller) GetAzureConnectionCommand(ctx context.Context, req *GetAzureConnectionCommandReq) (*GetAzureConnectionCommandRes, *model.ApiError) {
 	account, apiErr := c.accountsRepo.upsert(
-		ctx, req.OrgID, types.CloudProviderAzure, nil, req.AccountConfig,
+		ctx, req.OrgID, types.CloudProviderAzure.String(), nil, req.AccountConfig,
 		nil, nil, nil,
 	)
 	if apiErr != nil {
@@ -250,8 +250,8 @@ func (c *Controller) GetAzureConnectionCommand(ctx context.Context, req *GetAzur
 	}, nil
 }
 
-func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider string, req *AgentCheckInRequest) (*AWSAgentCheckInResponse, error) {
-	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
+func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId string, cloudProvider valuer.String, req *AgentCheckInRequest) (*AWSAgentCheckInResponse, error) {
+	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider.String(), req)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -269,8 +269,8 @@ func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider
 	}, nil
 }
 
-func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvider string, req *AgentCheckInRequest) (*AzureAgentCheckInResponse, error) {
-	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
+func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId string, cloudProvider valuer.String, req *AgentCheckInRequest) (*AzureAgentCheckInResponse, error) {
+	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider.String(), req)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -386,10 +386,10 @@ type UpdateAccountConfigRequest struct {
 	Config types.AccountConfig `json:"config"`
 }
 
-func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
+func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider valuer.String, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
 	// for azure, preserve deployment region if already set
 	if cloudProvider == types.CloudProviderAzure {
-		account, err := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
+		account, err := c.accountsRepo.get(ctx, orgId, cloudProvider.String(), accountId)
 		if err != nil && err.Type() != model.ErrorNotFound {
 			return nil, model.WrapApiError(err, "couldn't get cloud account")
 		}
@@ -400,7 +400,7 @@ func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, clou
 	}
 
 	accountRecord, apiErr := c.accountsRepo.upsert(
-		ctx, orgId, cloudProvider, &accountId, &req.Config, nil, nil, nil,
+		ctx, orgId, cloudProvider.String(), &accountId, &req.Config, nil, nil, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
@@ -411,15 +411,15 @@ func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, clou
 	return &account, nil
 }
 
-func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider string, accountId string) (*types.CloudIntegration, *model.ApiError) {
-	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
+func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider valuer.String, accountId string) (*types.CloudIntegration, *model.ApiError) {
+	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider.String(), accountId)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't disconnect account")
 	}
 
 	tsNow := time.Now()
 	account, apiErr = c.accountsRepo.upsert(
-		ctx, orgId, cloudProvider, &accountId, nil, nil, nil, &tsNow,
+		ctx, orgId, cloudProvider.String(), &accountId, nil, nil, nil, &tsNow,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't disconnect account")
@@ -435,12 +435,12 @@ type ListServicesResponse struct {
 func (c *Controller) ListServices(
 	ctx context.Context,
 	orgID string,
-	cloudProvider string,
+	cloudProvider valuer.String,
 	cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
 	svcConfigs := map[string]*types.CloudServiceConfig{}
 	if cloudAccountId != nil {
-		activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(ctx, orgID, cloudProvider, *cloudAccountId)
+		activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(ctx, orgID, cloudProvider.String(), *cloudAccountId)
 		if apiErr != nil {
 			return nil, model.WrapApiError(apiErr, "couldn't get active account")
 		}
@@ -492,7 +492,7 @@ func (c *Controller) ListServices(
 func (c *Controller) GetServiceDetails(
 	ctx context.Context,
 	orgID string,
-	cloudProvider string,
+	cloudProvider valuer.String,
 	serviceId string,
 	cloudAccountId *string,
 ) (*ServiceDetails, *model.ApiError) {
@@ -524,7 +524,7 @@ func (c *Controller) GetServiceDetails(
 	}
 
 	activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(
-		ctx, orgID, cloudProvider, *cloudAccountId,
+		ctx, orgID, cloudProvider.String(), *cloudAccountId,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't get active account")
@@ -578,7 +578,7 @@ type UpdateServiceConfigResponse struct {
 func (c *Controller) UpdateServiceConfig(
 	ctx context.Context,
 	orgID string,
-	cloudProvider string,
+	cloudProvider valuer.String,
 	serviceType string,
 	req *UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, error) {
@@ -607,14 +607,14 @@ func (c *Controller) UpdateServiceConfig(
 
 	// can only update config for a connected cloud account id
 	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
-		ctx, orgID, cloudProvider, req.CloudAccountId,
+		ctx, orgID, cloudProvider.String(), req.CloudAccountId,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't find connected cloud account")
 	}
 
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
-		ctx, orgID, cloudProvider, req.CloudAccountId, serviceType, req.Config,
+		ctx, orgID, cloudProvider.String(), req.CloudAccountId, serviceType, req.Config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't update service config")
@@ -631,7 +631,7 @@ func (c *Controller) UpdateServiceConfig(
 func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID) ([]*dashboardtypes.Dashboard, *model.ApiError) {
 	allDashboards := make([]*dashboardtypes.Dashboard, 0)
 
-	for _, provider := range []string{types.CloudProviderAWS, types.CloudProviderAzure} {
+	for _, provider := range []valuer.String{types.CloudProviderAWS, types.CloudProviderAzure} {
 		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, provider)
 		if apiErr != nil {
 			return nil, model.WrapApiError(
@@ -645,8 +645,8 @@ func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID)
 	return allDashboards, nil
 }
 
-func (c *Controller) AvailableDashboardsForCloudProvider(ctx context.Context, orgID valuer.UUID, cloudProvider string) ([]*dashboardtypes.Dashboard, *model.ApiError) {
-	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID.StringValue(), cloudProvider)
+func (c *Controller) AvailableDashboardsForCloudProvider(ctx context.Context, orgID valuer.UUID, cloudProvider valuer.String) ([]*dashboardtypes.Dashboard, *model.ApiError) {
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID.StringValue(), cloudProvider.String())
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
 	}
@@ -706,7 +706,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(ctx context.Context, or
 	return svcDashboards, nil
 }
 
-func (c *Controller) getDashboardsFromAssets(svcId, cloudProvider string, createdAt *time.Time,
+func (c *Controller) getDashboardsFromAssets(svcId string, cloudProvider valuer.String, createdAt *time.Time,
 	assets services.Assets) ([]*dashboardtypes.Dashboard, *model.ApiError) {
 	dashboards := make([]*dashboardtypes.Dashboard, 0)
 
@@ -736,7 +736,12 @@ func (c *Controller) GetDashboardById(ctx context.Context, orgId valuer.UUID, da
 		return nil, apiErr
 	}
 
-	allDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, cloudProvider)
+	cloudProviderValue, err := types.NewCloudProvider(cloudProvider)
+	if err != nil {
+		return nil, model.BadRequest(fmt.Errorf("invalid cloud provider in dashboard id: %s", cloudProvider))
+	}
+
+	allDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, cloudProviderValue)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list available dashboards")
 	}

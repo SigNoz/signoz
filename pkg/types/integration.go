@@ -6,33 +6,43 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
-const (
-	CloudProviderAWS   = "aws"
-	CloudProviderAzure = "azure"
+var (
+	CloudProviderAWS   = valuer.NewString("aws")
+	CloudProviderAzure = valuer.NewString("azure")
 )
 
-func ValidateCloudProvider(provider string) error {
+func NewCloudProvider(provider string) (valuer.String, error) {
 	switch provider {
-	case CloudProviderAWS, CloudProviderAzure:
-		return nil
+	case CloudProviderAWS.String(), CloudProviderAzure.String():
+		return valuer.NewString(provider), nil
 	default:
-		return errors.NewInternalf(errors.CodeInternal, "invalid cloud provider: %s", provider)
+		return valuer.String{}, errors.NewInternalf(errors.CodeInternal, "invalid cloud provider: %s", provider)
 	}
 }
 
-type (
-	IntegrationUserEmail string
+var (
+	AWSIntegrationUserEmail   valuer.Email
+	AzureIntegrationUserEmail valuer.Email
 )
 
-const (
-	AWSIntegrationUserEmail   IntegrationUserEmail = "aws-integration@signoz.io"
-	AzureIntegrationUserEmail IntegrationUserEmail = "azure-integration@signoz.io"
-)
+func init() {
+	var err error
+	AWSIntegrationUserEmail, err = valuer.NewEmail("aws-integration@signoz.io")
+	if err != nil {
+		panic("failed to initialize AWS integration user email: " + err.Error())
+	}
 
-var AllIntegrationUserEmails = []IntegrationUserEmail{
+	AzureIntegrationUserEmail, err = valuer.NewEmail("azure-integration@signoz.io")
+	if err != nil {
+		panic("failed to initialize Azure integration user email: " + err.Error())
+	}
+}
+
+var AllIntegrationUserEmails = []valuer.Email{
 	AWSIntegrationUserEmail,
 	AzureIntegrationUserEmail,
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	koanfJson "github.com/knadh/koanf/parsers/json"
 )
 
@@ -98,14 +99,10 @@ func NewAzureCloudProviderServices() (*AzureServicesProvider, error) {
 //go:embed definitions/*
 var definitionFiles embed.FS
 
-func readAllServiceDefinitions(cloudProvider string) (map[string]any, error) {
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
-		return nil, err
-	}
-
+func readAllServiceDefinitions(cloudProvider valuer.String) (map[string]any, error) {
 	rootDirName := "definitions"
 
-	cloudProviderDirPath := path.Join(rootDirName, cloudProvider)
+	cloudProviderDirPath := path.Join(rootDirName, cloudProvider.String())
 
 	cloudServices, err := readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath)
 	if err != nil {
@@ -119,7 +116,7 @@ func readAllServiceDefinitions(cloudProvider string) (map[string]any, error) {
 	return cloudServices, nil
 }
 
-func readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath string) (map[string]any, error) {
+func readServiceDefinitionsFromDir(cloudProvider valuer.String, cloudProviderDirPath string) (map[string]any, error) {
 	svcDefDirs, err := fs.ReadDir(definitionFiles, cloudProviderDirPath)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't list integrations dirs: %w", err)
@@ -148,7 +145,7 @@ func readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath string) (
 	return svcDefs, nil
 }
 
-func readServiceDefinition(cloudProvider string, svcDirpath string) (Definition, error) {
+func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (Definition, error) {
 	integrationJsonPath := path.Join(svcDirpath, "integration.json")
 
 	serializedSpec, err := definitionFiles.ReadFile(integrationJsonPath)

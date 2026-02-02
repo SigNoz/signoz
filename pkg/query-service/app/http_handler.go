@@ -3560,10 +3560,12 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 }
 
 func (aH *APIHandler) CloudIntegrationsGenerateConnection(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
-		RespondError(w, model.BadRequest(fmt.Errorf("invalid cloud provider: %s", cloudProvider)), nil)
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
@@ -3619,9 +3621,12 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnection(w http.ResponseWriter,
 }
 
 func (aH *APIHandler) CloudIntegrationsGetAccountStatus(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	accountId := mux.Vars(r)["accountId"]
@@ -3644,9 +3649,12 @@ func (aH *APIHandler) CloudIntegrationsGetAccountStatus(w http.ResponseWriter, r
 }
 
 func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	req := new(cloudintegrations.AgentCheckInRequest)
@@ -3684,9 +3692,12 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *ht
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	accountId := mux.Vars(r)["accountId"]
@@ -3716,9 +3727,12 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter
 }
 
 func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	accountId := mux.Vars(r)["accountId"]
@@ -3739,9 +3753,12 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, 
 }
 
 func (aH *APIHandler) CloudIntegrationsListServices(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	var cloudAccountId *string
@@ -3778,9 +3795,12 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 		return
 	}
 
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	serviceId := mux.Vars(r)["serviceId"]
@@ -4025,9 +4045,12 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter, r *http.Request) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	serviceId := mux.Vars(r)["serviceId"]

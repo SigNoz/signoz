@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Metadata struct {
@@ -131,7 +132,7 @@ type CollectedMetric struct {
 }
 
 type AWSCollectionStrategy struct {
-	Provider string `json:"provider"`
+	Provider valuer.String `json:"provider"`
 
 	AWSMetrics *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
 	AWSLogs    *AWSLogsStrategy    `json:"aws_logs,omitempty"`
@@ -139,7 +140,7 @@ type AWSCollectionStrategy struct {
 }
 
 type AzureCollectionStrategy struct {
-	Provider string `json:"provider"`
+	Provider valuer.String `json:"provider"`
 
 	AzureMetrics []*AzureMetricsStrategy `json:"azure_metrics,omitempty"`
 	AzureLogs    []*AzureLogsStrategy    `json:"azure_logs,omitempty"`
@@ -191,6 +192,6 @@ type Dashboard struct {
 	Definition  *dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
-func GetCloudIntegrationDashboardID(cloudProvider, svcId, dashboardId string) string {
+func GetCloudIntegrationDashboardID(cloudProvider valuer.String, svcId, dashboardId string) string {
 	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
 }

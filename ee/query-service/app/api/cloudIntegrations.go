@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -41,10 +42,12 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	cloudProvider := mux.Vars(r)["cloudProvider"]
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	if err = types.ValidateCloudProvider(cloudProvider); err != nil {
-		RespondError(w, basemodel.BadRequest(err), nil)
+	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
 	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
@@ -107,7 +110,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	ah.Respond(w, result)
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider string) (
+func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider valuer.String) (
 	string, *basemodel.ApiError,
 ) {
 	integrationPATName := fmt.Sprintf("%s integration", cloudProvider)
@@ -138,7 +141,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	zap.L().Info(
 		"no PAT found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider),
+		zap.String("cloudProvider", cloudProvider.String()),
 	)
 
 	newPAT, err := types.NewStorableAPIKey(
@@ -163,9 +166,9 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 }
 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
-	ctx context.Context, orgId string, cloudProvider string,
+	ctx context.Context, orgId string, cloudProvider valuer.String,
 ) (*types.User, *basemodel.ApiError) {
-	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
+	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider.String())
 	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
 	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId))
@@ -246,7 +249,7 @@ type createIngestionKeyResponse struct {
 }
 
 func getOrCreateCloudProviderIngestionKey(
-	ctx context.Context, gatewayUrl string, licenseKey string, cloudProvider string,
+	ctx context.Context, gatewayUrl string, licenseKey string, cloudProvider valuer.String,
 ) (string, *basemodel.ApiError) {
 	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
 
@@ -287,13 +290,13 @@ func getOrCreateCloudProviderIngestionKey(
 
 	zap.L().Info(
 		"no existing ingestion key found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider),
+		zap.String("cloudProvider", cloudProvider.String()),
 	)
 	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
 		ctx, gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
 		map[string]any{
 			"name": cloudProviderKeyName,
-			"tags": []string{"integration", cloudProvider},
+			"tags": []string{"integration", cloudProvider.String()},
 		},
 	)
 	if apiErr != nil {
