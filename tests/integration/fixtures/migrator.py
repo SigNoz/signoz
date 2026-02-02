@@ -20,14 +20,12 @@ def migrator(
     """
 
     def create() -> None:
-        # Hardcode version for new QB tests
-        version = "v0.129.13-rc.1"
+        version = request.config.getoption("--schema-migrator-version")
         client = docker.from_env()
 
         container = client.containers.run(
             image=f"signoz/signoz-schema-migrator:{version}",
             command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]}",
-            environment={"ENABLE_LOGS_MIGRATIONS_V2": "1"},
             detach=True,
             auto_remove=False,
             network=network.id,
@@ -46,7 +44,6 @@ def migrator(
         container = client.containers.run(
             image=f"signoz/signoz-schema-migrator:{version}",
             command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]}",
-            environment={"ENABLE_LOGS_MIGRATIONS_V2": "1"},
             detach=True,
             auto_remove=False,
             network=network.id,
