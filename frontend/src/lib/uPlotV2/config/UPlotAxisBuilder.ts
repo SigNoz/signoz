@@ -19,24 +19,29 @@ const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
  */
 export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 	/**
-	 * Build grid configuration based on theme and scale type
+	 * Build grid configuration based on theme and scale type.
+	 * Supports partial grid config: provided values override defaults.
 	 */
 	private buildGridConfig(): uPlot.Axis.Grid | undefined {
 		const { grid, isDarkMode, isLogScale } = this.props;
 
-		// If explicit grid config provided, use it
+		const defaultStroke = getGridColor(isDarkMode ?? false);
+		const defaultWidth = isLogScale ? 0.1 : 0.2;
+		const defaultShow = true;
+
+		// Merge partial or full grid config with defaults
 		if (grid) {
-			return grid;
+			return {
+				stroke: grid.stroke ?? defaultStroke,
+				width: grid.width ?? defaultWidth,
+				show: grid.show ?? defaultShow,
+			};
 		}
 
-		// Build default grid config similar to getAxes
-		const gridColor =
-			this.props.grid?.stroke || getGridColor(isDarkMode ?? false);
-
 		return {
-			stroke: gridColor,
-			width: isLogScale ? 0.1 : 0.2,
-			show: this.props.grid?.show ?? true,
+			stroke: defaultStroke,
+			width: defaultWidth,
+			show: defaultShow,
 		};
 	}
 

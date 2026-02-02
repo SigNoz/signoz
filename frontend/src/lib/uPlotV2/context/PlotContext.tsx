@@ -34,6 +34,7 @@ export const PlotContextProvider = ({
 		({ uPlotInstance, widgetId }: PlotContextInitialState): void => {
 			uPlotInstanceRef.current = uPlotInstance;
 			widgetIdRef.current = widgetId;
+			activeSeriesIndex.current = undefined;
 		},
 		[],
 	);
