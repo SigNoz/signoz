@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -33,9 +34,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
-	const { data } = selectedDashboard || {};
-
-	const { variables } = data || {};
+	const { dashboardVariables } = useDashboardVariables();
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 
@@ -48,29 +47,31 @@ function DashboardVariableSelection(): JSX.Element | null {
 	);
 
 	useEffect(() => {
-		if (variables) {
-			const tableRowData = [];
+		const tableRowData = [];
 
-			// eslint-disable-next-line no-restricted-syntax
-			for (const [key, value] of Object.entries(variables)) {
-				const { id } = value;
+		// eslint-disable-next-line no-restricted-syntax
+		for (const [key, value] of Object.entries(dashboardVariables)) {
+			const { id } = value;
 
-				tableRowData.push({
-					key,
-					name: key,
-					...variables[key],
-					id,
-				});
-			}
-
-			tableRowData.sort((a, b) => a.order - b.order);
-
-			setVariablesTableData(tableRowData);
-
-			// Initialize variables with default values if not in URL
-			initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
+			tableRowData.push({
+				key,
+				name: key,
+				...dashboardVariables[key],
+				id,
+			});
 		}
-	}, [getUrlVariables, updateUrlVariable, variables]);
+
+		tableRowData.sort((a, b) => a.order - b.order);
+
+		setVariablesTableData(tableRowData);
+
+		// Initialize variables with default values if not in URL
+		initializeDefaultVariables(
+			dashboardVariables,
+			getUrlVariables,
+			updateUrlVariable,
+		);
+	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
 	useEffect(() => {
 		if (variablesTableData.length > 0) {
@@ -94,7 +95,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 				cycleNodes,
 			});
 		}
-	}, [variables, variablesTableData]);
+	}, [dashboardVariables, variablesTableData]);
 
 	// this handles the case where the dependency order changes i.e. variable list updated via creation or deletion etc. and we need to refetch the variables
 	// also trigger when the global time changes
@@ -122,7 +123,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		if (id) {
 			// For dynamic variables, only store in localStorage when NOT allSelected
 			// This makes localStorage much lighter by avoiding storing all individual values
-			const variable = variables?.[id] || variables?.[name];
+			const variable = dashboardVariables?.[id] || dashboardVariables?.[name];
 			const isDynamic = variable?.type === 'DYNAMIC';
 			updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
 
@@ -185,7 +186,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		}
 	};
 
-	if (!variables) {
+	if (!dashboardVariables) {
 		return null;
 	}
 
@@ -202,7 +203,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					variable.type === 'DYNAMIC' ? (
 						<DynamicVariableSelection
 							key={`${variable.name}${variable.id}${variable.order}`}
-							existingVariables={variables}
+							existingVariables={dashboardVariables}
 							variableData={{
 								name: variable.name,
 								...variable,
@@ -212,7 +213,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					) : (
 						<VariableItem
 							key={`${variable.name}${variable.id}}${variable.order}`}
-							existingVariables={variables}
+							existingVariables={dashboardVariables}
 							variableData={{
 								name: variable.name,
 								...variable,

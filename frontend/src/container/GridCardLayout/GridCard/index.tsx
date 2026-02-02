@@ -53,7 +53,7 @@ function GridCardGraph({
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
-	widgetsHavingDynamicVariables,
+	widgetsByDynamicVariableId,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -226,8 +226,8 @@ function GridCardGraph({
 					? Object.entries(variables).reduce((acc, [id, variable]) => {
 							if (
 								variable.type !== 'DYNAMIC' ||
-								(widgetsHavingDynamicVariables?.[variable.id] &&
-									widgetsHavingDynamicVariables?.[variable.id].includes(widget.id))
+								(widgetsByDynamicVariableId?.[variable.id] &&
+									widgetsByDynamicVariableId?.[variable.id].includes(widget.id))
 							) {
 								return { ...acc, [id]: variable.selectedValue };
 							}
