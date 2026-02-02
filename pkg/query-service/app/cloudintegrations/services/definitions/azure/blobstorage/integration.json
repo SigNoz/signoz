@@ -1,0 +1,63 @@
+{
+  "id": "blobstorage",
+  "title": "Blob Storage",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "placeholder_log_1",
+        "path": "placeholder.path.value",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "azure_metrics": [
+      {
+        "category_type": "metrics",
+        "name": "Capacity"
+      },
+      {
+        "category_type": "metrics",
+        "name": "Transaction"
+      }
+    ],
+    "azure_logs": [
+      {
+        "category_type": "logs",
+        "name": "StorageRead"
+      },
+      {
+        "category_type": "logs",
+        "name": "StorageWrite"
+      },
+      {
+        "category_type": "logs",
+        "name": "StorageDelete"
+      }
+    ]
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Blob Storage Overview",
+        "description": "Overview of Blob Storage",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

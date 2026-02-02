@@ -1,6 +1,9 @@
 package services
 
 import (
+	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 )
 
@@ -10,7 +13,16 @@ type Metadata struct {
 	Icon  string `json:"icon"`
 }
 
-type Definition struct {
+type Definition interface {
+	GetId() string
+	Validate() error
+	PopulateDashboardIDs(svcId string)
+}
+
+var _ Definition = &AWSServiceDefinition{}
+var _ Definition = &AzureServiceDefinition{}
+
+type AWSServiceDefinition struct {
 	Metadata
 
 	Overview string `json:"overview"` // markdown
@@ -22,6 +34,76 @@ type Definition struct {
 	DataCollected DataCollected `json:"data_collected"`
 
 	Strategy *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
+}
+
+func (def *AWSServiceDefinition) GetId() string {
+	return def.Id
+}
+
+func (def *AWSServiceDefinition) Validate() error {
+	seenDashboardIds := map[string]interface{}{}
+
+	for _, dd := range def.Assets.Dashboards {
+		if _, seen := seenDashboardIds[dd.Id]; seen {
+			return fmt.Errorf("multiple dashboards found with id %s", dd.Id)
+		}
+		seenDashboardIds[dd.Id] = nil
+	}
+
+	if def.Strategy == nil {
+		return fmt.Errorf("telemetry_collection_strategy is required")
+	}
+
+	return nil
+}
+
+func (def *AWSServiceDefinition) PopulateDashboardIDs(serviceId string) {
+	for i := range def.Assets.Dashboards {
+		dashboardId := def.Assets.Dashboards[i].Id
+		def.Assets.Dashboards[i].Url = GetCloudIntegrationDashboardID(types.CloudProviderAWS, serviceId, dashboardId)
+	}
+}
+
+type AzureServiceDefinition struct {
+	Metadata
+
+	Overview string `json:"overview"` // markdown
+
+	Assets Assets `json:"assets"`
+
+	SupportedSignals SupportedSignals `json:"supported_signals"`
+
+	DataCollected DataCollected `json:"data_collected"`
+
+	Strategy *AzureCollectionStrategy `json:"telemetry_collection_strategy"`
+}
+
+func (def *AzureServiceDefinition) PopulateDashboardIDs(svcId string) {
+	for i := range def.Assets.Dashboards {
+		dashboardId := def.Assets.Dashboards[i].Id
+		def.Assets.Dashboards[i].Url = GetCloudIntegrationDashboardID(types.CloudProviderAzure, svcId, dashboardId)
+	}
+}
+
+func (def *AzureServiceDefinition) GetId() string {
+	return def.Id
+}
+
+func (def *AzureServiceDefinition) Validate() error {
+	seenDashboardIds := map[string]interface{}{}
+
+	for _, dd := range def.Assets.Dashboards {
+		if _, seen := seenDashboardIds[dd.Id]; seen {
+			return fmt.Errorf("multiple dashboards found with id %s", dd.Id)
+		}
+		seenDashboardIds[dd.Id] = nil
+	}
+
+	if def.Strategy == nil {
+		return fmt.Errorf("telemetry_collection_strategy is required")
+	}
+
+	return nil
 }
 
 type Assets struct {
@@ -62,8 +144,8 @@ type AWSCollectionStrategy struct {
 type AzureCollectionStrategy struct {
 	Provider string `json:"provider"`
 
-	AzureMetrics *AzureMetricsStrategy `json:"azure_metrics,omitempty"`
-	AzureLogs    *AzureLogsStrategy    `json:"azure_logs,omitempty"`
+	AzureMetrics []*AzureMetricsStrategy `json:"azure_metrics,omitempty"`
+	AzureLogs    []*AzureLogsStrategy    `json:"azure_logs,omitempty"`
 }
 
 type AzureResourceGroup struct {
@@ -94,11 +176,13 @@ type AWSLogsStrategy struct {
 }
 
 type AzureMetricsStrategy struct {
-	// Future fields for Azure Metrics collection strategy can be added here
+	CategoryType string `json:"category_type"`
+	Name         string `json:"name"`
 }
 
 type AzureLogsStrategy struct {
-	// Future fields for Azure Logs collection strategy can be added here
+	CategoryType string `json:"category_type"`
+	Name         string `json:"name"`
 }
 
 type Dashboard struct {
@@ -108,4 +192,8 @@ type Dashboard struct {
 	Description string                                `json:"description"`
 	Image       string                                `json:"image"`
 	Definition  *dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
+}
+
+func GetCloudIntegrationDashboardID(cloudProvider, svcId, dashboardId string) string {
+	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
 }

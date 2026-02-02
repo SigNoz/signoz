@@ -223,7 +223,8 @@ type CloudIntegrationService struct {
 }
 
 type CloudServiceLogsConfig struct {
-	Enabled   bool                `json:"enabled"`
+	Enabled bool `json:"enabled"`
+	// AWS Specific config
 	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
 }
 

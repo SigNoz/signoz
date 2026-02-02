@@ -3535,7 +3535,6 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 	subRouter.HandleFunc(
 		"/{cloudProvider}/services/{serviceId}/config", am.EditAccess(aH.CloudIntegrationsUpdateServiceConfig),
 	).Methods(http.MethodPost)
-
 }
 
 func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
@@ -3734,9 +3733,9 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 
 	accountId := mux.Vars(r)["accountId"]
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3767,9 +3766,9 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3784,9 +3783,7 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
@@ -3812,24 +3809,20 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resp, err := aH.CloudIntegrationsController.GetServiceDetails(
+	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
 		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
 	)
-	if err != nil {
-		render.Error(w, err)
+	if apiErr != nil {
+		render.Error(w, apiErr)
 		return
 	}
 
 	// Add connection status for the 2 signals.
-	if cloudAccountId != nil {
-		connStatus, apiErr := aH.calculateCloudIntegrationServiceConnectionStatus(
-			r.Context(), orgID, cloudProvider, *cloudAccountId, resp,
+	// TODO: we want to move remove this feature as it adds very little to no value,
+	// not adding this for other cloud providers.
+	if cloudAccountId != nil && cloudProvider == types.CloudProviderAWS {
+		connStatus, apiErr := aH.getAWSServiceConnectionStatus(
+			r.Context(), orgID, *cloudAccountId, resp,
 		)
 		if apiErr != nil {
 			RespondError(w, apiErr, nil)
@@ -3841,21 +3834,24 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
+func (aH *APIHandler) getAWSServiceConnectionStatus(
 	ctx context.Context,
 	orgID valuer.UUID,
-	cloudProvider string,
 	cloudAccountId string,
 	svcDetails *cloudintegrations.ServiceDetails,
 ) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
-	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
-		return nil, model.BadRequest(err)
+	definition, ok := svcDetails.Definition.(*services.AWSServiceDefinition)
+	if !ok {
+		return nil, model.InternalError(fmt.Errorf(
+			"service definition is not of type AWSServiceDefinition: %s", svcDetails.GetId(),
+		))
 	}
 
-	telemetryCollectionStrategy := svcDetails.Strategy
-	if telemetryCollectionStrategy == nil {
+	strategy := definition.Strategy
+
+	if strategy == nil {
 		return nil, model.InternalError(fmt.Errorf(
-			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
+			"service doesn't have telemetry collection strategy: %s", svcDetails.GetId(),
 		))
 	}
 
@@ -3866,13 +3862,13 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	var wg sync.WaitGroup
 
 	// Calculate metrics connection status
-	if telemetryCollectionStrategy.AWSMetrics != nil {
+	if strategy.AWSMetrics != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
 			metricsConnStatus, apiErr := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
-				ctx, cloudAccountId, telemetryCollectionStrategy.AWSMetrics, svcDetails.DataCollected.Metrics,
+				ctx, cloudAccountId, strategy.AWSMetrics, definition.DataCollected.Metrics,
 			)
 
 			resultLock.Lock()
@@ -3887,13 +3883,13 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	}
 
 	// Calculate logs connection status
-	if telemetryCollectionStrategy.AWSLogs != nil {
+	if strategy.AWSLogs != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
 			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
-				ctx, orgID, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
+				ctx, orgID, cloudAccountId, strategy.AWSLogs,
 			)
 
 			resultLock.Lock()
@@ -3914,8 +3910,8 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 	}
 
 	return result, nil
-
 }
+
 func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountId string,
