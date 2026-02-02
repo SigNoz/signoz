@@ -166,6 +166,24 @@ type AzureAgentCheckInResponse struct {
 	IntegrationConfig AzureAgentIntegrationConfig `json:"integration_config"`
 }
 
+type UpdateServiceConfigRequest struct {
+	CloudAccountId string                   `json:"cloud_account_id"`
+	Config         types.CloudServiceConfig `json:"config"`
+}
+
+type UpdateAccountConfigRequest struct {
+	Config types.AccountConfig `json:"config"`
+}
+
+type ListServicesResponse struct {
+	Services []ServiceSummary `json:"services"`
+}
+
+type UpdateServiceConfigResponse struct {
+	Id     string                   `json:"id"`
+	Config types.CloudServiceConfig `json:"config"`
+}
+
 func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider valuer.String, accountId string) (*AccountStatusResponse, *model.ApiError) {
 	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider.String(), accountId)
 	if apiErr != nil {
@@ -382,10 +400,6 @@ func (c *Controller) getAzureAgentConfig(ctx context.Context, account *types.Clo
 	return agentConfig, nil
 }
 
-type UpdateAccountConfigRequest struct {
-	Config types.AccountConfig `json:"config"`
-}
-
 func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider valuer.String, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
 	// for azure, preserve deployment region if already set
 	if cloudProvider == types.CloudProviderAzure {
@@ -426,10 +440,6 @@ func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudP
 	}
 
 	return account, nil
-}
-
-type ListServicesResponse struct {
-	Services []ServiceSummary `json:"services"`
 }
 
 func (c *Controller) ListServices(
@@ -489,43 +499,68 @@ func (c *Controller) ListServices(
 	}, nil
 }
 
-func (c *Controller) GetServiceDetails(
+func (c *Controller) GetAWSServiceDetails(
 	ctx context.Context,
 	orgID string,
-	cloudProvider valuer.String,
 	serviceId string,
 	cloudAccountId *string,
-) (*ServiceDetails, *model.ApiError) {
-	details := &ServiceDetails{}
+) (*AWSServiceDetails, *model.ApiError) {
+	details := new(AWSServiceDetails)
 
-	switch cloudProvider {
-	case types.CloudProviderAWS:
-		awsDefinition, err := c.awsServiceDefinitions.GetServiceDefinition(ctx, serviceId)
-		if err != nil {
-			return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
-		}
-
-		awsDefinition.Strategy.Provider = types.CloudProviderAWS
-		details.Definition = awsDefinition
-	case types.CloudProviderAzure:
-		azureDefinition, err := c.azureServiceDefinitions.GetServiceDefinition(ctx, serviceId)
-		if err != nil {
-			return nil, model.InternalError(fmt.Errorf("couldn't get azure service definition: %w", err))
-		}
-
-		azureDefinition.Strategy.Provider = types.CloudProviderAzure
-		details.Definition = azureDefinition
-	default:
-		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
+	awsDefinition, err := c.awsServiceDefinitions.GetServiceDefinition(ctx, serviceId)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
 	}
 
+	awsDefinition.Strategy.Provider = types.CloudProviderAWS
+
+	details.AWSServiceDefinition = *awsDefinition
 	if cloudAccountId == nil {
 		return details, nil
 	}
 
-	activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(
-		ctx, orgID, cloudProvider.String(), *cloudAccountId,
-	)
+	config, apiErr := c.getServiceConfig(ctx, details, orgID, types.CloudProviderAWS.String(), serviceId, *cloudAccountId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	details.Config = config
+
+	return details, nil
+}
+
+func (c *Controller) GetAzureServiceDetails(
+	ctx context.Context,
+	orgID string,
+	serviceId string,
+	cloudAccountId *string,
+) (*AzureServiceDetails, *model.ApiError) {
+	details := new(AzureServiceDetails)
+	azureDefinition, err := c.azureServiceDefinitions.GetServiceDefinition(ctx, serviceId)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't get azure service definition: %w", err))
+	}
+
+	azureDefinition.Strategy.Provider = types.CloudProviderAzure
+	details.AzureServiceDefinition = *azureDefinition
+	if cloudAccountId == nil {
+		return details, nil
+	}
+
+	config, apiErr := c.getServiceConfig(ctx, details, orgID, types.CloudProviderAzure.String(), serviceId, *cloudAccountId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	details.Config = config
+
+	return details, nil
+}
+
+func (c *Controller) getServiceConfig(ctx context.Context,
+	details services.Definition, orgID, cloudProvider, serviceId, cloudAccountId string,
+) (*types.CloudServiceConfig, *model.ApiError) {
+	activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(ctx, orgID, cloudProvider, cloudAccountId)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't get active account")
 	}
@@ -535,25 +570,11 @@ func (c *Controller) GetServiceDetails(
 		return nil, model.WrapApiError(apiErr, "couldn't fetch service config")
 	}
 
-	if config != nil {
-		details.Config = config
-
-		enabled := false
-		if config.Metrics != nil && config.Metrics.Enabled {
-			enabled = true
-		}
-
-		if enabled {
-			details.Definition.PopulateDashboardURLs(serviceId)
-		}
+	if config != nil && config.Metrics != nil && config.Metrics.Enabled {
+		details.PopulateDashboardURLs(serviceId)
 	}
 
-	return details, nil
-}
-
-type UpdateServiceConfigRequest struct {
-	CloudAccountId string                   `json:"cloud_account_id"`
-	Config         types.CloudServiceConfig `json:"config"`
+	return config, nil
 }
 
 func (u *UpdateServiceConfigRequest) Validate(def services.Definition) error {
@@ -568,11 +589,6 @@ func (u *UpdateServiceConfigRequest) Validate(def services.Definition) error {
 	}
 
 	return nil
-}
-
-type UpdateServiceConfigResponse struct {
-	Id     string                   `json:"id"`
-	Config types.CloudServiceConfig `json:"config"`
 }
 
 func (c *Controller) UpdateServiceConfig(

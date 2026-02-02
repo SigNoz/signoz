@@ -11,8 +11,15 @@ type ServiceSummary struct {
 	Config *types.CloudServiceConfig `json:"config"`
 }
 
-type ServiceDetails struct {
-	services.Definition
+type AWSServiceDetails struct {
+	services.AWSServiceDefinition
+
+	Config           *types.CloudServiceConfig `json:"config"`
+	ConnectionStatus *ServiceConnectionStatus  `json:"status,omitempty"`
+}
+
+type AzureServiceDetails struct {
+	services.AzureServiceDefinition
 
 	Config           *types.CloudServiceConfig `json:"config"`
 	ConnectionStatus *ServiceConnectionStatus  `json:"status,omitempty"`

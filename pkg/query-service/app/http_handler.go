@@ -3812,43 +3812,53 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 		cloudAccountId = &cloudAccountIdQP
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
-		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
-	)
-	if apiErr != nil {
-		render.Error(w, apiErr)
-		return
-	}
-
-	// Add connection status for the 2 signals.
-	// TODO: we want to move remove this feature as it adds very little to no value,
-	// not adding this for other cloud providers.
-	if cloudAccountId != nil && cloudProvider == types.CloudProviderAWS {
-		connStatus, apiErr := aH.getAWSServiceConnectionStatus(
-			r.Context(), orgID, *cloudAccountId, resp,
+	switch cloudProvider {
+	case types.CloudProviderAWS:
+		resp, apiErr := aH.CloudIntegrationsController.GetAWSServiceDetails(
+			r.Context(), claims.OrgID, serviceId, cloudAccountId,
 		)
 		if apiErr != nil {
-			RespondError(w, apiErr, nil)
+			render.Error(w, apiErr)
 			return
 		}
-		resp.ConnectionStatus = connStatus
-	}
 
-	aH.Respond(w, resp)
+		// Add connection status for the 2 signals.
+		// TODO: we want to move remove this feature as it adds very little to no value,
+		// not adding this for other cloud providers.
+		if cloudAccountId != nil && cloudProvider == types.CloudProviderAWS {
+			connStatus, apiErr := aH.getAWSServiceConnectionStatus(
+				r.Context(), orgID, *cloudAccountId, resp,
+			)
+			if apiErr != nil {
+				RespondError(w, apiErr, nil)
+				return
+			}
+			resp.ConnectionStatus = connStatus
+		}
+
+		aH.Respond(w, resp)
+		return
+	case types.CloudProviderAzure:
+		resp, apiErr := aH.CloudIntegrationsController.GetAzureServiceDetails(
+			r.Context(), claims.OrgID, serviceId, cloudAccountId,
+		)
+		if apiErr != nil {
+			render.Error(w, apiErr)
+			return
+		}
+
+		aH.Respond(w, resp)
+		return
+	}
 }
 
 func (aH *APIHandler) getAWSServiceConnectionStatus(
 	ctx context.Context,
 	orgID valuer.UUID,
 	cloudAccountId string,
-	svcDetails *cloudintegrations.ServiceDetails,
+	svcDetails *cloudintegrations.AWSServiceDetails,
 ) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
-	definition, ok := svcDetails.Definition.(*services.AWSServiceDefinition)
-	if !ok {
-		return nil, model.InternalError(fmt.Errorf(
-			"service definition is not of type AWSServiceDefinition: %s", svcDetails.GetId(),
-		))
-	}
+	definition := svcDetails.AWSServiceDefinition
 
 	strategy := definition.Strategy
 
@@ -3859,7 +3869,7 @@ func (aH *APIHandler) getAWSServiceConnectionStatus(
 	}
 
 	result := &cloudintegrations.ServiceConnectionStatus{}
-	errors := []*model.ApiError{}
+	var errors []*model.ApiError
 	var resultLock sync.Mutex
 
 	var wg sync.WaitGroup
