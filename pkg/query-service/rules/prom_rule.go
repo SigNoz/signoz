@@ -143,10 +143,10 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	matrixToProcess := r.matrixToV3Series(res)
 
-	// Check for missing data alerts
+	// Handle missing data alerts
 	hasData := len(matrixToProcess) > 0
-	if missingDataVector, shouldReturn := r.CheckMissingDataAlert(ctx, ts, hasData); shouldReturn {
-		return *missingDataVector, nil
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
 	var resultVector ruletypes.Vector

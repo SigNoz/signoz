@@ -234,10 +234,10 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 		}
 	}
 
-	// Check for missing data alerts
+	// Handle missing data alerts
 	hasData := queryResult != nil && len(queryResult.AnomalyScores) > 0
-	if missingDataVector, shouldReturn := r.CheckMissingDataAlert(ctx, ts, hasData); shouldReturn {
-		return *missingDataVector, nil
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
 	var resultVector ruletypes.Vector
@@ -296,10 +296,10 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 
 	queryResult := transition.ConvertV5TimeSeriesDataToV4Result(qbResult)
 
-	// Check for missing data alerts
+	// Handle missing data alerts
 	hasData := queryResult != nil && len(queryResult.AnomalyScores) > 0
-	if missingDataVector, shouldReturn := r.CheckMissingDataAlert(ctx, ts, hasData); shouldReturn {
-		return *missingDataVector, nil
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
 	var resultVector ruletypes.Vector

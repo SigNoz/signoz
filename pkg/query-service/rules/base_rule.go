@@ -744,22 +744,19 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	return filteredSeries, nil
 }
 
-// CheckMissingDataAlert checks if the rule should send a missing data alert based on
-// the [ruletypes.RuleCondition.AlertOnAbsent] and [ruletypes.RuleCondition.AbsentFor]
-// conditions.
-// It returns a vector with a missing data alert if the conditions are met, nil otherwise.
+// HandleMissingDataAlert handles missing data alert logic by tracking the last timestamp
+// with data points and checking if a missing data alert should be sent based on the
+// [ruletypes.RuleCondition.AlertOnAbsent] and [ruletypes.RuleCondition.AbsentFor] conditions.
 //
-// Returns:
-//   - [*ruletypes.Vector]: pointer to a vector containing the missing data alert
-//   - bool: true if a missing data alert was generated (early return should occur)
-func (r *BaseRule) CheckMissingDataAlert(ctx context.Context, ts time.Time, hasData bool) (*ruletypes.Vector, bool) {
+// Returns a pointer to the missing data alert if conditions are met, nil otherwise.
+func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, hasData bool) *ruletypes.Sample {
 	// Track the last timestamp with data points for missing data alerts
 	if hasData {
 		r.lastTimestampWithDatapoints = ts
 	}
 
 	if !r.ruleCondition.AlertOnAbsent || ts.Before(r.lastTimestampWithDatapoints.Add(time.Duration(r.ruleCondition.AbsentFor)*time.Minute)) {
-		return nil, false
+		return nil
 	}
 
 	r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
@@ -767,11 +764,5 @@ func (r *BaseRule) CheckMissingDataAlert(ctx context.Context, ts time.Time, hasD
 	if !r.lastTimestampWithDatapoints.IsZero() {
 		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
 	}
-	resultVector := ruletypes.Vector{
-		ruletypes.Sample{
-			Metric:    lbls.Labels(),
-			IsMissing: true,
-		},
-	}
-	return &resultVector, true
+	return &ruletypes.Sample{Metric: lbls.Labels(), IsMissing: true}
 }
