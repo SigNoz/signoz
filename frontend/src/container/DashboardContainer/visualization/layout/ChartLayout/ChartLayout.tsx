@@ -27,18 +27,22 @@ export default function ChartLayout({
 	legendConfig,
 	config,
 }: ChartLayoutProps): JSX.Element {
-	const chartDimensions = useMemo(() => {
-		const legendItemsMap = config.getLegendItems();
-		const seriesLabels = Object.values(legendItemsMap)
-			.map((item) => item.label)
-			.filter((label): label is string => label !== undefined);
-		return calculateChartDimensions({
-			containerWidth,
-			containerHeight,
-			legendConfig,
-			seriesLabels,
-		});
-	}, [containerWidth, containerHeight, legendConfig, config]);
+	const chartDimensions = useMemo(
+		() => {
+			const legendItemsMap = config.getLegendItems();
+			const seriesLabels = Object.values(legendItemsMap)
+				.map((item) => item.label)
+				.filter((label): label is string => label !== undefined);
+			return calculateChartDimensions({
+				containerWidth,
+				containerHeight,
+				legendConfig,
+				seriesLabels,
+			});
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[containerWidth, containerHeight, legendConfig],
+	);
 
 	return (
 		<div className="chart-layout-container">
