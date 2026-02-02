@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
@@ -17,11 +17,13 @@ import { RowProps } from 'antd/lib';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -91,12 +93,9 @@ function VariablesSettings({
 	const { t } = useTranslation(['dashboard']);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { notifications } = useNotifications();
-
-	const variables = useMemo(() => selectedDashboard?.data?.variables || {}, [
-		selectedDashboard?.data?.variables,
-	]);
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -147,13 +146,13 @@ function VariablesSettings({
 		const variableNamesMap = {};
 
 		// eslint-disable-next-line no-restricted-syntax
-		for (const [key, value] of Object.entries(variables)) {
+		for (const [key, value] of Object.entries(dashboardVariables)) {
 			const { order, id, name } = value;
 
 			tableRowData.push({
 				key,
 				name: key,
-				...variables[key],
+				...dashboardVariables[key],
 				id,
 			});
 
@@ -174,10 +173,10 @@ function VariablesSettings({
 		setVariablesTableData(tableRowData);
 		setVariablesOrderArr(variableOrderArr);
 		setExistingVariableNamesMap(variableNamesMap);
-	}, [variables]);
+	}, [dashboardVariables]);
 
 	const updateVariables = (
-		updatedVariablesData: Dashboard['data']['variables'],
+		updatedVariablesData: IDashboardVariables,
 		currentRequestedId?: string,
 		widgetIds?: string[],
 		applyToAll?: boolean,
@@ -312,7 +311,7 @@ function VariablesSettings({
 		currentVariableId?: string,
 	): boolean => {
 		// Check if any other dynamic variable already uses this attribute key
-		const isDuplicateAttributeKey = Object.values(variables).some(
+		const isDuplicateAttributeKey = Object.values(dashboardVariables).some(
 			(variable: IDashboardVariable) =>
 				variable.type === 'DYNAMIC' &&
 				variable.dynamicVariablesAttribute === attributeKey &&
@@ -422,7 +421,7 @@ function VariablesSettings({
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
-					existingVariables={variables}
+					existingVariables={dashboardVariables}
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
