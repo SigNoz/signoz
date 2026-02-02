@@ -7,6 +7,7 @@ import {
 	convertV5ResponseToLegacy,
 	getQueryRangeV5,
 	prepareQueryRangePayloadV5,
+	REQUEST_TYPES,
 } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -343,30 +344,39 @@ export async function GetMetricQueryRange(
 		return response;
 	}
 
-	if (response.payload?.data?.result && response.payload?.data?.resultType !== 'bucket') {
-		const v2Range = convertNewDataToOld(response.payload);
+	if (response.payload?.data?.result) {
+		if (response.payload?.data?.resultType === REQUEST_TYPES.HEATMAP) {
+			response.payload.data.newResult = {
+				data: {
+					result: response.payload.data.result,
+					resultType: response.payload.data.resultType,
+				},
+			};
+		} else {
+			const v2Range = convertNewDataToOld(response.payload);
 
-		response.payload = v2Range;
+			response.payload = v2Range;
 
-		response.payload.data.result = response.payload.data.result.map(
-			(queryData) => {
-				const newQueryData = queryData;
-				newQueryData.legend = legendMap[queryData.queryName]; // Adds the legend if it is already defined by the user.
-				// If metric names is an empty object
-				if (isEmpty(queryData.metric)) {
-					// If metrics list is empty && the user haven't defined a legend then add the legend equal to the name of the query.
-					if (!newQueryData.legend) {
-						newQueryData.legend = queryData.queryName;
+			response.payload.data.result = response.payload.data.result.map(
+				(queryData) => {
+					const newQueryData = queryData;
+					newQueryData.legend = legendMap[queryData.queryName]; // Adds the legend if it is already defined by the user.
+					// If metric names is an empty object
+					if (isEmpty(queryData.metric)) {
+						// If metrics list is empty && the user haven't defined a legend then add the legend equal to the name of the query.
+						if (!newQueryData.legend) {
+							newQueryData.legend = queryData.queryName;
+						}
+						// If name of the query and the legend if inserted is same then add the same to the metrics object.
+						if (queryData.queryName === newQueryData.legend) {
+							newQueryData.metric[queryData.queryName] = queryData.queryName;
+						}
 					}
-					// If name of the query and the legend if inserted is same then add the same to the metrics object.
-					if (queryData.queryName === newQueryData.legend) {
-						newQueryData.metric[queryData.queryName] = queryData.queryName;
-					}
-				}
 
-				return newQueryData;
-			},
-		);
+					return newQueryData;
+				},
+			);
+		}
 	}
 
 	if (response.payload?.data?.newResult?.data?.resultType === 'anomaly') {

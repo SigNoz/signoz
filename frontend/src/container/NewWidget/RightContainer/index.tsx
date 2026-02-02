@@ -26,6 +26,7 @@ import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
 	ItemsProps,
 } from 'container/DashboardContainer/ComponentsSlider/menuItems';
+import { HEATMAP_COLOR_GRADIENTS } from 'container/PanelWrapper/constants';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
@@ -73,6 +74,13 @@ import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 
 import './RightContainer.styles.scss';
+
+const heatmapColorPaletteOptions = Object.keys(HEATMAP_COLOR_GRADIENTS).map(
+	(key) => ({
+		label: key.charAt(0).toUpperCase() + key.slice(1),
+		value: key,
+	}),
+);
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -380,15 +388,7 @@ function RightContainer({
 					<section className="heatmap-color-palette-selector">
 						<Typography.Text className="typography">Color Palette</Typography.Text>
 						<Select
-							options={[
-								{ label: 'Default', value: 'default' },
-								{ label: 'Viridis', value: 'viridis' },
-								{ label: 'Plasma', value: 'plasma' },
-								{ label: 'Inferno', value: 'inferno' },
-								{ label: 'Cool', value: 'cool' },
-								{ label: 'Magma', value: 'magma' },
-								{ label: 'Spectral', value: 'spectral' },
-							]}
+							options={heatmapColorPaletteOptions}
 							value={heatmapColorPalette}
 							style={{ width: '100%' }}
 							className="panel-type-select"

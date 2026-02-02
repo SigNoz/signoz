@@ -172,32 +172,50 @@ const getFiltersFromMetric = (metric: any): FilterData[] => {
 	// Keys that should not be used as filters
 	const excludedKeys = new Set(['clickedTimestamp']);
 
+	const potentialRangePairs = new Set<string>();
+	Object.keys(metric).forEach((key) => {
+		if (key.endsWith('_min')) {
+			const fieldName = key.slice(0, -4);
+			const maxKey = `${fieldName}_max`;
+			if (maxKey in metric) {
+				potentialRangePairs.add(fieldName);
+			}
+		}
+	});
+
 	const minMaxPairs: Map<string, { min?: string; max?: string }> = new Map();
 
 	Object.keys(metric).forEach((key) => {
 		if (excludedKeys.has(key)) {
 			return;
 		}
+
 		if (key.endsWith('_min')) {
-			const fieldName = key.slice(0, -4); // Remove '_min' suffix
-			if (!minMaxPairs.has(fieldName)) {
-				minMaxPairs.set(fieldName, {});
+			const fieldName = key.slice(0, -4);
+			if (potentialRangePairs.has(fieldName)) {
+				if (!minMaxPairs.has(fieldName)) {
+					minMaxPairs.set(fieldName, {});
+				}
+				minMaxPairs.get(fieldName)!.min = metric[key];
+				return;
 			}
-			minMaxPairs.get(fieldName)!.min = metric[key];
 		} else if (key.endsWith('_max')) {
-			const fieldName = key.slice(0, -4); // Remove '_max' suffix
-			if (!minMaxPairs.has(fieldName)) {
-				minMaxPairs.set(fieldName, {});
+			const fieldName = key.slice(0, -4);
+			if (potentialRangePairs.has(fieldName)) {
+				if (!minMaxPairs.has(fieldName)) {
+					minMaxPairs.set(fieldName, {});
+				}
+				minMaxPairs.get(fieldName)!.max = metric[key];
+				return;
 			}
-			minMaxPairs.get(fieldName)!.max = metric[key];
-		} else {
-			// Regular filter
-			filters.push({
-				filterKey: key,
-				filterValue: metric[key],
-				operator: OPERATORS['='],
-			});
 		}
+
+		// Regular filter
+		filters.push({
+			filterKey: key,
+			filterValue: metric[key],
+			operator: OPERATORS['='],
+		});
 	});
 
 	// Add range filters for fields that have both min and max

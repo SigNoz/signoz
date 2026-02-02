@@ -310,22 +310,16 @@ const generateHeatmapTooltipContent = ({
 	// This ensures tooltip stays visible even when cursor is in gaps
 	let timeIdx = 0;
 	let minDistance = Infinity;
+	const xBinIncr = xBinQty > 1 ? xs[yBinQty] - xs[0] : timeBucketIntervalSec;
 
 	for (let i = 0; i < xBinQty; i++) {
 		const xStart = xs[i * yBinQty];
-		const distance = Math.abs(cursorX - xStart);
+		const xCenter = xStart + xBinIncr * 0.5;
+		const distance = Math.abs(cursorX - xCenter);
 		if (distance < minDistance) {
 			minDistance = distance;
 			timeIdx = i;
 		}
-	}
-
-	// Clamp to valid range
-	if (timeIdx < 0) {
-		timeIdx = 0;
-	}
-	if (timeIdx >= xBinQty) {
-		timeIdx = xBinQty - 1;
 	}
 
 	const flatIdx = timeIdx * yBinQty + bucketIdx;

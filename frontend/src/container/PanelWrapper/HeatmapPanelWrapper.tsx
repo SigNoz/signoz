@@ -60,36 +60,6 @@ function HeatmapPanelWrapper({
 		queryRange: queryResponse,
 	});
 
-	const clickHandlerWithContextMenu = useCallback(
-		(...args: any[]) => {
-			const [
-				,
-				,
-				,
-				,
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-				,
-				focusedSeries,
-			] = args;
-
-			const data = getUplotClickData({
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-				focusedSeries,
-			});
-
-			if (data && data?.record?.queryName) {
-				onClick(data.coord, { ...data.record, label: data.label });
-			}
-		},
-		[onClick],
-	);
-
 	const { startTime: minTimeScale, endTime: maxTimeScale } = useMemo(
 		() => getTimeRange(queryResponse),
 		[queryResponse],
@@ -122,6 +92,55 @@ function HeatmapPanelWrapper({
 	const heatmapData = useMemo(
 		() => extractAndProcessHeatmapData(queryResponse, widget.query),
 		[queryResponse, widget.query],
+	);
+
+	const clickHandlerWithContextMenu = useCallback(
+		(...args: any[]) => {
+			const [
+				,
+				,
+				,
+				,
+				metric,
+				queryData,
+				absoluteMouseX,
+				absoluteMouseY,
+				,
+				focusedSeries,
+			] = args;
+
+			const data = getUplotClickData({
+				metric,
+				queryData,
+				absoluteMouseX,
+				absoluteMouseY,
+				focusedSeries,
+			});
+
+			// Compute time range for the specific heatmap bucket
+			let timeRange;
+			if (metric?.clickedTimestamp && heatmapData?.timeBucketIntervalSec) {
+				const clickedTimestampSec = Number(metric.clickedTimestamp);
+				const bucketIntervalSec = heatmapData.timeBucketIntervalSec;
+				const minIntervalSec = 60; // Minimum 1 minute range
+
+				// If bucket interval is less than minimum, center the range around the bucket
+				const effectiveIntervalSec = Math.max(bucketIntervalSec, minIntervalSec);
+				const bucketCenterSec = clickedTimestampSec + bucketIntervalSec / 2;
+				const startTimeSec = bucketCenterSec - effectiveIntervalSec / 2;
+				const endTimeSec = bucketCenterSec + effectiveIntervalSec / 2;
+
+				// Convert to milliseconds for the time range
+				const startTime = startTimeSec * 1000;
+				const endTime = endTimeSec * 1000;
+				timeRange = { startTime, endTime };
+			}
+
+			if (data && data?.record?.queryName) {
+				onClick(data.coord, { ...data.record, label: data.label, timeRange });
+			}
+		},
+		[onClick, heatmapData?.timeBucketIntervalSec],
 	);
 
 	const heatmapColors = useMemo(
