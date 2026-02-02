@@ -69,7 +69,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_GLOBAL_INGESTION__URL": "https://ingest.test.signoz.cloud",
                 "SIGNOZ_USER_PASSWORD_RESET_ALLOW__SELF": True,
                 "SIGNOZ_USER_PASSWORD_RESET_MAX__TOKEN__LIFETIME": "6h",
-                "RULES_EVAL_DELAY": "0s"
+                "RULES_EVAL_DELAY": "0s",
             }
             | sqlstore.env
             | clickhouse.env
