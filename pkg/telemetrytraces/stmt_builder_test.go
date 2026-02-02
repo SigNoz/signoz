@@ -359,7 +359,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(response_status_code <> ?, response_status_code, NULL)) AS `responseStatusCode`, quantile(0.90)(multiIf(duration_nano <> ?, duration_nano, NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `responseStatusCode` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(response_status_code <> ?, response_status_code, NULL)) AS `responseStatusCode`, quantile(0.90)(multiIf(duration_nano <> ?, duration_nano, NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`responseStatusCode`) GLOBAL IN (SELECT `responseStatusCode` FROM __limit_cte) GROUP BY ts, `responseStatusCode`",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf(response_status_code <> ?, response_status_code, NULL)) AS `responseStatusCode`, quantile(0.90)(multiIf(duration_nano <> ?, toFloat64(duration_nano), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `responseStatusCode` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(response_status_code <> ?, response_status_code, NULL)) AS `responseStatusCode`, quantile(0.90)(multiIf(duration_nano <> ?, toFloat64(duration_nano), NULL)) AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`responseStatusCode`) GLOBAL IN (SELECT `responseStatusCode` FROM __limit_cte) GROUP BY ts, `responseStatusCode`",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "", 0, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "", 0, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
 			},
 			expectedErr: nil,
@@ -483,7 +483,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY attributes_string['user.id'] AS `user.id` desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY attributes_string['user.id'] AS `user.id` desc LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -682,6 +682,113 @@ func TestStatementBuilderListQuery(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+
+			if c.expectedErr != nil {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+				require.Equal(t, c.expected.Warnings, q.Warnings)
+			}
+		})
+	}
+}
+
+func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
+	cases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		query       qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+		keysMap     map[string][]*telemetrytypes.TelemetryFieldKey
+		expected    qbtypes.Statement
+		expectedErr error
+	}{
+		{
+			name:        "List query with empty select fields",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"timestamp": {
+					{
+						Name:          "timestamp",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				Limit:        10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "List query with empty select fields and order by timestamp",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"timestamp": {
+					{
+						Name:          "timestamp",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				Limit:        10,
+				Order: []qbtypes.OrderBy{{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "timestamp",
+						},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
+				}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, multiIf(toString(timestamp) != '', toString(timestamp), toString(attributes_string['timestamp']) != '', toString(attributes_string['timestamp']), NULL) AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY multiIf(toString(timestamp) != '', toString(timestamp), toString(attributes_string['timestamp']) != '', toString(attributes_string['timestamp']), NULL) AS `timestamp` asc LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			fm := NewFieldMapper()
+			cb := NewConditionBuilder(fm)
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore.KeysMap = c.keysMap
+			if mockMetadataStore.KeysMap == nil {
+				mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+			}
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+
+			resourceFilterStmtBuilder := resourceFilterStmtBuilder()
+
+			statementBuilder := NewTraceQueryStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				mockMetadataStore,
+				fm,
+				cb,
+				resourceFilterStmtBuilder,
+				aggExprRewriter,
+				nil,
+			)
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
 
