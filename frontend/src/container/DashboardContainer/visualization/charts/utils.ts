@@ -15,22 +15,37 @@ const LEGEND_PADDING = 12;
 const LEGEND_LINE_HEIGHT = 34;
 const MAX_LEGEND_WIDTH = 400;
 
-function avgLabelLength(labels: string[]): number {
-	if (labels.length === 0) {
-		return DEFAULT_AVG_LABEL_LENGTH;
-	}
-	return labels.reduce((sum, l) => sum + l.length, 0) / labels.length;
-}
-
 /**
  * Average text width from series labels (for legendsPerSet).
  */
-export function calculateAverageTextWidth(labels: string[]): number {
-	return avgLabelLength(labels) * AVG_CHAR_WIDTH;
+export function calculateAverageLegendWidth(legends: string[]): number {
+	if (legends.length === 0) {
+		return DEFAULT_AVG_LABEL_LENGTH;
+	}
+	const averageLabelLength =
+		legends.reduce((sum, l) => sum + l.length, 0) / legends.length;
+	return averageLabelLength * AVG_CHAR_WIDTH;
 }
 
 /**
- * Chart and legend dimensions from container size and legend position.
+ * Compute how much space to give to the chart area vs. the legend.
+ *
+ * - For a RIGHT legend, we reserve a vertical column on the right and shrink the chart width.
+ * - For a BOTTOM legend, we reserve up to two rows below the chart and shrink the chart height.
+ *
+ * Implementation details (high level):
+ * - Approximates legend item width from label text length, using a fixed average char width.
+ * - RIGHT legend:
+ *   - `legendWidth` is clamped between 150px and min(MAX_LEGEND_WIDTH, 30% of container width).
+ *   - Chart width is `containerWidth - legendWidth`.
+ * - BOTTOM legend:
+ *   - Computes how many items fit per row, then uses at most 2 rows.
+ *   - `legendHeight` is derived from row count, capped by both a fixed pixel max and a % of container height.
+ *   - Chart height is `containerHeight - legendHeight`, never below 0.
+ * - `legendsPerSet` is the number of legend items that fit horizontally, based on the same text-width approximation.
+ *
+ * The returned values are the final chart and legend rectangles (width/height),
+ * plus `legendsPerSet` which hints how many legend items to show per row.
  */
 export function calculateChartDimensions({
 	containerWidth,
@@ -54,57 +69,81 @@ export function calculateChartDimensions({
 		};
 	}
 
-	const avgLen = avgLabelLength(seriesLabels);
-	const labelCount = seriesLabels.length;
+	// Approximate width of a single legend item based on label text.
+	const approxLegendItemWidth = calculateAverageLegendWidth(seriesLabels);
+	const legendItemCount = seriesLabels.length;
 
-	// Right legend: fixed column beside the chart; chart width shrinks
 	if (legendConfig.position === LegendPosition.RIGHT) {
-		const maxWidth = Math.min(400, containerWidth * 0.3);
-		const estimated = 80 + AVG_CHAR_WIDTH * avgLen;
-		const legendWidth = Math.min(Math.max(150, estimated), maxWidth);
+		const maxRightLegendWidth = Math.min(MAX_LEGEND_WIDTH, containerWidth * 0.3);
+		const rightLegendWidth = Math.min(
+			Math.max(150, approxLegendItemWidth),
+			maxRightLegendWidth,
+		);
+
 		return {
-			width: Math.max(0, containerWidth - legendWidth),
+			width: Math.max(0, containerWidth - rightLegendWidth),
 			height: containerHeight,
-			legendWidth,
+			legendWidth: rightLegendWidth,
 			legendHeight: containerHeight,
+			// Single vertical list on the right.
 			legendsPerSet: 1,
 		};
 	}
 
-	// Bottom legend: up to 2 rows below the chart; legend height is shared
-	const rowHeight = LEGEND_LINE_HEIGHT + LEGEND_PADDING;
-	const maxLegendHeight = Math.min(
+	const legendRowHeight = LEGEND_LINE_HEIGHT + LEGEND_PADDING;
+
+	const maxBottomLegendHeight = Math.min(
 		80,
 		Math.max(containerHeight <= 400 ? 15 : 20, containerHeight * 0.15),
 	);
 
-	// How many legend items fit per row (by estimated item width)
-	const itemWidth = Math.min(44 + AVG_CHAR_WIDTH * avgLen, 400);
-	const itemsPerRow = Math.max(
+	const legendItemWidth = Math.min(approxLegendItemWidth, 400);
+	const legendItemsPerRow = Math.max(
 		1,
-		Math.floor((containerWidth - LEGEND_PADDING * 2) / itemWidth),
+		Math.floor((containerWidth - LEGEND_PADDING * 2) / legendItemWidth),
 	);
-	const rows = Math.min(2, Math.ceil(labelCount / itemsPerRow));
 
-	// Ideal height for that many rows; cap by 2 rows and container-based max
-	const idealHeight = rows > 1 ? rows * rowHeight - LEGEND_PADDING : rowHeight;
-	const maxHeight = Math.min(2 * rowHeight, maxLegendHeight);
-	const minHeight = rows <= 1 ? rowHeight : Math.min(2 * rowHeight, idealHeight);
-	const heightFloor =
-		containerHeight < 200 ? Math.min(minHeight, maxLegendHeight) : minHeight;
-	const legendHeight = Math.max(heightFloor, Math.min(idealHeight, maxHeight));
+	const legendRowCount = Math.min(
+		2,
+		Math.ceil(legendItemCount / legendItemsPerRow),
+	);
 
-	// How many items per row for the Legend component (chunking)
+	const idealBottomLegendHeight =
+		legendRowCount > 1
+			? legendRowCount * legendRowHeight - LEGEND_PADDING
+			: legendRowHeight;
+
+	const maxAllowedLegendHeight = Math.min(
+		2 * legendRowHeight,
+		maxBottomLegendHeight,
+	);
+
+	const minLegendHeight =
+		legendRowCount <= 1
+			? legendRowHeight
+			: Math.min(2 * legendRowHeight, idealBottomLegendHeight);
+
+	const legendHeightFloor =
+		containerHeight < 200
+			? Math.min(minLegendHeight, maxBottomLegendHeight)
+			: minLegendHeight;
+
+	const bottomLegendHeight = Math.max(
+		legendHeightFloor,
+		Math.min(idealBottomLegendHeight, maxAllowedLegendHeight),
+	);
+
+	// How many legend items per row in the Legend component.
 	const legendsPerSet = Math.ceil(
 		(containerWidth + LEGEND_GAP) /
-			(Math.min(MAX_LEGEND_WIDTH, avgLen * AVG_CHAR_WIDTH) + LEGEND_GAP),
+			(Math.min(MAX_LEGEND_WIDTH, approxLegendItemWidth) + LEGEND_GAP),
 	);
 
 	return {
 		width: containerWidth,
-		height: Math.max(0, containerHeight - legendHeight),
+		height: Math.max(0, containerHeight - bottomLegendHeight),
 		legendWidth: containerWidth,
-		legendHeight,
+		legendHeight: bottomLegendHeight,
 		legendsPerSet,
 	};
 }
