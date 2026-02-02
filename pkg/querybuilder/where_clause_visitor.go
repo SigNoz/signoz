@@ -280,6 +280,11 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 
 	// Check if this is a NOT expression
 	if ctx.NOT() != nil {
+		// If the inner expression is empty (filtered out), return empty
+		// to avoid generating invalid "not()" in ClickHouse
+		if result == "" {
+			return ""
+		}
 		return fmt.Sprintf("NOT (%s)", result)
 	}
 
