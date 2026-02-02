@@ -13,7 +13,7 @@ export interface HeatmapProcessedData {
 	originalSeries: SeriesItem;
 	numBuckets: number;
 	bucketLabels: string[];
-	timeBucketIntervalMs: number;
+	timeBucketIntervalSec: number;
 	data: AlignedData;
 	timeSeriesData: any;
 	fieldNames: string[];
@@ -125,7 +125,7 @@ export function extractAndProcessHeatmapData(
 
 	// Calculate time interval
 	const timestampsMs = finalValues?.map((v: any) => v.timestamp) || [];
-	const timeBucketIntervalMs =
+	const timeBucketIntervalSec =
 		timestampsMs.length > 1 ? (timestampsMs[1] - timestampsMs[0]) / 1000 : 60;
 
 	// Create timeSeriesData structure for plugins (with labels for drilldown)
@@ -171,7 +171,7 @@ export function extractAndProcessHeatmapData(
 		originalSeries: allSeries[0],
 		numBuckets,
 		bucketLabels,
-		timeBucketIntervalMs,
+		timeBucketIntervalSec,
 		data,
 		timeSeriesData,
 		fieldNames,
@@ -260,7 +260,10 @@ export function heatmapPaths(opts: {
 				const yBinQty = dlen - ys.lastIndexOf(ys[0]);
 				const xBinQty = dlen / yBinQty;
 
-				const xBinIncr = xs[yBinQty] - xs[0];
+				const xBinIncr =
+					yBinQty < xs.length && Number.isFinite(xs[yBinQty])
+						? xs[yBinQty] - xs[0]
+						: 0;
 
 				// Calculate tile sizes
 				const xSize = Math.ceil(
@@ -413,6 +416,8 @@ export function countsToFills(
 		for (let i = 0; i < counts.length; i++) {
 			if (counts[i] <= hideThreshold) {
 				indexedFills[i] = -1;
+			} else if (minCount === maxCount) {
+				indexedFills[i] = Math.floor(paletteSize / 2);
 			} else {
 				// Linear scale
 				const linearScale = (counts[i] - minCount) / (maxCount - minCount);

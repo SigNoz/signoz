@@ -19,7 +19,7 @@ export interface GetUplotHeatmapChartOptionsProps {
 	yAxisRange: { min: number; max: number };
 	bucketLabels: string[];
 	ySplits?: number[];
-	timeBucketIntervalMs: number;
+	timeBucketIntervalSec: number;
 	heatmapColors: string[];
 	yAxisUnit?: string;
 	minTimeScale: number;
@@ -80,7 +80,7 @@ export function getUplotHeatmapChartOptions({
 	yAxisRange,
 	bucketLabels,
 	ySplits,
-	timeBucketIntervalMs,
+	timeBucketIntervalSec,
 	heatmapColors,
 	yAxisUnit,
 	minTimeScale,
@@ -299,7 +299,7 @@ export function getUplotHeatmapChartOptions({
 			bucketLabels,
 			isDarkMode,
 			timezone,
-			timeBucketIntervalMs,
+			timeBucketIntervalSec,
 			formatDate,
 			heatmapColors,
 		}),

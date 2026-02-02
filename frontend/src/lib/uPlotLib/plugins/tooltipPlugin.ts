@@ -262,7 +262,7 @@ const generateHeatmapTooltipContent = ({
 	cursorX,
 	cursorY,
 	bucketLabels,
-	timeBucketIntervalMs,
+	timeBucketIntervalSec,
 	formatDate,
 	decimalPrecision,
 	colorMapping,
@@ -272,7 +272,7 @@ const generateHeatmapTooltipContent = ({
 	cursorX: number;
 	cursorY: number;
 	bucketLabels: string[];
-	timeBucketIntervalMs: number;
+	timeBucketIntervalSec: number;
 	formatDate: (ms: number) => string;
 	decimalPrecision?: PrecisionOption;
 	colorMapping?: Record<string, string>;
@@ -335,7 +335,7 @@ const generateHeatmapTooltipContent = ({
 	const bucketEndSec =
 		timeIdx < xBinQty - 1
 			? xs[(timeIdx + 1) * yBinQty]
-			: bucketStartSec + timeBucketIntervalMs;
+			: bucketStartSec + timeBucketIntervalSec;
 
 	const timestamp = bucketStartSec * 1000;
 	const nextTimestamp = bucketEndSec * 1000;
@@ -390,7 +390,7 @@ type ToolTipPluginProps = {
 	timezone?: string;
 	colorMapping?: Record<string, string>;
 	query?: Query;
-	timeBucketIntervalMs?: number;
+	timeBucketIntervalSec?: number;
 	formatDate?: (ms: number) => string;
 	heatmapColors?: string[];
 };
@@ -410,7 +410,7 @@ const tooltipPlugin = ({
 	colorMapping,
 	query,
 	decimalPrecision,
-	timeBucketIntervalMs,
+	timeBucketIntervalSec,
 	formatDate,
 	heatmapColors,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -522,13 +522,13 @@ ToolTipPluginProps): any => {
 					top: top + bbox.top,
 				};
 
-				if (isHeatmapChart && bucketLabels && timeBucketIntervalMs && formatDate) {
+				if (isHeatmapChart && bucketLabels && timeBucketIntervalSec && formatDate) {
 					const content = generateHeatmapTooltipContent({
 						u,
 						cursorX: u.posToVal(left, 'x'),
 						cursorY: u.posToVal(top, 'y'),
 						bucketLabels,
-						timeBucketIntervalMs,
+						timeBucketIntervalSec,
 						formatDate,
 						decimalPrecision,
 						colorMapping,

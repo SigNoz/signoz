@@ -144,7 +144,7 @@ function HeatmapPanelWrapper({
 			yAxisRange,
 			bucketLabels: heatmapData.bucketLabels,
 			ySplits,
-			timeBucketIntervalMs: heatmapData.timeBucketIntervalMs,
+			timeBucketIntervalSec: heatmapData.timeBucketIntervalSec,
 			heatmapColors,
 			yAxisUnit: widget.yAxisUnit,
 			minTimeScale,
