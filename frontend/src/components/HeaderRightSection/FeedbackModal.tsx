@@ -4,7 +4,7 @@ import { toast } from '@signozhq/sonner';
 import { Button, Input, Radio, RadioChangeEvent, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { handleContactSupport } from 'pages/Integrations/utils';
+import { handleContactSupport } from 'container/Integrations/utils';
 
 function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	const [activeTab, setActiveTab] = useState('feedback');

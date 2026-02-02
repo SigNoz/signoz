@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Home, LifeBuoy } from 'lucide-react';
-import { handleContactSupport } from 'pages/Integrations/utils';
+import { handleContactSupport } from 'container/Integrations/utils';
 
 import './ErrorBoundaryFallback.styles.scss';
 

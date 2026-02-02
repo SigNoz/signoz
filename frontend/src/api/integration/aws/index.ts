@@ -5,7 +5,7 @@ import {
 	ServiceData,
 	UpdateServiceConfigPayload,
 	UpdateServiceConfigResponse,
-} from 'container/CloudIntegrationPage/ServicesSection/types';
+} from 'container/Integrations/CloudIntegration/ServicesSection/types';
 import {
 	AccountConfigPayload,
 	AccountConfigResponse,

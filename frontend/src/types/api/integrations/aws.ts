@@ -1,4 +1,4 @@
-import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
+import { CloudAccount } from 'container/Integrations/CloudIntegration/ServicesSection/types';
 
 export interface ConnectionParams {
 	ingestion_url?: string;

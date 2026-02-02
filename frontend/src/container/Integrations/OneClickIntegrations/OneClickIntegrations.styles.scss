@@ -1,0 +1,74 @@
+.one-click-integrations {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.one-click-integrations-header {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+
+		.one-click-integrations-header-title {
+			color: var(--bg-vanilla-400);
+			font-size: 12px;
+			font-weight: 500;
+			line-height: 20px;
+			letter-spacing: 0.48px;
+			text-transform: uppercase;
+		}
+	}
+
+	.one-click-integrations-list {
+		display: flex;
+		flex-direction: row;
+		gap: 16px;
+
+		.one-click-integrations-list-item {
+			display: flex;
+			flex-direction: column;
+			padding: 8px 12px 12px 12px;
+			gap: 10px;
+			width: fit-content;
+
+			border-radius: 3px;
+			border: 1px solid var(--Slate-500, #161922);
+			background: var(--Ink-400, #121317);
+			cursor: pointer;
+
+			.one-click-integrations-list-item-title {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: center;
+
+				.one-click-integrations-list-item-title-image-container {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					gap: 10px;
+
+					.one-click-integrations-list-item-title-text {
+						color: var(--Vanilla-100, #fff);
+						font-family: Inter;
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 500;
+						line-height: 32px; /* 200% */
+						letter-spacing: -0.08px;
+					}
+				}
+			}
+		}
+	}
+}
+
+.lightMode {
+	.one-click-integrations {
+		.one-click-integrations-header {
+			.one-click-integrations-header-title {
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+}

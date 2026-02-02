@@ -19,7 +19,7 @@ import {
 	ErrorDetails,
 	Home,
 	InfrastructureMonitoring,
-	InstalledIntegrations,
+	Integrations,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -384,7 +384,7 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.INTEGRATIONS,
 		exact: true,
-		component: InstalledIntegrations,
+		component: Integrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
 	},

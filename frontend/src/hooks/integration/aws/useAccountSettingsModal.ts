@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
-import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
+import { CloudAccount } from 'container/Integrations/CloudIntegration/ServicesSection/types';
 import { useUpdateAccountConfig } from 'hooks/integration/aws/useUpdateAccountConfig';
 import { isEqual } from 'lodash-es';
 import { AccountConfigPayload } from 'types/api/integrations/aws';

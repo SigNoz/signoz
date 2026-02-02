@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LifeBuoy, RefreshCw } from 'lucide-react';
-import { handleContactSupport } from 'pages/Integrations/utils';
+import { handleContactSupport } from 'container/Integrations/utils';
 
 import './NoData.styles.scss';
 
