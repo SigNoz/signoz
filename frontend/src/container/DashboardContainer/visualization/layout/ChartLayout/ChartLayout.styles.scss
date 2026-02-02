@@ -18,22 +18,5 @@
 		padding-left: 12px;
 		padding-bottom: 12px;
 		overflow: auto;
-
-		&::-webkit-scrollbar {
-			width: 0.25rem !important;
-		}
-
-		&::-webkit-scrollbar-track {
-			background: transparent;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background: var(--bg-slate-400);
-			border-radius: 0.5rem;
-		}
-
-		&::-webkit-scrollbar-thumb:hover {
-			background: var(--bg-slate-300);
-		}
 	}
 }
