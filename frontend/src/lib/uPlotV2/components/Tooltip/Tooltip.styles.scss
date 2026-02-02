@@ -1,0 +1,59 @@
+.uplot-tooltip-container {
+	font-family: 'Inter';
+	font-size: 12px;
+	background: var(--bg-ink-300);
+	-webkit-font-smoothing: antialiased;
+	color: var(--bg-vanilla-100);
+	border-radius: 6px;
+	padding: 1rem 1rem 0.5rem 1rem;
+	border: 1px solid var(--bg-ink-100);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&.lightMode {
+		background: var(--bg-vanilla-100);
+		color: var(--bg-ink-500);
+		border: 1px solid var(--bg-vanilla-300);
+	}
+
+	.uplot-tooltip-header {
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	.uplot-tooltip-list-container {
+		height: 100%;
+		.uplot-tooltip-list {
+			&::-webkit-scrollbar {
+				width: 0.3rem;
+			}
+			&::-webkit-scrollbar-corner {
+				background: transparent;
+			}
+			&::-webkit-scrollbar-thumb {
+				background: rgb(136, 136, 136);
+			}
+		}
+	}
+
+	.uplot-tooltip-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 4px;
+
+		.uplot-tooltip-item-marker {
+			border-radius: 50%;
+			border-width: 2px;
+			width: 12px;
+			height: 12px;
+			flex-shrink: 0;
+		}
+
+		.uplot-tooltip-item-content {
+			white-space: wrap;
+			word-break: break-all;
+		}
+	}
+}
