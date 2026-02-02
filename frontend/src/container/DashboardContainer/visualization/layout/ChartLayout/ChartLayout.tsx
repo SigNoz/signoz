@@ -45,21 +45,21 @@ export default function ChartLayout({
 	);
 
 	return (
-		<div className="chart-layout-container">
+		<div className="chart-layout__container">
 			<div
 				className={cx('chart-layout', {
 					'chart-layout--legend-right':
 						legendConfig.position === LegendPosition.RIGHT,
 				})}
 			>
-				<div className="chart-layout-content">
+				<div className="chart-layout__content">
 					{children({
 						chartWidth: chartDimensions.width,
 						chartHeight: chartDimensions.height,
 					})}
 				</div>
 				<div
-					className="chart-layout-legend-wrapper"
+					className="chart-layout__legend-wrapper"
 					style={{
 						height: chartDimensions.legendHeight,
 						width: chartDimensions.legendWidth,
