@@ -1,4 +1,5 @@
 import datetime
+import os
 from typing import Any
 
 import isodate
@@ -25,3 +26,8 @@ def parse_duration(duration: Any) -> datetime.timedelta:
     if isinstance(duration, datetime.timedelta):
         return duration
     return datetime.timedelta(seconds=duration)
+
+
+def get_testdata_file_path(file: str) -> str:
+    testdata_dir = os.path.join(os.path.dirname(__file__), "..", "testdata")
+    return os.path.join(testdata_dir, file)
