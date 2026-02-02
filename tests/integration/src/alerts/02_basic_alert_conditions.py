@@ -7,6 +7,7 @@ import pytest
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
+from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
 
 # test cases match type and compare operators
@@ -586,7 +587,6 @@ def test_basic_alert_rule_conditions(
     make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
     create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
     # Alert rule related fixtures
-    get_testdata_file_path: Callable[[str], str],
     create_alert_rule: Callable[[dict], str],
     # Alert data insertion related fixtures
     insert_alert_data: Callable[[List[types.AlertData], datetime], None],

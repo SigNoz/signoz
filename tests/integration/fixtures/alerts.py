@@ -10,6 +10,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
@@ -66,7 +67,6 @@ def insert_alert_data(
     insert_metrics: Callable[[List[Metrics]], None],
     insert_traces: Callable[[List[Traces]], None],
     insert_logs: Callable[[List[Logs]], None],
-    get_testdata_file_path: Callable[[str], str],
 ) -> Callable[[List[types.AlertData]], None]:
 
     def _insert_alert_data(
