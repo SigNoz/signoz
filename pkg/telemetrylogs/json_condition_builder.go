@@ -73,10 +73,10 @@ func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONA
 
 			// switch operator for array membership checks
 			switch operator {
-			case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
-				operator = qbtypes.FilterOperatorEqual
-			case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
-				operator = qbtypes.FilterOperatorNotEqual
+			case qbtypes.FilterOperatorContains:
+				operator = qbtypes.FilterOperatorIn
+			case qbtypes.FilterOperatorNotContains:
+				operator = qbtypes.FilterOperatorNotIn
 			}
 		}
 
@@ -191,13 +191,14 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 		arrayExpr = typedArrayExpr()
 	}
 
-	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, "x", operator)
+	key := "x"
+	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, key, operator)
 	op, err := c.applyOperator(sb, fieldExpr, operator, value)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("arrayExists(%s -> %s, %s)", fieldExpr, op, arrayExpr), nil
+	return fmt.Sprintf("arrayExists(%s -> %s, %s)", key, op, arrayExpr), nil
 }
 
 // recurseArrayHops recursively builds array traversal conditions
