@@ -8,7 +8,6 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
@@ -49,6 +48,13 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 		if len(v) > 0 {
 			valueType, _ = InferDataType(v[0], operator, key)
 		}
+		// Between/In/NotIn compare a scalar field to multiple values - use scalar type for the field expression.
+		// For array paths (key has [*] or []), In means array membership so keep array type.
+		if operator == qbtypes.FilterOperatorBetween || operator == qbtypes.FilterOperatorIn || operator == qbtypes.FilterOperatorNotIn {
+			if !strings.HasSuffix(key.Name, telemetrytypes.ArrayAnyIndex) && !strings.HasSuffix(key.Name, telemetrytypes.ArraySep) {
+				return valueType, v
+			}
+		}
 		// convert the scaler type to the array type
 		return telemetrytypes.ScalerFieldTypeToArrayFieldType[valueType], v
 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
@@ -59,11 +65,6 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 		valueType, value = parseStrValue(v, operator)
 	case bool:
 		valueType = telemetrytypes.FieldDataTypeBool
-	}
-
-	// check if it is array
-	if strings.HasSuffix(key.Name, "[*]") || strings.HasSuffix(key.Name, "[]") {
-		valueType = telemetrytypes.FieldDataType{String: valuer.NewString(fmt.Sprintf("[]%s", valueType.StringValue()))}
 	}
 
 	return valueType, value
