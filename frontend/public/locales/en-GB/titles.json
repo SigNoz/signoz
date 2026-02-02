@@ -45,6 +45,10 @@
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
 	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
+	"ALERT_TYPE_SELECTION": "SigNoz | Select Alert Type",
 	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring",
-	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring"
+	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring",
+	"METER_EXPLORER": "SigNoz | Meter Explorer",
+	"METER_EXPLORER_VIEWS": "SigNoz | Meter Explorer Views",
+	"METER": "SigNoz | Meter"
 }

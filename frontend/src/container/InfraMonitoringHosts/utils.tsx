@@ -1,5 +1,4 @@
-import './InfraMonitoring.styles.scss';
-
+import { Dispatch, SetStateAction } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag, Tooltip } from 'antd';
@@ -15,13 +14,14 @@ import {
 } from 'components/QuickFilters/types';
 import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Dispatch, SetStateAction } from 'react';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import HostsList from './HostsList';
+
+import './InfraMonitoring.styles.scss';
 
 export interface HostRowData {
 	hostName: string;
@@ -146,8 +146,12 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 					size="small"
 					strokeColor={((): string => {
 						const cpuPercent = Number((host.cpu * 100).toFixed(1));
-						if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-						if (cpuPercent >= 60) return Color.BG_AMBER_500;
+						if (cpuPercent >= 90) {
+							return Color.BG_SAKURA_500;
+						}
+						if (cpuPercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
 						return Color.BG_FOREST_500;
 					})()}
 					className="progress-bar"
@@ -162,8 +166,12 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 					size="small"
 					strokeColor={((): string => {
 						const memoryPercent = Number((host.memory * 100).toFixed(1));
-						if (memoryPercent >= 90) return Color.BG_CHERRY_500;
-						if (memoryPercent >= 60) return Color.BG_AMBER_500;
+						if (memoryPercent >= 90) {
+							return Color.BG_CHERRY_500;
+						}
+						if (memoryPercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
 						return Color.BG_FOREST_500;
 					})()}
 					className="progress-bar"
@@ -182,8 +190,6 @@ export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'host_name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		aggregateOperator: 'noop',
 		aggregateAttribute: 'system_cpu_load_average_15m',
@@ -197,8 +203,6 @@ export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			key: 'os_type',
 			dataType: DataTypes.String,
 			type: 'resource',
-			isColumn: false,
-			isJSON: false,
 		},
 		aggregateOperator: 'noop',
 		aggregateAttribute: 'system_cpu_load_average_15m',
@@ -230,8 +234,6 @@ export function GetHostsQuickFiltersConfig(
 				key: hostNameKey,
 				dataType: DataTypes.String,
 				type: 'resource',
-				isColumn: false,
-				isJSON: false,
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: metricName,
@@ -245,8 +247,6 @@ export function GetHostsQuickFiltersConfig(
 				key: osTypeKey,
 				dataType: DataTypes.String,
 				type: 'resource',
-				isColumn: false,
-				isJSON: false,
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: metricName,
@@ -260,8 +260,6 @@ export function GetHostsQuickFiltersConfig(
 				key: environmentKey,
 				dataType: DataTypes.String,
 				type: 'resource',
-				isColumn: false,
-				isJSON: false,
 			},
 			defaultOpen: true,
 		},

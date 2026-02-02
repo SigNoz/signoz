@@ -1,6 +1,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './ExplorerOptions.styles.scss';
-
+import {
+	CSSProperties,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useHistory } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -56,26 +65,16 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
-import {
-	CSSProperties,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
+import { panelTypeToExplorerView } from 'utils/explorerUtils';
 
 import { PreservedViewsTypes } from './constants';
 import ExplorerOptionsHideArea from './ExplorerOptionsHideArea';
-import { PreservedViewsInLocalStorage } from './types';
+import { ChangeViewFunctionType, PreservedViewsInLocalStorage } from './types';
 import {
 	DATASOURCE_VS_ROUTES,
 	generateRGBAFromHex,
@@ -83,6 +82,8 @@ import {
 	saveNewViewHandler,
 	setExplorerToolBarVisibility,
 } from './utils';
+
+import './ExplorerOptions.styles.scss';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -93,10 +94,12 @@ function ExplorerOptions({
 	onExport,
 	query,
 	sourcepage,
+	signalSource,
 	isExplorerOptionHidden = false,
 	setIsExplorerOptionHidden,
 	isOneChartPerQuery = false,
 	splitedQueries = [],
+	handleChangeSelectedView,
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -110,6 +113,7 @@ function ExplorerOptions({
 
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
 	const isMetricsExplorer = sourcepage === DataSource.METRICS;
+	const isMeterExplorer = signalSource === 'meter';
 
 	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = LOCALSTORAGE.LAST_USED_SAVED_VIEWS;
 
@@ -120,8 +124,11 @@ function ExplorerOptions({
 		if (isMetricsExplorer) {
 			return PreservedViewsTypes.METRICS;
 		}
+		if (isMeterExplorer) {
+			return PreservedViewsTypes.METER;
+		}
 		return PreservedViewsTypes.TRACES;
-	}, [isLogsExplorer, isMetricsExplorer]);
+	}, [isLogsExplorer, isMetricsExplorer, isMeterExplorer]);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -148,6 +155,10 @@ function ExplorerOptions({
 			logEvent(MetricsExplorerEvents.SaveViewClicked, {
 				[MetricsExplorerEventKeys.Tab]: 'explorer',
 				[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,
+				panelType,
+			});
+		} else if (isMeterExplorer) {
+			logEvent('Meter Explorer: Save view clicked', {
 				panelType,
 			});
 		}
@@ -243,7 +254,7 @@ function ExplorerOptions({
 		error,
 		isRefetching,
 		refetch: refetchAllView,
-	} = useGetAllViews(sourcepage);
+	} = useGetAllViews(isMeterExplorer ? 'meter' : sourcepage);
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
@@ -316,7 +327,7 @@ function ExplorerOptions({
 		compositeQuery,
 		viewKey,
 		extraData: updatedExtraData,
-		sourcePage: sourcepage,
+		sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 		viewName,
 	});
 
@@ -332,7 +343,7 @@ function ExplorerOptions({
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
 				extraData: updatedExtraData,
-				sourcePage: sourcepage,
+				sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 				viewName,
 			},
 			{
@@ -382,15 +393,21 @@ function ExplorerOptions({
 			backwardCompatibleOptions = omit(options, 'version');
 		}
 
+		// Use the correct default columns based on the current data source
+		const defaultColumns =
+			sourcepage === DataSource.TRACES
+				? defaultTraceSelectedColumns
+				: defaultLogsSelectedColumns;
+
 		if (extraData.selectColumns?.length) {
 			handleOptionsChange({
 				...backwardCompatibleOptions,
 				selectColumns: extraData.selectColumns,
 			});
-		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
+		} else if (!isEqual(defaultColumns, options.selectColumns)) {
 			handleOptionsChange({
 				...backwardCompatibleOptions,
-				selectColumns: defaultTraceSelectedColumns,
+				selectColumns: defaultColumns,
 			});
 		}
 	};
@@ -400,16 +417,27 @@ function ExplorerOptions({
 				key,
 				viewsData?.data?.data,
 			);
-			if (!currentViewDetails) return;
+			if (!currentViewDetails) {
+				return;
+			}
 			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
-			handleExplorerTabChange(currentPanelType, {
-				query,
-				name,
-				id,
-			});
+			if (handleChangeSelectedView) {
+				handleChangeSelectedView(panelTypeToExplorerView[currentPanelType], {
+					query,
+					name,
+					id,
+				});
+			} else {
+				// to remove this after traces cleanup
+				handleExplorerTabChange(currentPanelType, {
+					query,
+					name,
+					id,
+				});
+			}
 		},
-		[viewsData, handleExplorerTabChange],
+		[viewsData, handleExplorerTabChange, handleChangeSelectedView],
 	);
 
 	const updatePreservedViewInLocalStorage = (option: {
@@ -459,6 +487,11 @@ function ExplorerOptions({
 				panelType,
 				viewName: option?.value,
 			});
+		} else if (isMeterExplorer) {
+			logEvent('Meter Explorer: Select view', {
+				panelType,
+				viewName: option?.value,
+			});
 		}
 
 		updatePreservedViewInLocalStorage(option);
@@ -505,6 +538,15 @@ function ExplorerOptions({
 					: defaultLogsSelectedColumns,
 		});
 
+		if (signalSource === 'meter') {
+			history.replace(ROUTES.METER_EXPLORER);
+			return;
+		}
+
+		if (handleChangeSelectedView) {
+			handleChangeSelectedView(panelTypeToExplorerView[PANEL_TYPES.LIST]);
+		}
+
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
@@ -549,7 +591,7 @@ function ExplorerOptions({
 			redirectWithQueryBuilderData,
 			refetchAllView,
 			saveViewAsync,
-			sourcePage: sourcepage,
+			sourcePage: isMeterExplorer ? 'meter' : sourcepage,
 			viewName: newViewName,
 			setNewViewName,
 		});
@@ -668,7 +710,7 @@ function ExplorerOptions({
 		return `Query ${query.builder.queryData[0].queryName}`;
 	};
 
-	const alertButton = useMemo(() => {
+	const CreateAlertButton = useMemo(() => {
 		if (isOneChartPerQuery) {
 			const selectLabel = (
 				<Button
@@ -721,7 +763,7 @@ function ExplorerOptions({
 		splitedQueries,
 	]);
 
-	const dashboardButton = useMemo(() => {
+	const AddToDashboardButton = useMemo(() => {
 		if (isOneChartPerQuery) {
 			const selectLabel = (
 				<Button
@@ -829,7 +871,7 @@ function ExplorerOptions({
 					style={{
 						background: extraData
 							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
-							: 'transparent',
+							: 'initial',
 					}}
 				>
 					<div className="view-options">
@@ -884,10 +926,13 @@ function ExplorerOptions({
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
-					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						{alertButton}
-						{dashboardButton}
-					</div>
+					{signalSource !== 'meter' && (
+						<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
+							{CreateAlertButton}
+							{AddToDashboardButton}
+						</div>
+					)}
+
 					<div className="actions">
 						{/* Hide the info icon for metrics explorer until we get the docs link */}
 						{!isMetricsExplorer && (
@@ -993,10 +1038,12 @@ export interface ExplorerOptionsProps {
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
+	signalSource?: string;
 	isExplorerOptionHidden?: boolean;
 	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 	isOneChartPerQuery?: boolean;
 	splitedQueries?: Query[];
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 ExplorerOptions.defaultProps = {
@@ -1005,6 +1052,8 @@ ExplorerOptions.defaultProps = {
 	setIsExplorerOptionHidden: undefined,
 	isOneChartPerQuery: false,
 	splitedQueries: [],
+	signalSource: '',
+	handleChangeSelectedView: undefined,
 };
 
 export default ExplorerOptions;

@@ -418,6 +418,11 @@
 								font-size: 12px;
 								font-weight: 600;
 							}
+
+							.set-alert-btn {
+								cursor: pointer;
+								margin-left: 24px;
+							}
 						}
 					}
 
@@ -991,6 +996,7 @@
 		gap: 8px;
 		justify-content: space-between;
 		align-items: center;
+		width: 100%;
 
 		.ingestion-key-url-label {
 			font-size: 13px;
@@ -1052,6 +1058,26 @@
 	}
 }
 
+.ingestion-url-error-tooltip {
+	.ingestion-url-error-content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.ingestion-url-error-code {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--bg-amber-500);
+	}
+
+	.ingestion-url-error-message {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--bg-vanilla-300);
+	}
+}
+
 .lightMode {
 	.ingestion-setup-details-links {
 		background: rgba(113, 144, 249, 0.1);
@@ -1059,6 +1085,18 @@
 
 		.learn-more {
 			color: var(--bg-robin-500);
+		}
+	}
+
+	.ingestion-url-error-tooltip {
+		.ingestion-url-error-content {
+			.ingestion-url-error-code {
+				color: var(--bg-amber-500);
+			}
+		}
+
+		.ingestion-url-error-message {
+			color: var(--bg-ink-500);
 		}
 	}
 }

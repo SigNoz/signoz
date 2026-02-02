@@ -1,5 +1,7 @@
-import './styles.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import { Button, Divider, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
@@ -13,14 +15,12 @@ import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
+
+import './styles.scss';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
@@ -138,9 +138,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	return (
-		<>
-			<Typography>{errorDetail.exceptionType}</Typography>
-			<Typography>{errorDetail.exceptionMessage}</Typography>
+		<div className="error-details-container">
+			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
+			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
 			<Divider />
 
 			<EventContainer>
@@ -200,7 +200,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
 			</EditorContainer>
-		</>
+		</div>
 	);
 }
 

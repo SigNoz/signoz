@@ -1,5 +1,7 @@
+import { Layout } from 'react-grid-layout';
 import { DefaultOptionType } from 'antd/es/select';
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
@@ -7,14 +9,13 @@ import {
 import {
 	listViewInitialLogQuery,
 	PANEL_TYPES_INITIAL_QUERY,
-} from 'container/NewDashboard/ComponentsSlider/constants';
+} from 'container/DashboardContainer/ComponentsSlider/constants';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
 import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
-import { Layout } from 'react-grid-layout';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -393,6 +394,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
+					'queryName',
 					'filters',
 					'filter',
 					'limit',
@@ -404,12 +406,13 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 		[DataSource.METRICS]: {
 			builder: {
-				queryData: ['filters', 'filter', 'aggregations'],
+				queryData: ['queryName', 'filters', 'filter', 'aggregations'],
 			},
 		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: [
+					'queryName',
 					'filters',
 					'filter',
 					'limit',
@@ -526,6 +529,10 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
+			queryTraceOperator:
+				newPanelType === PANEL_TYPES.LIST
+					? []
+					: supersetQuery.builder.queryTraceOperator,
 		},
 	};
 }
@@ -537,7 +544,6 @@ export const getDefaultWidgetData = (
 	id,
 	title: '',
 	description: '',
-	isStacked: false,
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
@@ -548,6 +554,8 @@ export const getDefaultWidgetData = (
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,
+	stackedBarChart: name === PANEL_TYPES.BAR,
+	decimalPrecision: PrecisionOptionsEnum.TWO, // default decimal precision
 	selectedLogFields: defaultLogsSelectedColumns.map((field) => ({
 		...field,
 		type: field.fieldContext ?? '',

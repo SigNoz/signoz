@@ -1,11 +1,11 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './LogsError.styles.scss';
-
 import { Typography } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
+
+import './LogsError.styles.scss';
 
 export default function LogsError(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
@@ -17,6 +17,7 @@ export default function LogsError(): JSX.Element {
 			window.open('https://signoz.io/slack', '_blank');
 		}
 	};
+
 	return (
 		<div className="logs-error-container">
 			<div className="logs-error-content">

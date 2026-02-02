@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
@@ -21,10 +25,6 @@ import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -274,8 +274,6 @@ function Application(): JSX.Element {
 					key: 'severity_text',
 					dataType: DataTypes.String,
 					type: '',
-					isColumn: true,
-					isJSON: false,
 					id: 'severity_text--string----true',
 				},
 				op: 'in',
@@ -292,8 +290,6 @@ function Application(): JSX.Element {
 					key: 'hasError',
 					dataType: DataTypes.bool,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'hasError--bool--tag--true',
 				},
 				op: 'in',

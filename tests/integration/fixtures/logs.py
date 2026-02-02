@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, Optional
 
 import numpy as np
 import pytest
@@ -9,6 +9,7 @@ from ksuid import KsuidMs
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
+from fixtures.utils import parse_timestamp
 
 
 class LogsResource(ABC):
@@ -29,7 +30,13 @@ class LogsResource(ABC):
         self.seen_at_ts_bucket_start = seen_at_ts_bucket_start
 
     def np_arr(self) -> np.array:
-        return np.array([self.labels, self.fingerprint, self.seen_at_ts_bucket_start])
+        return np.array(
+            [
+                self.labels,
+                self.fingerprint,
+                self.seen_at_ts_bucket_start,
+            ]
+        )
 
 
 class LogsResourceOrAttributeKeys(ABC):
@@ -58,7 +65,7 @@ class LogsTagAttributes(ABC):
         tag_key: str,
         tag_type: str,
         tag_data_type: str,
-        string_value: str,
+        string_value: Optional[str],
         number_value: np.float64,
     ) -> None:
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
@@ -108,7 +115,7 @@ class Logs(ABC):
 
     def __init__(
         self,
-        timestamp: datetime.datetime = datetime.datetime.now(),
+        timestamp: Optional[datetime.datetime] = None,
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
@@ -120,6 +127,8 @@ class Logs(ABC):
         scope_version: str = "",
         scope_attributes: dict[str, str] = {},
     ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
         self.tag_attributes = []
         self.attribute_keys = []
         self.resource_keys = []
@@ -317,8 +326,62 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
+                self.resources_string,
             ]
         )
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+    ) -> "Logs":
+        """Create a Logs instance from a dict."""
+        # parse timestamp from iso format
+        timestamp = parse_timestamp(data["timestamp"])
+        return cls(
+            timestamp=timestamp,
+            resources=data.get("resources", {}),
+            attributes=data.get("attributes", {}),
+            body=data["body"],
+            severity_text=data.get("severity_text", "INFO"),
+        )
+
+    @classmethod
+    def load_from_file(
+        cls,
+        file_path: str,
+        base_time: Optional[datetime.datetime] = None,
+    ) -> List["Logs"]:
+        """Load logs from a JSONL file."""
+
+        data_list = []
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data_list.append(json.loads(line))
+
+        # If base_time provided, calculate time offset
+        time_offset = datetime.timedelta(0)
+        if base_time is not None:
+            # Find earliest timestamp
+            earliest = None
+            for data in data_list:
+                ts = parse_timestamp(data["timestamp"])
+                if earliest is None or ts < earliest:
+                    earliest = ts
+            if earliest is not None:
+                time_offset = base_time - earliest
+
+        logs = []
+        for data in data_list:
+            original_ts = parse_timestamp(data["timestamp"])
+            adjusted_ts = original_ts + time_offset
+            data["timestamp"] = adjusted_ts.isoformat()
+            logs.append(cls.from_dict(data))
+
+        return logs
 
 
 @pytest.fixture(name="insert_logs", scope="function")
@@ -344,6 +407,11 @@ def insert_logs(
                 database="signoz_logs",
                 table="distributed_logs_v2_resource",
                 data=[resource.np_arr() for resource in resources],
+                column_names=[
+                    "labels",
+                    "fingerprint",
+                    "seen_at_ts_bucket_start",
+                ],
             )
 
         tag_attributes: List[LogsTagAttributes] = []
@@ -383,6 +451,27 @@ def insert_logs(
             database="signoz_logs",
             table="distributed_logs_v2",
             data=[log.np_arr() for log in logs],
+            column_names=[
+                "ts_bucket_start",
+                "resource_fingerprint",
+                "timestamp",
+                "observed_timestamp",
+                "id",
+                "trace_id",
+                "span_id",
+                "trace_flags",
+                "severity_text",
+                "severity_number",
+                "body",
+                "attributes_string",
+                "attributes_number",
+                "attributes_bool",
+                "resources_string",
+                "scope_name",
+                "scope_version",
+                "scope_string",
+                "resource",
+            ],
         )
 
     yield _insert_logs
@@ -402,3 +491,134 @@ def insert_logs(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_logs.logs_resource_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="ttl_legacy_logs_v2_table_setup", scope="function")
+def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
+    """
+    Fixture to setup and teardown legacy TTL test environment.
+    It renames existing logs tables to backup names and creates new empty tables for testing.
+    After the test, it restores the original tables.
+    """
+
+    # Setup code
+    result = signoz.telemetrystore.conn.query(
+        f"RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
+    ).result_rows
+    assert result is not None
+    # Add cleanup to restore original table
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            f"RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
+        )
+    )
+
+    # Create new test tables
+    result = signoz.telemetrystore.conn.query(
+        f"""CREATE TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                                                (
+                                                    `id` String,
+                                                    `timestamp` UInt64 CODEC(DoubleDelta, LZ4)
+
+                                                )
+                                                ENGINE = MergeTree()
+                                                ORDER BY id;"""
+    ).result_rows
+
+    assert result is not None
+    # Add cleanup to drop test table
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            f"DROP TABLE IF EXISTS signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
+        )
+    )
+
+    yield  # Test runs here
+
+
+@pytest.fixture(name="ttl_legacy_logs_v2_resource_table_setup", scope="function")
+def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
+    """
+    Fixture to setup and teardown legacy TTL test environment.
+    It renames existing logs tables to backup names and creates new empty tables for testing.
+    After the test, it restores the original tables.
+    """
+
+    # Setup code
+    result = signoz.telemetrystore.conn.query(
+        f"RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
+    ).result_rows
+    assert result is not None
+    # Add cleanup to restore original table
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            f"RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
+        )
+    )
+
+    # Create new test tables
+    result = signoz.telemetrystore.conn.query(
+        f"""CREATE TABLE signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                                                (
+                                                    `id` String,
+                                                    `seen_at_ts_bucket_start` Int64 CODEC(Delta(8), ZSTD(1))
+                                                )
+                                                ENGINE = MergeTree()
+                                                ORDER BY id;"""
+    ).result_rows
+
+    assert result is not None
+    # Add cleanup to drop test table
+    request.addfinalizer(
+        lambda: signoz.telemetrystore.conn.query(
+            f"DROP TABLE IF EXISTS signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}';"
+        )
+    )
+
+    yield  # Test runs here
+
+
+@pytest.fixture(name="remove_logs_ttl_settings", scope="function")
+def remove_logs_ttl_settings(signoz: types.SigNoz):
+    """
+    Remove TTL settings from the specified logs table.
+    This function alters the table to drop any existing TTL configurations
+    and resets the _retention_days default value to 0.
+    """
+    tables = [
+        "distributed_logs_v2",
+        "distributed_logs_v2_resource",
+        "logs_v2",
+        "logs_v2_resource",
+        "logs_attribute_keys",
+        "logs_resource_keys",
+    ]
+    for table in tables:
+
+        try:
+            # Reset _retention_days and _retention_days_cold default values to 0 for tables that have these columns
+            if table in [
+                "logs_v2",
+                "logs_v2_resource",
+                "distributed_logs_v2",
+                "distributed_logs_v2_resource",
+            ]:
+                reset_retention_query = f"""
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                MODIFY COLUMN _retention_days UInt16 DEFAULT 0
+                """
+                signoz.telemetrystore.conn.query(reset_retention_query)
+
+                reset_retention_cold_query = f"""
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                MODIFY COLUMN _retention_days_cold UInt16 DEFAULT 0
+                """
+                signoz.telemetrystore.conn.query(reset_retention_cold_query)
+            else:
+                alter_query = f"""
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                REMOVE TTL
+                """
+                signoz.telemetrystore.conn.query(alter_query)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"Error removing TTL from table {table}: {e}")

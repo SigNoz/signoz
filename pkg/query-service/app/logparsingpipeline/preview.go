@@ -9,22 +9,16 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
 	"github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-func SimulatePipelinesProcessing(
-	ctx context.Context,
-	pipelines []pipelinetypes.GettablePipeline,
-	logs []model.SignozLog,
-) (
-	output []model.SignozLog, collectorWarnAndErrorLogs []string, apiErr *model.ApiError,
-) {
-
+func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.GettablePipeline, logs []model.SignozLog) (
+	[]model.SignozLog, []string, error) {
 	if len(pipelines) < 1 {
 		return logs, nil, nil
 	}
@@ -42,13 +36,9 @@ func SimulatePipelinesProcessing(
 	}
 	simulatorInputPLogs := SignozLogsToPLogs(logs)
 
-	processorFactories, err := otelcol.MakeFactoryMap(
-		signozlogspipelineprocessor.NewFactory(),
-	)
+	processorFactories, err := otelcol.MakeFactoryMap(signozlogspipelineprocessor.NewFactory())
 	if err != nil {
-		return nil, nil, model.InternalError(errors.Wrap(
-			err, "could not construct processor factory map",
-		))
+		return nil, nil, errors.WrapInternalf(err, CodeProcessorFactoryMapFailed, "could not construct processor factory map")
 	}
 
 	// Pipelines translate to logtransformprocessors in otel collector config.
@@ -60,9 +50,9 @@ func SimulatePipelinesProcessing(
 	timeout := time.Millisecond * time.Duration(len(pipelines)*100+100)
 
 	configGenerator := func(baseConf []byte) ([]byte, error) {
-		updatedConf, apiErr := GenerateCollectorConfigWithPipelines(baseConf, pipelines)
-		if apiErr != nil {
-			return nil, apiErr.ToError()
+		updatedConf, err := GenerateCollectorConfigWithPipelines(baseConf, pipelines)
+		if err != nil {
+			return nil, err
 		}
 		return updatedConf, nil
 	}
@@ -76,14 +66,9 @@ func SimulatePipelinesProcessing(
 	)
 	if simulationErr != nil {
 		if errors.Is(simulationErr, collectorsimulator.ErrInvalidConfig) {
-			apiErr = model.BadRequest(simulationErr)
-		} else {
-			apiErr = model.InternalError(simulationErr)
+			return nil, nil, errors.WrapInvalidInputf(simulationErr, errors.CodeInvalidInput, "invalid config")
 		}
-
-		return nil, collectorErrs, model.WrapApiError(apiErr,
-			"could not simulate log pipelines processing.\nCollector errors",
-		)
+		return nil, nil, errors.WrapInternalf(simulationErr, errors.CodeInternal, "could not simulate log pipelines processing")
 	}
 
 	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
@@ -98,6 +83,7 @@ func SimulatePipelinesProcessing(
 		delete(sigLog.Attributes_int64, inputOrderAttribute)
 	}
 
+	collectorWarnAndErrorLogs := []string{}
 	for _, log := range collectorErrs {
 		// if log is empty or log comes from featuregate.go, then remove it
 		if log == "" || strings.Contains(log, "featuregate.go") {
@@ -146,7 +132,7 @@ func SignozLogsToPLogs(logs []model.SignozLog) []plog.Logs {
 		slRecord.SetSeverityText(log.SeverityText)
 		slRecord.SetSeverityNumber(plog.SeverityNumber(log.SeverityNumber))
 
-		slRecord.Body().SetStr(log.Body)
+		slRecord.Body().FromRaw(log.Body)
 
 		slAttribs := slRecord.Attributes()
 		for k, v := range log.Attributes_int64 {

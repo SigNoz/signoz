@@ -63,7 +63,8 @@ export function convertOperatorLabelForExceptions(
 export function formatStringValuesForTrace(
 	val: TagFilterItem['value'] = [],
 ): string[] {
-	return !Array.isArray(val) ? [String(val)] : val;
+	// IN QB V5 we can pass array of all (boolean, number, string) values. To make this compatible with the old version, we need to convert the array to a string array.
+	return !Array.isArray(val) ? [String(val)] : val.map((item) => String(item));
 }
 
 export const convertCompositeQueryToTraceSelectedTags = (
@@ -104,7 +105,6 @@ export const resourceAttributesToTagFilterItems = (
 			key: {
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
-				isColumn: false,
 				key: e.Key,
 			},
 		}));
@@ -114,7 +114,6 @@ export const resourceAttributesToTagFilterItems = (
 		id: `${res.id}`,
 		key: {
 			key: res.tagKey,
-			isColumn: false,
 			type: '',
 			dataType: DataTypes.EMPTY,
 		},
@@ -130,7 +129,6 @@ export const resourceAttributesToTracesFilterItems = (
 		id: `${res.id}`,
 		key: {
 			key: convertMetricKeyToTrace(res.tagKey),
-			isColumn: false,
 			type: MetricsType.Resource,
 			dataType: DataTypes.String,
 			id: `${convertMetricKeyToTrace(res.tagKey)}--string--resource--true`,
@@ -149,7 +147,9 @@ export const OperatorSchema: IOption[] = OperatorConversions.map(
 export const getResourceDeploymentKeys = (
 	dotMetricsEnabled: boolean,
 ): string => {
-	if (dotMetricsEnabled) return 'resource_deployment.environment';
+	if (dotMetricsEnabled) {
+		return 'resource_deployment.environment';
+	}
 	return 'resource_deployment_environment';
 };
 

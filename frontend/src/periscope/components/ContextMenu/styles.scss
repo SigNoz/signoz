@@ -1,0 +1,146 @@
+.context-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px;
+	cursor: pointer;
+	color: var(--bg-ink-400);
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-weight: 600;
+	line-height: 17px;
+	letter-spacing: 0.01em;
+	transition: background-color 0.2s ease;
+	border: none;
+	background: transparent;
+	width: 100%;
+	text-align: left;
+	height: 33px; /* Fixed height: 8px padding top + 17px line-height + 8px padding bottom */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	&:hover {
+		background-color: var(--bg-vanilla-200);
+	}
+
+	&:focus {
+		outline: none;
+		background-color: var(--bg-vanilla-200);
+	}
+
+	&.disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+		pointer-events: none;
+
+		&:hover {
+			background-color: transparent;
+		}
+	}
+
+	&.danger {
+		color: var(--bg-cherry-400);
+
+		.icon {
+			color: var(--bg-cherry-400);
+		}
+
+		&:hover {
+			background-color: var(--bg-cherry-100);
+		}
+	}
+
+	.icon {
+		color: var(--bg-robin-500);
+		font-size: 14px;
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.text {
+		flex: 1;
+		font-size: 13px;
+		font-weight: var(--font-weight-normal);
+		line-height: 17px;
+		letter-spacing: 0.01em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: block;
+		max-width: 100%;
+	}
+}
+
+.context-menu-header {
+	padding-bottom: 4px;
+	border-bottom: 1px solid var(--bg-vanilla-400);
+	color: var(--bg-slate-400);
+}
+
+// Target the popover inner specifically for context menu
+.context-menu .ant-popover-inner {
+	padding: 12px 8px !important;
+	// max-height: 254px !important;
+	max-width: 300px !important;
+}
+
+// Dark mode support
+.darkMode {
+	.context-menu-item {
+		color: var(--bg-vanilla-400);
+
+		&:hover,
+		&:focus {
+			background-color: var(--bg-slate-400);
+		}
+
+		&.danger {
+			color: var(--bg-cherry-400);
+
+			.icon {
+				color: var(--bg-cherry-400);
+			}
+
+			&:hover {
+				background-color: var(--bg-cherry-500);
+				color: var(--bg-vanilla-100);
+			}
+		}
+
+		.icon {
+			color: var(--bg-robin-400);
+		}
+	}
+
+	.context-menu-header {
+		border-bottom: 1px solid var(--bg-slate-400);
+		color: var(--bg-vanilla-400);
+	}
+
+	// Set the menu popover background
+	.context-menu .ant-popover-inner {
+		background: var(--bg-ink-500) !important;
+		border: 1px solid var(--bg-slate-400) !important;
+	}
+}
+
+// Context menu backdrop overlay
+.context-menu-backdrop {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 9999;
+	background: transparent;
+	cursor: default;
+
+	// Prevent any pointer events from reaching elements behind
+	pointer-events: auto;
+
+	// Ensure it covers the entire viewport including any scrollable areas
+	position: fixed !important;
+	inset: 0;
+}

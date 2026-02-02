@@ -40,13 +40,6 @@ const NormalizedMetricsMapQueryThreads = 10
 var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
 var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
-// TODO(srikanthccv): remove after backfilling is done
-func UseMetricsPreAggregation() bool {
-	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
-}
-
-var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
-
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
 	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
@@ -362,11 +355,6 @@ var NewStaticFieldsTraces = map[string]v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeString,
 		IsColumn: true,
 	},
-	"kind": {
-		Key:      "kind",
-		DataType: v3.AttributeKeyDataTypeString,
-		IsColumn: true,
-	},
 	"kind_string": {
 		Key:      "kind_string",
 		DataType: v3.AttributeKeyDataTypeString,
@@ -521,7 +509,7 @@ var DeprecatedStaticFieldsTraces = map[string]v3.AttributeKey{
 	},
 	"kind": {
 		Key:      "kind",
-		DataType: v3.AttributeKeyDataTypeString,
+		DataType: v3.AttributeKeyDataTypeInt64,
 		IsColumn: true,
 	},
 	"spanKind": {
@@ -690,17 +678,13 @@ var OldToNewTraceFieldsMap = map[string]string{
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
 var IsDotMetricsEnabled = false
-var PreferSpanMetrics = false
 var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
-	if GetOrDefaultEnv(DotMetricsEnabled, "false") == "true" {
+	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
 		IsDotMetricsEnabled = true
-	}
-	if GetOrDefaultEnv("USE_SPAN_METRICS", "false") == "true" {
-		PreferSpanMetrics = true
 	}
 
 	// set max flattening depth
@@ -729,10 +713,6 @@ var MaterializedDataTypeMap = map[string]string{
 }
 
 const InspectMetricsMaxTimeDiff = 1800000
-
-func GetDefaultSiteURL() string {
-	return GetOrDefaultEnv("SIGNOZ_SITE_URL", HTTPHostPort)
-}
 
 const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"

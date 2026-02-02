@@ -1,5 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -18,7 +19,6 @@ import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronUp } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [
@@ -95,7 +95,8 @@ function HavingFilter({
 	queryData: IBuilderQuery;
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { aggregationOptions } = useQueryBuilderV2Context();
+	const { getAggregationOptions } = useQueryBuilderV2Context();
+	const aggregationOptions = getAggregationOptions(queryData.queryName);
 	const having = queryData?.having as Having;
 	const [input, setInput] = useState(having?.expression || '');
 
@@ -156,7 +157,9 @@ function HavingFilter({
 
 	// Helper to check if we're after an operator
 	const isAfterOperator = (tokens: string[]): boolean => {
-		if (tokens.length === 0) return false;
+		if (tokens.length === 0) {
+			return false;
+		}
 		const lastToken = tokens[tokens.length - 1];
 		// Check if the last token is exactly an operator or ends with an operator and space
 		return havingOperators.some((op) => {

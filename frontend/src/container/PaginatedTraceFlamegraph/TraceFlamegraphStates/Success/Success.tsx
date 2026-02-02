@@ -1,14 +1,5 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Success.styles.scss';
-
-import { Tooltip } from 'antd';
-import Color from 'color';
-import TimelineV2 from 'components/TimelineV2/TimelineV2';
-import { themeColors } from 'constants/theme';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	Dispatch,
 	SetStateAction,
@@ -19,9 +10,18 @@ import {
 } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { Tooltip } from 'antd';
+import Color from 'color';
+import TimelineV2 from 'components/TimelineV2/TimelineV2';
+import { themeColors } from 'constants/theme';
+import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
+
+import './Success.styles.scss';
 
 interface ITraceMetadata {
 	startTime: number;

@@ -1,6 +1,6 @@
+import { Layout } from 'react-grid-layout';
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { isEmpty, isEqual } from 'lodash-es';
-import { Layout } from 'react-grid-layout';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -19,7 +19,9 @@ export const isFormula = (queryName: string): boolean =>
  * Specifically targets capital letters A-Z as query names, as after Z we dont have any query names
  */
 export function extractQueryNamesFromExpression(expression: string): string[] {
-	if (!expression) return [];
+	if (!expression) {
+		return [];
+	}
 
 	// Use regex to match standalone capital letters
 	// Uses word boundaries to ensure we only get standalone letters
@@ -34,7 +36,9 @@ export const hasColumnWidthsChanged = (
 	selectedDashboard?: Dashboard,
 ): boolean => {
 	// If no column widths stored, no changes
-	if (isEmpty(columnWidths) || !selectedDashboard) return false;
+	if (isEmpty(columnWidths) || !selectedDashboard) {
+		return false;
+	}
 
 	// Check each widget's column widths
 	return Object.keys(columnWidths).some((widgetId) => {
@@ -46,7 +50,9 @@ export const hasColumnWidthsChanged = (
 		const existingWidths = dashboardWidget?.columnWidths;
 
 		// If both are empty/undefined, no change
-		if (isEmpty(newWidths) || isEmpty(existingWidths)) return false;
+		if (isEmpty(newWidths) || isEmpty(existingWidths)) {
+			return false;
+		}
 
 		// Compare stored column widths with dashboard widget's column widths
 		return !isEqual(newWidths, existingWidths);
@@ -56,6 +62,8 @@ export const hasColumnWidthsChanged = (
 /**
  * Calculates the step interval in uPlot points (1 minute = 60 points)
  * based on the time duration between two timestamps in nanoseconds.
+ *
+ * NOTE: This function is specifically designed for BAR visualization panels only.
  *
  * Conversion logic:
  * - <= 1 hr     → 1 min (60 points)
@@ -67,7 +75,7 @@ export const hasColumnWidthsChanged = (
  * @param endNano - end time in nanoseconds
  * @returns stepInterval in uPlot points
  */
-export function getStepIntervalPoints(
+export function getBarStepIntervalPoints(
 	startNano: number,
 	endNano: number,
 ): number {
@@ -92,18 +100,18 @@ export function getStepIntervalPoints(
 	return roundedInterval * 60; // convert min to points
 }
 
-export function updateStepInterval(
+export function updateBarStepInterval(
 	query: Query,
 	minTime: number,
 	maxTime: number,
 ): Query {
-	const stepIntervalPoints = getStepIntervalPoints(minTime, maxTime);
+	const stepIntervalPoints = getBarStepIntervalPoints(minTime, maxTime);
 
 	// if user haven't enter anything manually, that is we have default value of 60 then do the interval adjustment for bar otherwise apply the user's value
-	const getSteps = (queryData: IBuilderQuery): number =>
-		queryData?.stepInterval === 60
-			? stepIntervalPoints || 60
-			: queryData?.stepInterval || 60;
+	const getBarSteps = (queryData: IBuilderQuery): number | null =>
+		!queryData.stepInterval
+			? stepIntervalPoints || null
+			: queryData?.stepInterval;
 
 	return {
 		...query,
@@ -112,7 +120,7 @@ export function updateStepInterval(
 			queryData: [
 				...(query?.builder?.queryData ?? []).map((queryData) => ({
 					...queryData,
-					stepInterval: getSteps(queryData),
+					stepInterval: getBarSteps(queryData),
 				})),
 			],
 		},

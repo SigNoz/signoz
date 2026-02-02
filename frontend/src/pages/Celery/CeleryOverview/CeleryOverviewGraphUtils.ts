@@ -9,7 +9,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 export const celeryOverviewRequestRateWidgetData = (
@@ -24,8 +24,6 @@ export const celeryOverviewRequestRateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.EMPTY,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -44,7 +42,7 @@ export const celeryOverviewRequestRateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -66,8 +64,6 @@ export const celeryOverviewErrorRateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.EMPTY,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -83,8 +79,6 @@ export const celeryOverviewErrorRateWidgetData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -101,7 +95,7 @@ export const celeryOverviewErrorRateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -123,8 +117,6 @@ export const celeryOverviewAvgLatencyWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -143,7 +135,7 @@ export const celeryOverviewAvgLatencyWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'p95',
@@ -168,8 +160,6 @@ export const celeryOverviewRequestRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.EMPTY,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -188,7 +178,7 @@ export const celeryOverviewRequestRateGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -217,8 +207,6 @@ export const celeryOverviewErrorRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -233,8 +221,6 @@ export const celeryOverviewErrorRateGraphData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -252,7 +238,7 @@ export const celeryOverviewErrorRateGraphData = (
 					orderBy: [],
 					groupBy: groupByFilter ? [groupByFilter] : [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					dataSource: DataSource.TRACES,
@@ -261,8 +247,6 @@ export const celeryOverviewErrorRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -277,8 +261,6 @@ export const celeryOverviewErrorRateGraphData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -296,7 +278,7 @@ export const celeryOverviewErrorRateGraphData = (
 					orderBy: [],
 					groupBy: groupByFilter ? [groupByFilter] : [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					dataSource: DataSource.TRACES,
@@ -305,8 +287,6 @@ export const celeryOverviewErrorRateGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -325,7 +305,7 @@ export const celeryOverviewErrorRateGraphData = (
 					orderBy: [],
 					groupBy: groupByFilter ? [groupByFilter] : [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					queryName: 'F1',
@@ -360,8 +340,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.ArrayFloat64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -380,7 +358,7 @@ export const celeryOverviewAvgLatencyGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'C',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p90',
@@ -389,8 +367,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.ArrayFloat64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -409,7 +385,7 @@ export const celeryOverviewAvgLatencyGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'D',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p95',
@@ -418,8 +394,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 					aggregateAttribute: {
 						dataType: DataTypes.ArrayFloat64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -438,7 +412,7 @@ export const celeryOverviewAvgLatencyGraphData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'E',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p99',

@@ -1,8 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	DEPRECATED_OPERATORS_MAP,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -18,9 +22,10 @@ import {
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
-import { unquote } from 'utils/stringUtils';
+import { isQuoted, unquote } from 'utils/stringUtils';
+import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
 import { v4 as uuid } from 'uuid';
 
 /**
@@ -33,38 +38,57 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
+const isVariable = (
+	value: (string | number | boolean)[] | string | number | boolean,
+): boolean => {
+	if (Array.isArray(value)) {
+		return value.some((v) => typeof v === 'string' && v.trim().startsWith('$'));
+	}
+	return typeof value === 'string' && value.trim().startsWith('$');
+};
+
+/**
+ * Formats a single value for use in expression strings.
+ * Strings are quoted and escaped, while numbers and booleans are converted to strings.
+ */
+const formatSingleValue = (v: string | number | boolean): string => {
+	if (typeof v === 'string') {
+		// Preserve already-quoted strings
+		if (isQuoted(v)) {
+			return v;
+		}
+		// Quote and escape single quotes in strings
+		return `'${v.replace(/'/g, "\\'")}'`;
+	}
+	// Convert numbers and booleans to strings without quotes
+	return String(v);
+};
+
 /**
  * Format a value for the expression string
  * @param value - The value to format
  * @param operator - The operator being used (to determine if array is needed)
  * @returns Formatted value string
  */
-const formatValueForExpression = (
-	value: string[] | string | number | boolean,
+export const formatValueForExpression = (
+	value: (string | number | boolean)[] | string | number | boolean,
 	operator?: string,
 ): string => {
-	// For IN operators, ensure value is always an array
+	if (isVariable(value)) {
+		return String(value);
+	}
+
 	if (isArrayOperator(operator || '')) {
 		const arrayValue = Array.isArray(value) ? value : [value];
-		return `[${arrayValue
-			.map((v) =>
-				typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'` : String(v),
-			)
-			.join(', ')}]`;
+		return `[${arrayValue.map(formatSingleValue).join(', ')}]`;
 	}
 
 	if (Array.isArray(value)) {
-		// Handle array values (e.g., for IN operations)
-		return `[${value
-			.map((v) =>
-				typeof v === 'string' ? `'${v.replace(/'/g, "\\'")}'` : String(v),
-			)
-			.join(', ')}]`;
+		return `[${value.map(formatSingleValue).join(', ')}]`;
 	}
 
 	if (typeof value === 'string') {
-		// Add single quotes around all string values and escape internal single quotes
-		return `'${value.replace(/'/g, "\\'")}'`;
+		return formatSingleValue(value);
 	}
 
 	return String(value);
@@ -86,8 +110,32 @@ export const convertFiltersToExpression = (
 				return '';
 			}
 
-			const formattedValue = formatValueForExpression(value, op);
-			return `${key.key} ${op} ${formattedValue}`;
+			let operator = op.trim().toLowerCase();
+			if (Object.keys(DEPRECATED_OPERATORS_MAP).includes(operator)) {
+				operator =
+					DEPRECATED_OPERATORS_MAP[
+						operator as keyof typeof DEPRECATED_OPERATORS_MAP
+					];
+			}
+
+			if (isNonValueOperator(operator)) {
+				return `${key.key} ${operator}`;
+			}
+
+			if (isFunctionOperator(operator)) {
+				// Get the proper function name from QUERY_BUILDER_FUNCTIONS
+				const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
+				const properFunctionName =
+					functionOperators.find(
+						(func: string) => func.toLowerCase() === operator.toLowerCase(),
+					) || operator;
+
+				const formattedValue = formatValueForExpression(value, operator);
+				return `${properFunctionName}(${key.key}, ${formattedValue})`;
+			}
+
+			const formattedValue = formatValueForExpression(value, operator);
+			return `${key.key} ${operator} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 
@@ -96,23 +144,57 @@ export const convertFiltersToExpression = (
 	};
 };
 
-const formatValuesForFilter = (value: string | string[]): string | string[] => {
-	if (Array.isArray(value)) {
-		return value.map((v) => (typeof v === 'string' ? unquote(v) : String(v)));
-	}
+/**
+ * Converts a string value to its appropriate type (number, boolean, or string)
+ * for use in filter objects. This is the inverse of formatSingleValue.
+ */
+function formatSingleValueForFilter(
+	value: string | number | boolean,
+): string | number | boolean {
 	if (typeof value === 'string') {
-		return unquote(value);
+		const trimmed = value.trim();
+
+		// Try to convert numeric strings to numbers
+		if (trimmed !== '' && !Number.isNaN(Number(trimmed))) {
+			return Number(trimmed);
+		}
+
+		// Convert boolean strings to booleans
+		if (trimmed === 'true' || trimmed === 'false') {
+			return trimmed === 'true';
+		}
+
+		if (isQuoted(value)) {
+			return unquote(value);
+		}
 	}
-	return String(value);
+
+	// Return non-string values as-is, or string values that couldn't be converted
+	return value;
+}
+
+/**
+ * Formats values for filter objects, converting string representations
+ * to their proper types (numbers, booleans) when appropriate.
+ */
+const formatValuesForFilter = (
+	value: (string | number | boolean)[] | number | boolean | string,
+): (string | number | boolean)[] | number | boolean | string => {
+	if (Array.isArray(value)) {
+		return value.map(formatSingleValueForFilter);
+	}
+
+	return formatSingleValueForFilter(value);
 };
 
 export const convertExpressionToFilters = (
 	expression: string,
 ): TagFilterItem[] => {
-	if (!expression) return [];
+	if (!expression) {
+		return [];
+	}
 
 	const queryPairs = extractQueryPairs(expression);
-
 	const filters: TagFilterItem[] = [];
 
 	queryPairs.forEach((pair) => {
@@ -135,45 +217,65 @@ export const convertExpressionToFilters = (
 
 	return filters;
 };
+const getQueryPairsMap = (query: string): Map<string, IQueryPair> => {
+	const queryPairs = extractQueryPairs(query);
+	const queryPairsMap: Map<string, IQueryPair> = new Map();
+
+	queryPairs.forEach((pair) => {
+		const key = pair.hasNegation
+			? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
+			: `${pair.key}-${pair.operator}`.trim().toLowerCase();
+		queryPairsMap.set(key, pair);
+	});
+
+	return queryPairsMap;
+};
 
 export const convertFiltersToExpressionWithExistingQuery = (
 	filters: TagFilter,
 	existingQuery: string | undefined,
 ): { filters: TagFilter; filter: { expression: string } } => {
+	// Check for deprecated operators and replace them with new operators
+	const updatedFilters = cloneDeep(filters);
+
+	// Replace deprecated operators in filter items
+	if (updatedFilters?.items) {
+		updatedFilters.items = updatedFilters.items.map((item) => {
+			const opLower = item.op?.toLowerCase();
+			if (Object.keys(DEPRECATED_OPERATORS_MAP).includes(opLower)) {
+				return {
+					...item,
+					op: DEPRECATED_OPERATORS_MAP[
+						opLower as keyof typeof DEPRECATED_OPERATORS_MAP
+					].toLowerCase(),
+				};
+			}
+			return item;
+		});
+	}
+
 	if (!existingQuery) {
 		// If no existing query, return filters with a newly generated expression
 		return {
-			filters,
-			filter: convertFiltersToExpression(filters),
+			filters: updatedFilters,
+			filter: convertFiltersToExpression(updatedFilters),
 		};
 	}
 
-	// Extract query pairs from the existing query
-	const queryPairs = extractQueryPairs(existingQuery.trim());
-	let queryPairsMap: Map<string, IQueryPair> = new Map();
-
-	const updatedFilters = cloneDeep(filters); // Clone filters to avoid direct mutation
 	const nonExistingFilters: TagFilterItem[] = [];
 	let modifiedQuery = existingQuery; // We'll modify this query as we proceed
 	const visitedPairs: Set<string> = new Set(); // Set to track visited query pairs
 
 	// Map extracted query pairs to key-specific pair information for faster access
-	if (queryPairs.length > 0) {
-		queryPairsMap = new Map(
-			queryPairs.map((pair) => {
-				const key = pair.hasNegation
-					? `${pair.key}-not ${pair.operator}`.trim().toLowerCase()
-					: `${pair.key}-${pair.operator}`.trim().toLowerCase();
-				return [key, pair];
-			}),
-		);
-	}
+	let queryPairsMap = getQueryPairsMap(existingQuery);
 
 	filters?.items?.forEach((filter) => {
 		const { key, op, value } = filter;
 
 		// Skip invalid filters with no key
-		if (!key) return;
+		if (!key) {
+			return;
+		}
 
 		let shouldAddToNonExisting = true; // Flag to decide if the filter should be added to non-existing filters
 		const sanitizedOperator = op.trim().toUpperCase();
@@ -196,10 +298,37 @@ export const convertFiltersToExpressionWithExistingQuery = (
 				existingPair.position?.valueEnd
 			) {
 				visitedPairs.add(`${key.key}-${op}`.trim().toLowerCase());
+
+				// Check if existing values match current filter values (for array-based operators)
+				if (existingPair.valueList && filter.value && Array.isArray(filter.value)) {
+					// Clean quotes from string values for comparison
+					const cleanValues = (values: any[]): any[] =>
+						values.map((val) => (typeof val === 'string' ? unquote(val) : val));
+
+					const cleanExistingValues = cleanValues(existingPair.valueList);
+					const cleanFilterValues = cleanValues(filter.value);
+
+					// Compare arrays (order-independent) - if identical, keep existing value
+					const isSameValues =
+						cleanExistingValues.length === cleanFilterValues.length &&
+						isEqual(sortBy(cleanExistingValues), sortBy(cleanFilterValues));
+
+					if (isSameValues) {
+						// Values are identical, preserve existing formatting
+						modifiedQuery =
+							modifiedQuery.slice(0, existingPair.position.valueStart) +
+							existingPair.value +
+							modifiedQuery.slice(existingPair.position.valueEnd + 1);
+						return;
+					}
+				}
+
 				modifiedQuery =
 					modifiedQuery.slice(0, existingPair.position.valueStart) +
 					formattedValue +
 					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
 				return;
 			}
 
@@ -225,6 +354,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notInPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -241,6 +371,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								equalsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					} else if (
@@ -257,6 +388,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							)}${OPERATORS.IN} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -278,6 +410,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 							} ${formattedValue} ${modifiedQuery.slice(
 								notEqualsPair.position.valueEnd + 1,
 							)}`;
+							queryPairsMap = getQueryPairsMap(modifiedQuery);
 						}
 						shouldAddToNonExisting = false; // Don't add this to non-existing filters
 					}
@@ -290,6 +423,23 @@ export const convertFiltersToExpressionWithExistingQuery = (
 		if (
 			queryPairsMap.has(`${filter.key?.key}-${filter.op}`.trim().toLowerCase())
 		) {
+			const existingPair = queryPairsMap.get(
+				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
+			);
+			if (
+				existingPair &&
+				existingPair.position?.valueStart &&
+				existingPair.position?.valueEnd
+			) {
+				const formattedValue = formatValueForExpression(value, op);
+				// replace the value with the new value
+				modifiedQuery =
+					modifiedQuery.slice(0, existingPair.position.valueStart) +
+					formattedValue +
+					modifiedQuery.slice(existingPair.position.valueEnd + 1);
+				queryPairsMap = getQueryPairsMap(modifiedQuery);
+			}
+
 			visitedPairs.add(`${filter.key?.key}-${filter.op}`.trim().toLowerCase());
 		}
 
@@ -372,11 +522,13 @@ export const convertFiltersToExpressionWithExistingQuery = (
  *
  * @param expression - The full query string.
  * @param keysToRemove - An array of keys (case-insensitive) that should be removed from the expression.
+ * @param removeOnlyVariableExpressions - When true, only removes key-value pairs where the value is a variable (starts with $). When false, uses the original behavior.
  * @returns A new expression string with the specified keys and their associated clauses removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
+	removeOnlyVariableExpressions = false,
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
@@ -392,9 +544,22 @@ export const removeKeysFromExpression = (
 			let queryPairsMap: Map<string, IQueryPair>;
 
 			if (existingQueryPairs.length > 0) {
+				// Filter query pairs based on the removeOnlyVariableExpressions flag
+				const filteredQueryPairs = removeOnlyVariableExpressions
+					? existingQueryPairs.filter((pair) => {
+							const pairKey = pair.key?.trim().toLowerCase();
+							const matchesKey = pairKey === `${key}`.trim().toLowerCase();
+							if (!matchesKey) {
+								return false;
+							}
+							const value = pair.value?.toString().trim();
+							return value && value.includes('$');
+					  })
+					: existingQueryPairs;
+
 				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
 				queryPairsMap = new Map(
-					existingQueryPairs.map((pair) => {
+					filteredQueryPairs.map((pair) => {
 						const key = pair.key.trim().toLowerCase();
 						return [key, pair];
 					}),
@@ -430,6 +595,12 @@ export const removeKeysFromExpression = (
 				}
 			}
 		});
+
+		// Clean up any remaining trailing AND/OR operators and extra whitespace
+		updatedExpression = updatedExpression
+			.replace(/\s+(AND|OR)\s*$/i, '') // Remove trailing AND/OR
+			.replace(/^(AND|OR)\s+/i, '') // Remove leading AND/OR
+			.trim();
 	}
 
 	return updatedExpression;
@@ -486,14 +657,25 @@ export const convertHavingToExpression = (
  * @returns New aggregation format based on data source
  *
  */
-export const convertAggregationToExpression = (
-	aggregateOperator: string,
-	aggregateAttribute: BaseAutocompleteData,
-	dataSource: DataSource,
-	timeAggregation?: string,
-	spaceAggregation?: string,
-	alias?: string,
-): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
+export const convertAggregationToExpression = ({
+	aggregateOperator,
+	aggregateAttribute,
+	dataSource,
+	timeAggregation,
+	spaceAggregation,
+	alias,
+	reduceTo,
+	temporality,
+}: {
+	aggregateOperator: string;
+	aggregateAttribute: BaseAutocompleteData;
+	dataSource: DataSource;
+	timeAggregation?: string;
+	spaceAggregation?: string;
+	alias?: string;
+	reduceTo?: ReduceOperators;
+	temporality?: string;
+}): (TraceAggregation | LogAggregation | MetricAggregation)[] | undefined => {
 	// Skip if no operator or attribute key
 	if (!aggregateOperator) {
 		return undefined;
@@ -511,7 +693,9 @@ export const convertAggregationToExpression = (
 	if (dataSource === DataSource.METRICS) {
 		return [
 			{
-				metricName: aggregateAttribute.key,
+				metricName: aggregateAttribute?.key || '',
+				reduceTo,
+				temporality,
 				timeAggregation: (normalizedTimeAggregation || normalizedOperator) as any,
 				spaceAggregation: (normalizedSpaceAggregation || normalizedOperator) as any,
 			} as MetricAggregation,
@@ -519,7 +703,9 @@ export const convertAggregationToExpression = (
 	}
 
 	// For traces and logs, use expression format
-	const expression = `${normalizedOperator}(${aggregateAttribute.key})`;
+	const expression = aggregateAttribute?.key
+		? `${normalizedOperator}(${aggregateAttribute?.key})`
+		: `${normalizedOperator}()`;
 
 	if (dataSource === DataSource.TRACES) {
 		return [
@@ -539,43 +725,16 @@ export const convertAggregationToExpression = (
 	];
 };
 
-export const getQueryTitles = (currentQuery: Query): string[] => {
-	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-		const queryTitles: string[] = [];
-
-		// Handle builder queries with multiple aggregations
-		currentQuery.builder.queryData.forEach((q) => {
-			const aggregationCount = q.aggregations?.length || 1;
-
-			if (aggregationCount > 1) {
-				// If multiple aggregations, create titles like A.0, A.1, A.2
-				for (let i = 0; i < aggregationCount; i++) {
-					queryTitles.push(`${q.queryName}.${i}`);
-				}
-			} else {
-				// Single aggregation, just use query name
-				queryTitles.push(q.queryName);
-			}
-		});
-
-		// Handle formulas (they don't have aggregations, so just use query name)
-		const formulas = currentQuery.builder.queryFormulas.map((q) => q.queryName);
-
-		return [...queryTitles, ...formulas];
-	}
-
-	if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
-		return currentQuery.clickhouse_sql.map((q) => q.name);
-	}
-
-	return currentQuery.promql.map((q) => q.name);
-};
-
 function getColId(
 	queryName: string,
 	aggregation: { alias?: string; expression?: string },
+	isMultipleAggregations: boolean,
 ): string {
-	return `${queryName}.${aggregation.expression}`;
+	if (isMultipleAggregations && aggregation.expression) {
+		return `${queryName}.${aggregation.expression}`;
+	}
+
+	return queryName;
 }
 
 // function to give you label value for query name taking multiaggregation into account
@@ -599,7 +758,7 @@ export function getQueryLabelWithAggregation(
 		const isMultipleAggregations = aggregations.length > 1;
 
 		aggregations.forEach((agg: any, index: number) => {
-			const columnId = getColId(queryName, agg);
+			const columnId = getColId(queryName, agg, isMultipleAggregations);
 
 			// For display purposes, show the aggregation index for multiple aggregations
 			const displayLabel = isMultipleAggregations
@@ -637,12 +796,12 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 			});
 
 			const {
-				aggregateAttribute,
-				aggregateOperator,
-				timeAggregation,
-				spaceAggregation,
-				reduceTo,
-				filters,
+				aggregateAttribute: _aggregateAttribute,
+				aggregateOperator: _aggregateOperator,
+				timeAggregation: _timeAggregation,
+				spaceAggregation: _spaceAggregation,
+				reduceTo: _reduceTo,
+				filters: _filters,
 				...retainedQuery
 			} = query;
 

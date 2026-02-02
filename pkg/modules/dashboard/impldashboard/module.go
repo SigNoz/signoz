@@ -2,29 +2,38 @@ package impldashboard
 
 import (
 	"context"
-	"strings"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store     dashboardtypes.Store
-	settings  factory.ScopedProviderSettings
-	analytics analytics.Analytics
+	store       dashboardtypes.Store
+	settings    factory.ScopedProviderSettings
+	analytics   analytics.Analytics
+	orgGetter   organization.Getter
+	queryParser queryparser.QueryParser
 }
 
-func NewModule(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics) dashboard.Module {
-	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/impldashboard")
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser) dashboard.Module {
+	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard")
 	return &module{
-		store:     NewStore(sqlstore),
-		settings:  scopedProviderSettings,
-		analytics: analytics,
+		store:       store,
+		settings:    scopedProviderSettings,
+		analytics:   analytics,
+		orgGetter:   orgGetter,
+		queryParser: queryParser,
 	}
 }
 
@@ -54,11 +63,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		return nil, err
 	}
 
-	dashboard, err := dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard)
-	if err != nil {
-		return nil, err
-	}
-	return dashboard, nil
+	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
@@ -67,21 +72,16 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboard
 		return nil, err
 	}
 
-	dashboards, err := dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboards, nil
+	return dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards), nil
 }
 
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard) (*dashboardtypes.Dashboard, error) {
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	err = dashboard.Update(updatableDashboard, updatedBy)
+	err = dashboard.Update(ctx, updatableDashboard, updatedBy, diff)
 	if err != nil {
 		return nil, err
 	}
@@ -99,13 +99,13 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error {
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	err = dashboard.LockUnlock(ctx, lock, updatedBy)
+	err = dashboard.LockUnlock(lock, role, updatedBy)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,12 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
-	return module.store.Delete(ctx, orgID, id)
+	err = module.store.Delete(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {
@@ -141,13 +146,10 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 		return nil, err
 	}
 
-	// Initialize result map for each metric
 	result := make(map[string][]map[string]string)
 
-	// Process the JSON data in Go
 	for _, dashboard := range dashboards {
-		var dashData = dashboard.Data
-
+		dashData := dashboard.Data
 		dashTitle, _ := dashData["title"].(string)
 		widgets, ok := dashData["widgets"].([]interface{})
 		if !ok {
@@ -168,44 +170,22 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 				continue
 			}
 
-			builder, ok := query["builder"].(map[string]interface{})
-			if !ok {
-				continue
-			}
+			// Track which metrics were found in this widget
+			foundMetrics := make(map[string]bool)
 
-			queryData, ok := builder["queryData"].([]interface{})
-			if !ok {
-				continue
-			}
+			// Check all three query types
+			module.checkBuilderQueriesForMetricNames(query, metricNames, foundMetrics)
+			module.checkClickHouseQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
+			module.checkPromQLQueriesForMetricNames(ctx, query, metricNames, foundMetrics)
 
-			for _, qd := range queryData {
-				data, ok := qd.(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
-					continue
-				}
-
-				aggregateAttr, ok := data["aggregateAttribute"].(map[string]interface{})
-				if !ok {
-					continue
-				}
-
-				if key, ok := aggregateAttr["key"].(string); ok {
-					// Check if this metric is in our list of interest
-					for _, metricName := range metricNames {
-						if strings.TrimSpace(key) == metricName {
-							result[metricName] = append(result[metricName], map[string]string{
-								"dashboard_id":   dashboard.ID,
-								"widget_name":    widgetTitle,
-								"widget_id":      widgetID,
-								"dashboard_name": dashTitle,
-							})
-						}
-					}
-				}
+			// Add widget to results for all found metrics
+			for metricName := range foundMetrics {
+				result[metricName] = append(result[metricName], map[string]string{
+					"dashboard_id":   dashboard.ID,
+					"widget_name":    widgetTitle,
+					"widget_id":      widgetID,
+					"dashboard_name": dashTitle,
+				})
 			}
 		}
 	}
@@ -220,4 +200,154 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 
 	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
+}
+
+func (module *module) MustGetTypeables() []authtypes.Typeable {
+	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
+}
+
+// not supported
+func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
+	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublic(_ context.Context, _, _ valuer.UUID) (*dashboardtypes.PublicDashboard, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetDashboardByPublicID(_ context.Context, _ valuer.UUID) (*dashboardtypes.Dashboard, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) GetPublicDashboardSelectorsAndOrg(_ context.Context, _ valuer.UUID, _ []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+	return nil, valuer.UUID{}, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) UpdatePublic(_ context.Context, _ valuer.UUID, _ *dashboardtypes.PublicDashboard) error {
+	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+func (module *module) DeletePublic(_ context.Context, _ valuer.UUID, _ valuer.UUID) error {
+	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+// checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName
+func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+	builder, ok := query["builder"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	queryData, ok := builder["queryData"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, qd := range queryData {
+		data, ok := qd.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Check dataSource is metrics
+		if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+			continue
+		}
+
+		// Check aggregations[].metricName
+		aggregations, ok := data["aggregations"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, agg := range aggregations {
+			aggMap, ok := agg.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			metricName, ok := aggMap["metricName"].(string)
+			if !ok || metricName == "" {
+				continue
+			}
+
+			if slices.Contains(metricNames, metricName) {
+				foundMetrics[metricName] = true
+			}
+		}
+	}
+}
+
+// checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings
+func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+	clickhouseSQL, ok := query["clickhouse_sql"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, chQuery := range clickhouseSQL {
+		chQueryMap, ok := chQuery.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		queryStr, ok := chQueryMap["query"].(string)
+		if !ok || queryStr == "" {
+			continue
+		}
+
+		// Parse query to extract metric names
+		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, queryStr)
+		if err != nil {
+			// Log warning and continue - parsing errors shouldn't break the search
+			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
+			continue
+		}
+
+		// Check if any of the search metric names are in the extracted metric names
+		for _, metricName := range metricNames {
+			if slices.Contains(result.MetricNames, metricName) {
+				foundMetrics[metricName] = true
+			}
+		}
+	}
+}
+
+// checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings
+func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
+	promQL, ok := query["promql"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, promQuery := range promQL {
+		promQueryMap, ok := promQuery.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		queryStr, ok := promQueryMap["query"].(string)
+		if !ok || queryStr == "" {
+			continue
+		}
+
+		// Parse query to extract metric names
+		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, queryStr)
+		if err != nil {
+			// Log warning and continue - parsing errors shouldn't break the search
+			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
+			continue
+		}
+
+		// Check if any of the search metric names are in the extracted metric names
+		for _, metricName := range metricNames {
+			if slices.Contains(result.MetricNames, metricName) {
+				foundMetrics[metricName] = true
+			}
+		}
+	}
 }

@@ -1,8 +1,13 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
-import './ExplorerColumnsRenderer.styles.scss';
-
+import { useEffect, useState } from 'react';
+import {
+	DragDropContext,
+	Draggable,
+	Droppable,
+	DropResult,
+} from 'react-beautiful-dnd';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Dropdown, Input, Tooltip, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
@@ -19,17 +24,12 @@ import {
 	Search,
 	Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import {
-	DragDropContext,
-	Draggable,
-	Droppable,
-	DropResult,
-} from 'react-beautiful-dnd';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WidgetGraphProps } from '../types';
 import ExplorerAttributeColumns from './ExplorerAttributeColumns';
+
+import './ExplorerColumnsRenderer.styles.scss';
 
 type LogColumnsRendererProps = {
 	setSelectedLogFields: WidgetGraphProps['setSelectedLogFields'];
@@ -133,13 +133,14 @@ function ExplorerColumnsRenderer({
 						},
 					]);
 				}
-			} else if (selectedField)
+			} else if (selectedField) {
 				setSelectedTracesFields([
 					{
 						...selectedField,
 						fieldDataType: selectedField.fieldDataType as FieldDataType,
 					},
 				]);
+			}
 		}
 		setOpen(false);
 	};
@@ -183,6 +184,7 @@ function ExplorerColumnsRenderer({
 					searchText={searchText}
 					isAttributeKeySelected={isAttributeKeySelected}
 					handleCheckboxChange={handleCheckboxChange}
+					dataSource={initialDataSource}
 				/>
 			),
 		},

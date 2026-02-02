@@ -1,11 +1,10 @@
+import { UseQueryResult } from 'react-query';
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { ServicesList } from 'types/api/metrics/getService';
@@ -26,9 +25,7 @@ export interface ServiceMetricsTableProps {
 
 export interface GetQueryRangeRequestDataProps {
 	topLevelOperations: [keyof ServiceDataProps, string[]][];
-	maxTime: number;
-	minTime: number;
-	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
+	globalSelectedInterval: Time | CustomTimeType;
 	dotMetricsEnabled: boolean;
 }
 

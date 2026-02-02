@@ -15,7 +15,7 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_ALERTMANAGER_PROVIDER", "legacy")
+	t.Setenv("SIGNOZ_ALERTMANAGER_PROVIDER", "signoz")
 	t.Setenv("SIGNOZ_ALERTMANAGER_LEGACY_API__URL", "http://localhost:9093/api")
 	t.Setenv("SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_REPEAT__INTERVAL", "5m")
 	t.Setenv("SIGNOZ_ALERTMANAGER_SIGNOZ_EXTERNAL__URL", "https://example.com/test")
@@ -49,15 +49,8 @@ func TestNewWithEnvProvider(t *testing.T) {
 	}
 
 	expected := &Config{
-		Provider: "legacy",
-		Legacy: Legacy{
-			ApiURL: &url.URL{
-				Scheme: "http",
-				Host:   "localhost:9093",
-				Path:   "/api",
-			},
-		},
-		Signoz: def.Signoz,
+		Provider: "signoz",
+		Signoz:   def.Signoz,
 	}
 
 	assert.Equal(t, expected, actual)

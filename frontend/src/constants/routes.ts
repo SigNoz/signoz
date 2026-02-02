@@ -27,6 +27,7 @@ const ROUTES = {
 	ALERTS_NEW: '/alerts/new',
 	ALERT_HISTORY: '/alerts/history',
 	ALERT_OVERVIEW: '/alerts/overview',
+	ALERT_TYPE_SELECTION: '/alerts/type-selection',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
 	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
@@ -77,7 +78,11 @@ const ROUTES = {
 	API_MONITORING: '/api-monitoring/explorer',
 	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
+	METER: '/meter',
+	METER_EXPLORER: '/meter/explorer',
+	METER_EXPLORER_VIEWS: '/meter/explorer/views',
 	HOME_PAGE: '/',
+	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 } as const;
 
 export default ROUTES;

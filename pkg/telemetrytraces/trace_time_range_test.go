@@ -38,12 +38,13 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 	resourceFilterFM := resourcefilter.NewFieldMapper()
 	resourceFilterCB := resourcefilter.NewConditionBuilder(resourceFilterFM)
 	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
 		resourceFilterFM,
 		resourceFilterCB,
 		mockMetadataStore,
 	)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(nil, fm, cb, "", nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

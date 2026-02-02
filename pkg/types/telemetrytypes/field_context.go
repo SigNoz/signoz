@@ -2,9 +2,9 @@ package telemetrytypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -36,6 +36,9 @@ import (
 //
 // - Use `log.` for explicit log context
 //   - `log.severity_text` will always resolve to `severity_text` of log record
+//
+// - Use `body.` to indicate and enforce body context
+//   - `body.key` will look for `key` in the body field
 type FieldContext struct {
 	valuer.String
 }
@@ -49,6 +52,7 @@ var (
 	FieldContextScope       = FieldContext{valuer.NewString("scope")}
 	FieldContextAttribute   = FieldContext{valuer.NewString("attribute")}
 	FieldContextEvent       = FieldContext{valuer.NewString("event")}
+	FieldContextBody        = FieldContext{valuer.NewString("body")}
 	FieldContextUnspecified = FieldContext{valuer.NewString("")}
 
 	// Map string representations to FieldContext values
@@ -65,6 +69,7 @@ var (
 		"point":      FieldContextAttribute,
 		"attribute":  FieldContextAttribute,
 		"event":      FieldContextEvent,
+		"body":       FieldContextBody,
 		"spanfield":  FieldContextSpan,
 		"span":       FieldContextSpan,
 		"logfield":   FieldContextLog,
@@ -98,7 +103,7 @@ func (f *FieldContext) UnmarshalJSON(data []byte) error {
 // Scan implements the sql.Scanner interface
 func (f *FieldContext) Scan(value interface{}) error {
 	if f == nil {
-		return fmt.Errorf("fieldcontext: nil receiver")
+		return errors.NewInternalf(errors.CodeInternal, "fieldcontext: nil receiver")
 	}
 
 	if value == nil {
@@ -108,7 +113,7 @@ func (f *FieldContext) Scan(value interface{}) error {
 
 	str, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("fieldcontext: expected string, got %T", value)
+		return errors.NewInternalf(errors.CodeInternal, "fieldcontext: expected string, got %T", value)
 	}
 
 	// Normalize the string
@@ -144,6 +149,8 @@ func (f FieldContext) TagType() string {
 		return "metricfield"
 	case FieldContextEvent:
 		return "eventfield"
+	case FieldContextBody:
+		return "body"
 	}
 	return ""
 }

@@ -1,10 +1,10 @@
+import { Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import uPlot from 'uplot';
 
@@ -59,6 +59,7 @@ export interface FullViewProps {
 	isDependedDataLoaded?: boolean;
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 	setCurrentGraphRef: Dispatch<SetStateAction<RefObject<HTMLDivElement> | null>>;
+	enableDrillDown?: boolean;
 }
 
 export interface GraphManagerProps extends UplotProps {

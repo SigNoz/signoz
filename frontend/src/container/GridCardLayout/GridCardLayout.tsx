@@ -1,5 +1,8 @@
-import './GridCardLayout.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FullScreen, FullScreenHandle } from 'react-full-screen';
+import { ItemCallback, Layout } from 'react-grid-layout';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
@@ -10,8 +13,10 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
-import { DEFAULT_ROW_NAME } from 'container/NewDashboard/DashboardDescription/utils';
+import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useWidgetsByDynamicVariableId } from 'hooks/dashboard/useWidgetsByDynamicVariableId';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -29,11 +34,6 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FullScreen, FullScreenHandle } from 'react-full-screen';
-import { ItemCallback, Layout } from 'react-grid-layout';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
@@ -51,13 +51,16 @@ import {
 import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
+import './GridCardLayout.styles.scss';
+
 interface GraphLayoutProps {
 	handle: FullScreenHandle;
+	enableDrillDown?: boolean;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
-	const { handle } = props;
+	const { handle, enableDrillDown = false } = props;
 	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
@@ -77,7 +80,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 
-	const { widgets, variables } = data || {};
+	const { widgets } = data || {};
+
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { user } = useAppContext();
 
@@ -96,6 +101,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const [currentPanelMap, setCurrentPanelMap] = useState<
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
+
+	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
 		setCurrentPanelMap(panelMap);
@@ -160,14 +167,16 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				dashboardId: selectedDashboard?.id,
 				dashboardName: data.title,
 				numberOfPanels: data.widgets?.length,
-				numberOfVariables: Object.keys(data?.variables || {}).length || 0,
+				numberOfVariables: Object.keys(dashboardVariables).length || 0,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [data, selectedDashboard?.id]);
+	}, [dashboardVariables, data, selectedDashboard?.id]);
 
 	const onSaveHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const updatedDashboard: Props = {
 			id: selectedDashboard.id,
@@ -191,8 +200,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			onSuccess: (updatedDashboard) => {
 				setSelectedRowWidgetId(null);
 				if (updatedDashboard.data) {
-					if (updatedDashboard.data.data.layout)
+					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
+					}
 					setSelectedDashboard(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
@@ -262,15 +272,21 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
-		if (!currentSelectRowId) return;
+		if (!currentSelectRowId) {
+			return;
+		}
 
 		const currentWidget = selectedDashboard?.data?.widgets?.find(
 			(e) => e.id === currentSelectRowId,
 		);
 
-		if (!currentWidget) return;
+		if (!currentWidget) {
+			return;
+		}
 
 		currentWidget.title = newTitle;
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
@@ -289,11 +305,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
-				if (setPanelMap) setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				if (setPanelMap) {
+					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				}
 				form.setFieldValue('title', '');
 				setIsSettingsModalOpen(false);
 				setCurrentSelectRowId(null);
@@ -302,7 +322,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!currentSelectRowId) return;
+		if (!currentSelectRowId) {
+			return;
+		}
 		form.setFieldValue(
 			'title',
 			(widgets?.find((widget) => widget.id === currentSelectRowId)
@@ -312,7 +334,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleRowCollapse = (id: string): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 		const rowProperties = { ...currentPanelMap[id] };
 		const updatedPanelMap = { ...currentPanelMap };
 
@@ -419,9 +443,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	const handleRowDelete = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
-		if (!currentSelectRowId) return;
+		if (!currentSelectRowId) {
+			return;
+		}
 
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== currentSelectRowId,
@@ -446,11 +474,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
-				if (setPanelMap) setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				if (setPanelMap) {
+					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
+				}
 				setIsDeleteModalOpen(false);
 				setCurrentSelectRowId(null);
 			},
@@ -579,11 +611,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 								<GridCard
 									widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
 									headerMenuList={widgetActions}
-									variables={variables}
+									variables={dashboardVariables}
 									// version={selectedDashboard?.data?.version}
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
+									enableDrillDown={enableDrillDown}
+									widgetsByDynamicVariableId={widgetsByDynamicVariableId}
 								/>
 							</Card>
 						</CardContainer>
@@ -670,3 +704,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 }
 
 export default GraphLayout;
+
+GraphLayout.defaultProps = {
+	enableDrillDown: false,
+};

@@ -1,10 +1,11 @@
-import { Tabs, TabsProps } from 'antd';
 import {
 	generatePath,
 	matchPath,
 	useLocation,
 	useParams,
 } from 'react-router-dom';
+import { Tabs, TabsProps } from 'antd';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import { RouteTabProps } from './types';
 
@@ -17,6 +18,7 @@ function RouteTab({
 	activeKey,
 	onChangeHandler,
 	history,
+	showRightSection,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
 	const params = useParams<Params>();
@@ -59,7 +61,16 @@ function RouteTab({
 			defaultActiveKey={currentRoute?.key || activeKey}
 			animated
 			items={items}
-			// eslint-disable-next-line react/jsx-props-no-spreading
+			tabBarExtraContent={
+				showRightSection && (
+					<HeaderRightSection
+						enableAnnouncements={false}
+						enableShare
+						enableFeedback
+					/>
+				)
+			}
+			// eslint-disable-next-line react/jsx-props-no-spreading ---- TODO: remove this once follow the linting rules
 			{...rest}
 		/>
 	);
@@ -67,6 +78,7 @@ function RouteTab({
 
 RouteTab.defaultProps = {
 	onChangeHandler: undefined,
+	showRightSection: true,
 };
 
 export default RouteTab;

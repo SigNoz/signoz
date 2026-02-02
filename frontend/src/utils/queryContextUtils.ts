@@ -10,12 +10,12 @@ import {
 	isFunctionToken,
 	isKeyToken,
 	isMultiValueOperator,
+	isNonValueOperator,
 	isNonValueOperatorToken,
 	isOperatorToken,
 	isQueryPairComplete,
 	isValueToken,
 } from './tokenUtils';
-import { NON_VALUE_OPERATORS } from 'constants/antlrQueryConstants';
 
 // Function to create a context object
 export function createContext(
@@ -1255,10 +1255,12 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 							allTokens[iterator].type,
 						)
 					) {
+						// Capture opening token type before advancing
+						const openingTokenType = allTokens[iterator].type;
 						multiValueStart = allTokens[iterator].start;
 						iterator += 1;
 						const closingToken =
-							allTokens[iterator].type === FilterQueryLexer.LPAREN
+							openingTokenType === FilterQueryLexer.LPAREN
 								? FilterQueryLexer.RPAREN
 								: FilterQueryLexer.RBRACK;
 
@@ -1279,6 +1281,15 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						if (allTokens[iterator].type === closingToken) {
 							multiValueEnd = allTokens[iterator].stop;
 						}
+					} else if (isValueToken(allTokens[iterator].type)) {
+						valueList.push(allTokens[iterator].text);
+						valuesPosition.push({
+							start: allTokens[iterator].start,
+							end: allTokens[iterator].stop,
+						});
+						multiValueStart = allTokens[iterator].start;
+						multiValueEnd = allTokens[iterator].stop;
+						iterator += 1;
 					}
 
 					currentPair.valuesPosition = valuesPosition;
@@ -1308,7 +1319,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				currentPair &&
 				currentPair.key &&
 				currentPair.operator &&
-				!NON_VALUE_OPERATORS.includes(currentPair.operator) &&
+				!isNonValueOperator(currentPair.operator) &&
 				!currentPair.value
 			) {
 				currentPair.value = token.text;
@@ -1328,8 +1339,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 			else if (
 				currentPair &&
 				currentPair.key &&
-				(isConjunctionToken(token.type) ||
-					(token.type === FilterQueryLexer.KEY && isQueryPairComplete(currentPair)))
+				(isConjunctionToken(token.type) || token.type === FilterQueryLexer.KEY)
 			) {
 				queryPairs.push({
 					key: currentPair.key,

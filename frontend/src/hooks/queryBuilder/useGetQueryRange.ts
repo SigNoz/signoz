@@ -1,41 +1,58 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { updateStepInterval } from 'container/GridCardLayout/utils';
+import { updateBarStepInterval } from 'container/GridCardLayout/utils';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { SuccessResponse, Warning } from 'types/api';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
-	SuccessResponse<MetricRangePayloadProps>,
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
 	APIError | Error
-> & {
-	showErrorModal?: boolean;
-};
+>;
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
+	publicQueryMeta?: {
+		isPublic: boolean;
+		widgetIndex: number;
+		publicDashboardId: string;
+	},
+) => UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	Error
+>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
 	version,
 	options,
 	headers,
+	publicQueryMeta,
 ) => {
-	const { showErrorModal: showErrorModalFn } = useErrorModal();
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
+
 	const newRequestData: GetQueryResultsProps = useMemo(() => {
 		const firstQueryData = requestData.query.builder?.queryData[0];
 		const isListWithSingleTimestampOrder =
@@ -98,7 +115,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 				interval: requestData.globalSelectedInterval,
 			});
 
-			const updatedQuery = updateStepInterval(
+			const updatedQuery = updateBarStepInterval(
 				requestData.query,
 				requestData.start ? requestData.start * 1e3 : parseInt(start, 10) * 1e3,
 				requestData.end ? requestData.end * 1e3 : parseInt(end, 10) * 1e3,
@@ -134,17 +151,22 @@ export const useGetQueryRange: UseGetQueryRange = (
 		};
 	}, [options?.retry]);
 
-	return useQuery<SuccessResponse<MetricRangePayloadProps>, APIError | Error>({
+	return useQuery<
+		SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+		APIError | Error
+	>({
 		queryFn: async ({ signal }) =>
-			GetMetricQueryRange(modifiedRequestData, version, signal, headers),
+			GetMetricQueryRange(
+				modifiedRequestData,
+				version,
+				dynamicVariables,
+				signal,
+				headers,
+				undefined,
+				publicQueryMeta,
+			),
 		...options,
 		retry,
-		onError: (error) => {
-			if (options?.showErrorModal !== false) {
-				showErrorModalFn(error as APIError);
-			}
-			options?.onError?.(error);
-		},
 		queryKey,
 	});
 };

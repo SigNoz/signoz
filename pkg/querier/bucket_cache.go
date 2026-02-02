@@ -36,29 +36,6 @@ func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheT
 	}
 }
 
-// cachedBucket represents a cached time bucket
-type cachedBucket struct {
-	StartMs uint64              `json:"startMs"`
-	EndMs   uint64              `json:"endMs"`
-	Type    qbtypes.RequestType `json:"type"`
-	Value   json.RawMessage     `json:"value"`
-	Stats   qbtypes.ExecStats   `json:"stats"`
-}
-
-// cachedData represents the full cached data for a query
-type cachedData struct {
-	Buckets  []*cachedBucket `json:"buckets"`
-	Warnings []string        `json:"warnings"`
-}
-
-func (c *cachedData) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, c)
-}
-
-func (c *cachedData) MarshalBinary() ([]byte, error) {
-	return json.Marshal(c)
-}
-
 // GetMissRanges returns cached data and missing time ranges
 func (bc *bucketCache) GetMissRanges(
 	ctx context.Context,
@@ -78,8 +55,8 @@ func (bc *bucketCache) GetMissRanges(
 	bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
 
 	// Try to get cached data
-	var data cachedData
-	err := bc.cache.Get(ctx, orgID, cacheKey, &data, false)
+	var data qbtypes.CachedData
+	err := bc.cache.Get(ctx, orgID, cacheKey, &data)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			bc.logger.ErrorContext(ctx, "error getting cached data", "error", err)
@@ -147,9 +124,9 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	cacheKey := bc.generateCacheKey(q)
 
 	// Get existing cached data
-	var existingData cachedData
-	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData, true); err != nil {
-		existingData = cachedData{}
+	var existingData qbtypes.CachedData
+	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData); err != nil {
+		existingData = qbtypes.CachedData{}
 	}
 
 	// Trim the result to exclude data within flux interval
@@ -203,7 +180,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	uniqueWarnings := bc.deduplicateWarnings(allWarnings)
 
 	// Create updated cached data
-	updatedData := cachedData{
+	updatedData := qbtypes.CachedData{
 		Buckets:  mergedBuckets,
 		Warnings: uniqueWarnings,
 	}
@@ -222,7 +199,7 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 }
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment
-func (bc *bucketCache) findMissingRangesWithStep(buckets []*cachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
+func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
 	// When step is 0 or window is too small to be cached, use simple algorithm
 	if stepMs == 0 || (startMs+stepMs) > endMs {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
@@ -265,7 +242,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*cachedBucket, startM
 	}
 
 	if needsSort {
-		slices.SortFunc(buckets, func(a, b *cachedBucket) int {
+		slices.SortFunc(buckets, func(a, b *qbtypes.CachedBucket) int {
 			if a.StartMs < b.StartMs {
 				return -1
 			}
@@ -339,7 +316,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*cachedBucket, startM
 }
 
 // findMissingRangesBasic is the simple algorithm without step alignment
-func (bc *bucketCache) findMissingRangesBasic(buckets []*cachedBucket, startMs, endMs uint64) []*qbtypes.TimeRange {
+func (bc *bucketCache) findMissingRangesBasic(buckets []*qbtypes.CachedBucket, startMs, endMs uint64) []*qbtypes.TimeRange {
 	// Check if already sorted before sorting
 	needsSort := false
 	for i := 1; i < len(buckets); i++ {
@@ -350,7 +327,7 @@ func (bc *bucketCache) findMissingRangesBasic(buckets []*cachedBucket, startMs, 
 	}
 
 	if needsSort {
-		slices.SortFunc(buckets, func(a, b *cachedBucket) int {
+		slices.SortFunc(buckets, func(a, b *qbtypes.CachedBucket) int {
 			if a.StartMs < b.StartMs {
 				return -1
 			}
@@ -421,9 +398,9 @@ func (bc *bucketCache) findMissingRangesBasic(buckets []*cachedBucket, startMs, 
 }
 
 // filterRelevantBuckets returns buckets that overlap with the requested time range
-func (bc *bucketCache) filterRelevantBuckets(buckets []*cachedBucket, startMs, endMs uint64) []*cachedBucket {
+func (bc *bucketCache) filterRelevantBuckets(buckets []*qbtypes.CachedBucket, startMs, endMs uint64) []*qbtypes.CachedBucket {
 	// Pre-allocate with estimated capacity
-	relevant := make([]*cachedBucket, 0, len(buckets))
+	relevant := make([]*qbtypes.CachedBucket, 0, len(buckets))
 
 	for _, bucket := range buckets {
 		// Check if bucket overlaps with requested range
@@ -433,7 +410,7 @@ func (bc *bucketCache) filterRelevantBuckets(buckets []*cachedBucket, startMs, e
 	}
 
 	// Sort by start time
-	slices.SortFunc(relevant, func(a, b *cachedBucket) int {
+	slices.SortFunc(relevant, func(a, b *qbtypes.CachedBucket) int {
 		if a.StartMs < b.StartMs {
 			return -1
 		}
@@ -447,7 +424,7 @@ func (bc *bucketCache) filterRelevantBuckets(buckets []*cachedBucket, startMs, e
 }
 
 // mergeBuckets combines multiple cached buckets into a single result
-func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*cachedBucket, warnings []string) *qbtypes.Result {
+func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.CachedBucket, warnings []string) *qbtypes.Result {
 	if len(buckets) == 0 {
 		return &qbtypes.Result{}
 	}
@@ -480,7 +457,7 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*cachedBucket
 }
 
 // mergeTimeSeriesValues merges time series data from multiple buckets
-func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cachedBucket) *qbtypes.TimeSeriesData {
+func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbtypes.CachedBucket) *qbtypes.TimeSeriesData {
 	// Estimate capacity based on bucket count
 	estimatedSeries := len(buckets) * 10
 
@@ -490,18 +467,12 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 		key      string
 	}
 	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
-	var queryName string
 
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
 		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
 			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", "error", err)
 			continue
-		}
-
-		// Preserve the query name from the first bucket
-		if queryName == "" && tsData.QueryName != "" {
-			queryName = tsData.QueryName
 		}
 
 		for _, aggBucket := range tsData.Aggregations {
@@ -549,7 +520,6 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*cac
 
 	// Convert map back to slice
 	result := &qbtypes.TimeSeriesData{
-		QueryName:    queryName,
 		Aggregations: make([]*qbtypes.AggregationBucket, 0, len(aggMap)),
 	}
 
@@ -638,7 +608,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 }
 
 // resultToBuckets converts a query result into time-based buckets
-func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs uint64) []*cachedBucket {
+func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs uint64) []*qbtypes.CachedBucket {
 	// Check if result is empty
 	isEmpty, isFiltered := bc.isEmptyResult(result)
 
@@ -659,7 +629,7 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 
 	// Always create a bucket, even for empty filtered results
 	// This ensures we don't re-query for data that doesn't exist
-	return []*cachedBucket{
+	return []*qbtypes.CachedBucket{
 		{
 			StartMs: startMs,
 			EndMs:   endMs,
@@ -671,9 +641,9 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 }
 
 // mergeAndDeduplicateBuckets combines and deduplicates bucket lists
-func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*cachedBucket) []*cachedBucket {
+func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
 	// Create a map to deduplicate by time range
-	bucketMap := make(map[string]*cachedBucket)
+	bucketMap := make(map[string]*qbtypes.CachedBucket)
 
 	// Add existing buckets
 	for _, bucket := range existing {
@@ -688,13 +658,13 @@ func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*cachedBucke
 	}
 
 	// Convert back to slice with pre-allocated capacity
-	result := make([]*cachedBucket, 0, len(bucketMap))
+	result := make([]*qbtypes.CachedBucket, 0, len(bucketMap))
 	for _, bucket := range bucketMap {
 		result = append(result, bucket)
 	}
 
 	// Sort by start time
-	slices.SortFunc(result, func(a, b *cachedBucket) int {
+	slices.SortFunc(result, func(a, b *qbtypes.CachedBucket) int {
 		if a.StartMs < b.StartMs {
 			return -1
 		}
@@ -738,9 +708,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 	case qbtypes.RequestTypeTimeSeries:
 		// Trim time series data
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
-			trimmedData := &qbtypes.TimeSeriesData{
-				QueryName: tsData.QueryName,
-			}
+			trimmedData := &qbtypes.TimeSeriesData{}
 
 			for _, aggBucket := range tsData.Aggregations {
 				trimmedBucket := &qbtypes.AggregationBucket{
@@ -807,7 +775,6 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 	case qbtypes.RequestTypeTimeSeries:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			filteredData := &qbtypes.TimeSeriesData{
-				QueryName:    tsData.QueryName,
 				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
 			}
 

@@ -2,8 +2,19 @@
 /* eslint-disable jsx-a11y/img-redundant-alt */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import './DashboardList.styles.scss';
-
+import {
+	ChangeEvent,
+	Key,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -28,9 +39,11 @@ import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
-import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
-import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
-import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
+import {
+	downloadObjectAsJson,
+	sanitizeDashboardData,
+} from 'container/DashboardContainer/DashboardDescription/utils';
+import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -67,19 +80,6 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import {
-	ChangeEvent,
-	Key,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
-import {
 	Dashboard,
 	IDashboardVariable,
 	WidgetRow,
@@ -96,6 +96,8 @@ import {
 	DynamicColumns,
 	filterDashboard,
 } from './utils';
+
+import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardsList(): JSX.Element {
@@ -202,7 +204,9 @@ function DashboardsList(): JSX.Element {
 	};
 
 	const sortHandle = (key: string): void => {
-		if (!dashboards) return;
+		if (!dashboards) {
+			return;
+		}
 		if (key === 'createdAt') {
 			sortDashboardsByCreatedAt(dashboards);
 			setSortOrder({
@@ -613,7 +617,7 @@ function DashboardsList(): JSX.Element {
 			{
 				label: (
 					<a
-						href="https://github.com/SigNoz/dashboards"
+						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
 					>

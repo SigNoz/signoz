@@ -5,7 +5,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 export const mockLog: ILog = {
 	id: 'test-log-id',
@@ -43,7 +43,6 @@ export const mockQuery: Query = {
 					key: 'body',
 					type: 'string',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 				timeAggregation: 'sum',
 				functions: [],
@@ -55,10 +54,11 @@ export const mockQuery: Query = {
 					op: 'AND',
 				},
 				expression: 'A',
-				reduceTo: 'sum',
+				reduceTo: ReduceOperators.SUM,
 			},
 		],
 		queryFormulas: [],
+		queryTraceOperator: [],
 	},
 	clickhouse_sql: [],
 	id: 'test-query-id',
@@ -69,7 +69,6 @@ const mockBaseAutocompleteData: BaseAutocompleteData = {
 	key: 'service',
 	type: 'string',
 	dataType: DataTypes.String,
-	isColumn: true,
 };
 
 export const mockTagFilter: TagFilter = {

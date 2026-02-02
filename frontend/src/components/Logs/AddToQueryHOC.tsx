@@ -1,11 +1,11 @@
-import './AddToQueryHOC.styles.scss';
-
+import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { Popover } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import { FontSize } from 'container/OptionsMenu/types';
-import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import './AddToQueryHOC.styles.scss';
 
 function AddToQueryHOC({
 	fieldKey,
@@ -17,7 +17,7 @@ function AddToQueryHOC({
 }: AddToQueryHOCProps): JSX.Element {
 	const handleQueryAdd = (event: MouseEvent<HTMLDivElement>): void => {
 		event.stopPropagation();
-		onAddToQuery(fieldKey, fieldValue, OPERATORS['='], undefined, dataType);
+		onAddToQuery(fieldKey, fieldValue, OPERATORS['='], dataType);
 	};
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
@@ -41,7 +41,6 @@ export interface AddToQueryHOCProps {
 		fieldKey: string,
 		fieldValue: string,
 		operator: string,
-		isJSON?: boolean,
 		dataType?: DataTypes,
 	) => void;
 	fontSize: FontSize;

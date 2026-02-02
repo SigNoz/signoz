@@ -140,7 +140,7 @@ describe('CustomSelect Component', () => {
 		fireEvent.mouseDown(selectElement);
 
 		// Check loading text is displayed
-		expect(screen.getByText('We are updating the values...')).toBeInTheDocument();
+		expect(screen.getByText('Refreshing values...')).toBeInTheDocument();
 	});
 
 	it('shows error message', () => {

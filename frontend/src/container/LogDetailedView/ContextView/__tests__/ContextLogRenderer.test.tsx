@@ -1,3 +1,6 @@
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
+import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	act,
 	render,
@@ -14,9 +17,6 @@ import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import TimezoneProvider from 'providers/Timezone';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { VirtuosoMockContext } from 'react-virtuoso';
 import store from 'store';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -31,20 +31,6 @@ import {
 
 // Mock the useContextLogData hook
 const mockHandleRunQuery = jest.fn();
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 
 jest.mock('container/OptionsMenu', () => ({
 	useOptionsMenu: (): any => ({

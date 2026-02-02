@@ -1,7 +1,7 @@
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { AxiosError, AxiosResponse } from 'axios';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
+import { AxiosError, AxiosResponse } from 'axios';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
@@ -25,6 +25,7 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 		fieldContext,
 		fieldDataType,
 		metricName,
+		signalSource,
 	}: QueryKeyRequestProps,
 	options?: UseQueryOptions<
 		AxiosResponse<QueryKeySuggestionsResponseProps>,
@@ -42,6 +43,7 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 			metricName,
 			fieldContext,
 			fieldDataType,
+			signalSource,
 		];
 	}, [
 		options?.queryKey,
@@ -50,9 +52,9 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 		metricName,
 		fieldContext,
 		fieldDataType,
+		signalSource,
 	]);
 	return useQuery<AxiosResponse<QueryKeySuggestionsResponseProps>, AxiosError>({
-		queryKey,
 		queryFn: () =>
 			getKeySuggestions({
 				signal,
@@ -60,7 +62,9 @@ export const useGetQueryKeySuggestions: UseGetQueryKeySuggestions = (
 				metricName,
 				fieldContext,
 				fieldDataType,
+				signalSource,
 			}),
 		...options,
+		queryKey,
 	});
 };

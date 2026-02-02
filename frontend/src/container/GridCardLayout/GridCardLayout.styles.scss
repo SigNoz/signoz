@@ -41,9 +41,11 @@
 			}
 		}
 
-		.widget-graph-container {
-			&.graph {
-				height: 100%;
+		.widget-graph-component-container {
+			.widget-graph-container {
+				&.graph-panel-container {
+					height: 100%;
+				}
 			}
 		}
 	}
@@ -89,11 +91,19 @@
 	}
 }
 
-.widget-graph-container {
-	height: 100%;
+.widget-graph-component-container {
+	.widget-graph-container {
+		height: 100%;
 
-	&.graph {
-		height: calc(100% - 30px);
+		&.graph-panel-container {
+			height: calc(100% - 30px);
+		}
+	}
+
+	&:hover {
+		.widget-header-more-options {
+			visibility: visible;
+		}
 	}
 }
 

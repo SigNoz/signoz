@@ -1,8 +1,6 @@
-import './QuickFiltersSettings.styles.scss';
-
+import { useMemo } from 'react';
 import { Button, Input } from 'antd';
 import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
-import { useMemo } from 'react';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { SignalType } from '../types';
@@ -10,16 +8,18 @@ import AddedFilters from './AddedFilters';
 import useQuickFilterSettings from './hooks/useQuickFilterSettings';
 import OtherFilters from './OtherFilters';
 
+import './QuickFiltersSettings.styles.scss';
+
 function QuickFiltersSettings({
 	signal,
 	setIsSettingsOpen,
 	customFilters,
-	setIsStale,
+	refetchCustomFilters,
 }: {
 	signal: SignalType | undefined;
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
 	customFilters: FilterType[];
-	setIsStale: (isStale: boolean) => void;
+	refetchCustomFilters: () => void;
 }): JSX.Element {
 	const {
 		handleSettingsClose,
@@ -34,7 +34,7 @@ function QuickFiltersSettings({
 	} = useQuickFilterSettings({
 		setIsSettingsOpen,
 		customFilters,
-		setIsStale,
+		refetchCustomFilters,
 		signal,
 	});
 

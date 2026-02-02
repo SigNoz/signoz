@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -10,7 +11,6 @@ import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribut
 import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
-import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -163,8 +163,6 @@ export function onViewAPIMonitoringPopupClick({
 									key: 'hasError',
 									dataType: DataTypes.bool,
 									type: 'tag',
-									isColumn: true,
-									isJSON: false,
 									id: 'hasError--bool--tag--true',
 								},
 								op: 'in',
@@ -178,8 +176,6 @@ export function onViewAPIMonitoringPopupClick({
 						key: 'service.name',
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 					},
 					op: '=',
 					value: servicename,
@@ -308,10 +304,8 @@ export function useGetAPMToLogsQueries({
 	const serviceName = {
 		id: 'service.name--string--resource--true',
 		dataType: DataTypes.String,
-		isColumn: false,
 		key: 'service.name',
 		type: 'resource',
-		isJSON: false,
 	};
 
 	if (filters?.length) {
@@ -356,8 +350,6 @@ export function useGetAPMToTracesQueries({
 				key: 'spanKind',
 				dataType: DataTypes.String,
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'spanKind--string--tag--true',
 			},
 			op: '=',
@@ -373,8 +365,6 @@ export function useGetAPMToTracesQueries({
 				key: 'dbSystem',
 				dataType: DataTypes.String,
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'dbSystem--string--tag--true',
 			},
 			op: 'exists',

@@ -1,15 +1,17 @@
-import { renderHook } from '@testing-library/react';
 import React from 'react';
+import { renderHook } from '@testing-library/react';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
 
 import useGetResolvedText from '../useGetResolvedText';
 
-// Mock the useDashboard hook
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: function useDashboardMock(): any {
-		return {
-			selectedDashboard: null,
-		};
-	},
+// Create a mock function that we can modify per test
+let mockDashboardVariables: IDashboardVariables = {};
+
+// Mock the useDashboardVariables hook
+jest.mock('hooks/dashboard/useDashboardVariables', () => ({
+	useDashboardVariables: jest.fn(() => ({
+		dashboardVariables: mockDashboardVariables,
+	})),
 }));
 
 describe('useGetResolvedText', () => {
@@ -20,13 +22,35 @@ describe('useGetResolvedText', () => {
 	const TRUNCATED_SERVICE = 'test, app +2';
 	const TEXT_TEMPLATE = 'Logs count in $service.name in $severity';
 
-	const renderHookWithProps = (props: {
-		text: string | React.ReactNode;
-		variables?: Record<string, string | number | boolean>;
-		dashboardVariables?: Record<string, any>;
-		maxLength?: number;
-		matcher?: string;
-	}): any => renderHook(() => useGetResolvedText(props));
+	const renderHookWithProps = (
+		props: {
+			text: string | React.ReactNode;
+			maxLength?: number;
+			matcher?: string;
+		},
+		variables?: Record<string, string | number | boolean>,
+	): any => {
+		if (variables) {
+			mockDashboardVariables = Object.entries(
+				variables,
+			).reduce<IDashboardVariables>((acc, [key, value]) => {
+				acc[key] = {
+					id: key,
+					name: key,
+					description: '',
+					type: 'CUSTOM' as const,
+					sort: 'DISABLED' as const,
+					multiSelect: false,
+					showALLOption: false,
+					selectedValue: value,
+				};
+				return acc;
+			}, {});
+		} else {
+			mockDashboardVariables = {};
+		}
+		return renderHook(() => useGetResolvedText(props));
+	};
 
 	it('should resolve variables with truncated and full text', () => {
 		const text = TEXT_TEMPLATE;
@@ -35,7 +59,7 @@ describe('useGetResolvedText', () => {
 			severity: SEVERITY_VAR,
 		};
 
-		const { result } = renderHookWithProps({ text, variables });
+		const { result } = renderHookWithProps({ text }, variables);
 
 		expect(result.current.truncatedText).toBe(
 			`Logs count in ${TRUNCATED_SERVICE} in DEBUG, INFO`,
@@ -50,7 +74,7 @@ describe('useGetResolvedText', () => {
 			severity: SEVERITY_VAR,
 		};
 
-		const { result } = renderHookWithProps({ text, variables, maxLength: 20 });
+		const { result } = renderHookWithProps({ text, maxLength: 20 }, variables);
 
 		expect(result.current.truncatedText).toBe('Logs count in test, a...');
 		expect(result.current.fullText).toBe(EXPECTED_FULL_TEXT);
@@ -62,7 +86,7 @@ describe('useGetResolvedText', () => {
 			'service.name': SERVICE_VAR,
 		};
 
-		const { result } = renderHookWithProps({ text, variables });
+		const { result } = renderHookWithProps({ text }, variables);
 
 		expect(result.current.truncatedText).toBe(
 			'Logs count in test, app +2 and test, app +2',
@@ -80,7 +104,7 @@ describe('useGetResolvedText', () => {
 			'$dyn-service.name': 'dyn-1, dyn-2',
 		};
 
-		const { result } = renderHookWithProps({ text, variables });
+		const { result } = renderHookWithProps({ text }, variables);
 
 		expect(result.current.truncatedText).toBe(
 			'Logs in test, app +2, test, app +2, test, app +2 - dyn-1, dyn-2',
@@ -97,7 +121,7 @@ describe('useGetResolvedText', () => {
 			severity: SEVERITY_VAR,
 		};
 
-		const { result } = renderHookWithProps({ text, variables, matcher: '#' });
+		const { result } = renderHookWithProps({ text, matcher: '#' }, variables);
 
 		expect(result.current.truncatedText).toBe(
 			'Logs count in test, app +2 in DEBUG, INFO',
@@ -112,7 +136,7 @@ describe('useGetResolvedText', () => {
 			active: true,
 		};
 
-		const { result } = renderHookWithProps({ text, variables });
+		const { result } = renderHookWithProps({ text }, variables);
 
 		expect(result.current.fullText).toBe('Count: 42, Active: true');
 		expect(result.current.truncatedText).toBe('Count: 42, Active: true');
@@ -124,7 +148,7 @@ describe('useGetResolvedText', () => {
 			'service.name': SERVICE_VAR,
 		};
 
-		const { result } = renderHookWithProps({ text, variables });
+		const { result } = renderHookWithProps({ text }, variables);
 
 		expect(result.current.truncatedText).toBe(
 			'Logs count in test, app +2 in $unknown',
@@ -140,10 +164,12 @@ describe('useGetResolvedText', () => {
 			'service.name': SERVICE_VAR,
 		};
 
-		const { result } = renderHookWithProps({
-			text: reactNodeText,
+		const { result } = renderHookWithProps(
+			{
+				text: reactNodeText,
+			},
 			variables,
-		});
+		);
 
 		// Should return the ReactNode unchanged
 		expect(result.current.fullText).toBe(reactNodeText);
@@ -156,10 +182,12 @@ describe('useGetResolvedText', () => {
 			'service.name': SERVICE_VAR,
 		};
 
-		const { result } = renderHookWithProps({
-			text,
+		const { result } = renderHookWithProps(
+			{
+				text,
+			},
 			variables,
-		});
+		);
 
 		// Should return the number unchanged
 		expect(result.current.fullText).toBe(text);
@@ -172,13 +200,43 @@ describe('useGetResolvedText', () => {
 			'service.name': SERVICE_VAR,
 		};
 
-		const { result } = renderHookWithProps({
-			text,
+		const { result } = renderHookWithProps(
+			{
+				text,
+			},
 			variables,
-		});
+		);
 
 		// Should return the boolean unchanged
 		expect(result.current.fullText).toBe(text);
 		expect(result.current.truncatedText).toBe(text);
+	});
+
+	it('should handle complex variable names with improved patterns', () => {
+		const text = 'API: $api.v1.endpoint Config: $config.database.host';
+		const variables = {
+			'api.v1.endpoint': '/users',
+			'config.database.host': 'localhost:5432',
+		};
+
+		const { result } = renderHookWithProps({ text }, variables);
+
+		expect(result.current.fullText).toBe('API: /users Config: localhost:5432');
+		expect(result.current.truncatedText).toBe(
+			'API: /users Config: localhost:5432',
+		);
+	});
+
+	it('should stop at punctuation boundaries correctly', () => {
+		const text = 'Status: $service.name, Error: $error.type;';
+		const variables = {
+			'service.name': 'web-api',
+			'error.type': 'timeout',
+		};
+
+		const { result } = renderHookWithProps({ text }, variables);
+
+		expect(result.current.fullText).toBe('Status: web-api, Error: timeout;');
+		expect(result.current.truncatedText).toBe('Status: web-api, Error: timeout;');
 	});
 });

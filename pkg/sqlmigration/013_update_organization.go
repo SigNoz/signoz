@@ -3,7 +3,8 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
-	"errors"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"

@@ -1,0 +1,20 @@
+.create-alert-v2-container {
+	background-color: var(--bg-ink-500);
+	padding-bottom: 100px;
+}
+
+.lightMode {
+	.create-alert-v2-container {
+		background-color: var(--bg-vanilla-100);
+	}
+}
+
+.sticky-page-spinner {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background: rgba(0, 0, 0, 0.35);
+	z-index: 10000;
+	pointer-events: auto;
+}

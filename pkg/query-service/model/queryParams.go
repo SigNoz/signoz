@@ -404,6 +404,45 @@ type TTLParams struct {
 	DelDuration           int64  // Seconds after which data will be deleted.
 }
 
+type CustomRetentionTTLParams struct {
+	Type                      string                `json:"type"`
+	DefaultTTLDays            int                   `json:"defaultTTLDays"`
+	TTLConditions             []CustomRetentionRule `json:"ttlConditions"`
+	ColdStorageVolume         string                `json:"coldStorageVolume,omitempty"`
+	ToColdStorageDurationDays int64                 `json:"coldStorageDurationDays,omitempty"`
+}
+
+type CustomRetentionRule struct {
+	Filters []FilterCondition `json:"conditions"`
+	TTLDays int               `json:"ttlDays"`
+}
+
+type FilterCondition struct {
+	Key    string   `json:"key"`
+	Values []string `json:"values"`
+}
+
+type GetCustomRetentionTTLResponse struct {
+	Version string `json:"version"`
+	Status  string `json:"status"`
+
+	// V1 fields
+	// LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
+	// LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
+	ExpectedLogsTime     int `json:"expected_logs_ttl_duration_hrs,omitempty"`
+	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
+
+	// V2 fields
+	DefaultTTLDays     int                   `json:"default_ttl_days,omitempty"`
+	TTLConditions      []CustomRetentionRule `json:"ttl_conditions,omitempty"`
+	ColdStorageVolume  string                `json:"cold_storage_volume,omitempty"`
+	ColdStorageTTLDays int                   `json:"cold_storage_ttl_days,omitempty"`
+}
+
+type CustomRetentionTTLResponse struct {
+	Message string `json:"message"`
+}
+
 type GetTTLParams struct {
 	Type string
 }

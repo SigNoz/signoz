@@ -1,13 +1,3 @@
-import { apiV3 } from 'api/apiV1';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import { Logout } from 'api/utils';
-import loginApi from 'api/v1/login/login';
-import afterLogin from 'AppRoutes/utils';
-import { ENVIRONMENT } from 'constants/env';
-import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
-import { useNotifications } from 'hooks/useNotifications';
 import {
 	createContext,
 	PropsWithChildren,
@@ -18,6 +8,17 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useQueryClient } from 'react-query';
+import { apiV3 } from 'api/apiV1';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import { Logout } from 'api/utils';
+import post from 'api/v2/sessions/rotate/post';
+import afterLogin from 'AppRoutes/utils';
+import { ENVIRONMENT } from 'constants/env';
+import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
+import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
 
 interface IEventSourceContext {
@@ -27,10 +28,7 @@ interface IEventSourceContext {
 	isConnectionError: boolean;
 	initialLoading: boolean;
 	reconnectDueToError: boolean;
-	handleStartOpenConnection: (urlProps: {
-		url?: string;
-		queryString: string;
-	}) => void;
+	handleStartOpenConnection: (filterExpression?: string) => void;
 	handleCloseConnection: () => void;
 	handleSetInitialLoading: (value: boolean) => void;
 }
@@ -61,6 +59,7 @@ export function EventSourceProvider({
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
 
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 
 	const handleSetInitialLoading = useCallback((value: boolean) => {
 		setInitialLoading(value);
@@ -78,15 +77,15 @@ export function EventSourceProvider({
 		setInitialLoading(false);
 
 		try {
-			const response = await loginApi({
-				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
+			const accessToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN);
+			const refreshToken = getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
+
+			const response = await queryClient.fetchQuery({
+				queryFn: () => post({ refreshToken: refreshToken || '' }),
+				queryKey: ['/api/v2/sessions/rotate', accessToken, refreshToken],
 			});
-			afterLogin(
-				response.data.userId,
-				response.data.accessJwt,
-				response.data.refreshJwt,
-				true,
-			);
+			afterLogin(response.data.accessToken, response.data.refreshToken, true);
+
 			// If token refresh was successful, we'll let the component
 			// handle reconnection through the reconnectDueToError state
 			setReconnectDueToError(true);
@@ -100,14 +99,18 @@ export function EventSourceProvider({
 				description: (error as APIError).getErrorMessage(),
 			});
 			setIsConnectionError(true);
-			if (!eventSourceRef.current) return;
+			if (!eventSourceRef.current) {
+				return;
+			}
 			eventSourceRef.current.close();
 			Logout();
 		}
-	}, [notifications]);
+	}, [notifications, queryClient]);
 
 	const destroyEventSourceSession = useCallback(() => {
-		if (!eventSourceRef.current) return;
+		if (!eventSourceRef.current) {
+			return;
+		}
 
 		eventSourceRef.current.close();
 		eventSourceRef.current.removeEventListener('error', handleErrorConnection);
@@ -123,12 +126,10 @@ export function EventSourceProvider({
 	}, [destroyEventSourceSession]);
 
 	const handleStartOpenConnection = useCallback(
-		(urlProps: { url?: string; queryString: string }): void => {
-			const { url, queryString } = urlProps;
-
-			const eventSourceUrl = url
-				? `${url}/?${queryString}`
-				: `${ENVIRONMENT.baseURL}${apiV3}logs/livetail?${queryString}`;
+		(filterExpression?: string): void => {
+			const eventSourceUrl = `${
+				ENVIRONMENT.baseURL
+			}${apiV3}logs/livetail?filter=${encodeURIComponent(filterExpression || '')}`;
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {

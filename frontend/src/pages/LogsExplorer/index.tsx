@@ -1,5 +1,4 @@
-import './LogsExplorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -8,9 +7,9 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
 import {
@@ -24,33 +23,37 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
+import {
+	ICurrentQueryData,
+	useHandleExplorerTabChange,
+} from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { isEqual, isNull } from 'lodash-es';
+import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import {
-	getExplorerViewForPanelType,
-	getExplorerViewFromUrl,
+	explorerViewToPanelType,
+	panelTypeToExplorerView,
 } from 'utils/explorerUtils';
 
 import { ExplorerViews } from './utils';
 
+import './LogsExplorer.styles.scss';
+
 function LogsExplorer(): JSX.Element {
-	const [searchParams] = useSearchParams();
+	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
-		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	const [selectedView, setSelectedView] = useState<ExplorerViews>(
+		() => panelTypeToExplorerView[panelTypesFromUrl],
 	);
-	const { preferences, loading: preferencesLoading } = usePreferenceContext();
+	const { logs } = usePreferenceContext();
+	const { preferences } = logs;
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -62,30 +65,7 @@ function LogsExplorer(): JSX.Element {
 		return true;
 	});
 
-	// Update selected view when panel type from URL changes
-	useEffect(() => {
-		if (panelTypesFromUrl) {
-			const newView = getExplorerViewForPanelType(panelTypesFromUrl);
-			if (newView && newView !== selectedView) {
-				setSelectedView(newView);
-			}
-		}
-	}, [panelTypesFromUrl, selectedView]);
-
-	// Update URL when selectedView changes (without triggering re-renders)
-	useEffect(() => {
-		const url = new URL(window.location.href);
-		url.searchParams.set(QueryParams.selectedExplorerView, selectedView);
-		window.history.replaceState({}, '', url.toString());
-	}, [selectedView]);
-
-	const {
-		handleRunQuery,
-		handleSetConfig,
-		updateAllQueriesOperators,
-		currentQuery,
-		updateQueriesData,
-	} = useQueryBuilder();
+	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -95,83 +75,26 @@ function LogsExplorer(): JSX.Element {
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 
-	const [shouldReset, setShouldReset] = useState(false);
-
-	const [defaultQuery, setDefaultQuery] = useState<Query>(() =>
-		updateAllQueriesOperators(
-			initialQueriesMap.logs,
-			PANEL_TYPES.LIST,
-			DataSource.LOGS,
-		),
-	);
+	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
 	const handleChangeSelectedView = useCallback(
-		(view: ExplorerViews): void => {
-			if (selectedView === ExplorerViews.LIST) {
-				handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
-			}
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
+			const nextPanelType = defaultTo(
+				explorerViewToPanelType[view],
+				PANEL_TYPES.LIST,
+			);
 
-			if (view === ExplorerViews.LIST) {
-				if (
-					selectedView !== ExplorerViews.LIST &&
-					currentQuery?.builder?.queryData?.[0]
-				) {
-					const filterToRetain = currentQuery.builder.queryData[0].filter;
-
-					const newDefaultQuery = updateAllQueriesOperators(
-						initialQueriesMap.logs,
-						PANEL_TYPES.LIST,
-						DataSource.LOGS,
-					);
-
-					const newListQuery = updateQueriesData(
-						newDefaultQuery,
-						'queryData',
-						(item, index) => {
-							if (index === 0) {
-								return { ...item, filter: filterToRetain };
-							}
-							return item;
-						},
-					);
-					setDefaultQuery(newListQuery);
-				}
-				setShouldReset(true);
-			}
-
+			handleSetConfig(nextPanelType, DataSource.LOGS);
 			setSelectedView(view);
-			handleExplorerTabChange(
-				view === ExplorerViews.TIMESERIES ? PANEL_TYPES.TIME_SERIES : view,
-			);
+
+			if (view !== ExplorerViews.LIST) {
+				setShowLiveLogs(false);
+			}
+
+			handleExplorerTabChange(nextPanelType, querySearchParameters);
 		},
-		[
-			handleSetConfig,
-			handleExplorerTabChange,
-			selectedView,
-			currentQuery,
-			updateAllQueriesOperators,
-			updateQueriesData,
-			setSelectedView,
-		],
+		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
-
-	useShareBuilderUrl({
-		defaultValue: defaultQuery,
-		forceReset: shouldReset,
-	});
-
-	useEffect(() => {
-		if (shouldReset) {
-			setShouldReset(false);
-			setDefaultQuery(
-				updateAllQueriesOperators(
-					initialQueriesMap.logs,
-					PANEL_TYPES.LIST,
-					DataSource.LOGS,
-				),
-			);
-		}
-	}, [shouldReset, updateAllQueriesOperators]);
 
 	const handleFilterVisibilityChange = (): void => {
 		setLocalStorageApi(
@@ -189,7 +112,9 @@ function LogsExplorer(): JSX.Element {
 	const logListOptionsFromLocalStorage = useMemo(() => {
 		const data = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
 
-		if (!data) return null;
+		if (!data) {
+			return null;
+		}
 
 		try {
 			return JSON.parse(data);
@@ -201,7 +126,9 @@ function LogsExplorer(): JSX.Element {
 	// Check if the columns have the required columns (timestamp, body)
 	const hasRequiredColumns = useCallback(
 		(columns?: TelemetryFieldKey[] | null): boolean => {
-			if (!columns?.length) return false;
+			if (!columns?.length) {
+				return false;
+			}
 
 			const hasTimestamp = columns.some((col) => col.name === 'timestamp');
 			const hasBody = columns.some((col) => col.name === 'body');
@@ -225,7 +152,9 @@ function LogsExplorer(): JSX.Element {
 	const migrateOptionsQuery = useCallback(
 		(query: OptionsQuery): OptionsQuery => {
 			// Skip if already migrated
-			if (query.version) return query;
+			if (query.version) {
+				return query;
+			}
 
 			if (logListOptionsFromLocalStorage?.version) {
 				return logListOptionsFromLocalStorage;
@@ -262,7 +191,7 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (!preferences || preferencesLoading) {
+		if (!preferences) {
 			return;
 		}
 		const migratedQuery = migrateOptionsQuery({
@@ -284,12 +213,7 @@ function LogsExplorer(): JSX.Element {
 		) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [
-		migrateOptionsQuery,
-		preferences,
-		redirectWithOptionsData,
-		preferencesLoading,
-	]);
+	}, [migrateOptionsQuery, preferences, redirectWithOptionsData]);
 
 	const toolbarViews = useMemo(
 		() => ({
@@ -331,58 +255,79 @@ function LogsExplorer(): JSX.Element {
 		[],
 	);
 
+	const handleShowLiveLogs = useCallback(() => {
+		setShowLiveLogs(true);
+	}, []);
+
+	const handleExitLiveLogs = useCallback(() => {
+		setShowLiveLogs(false);
+	}, []);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}>
-				{showFilters && (
-					<section className={cx('log-quick-filter-left-section')}>
-						<QuickFilters
-							className="qf-logs-explorer"
-							signal={SignalType.LOGS}
-							source={QuickFiltersSource.LOGS_EXPLORER}
-							handleFilterVisibilityChange={handleFilterVisibilityChange}
-						/>
-					</section>
-				)}
-				<section className={cx('log-module-right-section')}>
-					<Toolbar
-						showAutoRefresh={false}
-						leftActions={
-							<LeftToolbarActions
-								showFilter={showFilters}
+			<EventSourceProvider>
+				<div
+					className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}
+				>
+					{showFilters && (
+						<section className={cx('log-quick-filter-left-section')}>
+							<QuickFilters
+								className="qf-logs-explorer"
+								signal={SignalType.LOGS}
+								source={QuickFiltersSource.LOGS_EXPLORER}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								items={toolbarViews}
-								selectedView={selectedView}
-								onChangeSelectedView={handleChangeSelectedView}
 							/>
-						}
-						rightActions={
-							<RightToolbarActions
-								onStageRunQuery={(): void => handleRunQuery(true, true)}
-								listQueryKeyRef={listQueryKeyRef}
-								chartQueryKeyRef={chartQueryKeyRef}
-								isLoadingQueries={isLoadingQueries}
-							/>
-						}
-					/>
+						</section>
+					)}
+					<section className={cx('log-module-right-section')}>
+						<Toolbar
+							showAutoRefresh={false}
+							leftActions={
+								<LeftToolbarActions
+									showFilter={showFilters}
+									handleFilterVisibilityChange={handleFilterVisibilityChange}
+									items={toolbarViews}
+									selectedView={selectedView}
+									onChangeSelectedView={handleChangeSelectedView}
+								/>
+							}
+							warningElement={
+								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
+							}
+							rightActions={
+								<RightToolbarActions
+									onStageRunQuery={(): void => handleRunQuery()}
+									listQueryKeyRef={listQueryKeyRef}
+									chartQueryKeyRef={chartQueryKeyRef}
+									isLoadingQueries={isLoadingQueries}
+									showLiveLogs={showLiveLogs}
+								/>
+							}
+							showLiveLogs={showLiveLogs}
+							onGoLive={handleShowLiveLogs}
+							onExitLiveLogs={handleExitLiveLogs}
+						/>
 
-					<div className="log-explorer-query-container">
-						<div>
-							<ExplorerCard sourcepage={DataSource.LOGS}>
-								<LogExplorerQuerySection selectedView={selectedView} />
-							</ExplorerCard>
+						<div className="log-explorer-query-container">
+							<div>
+								<ExplorerCard sourcepage={DataSource.LOGS}>
+									<LogExplorerQuerySection selectedView={selectedView} />
+								</ExplorerCard>
+							</div>
+							<div className="logs-explorer-views">
+								<LogsExplorerViewsContainer
+									listQueryKeyRef={listQueryKeyRef}
+									chartQueryKeyRef={chartQueryKeyRef}
+									setIsLoadingQueries={setIsLoadingQueries}
+									setWarning={setWarning}
+									showLiveLogs={showLiveLogs}
+									handleChangeSelectedView={handleChangeSelectedView}
+								/>
+							</div>
 						</div>
-						<div className="logs-explorer-views">
-							<LogsExplorerViewsContainer
-								selectedView={selectedView}
-								listQueryKeyRef={listQueryKeyRef}
-								chartQueryKeyRef={chartQueryKeyRef}
-								setIsLoadingQueries={setIsLoadingQueries}
-							/>
-						</div>
-					</div>
-				</section>
-			</div>
+					</section>
+				</div>
+			</EventSourceProvider>
 		</Sentry.ErrorBoundary>
 	);
 }

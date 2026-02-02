@@ -4,19 +4,31 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 // dynamic step interval
 export const getStepInterval = (startTime: number, endTime: number): number => {
 	const diffInMinutes = (endTime - startTime) / 1000000 / (60 * 1000); // Convert to minutes
 
-	if (diffInMinutes <= 15) return 60; // 15 min or less
-	if (diffInMinutes <= 30) return 60; // 30 min or less
-	if (diffInMinutes <= 60) return 120; // 1 hour or less
-	if (diffInMinutes <= 360) return 520; // 6 hours or less
-	if (diffInMinutes <= 1440) return 2440; // 1 day or less
-	if (diffInMinutes <= 10080) return 10080; // 1 week or less
+	if (diffInMinutes <= 15) {
+		return 60;
+	} // 15 min or less
+	if (diffInMinutes <= 30) {
+		return 60;
+	} // 30 min or less
+	if (diffInMinutes <= 60) {
+		return 120;
+	} // 1 hour or less
+	if (diffInMinutes <= 360) {
+		return 520;
+	} // 6 hours or less
+	if (diffInMinutes <= 1440) {
+		return 2440;
+	} // 1 day or less
+	if (diffInMinutes <= 10080) {
+		return 10080;
+	} // 1 week or less
 	return 54000; // More than a week (use monthly interval)
 };
 
@@ -32,8 +44,6 @@ export const celeryAllStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -50,8 +60,6 @@ export const celeryAllStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.state--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.state',
 							type: 'tag',
 						},
@@ -61,7 +69,7 @@ export const celeryAllStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -88,7 +96,6 @@ export const celeryRetryStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
 						key: '',
 						type: '',
 					},
@@ -103,8 +110,6 @@ export const celeryRetryStateWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: 'celery.state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'celery.state',
 									type: 'tag',
 								},
@@ -119,8 +124,6 @@ export const celeryRetryStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -130,7 +133,7 @@ export const celeryRetryStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'count',
@@ -153,8 +156,6 @@ export const celeryFailedStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -169,8 +170,6 @@ export const celeryFailedStateWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: 'celery.state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'celery.state',
 									type: 'tag',
 								},
@@ -185,8 +184,6 @@ export const celeryFailedStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -196,7 +193,7 @@ export const celeryFailedStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -219,8 +216,6 @@ export const celerySuccessStateWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
-						isJSON: false,
 						key: '',
 						type: '',
 					},
@@ -235,8 +230,6 @@ export const celerySuccessStateWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: 'celery.state--string--tag--false',
-									isColumn: false,
-									isJSON: false,
 									key: 'celery.state',
 									type: 'tag',
 								},
@@ -251,8 +244,6 @@ export const celerySuccessStateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -262,7 +253,7 @@ export const celerySuccessStateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -284,7 +275,6 @@ export const celeryTasksByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.String,
 						id: '------false',
-						isColumn: false,
 						key: '',
 						type: '',
 					},
@@ -301,8 +291,6 @@ export const celeryTasksByWorkerWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -312,7 +300,7 @@ export const celeryTasksByWorkerWidgetData = (
 					limit: 10,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'rate',
@@ -338,8 +326,6 @@ export const celeryErrorByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: 'string',
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -353,8 +339,6 @@ export const celeryErrorByWorkerWidgetData = (
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
-									isColumn: true,
-									isJSON: false,
 									key: 'has_error',
 									type: '',
 								},
@@ -373,15 +357,13 @@ export const celeryErrorByWorkerWidgetData = (
 					groupBy: [
 						{
 							dataType: DataTypes.String,
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 							id: 'celery.hostname--string--tag--false',
 						},
 					],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					dataSource: 'traces',
@@ -390,8 +372,6 @@ export const celeryErrorByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: 'string',
 						id: 'span_id--string----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'span_id',
 						type: '',
 					},
@@ -411,15 +391,13 @@ export const celeryErrorByWorkerWidgetData = (
 					groupBy: [
 						{
 							dataType: DataTypes.String,
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 							id: 'celery.hostname--string--tag--false',
 						},
 					],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 				{
 					queryName: 'F1',
@@ -445,8 +423,6 @@ export const celeryLatencyByWorkerWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -463,8 +439,6 @@ export const celeryLatencyByWorkerWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.hostname--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
 						},
@@ -474,7 +448,7 @@ export const celeryLatencyByWorkerWidgetData = (
 					limit: 10,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p99',
@@ -498,8 +472,6 @@ export const celeryActiveTasksWidgetData = (
 						dataType: DataTypes.Float64,
 						id:
 							'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
-						isColumn: true,
-						isJSON: false,
 						key: 'flower_worker_number_of_currently_executing_tasks',
 						type: 'Gauge',
 					},
@@ -516,8 +488,6 @@ export const celeryActiveTasksWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'worker--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'worker',
 							type: 'tag',
 						},
@@ -527,7 +497,7 @@ export const celeryActiveTasksWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'latest',
@@ -551,8 +521,6 @@ export const celeryTaskLatencyWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -569,8 +537,6 @@ export const celeryTaskLatencyWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.task_name--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.task_name',
 							type: 'tag',
 						},
@@ -585,7 +551,7 @@ export const celeryTaskLatencyWidgetData = (
 						},
 					],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: type || 'p99',
@@ -606,8 +572,6 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -624,8 +588,6 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -640,7 +602,7 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -660,8 +622,6 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -676,8 +636,6 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -692,8 +650,6 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -708,7 +664,7 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -729,8 +685,6 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -745,8 +699,6 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -761,8 +713,6 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -777,7 +727,7 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -796,8 +746,6 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.Float64,
 					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'duration_nano',
 					type: '',
 				},
@@ -812,8 +760,6 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -828,8 +774,6 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 					{
 						dataType: DataTypes.String,
 						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
 						key: 'celery.task_name',
 						type: 'tag',
 					},
@@ -844,7 +788,7 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 					},
 				],
 				queryName: 'A',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'avg',
@@ -869,8 +813,6 @@ export const celeryTimeSeriesTablesWidgetData = (
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
 						key: 'duration_nano',
 						type: '',
 					},
@@ -885,8 +827,6 @@ export const celeryTimeSeriesTablesWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									id: `${entity}--string--tag--false`,
-									isColumn: false,
-									isJSON: false,
 									key: `${entity}`,
 									type: 'tag',
 								},
@@ -901,8 +841,6 @@ export const celeryTimeSeriesTablesWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'celery.task_name--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'celery.task_name',
 							type: 'tag',
 						},
@@ -912,7 +850,7 @@ export const celeryTimeSeriesTablesWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -933,8 +871,6 @@ export const celeryAllStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'span_id',
 					type: '',
 				},
@@ -953,7 +889,7 @@ export const celeryAllStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',
@@ -972,8 +908,6 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'span_id',
 					type: '',
 				},
@@ -988,8 +922,6 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -1006,7 +938,7 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',
@@ -1025,8 +957,6 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
-					isJSON: false,
 					key: 'span_id',
 					type: '',
 				},
@@ -1041,8 +971,6 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -1059,7 +987,7 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',
@@ -1078,7 +1006,6 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 				aggregateAttribute: {
 					dataType: DataTypes.String,
 					id: 'span_id--string----true',
-					isColumn: true,
 					key: 'span_id',
 					type: '',
 				},
@@ -1093,8 +1020,6 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 							key: {
 								dataType: DataTypes.String,
 								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
 								key: 'celery.state',
 								type: 'tag',
 							},
@@ -1111,7 +1036,7 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [],
 				queryName: 'A',
-				reduceTo: 'last',
+				reduceTo: ReduceOperators.LAST,
 				spaceAggregation: 'sum',
 				stepInterval: 60,
 				timeAggregation: 'count_distinct',

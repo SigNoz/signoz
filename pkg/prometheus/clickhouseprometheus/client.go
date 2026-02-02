@@ -3,12 +3,13 @@ package clickhouseprometheus
 import (
 	"context"
 	"fmt"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"math"
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/prompb"
@@ -122,7 +123,7 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 		case prompb.LabelMatcher_NRE:
 			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
 		default:
-			return "", nil, fmt.Errorf("unexpected matcher found in query: %s", m.Type.String())
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported or invalid matcher type: %s", m.Type.String())
 		}
 		args = append(args, m.Name, m.Value)
 		argCount += 2

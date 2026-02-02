@@ -1,0 +1,26 @@
+.live-logs-chart-container {
+	height: 200px;
+	min-height: 200px;
+	border-left: none;
+	border-right: none;
+}
+
+.live-logs-settings-panel {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px;
+	border-bottom: 1px solid var(--bg-ink-300);
+
+	.live-logs-frequency-chart-view-controller {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+}
+
+.lightMode {
+	.live-logs-settings-panel {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+	}
+}

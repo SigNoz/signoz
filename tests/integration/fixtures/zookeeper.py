@@ -20,7 +20,7 @@ def zookeeper(
     def create() -> types.TestContainerDocker:
         version = request.config.getoption("--zookeeper-version")
 
-        container = DockerContainer(image=f"bitnami/zookeeper:{version}")
+        container = DockerContainer(image=f"signoz/zookeeper:{version}")
         container.with_env("ALLOW_ANONYMOUS_LOGIN", "yes")
         container.with_exposed_ports(2181)
         container.with_network(network=network)

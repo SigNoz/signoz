@@ -29,6 +29,11 @@ var (
 	OrderByTraceDuration = TraceOrderBy{valuer.NewString("trace_duration")}
 )
 
+const (
+	// MaxTraceOperators defines the maximum number of operators allowed in a trace expression
+	MaxTraceOperators = 10
+)
+
 type QueryBuilderTraceOperator struct {
 	Name     string `json:"name"`
 	Disabled bool   `json:"disabled,omitempty"`
@@ -41,14 +46,20 @@ type QueryBuilderTraceOperator struct {
 	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
 
 	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order []OrderBy `json:"orderBy,omitempty"`
+	Order []OrderBy `json:"order,omitempty"`
 
 	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
 	StepInterval Step               `json:"stepInterval,omitempty"`
 	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
 
+	// having clause to apply to the aggregated query results
+	Having *Having `json:"having,omitempty"`
+
 	Limit  int    `json:"limit,omitempty"`
+	Offset int    `json:"offset,omitempty"`
 	Cursor string `json:"cursor,omitempty"`
+
+	Legend string `json:"legend,omitempty"`
 
 	// Other post-processing options
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
@@ -84,7 +95,7 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 		)
 	}
 
-	parsed, err := parseTraceExpression(q.Expression)
+	parsed, operatorCount, err := parseTraceExpression(q.Expression)
 	if err != nil {
 		return errors.WrapInvalidInputf(
 			err,
@@ -94,13 +105,24 @@ func (q *QueryBuilderTraceOperator) ParseExpression() error {
 		)
 	}
 
+	// Validate operator count immediately during parsing
+	if operatorCount > MaxTraceOperators {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"expression contains %d operators, which exceeds the maximum allowed %d operators",
+			operatorCount,
+			MaxTraceOperators,
+		)
+	}
+
 	q.ParsedExpression = parsed
 	return nil
 }
 
 // ValidateTraceOperator validates that all referenced queries exist and are trace queries
 func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelope) error {
-	// Parse the expression
+	// Parse the expression - this now includes operator count validation
 	if err := q.ParseExpression(); err != nil {
 		return err
 	}
@@ -131,7 +153,7 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 	}
 
 	// Get all query names referenced in the expression
-	referencedQueries := q.collectReferencedQueries(q.ParsedExpression)
+	referencedQueries := q.CollectReferencedQueries(q.ParsedExpression)
 
 	// Validate that all referenced queries exist and are trace queries
 	for _, queryName := range referencedQueries {
@@ -155,6 +177,15 @@ func (q *QueryBuilderTraceOperator) ValidateTraceOperator(queries []QueryEnvelop
 				signal,
 			)
 		}
+	}
+
+	if q.StepInterval.Seconds() < 0 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"stepInterval cannot be negative, got %f seconds",
+			q.StepInterval.Seconds(),
+		)
 	}
 
 	// Validate ReturnSpansFrom if specified
@@ -234,6 +265,15 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 		)
 	}
 
+	if q.Offset < 0 {
+		return errors.WrapInvalidInputf(
+			nil,
+			errors.CodeInvalidInput,
+			"offset must be non-negative, got %d",
+			q.Offset,
+		)
+	}
+
 	// For production use, you might want to enforce maximum limits
 	if q.Limit > 10000 {
 		return errors.WrapInvalidInputf(
@@ -247,8 +287,8 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 	return nil
 }
 
-// collectReferencedQueries collects all query names referenced in the expression tree
-func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOperand) []string {
+// CollectReferencedQueries collects all query names referenced in the expression tree
+func (q *QueryBuilderTraceOperator) CollectReferencedQueries(operand *TraceOperand) []string {
 	if operand == nil {
 		return nil
 	}
@@ -260,8 +300,8 @@ func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOpera
 	}
 
 	// Recursively collect from children
-	queries = append(queries, q.collectReferencedQueries(operand.Left)...)
-	queries = append(queries, q.collectReferencedQueries(operand.Right)...)
+	queries = append(queries, q.CollectReferencedQueries(operand.Left)...)
+	queries = append(queries, q.CollectReferencedQueries(operand.Right)...)
 
 	// Remove duplicates
 	seen := make(map[string]bool)
@@ -274,6 +314,95 @@ func (q *QueryBuilderTraceOperator) collectReferencedQueries(operand *TraceOpera
 	}
 
 	return unique
+}
+
+// Copy creates a deep copy of QueryBuilderTraceOperator
+func (q QueryBuilderTraceOperator) Copy() QueryBuilderTraceOperator {
+	// Start with a shallow copy
+	c := q
+
+	if q.Filter != nil {
+		c.Filter = q.Filter.Copy()
+	}
+
+	if q.Order != nil {
+		c.Order = make([]OrderBy, len(q.Order))
+		for i, o := range q.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if q.Aggregations != nil {
+		c.Aggregations = make([]TraceAggregation, len(q.Aggregations))
+		copy(c.Aggregations, q.Aggregations)
+	}
+
+	if q.GroupBy != nil {
+		c.GroupBy = make([]GroupByKey, len(q.GroupBy))
+		for i, gb := range q.GroupBy {
+			c.GroupBy[i] = gb.Copy()
+		}
+	}
+
+	if q.Having != nil {
+		c.Having = q.Having.Copy()
+	}
+
+	if q.SelectFields != nil {
+		c.SelectFields = make([]telemetrytypes.TelemetryFieldKey, len(q.SelectFields))
+		copy(c.SelectFields, q.SelectFields)
+	}
+
+	if q.Functions != nil {
+		c.Functions = make([]Function, len(q.Functions))
+		for i, f := range q.Functions {
+			c.Functions[i] = f.Copy()
+		}
+	}
+
+	// Note: ParsedExpression is not copied as it's internal and will be re-parsed when needed
+	c.ParsedExpression = nil
+
+	return c
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+func (q *QueryBuilderTraceOperator) UnmarshalJSON(data []byte) error {
+	// Define a type alias to avoid infinite recursion
+	type Alias QueryBuilderTraceOperator
+
+	var temp Alias
+	// Use UnmarshalJSONWithContext for better error messages
+	if err := UnmarshalJSONWithContext(data, &temp, "query spec"); err != nil {
+		return err
+	}
+
+	// Copy the decoded values back to the original struct
+	*q = QueryBuilderTraceOperator(temp)
+
+	// Nomarlize the query after unmarshaling
+	q.Normalize()
+	return nil
+}
+
+// Normalize normalizes all the field keys in the query
+func (q *QueryBuilderTraceOperator) Normalize() {
+
+	// normalize select fields
+	for idx := range q.SelectFields {
+		q.SelectFields[idx].Normalize()
+	}
+
+	// normalize group by fields
+	for idx := range q.GroupBy {
+		q.GroupBy[idx].Normalize()
+	}
+
+	// normalize order by fields
+	for idx := range q.Order {
+		q.Order[idx].Key.Normalize()
+	}
+
 }
 
 // ValidateUniqueTraceOperator ensures only one trace operator exists in queries
@@ -304,9 +433,8 @@ func ValidateUniqueTraceOperator(queries []QueryEnvelope) error {
 	return nil
 }
 
-// parseTraceExpression parses an expression string into a tree structure
 // Handles precedence: NOT (highest) > || > && > => (lowest)
-func parseTraceExpression(expr string) (*TraceOperand, error) {
+func parseTraceExpression(expr string) (*TraceOperand, int, error) {
 	expr = strings.TrimSpace(expr)
 
 	// Handle parentheses
@@ -319,40 +447,42 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 
 	// Handle unary NOT operator (prefix)
 	if strings.HasPrefix(expr, "NOT ") {
-		operand, err := parseTraceExpression(expr[4:])
+		operand, count, err := parseTraceExpression(expr[4:])
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		notOp := TraceOperatorNot
 		return &TraceOperand{
 			Operator: &notOp,
 			Left:     operand,
-		}, nil
+		}, count + 1, nil // Add 1 for this NOT operator
 	}
 
 	// Find binary operators with lowest precedence first (=> has lowest precedence)
 	// Order: => (lowest) < && < || < NOT (highest)
-	operators := []string{"=>", "&&", "||", " NOT "}
+	operators := []string{"->", "=>", "&&", "||", " NOT "}
 
 	for _, op := range operators {
 		if pos := findOperatorPosition(expr, op); pos != -1 {
 			leftExpr := strings.TrimSpace(expr[:pos])
 			rightExpr := strings.TrimSpace(expr[pos+len(op):])
 
-			left, err := parseTraceExpression(leftExpr)
+			left, leftCount, err := parseTraceExpression(leftExpr)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 
-			right, err := parseTraceExpression(rightExpr)
+			right, rightCount, err := parseTraceExpression(rightExpr)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 
 			var opType TraceOperatorType
 			switch strings.TrimSpace(op) {
 			case "=>":
 				opType = TraceOperatorDirectDescendant
+			case "->":
+				opType = TraceOperatorIndirectDescendant
 			case "&&":
 				opType = TraceOperatorAnd
 			case "||":
@@ -365,13 +495,13 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 				Operator: &opType,
 				Left:     left,
 				Right:    right,
-			}, nil
+			}, leftCount + rightCount + 1, nil // Add counts from both sides + 1 for this operator
 		}
 	}
 
 	// If no operators found, this should be a query reference
 	if matched, _ := regexp.MatchString(`^[A-Za-z][A-Za-z0-9_]*$`, expr); !matched {
-		return nil, errors.WrapInvalidInputf(
+		return nil, 0, errors.WrapInvalidInputf(
 			nil,
 			errors.CodeInvalidInput,
 			"invalid query reference '%s'",
@@ -379,9 +509,10 @@ func parseTraceExpression(expr string) (*TraceOperand, error) {
 		)
 	}
 
+	// Leaf node - no operators
 	return &TraceOperand{
 		QueryRef: &TraceOperatorQueryRef{Name: expr},
-	}, nil
+	}, 0, nil
 }
 
 // isBalancedParentheses checks if parentheses are balanced in the expression

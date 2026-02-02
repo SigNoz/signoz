@@ -6,10 +6,13 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/slices"
 )
@@ -17,33 +20,78 @@ import (
 const (
 	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 	IncreaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
+
+	RateWithInterpolation = `
+		CASE 
+			WHEN row_number() OVER rate_window = 1 THEN 
+				-- First row: try to interpolate using next value
+				CASE 
+					WHEN leadInFrame(per_series_value, 1) OVER rate_window IS NOT NULL THEN
+						-- Assume linear growth to next point
+						(leadInFrame(per_series_value, 1) OVER rate_window - per_series_value) / 
+						(leadInFrame(ts, 1) OVER rate_window - ts)
+					ELSE 
+						0  -- No next value either, can't interpolate
+				END
+			WHEN (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0 THEN
+				-- Counter reset detected
+				per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window)
+			ELSE 
+				-- Normal case: calculate rate
+				(per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / 
+				(ts - lagInFrame(ts, 1) OVER rate_window)
+		END`
+
+	IncreaseWithInterpolation = `
+		CASE 
+			WHEN row_number() OVER rate_window = 1 THEN 
+				-- First row: try to interpolate using next value
+				CASE 
+					WHEN leadInFrame(per_series_value, 1) OVER rate_window IS NOT NULL THEN
+						-- Calculate the interpolated increase for this interval
+						((leadInFrame(per_series_value, 1) OVER rate_window - per_series_value) / 
+						 (leadInFrame(ts, 1) OVER rate_window - ts)) * 
+						(leadInFrame(ts, 1) OVER rate_window - ts)
+					ELSE 
+						0  -- No next value either, can't interpolate
+				END
+			WHEN (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0 THEN
+				-- Counter reset detected: the increase is the current value
+				per_series_value
+			ELSE 
+				-- Normal case: calculate increase
+				(per_series_value - lagInFrame(per_series_value, 1) OVER rate_window)
+		END`
 )
 
-type metricQueryStatementBuilder struct {
+type MetricQueryStatementBuilder struct {
 	logger        *slog.Logger
 	metadataStore telemetrytypes.MetadataStore
 	fm            qbtypes.FieldMapper
 	cb            qbtypes.ConditionBuilder
+	flagger       flagger.Flagger
 }
 
-var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*metricQueryStatementBuilder)(nil)
+var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*MetricQueryStatementBuilder)(nil)
 
 func NewMetricQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-) *metricQueryStatementBuilder {
+	flagger flagger.Flagger,
+) *MetricQueryStatementBuilder {
 	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetrics")
-	return &metricQueryStatementBuilder{
+	return &MetricQueryStatementBuilder{
 		logger:        metricsSettings.Logger(),
 		metadataStore: metadataStore,
 		fm:            fieldMapper,
 		cb:            conditionBuilder,
+		flagger:       flagger,
 	}
 }
 
-func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) []*telemetrytypes.FieldKeySelector {
+func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) []*telemetrytypes.FieldKeySelector {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 	if query.Filter != nil && query.Filter.Expression != "" {
 		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
@@ -67,11 +115,16 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalMetrics
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		keySelectors[idx].MetricContext = &telemetrytypes.MetricContext{
+			MetricName: query.Aggregations[0].MetricName,
+		}
+		keySelectors[idx].Source = query.Source
 	}
 	return keySelectors
 }
 
-func (b *metricQueryStatementBuilder) Build(
+func (b *MetricQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
 	end uint64,
@@ -79,8 +132,8 @@ func (b *metricQueryStatementBuilder) Build(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	keySelectors := getKeySelectors(query)
-	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keySelectors := GetKeySelectors(query)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +165,7 @@ func (b *metricQueryStatementBuilder) Build(
 // we can directly use the quantilesDDMerge function
 //
 // all of this is true only for delta metrics
-func (b *metricQueryStatementBuilder) canShortCircuitDelta(q qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
+func (b *MetricQueryStatementBuilder) CanShortCircuitDelta(q qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
 	if q.Aggregations[0].Temporality != metrictypes.Delta {
 		return false
 	}
@@ -138,7 +191,7 @@ func (b *metricQueryStatementBuilder) canShortCircuitDelta(q qbtypes.QueryBuilde
 	return false
 }
 
-func (b *metricQueryStatementBuilder) buildPipelineStatement(
+func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	ctx context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
@@ -199,7 +252,7 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 		return nil, err
 	}
 
-	if b.canShortCircuitDelta(query) {
+	if b.CanShortCircuitDelta(query) {
 		// spatial_aggregation_cte directly for certain delta queries
 		frag, args := b.buildTemporalAggDeltaFastPath(start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
 		if frag != "" {
@@ -229,10 +282,10 @@ func (b *metricQueryStatementBuilder) buildPipelineStatement(
 	query.GroupBy = origGroupBy
 
 	// final SELECT
-	return b.buildFinalSelect(cteFragments, cteArgs, query)
+	return b.BuildFinalSelect(cteFragments, cteArgs, query)
 }
 
-func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
+func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	timeSeriesCTE string,
@@ -280,7 +333,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
-func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
+func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 	ctx context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
@@ -289,23 +342,24 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 ) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	var filterWhere *sqlbuilder.WhereClause
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		filterWhere, _, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		})
+		}, start, end)
 		if err != nil {
 			return "", nil, err
 		}
 	}
 
-	start, end, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
+	start, end, _, tbl := WhichTSTableToUse(start, end, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s", DBName, tbl))
 
 	sb.Select("fingerprint")
@@ -332,8 +386,8 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.EQ("__normalized", false),
 	)
 
-	if filterWhere != nil {
-		sb.AddWhereClause(filterWhere)
+	if preparedWhereClause != nil {
+		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 
 	sb.GroupBy("fingerprint")
@@ -343,7 +397,7 @@ func (b *metricQueryStatementBuilder) buildTimeSeriesCTE(
 	return fmt.Sprintf("(%s) AS filtered_time_series", q), args, nil
 }
 
-func (b *metricQueryStatementBuilder) buildTemporalAggregationCTE(
+func (b *MetricQueryStatementBuilder) buildTemporalAggregationCTE(
 	ctx context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
@@ -357,7 +411,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggregationCTE(
 	return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
 }
 
-func (b *metricQueryStatementBuilder) buildTemporalAggDelta(
+func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 	_ context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
@@ -400,8 +454,8 @@ func (b *metricQueryStatementBuilder) buildTemporalAggDelta(
 	return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
 }
 
-func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
-	_ context.Context,
+func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
+	ctx context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	timeSeriesCTE string,
@@ -436,9 +490,15 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
+	// ! TODO (balanikaran) Get OrgID via function parameter instead of valuer.GenerateUUID()
+	interpolationEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
+
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
 		rateExpr := fmt.Sprintf(RateWithoutNegative, start, start)
+		if interpolationEnabled {
+			rateExpr = RateWithInterpolation
+		}
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
@@ -451,6 +511,9 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	case metrictypes.TimeAggregationIncrease:
 		incExpr := fmt.Sprintf(IncreaseWithoutNegative, start, start)
+		if interpolationEnabled {
+			incExpr = IncreaseWithInterpolation
+		}
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
@@ -465,7 +528,7 @@ func (b *metricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	}
 }
 
-func (b *metricQueryStatementBuilder) buildSpatialAggregationCTE(
+func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ context.Context,
 	_ uint64,
 	_ uint64,
@@ -491,7 +554,7 @@ func (b *metricQueryStatementBuilder) buildSpatialAggregationCTE(
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
-func (b *metricQueryStatementBuilder) buildFinalSelect(
+func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	cteFragments []string,
 	cteArgs [][]any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],

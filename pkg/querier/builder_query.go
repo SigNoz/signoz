@@ -10,9 +10,11 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 type builderQuery[T any] struct {
@@ -61,6 +63,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
+
+	// Add source type
+	parts = append(parts, fmt.Sprintf("source=%s", q.spec.Source.StringValue()))
 
 	// Add step interval if present
 	parts = append(parts, fmt.Sprintf("step=%s", q.spec.StepInterval.String()))
@@ -194,7 +199,9 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	result.Warnings = stmt.Warnings
+	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
 }
 
@@ -241,6 +248,40 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
+	}
+
+	// merge body_json and promoted into body
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		switch typedPayload := payload.(type) {
+		case *qbtypes.RawData:
+			for _, rr := range typedPayload.Rows {
+				seeder := func() error {
+					body, ok := rr.Data[telemetrylogs.LogsV2BodyJSONColumn].(map[string]any)
+					if !ok {
+						return nil
+					}
+					promoted, ok := rr.Data[telemetrylogs.LogsV2BodyPromotedColumn].(map[string]any)
+					if !ok {
+						return nil
+					}
+					seed(promoted, body)
+					str, err := sonic.MarshalString(body)
+					if err != nil {
+						return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
+					}
+					rr.Data["body"] = str
+					return nil
+				}
+				err := seeder()
+				if err != nil {
+					return nil, err
+				}
+
+				delete(rr.Data, telemetrylogs.LogsV2BodyJSONColumn)
+				delete(rr.Data, telemetrylogs.LogsV2BodyPromotedColumn)
+			}
+			payload = typedPayload
+		}
 	}
 
 	return &qbtypes.Result{
@@ -297,6 +338,9 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		}
 	}
 
+	var warnings []string
+	var warningsDocURL string
+
 	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
@@ -305,7 +349,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		if err != nil {
 			return nil, err
 		}
-
+		warnings = stmt.Warnings
+		warningsDocURL = stmt.WarningsDocURL
 		// Execute with proper context for partial value detection
 		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 		if err != nil {
@@ -345,6 +390,8 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			Rows:       rows,
 			NextCursor: nextCursor,
 		},
+		Warnings:       warnings,
+		WarningsDocURL: warningsDocURL,
 		Stats: qbtypes.ExecStats{
 			RowsScanned:  totalRows,
 			BytesScanned: totalBytes,
@@ -363,4 +410,19 @@ func decodeCursor(cur string) (int64, error) {
 		return 0, err
 	}
 	return strconv.ParseInt(string(b), 10, 64)
+}
+
+func seed(promoted map[string]any, body map[string]any) {
+	for key, fromValue := range promoted {
+		if toValue, ok := body[key]; !ok {
+			body[key] = fromValue
+		} else {
+			if fromValue, ok := fromValue.(map[string]any); ok {
+				if toValue, ok := toValue.(map[string]any); ok {
+					seed(fromValue, toValue)
+					body[key] = toValue
+				}
+			}
+		}
+	}
 }

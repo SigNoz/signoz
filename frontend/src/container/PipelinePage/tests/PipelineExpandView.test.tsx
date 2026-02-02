@@ -3,20 +3,6 @@ import { render } from 'tests/test-utils';
 import { pipelineMockData } from '../mocks/pipeline';
 import PipelineExpandView from '../PipelineListsView/PipelineExpandView';
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 beforeAll(() => {
 	Object.defineProperty(window, 'matchMedia', {
 		writable: true,

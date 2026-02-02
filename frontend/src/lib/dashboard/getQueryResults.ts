@@ -11,22 +11,24 @@ import {
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, SuccessResponseV2, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
+import getPublicDashboardWidgetData from 'api/dashboard/public/getPublicDashboardWidgetData';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -72,53 +74,144 @@ const getQueryDataSource = (
 	return queryItem?.dataSource || null;
 };
 
+const getLegendForSingleAggregation = (
+	queryData: QueryData,
+	allQueries: IBuilderQuery[],
+	aggregationAlias: string,
+	aggregationExpression: string,
+	labelName: string,
+	singleAggregation: boolean,
+) => {
+	const queryItem = allQueries.find(
+		(query) => query.queryName === queryData.queryName,
+	);
+
+	const legend = queryItem?.legend;
+	// Check if groupBy exists and has items
+	const hasGroupBy = queryItem?.groupBy && queryItem.groupBy.length > 0;
+
+	if (hasGroupBy) {
+		if (singleAggregation) {
+			return labelName;
+		} else {
+			return `${aggregationAlias || aggregationExpression}-${labelName}`;
+		}
+	} else {
+		if (singleAggregation) {
+			return aggregationAlias || legend || aggregationExpression;
+		} else {
+			return aggregationAlias || aggregationExpression;
+		}
+	}
+};
+
+const getLegendForMultipleAggregations = (
+	queryData: QueryData,
+	allQueries: IBuilderQuery[],
+	aggregationAlias: string,
+	aggregationExpression: string,
+	labelName: string,
+	singleAggregation: boolean,
+) => {
+	const queryItem = allQueries.find(
+		(query) => query.queryName === queryData.queryName,
+	);
+
+	const legend = queryItem?.legend;
+	// Check if groupBy exists and has items
+	const hasGroupBy = queryItem?.groupBy && queryItem.groupBy.length > 0;
+
+	if (hasGroupBy) {
+		if (singleAggregation) {
+			return labelName;
+		} else {
+			return `${aggregationAlias || aggregationExpression}-${labelName}`;
+		}
+	} else {
+		if (singleAggregation) {
+			return aggregationAlias || labelName || aggregationExpression;
+		} else {
+			return `${aggregationAlias || aggregationExpression}-${labelName}`;
+		}
+	}
+};
+
 export const getLegend = (
 	queryData: QueryData,
 	payloadQuery: Query,
 	labelName: string,
 ) => {
-	const aggregationPerQuery = payloadQuery?.builder?.queryData.reduce(
-		(acc, query) => {
-			if (query.queryName === queryData.queryName) {
-				acc[query.queryName] = createAggregation(query);
-			}
-			return acc;
-		},
-		{},
-	);
+	// For non-query builder queries, return the label name directly
+	if (payloadQuery.queryType !== EQueryType.QUERY_BUILDER) {
+		return labelName;
+	}
+
+	// Combine queryData and queryTraceOperator
+	const allQueries = [
+		...(payloadQuery?.builder?.queryData || []),
+		...(payloadQuery?.builder?.queryTraceOperator || []),
+	];
+
+	const aggregationPerQuery = allQueries.reduce((acc, query) => {
+		if (query.queryName === queryData.queryName) {
+			acc[query.queryName] = createAggregation(query);
+		}
+		return acc;
+	}, {});
 
 	const metaData = queryData?.metaData;
 	const aggregation =
 		aggregationPerQuery?.[metaData?.queryName]?.[metaData?.index];
 
-	const aggregationName = aggregation?.alias || aggregation?.expression || '';
+	const aggregationAlias = aggregation?.alias || '';
+	const aggregationExpression = aggregation?.expression || '';
 
-	// Check if there's only one total query (queryData + queryFormulas)
-	const totalQueries =
-		(payloadQuery?.builder?.queryData?.length || 0) +
-		(payloadQuery?.builder?.queryFormulas?.length || 0);
-	const showSingleAggregationName =
-		totalQueries === 1 && labelName === metaData?.queryName;
+	// Check if there's only one total query
+	const singleQuery = allQueries.length === 1;
+	const singleAggregation =
+		aggregationPerQuery?.[metaData?.queryName]?.length === 1;
 
-	if (aggregationName) {
-		return showSingleAggregationName
-			? aggregationName
-			: `${aggregationName}-${labelName}`;
+	if (aggregationAlias || aggregationExpression) {
+		return singleQuery
+			? getLegendForSingleAggregation(
+					queryData,
+					allQueries,
+					aggregationAlias,
+					aggregationExpression,
+					labelName,
+					singleAggregation,
+			  )
+			: getLegendForMultipleAggregations(
+					queryData,
+					allQueries,
+					aggregationAlias,
+					aggregationExpression,
+					labelName,
+					singleAggregation,
+			  );
 	}
-	return labelName || metaData?.queryName;
+	return labelName || metaData?.queryName || queryData.queryName;
 };
 
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
+	dynamicVariables?: IDashboardVariable[],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	isInfraMonitoring?: boolean,
-): Promise<SuccessResponse<MetricRangePayloadProps>> {
+	publicQueryMeta?: {
+		isPublic: boolean;
+		widgetIndex: number;
+		publicDashboardId: string;
+	},
+): Promise<SuccessResponse<MetricRangePayloadProps> & { warning?: Warning }> {
 	let legendMap: Record<string, string>;
 	let response:
 		| SuccessResponse<MetricRangePayloadProps>
-		| SuccessResponseV2<MetricRangePayloadV5>;
+		| SuccessResponseV2<MetricRangePayloadV5>
+		| (SuccessResponse<MetricRangePayloadProps> & { warning?: Warning });
+	let warning: Warning | undefined;
 
 	const panelType = props.originalGraphType || props.graphType;
 
@@ -146,17 +239,25 @@ export async function GetMetricQueryRange(
 						},
 					},
 				},
+				warning: undefined,
 			},
 			params: props,
+			warnings: [],
 		};
 	}
 
 	if (version === ENTITY_VERSION_V5) {
-		const v5Result = prepareQueryRangePayloadV5(props);
+		const v5Result = prepareQueryRangePayloadV5({
+			...props,
+			dynamicVariables,
+		});
 		legendMap = v5Result.legendMap;
 
 		// atleast one query should be there to make call to v5 api
-		if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
+		if (
+			v5Result.queryPayload.compositeQuery.queries.length === 0 &&
+			!publicQueryMeta?.isPublic
+		) {
 			return {
 				statusCode: 200,
 				error: null,
@@ -173,26 +274,51 @@ export async function GetMetricQueryRange(
 						},
 					},
 				},
+				warning: undefined,
 				params: props,
+				warnings: [],
 			};
 		}
 
-		const v5Response = await getQueryRangeV5(
-			v5Result.queryPayload,
-			version,
-			signal,
-			headers,
-		);
+		if (publicQueryMeta?.isPublic) {
+			const publicResponse = await getPublicDashboardWidgetData({
+				id: publicQueryMeta?.publicDashboardId,
+				index: publicQueryMeta?.widgetIndex,
+				startTime: props.start * 1000,
+				endTime: props.end * 1000,
+			});
 
-		// Convert V5 response to legacy format for components
-		response = convertV5ResponseToLegacy(
-			{
-				payload: v5Response.data,
-				params: v5Result.queryPayload,
-			},
-			legendMap,
-			finalFormatForWeb,
-		);
+			// Convert V5 response to legacy format for components
+			response = convertV5ResponseToLegacy(
+				{
+					payload: publicResponse.data,
+					params: v5Result.queryPayload,
+				},
+				legendMap,
+				finalFormatForWeb,
+			);
+
+			warning = response.payload.warning || undefined;
+		} else {
+			const v5Response = await getQueryRangeV5(
+				v5Result.queryPayload,
+				version,
+				signal,
+				headers,
+			);
+
+			// Convert V5 response to legacy format for components
+			response = convertV5ResponseToLegacy(
+				{
+					payload: v5Response.data,
+					params: v5Result.queryPayload,
+				},
+				legendMap,
+				finalFormatForWeb,
+			);
+
+			warning = response.payload.warning || undefined;
+		}
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
 		legendMap = legacyResult.legendMap;
@@ -255,14 +381,17 @@ export async function GetMetricQueryRange(
 		);
 	}
 
-	return response;
+	return {
+		...response,
+		warning,
+	};
 }
 
 export interface GetQueryResultsProps {
 	query: Query;
 	graphType: PANEL_TYPES;
 	selectedTime: timePreferenceType;
-	globalSelectedInterval?: Time | TimeV2 | CustomTimeType;
+	globalSelectedInterval?: Time | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
 	fillGaps?: boolean;
@@ -275,4 +404,5 @@ export interface GetQueryResultsProps {
 	end?: number;
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
+	dynamicVariables?: IDashboardVariable[];
 }

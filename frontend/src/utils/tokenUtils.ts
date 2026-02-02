@@ -1,4 +1,8 @@
-import { NON_VALUE_OPERATORS } from 'constants/antlrQueryConstants';
+import {
+	NON_VALUE_OPERATORS,
+	OPERATORS,
+	QUERY_BUILDER_FUNCTIONS,
+} from 'constants/antlrQueryConstants';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryPair } from 'types/antlrQueryTypes';
 
@@ -59,7 +63,9 @@ export function isBracketToken(tokenType: number): boolean {
 
 // Helper function to check if an operator typically uses bracket values (multi-value operators)
 export function isMultiValueOperator(operatorToken?: string): boolean {
-	if (!operatorToken) return false;
+	if (!operatorToken) {
+		return false;
+	}
 
 	const upperOp = operatorToken.toUpperCase();
 	return upperOp === 'IN';
@@ -70,11 +76,14 @@ export function isFunctionToken(tokenType: number): boolean {
 		FilterQueryLexer.HAS,
 		FilterQueryLexer.HASANY,
 		FilterQueryLexer.HASALL,
+		FilterQueryLexer.HASTOKEN,
 	].includes(tokenType);
 }
 
 export function isWrappedUnderQuotes(token: string): boolean {
-	if (!token) return false;
+	if (!token) {
+		return false;
+	}
 	const sanitizedToken = token.trim();
 	return (
 		(sanitizedToken.startsWith('"') && sanitizedToken.endsWith('"')) ||
@@ -82,10 +91,50 @@ export function isWrappedUnderQuotes(token: string): boolean {
 	);
 }
 
+export function isFunctionOperator(operator: string): boolean {
+	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
+
+	const sanitizedOperator = operator.trim();
+	// Check if it's a direct function operator (case-insensitive)
+	if (
+		functionOperators.some(
+			(func) => func.toLowerCase() === sanitizedOperator.toLowerCase(),
+		)
+	) {
+		return true;
+	}
+
+	// Check if it's a NOT function operator (e.g., "NOT has")
+	if (sanitizedOperator.toUpperCase().startsWith(OPERATORS.NOT)) {
+		const operatorWithoutNot = sanitizedOperator.substring(4).toLowerCase();
+		return functionOperators.some(
+			(func) => func.toLowerCase() === operatorWithoutNot,
+		);
+	}
+
+	return false;
+}
+
+export function isNonValueOperator(operator: string): boolean {
+	const upperOperator = operator.toUpperCase();
+	// Check if it's a direct non-value operator
+	if (NON_VALUE_OPERATORS.includes(upperOperator)) {
+		return true;
+	}
+	// Check if it's a NOT non-value operator (e.g., "NOT EXISTS")
+	if (upperOperator.startsWith(OPERATORS.NOT)) {
+		const operatorWithoutNot = upperOperator.substring(4).trim(); // Remove "NOT " prefix
+		return NON_VALUE_OPERATORS.includes(operatorWithoutNot);
+	}
+	return false;
+}
+
 export function isQueryPairComplete(queryPair: Partial<IQueryPair>): boolean {
-	if (!queryPair) return false;
+	if (!queryPair) {
+		return false;
+	}
 	// A complete query pair must have a key, an operator, and a value (or EXISTS operator)
-	if (queryPair.operator && NON_VALUE_OPERATORS.includes(queryPair.operator)) {
+	if (queryPair.operator && isNonValueOperator(queryPair.operator)) {
 		return !!queryPair.key && !!queryPair.operator;
 	}
 	// For other operators, we need a value as well

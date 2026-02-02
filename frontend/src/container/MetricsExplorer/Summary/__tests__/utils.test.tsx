@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { render } from '@testing-library/react';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { TreemapViewType } from '../types';
@@ -144,7 +145,7 @@ describe('formatDataForMetricsTable', () => {
 		// Verify unit rendering
 		const unitElement = result[0].unit as JSX.Element;
 		const { container: unitWrapper } = render(unitElement);
-		expect(unitWrapper.textContent).toBe('bytes');
+		expect(unitWrapper.textContent).toBe(getUniversalNameFromMetricUnit('bytes'));
 
 		// Verify samples rendering
 		const samplesElement = result[0][TreemapViewType.SAMPLES] as JSX.Element;
@@ -162,10 +163,10 @@ describe('formatDataForMetricsTable', () => {
 	it('should handle empty/null values', () => {
 		const mockData = [
 			{
-				metric_name: 'test-metric',
-				description: 'test-description',
+				metric_name: '',
+				description: '',
 				type: MetricType.GAUGE,
-				unit: 'ms',
+				unit: '',
 				[TreemapViewType.SAMPLES]: 0,
 				[TreemapViewType.TIMESERIES]: 0,
 				lastReceived: '2023-01-01T00:00:00Z',
@@ -177,17 +178,17 @@ describe('formatDataForMetricsTable', () => {
 		// Verify empty metric name rendering
 		const metricNameElement = result[0].metric_name as JSX.Element;
 		const { container: metricNameWrapper } = render(metricNameElement);
-		expect(metricNameWrapper.textContent).toBe('test-metric');
+		expect(metricNameWrapper.textContent).toBe('-');
 
 		// Verify null description rendering
 		const descriptionElement = result[0].description as JSX.Element;
 		const { container: descriptionWrapper } = render(descriptionElement);
-		expect(descriptionWrapper.textContent).toBe('test-description');
+		expect(descriptionWrapper.textContent).toBe('-');
 
 		// Verify null unit rendering
 		const unitElement = result[0].unit as JSX.Element;
 		const { container: unitWrapper } = render(unitElement);
-		expect(unitWrapper.textContent).toBe('ms');
+		expect(unitWrapper.textContent).toBe('-');
 
 		// Verify zero samples rendering
 		const samplesElement = result[0][TreemapViewType.SAMPLES] as JSX.Element;

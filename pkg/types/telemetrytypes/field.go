@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -17,6 +18,15 @@ var (
 	FieldSelectorMatchTypeFuzzy = FieldSelectorMatchType{valuer.NewString("fuzzy")}
 )
 
+const (
+	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
+	// e.g., "body.status" where "body." is the prefix
+	BodyJSONStringSearchPrefix = "body."
+	ArraySep                   = jsontypeexporter.ArraySeparator
+	// TODO(Piyush): Remove once we've migrated to the new array syntax
+	ArrayAnyIndex = "[*]."
+)
+
 type TelemetryFieldKey struct {
 	Name          string        `json:"name"`
 	Description   string        `json:"description,omitempty"`
@@ -24,7 +34,46 @@ type TelemetryFieldKey struct {
 	Signal        Signal        `json:"signal,omitempty"`
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
-	Materialized  bool          `json:"materialized,omitempty"`
+
+	JSONDataType *JSONDataType       `json:"-"`
+	JSONPlan     JSONAccessPlan      `json:"-"`
+	Indexes      []JSONDataTypeIndex `json:"-"`
+	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+}
+
+func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
+	return strings.Contains(f.Name, ArraySep) || strings.Contains(f.Name, ArrayAnyIndex)
+}
+
+// ArrayPathSegments returns just the individual segments of the path
+// e.g., "education[].awards[].type" -> ["education", "awards", "type"]
+func (f *TelemetryFieldKey) ArrayPathSegments() []string {
+	return strings.Split(strings.ReplaceAll(f.Name, ArrayAnyIndex, ArraySep), ArraySep)
+}
+
+func (f *TelemetryFieldKey) ArrayParentPaths() []string {
+	parts := f.ArrayPathSegments()
+	paths := make([]string, 0, len(parts))
+	for i := range parts {
+		paths = append(paths, strings.Join(parts[:i+1], ArraySep))
+	}
+	return paths
+}
+
+func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
+	paths := f.ArrayParentPaths()
+	selectors := make([]*FieldKeySelector, 0, len(paths))
+	for i := range paths {
+		selectors = append(selectors, &FieldKeySelector{
+			Name:              paths[i],
+			SelectorMatchType: FieldSelectorMatchTypeExact,
+			Signal:            f.Signal,
+			FieldContext:      f.FieldContext,
+			Limit:             1,
+		})
+	}
+
+	return selectors
 }
 
 func (f TelemetryFieldKey) String() string {
@@ -34,71 +83,145 @@ func (f TelemetryFieldKey) String() string {
 		sb.WriteString(fmt.Sprintf(",context=%s", f.FieldContext.String))
 	}
 	if f.FieldDataType != FieldDataTypeUnspecified {
-		sb.WriteString(fmt.Sprintf(",type=%s", f.FieldDataType.StringValue()))
+		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
 	}
 	if f.Materialized {
-		sb.WriteString(",materialized")
+		sb.WriteString(",materialized=true")
+	}
+	if f.JSONDataType != nil {
+		sb.WriteString(fmt.Sprintf(",jsondatatype=%s", f.JSONDataType.StringValue()))
+	}
+	if len(f.Indexes) > 0 {
+		sb.WriteString(",indexes=[")
+		for i, index := range f.Indexes {
+			if i > 0 {
+				sb.WriteString("; ")
+			}
+			sb.WriteString(fmt.Sprintf("{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression))
+		}
+		sb.WriteString("]")
 	}
 	return sb.String()
 }
 
-// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
-// The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
-func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
+func (f TelemetryFieldKey) Text() string {
+	return TelemetryFieldKeyToText(&f)
+}
 
-	keyTextParts := strings.Split(key, ".")
+func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
+	return f.Name == key.Name &&
+		f.FieldContext == key.FieldContext &&
+		f.FieldDataType == key.FieldDataType
+}
 
-	var explicitFieldContextProvided, explicitFieldDataTypeProvided bool
-	var explicitFieldContext FieldContext
-	var explicitFieldDataType FieldDataType
-	var ok bool
+// Normalize parses and normalizes a TelemetryFieldKey by extracting
+// the field context and data type from the field name if they are not already specified.
+// This function modifies the key in place.
+//
+// Example:
+//
+//	key := &TelemetryFieldKey{Name: "resource.service.name:string"}
+//	key.Normalize()
+//	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
+func (f *TelemetryFieldKey) Normalize() {
 
-	if len(keyTextParts) > 1 {
-		explicitFieldContext, ok = fieldContexts[keyTextParts[0]]
-		if ok && explicitFieldContext != FieldContextUnspecified {
-			explicitFieldContextProvided = true
-		}
-	}
-
-	if explicitFieldContextProvided {
-		keyTextParts = keyTextParts[1:]
-	}
-
-	// check if there is a field data type provided
-	if len(keyTextParts) >= 1 {
-		lastPart := keyTextParts[len(keyTextParts)-1]
-		lastPartParts := strings.Split(lastPart, ":")
-		if len(lastPartParts) > 1 {
-			explicitFieldDataType, ok = fieldDataTypes[lastPartParts[1]]
-			if ok && explicitFieldDataType != FieldDataTypeUnspecified {
-				explicitFieldDataTypeProvided = true
+	// Step 1: Parse data type from the right (after the last ":") if not already specified
+	if f.FieldDataType == FieldDataTypeUnspecified {
+		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
+			potentialDataType := f.Name[colonIdx+1:]
+			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+				f.FieldDataType = dt
+				f.Name = f.Name[:colonIdx]
 			}
 		}
+	}
 
-		if explicitFieldDataTypeProvided {
-			keyTextParts[len(keyTextParts)-1] = lastPartParts[0]
+	// Step 2: Parse field context from the left if not already specified
+	if f.FieldContext == FieldContextUnspecified {
+		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
+			potentialContext := f.Name[:dotIdx]
+			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+				f.Name = f.Name[dotIdx+1:]
+				f.FieldContext = fc
+
+				// Step 2a: Handle special case for log.body.* fields
+				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
+					f.FieldContext = FieldContextBody
+					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
+				}
+
+			}
 		}
 	}
 
-	realKey := strings.Join(keyTextParts, ".")
+}
 
-	fieldKeySelector := TelemetryFieldKey{
-		Name: realKey,
-	}
+// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
+// The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
+// Both fieldContext and :fieldDataType are optional.
+// fieldName can contain dots and can start with a dot (e.g., ".http_code").
+// Special cases:
+// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context
+// - When key starts with "body." prefix, use "body" as context with remainder as field name
+func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
+	var explicitFieldDataType FieldDataType = FieldDataTypeUnspecified
+	var fieldName string
 
-	if explicitFieldContextProvided {
-		fieldKeySelector.FieldContext = explicitFieldContext
+	// Step 1: Parse data type from the right (after the last ":")
+	var keyWithoutDataType string
+	if colonIdx := strings.LastIndex(key, ":"); colonIdx != -1 {
+		potentialDataType := key[colonIdx+1:]
+		if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+			explicitFieldDataType = dt
+			keyWithoutDataType = key[:colonIdx]
+		} else {
+			// No valid data type found, treat the entire key as the field name
+			keyWithoutDataType = key
+		}
 	} else {
-		fieldKeySelector.FieldContext = FieldContextUnspecified
+		keyWithoutDataType = key
 	}
 
-	if explicitFieldDataTypeProvided {
-		fieldKeySelector.FieldDataType = explicitFieldDataType
-	} else {
-		fieldKeySelector.FieldDataType = FieldDataTypeUnspecified
+	// Step 2: Parse field context from the left
+	if dotIdx := strings.Index(keyWithoutDataType, "."); dotIdx != -1 {
+		potentialContext := keyWithoutDataType[:dotIdx]
+		if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+			fieldName = keyWithoutDataType[dotIdx+1:]
+
+			// Step 2a: Handle special case for log.body.* fields
+			if fc == FieldContextLog && strings.HasPrefix(fieldName, BodyJSONStringSearchPrefix) {
+				fc = FieldContextBody
+				fieldName = strings.TrimPrefix(fieldName, BodyJSONStringSearchPrefix)
+			}
+
+			return TelemetryFieldKey{
+				Name:          fieldName,
+				FieldContext:  fc,
+				FieldDataType: explicitFieldDataType,
+			}
+		}
 	}
 
-	return fieldKeySelector
+	// Step 3: No context found, entire key is the field name
+	return TelemetryFieldKey{
+		Name:          keyWithoutDataType,
+		FieldContext:  FieldContextUnspecified,
+		FieldDataType: explicitFieldDataType,
+	}
+}
+
+func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
+	var sb strings.Builder
+	if key.FieldContext != FieldContextUnspecified {
+		sb.WriteString(key.FieldContext.StringValue())
+		sb.WriteString(".")
+	}
+	sb.WriteString(key.Name)
+	if key.FieldDataType != FieldDataTypeUnspecified {
+		sb.WriteString(":")
+		sb.WriteString(key.FieldDataType.StringValue())
+	}
+	return sb.String()
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
@@ -116,6 +239,10 @@ type TelemetryFieldValues struct {
 	RelatedValues []string  `json:"relatedValues,omitempty"`
 }
 
+func (t *TelemetryFieldValues) NumValues() int {
+	return len(t.StringValues) + len(t.BoolValues) + len(t.NumberValues)
+}
+
 type MetricContext struct {
 	MetricName string `json:"metricName"`
 }
@@ -124,6 +251,7 @@ type FieldKeySelector struct {
 	StartUnixMilli    int64                  `json:"startUnixMilli"`
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
 	Signal            Signal                 `json:"signal"`
+	Source            Source                 `json:"source"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
 	Name              string                 `json:"name"`
@@ -137,98 +265,4 @@ type FieldValueSelector struct {
 	ExistingQuery string `json:"existingQuery"`
 	Value         string `json:"value"`
 	Limit         int    `json:"limit"`
-}
-
-func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFieldName string) (string, any) {
-	// This block of code exists to handle the data type collisions
-	// We don't want to fail the requests when there is a key with more than one data type
-	// Let's take an example of `http.status_code`, and consider user sent a string value and number value
-	// When they search for `http.status_code=200`, we will search across both the number columns and string columns
-	// and return the results from both the columns
-	// While we expect user not to send the mixed data types, it inevitably happens
-	// So we handle the data type collisions here
-	switch key.FieldDataType {
-	case FieldDataTypeString:
-		switch v := value.(type) {
-		case float64:
-			// try to convert the string value to to number
-			tblFieldName = castFloat(tblFieldName)
-		case []any:
-			if allFloats(v) {
-				tblFieldName = castFloat(tblFieldName)
-			} else if hasString(v) {
-				_, value = castString(tblFieldName), toStrings(v)
-			}
-		case bool:
-			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
-			value = fmt.Sprintf("%t", v)
-		}
-
-	case FieldDataTypeFloat64, FieldDataTypeInt64, FieldDataTypeNumber:
-		switch v := value.(type) {
-		// why? ; CH returns an error for a simple check
-		// attributes_number['http.status_code'] = 200 but not for attributes_number['http.status_code'] >= 200
-		// DB::Exception: Bad get: has UInt64, requested Float64.
-		// How is it working in v4? v4 prepares the full query with values in query string
-		// When we format the float it becomes attributes_number['http.status_code'] = 200.000
-		// Which CH gladly accepts and doesn't throw error
-		// However, when passed as query args, the default formatter
-		// https://github.com/ClickHouse/clickhouse-go/blob/757e102f6d8c6059d564ce98795b4ce2a101b1a5/bind.go#L393
-		// is used which prepares the
-		// final query as attributes_number['http.status_code'] = 200 giving this error
-		// This following is one way to workaround it
-		case float32, float64:
-			tblFieldName = castFloatHack(tblFieldName)
-		case string:
-			// try to convert the number attribute to string
-			tblFieldName = castString(tblFieldName) // numeric col vs string literal
-		case []any:
-			if allFloats(v) {
-				tblFieldName = castFloatHack(tblFieldName)
-			} else if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
-			}
-		}
-
-	case FieldDataTypeBool:
-		switch v := value.(type) {
-		case string:
-			tblFieldName = castString(tblFieldName)
-		case []any:
-			if hasString(v) {
-				tblFieldName, value = castString(tblFieldName), toStrings(v)
-			}
-		}
-	}
-	return tblFieldName, value
-}
-
-func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
-func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
-func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
-
-func allFloats(in []any) bool {
-	for _, x := range in {
-		if _, ok := x.(float64); !ok {
-			return false
-		}
-	}
-	return true
-}
-
-func hasString(in []any) bool {
-	for _, x := range in {
-		if _, ok := x.(string); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func toStrings(in []any) []any {
-	out := make([]any, len(in))
-	for i, x := range in {
-		out[i] = fmt.Sprintf("%v", x)
-	}
-	return out
 }

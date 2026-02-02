@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './InfraMonitoringK8s.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -12,7 +11,6 @@ import {
 	K8sPodsListPayload,
 } from 'api/infraMonitoring/getK8sPodsList';
 import { Group } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -21,6 +19,8 @@ import {
 	ValidateColumnValueWrapper,
 } from './commonUtils';
 import { DEFAULT_PAGE_SIZE, K8sCategory } from './constants';
+
+import './InfraMonitoringK8s.styles.scss';
 
 export interface IEntityColumn {
 	label: string;
@@ -69,7 +69,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		canRemove: false,
 	},
 	{
-		label: 'Mem Usage',
+		label: 'Mem Usage (WSS)',
 		value: 'memory',
 		id: 'memory',
 		canRemove: false,
@@ -207,10 +207,10 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Usage</div>,
+		title: <div className="column-header med-col">Mem Usage (WSS)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
-		width: 80,
+		width: 120,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',

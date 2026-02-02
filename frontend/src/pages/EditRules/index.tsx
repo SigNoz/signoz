@@ -1,5 +1,6 @@
-import './EditRules.styles.scss';
-
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { Button, Card } from 'antd';
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
@@ -11,15 +12,18 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import {
+	NEW_ALERT_SCHEMA_VERSION,
+	PostableAlertRuleV2,
+} from 'types/api/alerts/alertTypesV2';
 
 import {
 	errorMessageReceivedFromBackend,
 	improvedErrorMessage,
 	returnToAlertsPage,
 } from './constants';
+
+import './EditRules.styles.scss';
 
 function EditRules(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
@@ -88,9 +92,18 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
+	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
+	if (data.payload.data.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
+		initialV2AlertValue = data.payload.data as PostableAlertRuleV2;
+	}
+
 	return (
 		<div className="edit-rules-container">
-			<EditRulesContainer ruleId={ruleId || ''} initialValue={data.payload.data} />
+			<EditRulesContainer
+				ruleId={ruleId || ''}
+				initialValue={data.payload.data}
+				initialV2AlertValue={initialV2AlertValue}
+			/>
 		</div>
 	);
 }

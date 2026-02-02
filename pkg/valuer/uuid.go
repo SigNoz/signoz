@@ -3,9 +3,9 @@ package valuer
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +18,7 @@ type UUID struct {
 func NewUUID(value string) (UUID, error) {
 	val, err := uuid.Parse(value)
 	if err != nil {
-		return UUID{}, err
+		return UUID{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidValuer, "invalid uuid %s", value).WithAdditional(err.Error())
 	}
 
 	return UUID{
@@ -29,7 +29,7 @@ func NewUUID(value string) (UUID, error) {
 func NewUUIDFromBytes(value []byte) (UUID, error) {
 	val, err := uuid.FromBytes(value)
 	if err != nil {
-		return UUID{}, err
+		return UUID{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidValuer, "invalid uuid %s", value).WithAdditional(err.Error())
 	}
 
 	return UUID{
@@ -98,11 +98,11 @@ func (enum UUID) Value() (driver.Value, error) {
 
 func (enum *UUID) Scan(val interface{}) error {
 	if enum == nil {
-		return fmt.Errorf("uuid: (nil \"%s\")", reflect.TypeOf(enum).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%s\")", reflect.TypeOf(enum).String())
 	}
 
 	if val == nil {
-		return fmt.Errorf("uuid: (nil \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (nil \"%s\")", reflect.TypeOf(val).String())
 	}
 
 	var enumVal UUID
@@ -110,17 +110,17 @@ func (enum *UUID) Scan(val interface{}) error {
 	case string:
 		_enumVal, err := NewUUID(val)
 		if err != nil {
-			return fmt.Errorf("uuid: (invalid-uuid \"%s\")", err.Error())
+			return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (invalid-uuid \"%s\")", err.Error())
 		}
 		enumVal = _enumVal
 	case []byte:
 		_enumVal, err := NewUUIDFromBytes(val)
 		if err != nil {
-			return fmt.Errorf("uuid: (invalid-uuid \"%s\")", err.Error())
+			return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (invalid-uuid \"%s\")", err.Error())
 		}
 		enumVal = _enumVal
 	default:
-		return fmt.Errorf("uuid: (non-uuid \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "uuid: (non-uuid \"%s\")", reflect.TypeOf(val).String())
 	}
 
 	*enum = enumVal
@@ -135,4 +135,8 @@ func (enum *UUID) UnmarshalText(text []byte) error {
 
 	*enum = uuid
 	return nil
+}
+
+func (enum UUID) MarshalText() (text []byte, err error) {
+	return []byte(enum.StringValue()), nil
 }

@@ -1,39 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import './AppLayout.styles.scss';
-
-import * as Sentry from '@sentry/react';
-import { Flex } from 'antd';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import setLocalStorageApi from 'api/browser/localstorage/set';
-import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
-import logEvent from 'api/common/logEvent';
-import manageCreditCardApi from 'api/v1/portal/create';
-import getUserLatestVersion from 'api/v1/version/getLatestVersion';
-import getUserVersion from 'api/v1/version/getVersion';
-import cx from 'classnames';
-import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
-import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
-import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
-import { Events } from 'constants/events';
-import { FeatureKeys } from 'constants/features';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import ROUTES from 'constants/routes';
-import { USER_PREFERENCES } from 'constants/userPreferences';
-import SideNav from 'container/SideNav';
-import TopNav from 'container/TopNav';
-import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { useNotifications } from 'hooks/useNotifications';
-import useTabVisibility from 'hooks/useTabFocus';
-import history from 'lib/history';
-import { isNull } from 'lodash-es';
-import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useAppContext } from 'providers/App/App';
 import {
 	ReactNode,
 	useCallback,
@@ -47,6 +14,42 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
+import { Toaster } from '@signozhq/sonner';
+import { Flex } from 'antd';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
+import logEvent from 'api/common/logEvent';
+import manageCreditCardApi from 'api/v1/portal/create';
+import updateUserPreference from 'api/v1/user/preferences/name/update';
+import getUserVersion from 'api/v1/version/get';
+import getUserLatestVersion from 'api/v1/version/getLatestVersion';
+import { AxiosError } from 'axios';
+import cx from 'classnames';
+import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
+import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
+import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
+import { Events } from 'constants/events';
+import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import ROUTES from 'constants/routes';
+import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
+import { USER_PREFERENCES } from 'constants/userPreferences';
+import SideNav from 'container/SideNav';
+import TopNav from 'container/TopNav';
+import dayjs from 'dayjs';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useNotifications } from 'hooks/useNotifications';
+import useTabVisibility from 'hooks/useTabFocus';
+import history from 'lib/history';
+import { isNull } from 'lodash-es';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { useAppContext } from 'providers/App/App';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -68,8 +71,10 @@ import {
 	LicensePlatform,
 	LicenseState,
 } from 'types/api/licensesV3/getActive';
+import { UserPreference } from 'types/api/preferences/preference';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
@@ -79,6 +84,8 @@ import {
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
+
+import './AppLayout.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
@@ -104,6 +111,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		showPaymentFailedWarning,
 		setShowPaymentFailedWarning,
 	] = useState<boolean>(false);
+
+	const errorBoundaryRef = useRef<Sentry.ErrorBoundary>(null);
 
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
@@ -310,14 +319,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getUserVersionResponse.isFetched &&
 			getUserVersionResponse.isSuccess &&
 			getUserVersionResponse.data &&
-			getUserVersionResponse.data.payload
+			getUserVersionResponse.data.data
 		) {
 			dispatch({
 				type: UPDATE_CURRENT_VERSION,
 				payload: {
-					currentVersion: getUserVersionResponse.data.payload.version,
-					ee: getUserVersionResponse.data.payload.ee,
-					setupCompleted: getUserVersionResponse.data.payload.setupCompleted,
+					currentVersion: getUserVersionResponse.data.data.version,
+					ee: getUserVersionResponse.data.data.ee,
+					setupCompleted: getUserVersionResponse.data.data.setupCompleted,
 				},
 			});
 		}
@@ -371,10 +380,20 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getChangelogByVersionResponse.isSuccess,
 	]);
 
+	// reset error boundary on route change
+	useEffect(() => {
+		if (errorBoundaryRef.current) {
+			errorBoundaryRef.current.resetErrorBoundary();
+		}
+	}, [pathname]);
+
 	const isToDisplayLayout = isLoggedIn;
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
+
+	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
+
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
 		pathname === ROUTES.ONBOARDING ||
@@ -383,7 +402,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
 		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
 		pathname === ROUTES.GET_STARTED_AWS_MONITORING ||
-		pathname === ROUTES.GET_STARTED_AZURE_MONITORING;
+		pathname === ROUTES.GET_STARTED_AZURE_MONITORING ||
+		isPublicDashboard;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
@@ -662,9 +682,84 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		</div>
 	);
 
-	const sideNavPinned = userPreferences?.find(
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+	const { updateUserPreferenceInContext } = useAppContext();
+
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreference,
+		{
+			onError: (error) => {
+				showErrorNotification(notifications, error as AxiosError);
+			},
+		},
+	);
+
+	const sideNavPinnedPreference = userPreferences?.find(
 		(preference) => preference.name === USER_PREFERENCES.SIDENAV_PINNED,
 	)?.value as boolean;
+
+	// Add loading state to prevent layout shift during initial load
+	const [isSidebarLoaded, setIsSidebarLoaded] = useState(false);
+
+	// Get sidebar state from localStorage as fallback until preferences are loaded
+	const getSidebarStateFromLocalStorage = useCallback((): boolean => {
+		try {
+			const storedValue = getLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED);
+			return storedValue === 'true';
+		} catch {
+			return false;
+		}
+	}, []);
+
+	// Set sidebar as loaded after user preferences are fetched
+	useEffect(() => {
+		if (userPreferences !== null) {
+			setIsSidebarLoaded(true);
+		}
+	}, [userPreferences]);
+
+	// Use localStorage value as fallback until preferences are loaded
+	const isSideNavPinned = isSidebarLoaded
+		? sideNavPinnedPreference
+		: getSidebarStateFromLocalStorage();
+
+	const handleToggleSidebar = useCallback((): void => {
+		const newState = !isSideNavPinned;
+
+		logEvent('Global Shortcut: Sidebar Toggle', {
+			previousState: isSideNavPinned,
+			newState,
+		});
+
+		// Save to localStorage immediately for instant feedback
+		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, newState.toString());
+
+		// Update the context immediately
+		const save = {
+			name: USER_PREFERENCES.SIDENAV_PINNED,
+			value: newState,
+		};
+		updateUserPreferenceInContext(save as UserPreference);
+
+		// Make the API call in the background
+		updateUserPreferenceMutation({
+			name: USER_PREFERENCES.SIDENAV_PINNED,
+			value: newState,
+		});
+	}, [
+		isSideNavPinned,
+		updateUserPreferenceInContext,
+		updateUserPreferenceMutation,
+	]);
+
+	// Register the sidebar toggle shortcut
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.ToggleSidebar, handleToggleSidebar);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.ToggleSidebar);
+		};
+	}, [registerShortcut, deregisterShortcut, handleToggleSidebar]);
 
 	const SHOW_TRIAL_EXPIRY_BANNER =
 		showTrialExpiryBanner && !showPaymentFailedWarning;
@@ -739,14 +834,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				className={cx(
 					'app-layout',
 					isDarkMode ? 'darkMode dark' : 'lightMode',
-					sideNavPinned ? 'side-nav-pinned' : '',
+					isSideNavPinned ? 'side-nav-pinned' : '',
 					SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
 					SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
 					SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav isPinned={sideNavPinned} />
+					<SideNav isPinned={isSideNavPinned} />
 				)}
 				<div
 					className={cx('app-content', {
@@ -754,7 +849,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					})}
 					data-overlayscrollbars-initialize
 				>
-					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+					<Sentry.ErrorBoundary
+						fallback={<ErrorBoundaryFallback />}
+						ref={errorBoundaryRef}
+					>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
 								<ChildrenContainer>
@@ -771,6 +869,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{showChangelogModal && changelog && (
 				<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 			)}
+
+			<Toaster />
 		</Layout>
 	);
 }

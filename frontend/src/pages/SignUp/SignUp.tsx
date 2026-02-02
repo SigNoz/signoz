@@ -1,29 +1,29 @@
-import './SignUp.styles.scss';
-
-import { Button, Form, Input, Typography } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
+import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
+import { Input } from '@signozhq/input';
+import { Form, Input as AntdInput, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import accept from 'api/v1/invite/id/accept';
 import getInviteDetails from 'api/v1/invite/id/get';
-import loginApi from 'api/v1/login/login';
-import signUpApi from 'api/v1/register/signup';
+import signUpApi from 'api/v1/register/post';
+import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
-import ROUTES from 'constants/routes';
+import AuthError from 'components/AuthError/AuthError';
+import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { ArrowRight, CircleAlert } from 'lucide-react';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { InviteDetails } from 'types/api/user/getInviteDetails';
-import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, Label } from './styles';
-import { isPasswordNotValidMessage, isPasswordValid } from './utils';
+
+import './SignUp.styles.scss';
 
 type FormValues = {
-	firstName: string;
 	email: string;
 	organizationName: string;
 	password: string;
@@ -35,17 +35,10 @@ type FormValues = {
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
-	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
-		sso: false,
-		isUser: false,
-	});
-
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
-	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
-		false,
-	);
+	const [formError, setFormError] = useState<APIError | null>();
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
@@ -66,14 +59,17 @@ function SignUp(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
 
+	// Watch form values for reactive validation
+	const email = Form.useWatch('email', form);
+	const password = Form.useWatch('password', form);
+	const confirmPassword = Form.useWatch('confirmPassword', form);
+
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
 			getInviteDetailsResponse.data.data
 		) {
 			const responseDetails = getInviteDetailsResponse.data.data;
-			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
-			form.setFieldValue('firstName', responseDetails.name);
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
@@ -114,88 +110,43 @@ function SignUp(): JSX.Element {
 
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
-			const { organizationName, password, firstName, email } = values;
-			const response = await signUpApi({
+			const { organizationName, password, email } = values;
+			const user = await signUpApi({
 				email,
-				name: firstName,
 				orgDisplayName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
 
-			if (response.statusCode === 200) {
-				const loginResponse = await loginApi({
-					email,
-					password,
-				});
-
-				const { data } = loginResponse;
-				await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
-			}
-		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
+			const token = await passwordAuthNContext({
+				email,
+				password,
+				orgId: user.data.orgId,
 			});
+
+			await afterLogin(token.data.accessToken, token.data.refreshToken);
+		} catch (error) {
+			setFormError(error as APIError);
 		}
 	};
 
 	const acceptInvite = async (values: FormValues): Promise<void> => {
 		try {
-			const { password, email, firstName } = values;
-			await accept({
+			const { password, email } = values;
+			const user = await accept({
 				password,
 				token: params.get('token') || '',
-				displayName: firstName,
 			});
-			const loginResponse = await loginApi({
+			const token = await passwordAuthNContext({
 				email,
 				password,
+				orgId: user.data.orgId,
 			});
-			const { data } = loginResponse;
-			await afterLogin(data.userId, data.accessJwt, data.refreshJwt);
+
+			await afterLogin(token.data.accessToken, token.data.refreshToken);
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			setFormError(error as APIError);
 		}
-	};
-
-	const handleSubmitSSO = async (): Promise<void> => {
-		if (!params.get('token')) {
-			notifications.error({
-				message:
-					'Invite token is required for signup, please request one from your admin',
-			});
-			return;
-		}
-		setLoading(true);
-		try {
-			const response = await accept({
-				password: '',
-				token: params.get('token') || '',
-				sourceUrl: encodeURIComponent(window.location.href),
-			});
-
-			if (response.data?.sso) {
-				if (response.data?.ssoUrl) {
-					window.location.href = response.data?.ssoUrl;
-				} else {
-					notifications.error({
-						message: 'Signup completed but failed to initiate login',
-					});
-					// take user to login page as there is nothing to do here
-					history.push(ROUTES.LOGIN);
-				}
-			}
-		} catch (error) {
-			notifications.error({
-				message: 'Something went wrong',
-			});
-		}
-
-		setLoading(false);
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -204,22 +155,12 @@ function SignUp(): JSX.Element {
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
-
-				if (!isPasswordValid(values.password)) {
-					logEvent('Account Creation Page - Invalid Password', {
-						email: values.email,
-						name: values.firstName,
-					});
-					setIsPasswordPolicyError(true);
-					setLoading(false);
-					return;
-				}
+				setFormError(null);
 
 				if (isSignUp) {
 					await signUp(values);
 					logEvent('Account Created Successfully', {
 						email: values.email,
-						name: values.firstName,
 					});
 				} else {
 					await acceptInvite(values);
@@ -235,161 +176,162 @@ function SignUp(): JSX.Element {
 		})();
 	};
 
-	const getIsNameVisible = (): boolean =>
-		!(form.getFieldValue('firstName') === 0 && !isSignUp);
-
-	const isNameVisible = getIsNameVisible();
-
 	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
 		changedValues,
 	) => {
+		// Clear error if passwords match while typing (but don't set error until blur)
 		if ('password' in changedValues || 'confirmPassword' in changedValues) {
 			const { password, confirmPassword } = form.getFieldsValue();
 
-			const isInvalidPassword = !isPasswordValid(password) && password.length > 0;
-			setIsPasswordPolicyError(isInvalidPassword);
+			if (password && confirmPassword && password === confirmPassword) {
+				setConfirmPasswordError(false);
+			}
+		}
+	};
 
+	const handlePasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		// Only validate if confirm password has a value
+		if (confirmPassword) {
 			const isSamePassword = password === confirmPassword;
 			setConfirmPasswordError(!isSamePassword);
 		}
 	};
 
-	const isValidForm: () => boolean = () => {
-		const values = form.getFieldsValue();
-		return (
-			loading ||
-			!values.email ||
-			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
-			(!isDetailsDisable && !values.firstName) ||
-			confirmPasswordError ||
-			isPasswordPolicyError
-		);
+	const handleConfirmPasswordBlur = (): void => {
+		const { password, confirmPassword } = form.getFieldsValue();
+		if (password && confirmPassword) {
+			const isSamePassword = password === confirmPassword;
+			setConfirmPasswordError(!isSamePassword);
+		}
 	};
 
-	return (
-		<div className="signup-page-container">
-			<div className="perilin-bg" />
-			<div className="signup-page-content">
-				<div className="brand-container">
-					<img
-						src="/Logos/signoz-brand-logo.svg"
-						alt="logo"
-						className="brand-logo"
-					/>
+	const isValidForm = useMemo(
+		(): boolean =>
+			!loading &&
+			Boolean(email?.trim()) &&
+			Boolean(password?.trim()) &&
+			Boolean(confirmPassword?.trim()) &&
+			!confirmPasswordError,
+		[loading, email, password, confirmPassword, confirmPasswordError],
+	);
 
-					<div className="brand-title">SigNoz</div>
+	return (
+		<AuthPageContainer>
+			<div className="signup-card">
+				<div className="signup-form-header">
+					<div className="signup-header-icon">
+						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+					</div>
+					<Typography.Title level={4} className="signup-header-title">
+						Create your account
+					</Typography.Title>
+					<Typography.Paragraph className="signup-header-subtitle">
+						You&apos;re almost in. Create a password to start monitoring your
+						applications with SigNoz.
+					</Typography.Paragraph>
 				</div>
 
 				<FormContainer
-					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
+					onFinish={handleSubmit}
 					onValuesChange={handleValuesChange}
 					form={form}
 					className="signup-form"
 				>
-					<div className="signup-form-header">
-						<Typography.Paragraph className="signup-form-header-text">
-							Create your account to monitor, trace, and troubleshoot your applications
-							effortlessly.
-						</Typography.Paragraph>
-					</div>
-
-					<div className="email-container">
-						<Label htmlFor="signupEmail">Email</Label>
-						<FormContainer.Item noStyle name="email">
-							<Input
-								placeholder="name@yourcompany.com"
-								type="email"
-								autoFocus
-								required
-								id="signupEmail"
-								disabled={isDetailsDisable}
-							/>
-						</FormContainer.Item>
-					</div>
-
-					{isNameVisible && (
-						<div className="first-name-container">
-							<Label htmlFor="signupFirstName">Name</Label>{' '}
-							<FormContainer.Item noStyle name="firstName">
-								<Input
-									placeholder="Your Name"
-									required
-									id="signupFirstName"
-									disabled={isDetailsDisable && form.getFieldValue('firstName')}
-								/>
-							</FormContainer.Item>
-						</div>
-					)}
-
-					<div className="org-name-container">
-						<Label htmlFor="organizationName">Organization Name</Label>{' '}
-						<FormContainer.Item noStyle name="organizationName">
-							<Input
-								placeholder="Your Company"
-								id="organizationName"
-								disabled={isDetailsDisable}
-							/>
-						</FormContainer.Item>
-					</div>
-
-					{!precheck.sso && (
-						<div className="password-section">
-							<div className="password-container">
-								<label htmlFor="Password">Password</label>{' '}
-								<FormContainer.Item noStyle name="password">
-									<Input.Password required id="currentPassword" />
+					<div className="signup-form-container">
+						<div className="signup-form-fields">
+							<div className="signup-field-container">
+								<Label htmlFor="signupEmail">Email address</Label>
+								<FormContainer.Item noStyle name="email">
+									<Input
+										placeholder="e.g. john@signoz.io"
+										type="email"
+										autoFocus
+										required
+										id="signupEmail"
+										disabled={isDetailsDisable}
+										className="signup-form-input"
+									/>
 								</FormContainer.Item>
 							</div>
 
-							<div className="password-container">
-								<label htmlFor="ConfirmPassword">Confirm Password</label>{' '}
-								<FormContainer.Item noStyle name="confirmPassword">
-									<Input.Password required id="confirmPassword" />
+							<div className="signup-field-container">
+								<Label htmlFor="currentPassword">Set your password</Label>
+								<FormContainer.Item
+									name="password"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter password!' }]}
+								>
+									<AntdInput.Password
+										required
+										id="currentPassword"
+										placeholder="Enter new password"
+										disabled={loading}
+										className="signup-antd-input"
+										onBlur={handlePasswordBlur}
+									/>
+								</FormContainer.Item>
+							</div>
+
+							<div className="signup-field-container">
+								<Label htmlFor="confirmPassword">Confirm your new password</Label>
+								<FormContainer.Item
+									name="confirmPassword"
+									validateTrigger="onBlur"
+									rules={[{ required: true, message: 'Please enter confirm password!' }]}
+								>
+									<AntdInput.Password
+										required
+										id="confirmPassword"
+										placeholder="Confirm your new password"
+										disabled={loading}
+										className="signup-antd-input"
+										onBlur={handleConfirmPasswordBlur}
+									/>
 								</FormContainer.Item>
 							</div>
 						</div>
-					)}
-
-					<div className="password-error-container">
-						{confirmPasswordError && (
-							<Typography.Paragraph
-								id="password-confirm-error"
-								className="password-error-message"
-							>
-								Passwords don’t match. Please try again
-							</Typography.Paragraph>
-						)}
-
-						{isPasswordPolicyError && (
-							<Typography.Paragraph className="password-error-message">
-								{isPasswordNotValidMessage}
-							</Typography.Paragraph>
-						)}
 					</div>
 
 					{isSignUp && (
-						<Typography.Paragraph className="signup-info-message">
-							* This will create an admin account. If you are not an admin, please ask
-							your admin for an invite link
-						</Typography.Paragraph>
+						<Callout
+							type="info"
+							size="small"
+							showIcon
+							className="signup-info-callout"
+							description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
+						/>
 					)}
 
-					<div className="signup-button-container">
+					{confirmPasswordError && (
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							icon={<CircleAlert size={12} />}
+							className="signup-error-callout"
+							description="Passwords don't match. Please try again."
+						/>
+					)}
+
+					{formError && !confirmPasswordError && <AuthError error={formError} />}
+
+					<div className="signup-form-actions">
 						<Button
-							type="primary"
-							htmlType="submit"
+							variant="solid"
+							color="primary"
+							type="submit"
 							data-attr="signup"
-							loading={loading}
-							disabled={isValidForm()}
-							className="periscope-btn primary next-btn"
-							icon={<ArrowRight size={12} />}
+							disabled={!isValidForm}
+							className="signup-submit-button"
+							suffixIcon={<ArrowRight size={16} />}
 						>
-							Sign Up
+							Access My Workspace
 						</Button>
 					</div>
 				</FormContainer>
 			</div>
-		</div>
+		</AuthPageContainer>
 	);
 }
 

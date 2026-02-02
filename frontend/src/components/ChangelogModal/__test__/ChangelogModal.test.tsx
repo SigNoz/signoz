@@ -91,7 +91,7 @@ describe('ChangelogModal', () => {
 		renderChangelog();
 		fireEvent.click(screen.getByText('Update my workspace'));
 		expect(window.open).toHaveBeenCalledWith(
-			'https://github.com/SigNoz/signoz/releases',
+			'https://signoz.io/upgrade-path',
 			'_blank',
 			'noopener,noreferrer',
 		);

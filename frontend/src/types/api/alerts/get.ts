@@ -13,6 +13,7 @@ export interface GettableAlert extends AlertDef {
 	createBy: string;
 	updateAt: string;
 	updateBy: string;
+	schemaVersion: string;
 }
 
 export type PayloadProps = {

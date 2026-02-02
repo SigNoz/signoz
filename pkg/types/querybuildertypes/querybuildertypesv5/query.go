@@ -15,16 +15,18 @@ type Query interface {
 }
 
 type Result struct {
-	Type     RequestType
-	Value    any // concrete Go value (to be type asserted based on the RequestType)
-	Stats    ExecStats
-	Warnings []string
+	Type           RequestType
+	Value          any // concrete Go value (to be type asserted based on the RequestType)
+	Stats          ExecStats
+	Warnings       []string
+	WarningsDocURL string
 }
 
 type ExecStats struct {
-	RowsScanned  uint64 `json:"rowsScanned"`
-	BytesScanned uint64 `json:"bytesScanned"`
-	DurationMS   uint64 `json:"durationMs"`
+	RowsScanned   uint64            `json:"rowsScanned"`
+	BytesScanned  uint64            `json:"bytesScanned"`
+	DurationMS    uint64            `json:"durationMs"`
+	StepIntervals map[string]uint64 `json:"stepIntervals,omitempty"`
 }
 
 type TimeRange struct{ From, To uint64 } // ms since epoch

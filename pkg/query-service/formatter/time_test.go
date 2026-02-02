@@ -26,4 +26,5 @@ func TestDuration(t *testing.T) {
 	assert.Equal(t, "1.82 min", durationFormatter.Format(109200000000, "ns"))
 	assert.Equal(t, "1.27 day", durationFormatter.Format(109800000000000, "ns"))
 	assert.Equal(t, "2 day", durationFormatter.Format(172800000, "ms"))
+	assert.Equal(t, "1 hour", durationFormatter.Format(60, "min"))
 }

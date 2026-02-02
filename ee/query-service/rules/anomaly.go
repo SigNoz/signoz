@@ -35,7 +35,6 @@ import (
 	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -78,11 +77,6 @@ func NewAnomalyRule(
 	logger.Info("creating new AnomalyRule", "rule_id", id)
 
 	opts = append(opts, baserules.WithLogger(logger))
-
-	if p.RuleCondition.CompareOp == ruletypes.ValueIsBelow {
-		target := -1 * *p.RuleCondition.Target
-		p.RuleCondition.Target = &target
-	}
 
 	baseRule, err := baserules.NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
@@ -167,16 +161,9 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v3.
 		ctx, "prepare query range request v4", "ts", ts.UnixMilli(), "eval_window", r.EvalWindow().Milliseconds(), "eval_delay", r.EvalDelay().Milliseconds(),
 	)
 
-	start := ts.Add(-time.Duration(r.EvalWindow())).UnixMilli()
-	end := ts.UnixMilli()
-
-	if r.EvalDelay() > 0 {
-		start = start - int64(r.EvalDelay().Milliseconds())
-		end = end - int64(r.EvalDelay().Milliseconds())
-	}
-	// round to minute otherwise we could potentially miss data
-	start = start - (start % (60 * 1000))
-	end = end - (end % (60 * 1000))
+	st, en := r.Timestamps(ts)
+	start := st.UnixMilli()
+	end := en.UnixMilli()
 
 	compositeQuery := r.Condition().CompositeQuery
 
@@ -211,7 +198,8 @@ func (r *AnomalyRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (*q
 		},
 		NoCache: true,
 	}
-	copy(r.Condition().CompositeQuery.Queries, req.CompositeQuery.Queries)
+	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
+	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
 	return req, nil
 }
 
@@ -252,10 +240,18 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
 	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if !r.Condition().ShouldEval(series) {
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+			continue
 		}
+		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
@@ -294,16 +290,36 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
 
-	for _, series := range queryResult.AnomalyScores {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+	// Filter out new series if newGroupEvalDelay is configured
+	seriesToProcess := queryResult.AnomalyScores
+	if r.ShouldSkipNewGroups() {
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+		} else {
+			seriesToProcess = filteredSeries
 		}
+	}
+
+	for _, series := range seriesToProcess {
+		if !r.Condition().ShouldEval(series) {
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+			continue
+		}
+		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
 }
 
-func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 	prevState := r.State()
 
@@ -320,7 +336,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		res, err = r.buildAndRunQuery(ctx, r.OrgID(), ts)
 	}
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	r.mtx.Lock()
@@ -329,14 +345,19 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	resultFPs := map[uint64]struct{}{}
 	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
+
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
 		for _, lbl := range smpl.Metric {
 			l[lbl.Name] = lbl.Value
 		}
-
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := valueFormatter.Format(r.TargetVal(), r.Unit())
+		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
 		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
@@ -380,6 +401,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(labels.NoDataLabel, "true")
 		}
 
 		lbs := lb.Labels()
@@ -389,7 +411,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		if _, ok := alerts[h]; ok {
 			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", "rule_id", r.ID(), "alert", alerts[h])
 			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
-			return nil, err
+			return 0, err
 		}
 
 		alerts[h] = &ruletypes.Alert{
@@ -400,13 +422,13 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.PreferredChannels(),
+			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
+			IsRecovering:      smpl.IsRecovering,
 		}
 	}
 
 	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
-
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -415,7 +437,12 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.PreferredChannels()
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 
@@ -471,6 +498,30 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 				Value:        a.Value,
 			})
 		}
+
+		// We need to change firing alert to recovering if the returned sample meets recovery threshold
+		changeFiringToRecovering := a.State == model.StateFiring && a.IsRecovering
+		// We need to change recovering alerts to firing if the returned sample meets target threshold
+		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		// in any of the above case we need to update the status of alert
+		if changeFiringToRecovering || changeRecoveringToFiring {
+			state := model.StateRecovering
+			if changeRecoveringToFiring {
+				state = model.StateFiring
+			}
+			a.State = state
+			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
 	}
 
 	currentState := r.State()
@@ -498,7 +549,7 @@ func (r *AnomalyRule) String() string {
 		PreferredChannels: r.PreferredChannels(),
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}

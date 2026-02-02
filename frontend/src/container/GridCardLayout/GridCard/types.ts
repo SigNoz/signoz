@@ -1,11 +1,12 @@
+import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
+import { UseQueryResult } from 'react-query';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
-import { UseQueryResult } from 'react-query';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
 import { SuccessResponse } from 'types/api';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
@@ -41,6 +42,7 @@ export interface WidgetGraphComponentProps {
 	customErrorMessage?: string;
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
+	enableDrillDown?: boolean;
 }
 
 export interface GridCardGraphProps {
@@ -49,7 +51,7 @@ export interface GridCardGraphProps {
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	isQueryEnabled: boolean;
-	variables?: Dashboard['data']['variables'];
+	variables?: IDashboardVariables;
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
 	customOnDragSelect?: (start: number, end: number) => void;
@@ -69,6 +71,8 @@ export interface GridCardGraphProps {
 	};
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
+	enableDrillDown?: boolean;
+	widgetsByDynamicVariableId?: Record<string, string[]>;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

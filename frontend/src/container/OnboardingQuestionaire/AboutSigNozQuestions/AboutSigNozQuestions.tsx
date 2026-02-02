@@ -1,15 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import '../OnboardingQuestionaire.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { Button } from '@signozhq/button';
+import { Checkbox } from '@signozhq/checkbox';
+import { Input } from '@signozhq/input';
 import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+
+import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+
+import '../OnboardingQuestionaire.styles.scss';
 
 export interface SignozDetails {
-	interestInSignoz: string | null;
+	interestInSignoz: string[] | null;
 	otherInterestInSignoz: string | null;
 	discoverSignoz: string | null;
 }
@@ -18,23 +21,24 @@ interface AboutSigNozQuestionsProps {
 	signozDetails: SignozDetails;
 	setSignozDetails: (details: SignozDetails) => void;
 	onNext: () => void;
-	onBack: () => void;
 }
 
 const interestedInOptions: Record<string, string> = {
-	savingCosts: 'Saving costs',
-	otelNativeStack: 'Interested in Otel-native stack',
-	allInOne: 'All in one (Logs, Metrics & Traces)',
+	loweringCosts: 'Lowering observability costs',
+	otelNativeStack: 'Interested in OTel-native stack',
+	deploymentFlexibility: 'Deployment flexibility (Cloud/Self-Host) in future',
+	singleTool:
+		'Single Tool (logs, metrics & traces) to reduce operational overhead',
+	correlateSignals: 'Correlate signals for faster troubleshooting',
 };
 
 export function AboutSigNozQuestions({
 	signozDetails,
 	setSignozDetails,
 	onNext,
-	onBack,
 }: AboutSigNozQuestionsProps): JSX.Element {
-	const [interestInSignoz, setInterestInSignoz] = useState<string | null>(
-		signozDetails?.interestInSignoz || null,
+	const [interestInSignoz, setInterestInSignoz] = useState<string[]>(
+		signozDetails?.interestInSignoz || [],
 	);
 	const [otherInterestInSignoz, setOtherInterestInSignoz] = useState<string>(
 		signozDetails?.otherInterestInSignoz || '',
@@ -47,14 +51,28 @@ export function AboutSigNozQuestions({
 	useEffect((): void => {
 		if (
 			discoverSignoz !== '' &&
-			interestInSignoz !== null &&
-			(interestInSignoz !== 'Others' || otherInterestInSignoz !== '')
+			interestInSignoz.length > 0 &&
+			(!interestInSignoz.includes('Others') || otherInterestInSignoz !== '')
 		) {
 			setIsNextDisabled(false);
 		} else {
 			setIsNextDisabled(true);
 		}
 	}, [interestInSignoz, otherInterestInSignoz, discoverSignoz]);
+
+	const handleInterestChange = (option: string, checked: boolean): void => {
+		if (checked) {
+			setInterestInSignoz((prev) => [...prev, option]);
+		} else {
+			setInterestInSignoz((prev) => prev.filter((item) => item !== option));
+		}
+	};
+
+	const createInterestChangeHandler = (option: string) => (
+		checked: boolean,
+	): void => {
+		handleInterestChange(option, Boolean(checked));
+	};
 
 	const handleOnNext = (): void => {
 		setSignozDetails({
@@ -72,24 +90,12 @@ export function AboutSigNozQuestions({
 		onNext();
 	};
 
-	const handleOnBack = (): void => {
-		setSignozDetails({
-			discoverSignoz,
-			interestInSignoz,
-			otherInterestInSignoz,
-		});
-
-		onBack();
-	};
-
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Tell Us About Your Interest in SigNoz
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				We&apos;d love to know a little bit about you and your interest in SigNoz
-			</Typography.Paragraph>
+			<OnboardingQuestionHeader
+				title="Set up your workspace"
+				subtitle="Tailor SigNoz to suit your observability needs."
+			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
@@ -98,7 +104,7 @@ export function AboutSigNozQuestions({
 
 						<TextArea
 							className="discover-signoz-input"
-							placeholder="e.g., Google Search, Hacker News, Reddit, a friend, ChatGPT, a blog post, a conference, etc."
+							placeholder={`e.g., googling "datadog alternative", a post on r/devops, from a friend/colleague, a LinkedIn post, ChatGPT, etc.`}
 							value={discoverSignoz}
 							autoFocus
 							rows={4}
@@ -108,68 +114,50 @@ export function AboutSigNozQuestions({
 
 					<div className="form-group">
 						<div className="question">What got you interested in SigNoz?</div>
-						<div className="two-column-grid">
+						<div className="checkbox-grid">
 							{Object.keys(interestedInOptions).map((option: string) => (
-								<Button
-									key={option}
-									type="primary"
-									className={`onboarding-questionaire-button ${
-										interestInSignoz === option ? 'active' : ''
-									}`}
-									onClick={(): void => setInterestInSignoz(option)}
-								>
-									{interestedInOptions[option]}
-									{interestInSignoz === option && (
-										<CheckCircle size={12} color={Color.BG_FOREST_500} />
-									)}
-								</Button>
+								<div key={option} className="checkbox-item">
+									<Checkbox
+										id={`checkbox-${option}`}
+										checked={interestInSignoz.includes(option)}
+										onCheckedChange={createInterestChangeHandler(option)}
+										labelName={interestedInOptions[option]}
+									/>
+								</div>
 							))}
 
-							{interestInSignoz === 'Others' ? (
-								<Input
-									type="text"
-									className="onboarding-questionaire-other-input"
-									placeholder="Please specify your interest"
-									value={otherInterestInSignoz}
-									autoFocus
-									addonAfter={
-										otherInterestInSignoz !== '' ? (
-											<CheckCircle size={12} color={Color.BG_FOREST_500} />
-										) : (
-											''
-										)
-									}
-									onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
+							<div className="checkbox-item checkbox-item-others">
+								<Checkbox
+									id="others-checkbox"
+									checked={interestInSignoz.includes('Others')}
+									onCheckedChange={createInterestChangeHandler('Others')}
+									labelName={interestInSignoz.includes('Others') ? '' : 'Others'}
 								/>
-							) : (
-								<Button
-									type="primary"
-									className={`onboarding-questionaire-button ${
-										interestInSignoz === 'Others' ? 'active' : ''
-									}`}
-									onClick={(): void => setInterestInSignoz('Others')}
-								>
-									Others
-								</Button>
-							)}
+								{interestInSignoz.includes('Others') && (
+									<Input
+										type="text"
+										className="onboarding-questionaire-other-input"
+										placeholder="What got you interested in SigNoz?"
+										value={otherInterestInSignoz}
+										autoFocus
+										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
+									/>
+								)}
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<div className="next-prev-container">
-					<Button type="default" className="next-button" onClick={handleOnBack}>
-						<ArrowLeft size={14} />
-						Back
-					</Button>
-
+				<div className="onboarding-buttons-container">
 					<Button
-						type="primary"
-						className={`next-button ${isNextDisabled ? 'disabled' : ''}`}
+						variant="solid"
+						color="primary"
+						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
+						suffixIcon={<ArrowRight size={12} />}
 					>
 						Next
-						<ArrowRight size={14} />
 					</Button>
 				</div>
 			</div>

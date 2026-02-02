@@ -1,7 +1,10 @@
-import { Button, Slider, Typography } from 'antd';
-import logEvent from 'api/common/logEvent';
-import { ArrowLeft, ArrowRight, Loader2, Minus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from '@signozhq/button';
+import { Slider, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { ArrowRight, Loader2, Minus } from 'lucide-react';
+
+import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
 export interface OptimiseSignozDetails {
 	logsPerDay: number;
@@ -47,7 +50,6 @@ interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
 	onNext: () => void;
-	onBack: () => void;
 	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
 	isNextDisabled: boolean;
@@ -82,7 +84,6 @@ function OptimiseSignozNeeds({
 	optimiseSignozDetails,
 	setOptimiseSignozDetails,
 	onNext,
-	onBack,
 	onWillDoLater,
 	isNextDisabled,
 }: OptimiseSignozNeedsProps): JSX.Element {
@@ -129,10 +130,6 @@ function OptimiseSignozNeeds({
 		});
 
 		onNext();
-	};
-
-	const handleOnBack = (): void => {
-		onBack();
 	};
 
 	const handleWillDoLater = (): void => {
@@ -189,24 +186,24 @@ function OptimiseSignozNeeds({
 
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Optimize SigNoz for Your Needs
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				Give us a quick sense of your scale so SigNoz can keep up!
-			</Typography.Paragraph>
+			<OnboardingQuestionHeader
+				title="Set up your workspace"
+				subtitle="Tailor SigNoz to suit your observability needs."
+			/>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
-					<Typography.Paragraph className="question">
-						What does your scale approximately look like?
-					</Typography.Paragraph>
+					<div className="form-group">
+						<Typography.Paragraph className="question">
+							What does your scale approximately look like?
+						</Typography.Paragraph>
+					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Logs / Day
 						</label>
-						<div className="slider-container">
+						<div className="slider-container logs-slider-container">
 							<div>
 								<Slider
 									min={0}
@@ -230,7 +227,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Metrics <Minus size={14} /> Number of Hosts
 						</label>
 						<div className="slider-container">
@@ -257,7 +254,7 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="organisationName">
+						<label className="question-slider" htmlFor="organisationName">
 							Number of services
 						</label>
 						<div className="slider-container">
@@ -284,34 +281,32 @@ function OptimiseSignozNeeds({
 					</div>
 				</div>
 
-				<div className="next-prev-container">
+				<div className="onboarding-buttons-container">
 					<Button
-						type="default"
-						className="next-button"
-						onClick={handleOnBack}
-						disabled={isUpdatingProfile}
-					>
-						<ArrowLeft size={14} />
-						Back
-					</Button>
-
-					<Button
-						type="primary"
-						className="next-button"
+						variant="solid"
+						color="primary"
+						className={`onboarding-next-button ${
+							isUpdatingProfile || isNextDisabled ? 'disabled' : ''
+						}`}
 						onClick={handleOnNext}
 						disabled={isUpdatingProfile || isNextDisabled}
+						suffixIcon={
+							isUpdatingProfile ? (
+								<Loader2 className="animate-spin" size={12} />
+							) : (
+								<ArrowRight size={12} />
+							)
+						}
 					>
-						Next{' '}
-						{isUpdatingProfile ? (
-							<Loader2 className="animate-spin" />
-						) : (
-							<ArrowRight size={14} />
-						)}
+						Next
 					</Button>
-				</div>
-
-				<div className="do-later-container">
-					<Button type="link" onClick={handleWillDoLater}>
+					<Button
+						variant="ghost"
+						color="secondary"
+						className="onboarding-do-later-button"
+						onClick={handleWillDoLater}
+						disabled={isUpdatingProfile}
+					>
 						I&apos;ll do this later
 					</Button>
 				</div>

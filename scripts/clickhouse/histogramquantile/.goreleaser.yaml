@@ -15,8 +15,6 @@ builds:
   - id: signoz
     binary: bin/histogram-quantile
     main: scripts/clickhouse/histogramquantile/main.go
-    env:
-      - CGO_ENABLED=0
     goos:
       - linux
       - darwin

@@ -1,7 +1,10 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './IngestionSettings.styles.scss';
-
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useMutation } from 'react-query';
+import { useHistory } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -19,6 +22,7 @@ import {
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
 	Tag,
+	Tooltip,
 	Typography,
 } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
@@ -34,15 +38,19 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
+import { initialQueryMeterWithType } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
 import dayjs from 'dayjs';
-import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { isNil, isUndefined } from 'lodash-es';
+import { cloneDeep, isNil, isUndefined } from 'lodash-es';
 import {
 	ArrowUpRight,
+	BellPlus,
 	CalendarClock,
 	Check,
 	Copy,
@@ -53,14 +61,11 @@ import {
 	PlusIcon,
 	Search,
 	Trash2,
+	TriangleAlert,
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { ChangeEvent, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
-import { useCopyToClipboard } from 'react-use';
 import { ErrorResponse } from 'types/api';
 import {
 	AddLimitProps,
@@ -71,8 +76,11 @@ import {
 	IngestionKeyProps,
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
+import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
+
+import './IngestionSettings.styles.scss';
 
 const { Option } = Select;
 
@@ -168,7 +176,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
-	const { isEnterpriseSelfHostedUser } = useGetTenantLicense();
+	const history = useHistory();
 
 	const [
 		hasCreateLimitForIngestionKeyError,
@@ -292,11 +300,11 @@ function MultiIngestionSettings(): JSX.Element {
 	};
 
 	const {
-		data: deploymentsData,
-		isLoading: isLoadingDeploymentsData,
-		isFetching: isFetchingDeploymentsData,
-		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData(!isEnterpriseSelfHostedUser);
+		data: globalConfig,
+		isLoading: isLoadingGlobalConfig,
+		isError: isErrorGlobalConfig,
+		error: globalConfigError,
+	} = useGetGlobalConfig();
 
 	const {
 		mutate: createIngestionKey,
@@ -438,12 +446,15 @@ function MultiIngestionSettings(): JSX.Element {
 			});
 	};
 
-	const handleCopyKey = (text: string): void => {
-		handleCopyToClipboard(text);
-		notifications.success({
-			message: 'Copied to clipboard',
-		});
-	};
+	const handleCopyKey = useCallback(
+		(text: string): void => {
+			handleCopyToClipboard(text);
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		},
+		[handleCopyToClipboard, notifications],
+	);
 
 	const gbToBytes = (gb: number): number => Math.round(gb * 1024 ** 3);
 
@@ -497,7 +508,9 @@ function MultiIngestionSettings(): JSX.Element {
 		};
 
 		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signalName);
-		if (!signalCfg) return;
+		if (!signalCfg) {
+			return;
+		}
 
 		// Only set size if usesSize is true
 		if (signalCfg.usesSize) {
@@ -586,7 +599,9 @@ function MultiIngestionSettings(): JSX.Element {
 		};
 
 		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signal.signal);
-		if (!signalCfg) return;
+		if (!signalCfg) {
+			return;
+		}
 
 		const noSizeProvided =
 			isUndefined(dailyLimit) && isUndefined(secondsLimit) && signalCfg.usesSize;
@@ -694,6 +709,68 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
+	const handleCreateAlert = (
+		APIKey: IngestionKeyProps,
+		signal: LimitProps,
+	): void => {
+		let metricName = '';
+
+		switch (signal.signal) {
+			case 'metrics':
+				metricName = 'signoz.meter.metric.datapoint.count';
+				break;
+			case 'traces':
+				metricName = 'signoz.meter.span.size';
+				break;
+			case 'logs':
+				metricName = 'signoz.meter.log.size';
+				break;
+			default:
+				return;
+		}
+
+		const threshold =
+			signal.signal === 'metrics'
+				? signal.config?.day?.count || 0
+				: signal.config?.day?.size || 0;
+
+		const query = {
+			...initialQueryMeterWithType,
+			builder: {
+				...initialQueryMeterWithType.builder,
+				queryData: [
+					{
+						...initialQueryMeterWithType.builder.queryData[0],
+						aggregations: [
+							{
+								...initialQueryMeterWithType.builder.queryData[0].aggregations?.[0],
+								metricName,
+								timeAggregation: MeterAggregateOperator.INCREASE,
+								spaceAggregation: MeterAggregateOperator.SUM,
+							},
+						],
+						filter: {
+							expression: `signoz.workspace.key.id='${APIKey.id}'`,
+						},
+					},
+				],
+			},
+		};
+
+		const stringifiedQuery = JSON.stringify(query);
+
+		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
+		thresholds[0].thresholdValue = threshold;
+
+		const URL = `${ROUTES.ALERTS_NEW}?${
+			QueryParams.compositeQuery
+		}=${encodeURIComponent(stringifiedQuery)}&${
+			QueryParams.thresholds
+		}=${encodeURIComponent(JSON.stringify(thresholds))}`;
+
+		history.push(URL);
+	};
+
 	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
 		{
 			title: 'Ingestion Key',
@@ -774,6 +851,13 @@ function MultiIngestionSettings(): JSX.Element {
 						),
 						children: (
 							<div className="ingestion-key-info-container">
+								<Row>
+									<Col span={6}> ID </Col>
+									<Col span={12}>
+										<Typography.Text>{APIKey.id}</Typography.Text>
+									</Col>
+								</Row>
+
 								<Row>
 									<Col span={6}> Created on </Col>
 									<Col span={12}>
@@ -1176,6 +1260,27 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				))}
 																		</div>
+
+																		{((signalCfg.usesSize &&
+																			limit?.config?.day?.size !== undefined) ||
+																			(signalCfg.usesCount &&
+																				limit?.config?.day?.count !== undefined)) && (
+																			<Tooltip
+																				title="Set alert on this limit"
+																				placement="top"
+																				arrow={false}
+																			>
+																				<Button
+																					icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
+																					className="set-alert-btn periscope-btn ghost"
+																					type="text"
+																					data-testid={`set-alert-btn-${signalName}`}
+																					onClick={(): void =>
+																						handleCreateAlert(APIKey, limitsDict[signalName])
+																					}
+																				/>
+																			</Tooltip>
+																		)}
 																	</div>
 
 																	{/* SECOND limit usage/limit */}
@@ -1291,6 +1396,19 @@ function MultiIngestionSettings(): JSX.Element {
 		});
 	};
 
+	const handleCopyIngestionURL = useCallback(
+		(e: React.MouseEvent<HTMLDivElement>): void => {
+			e.stopPropagation();
+			e.preventDefault();
+
+			const ingestionURL = globalConfig?.data?.ingestion_url;
+			if (ingestionURL) {
+				handleCopyKey(ingestionURL);
+			}
+		},
+		[globalConfig, handleCopyKey],
+	);
+
 	return (
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
@@ -1309,46 +1427,44 @@ function MultiIngestionSettings(): JSX.Element {
 					</Typography.Text>
 				</header>
 
-				{!isErrorDeploymentsData &&
-					!isLoadingDeploymentsData &&
-					!isFetchingDeploymentsData &&
-					deploymentsData && (
-						<div className="ingestion-setup-details-links">
-							<div className="ingestion-key-url-container">
-								<div className="ingestion-key-url-label">Ingestion URL</div>
+				{!isLoadingGlobalConfig && (
+					<div className="ingestion-setup-details-links">
+						<div className="ingestion-key-url-container">
+							<div className="ingestion-key-url-label">Ingestion URL</div>
+
+							{!isErrorGlobalConfig && (
 								<div
 									className="ingestion-key-url-value"
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										handleCopyKey(
-											`ingest.${deploymentsData?.data.data.cluster.region.dns}`,
-										);
-									}}
+									onClick={handleCopyIngestionURL}
 								>
-									ingest.{deploymentsData?.data.data.cluster.region.dns}
+									{globalConfig?.data.ingestion_url}
 									<Copy className="copy-key-btn" size={12} />
 								</div>
-							</div>
+							)}
 
-							<div className="ingestion-data-region-container">
-								<div className="ingestion-data-region-label">Region</div>
-								<div
-									className="ingestion-data-region-value"
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										handleCopyKey(deploymentsData?.data.data.cluster.region.name || '');
-									}}
+							{isErrorGlobalConfig && (
+								<Tooltip
+									rootClassName="ingestion-url-error-tooltip"
+									arrow={false}
+									title={
+										<div className="ingestion-url-error-content">
+											<Typography.Text className="ingestion-url-error-code">
+												{globalConfigError?.getErrorCode()}
+											</Typography.Text>
+
+											<Typography.Text className="ingestion-url-error-message">
+												{globalConfigError?.getErrorMessage()}
+											</Typography.Text>
+										</div>
+									}
+									placement="topLeft"
 								>
-									<Typography.Text className="ingestion-data-region-value-text">
-										{deploymentsData?.data.data.cluster.region.name}
-									</Typography.Text>
-									<Copy className="copy-key-btn" size={12} />
-								</div>
-							</div>
+									<Button type="text" icon={<TriangleAlert size={14} />} />
+								</Tooltip>
+							)}
 						</div>
-					)}
+					</div>
+				)}
 
 				<div className="ingestion-keys-search-add-new">
 					<Input

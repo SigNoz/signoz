@@ -1,3 +1,5 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Card, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
@@ -21,8 +23,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -69,6 +69,13 @@ function StatusCodeBarCharts({
 	} = endPointStatusCodeLatencyBarChartsDataQuery;
 
 	const { startTime: minTime, endTime: maxTime } = timeRange;
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
@@ -207,6 +214,13 @@ function StatusCodeBarCharts({
 				onDragSelect,
 				colorMapping,
 				query: currentQuery,
+				legendScrollPosition: legendScrollPositionRef.current,
+				setLegendScrollPosition: (position: {
+					scrollTop: number;
+					scrollLeft: number;
+				}) => {
+					legendScrollPositionRef.current = position;
+				},
 			}),
 		[
 			minTime,

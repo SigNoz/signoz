@@ -16,6 +16,7 @@ import (
 var (
 	ErrCodeAlertmanagerChannelNotFound     = errors.MustNewCode("alertmanager_channel_not_found")
 	ErrCodeAlertmanagerChannelNameMismatch = errors.MustNewCode("alertmanager_channel_name_mismatch")
+	ErrCodeAlertmanagerChannelInvalid      = errors.MustNewCode("alertmanager_channel_invalid")
 )
 
 var (
@@ -41,9 +42,9 @@ type Channel struct {
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
 // It can return nil if the receiver is the default receiver.
-func NewChannelFromReceiver(receiver config.Receiver, orgID string) *Channel {
+func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
-		return nil
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
 	}
 
 	// Initialize channel with common fields
@@ -98,7 +99,12 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) *Channel {
 		break
 	}
 
-	return &channel
+	// If we were unable to find the channel type, return an error
+	if channel.Type == "" {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
+	}
+
+	return &channel, nil
 }
 
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
@@ -163,9 +169,9 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 }
 
 func (c *Channel) Update(receiver Receiver) error {
-	channel := NewChannelFromReceiver(receiver, c.OrgID)
-	if channel == nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", c.ID.StringValue())
+	channel, err := NewChannelFromReceiver(receiver, c.OrgID)
+	if err != nil {
+		return err
 	}
 
 	if c.Name != channel.Name {
@@ -174,29 +180,6 @@ func (c *Channel) Update(receiver Receiver) error {
 
 	c.Data = channel.Data
 	c.UpdatedAt = time.Now()
-
-	return nil
-}
-
-// This is needed by the legacy alertmanager to convert the MSTeamsV2Configs to MSTeamsConfigs
-func (c *Channel) MSTeamsV2ToMSTeams() error {
-	if c.Type != "msteamsv2" {
-		return nil
-	}
-
-	receiver, err := NewReceiver(c.Data)
-	if err != nil {
-		return err
-	}
-
-	receiver = MSTeamsV2ReceiverToMSTeamsReceiver(receiver)
-	data, err := json.Marshal(receiver)
-	if err != nil {
-		return err
-	}
-
-	c.Type = "msteams"
-	c.Data = string(data)
 
 	return nil
 }

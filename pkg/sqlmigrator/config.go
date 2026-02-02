@@ -1,10 +1,15 @@
 package sqlmigrator
 
 import (
-	"errors"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+
 	"github.com/SigNoz/signoz/pkg/factory"
+)
+
+var (
+	ErrCodeInvalidSQLMigratorConfig = errors.MustNewCode("invalid_sqlmigrator_config")
 )
 
 type Config struct {
@@ -34,7 +39,7 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	if c.Lock.Timeout <= c.Lock.Interval {
-		return errors.New("lock::timeout must be greater than lock::interval")
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidSQLMigratorConfig, "lock::timeout must be greater than lock::interval")
 	}
 
 	return nil

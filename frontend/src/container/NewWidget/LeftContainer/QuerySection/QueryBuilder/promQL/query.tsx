@@ -1,7 +1,7 @@
+import { ChangeEvent, useCallback } from 'react';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ChangeEvent, useCallback } from 'react';
 import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
@@ -66,6 +66,7 @@ function PromQLQueryBuilder({
 				defaultValue={queryData?.query}
 				addonBefore="PromQL Query"
 				style={{ marginBottom: '0.5rem' }}
+				data-testid="promql-query-input"
 			/>
 
 			<Input
@@ -75,6 +76,7 @@ function PromQLQueryBuilder({
 				defaultValue={queryData?.legend}
 				addonBefore="Legend Format"
 				style={{ marginBottom: '0.5rem' }}
+				data-testid="promql-legend-input"
 			/>
 		</QueryHeader>
 	);

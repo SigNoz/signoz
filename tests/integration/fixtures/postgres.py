@@ -1,7 +1,7 @@
 import docker
 import docker.errors
-import psycopg2
 import pytest
+from sqlalchemy import create_engine, sql
 from testcontainers.core.container import Network
 from testcontainers.postgres import PostgresContainer
 
@@ -29,17 +29,17 @@ def postgres(
             password="password",
             dbname="signoz",
             driver="psycopg2",
-            network=network.id,
         )
+        container.with_network(network)
         container.start()
 
-        connection = psycopg2.connect(
-            dbname=container.dbname,
-            user=container.username,
-            password=container.password,
-            host=container.get_container_host_ip(),
-            port=container.get_exposed_port(5432),
+        engine = create_engine(
+            f"postgresql+psycopg2://{container.username}:{container.password}@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/{container.dbname}"
         )
+
+        with engine.connect() as conn:
+            result = conn.execute(sql.text("SELECT 1"))
+            assert result.fetchone()[0] == 1
 
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
@@ -57,7 +57,7 @@ def postgres(
                     )
                 },
             ),
-            conn=connection,
+            conn=engine,
             env={
                 "SIGNOZ_SQLSTORE_PROVIDER": "postgres",
                 "SIGNOZ_SQLSTORE_POSTGRES_DSN": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}",
@@ -83,17 +83,17 @@ def postgres(
         host_config = container.host_configs["5432"]
         env = cache["env"]
 
-        connection = psycopg2.connect(
-            dbname=env["SIGNOZ_SQLSTORE_POSTGRES_DBNAME"],
-            user=env["SIGNOZ_SQLSTORE_POSTGRES_USER"],
-            password=env["SIGNOZ_SQLSTORE_POSTGRES_PASSWORD"],
-            host=host_config.address,
-            port=host_config.port,
+        engine = create_engine(
+            f"postgresql+psycopg2://{env['SIGNOZ_SQLSTORE_POSTGRES_USER']}:{env['SIGNOZ_SQLSTORE_POSTGRES_PASSWORD']}@{host_config.address}:{host_config.port}/{env['SIGNOZ_SQLSTORE_POSTGRES_DBNAME']}"
         )
+
+        with engine.connect() as conn:
+            result = conn.execute(sql.text("SELECT 1"))
+            assert result.fetchone()[0] == 1
 
         return types.TestContainerSQL(
             container=container,
-            conn=connection,
+            conn=engine,
             env=env,
         )
 

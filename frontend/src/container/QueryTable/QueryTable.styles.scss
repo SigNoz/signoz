@@ -13,4 +13,13 @@
 			width: 0.1rem;
 		}
 	}
+
+	.clickable-cell {
+		cursor: pointer;
+		max-width: fit-content;
+
+		&:hover {
+			color: var(--bg-robin-500);
+		}
+	}
 }

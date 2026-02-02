@@ -1,13 +1,13 @@
-import './TracesModulePage.styles.scss';
-
+import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useLocation } from 'react-router-dom';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
+
+import './TracesModulePage.styles.scss';
 
 function TracesModulePage(): JSX.Element {
 	const { pathname } = useLocation();

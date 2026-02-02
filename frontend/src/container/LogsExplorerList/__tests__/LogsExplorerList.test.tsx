@@ -6,7 +6,6 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { logsQueryRangeEmptyResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { render, screen } from 'tests/test-utils';
@@ -36,7 +35,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		preferences: {
 			columns: [],
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table',
 				fontSize: 'small',
 				version: 1,
@@ -73,20 +72,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
-
 jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
 	useGetExplorerQueryRange: jest.fn(),
@@ -119,7 +104,6 @@ describe('LogsExplorerList - empty states', () => {
 											key: 'trace_id',
 											type: '',
 											dataType: 'string',
-											isColumn: true,
 										},
 										op: '=',
 										value: 'test-trace-id',
@@ -137,10 +121,12 @@ describe('LogsExplorerList - empty states', () => {
 			<QueryBuilderContext.Provider value={mockTraceToLogsContextValue as any}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
-						selectedView={ExplorerViews.LIST}
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
+						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,
@@ -183,7 +169,6 @@ describe('LogsExplorerList - empty states', () => {
 											key: 'service.name',
 											type: '',
 											dataType: 'string',
-											isColumn: true,
 										},
 										op: '=',
 										value: 'test-service-name',
@@ -201,10 +186,12 @@ describe('LogsExplorerList - empty states', () => {
 			<QueryBuilderContext.Provider value={mockTraceToLogsContextValue as any}>
 				<PreferenceContextProvider>
 					<LogsExplorerViews
-						selectedView={ExplorerViews.LIST}
 						setIsLoadingQueries={(): void => {}}
 						listQueryKeyRef={{ current: {} }}
 						chartQueryKeyRef={{ current: {} }}
+						setWarning={(): void => {}}
+						showLiveLogs={false}
+						handleChangeSelectedView={(): void => {}}
 					/>
 				</PreferenceContextProvider>
 			</QueryBuilderContext.Provider>,

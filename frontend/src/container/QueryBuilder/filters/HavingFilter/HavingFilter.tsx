@@ -1,3 +1,5 @@
+// ** Helpers
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -11,9 +13,6 @@ import {
 	transformFromStringToHaving,
 	transformHavingToStringValue,
 } from 'lib/query/transformQueryBuilderData';
-// ** Helpers
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -43,12 +42,7 @@ export function HavingFilter({
 	);
 
 	const aggregatorAttribute = useMemo(
-		() =>
-			transformStringWithPrefix({
-				str: query.aggregateAttribute?.key || '',
-				prefix: query.aggregateAttribute?.type || '',
-				condition: !query.aggregateAttribute?.isColumn,
-			}),
+		() => query.aggregateAttribute?.key || '',
 		[query],
 	);
 

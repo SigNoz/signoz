@@ -6,7 +6,9 @@ export const getDefaultLogBackground = (
 	isReadOnly?: boolean,
 	isDarkMode?: boolean,
 ): string => {
-	if (isReadOnly) return '';
+	if (isReadOnly) {
+		return '';
+	}
 	// TODO handle the light mode here
 	return `&:hover {
     background-color: ${
@@ -20,7 +22,9 @@ export const getActiveLogBackground = (
 	isDarkMode = true,
 	logType?: string,
 ): string => {
-	if (!isActiveLog) return ``;
+	if (!isActiveLog) {
+		return ``;
+	}
 	if (isDarkMode) {
 		switch (logType) {
 			case LogType.INFO:
@@ -45,6 +49,16 @@ export const getActiveLogBackground = (
 export const getHightLightedLogBackground = (
 	isHighlightedLog = true,
 ): string => {
-	if (!isHighlightedLog) return '';
+	if (!isHighlightedLog) {
+		return '';
+	}
 	return `background-color: ${orange[3]};`;
+};
+
+export const getCustomHighlightBackground = (isHighlighted = false): string => {
+	if (!isHighlighted) {
+		return '';
+	}
+
+	return `background-color: ${Color.BG_ROBIN_500}20;`;
 };

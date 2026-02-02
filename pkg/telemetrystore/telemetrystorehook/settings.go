@@ -2,36 +2,33 @@ package telemetrystorehook
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 )
 
 type provider struct {
-	settings telemetrystore.QuerySettings
+	settings          telemetrystore.QuerySettings
 }
 
 func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("settings"), NewSettings)
+	return factory.NewProviderFactory(factory.MustNewName("settings"), func(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
+		return NewSettings(ctx, providerSettings, config)
+	})
 }
 
 func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
 	return &provider{
-		settings: config.Clickhouse.QuerySettings,
+		settings:          config.Clickhouse.QuerySettings,
 	}, nil
 }
 
 func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
 	settings := clickhouse.Settings{}
 
-	// Apply default settings
-	logComment := h.getLogComment(ctx)
-	if logComment != "" {
-		settings["log_comment"] = logComment
-	}
+	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
 
 	if ctx.Value("enforce_max_result_rows") != nil {
 		settings["max_result_rows"] = h.settings.MaxResultRows
@@ -53,6 +50,10 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["timeout_before_checking_execution_speed"] = h.settings.TimeoutBeforeCheckingExecutionSpeed
 	}
 
+	if h.settings.IgnoreDataSkippingIndices != "" {
+		settings["ignore_data_skipping_indices"] = h.settings.IgnoreDataSkippingIndices
+	}
+
 	if ctx.Value("clickhouse_max_threads") != nil {
 		if maxThreads, ok := ctx.Value("clickhouse_max_threads").(int); ok {
 			settings["max_threads"] = maxThreads
@@ -71,26 +72,12 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
+	// TODO(srikanthccv): enable it when the "Cannot read all data" issue is fixed
+	// https://github.com/ClickHouse/ClickHouse/issues/82283
+	settings["secondary_indices_enable_bulk_filtering"] = false
+
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }
 
-func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
-}
-
-func (h *provider) getLogComment(ctx context.Context) string {
-	// Get the key-value pairs from context for log comment
-	kv := ctx.Value(common.LogCommentKey)
-	if kv == nil {
-		return ""
-	}
-
-	logCommentKVs, ok := kv.(map[string]string)
-	if !ok {
-		return ""
-	}
-
-	logComment, _ := json.Marshal(logCommentKVs)
-
-	return string(logComment)
-}
+func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}

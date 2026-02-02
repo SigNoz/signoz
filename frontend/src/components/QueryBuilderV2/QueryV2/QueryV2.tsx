@@ -1,3 +1,11 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+import {
+	ForwardedRef,
+	forwardRef,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Dropdown } from 'antd';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
@@ -8,7 +16,6 @@ import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearch
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -19,16 +26,29 @@ import QueryAddOns from './QueryAddOns/QueryAddOns';
 import QueryAggregation from './QueryAggregation/QueryAggregation';
 import QuerySearch from './QuerySearch/QuerySearch';
 
-export const QueryV2 = memo(function QueryV2({
-	ref,
-	index,
-	queryVariant,
-	query,
-	filterConfigs,
-	isListViewPanel = false,
-	version,
-	showOnlyWhereClause = false,
-}: QueryProps & { ref: React.RefObject<HTMLDivElement> }): JSX.Element {
+export const QueryV2 = forwardRef(function QueryV2(
+	{
+		index,
+		queryVariant,
+		query,
+		filterConfigs,
+		isListViewPanel = false,
+		showTraceOperator = false,
+		hasTraceOperator = false,
+		version,
+		showOnlyWhereClause = false,
+		signalSource = '',
+		isMultiQueryAllowed = false,
+		onSignalSourceChange,
+		signalSourceChangeEnabled = false,
+		queriesCount = 1,
+	}: QueryProps & {
+		onSignalSourceChange: (value: string) => void;
+		signalSourceChangeEnabled: boolean;
+		queriesCount: number;
+	},
+	ref: ForwardedRef<HTMLDivElement>,
+): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
@@ -74,6 +94,15 @@ export const QueryV2 = memo(function QueryV2({
 		dataSource,
 	]);
 
+	const showInlineQuerySearch = useMemo(() => {
+		if (!showTraceOperator) {
+			return false;
+		}
+		return (
+			dataSource === DataSource.TRACES && (hasTraceOperator || isListViewPanel)
+		);
+	}, [hasTraceOperator, isListViewPanel, showTraceOperator, dataSource]);
+
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
 			handleChangeQueryData('stepInterval', value);
@@ -107,11 +136,12 @@ export const QueryV2 = memo(function QueryV2({
 			ref={ref}
 		>
 			<div className="qb-content-section">
-				{!showOnlyWhereClause && (
+				{(!showOnlyWhereClause || showTraceOperator) && (
 					<div className="qb-header-container">
 						<div className="query-actions-container">
 							<div className="query-actions-left-container">
 								<QBEntityOptions
+									hasTraceOperator={hasTraceOperator}
 									isMetricsDataSource={dataSource === DataSource.METRICS}
 									showFunctions={
 										(version && version === ENTITY_VERSION_V4) ||
@@ -121,6 +151,7 @@ export const QueryV2 = memo(function QueryV2({
 										false
 									}
 									isCollapsed={isCollapsed}
+									showTraceOperator={showTraceOperator}
 									entityType="query"
 									entityData={query}
 									onToggleVisibility={handleToggleDisableQuery}
@@ -138,7 +169,28 @@ export const QueryV2 = memo(function QueryV2({
 								/>
 							</div>
 
-							{!isListViewPanel && (
+							{!isCollapsed && showInlineQuerySearch && (
+								<div className="qb-search-filter-container">
+									<div className="query-search-container">
+										<QuerySearch
+											key={`query-search-${query.queryName}-${query.dataSource}`}
+											onChange={handleSearchChange}
+											queryData={query}
+											dataSource={dataSource}
+											signalSource={signalSource}
+										/>
+									</div>
+
+									{showSpanScopeSelector && (
+										<div className="traces-search-filter-container">
+											<div className="traces-search-filter-in">in</div>
+											<SpanScopeSelector query={query} />
+										</div>
+									)}
+								</div>
+							)}
+
+							{isMultiQueryAllowed && (
 								<Dropdown
 									className="query-actions-dropdown"
 									menu={{
@@ -149,12 +201,16 @@ export const QueryV2 = memo(function QueryV2({
 												icon: <Copy size={14} />,
 												onClick: handleCloneEntity,
 											},
-											{
-												label: 'Delete',
-												key: 'delete-query',
-												icon: <Trash size={14} />,
-												onClick: handleDeleteQuery,
-											},
+											...(queriesCount && queriesCount > 1
+												? [
+														{
+															label: 'Delete',
+															key: 'delete-query',
+															icon: <Trash size={14} />,
+															onClick: handleDeleteQuery,
+														},
+												  ]
+												: []),
 										],
 									}}
 									placement="bottomRight"
@@ -170,36 +226,43 @@ export const QueryV2 = memo(function QueryV2({
 					<div className="qb-elements-container">
 						<div className="qb-search-container">
 							{dataSource === DataSource.METRICS && (
-								<div className="metrics-select-container">
+								<div className="metrics-container">
 									<MetricsSelect
 										query={query}
 										index={index}
 										version={ENTITY_VERSION_V5}
+										signalSource={signalSource as 'meter' | ''}
+										onSignalSourceChange={onSignalSourceChange}
+										signalSourceChangeEnabled={signalSourceChangeEnabled}
 									/>
 								</div>
 							)}
 
-							<div className="qb-search-filter-container">
-								<div className="query-search-container">
-									<QuerySearch
-										key={`query-search-${query.queryName}-${query.dataSource}`}
-										onChange={handleSearchChange}
-										queryData={query}
-										dataSource={dataSource}
-									/>
-								</div>
-
-								{showSpanScopeSelector && (
-									<div className="traces-search-filter-container">
-										<div className="traces-search-filter-in">in</div>
-										<SpanScopeSelector query={query} />
+							{!showInlineQuerySearch && (
+								<div className="qb-search-filter-container">
+									<div className="query-search-container">
+										<QuerySearch
+											key={`query-search-${query.queryName}-${query.dataSource}`}
+											onChange={handleSearchChange}
+											queryData={query}
+											dataSource={dataSource}
+											signalSource={signalSource}
+										/>
 									</div>
-								)}
-							</div>
+
+									{showSpanScopeSelector && (
+										<div className="traces-search-filter-container">
+											<div className="traces-search-filter-in">in</div>
+											<SpanScopeSelector query={query} />
+										</div>
+									)}
+								</div>
+							)}
 						</div>
 
 						{!showOnlyWhereClause &&
 							!isListViewPanel &&
+							!(hasTraceOperator && dataSource === DataSource.TRACES) &&
 							dataSource !== DataSource.METRICS && (
 								<QueryAggregation
 									dataSource={dataSource}
@@ -216,24 +279,28 @@ export const QueryV2 = memo(function QueryV2({
 								panelType={panelType}
 								query={query}
 								index={index}
-								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}`}
+								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
 								version="v4"
+								signalSource={signalSource as 'meter' | ''}
 							/>
 						)}
 
-						{!showOnlyWhereClause && (
-							<QueryAddOns
-								index={index}
-								query={query}
-								version="v3"
-								isListViewPanel={isListViewPanel}
-								showReduceTo={showReduceTo}
-								panelType={panelType}
-							/>
-						)}
+						{!showOnlyWhereClause &&
+							!(hasTraceOperator && query.dataSource === DataSource.TRACES) && (
+								<QueryAddOns
+									index={index}
+									query={query}
+									version="v3"
+									isListViewPanel={isListViewPanel}
+									showReduceTo={showReduceTo}
+									panelType={panelType}
+								/>
+							)}
 					</div>
 				)}
 			</div>
 		</div>
 	);
 });
+
+QueryV2.displayName = 'QueryV2';

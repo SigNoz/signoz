@@ -1,13 +1,13 @@
-import './ChangelogRenderer.styles.scss';
-
-import dayjs from 'dayjs';
 import ReactMarkdown from 'react-markdown';
+import dayjs from 'dayjs';
 import {
 	ChangelogSchema,
 	Media,
 	SupportedImageTypes,
 	SupportedVideoTypes,
 } from 'types/api/changelog/getChangelogByVersion';
+
+import './ChangelogRenderer.styles.scss';
 
 interface Props {
 	changelog: ChangelogSchema;
@@ -55,33 +55,35 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 				<div className="inner-ball" />
 			</div>
 			<span className="changelog-release-date">{formattedReleaseDate}</span>
-			{changelog.features && changelog.features.length > 0 && (
-				<div className="changelog-renderer-list">
-					{changelog.features.map((feature) => (
-						<div key={feature.id}>
-							<h2>{feature.title}</h2>
-							{feature.media && renderMedia(feature.media)}
-							<ReactMarkdown>{feature.description}</ReactMarkdown>
-						</div>
-					))}
-				</div>
-			)}
-			{changelog.bug_fixes && changelog.bug_fixes.length > 0 && (
-				<div>
-					<h2>Bug Fixes</h2>
-					{changelog.bug_fixes && (
-						<ReactMarkdown>{changelog.bug_fixes}</ReactMarkdown>
-					)}
-				</div>
-			)}
-			{changelog.maintenance && changelog.maintenance.length > 0 && (
-				<div>
-					<h2>Maintenance</h2>
-					{changelog.maintenance && (
-						<ReactMarkdown>{changelog.maintenance}</ReactMarkdown>
-					)}
-				</div>
-			)}
+			<div className="changelog-renderer-content">
+				{changelog.features && changelog.features.length > 0 && (
+					<div className="changelog-renderer-list">
+						{changelog.features.map((feature) => (
+							<div key={feature.id}>
+								<div className="changelog-renderer-section-title">{feature.title}</div>
+								{feature.media && renderMedia(feature.media)}
+								<ReactMarkdown>{feature.description}</ReactMarkdown>
+							</div>
+						))}
+					</div>
+				)}
+				{changelog.bug_fixes && changelog.bug_fixes.length > 0 && (
+					<div className="changelog-renderer-bug-fixes">
+						<div className="changelog-renderer-section-title">Bug Fixes</div>
+						{changelog.bug_fixes && (
+							<ReactMarkdown>{changelog.bug_fixes}</ReactMarkdown>
+						)}
+					</div>
+				)}
+				{changelog.maintenance && changelog.maintenance.length > 0 && (
+					<div className="changelog-renderer-maintenance">
+						<div className="changelog-renderer-section-title">Maintenance</div>
+						{changelog.maintenance && (
+							<ReactMarkdown>{changelog.maintenance}</ReactMarkdown>
+						)}
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

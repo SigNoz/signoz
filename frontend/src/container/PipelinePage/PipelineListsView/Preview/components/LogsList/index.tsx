@@ -1,5 +1,3 @@
-import './styles.scss';
-
 import { ExpandAltOutlined } from '@ant-design/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -8,13 +6,14 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
 
+import './styles.scss';
+
 function LogsList({ logs }: LogsListProps): JSX.Element {
 	const {
 		activeLog,
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
 	} = useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
@@ -49,7 +48,6 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
-				onGroupByAttribute={onGroupByAttribute}
 			/>
 		</div>
 	);

@@ -1,6 +1,9 @@
 
 node_modules
 
+.vscode
+!.vscode/settings.json
+
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
@@ -12,7 +15,6 @@ frontend/coverage
 
 # production
 frontend/build
-frontend/.vscode
 frontend/.yarnclean
 frontend/.temp_cache
 frontend/test-results
@@ -31,7 +33,6 @@ frontend/src/constants/env.ts
 
 .idea
 
-**/.vscode
 **/build
 **/storage
 **/locust-scripts/__pycache__/
@@ -49,13 +50,13 @@ ee/query-service/tests/test-deploy/data/
 # local data
 *.backup
 *.db
+**/db
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
 bin/
 .local/
 */query-service/queries.active
 ee/query-service/db
-
 # e2e
 
 e2e/node_modules/
@@ -86,6 +87,8 @@ queries.active
 .devenv/**/tmp/**
 .qodo
 
+.dev
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -103,7 +106,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -219,8 +221,6 @@ cython_debug/
 #.idea/
 
 ### Python Patch ###
-# Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
-poetry.toml
 
 # ruff
 .ruff_cache/
@@ -228,4 +228,6 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
-# End of https://www.toptal.com/developers/gitignore/api/python
+
+# cursor files
+frontend/.cursor/

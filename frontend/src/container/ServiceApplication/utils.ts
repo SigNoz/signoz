@@ -25,8 +25,6 @@ export function getSeriesValue(
 
 export const getQueryRangeRequestData = ({
 	topLevelOperations,
-	maxTime,
-	minTime,
 	globalSelectedInterval,
 	dotMetricsEnabled,
 }: GetQueryRangeRequestDataProps): GetQueryResultsProps[] => {
@@ -43,11 +41,7 @@ export const getQueryRangeRequestData = ({
 			panelTypes: PANEL_TYPES.TABLE,
 		});
 
-		const updatedQuery = updateStepInterval(
-			serviceMetricsWidget.query,
-			maxTime,
-			minTime,
-		);
+		const updatedQuery = updateStepInterval(serviceMetricsWidget.query);
 
 		requestData.push({
 			selectedTime: serviceMetricsWidget?.timePreferance,

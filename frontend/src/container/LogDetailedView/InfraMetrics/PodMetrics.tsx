@@ -1,3 +1,5 @@
+import { useMemo, useRef } from 'react';
+import { useQueries, UseQueryResult } from 'react-query';
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
@@ -11,8 +13,6 @@ import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { useMemo, useRef } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -23,14 +23,14 @@ import { getPodQueryPayload, podWidgetInfo } from './constants';
 function PodMetrics({
 	podName,
 	clusterName,
-	logLineTimestamp,
+	timestamp,
 }: {
 	podName: string;
 	clusterName: string;
-	logLineTimestamp: string;
+	timestamp: string;
 }): JSX.Element {
 	const { start, end, verticalLineTimestamp } = useMemo(() => {
-		const logTimestamp = dayjs(logLineTimestamp);
+		const logTimestamp = dayjs(timestamp);
 		const now = dayjs();
 		const startTime = logTimestamp.subtract(3, 'hour');
 
@@ -43,7 +43,15 @@ function PodMetrics({
 			end: endTime.unix(),
 			verticalLineTimestamp: logTimestamp.unix(),
 		};
-	}, [logLineTimestamp]);
+	}, [timestamp]);
+
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -91,6 +99,13 @@ function PodMetrics({
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				}),
 			),
 		[

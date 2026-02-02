@@ -3,14 +3,9 @@ import ROUTES from 'constants/routes';
 import InfraMonitoringHosts from 'container/InfraMonitoringHosts';
 import InfraMonitoringK8s from 'container/InfraMonitoringK8s';
 import { Inbox } from 'lucide-react';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 
 export const Hosts: TabRoutes = {
-	Component: (): JSX.Element => (
-		<PreferenceContextProvider>
-			<InfraMonitoringHosts />
-		</PreferenceContextProvider>
-	),
+	Component: (): JSX.Element => <InfraMonitoringHosts />,
 	name: (
 		<div className="tab-item">
 			<Inbox size={16} /> Hosts
@@ -21,11 +16,7 @@ export const Hosts: TabRoutes = {
 };
 
 export const Kubernetes: TabRoutes = {
-	Component: (): JSX.Element => (
-		<PreferenceContextProvider>
-			<InfraMonitoringK8s />
-		</PreferenceContextProvider>
-	),
+	Component: (): JSX.Element => <InfraMonitoringK8s />,
 	name: (
 		<div className="tab-item">
 			<Inbox size={16} /> Kubernetes

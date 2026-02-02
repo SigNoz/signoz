@@ -1,6 +1,8 @@
-import ROUTES from 'constants/routes';
-import MessagingQueues from 'pages/MessagingQueues';
 import { RouteProps } from 'react-router-dom';
+import ROUTES from 'constants/routes';
+import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
+import MessagingQueues from 'pages/MessagingQueues';
+import MeterExplorer from 'pages/MeterExplorer';
 
 import {
 	AlertHistory,
@@ -11,6 +13,7 @@ import {
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardsListPage,
 	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
@@ -26,13 +29,13 @@ import {
 	LogsIndexToFields,
 	LogsSaveViews,
 	MetricsExplorer,
-	NewDashboardPage,
 	OldLogsExplorer,
 	Onboarding,
 	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
 	PipelinePage,
+	PublicDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -157,16 +160,23 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.ALL_DASHBOARD,
 		exact: true,
-		component: DashboardPage,
+		component: DashboardsListPage,
 		isPrivate: true,
 		key: 'ALL_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD,
 		exact: true,
-		component: NewDashboardPage,
+		component: DashboardPage,
 		isPrivate: true,
 		key: 'DASHBOARD',
+	},
+	{
+		path: ROUTES.PUBLIC_DASHBOARD,
+		exact: false,
+		component: PublicDashboardPage,
+		isPrivate: false,
+		key: 'PUBLIC_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD_WIDGET,
@@ -188,6 +198,13 @@ const routes: AppRoutes[] = [
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
+	},
+	{
+		path: ROUTES.ALERT_TYPE_SELECTION,
+		exact: true,
+		component: AlertTypeSelectionPage,
+		isPrivate: true,
+		key: 'ALERT_TYPE_SELECTION',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
@@ -432,6 +449,28 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER_VIEWS',
+		isPrivate: true,
+	},
+
+	{
+		path: ROUTES.METER,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METER_EXPLORER,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METER_EXPLORER_VIEWS,
+		exact: true,
+		component: MeterExplorer,
+		key: 'METER_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
 	{

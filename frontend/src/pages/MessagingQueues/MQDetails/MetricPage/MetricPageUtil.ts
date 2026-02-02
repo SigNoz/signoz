@@ -8,7 +8,7 @@ import {
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 interface GetWidgetQueryProps {
@@ -39,7 +39,6 @@ export const getWidgetQueryBuilder = ({
 }: GetWidgetQueryPropsReturn): Widgets => ({
 	description: description || '',
 	id: id || uuid(),
-	isStacked: false,
 	nullZeroValues: nullZeroValues || '',
 	opacity: '1',
 	panelTypes,
@@ -72,6 +71,7 @@ export function getWidgetQuery(
 			builder: {
 				queryData: props.queryData,
 				queryFormulas: (props.queryFormulas as IBuilderFormula[]) || [],
+				queryTraceOperator: [],
 			},
 			clickhouse_sql: [],
 			id: uuid(),
@@ -94,8 +94,6 @@ export const getRequestTimesWidgetData = (
 							: 'kafka_request_time_avg',
 						// mirror into the id as well
 						id: 'kafka_request_time_avg--float64--Gauge--true',
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -113,7 +111,7 @@ export const getRequestTimesWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -134,8 +132,6 @@ export const getBrokerCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 						dataType: DataTypes.Float64,
 						key: dotMetricsEnabled ? 'kafka.brokers' : 'kafka_brokers',
 						id: 'kafka_brokers--float64--Gauge--true',
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'sum',
@@ -150,7 +146,7 @@ export const getBrokerCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'sum',
@@ -175,8 +171,6 @@ export const getProducerFetchRequestPurgatoryWidgetData = (
 						id: `${
 							dotMetricsEnabled ? 'kafka.purgatory.size' : 'kafka_purgatory_size'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -191,7 +185,7 @@ export const getProducerFetchRequestPurgatoryWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -221,8 +215,6 @@ export const getBrokerNetworkThroughputWidgetData = (
 								? 'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate'
 								: 'kafka_server_brokertopicmetrics_bytesoutpersec_oneminuterate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -237,7 +229,7 @@ export const getBrokerNetworkThroughputWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -265,8 +257,6 @@ export const getIoWaitTimeWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 								? 'kafka.producer.io_waittime_total'
 								: 'kafka_producer_io_waittime_total'
 						}--float64--Sum--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Sum',
 					},
 					aggregateOperator: 'rate',
@@ -281,7 +271,7 @@ export const getIoWaitTimeWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -310,8 +300,6 @@ export const getRequestResponseWidgetData = (
 								? 'kafka.producer.request_rate'
 								: 'kafka_producer_request_rate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -326,7 +314,7 @@ export const getRequestResponseWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -342,8 +330,6 @@ export const getRequestResponseWidgetData = (
 								? 'kafka.producer.response_rate'
 								: 'kafka_producer_response_rate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -358,7 +344,7 @@ export const getRequestResponseWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'B',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -387,8 +373,6 @@ export const getAverageRequestLatencyWidgetData = (
 								? 'kafka.producer.request_latency_avg'
 								: 'kafka_producer_request_latency_avg'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -403,7 +387,7 @@ export const getAverageRequestLatencyWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -432,8 +416,6 @@ export const getKafkaProducerByteRateWidgetData = (
 								? 'kafka.producer.byte_rate'
 								: 'kafka_producer_byte_rate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -446,8 +428,6 @@ export const getKafkaProducerByteRateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
@@ -457,7 +437,7 @@ export const getKafkaProducerByteRateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -488,8 +468,6 @@ export const getBytesConsumedWidgetData = (
 								? 'kafka.consumer.bytes_consumed_rate'
 								: 'kafka_consumer_bytes_consumed_rate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -504,7 +482,7 @@ export const getBytesConsumedWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -534,8 +512,6 @@ export const getConsumerOffsetWidgetData = (
 								? 'kafka.consumer_group.offset'
 								: 'kafka_consumer_group_offset'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -548,24 +524,18 @@ export const getConsumerOffsetWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'group--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'group',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'partition--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'partition',
 							type: 'tag',
 						},
@@ -575,7 +545,7 @@ export const getConsumerOffsetWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -604,8 +574,6 @@ export const getConsumerGroupMemberWidgetData = (
 								? 'kafka.consumer_group.members'
 								: 'kafka_consumer_group_members'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'sum',
@@ -618,8 +586,6 @@ export const getConsumerGroupMemberWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'group--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'group',
 							type: 'tag',
 						},
@@ -629,7 +595,7 @@ export const getConsumerGroupMemberWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'sum',
@@ -657,8 +623,6 @@ export const getConsumerLagByGroupWidgetData = (
 								? 'kafka.consumer_group.lag'
 								: 'kafka_consumer_group_lag'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -671,24 +635,18 @@ export const getConsumerLagByGroupWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'group--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'group',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'partition--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'partition',
 							type: 'tag',
 						},
@@ -698,7 +656,7 @@ export const getConsumerLagByGroupWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -727,8 +685,6 @@ export const getConsumerFetchRateWidgetData = (
 								? 'kafka.consumer.fetch_rate'
 								: 'kafka_consumer_fetch_rate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -741,8 +697,6 @@ export const getConsumerFetchRateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'service_name--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: dotMetricsEnabled ? 'service.name' : 'service_name',
 							type: 'tag',
 						},
@@ -752,7 +706,7 @@ export const getConsumerFetchRateWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -781,8 +735,6 @@ export const getMessagesConsumedWidgetData = (
 								? 'kafka.consumer.records_consumed_rate'
 								: 'kafka_consumer_records_consumed_rate'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -797,7 +749,7 @@ export const getMessagesConsumedWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -824,8 +776,6 @@ export const getJvmGCCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 								? 'jvm.gc.collections.count'
 								: 'jvm_gc_collections_count'
 						}--float64--Sum--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Sum',
 					},
 					aggregateOperator: 'rate',
@@ -840,7 +790,7 @@ export const getJvmGCCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -869,8 +819,6 @@ export const getJvmGcCollectionsElapsedWidgetData = (
 								? 'jvm.gc.collections.elapsed'
 								: 'jvm_gc_collections_elapsed'
 						}--float64--Sum--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Sum',
 					},
 					aggregateOperator: 'rate',
@@ -885,7 +833,7 @@ export const getJvmGcCollectionsElapsedWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'rate',
@@ -916,8 +864,6 @@ export const getCpuRecentUtilizationWidgetData = (
 								? 'jvm.cpu.recent_utilization'
 								: 'jvm_cpu_recent_utilization'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -932,7 +878,7 @@ export const getCpuRecentUtilizationWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -957,8 +903,6 @@ export const getJvmMemoryHeapWidgetData = (
 						id: `${
 							dotMetricsEnabled ? 'jvm.memory.heap.max' : 'jvm_memory_heap_max'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -973,7 +917,7 @@ export const getJvmMemoryHeapWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -1000,8 +944,6 @@ export const getPartitionCountPerTopicWidgetData = (
 						id: `${
 							dotMetricsEnabled ? 'kafka.topic.partitions' : 'kafka_topic_partitions'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'sum',
@@ -1014,8 +956,6 @@ export const getPartitionCountPerTopicWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
@@ -1025,7 +965,7 @@ export const getPartitionCountPerTopicWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'sum',
 					stepInterval: 60,
 					timeAggregation: 'sum',
@@ -1053,8 +993,6 @@ export const getCurrentOffsetPartitionWidgetData = (
 								? 'kafka.partition.current_offset'
 								: 'kafka_partition_current_offset'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -1067,16 +1005,12 @@ export const getCurrentOffsetPartitionWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'partition--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'partition',
 							type: 'tag',
 						},
@@ -1086,7 +1020,7 @@ export const getCurrentOffsetPartitionWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -1115,8 +1049,6 @@ export const getOldestOffsetWidgetData = (
 								? 'kafka.partition.oldest_offset'
 								: 'kafka_partition_oldest_offset'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -1129,16 +1061,12 @@ export const getOldestOffsetWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'partition--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'partition',
 							type: 'tag',
 						},
@@ -1148,7 +1076,7 @@ export const getOldestOffsetWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',
@@ -1177,8 +1105,6 @@ export const getInsyncReplicasWidgetData = (
 								? 'kafka.partition.replicas_in_sync'
 								: 'kafka_partition_replicas_in_sync'
 						}--float64--Gauge--true`,
-						isColumn: true,
-						isJSON: false,
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -1191,16 +1117,12 @@ export const getInsyncReplicasWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'topic--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'topic',
 							type: 'tag',
 						},
 						{
 							dataType: DataTypes.String,
 							id: 'partition--string--tag--false',
-							isColumn: false,
-							isJSON: false,
 							key: 'partition',
 							type: 'tag',
 						},
@@ -1210,7 +1132,7 @@ export const getInsyncReplicasWidgetData = (
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					spaceAggregation: 'avg',
 					stepInterval: 60,
 					timeAggregation: 'avg',

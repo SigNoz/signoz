@@ -1,7 +1,7 @@
-import { render, renderHook } from '@testing-library/react';
-import TraceFlameGraph from 'container/TraceFlameGraph';
 import { useState } from 'react';
 import { Provider } from 'react-redux';
+import { render, renderHook } from '@testing-library/react';
+import TraceFlameGraph from 'container/TraceFlameGraph';
 import store from 'store';
 
 test('loads and displays greeting', () => {

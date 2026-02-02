@@ -1,7 +1,7 @@
+import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import CreateAlertPage from 'pages/CreateAlert';
-import { MemoryRouter, Route } from 'react-router-dom';
 import { act, fireEvent, render } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
@@ -14,20 +14,6 @@ jest.mock('react-router-dom', () => ({
 		search: 'ruleType=anomaly_rule',
 	}),
 }));
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 
 window.ResizeObserver =
 	window.ResizeObserver ||

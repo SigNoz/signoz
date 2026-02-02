@@ -1,5 +1,5 @@
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Link } from 'react-router-dom';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 export const topTracesTableColumns = [
 	{
@@ -16,6 +16,6 @@ export const topTracesTableColumns = [
 		title: 'STEP TRANSITION DURATION',
 		dataIndex: 'duration_ms',
 		key: 'duration_ms',
-		render: (value: string): string => getYAxisFormattedValue(value, 'ms'),
+		render: (value: string): string => getYAxisFormattedValue(`${value}`, 'ms'),
 	},
 ];

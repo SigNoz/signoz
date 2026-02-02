@@ -12,6 +12,7 @@ import {
 	Having as HavingV5,
 	LogAggregation,
 	MetricAggregation,
+	QueryFunction,
 	TraceAggregation,
 } from '../v5/queryRange';
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
@@ -28,11 +29,13 @@ export interface IBuilderFormula {
 	orderBy?: OrderByPayload[];
 }
 
+export type IBuilderTraceOperator = IBuilderQuery;
+
 export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number | boolean;
+	value: (string | number | boolean)[] | string | number | boolean;
 }
 
 export interface TagFilter {
@@ -71,7 +74,7 @@ export type IBuilderQuery = {
 	timeAggregation?: string;
 	spaceAggregation?: string;
 	temporality?: string;
-	functions: QueryFunctionProps[];
+	functions: QueryFunction[];
 	filter?: Filter;
 	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];
@@ -79,13 +82,14 @@ export type IBuilderQuery = {
 	disabled: boolean;
 	having: Having[] | HavingV5;
 	limit: number | null;
-	stepInterval: number | undefined;
+	stepInterval: number | undefined | null;
 	orderBy: OrderByPayload[];
 	reduceTo?: ReduceOperators;
 	legend: string;
 	pageSize?: number;
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
+	source?: 'meter' | '';
 };
 
 export interface IClickHouseQuery {
@@ -116,12 +120,13 @@ export type BuilderClickHouseResource = Record<string, IClickHouseQuery>;
 export type BuilderPromQLResource = Record<string, IPromQLQuery>;
 export type BuilderQueryDataResourse = Record<
 	string,
-	IBuilderQuery | IBuilderFormula
+	IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
 >;
 
 export type MapData =
 	| IBuilderQuery
 	| IBuilderFormula
+	| IBuilderTraceOperator
 	| IClickHouseQuery
 	| IPromQLQuery;
 

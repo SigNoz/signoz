@@ -16,6 +16,8 @@ function ExplorerOptionWrapper({
 	sourcepage,
 	isOneChartPerQuery,
 	splitedQueries,
+	signalSource,
+	handleChangeSelectedView,
 }: ExplorerOptionsWrapperProps): JSX.Element {
 	const [isExplorerOptionHidden, setIsExplorerOptionHidden] = useState(false);
 
@@ -32,10 +34,12 @@ function ExplorerOptionWrapper({
 			isLoading={isLoading}
 			onExport={onExport}
 			sourcepage={sourcepage}
+			signalSource={signalSource}
 			isExplorerOptionHidden={isExplorerOptionHidden}
 			setIsExplorerOptionHidden={setIsExplorerOptionHidden}
 			isOneChartPerQuery={isOneChartPerQuery}
 			splitedQueries={splitedQueries}
+			handleChangeSelectedView={handleChangeSelectedView}
 		/>
 	);
 }

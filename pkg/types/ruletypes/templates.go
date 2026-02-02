@@ -3,13 +3,14 @@ package ruletypes
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"net/url"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	html_template "html/template"
 	text_template "text/template"
@@ -73,7 +74,7 @@ func NewTemplateExpander(
 				if len(v) > 0 {
 					return v[0], nil
 				}
-				return nil, errors.New("first() called on vector with no elements")
+				return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "first() called on vector with no elements")
 			},
 			"label": func(label string, s *tmplQueryRecord) string {
 				return s.Labels[label]
@@ -289,7 +290,7 @@ func (te TemplateExpander) Expand() (result string, resultErr error) {
 			var ok bool
 			resultErr, ok = r.(error)
 			if !ok {
-				resultErr = fmt.Errorf("panic expanding template %v: %v", te.name, r)
+				resultErr = errors.NewInternalf(errors.CodeInternal, "panic expanding template %v: %v", te.name, r)
 			}
 		}
 	}()
@@ -298,12 +299,12 @@ func (te TemplateExpander) Expand() (result string, resultErr error) {
 
 	tmpl, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {
-		return "", fmt.Errorf("error parsing template %v: %v", te.name, err)
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error parsing template %v", te.name)
 	}
 	var buffer bytes.Buffer
 	err = tmpl.Execute(&buffer, te.data)
 	if err != nil {
-		return "", fmt.Errorf("error executing template %v: %v", te.name, err)
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error executing template %v", te.name)
 	}
 	return buffer.String(), nil
 }
@@ -315,7 +316,7 @@ func (te TemplateExpander) ExpandHTML(templateFiles []string) (result string, re
 			var ok bool
 			resultErr, ok = r.(error)
 			if !ok {
-				resultErr = fmt.Errorf("panic expanding template %v: %v", te.name, r)
+				resultErr = errors.NewInternalf(errors.CodeInternal, "panic expanding template %v: %v", te.name, r)
 			}
 		}
 	}()
@@ -331,18 +332,18 @@ func (te TemplateExpander) ExpandHTML(templateFiles []string) (result string, re
 	})
 	tmpl, err := tmpl.Parse(te.text)
 	if err != nil {
-		return "", fmt.Errorf("error parsing template %v: %v", te.name, err)
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error parsing template %v", te.name)
 	}
 	if len(templateFiles) > 0 {
 		_, err = tmpl.ParseFiles(templateFiles...)
 		if err != nil {
-			return "", fmt.Errorf("error parsing template files for %v: %v", te.name, err)
+			return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error parsing template files for %v", te.name)
 		}
 	}
 	var buffer bytes.Buffer
 	err = tmpl.Execute(&buffer, te.data)
 	if err != nil {
-		return "", fmt.Errorf("error executing template %v: %v", te.name, err)
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error executing template %v", te.name)
 	}
 	return buffer.String(), nil
 }

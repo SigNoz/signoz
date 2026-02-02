@@ -1,5 +1,8 @@
-import './importJSON.styles.scss';
-
+// #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
+// See more: https://github.com/lucide-icons/lucide/issues/94
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
 import { red } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
@@ -20,15 +23,12 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
+import { ExternalLink, Github, MonitorDot, MoveRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-// #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
-// See more: https://github.com/lucide-icons/lucide/issues/94
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
+
+import './importJSON.styles.scss';
 
 function ImportJSON({
 	isImportJSONModalVisible,
@@ -151,7 +151,10 @@ function ImportJSON({
 			wrapClassName="import-json-modal"
 			open={isImportJSONModalVisible}
 			centered
-			closable={false}
+			closable
+			keyboard
+			maskClosable
+			onCancel={onCancelHandler}
 			destroyOnClose
 			width="60vw"
 			footer={
@@ -192,7 +195,7 @@ function ImportJSON({
 								</Button>
 							</Upload>
 							<a
-								href="https://github.com/SigNoz/dashboards"
+								href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -223,8 +226,6 @@ function ImportJSON({
 			<div className="import-json-content-container">
 				<div className="import-json-content-header">
 					<Typography.Text>{t('import_json')}</Typography.Text>
-
-					<X size={14} className="periscope-btn ghost" onClick={onCancelHandler} />
 				</div>
 
 				<MEditor

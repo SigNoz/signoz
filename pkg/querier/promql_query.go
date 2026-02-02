@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -16,7 +17,52 @@ import (
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 )
+
+// unquotedDottedNamePattern matches unquoted identifiers containing dots
+// that appear in metric or label name positions. This helps detect queries
+// using the old syntax that needs migration to UTF-8 quoted syntax.
+// Examples it matches: k8s.pod.name, deployment.environment, http.status_code
+var unquotedDottedNamePattern = regexp.MustCompile(`(?:^|[{,(\s])([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)(?:[}\s,=!~)\[]|$)`)
+
+// quotedMetricOutsideBracesPattern matches the incorrect syntax where a quoted
+// metric name appears outside of braces followed by a selector block.
+// Example: "kube_pod_status_ready_time"{"condition"="true"}
+// This is a common mistake when migrating to UTF-8 syntax.
+var quotedMetricOutsideBracesPattern = regexp.MustCompile(`"([^"]+)"\s*\{`)
+
+// enhancePromQLError adds helpful context to PromQL parse errors,
+// particularly for UTF-8 syntax migration issues where metric and label
+// names containing dots need to be quoted.
+func enhancePromQLError(query string, parseErr error) error {
+	errMsg := parseErr.Error()
+
+	if matches := quotedMetricOutsideBracesPattern.FindStringSubmatch(query); len(matches) > 1 {
+		metricName := matches[1]
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid promql query: %s. Hint: The metric name should be inside the braces. Use {\"__name__\"=\"%s\", ...} or {\"%s\", ...} instead of \"%s\"{...}",
+			errMsg,
+			metricName,
+			metricName,
+			metricName,
+		)
+	}
+
+	if matches := unquotedDottedNamePattern.FindStringSubmatch(query); len(matches) > 1 {
+		dottedName := matches[1]
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid promql query: %s. Hint: Metric and label names containing dots require quoted notation in the new UTF-8 syntax, e.g., use \"%s\" instead of %s",
+			errMsg,
+			dottedName,
+			dottedName,
+		)
+	}
+
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query: %s", errMsg)
+}
 
 type promqlQuery struct {
 	logger      *slog.Logger
@@ -59,8 +105,50 @@ func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }
 
+// removeAllVarMatchers removes label matchers from a PromQL query that reference variables with __all__ value.
+// This method parses the query, walks the AST to remove matching matchers, and returns the modified query string.
+// If parsing or walking fails, it returns an error.
+func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.VariableItem) (string, error) {
+	// Find all variables that have __all__ value
+	allVars := make(map[string]bool)
+	for k, v := range vars {
+		if v.Type == qbv5.DynamicVariableType {
+			if allVal, ok := v.Value.(string); ok && allVal == "__all__" {
+				allVars[k] = true
+			}
+		}
+	}
+
+	// If no variables have __all__ value, return the query unchanged
+	if len(allVars) == 0 {
+		return query, nil
+	}
+
+	expr, err := parser.ParseExpr(query)
+	if err != nil {
+		return "", enhancePromQLError(query, err)
+	}
+
+	// Create visitor and walk the AST
+	visitor := &allVarRemover{allVars: allVars}
+	if err := parser.Walk(visitor, expr, nil); err != nil {
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", "error", err, "query", query)
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
+	}
+
+	// Convert the modified AST back to a string
+	return expr.String(), nil
+}
+
 // TODO(srikanthccv): cleanup the templating logic
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
+	// First, remove label matchers that use variables with __all__ value.
+	// This must happen before variable substitution so we can detect variable references
+	// in their original form ($var, {{var}}, [[var]]).
+	query, err := q.removeAllVarMatchers(query, vars)
+	if err != nil {
+		return "", err
+	}
 	varsData := map[string]any{}
 	for k, v := range vars {
 		varsData[k] = formatValueForProm(v.Value)
@@ -83,7 +171,7 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	}
 
 	tmpl := template.New("promql-query")
-	tmpl, err := tmpl.Parse(query)
+	tmpl, err = tmpl.Parse(query)
 	if err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
 	}
@@ -118,7 +206,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	)
 
 	if err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query %q", query)
+		return nil, enhancePromQLError(query, err)
 	}
 
 	res := qry.Exec(ctx)

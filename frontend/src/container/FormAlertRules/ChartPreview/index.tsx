@@ -1,21 +1,26 @@
-import './ChartPreview.styles.scss';
-
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
+import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
+import { Threshold } from 'container/CreateAlertV2/context/types';
+import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
-	Time as TimeV2,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -26,15 +31,15 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
 import { AlertDef } from 'types/api/alerts/def';
+import { LegendPosition } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -44,21 +49,25 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { AlertDetectionTypes } from '..';
-import { ChartContainer, FailedMessageContainer } from './styles';
-import { getThresholdLabel } from './utils';
+import { ChartContainer } from './styles';
+import { getThresholds } from './utils';
+
+import './ChartPreview.styles.scss';
 
 export interface ChartPreviewProps {
 	name: string;
 	query: Query | null;
 	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
-	selectedInterval?: Time | TimeV2 | CustomTimeType;
+	selectedInterval?: Time | CustomTimeType;
 	headline?: JSX.Element;
 	alertDef?: AlertDef;
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
 	yAxisUnit: string;
 	setQueryStatus?: (status: string) => void;
+	showSideLegend?: boolean;
+	additionalThresholds?: Threshold[];
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -74,12 +83,37 @@ function ChartPreview({
 	alertDef,
 	yAxisUnit,
 	setQueryStatus,
+	showSideLegend = false,
+	additionalThresholds,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
-	const threshold = alertDef?.condition.target || 0;
+	const thresholds: Threshold[] = useMemo(
+		() =>
+			additionalThresholds || [
+				{
+					...INITIAL_CRITICAL_THRESHOLD,
+					thresholdValue: alertDef?.condition.target || 0,
+					unit: alertDef?.condition.targetUnit || '',
+				},
+			],
+		[
+			additionalThresholds,
+			alertDef?.condition.target,
+			alertDef?.condition.targetUnit,
+		],
+	);
+
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 	const { currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
@@ -135,7 +169,6 @@ function ChartPreview({
 				return false;
 		}
 	}, [query]);
-
 	const queryResponse = useGetQueryRange(
 		{
 			query: query || initialQueriesMap.metrics,
@@ -166,10 +199,25 @@ function ChartPreview({
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
-		if (setQueryStatus) setQueryStatus(queryResponse.status);
+		if (setQueryStatus) {
+			setQueryStatus(queryResponse.status);
+		}
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);
+
+	// Initialize graph visibility from localStorage
+	useEffect(() => {
+		if (queryResponse?.data?.payload?.data?.result) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data.payload.data.result,
+				name: 'alert-chart-preview',
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
+	}, [queryResponse?.data?.payload?.data?.result]);
 
 	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -217,6 +265,18 @@ function ChartPreview({
 
 	const { timezone } = useTimezone();
 
+	const legendPosition = useMemo(() => {
+		if (!showSideLegend) {
+			return LegendPosition.BOTTOM;
+		}
+		const numberOfSeries =
+			queryResponse?.data?.payload?.data?.result?.length || 0;
+		if (numberOfSeries <= 1) {
+			return LegendPosition.BOTTOM;
+		}
+		return LegendPosition.RIGHT;
+	}, [queryResponse?.data?.payload?.data?.result?.length, showSideLegend]);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -231,24 +291,7 @@ function ChartPreview({
 				maxTimeScale,
 				isDarkMode,
 				onDragSelect,
-				thresholds: [
-					{
-						index: '0', // no impact
-						keyIndex: 0,
-						moveThreshold: (): void => {},
-						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
-						thresholdValue: threshold,
-						thresholdLabel: `${t(
-							'preview_chart_threshold_label',
-						)} (y=${getThresholdLabel(
-							optionName,
-							threshold,
-							alertDef?.condition.targetUnit,
-							yAxisUnit,
-						)})`,
-						thresholdUnit: alertDef?.condition.targetUnit,
-					},
-				],
+				thresholds: getThresholds(thresholds, t, optionName, yAxisUnit),
 				softMax: null,
 				softMin: null,
 				panelType: graphType,
@@ -257,6 +300,17 @@ function ChartPreview({
 				timezone: timezone.value,
 				currentQuery,
 				query: query || currentQuery,
+				graphsVisibilityStates: graphVisibility,
+				setGraphsVisibilityStates: setGraphVisibility,
+				enhancedLegend: true,
+				legendPosition,
+				legendScrollPosition: legendScrollPositionRef.current,
+				setLegendScrollPosition: (position: {
+					scrollTop: number;
+					scrollLeft: number;
+				}) => {
+					legendScrollPositionRef.current = position;
+				},
 			}),
 		[
 			yAxisUnit,
@@ -266,14 +320,15 @@ function ChartPreview({
 			maxTimeScale,
 			isDarkMode,
 			onDragSelect,
-			threshold,
+			thresholds,
 			t,
 			optionName,
-			alertDef?.condition.targetUnit,
 			graphType,
 			timezone.value,
 			currentQuery,
 			query,
+			graphVisibility,
+			legendPosition,
 		],
 	);
 
@@ -289,20 +344,23 @@ function ChartPreview({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
+	const isWarning = !isEmpty(queryResponse.data?.warning);
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
 			<ChartContainer>
-				{headline}
+				<div className="chart-preview-header">
+					{headline}
+					{isWarning && (
+						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+					)}
+				</div>
 
 				<div className="threshold-alert-uplot-chart-container">
 					{queryResponse.isLoading && (
 						<Spinner size="large" tip="Loading..." height="100%" />
 					)}
 					{(queryResponse?.isError || queryResponse?.error) && (
-						<FailedMessageContainer color="red" title="Failed to refresh the chart">
-							<InfoCircleOutlined />
-							{queryResponse.error.message || t('preview_chart_unexpected_error')}
-						</FailedMessageContainer>
+						<ErrorInPlace error={queryResponse.error as APIError} />
 					)}
 
 					{chartDataAvailable && !isAnomalyDetectionAlert && (
@@ -343,6 +401,8 @@ ChartPreview.defaultProps = {
 	allowSelectedIntervalForStepGen: false,
 	alertDef: undefined,
 	setQueryStatus: (): void => {},
+	showSideLegend: false,
+	additionalThresholds: undefined,
 };
 
 export default ChartPreview;

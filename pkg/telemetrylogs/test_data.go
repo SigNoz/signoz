@@ -27,6 +27,13 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
+		"body": {
+			{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 		"http.status_code": {
 			{
 				Name:          "http.status_code",
@@ -313,6 +320,18 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				Name:          "severity",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"severity_number": {
+			{
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			{
+				Name:          "severity_number",
+				FieldContext:  telemetrytypes.FieldContextBody,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
 			},
 		},
 		"created_at": {
@@ -843,6 +862,130 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 		"query": {
 			{
 				Name:          "query",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"materialized.key.name": {
+			{
+				Name:          "materialized.key.name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+		},
+		"{UserId}": {
+			{
+				Name:          "{UserId}",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"user@email": {
+			{
+				Name:          "user@email",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"#user_name": {
+			{
+				Name:          "#user_name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"gen_ai.completion.0.content": {
+			{
+				Name:          "gen_ai.completion.0.content",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"mixed.materialization.key": {
+			{
+				Name:          "mixed.materialization.key",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			{
+				Name:          "mixed.materialization.key",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  false,
+			},
+		},
+		"multi.mat.key": {
+			{
+				Name:          "multi.mat.key",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+			{
+				Name:          "multi.mat.key",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+		},
+		"mat.key": {
+			{
+				Name:          "mat.key",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Materialized:  true,
+			},
+		},
+	}
+
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalLogs
+		}
+	}
+	return keysMap
+}
+
+func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryFieldKey {
+	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"service.name": {
+			{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"body": {
+			{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"error.code": {
+			{
+				Name:          "error.code",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeInt64,
+			},
+		},
+		"environment": {
+			{
+				Name:          "environment",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"user.id": {
+			{
+				Name:          "user.id",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},

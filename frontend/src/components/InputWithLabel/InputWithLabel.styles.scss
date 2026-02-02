@@ -37,7 +37,6 @@
 
 		border-radius: 2px 0px 0px 2px;
 		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
 
 		border-right: none;
 		border-left: none;
@@ -45,6 +44,19 @@
 		border-bottom-right-radius: 0px;
 		border-top-left-radius: 0px;
 		border-bottom-left-radius: 0px;
+		font-size: 12px !important;
+		line-height: 27px;
+		&::placeholder {
+			color: var(--bg-vanilla-400) !important;
+			font-size: 12px !important;
+		}
+		&[type='number']::-webkit-inner-spin-button,
+		&[type='number']::-webkit-outer-spin-button {
+			-webkit-appearance: none;
+			-moz-appearance: none;
+			appearance: none;
+			margin: 0;
+		}
 	}
 
 	.close-btn {

@@ -107,7 +107,7 @@ fullText
  *    ...
  */
 functionCall
-    : (HAS | HASANY | HASALL) LPAREN functionParamList RPAREN
+    : (HASTOKEN | HAS | HASANY | HASALL) LPAREN functionParamList RPAREN
     ;
 
 // Function parameters can be keys, single scalar values, or arrays
@@ -180,6 +180,7 @@ AND         : [Aa][Nn][Dd] ;
 OR          : [Oo][Rr] ;
 
 // For easy referencing in function calls
+HASTOKEN    : [Hh][Aa][Ss][Tt][Oo][Kk][Ee][Nn];
 HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
@@ -206,12 +207,12 @@ QUOTED_TEXT
         )
     ;
 
-fragment SEGMENT      : [a-zA-Z$_] [a-zA-Z0-9$_:\-/]* ;
+fragment SEGMENT      : [a-zA-Z$_@{#] [a-zA-Z0-9$_@#{}:\-/]* ;
 fragment EMPTY_BRACKS : '[' ']' ;
 fragment OLD_JSON_BRACKS: '[' '*' ']';
 
 KEY
-    : SEGMENT ( '.' SEGMENT | EMPTY_BRACKS | OLD_JSON_BRACKS)*
+    : SEGMENT ( '.' SEGMENT | EMPTY_BRACKS | OLD_JSON_BRACKS | '.' DIGIT+)*
     ;
 
 // Ignore whitespace

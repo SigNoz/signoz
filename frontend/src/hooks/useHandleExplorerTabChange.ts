@@ -1,13 +1,19 @@
+import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
-import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
+
+export interface ICurrentQueryData {
+	name: string;
+	id: string;
+	query: Query;
+}
 
 export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
@@ -60,7 +66,9 @@ export const useHandleExplorerTabChange = (): {
 		) => {
 			const newPanelType = type as PANEL_TYPES;
 
-			if (newPanelType === panelType && !currentQueryData) return;
+			if (newPanelType === panelType && !currentQueryData) {
+				return;
+			}
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 
@@ -87,9 +95,3 @@ export const useHandleExplorerTabChange = (): {
 
 	return { handleExplorerTabChange };
 };
-
-interface ICurrentQueryData {
-	name: string;
-	id: string;
-	query: Query;
-}

@@ -15,25 +15,18 @@ const (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-type response struct {
-	Status string         `json:"status"`
-	Data   interface{}    `json:"data,omitempty"`
-	Error  *responseerror `json:"error,omitempty"`
+type SuccessResponse struct {
+	Status string      `json:"status"`
+	Data   interface{} `json:"data,omitempty"`
 }
 
-type responseerror struct {
-	Code    string                    `json:"code"`
-	Message string                    `json:"message"`
-	Url     string                    `json:"url,omitempty"`
-	Errors  []responseerroradditional `json:"errors,omitempty"`
-}
-
-type responseerroradditional struct {
-	Message string `json:"message"`
+type ErrorResponse struct {
+	Status string       `json:"status"`
+	Error  *errors.JSON `json:"error"`
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
-	body, err := json.Marshal(&response{Status: StatusSuccess.s, Data: data})
+	body, err := json.Marshal(&SuccessResponse{Status: StatusSuccess.s, Data: data})
 	if err != nil {
 		Error(rw, err)
 		return
@@ -50,10 +43,9 @@ func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
 }
 
 func Error(rw http.ResponseWriter, cause error) {
-	// See if this is an instance of the base error or not
-	t, c, m, _, u, a := errors.Unwrapb(cause)
-
 	// Derive the http code from the error type
+	t, _, _, _, _, _ := errors.Unwrapb(cause)
+
 	httpCode := http.StatusInternalServerError
 	switch t {
 	case errors.TypeInvalidInput:
@@ -72,22 +64,11 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = statusClientClosedConnection
 	case errors.TypeTimeout:
 		httpCode = http.StatusGatewayTimeout
+	case errors.TypeLicenseUnavailable:
+		httpCode = http.StatusUnavailableForLegalReasons
 	}
 
-	rea := make([]responseerroradditional, len(a))
-	for k, v := range a {
-		rea[k] = responseerroradditional{v}
-	}
-
-	body, err := json.Marshal(&response{
-		Status: StatusError.s,
-		Error: &responseerror{
-			Code:    c.String(),
-			Url:     u,
-			Message: m,
-			Errors:  rea,
-		},
-	})
+	body, err := json.Marshal(&ErrorResponse{Status: StatusError.s, Error: errors.AsJSON(cause)})
 	if err != nil {
 		// this should never be the case
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

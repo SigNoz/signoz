@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/strfmt"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/api/v2/restapi/operations/alert"
@@ -28,17 +27,21 @@ type (
 	// An alias for the Alert type from the alertmanager package.
 	Alert = types.Alert
 
-	// An alias for the PostableAlert type from the alertmanager package.
+	AlertSlice = types.AlertSlice
+
 	PostableAlert = models.PostableAlert
 
-	// A slice of PostableAlert.
-	PostableAlerts = []*PostableAlert
+	PostableAlerts = models.PostableAlerts
 
 	// An alias for the GettableAlert type from the alertmanager package.
 	GettableAlert = models.GettableAlert
 
 	// A slice of GettableAlert.
 	GettableAlerts = models.GettableAlerts
+)
+
+const (
+	NoDataLabel = model.LabelName("nodata")
 )
 
 type DeprecatedGettableAlert struct {
@@ -84,26 +87,6 @@ func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts
 	}
 
 	return deprecatedGettableAlerts
-}
-
-// Converts a slice of Alert to a slice of PostableAlert.
-func NewPostableAlertsFromAlerts(alerts []*types.Alert) PostableAlerts {
-	postableAlerts := make(PostableAlerts, 0, len(alerts))
-	for _, alert := range alerts {
-		start := strfmt.DateTime(alert.StartsAt)
-		end := strfmt.DateTime(alert.EndsAt)
-		postableAlerts = append(postableAlerts, &models.PostableAlert{
-			Annotations: v2.ModelLabelSetToAPILabelSet(alert.Annotations),
-			EndsAt:      end,
-			StartsAt:    start,
-			Alert: models.Alert{
-				GeneratorURL: strfmt.URI(alert.GeneratorURL),
-				Labels:       v2.ModelLabelSetToAPILabelSet(alert.Labels),
-			},
-		})
-	}
-
-	return postableAlerts
 }
 
 // Converts a slice of PostableAlert to a slice of Alert.
@@ -329,4 +312,12 @@ func receiversMatchFilter(receivers []string, filter *regexp.Regexp) bool {
 	}
 
 	return false
+}
+
+func NoDataAlert(alert *types.Alert) bool {
+	if _, ok := alert.Labels[NoDataLabel]; ok {
+		return true
+	} else {
+		return false
+	}
 }

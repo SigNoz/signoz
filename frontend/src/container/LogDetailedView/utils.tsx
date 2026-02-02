@@ -5,7 +5,7 @@ import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';
 import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
+import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
@@ -39,9 +39,17 @@ export const computeDataNode = (
 	valueIsArray: boolean,
 	value: unknown,
 	nodeKey: string,
+	parentIsArray: boolean,
 ): DataNode => ({
 	key: uniqueId(),
-	title: `${key} ${valueIsArray ? '[...]' : ''}`,
+	title: (
+		<BodyTitleRenderer
+			title={`${key} ${valueIsArray ? '[...]' : ''}`}
+			nodeKey={nodeKey}
+			value={value}
+			parentIsArray={parentIsArray}
+		/>
+	),
 	// eslint-disable-next-line @typescript-eslint/no-use-before-define
 	children: jsonToDataNodes(
 		value as Record<string, unknown>,
@@ -67,7 +75,7 @@ export function jsonToDataNodes(
 
 		if (parentIsArray) {
 			if (typeof value === 'object' && value !== null) {
-				return computeDataNode(key, valueIsArray, value, nodeKey);
+				return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
 			}
 
 			return {
@@ -85,7 +93,7 @@ export function jsonToDataNodes(
 		}
 
 		if (typeof value === 'object' && value !== null) {
-			return computeDataNode(key, valueIsArray, value, nodeKey);
+			return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
 		}
 		return {
 			key: uniqueId(),
@@ -352,6 +360,7 @@ export const getSanitizedLogBody = (
 		return convertInstance.toHtml(
 			dompurify.sanitize(unescapeString(escapedText), {
 				FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				FORBID_ATTR: [...FORBID_DOM_PURIFY_ATTR],
 			}),
 		);
 	} catch (error) {

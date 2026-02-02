@@ -1,7 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { uniqueOptions } from 'container/DashboardContainer/DashboardVariablesSelection/util';
+
 import { OptionData } from './types';
 
 export const SPACEKEY = ' ';
+
+export const ALL_SELECTED_VALUE = '__ALL__'; // Constant for the special value
 
 export const prioritizeOrAddOptionForSingleSelect = (
 	options: OptionData[],
@@ -22,7 +26,9 @@ export const prioritizeOrAddOptionForSingleSelect = (
 					(subOption) => subOption.value === value,
 				);
 
-				if (extractedOption) foundOption = extractedOption;
+				if (extractedOption) {
+					foundOption = extractedOption;
+				}
 
 				// Keep the group if it still has remaining options
 				return remainingSubOptions.length > 0
@@ -98,8 +104,10 @@ export const prioritizeOrAddOptionForMultiSelect = (
 		label: labels?.[value] ?? value, // Use provided label or default to value
 	}));
 
+	const flatOutSelectedOptions = uniqueOptions([...newOptions, ...foundOptions]);
+
 	// Add found & new options to the top
-	return [...newOptions, ...foundOptions, ...filteredOptions];
+	return [...flatOutSelectedOptions, ...filteredOptions];
 };
 
 /**
@@ -109,7 +117,9 @@ export const filterOptionsBySearch = (
 	options: OptionData[],
 	searchText: string,
 ): OptionData[] => {
-	if (!searchText.trim()) return options;
+	if (!searchText.trim()) {
+		return options;
+	}
 
 	const lowerSearchText = searchText.toLowerCase();
 
@@ -132,4 +142,16 @@ export const filterOptionsBySearch = (
 				: undefined;
 		})
 		.filter(Boolean) as OptionData[];
+};
+
+/**
+ * Utility function to handle dropdown scroll and detect when scrolled to bottom
+ * Returns true when scrolled to within 20px of the bottom
+ */
+export const handleScrollToBottom = (
+	e: React.UIEvent<HTMLDivElement>,
+): boolean => {
+	const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+	// Consider "scrolled to bottom" when within 20px of the bottom or at the bottom
+	return scrollHeight - scrollTop - clientHeight < 20;
 };

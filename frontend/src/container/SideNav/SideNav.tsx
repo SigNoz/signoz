@@ -1,8 +1,17 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './SideNav.styles.scss';
-
+import {
+	MouseEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import {
 	closestCenter,
 	DndContext,
@@ -51,23 +60,13 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import {
-	MouseEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
 
+import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import {
@@ -83,6 +82,8 @@ import {
 	SidebarItem,
 } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
+
+import './SideNav.styles.scss';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	const {
@@ -120,6 +121,7 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
+	const { openCmdK } = useCmdK();
 	const { pathname, search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
@@ -637,6 +639,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			} else {
 				history.push(settingsRoute);
 			}
+		} else if (item.key === 'quick-search') {
+			openCmdK();
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}
@@ -647,11 +651,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	useEffect(() => {
+		registerShortcut(GlobalShortcuts.NavigateToHome, () =>
+			onClickHandler(ROUTES.HOME, null),
+		);
 		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
 			onClickHandler(ROUTES.APPLICATION, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
-			onClickHandler(ROUTES.TRACE, null),
+			onClickHandler(ROUTES.TRACES_EXPLORER, null),
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
@@ -672,8 +679,44 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
 			onClickHandler(ROUTES.ALL_ERROR, null),
 		);
-
+		registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
+			onClickHandler(ROUTES.TRACES_FUNNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTracesViews, () =>
+			onClickHandler(ROUTES.TRACES_SAVE_VIEWS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsExplorer, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER_EXPLORER, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToMetricsViews, () =>
+			onClickHandler(ROUTES.METRICS_EXPLORER_VIEWS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettings, () =>
+			onClickHandler(ROUTES.SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsIngestion, () =>
+			onClickHandler(ROUTES.INGESTION_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
+			onClickHandler(ROUTES.BILLING, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys, () =>
+			onClickHandler(ROUTES.API_KEYS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
+			onClickHandler(ROUTES.ALL_CHANNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
+			onClickHandler(ROUTES.LOGS_PIPELINES, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToLogsViews, () =>
+			onClickHandler(ROUTES.LOGS_SAVE_VIEWS, null),
+		);
 		return (): void => {
+			deregisterShortcut(GlobalShortcuts.NavigateToHome);
 			deregisterShortcut(GlobalShortcuts.NavigateToServices);
 			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
@@ -681,6 +724,18 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
 			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
 			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
+			deregisterShortcut(GlobalShortcuts.NavigateToTracesFunnel);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsSummary);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsExplorer);
+			deregisterShortcut(GlobalShortcuts.NavigateToMetricsViews);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
+			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
 		};
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 

@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import '../../EntityDetailsUtils/entityDetails.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -26,7 +27,7 @@ import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/util
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
@@ -38,9 +39,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -60,6 +58,8 @@ import ClusterMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import ClusterTraces from '../../EntityDetailsUtils/EntityTraces';
 import { ClusterDetailsProps } from './ClusterDetails.interfaces';
 import { clusterWidgetInfo, getClusterMetricsQueryPayload } from './constants';
+
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 function ClusterDetails({
 	cluster,
@@ -122,8 +122,6 @@ function ClusterDetails({
 						key: QUERY_KEYS.K8S_CLUSTER_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s_cluster_name--string--resource--false',
 					},
 					op: '=',
@@ -150,8 +148,6 @@ function ClusterDetails({
 						key: QUERY_KEYS.K8S_OBJECT_KIND,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
@@ -163,8 +159,6 @@ function ClusterDetails({
 						key: QUERY_KEYS.K8S_OBJECT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
@@ -520,21 +514,12 @@ function ClusterDetails({
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									Cluster Name
-								</Typography.Text>
 							</div>
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={cluster.meta.k8s_cluster_name}>
 										{cluster.meta.k8s_cluster_name}
 									</Tooltip>
-								</Typography.Text>
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title="Cluster name">{cluster.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>

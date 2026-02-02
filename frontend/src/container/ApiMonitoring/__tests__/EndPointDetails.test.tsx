@@ -1,3 +1,4 @@
+import { useQueries } from 'react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -9,8 +10,7 @@ import {
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
-import { useQueries } from 'react-query';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	TagFilter,
@@ -22,6 +22,7 @@ import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
 
 // Mock dependencies
 jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
 	useQueries: jest.fn(),
 }));
 
@@ -76,8 +77,6 @@ jest.mock(
 										key: 'test.key',
 										dataType: DataTypes.String,
 										type: 'tag',
-										isColumn: false,
-										isJSON: false,
 									},
 									op: '=',
 									value: 'test-value',
@@ -335,8 +334,6 @@ describe('EndPointDetails Component', () => {
 							key: 'service.name',
 							dataType: DataTypes.String,
 							type: 'tag',
-							isColumn: false,
-							isJSON: false,
 						},
 						op: '=',
 						value: 'test-service',

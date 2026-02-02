@@ -1,9 +1,26 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { VirtuosoMockContext } from 'react-virtuoso';
+import {
+	fireEvent,
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+} from '@testing-library/react';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
 // Mock scrollIntoView which isn't available in JSDOM
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+// Helper function to render with VirtuosoMockContext
+const renderWithVirtuoso = (component: React.ReactElement): RenderResult =>
+	render(
+		<VirtuosoMockContext.Provider
+			value={{ viewportHeight: 300, itemHeight: 100 }}
+		>
+			{component}
+		</VirtuosoMockContext.Provider>,
+	);
 
 // Mock options data
 const mockOptions = [
@@ -32,7 +49,7 @@ const mockGroupedOptions = [
 describe('CustomMultiSelect Component', () => {
 	it('renders with placeholder', () => {
 		const handleChange = jest.fn();
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect
 				placeholder="Select multiple options"
 				options={mockOptions}
@@ -47,7 +64,9 @@ describe('CustomMultiSelect Component', () => {
 
 	it('opens dropdown when clicked', async () => {
 		const handleChange = jest.fn();
-		render(<CustomMultiSelect options={mockOptions} onChange={handleChange} />);
+		renderWithVirtuoso(
+			<CustomMultiSelect options={mockOptions} onChange={handleChange} />,
+		);
 
 		// Click to open the dropdown
 		const selectElement = screen.getByRole('combobox');
@@ -66,7 +85,7 @@ describe('CustomMultiSelect Component', () => {
 		const handleChange = jest.fn();
 
 		// Start with option1 already selected
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}
 				onChange={handleChange}
@@ -93,7 +112,7 @@ describe('CustomMultiSelect Component', () => {
 
 	it('selects ALL options when ALL is clicked', async () => {
 		const handleChange = jest.fn();
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}
 				onChange={handleChange}
@@ -126,7 +145,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('displays selected options as tags', async () => {
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect options={mockOptions} value={['option1', 'option2']} />,
 		);
 
@@ -137,7 +156,7 @@ describe('CustomMultiSelect Component', () => {
 
 	it('removes a tag when clicked', async () => {
 		const handleChange = jest.fn();
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}
 				value={['option1', 'option2']}
@@ -159,7 +178,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('filters options when searching', async () => {
-		render(<CustomMultiSelect options={mockOptions} />);
+		renderWithVirtuoso(<CustomMultiSelect options={mockOptions} />);
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
@@ -185,7 +204,9 @@ describe('CustomMultiSelect Component', () => {
 
 			options.forEach((option) => {
 				const text = option.textContent || '';
-				if (text.includes('Option 2')) foundOption2 = true;
+				if (text.includes('Option 2')) {
+					foundOption2 = true;
+				}
 			});
 
 			expect(foundOption2).toBe(true);
@@ -193,7 +214,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('renders grouped options correctly', async () => {
-		render(<CustomMultiSelect options={mockGroupedOptions} />);
+		renderWithVirtuoso(<CustomMultiSelect options={mockGroupedOptions} />);
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
@@ -211,18 +232,18 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('shows loading state', () => {
-		render(<CustomMultiSelect options={mockOptions} loading />);
+		renderWithVirtuoso(<CustomMultiSelect options={mockOptions} loading />);
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
 		fireEvent.mouseDown(selectElement);
 
 		// Check loading text is displayed
-		expect(screen.getByText('We are updating the values...')).toBeInTheDocument();
+		expect(screen.getByText('Refreshing values...')).toBeInTheDocument();
 	});
 
 	it('shows error message', () => {
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}
 				errorMessage="Test error message"
@@ -238,7 +259,9 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('shows no data message', () => {
-		render(<CustomMultiSelect options={[]} noDataMessage="No data available" />);
+		renderWithVirtuoso(
+			<CustomMultiSelect options={[]} noDataMessage="No data available" />,
+		);
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
@@ -249,7 +272,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('shows "ALL" tag when all options are selected', () => {
-		render(
+		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}
 				value={['option1', 'option2', 'option3']}

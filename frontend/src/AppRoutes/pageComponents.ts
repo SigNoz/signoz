@@ -93,13 +93,15 @@ export const OnboardingV2 = Loadable(
 	() => import(/* webpackChunkName: "Onboarding V2" */ 'pages/OnboardingPageV2'),
 );
 
-export const DashboardPage = Loadable(
+export const DashboardsListPage = Loadable(
 	() =>
-		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
+		import(
+			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPage'
+		),
 );
 
-export const NewDashboardPage = Loadable(
-	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
+export const DashboardPage = Loadable(
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
 export const DashboardWidget = Loadable(
@@ -294,4 +296,11 @@ export const MetricsExplorer = Loadable(
 
 export const ApiMonitoring = Loadable(
 	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
+);
+
+export const PublicDashboardPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
+		),
 );

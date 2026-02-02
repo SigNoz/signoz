@@ -36,10 +36,16 @@ func TestDataRate(t *testing.T) {
 
 	// 8 bits = 1 byte
 	assert.Equal(t, Value{F: 1, U: "binBps"}, dataRateConverter.Convert(Value{F: 8, U: "binbps"}, "binBps"))
+	// 8 bits = 1 byte
+	assert.Equal(t, Value{F: 1, U: "Bps"}, dataRateConverter.Convert(Value{F: 8, U: "bps"}, "Bps"))
+	// 8 bits = 1 byte
+	assert.Equal(t, Value{F: 1, U: "By/s"}, dataRateConverter.Convert(Value{F: 8, U: "bit/s"}, "By/s"))
 	// 1024 bytes = 1 kbytes
 	assert.Equal(t, Value{F: 1, U: "KiBs"}, dataRateConverter.Convert(Value{F: 1024, U: "binBps"}, "KiBs"))
 	// 1 byte = 8 bits
 	assert.Equal(t, Value{F: 8, U: "binbps"}, dataRateConverter.Convert(Value{F: 1, U: "binBps"}, "binbps"))
+	// 1 byte = 8 bits
+	assert.Equal(t, Value{F: 8, U: "bit/s"}, dataRateConverter.Convert(Value{F: 1, U: "Bps"}, "bit/s"))
 	// 1 mbytes = 1024 kbytes
 	assert.Equal(t, Value{F: 1, U: "MiBs"}, dataRateConverter.Convert(Value{F: 1024, U: "KiBs"}, "MiBs"))
 	// 1 kbytes = 1024 bytes
@@ -56,6 +62,10 @@ func TestDataRate(t *testing.T) {
 	assert.Equal(t, Value{F: 1024, U: "MiBs"}, dataRateConverter.Convert(Value{F: 1, U: "GiBs"}, "MiBs"))
 	// 1 gbytes = 1024 * 1024 kbytes
 	assert.Equal(t, Value{F: 1024 * 1024, U: "KiBs"}, dataRateConverter.Convert(Value{F: 1, U: "GiBs"}, "KiBs"))
+	// 1 gbytes = 1024 * 1024 * 1024 bytes
+	assert.Equal(t, Value{F: (1024 * 1024 * 1024 * 8) / 1024, U: "Kibits"}, dataRateConverter.Convert(Value{F: 1, U: "GiBs"}, "Kibits"))
+	// 1 gbytes = 1024 * 1024 * 1024 bytes
+	assert.Equal(t, Value{F: float64(1024*1024*1024) / 1000.0, U: "kBy/s"}, dataRateConverter.Convert(Value{F: 1, U: "GiBs"}, "kBy/s"))
 	// 1 gbytes = 1024 * 1024 * 1024 bytes
 	assert.Equal(t, Value{F: 1024 * 1024 * 1024, U: "binBps"}, dataRateConverter.Convert(Value{F: 1, U: "GiBs"}, "binBps"))
 	// 1024 * 1024 bytes = 1 mbytes

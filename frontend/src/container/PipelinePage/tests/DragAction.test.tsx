@@ -1,24 +1,10 @@
-import { render } from '@testing-library/react';
-import DragAction from 'container/PipelinePage/PipelineListsView/TableComponents/DragAction';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import DragAction from 'container/PipelinePage/PipelineListsView/TableComponents/DragAction';
 import i18n from 'ReactI18';
 import store from 'store';
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 
 describe('PipelinePage container test', () => {
 	it('should render DragAction section', () => {

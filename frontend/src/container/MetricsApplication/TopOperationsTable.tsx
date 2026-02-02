@@ -1,5 +1,6 @@
-import './TopOperationsTable.styles.scss';
-
+import { useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { SearchOutlined } from '@ant-design/icons';
 import { InputRef, Switch, Tooltip, Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
@@ -10,9 +11,6 @@ import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdo
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -26,6 +24,8 @@ import {
 	getErrorRate,
 	navigateToTrace,
 } from './utils';
+
+import './TopOperationsTable.styles.scss';
 
 function TopOperationsTable({
 	data,
@@ -61,8 +61,6 @@ function TopOperationsTable({
 					key: 'name',
 					dataType: DataTypes.String,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'name--string--tag--true',
 				},
 				op: 'in',

@@ -1,3 +1,6 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueries } from 'react-query';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
@@ -6,10 +9,9 @@ import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKey
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { has } from 'lodash-es';
 import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
@@ -25,6 +27,7 @@ import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
+	EXCLUDED_COLUMNS,
 	URL_OPTIONS,
 } from './constants';
 import {
@@ -54,26 +57,14 @@ const useOptionsMenu = ({
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const { notifications } = useNotifications();
-	const {
-		preferences,
-		updateColumns,
-		updateFormatting,
-	} = usePreferenceContext();
+	const prefCtx = usePreferenceContext();
+	// TODO: send null to updateColumns and updateFormatting if dataSource is not logs or traces
+	const slice = dataSource === DataSource.TRACES ? prefCtx.traces : prefCtx.logs;
+	const { preferences, updateColumns, updateFormatting } = slice;
 
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
-
-	// const initialQueryParams = useMemo(
-	// 	() => ({
-	// 		searchText: '',
-	// 		aggregateAttribute: '',
-	// 		tagType: undefined,
-	// 		dataSource,
-	// 		aggregateOperator,
-	// 	}),
-	// 	[dataSource, aggregateOperator],
-	// );
 
 	const initialQueryParamsV5: QueryKeyRequestProps = useMemo(
 		() => ({
@@ -87,22 +78,6 @@ const useOptionsMenu = ({
 		query: optionsQuery,
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
-
-	// const initialQueries = useMemo(
-	// 	() =>
-	// 		initialOptions?.selectColumns?.map((column) => ({
-	// 			queryKey: column,
-	// 			queryFn: (): Promise<
-	// 				SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
-	// 			> =>
-	// 				getAggregateKeys({
-	// 					...initialQueryParams,
-	// 					searchText: column,
-	// 				}),
-	// 			enabled: !!column && !optionsQuery,
-	// 		})) || [],
-	// 	[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
-	// );
 
 	const initialQueriesV5 = useMemo(
 		() =>
@@ -293,8 +268,9 @@ const useOptionsMenu = ({
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
-			if (dataSource !== DataSource.LOGS) {
-				return item.name !== 'body';
+			const exclusions = EXCLUDED_COLUMNS[dataSource];
+			if (exclusions) {
+				return !exclusions.includes(item.name);
 			}
 			return true;
 		});
@@ -318,7 +294,9 @@ const useOptionsMenu = ({
 					...(preferences?.columns || []),
 				].find(({ name }) => name === key);
 
-				if (!column) return acc;
+				if (!column) {
+					return acc;
+				}
 				return [...acc, column];
 			}, [] as TelemetryFieldKey[]);
 
@@ -452,7 +430,9 @@ const useOptionsMenu = ({
 		() => ({
 			addColumn: {
 				isFetching: isSearchedAttributesFetchingV5,
-				value: preferences?.columns || defaultOptionsQuery.selectColumns,
+				value:
+					preferences?.columns.filter((item) => has(item, 'name')) ||
+					defaultOptionsQuery.selectColumns.filter((item) => has(item, 'name')),
 				options: optionsFromAttributeKeys || [],
 				onFocus: handleFocus,
 				onBlur: handleBlur,

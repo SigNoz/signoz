@@ -1,7 +1,7 @@
 package model
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -38,7 +38,7 @@ func onConfigSuccess(orgId valuer.UUID, agentId string, hash string) {
 
 func onConfigFailure(orgId valuer.UUID, agentId string, hash string, errorMessage string) {
 	key := getSubscriberKey(orgId, hash)
-	notifySubscribers(orgId, agentId, key, fmt.Errorf(errorMessage))
+	notifySubscribers(orgId, agentId, key, errors.New(errorMessage))
 }
 
 // OnSuccess listens to config changes and notifies subscribers

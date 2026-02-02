@@ -1,0 +1,7 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"target": "es6",
+		"noEmit": false
+	}
+}

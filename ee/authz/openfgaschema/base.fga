@@ -1,0 +1,40 @@
+module base
+
+type organisation 
+  relations
+    define read: [user, role#assignee]
+    define update: [user, role#assignee]
+
+type user
+  relations
+    define read: [user, role#assignee]
+    define update: [user, role#assignee]
+    define delete: [user, role#assignee]
+
+type anonymous
+
+type role 
+  relations
+    define assignee: [user, anonymous]
+
+    define read: [user, role#assignee]
+    define update: [user, role#assignee]
+    define delete: [user, role#assignee]
+
+type metaresources
+  relations
+    define create: [user, role#assignee]
+    define list: [user, role#assignee]
+
+type metaresource
+  relations
+      define read: [user, anonymous, role#assignee]
+      define update: [user, role#assignee]
+      define delete: [user, role#assignee]
+
+      define block: [user, role#assignee]
+
+
+type telemetryresource
+  relations
+      define read: [user, role#assignee]

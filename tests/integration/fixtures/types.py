@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Literal
 from urllib.parse import urljoin
 
 import clickhouse_connect
 import clickhouse_connect.driver
 import clickhouse_connect.driver.client
 import py
-from testcontainers.core.container import Network
+from sqlalchemy import Engine
 
 LegacyPath = py.path.local
 
@@ -76,7 +76,7 @@ class TestContainerDocker:
 class TestContainerSQL:
     __test__ = False
     container: TestContainerDocker
-    conn: any
+    conn: Engine
     env: Dict[str, str]
 
     def __cache__(self) -> dict:
@@ -107,18 +107,33 @@ class TestContainerClickhouse:
 
 
 @dataclass
+class TestContainerIDP:
+    __test__ = False
+    container: TestContainerDocker
+
+    def __cache__(self) -> dict:
+        return {
+            "container": self.container.__cache__(),
+        }
+
+    def __log__(self) -> str:
+        return f"TestContainerIDP(container={self.container.__log__()})"
+
+
+@dataclass
 class SigNoz:
     __test__ = False
     self: TestContainerDocker
     sqlstore: TestContainerSQL
     telemetrystore: TestContainerClickhouse
     zeus: TestContainerDocker
+    gateway: TestContainerDocker
 
     def __cache__(self) -> dict:
         return self.self.__cache__()
 
     def __log__(self) -> str:
-        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()})"
+        return f"SigNoz(self={self.self.__log__()}, sqlstore={self.sqlstore.__log__()}, telemetrystore={self.telemetrystore.__log__()}, zeus={self.zeus.__log__()}, gateway={self.gateway.__log__()})"
 
 
 @dataclass
@@ -133,7 +148,12 @@ class Operation:
         return f"Operation(name={self.name})"
 
 
-class Network(Network):  # pylint: disable=function-redefined
+@dataclass
+class Network:
+    __test__ = False
+    id: str
+    name: str
+
     def __cache__(self) -> dict:
         return {
             "id": self.id,
@@ -142,3 +162,14 @@ class Network(Network):  # pylint: disable=function-redefined
 
     def __log__(self) -> str:
         return f"Network(id={self.id}, name={self.name})"
+
+
+# Alerts related types
+
+
+@dataclass(frozen=True)
+class AlertData:
+    # type of the alert data, one of 'metrics', 'logs', 'traces'
+    type: Literal["metrics", "logs", "traces"]
+    # path to the data file in testdata directory
+    data_path: str

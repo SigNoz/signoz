@@ -2,9 +2,11 @@ package alertmanager
 
 import (
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -14,9 +16,6 @@ type Config struct {
 
 	// Internal is the internal alertmanager configuration.
 	Signoz Signoz `mapstructure:"signoz" yaml:"signoz"`
-
-	// Legacy is the legacy alertmanager configuration.
-	Legacy Legacy `mapstructure:"legacy"`
 }
 
 type Signoz struct {
@@ -38,14 +37,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return Config{
-		Provider: "legacy",
-		Legacy: Legacy{
-			ApiURL: &url.URL{
-				Scheme: "http",
-				Host:   "alertmanager:9093",
-				Path:   "/api",
-			},
-		},
+		Provider: "signoz",
 		Signoz: Signoz{
 			PollInterval: 1 * time.Minute,
 			Config:       alertmanagerserver.NewConfig(),
@@ -54,5 +46,9 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if c.Provider != "signoz" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "provider must be one of [%s], got %s", strings.Join([]string{"signoz"}, ", "), c.Provider)
+	}
+
 	return nil
 }

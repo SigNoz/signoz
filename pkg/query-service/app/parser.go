@@ -14,16 +14,17 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
 	"github.com/SigNoz/govaluate"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
@@ -484,7 +485,7 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		limit = 50
 	}
 
-	if dataSource != v3.DataSourceMetrics {
+	if dataSource != v3.DataSourceMetrics && dataSource != v3.DataSourceMeter {
 		if err := aggregateOperator.Validate(); err != nil {
 			return nil, err
 		}
@@ -604,7 +605,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if dataSource != v3.DataSourceMetrics {
+	if dataSource != v3.DataSourceMetrics && dataSource != v3.DataSourceMeter {
 		if err := aggregateOperator.Validate(); err != nil {
 			return nil, err
 		}
@@ -818,7 +819,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				query.StepInterval = minStep
 			}
 
-			if query.DataSource == v3.DataSourceMetrics && baseconstants.UseMetricsPreAggregation() {
+			if query.DataSource == v3.DataSourceMetrics {
 				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
 				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
 				start, end := queryRangeParams.Start, queryRangeParams.End
@@ -981,10 +982,15 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 }
 
 // ParseRequestBody for third party APIs
-func ParseRequestBody(r *http.Request) (*thirdPartyApi.ThirdPartyApis, *model.ApiError) {
-	thirdPartApis := new(thirdPartyApi.ThirdPartyApis)
-	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+func ParseRequestBody(r *http.Request) (*thirdpartyapitypes.ThirdPartyApiRequest, error) {
+	req := new(thirdpartyapitypes.ThirdPartyApiRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "cannot parse the request body: %v", err)
 	}
-	return thirdPartApis, nil
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }

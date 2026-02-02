@@ -1,4 +1,5 @@
 /* eslint-disable no-nested-ternary */
+import { useMemo, useState } from 'react';
 import { Card, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
@@ -9,7 +10,6 @@ import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { HardHat } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -117,8 +117,6 @@ export function MetricFilters({
 			key: metricName ?? '',
 			dataType: DataTypes.String,
 			type: metricType,
-			isColumn: true,
-			isJSON: false,
 			id: `${metricName}--${DataTypes.String}--${metricType}--true`,
 		}),
 		[metricName, metricType],
@@ -561,7 +559,9 @@ export function onGraphClick(
 		u,
 		formattedInspectMetricsTimeSeries,
 	);
-	if (seriesIndex <= 0) return;
+	if (seriesIndex <= 0) {
+		return;
+	}
 
 	const series = inspectMetricsTimeSeries[seriesIndex - 1];
 

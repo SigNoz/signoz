@@ -1,9 +1,9 @@
 package tracefunnel
 
 import (
-	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	tracev4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
@@ -113,7 +113,7 @@ func GetFunnelAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange trace
 
 func GetFunnelStepAnalytics(funnel *tracefunneltypes.StorableFunnel, timeRange tracefunneltypes.TimeRange, stepStart, stepEnd int64) (*v3.ClickHouseQuery, error) {
 	if stepStart == stepEnd {
-		return nil, fmt.Errorf("step start and end cannot be the same for /step/overview")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "step start and end cannot be the same for /step/overview")
 	}
 
 	funnelSteps := funnel.Steps

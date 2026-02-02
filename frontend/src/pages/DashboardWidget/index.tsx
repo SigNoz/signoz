@@ -1,15 +1,15 @@
+import { useEffect, useState } from 'react';
+import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
+import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { useEffect, useState } from 'react';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
@@ -53,13 +53,12 @@ function DashboardWidget(): JSX.Element | null {
 	}
 
 	return (
-		<PreferenceContextProvider>
-			<NewWidget
-				yAxisUnit={selectedWidget?.yAxisUnit}
-				selectedGraph={selectedGraph}
-				fillSpans={selectedWidget?.fillSpans}
-			/>
-		</PreferenceContextProvider>
+		<NewWidget
+			yAxisUnit={selectedWidget?.yAxisUnit}
+			selectedGraph={selectedGraph}
+			fillSpans={selectedWidget?.fillSpans}
+			enableDrillDown={isDrilldownEnabled()}
+		/>
 	);
 }
 

@@ -1,9 +1,3 @@
-import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col, Typography } from 'antd';
-import { StyledCol, StyledRow } from 'components/Styled';
-import { IIntervalUnit } from 'container/TraceDetail/utils';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import {
 	Dispatch,
 	MouseEventHandler,
@@ -13,6 +7,14 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
+import { Col, Typography } from 'antd';
+import { StyledCol, StyledRow } from 'components/Styled';
+import {
+	IIntervalUnit,
+	SPAN_DETAILS_LEFT_COL_WIDTH,
+} from 'container/TraceDetail/utils';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { ITraceMetaData } from '..';

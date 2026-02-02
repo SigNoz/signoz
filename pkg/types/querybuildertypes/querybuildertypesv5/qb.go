@@ -31,7 +31,8 @@ type FieldMapper interface {
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
-	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	// TODO(srikanthccv,nikhilmantri0902): remove startNs, endNs when top_level_operations can be replaced with `is_remote`
+	ConditionFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder, startNs uint64, endNs uint64) (string, error)
 }
 
 type AggExprRewriter interface {
@@ -41,13 +42,19 @@ type AggExprRewriter interface {
 }
 
 type Statement struct {
-	Query    string
-	Args     []any
-	Warnings []string
+	Query          string
+	Args           []any
+	Warnings       []string
+	WarningsDocURL string
 }
 
 // StatementBuilder builds the query.
 type StatementBuilder[T any] interface {
 	// Build builds the query.
 	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T], variables map[string]VariableItem) (*Statement, error)
+}
+
+type TraceOperatorStatementBuilder interface {
+	// Build builds the trace operator query.
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderTraceOperator, compositeQuery *CompositeQuery) (*Statement, error)
 }

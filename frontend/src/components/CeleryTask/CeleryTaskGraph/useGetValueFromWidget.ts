@@ -1,10 +1,10 @@
+import { useCallback } from 'react';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getQueryPayloadFromWidgetsData } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
-import { useCallback } from 'react';
-import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -49,8 +49,12 @@ export const useGetValueFromWidget = (
 	const isError = queries.some((query) => query.isError);
 
 	const values = queries.map((query) => {
-		if (query.isLoading) return 'Loading...';
-		if (query.isError) return 'Error';
+		if (query.isLoading) {
+			return 'Loading...';
+		}
+		if (query.isError) {
+			return 'Error';
+		}
 
 		const value = parseFloat(
 			query.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]

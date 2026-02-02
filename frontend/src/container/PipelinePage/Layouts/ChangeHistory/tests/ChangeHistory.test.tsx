@@ -1,28 +1,14 @@
-import { render } from '@testing-library/react';
-import TimezoneProvider from 'providers/Timezone';
 import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import TimezoneProvider from 'providers/Timezone';
 import i18n from 'ReactI18';
 import store from 'store';
 
 import ChangeHistory from '../index';
 import { pipelineData, pipelineDataHistory } from './testUtils';
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 
 const queryClient = new QueryClient({
 	defaultOptions: {

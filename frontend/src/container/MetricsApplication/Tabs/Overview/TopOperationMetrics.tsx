@@ -1,3 +1,6 @@
+import { ReactNode, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
@@ -5,14 +8,11 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ReactNode, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -65,7 +65,7 @@ function TopOperationMetrics(): JSX.Element {
 		[servicename, dotMetricsEnabled],
 	);
 
-	const updatedQuery = useStepInterval(keyOperationWidget.query);
+	const updatedQuery = updateStepInterval(keyOperationWidget.query);
 
 	const isEmptyWidget = keyOperationWidget.id === PANEL_TYPES.EMPTY_WIDGET;
 

@@ -1,5 +1,4 @@
-import './ActionButtons.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -12,16 +11,23 @@ import {
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
-import { useCallback, useEffect, useState } from 'react';
 import { CSSProperties } from 'styled-components';
+import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { AlertHeaderProps } from '../AlertHeader';
 import RenameModal from './RenameModal';
 
+import './ActionButtons.styles.scss';
+
 const menuItemStyle: CSSProperties = {
 	fontSize: '14px',
 	letterSpacing: '0.14px',
+};
+
+const menuItemStyleV2: CSSProperties = {
+	fontSize: '13px',
+	letterSpacing: '0.13px',
 };
 
 function AlertActionButtons({
@@ -60,20 +66,28 @@ function AlertActionButtons({
 		setIsRenameAlertOpen(false);
 	}, [handleAlertUpdate]);
 
+	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
+
+	const finalMenuItemStyle = isV2Alert ? menuItemStyleV2 : menuItemStyle;
+
 	const menuItems: MenuProps['items'] = [
-		{
-			key: 'rename-rule',
-			label: 'Rename',
-			icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleRename,
-			style: menuItemStyle,
-		},
+		...(!isV2Alert
+			? [
+					{
+						key: 'rename-rule',
+						label: 'Rename',
+						icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
+						onClick: handleRename,
+						style: finalMenuItemStyle,
+					},
+			  ]
+			: []),
 		{
 			key: 'duplicate-rule',
 			label: 'Duplicate',
 			icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
 			onClick: handleAlertDuplicate,
-			style: menuItemStyle,
+			style: finalMenuItemStyle,
 		},
 		{
 			key: 'delete-rule',
@@ -81,7 +95,7 @@ function AlertActionButtons({
 			icon: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
 			onClick: handleAlertDelete,
 			style: {
-				...menuItemStyle,
+				...finalMenuItemStyle,
 				color: Color.BG_CHERRY_400,
 			},
 		},
@@ -111,7 +125,7 @@ function AlertActionButtons({
 	return (
 		<>
 			<div className="alert-action-buttons">
-				<Tooltip title={alertRuleState ? 'Enable alert' : 'Disable alert'}>
+				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
 						<Switch
 							size="small"

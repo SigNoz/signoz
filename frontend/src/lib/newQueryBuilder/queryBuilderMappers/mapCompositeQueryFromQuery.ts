@@ -25,12 +25,17 @@ const buildBuilderQuery = (
 	query: Query,
 	panelType: PANEL_TYPES | null,
 ): ICompositeMetricQuery => {
-	const { queryData, queryFormulas } = query.builder;
+	const { queryData, queryFormulas, queryTraceOperator } = query.builder;
 	const currentQueryData = mapQueryDataToApi(queryData, 'queryName');
 	const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+	const currentTraceOperator = mapQueryDataToApi(
+		queryTraceOperator,
+		'queryName',
+	);
 	const builderQueries = {
 		...currentQueryData.data,
 		...currentFormulas.data,
+		...currentTraceOperator.data,
 	};
 
 	const compositeQuery = defaultCompositeQuery;
@@ -47,7 +52,9 @@ const buildClickHouseQuery = (
 ): ICompositeMetricQuery => {
 	const chQueries: BuilderClickHouseResource = {};
 	query.clickhouse_sql.forEach((query: IClickHouseQuery) => {
-		if (!query.query) return;
+		if (!query.query) {
+			return;
+		}
 		chQueries[query.name] = query;
 	});
 
@@ -65,7 +72,9 @@ const buildPromQuery = (
 ): ICompositeMetricQuery => {
 	const promQueries: BuilderPromQLResource = {};
 	query.promql.forEach((query) => {
-		if (!query.query) return;
+		if (!query.query) {
+			return;
+		}
 		promQueries[query.name] = {
 			legend: query.legend,
 			name: query.name,

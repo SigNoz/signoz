@@ -1,11 +1,11 @@
-import './ListViewOrderBy.styles.scss';
-
-import { Select, Spin } from 'antd';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
+import { Select, Spin } from 'antd';
+import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
+
+import './ListViewOrderBy.styles.scss';
 
 interface ListViewOrderByProps {
 	value: string;
@@ -102,7 +102,7 @@ function ListViewOrderBy({
 			onChange={onChange}
 			onSearch={handleSearch}
 			notFoundContent={<Loader isLoading={isLoading} />}
-			placeholder="Select an attribute"
+			placeholder="Select a field"
 			style={{ width: 200 }}
 			options={selectOptions}
 			filterOption={(input, option): boolean =>

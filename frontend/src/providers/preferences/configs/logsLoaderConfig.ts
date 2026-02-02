@@ -8,20 +8,38 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 
 import { FormattingOptions } from '../types';
 
+/**
+ * Validates if a column is valid for Logs Explorer
+ * Filters out Traces-specific columns that would cause query failures
+ */
+const isValidLogColumn = (col: {
+	name?: string;
+	signal?: string;
+	[key: string]: unknown;
+}): boolean =>
+	// If column has signal field, it must be 'logs'
+	!(col?.signal && col.signal !== 'logs');
+
 // --- LOGS preferences loader config ---
 const logsLoaders = {
-	local: async (): Promise<{
+	local: (): {
 		columns: BaseAutocompleteData[];
 		formatting: FormattingOptions;
-	}> => {
+	} => {
 		const local = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
 		if (local) {
 			try {
 				const parsed = JSON.parse(local);
+
+				const localColumns = parsed.selectColumns || [];
+
+				// Filter out invalid columns (e.g., Logs columns that might have been incorrectly stored)
+				const validLogColumns = localColumns.filter(isValidLogColumn);
+
 				return {
-					columns: parsed.selectColumns || [],
+					columns: validLogColumns.length > 0 ? validLogColumns : [],
 					formatting: {
-						maxLines: parsed.maxLines ?? 2,
+						maxLines: parsed.maxLines ?? 1,
 						format: parsed.format ?? 'table',
 						fontSize: parsed.fontSize ?? 'small',
 						version: parsed.version ?? 1,
@@ -31,17 +49,23 @@ const logsLoaders = {
 		}
 		return { columns: [], formatting: undefined } as any;
 	},
-	url: async (): Promise<{
+	url: (): {
 		columns: BaseAutocompleteData[];
 		formatting: FormattingOptions;
-	}> => {
+	} => {
 		const urlParams = new URLSearchParams(window.location.search);
 		try {
 			const options = JSON.parse(urlParams.get('options') || '{}');
+
+			const urlColumns = options.selectColumns || [];
+
+			// Filter out invalid columns (e.g., Logs columns that might have been incorrectly stored)
+			const validLogColumns = urlColumns.filter(isValidLogColumn);
+
 			return {
-				columns: options.selectColumns || [],
+				columns: validLogColumns.length > 0 ? validLogColumns : [],
 				formatting: {
-					maxLines: options.maxLines ?? 2,
+					maxLines: options.maxLines ?? 1,
 					format: options.format ?? 'table',
 					fontSize: options.fontSize ?? 'small',
 					version: options.version ?? 1,
@@ -50,13 +74,13 @@ const logsLoaders = {
 		} catch {}
 		return { columns: [], formatting: undefined } as any;
 	},
-	default: async (): Promise<{
+	default: (): {
 		columns: TelemetryFieldKey[];
 		formatting: FormattingOptions;
-	}> => ({
+	} => ({
 		columns: defaultLogsSelectedColumns,
 		formatting: {
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 			fontSize: 'small' as FontSize,
 			version: 1,

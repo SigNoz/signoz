@@ -1,12 +1,11 @@
 /* eslint-disable react/button-has-type */
-import { render } from '@testing-library/react';
-import ROUTES from 'constants/routes';
-import * as useGetHostListHooks from 'hooks/infraMonitoring/useGetHostList';
-import * as appContextHooks from 'providers/App/App';
-import * as timezoneHooks from 'providers/Timezone';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { render } from '@testing-library/react';
+import * as useGetHostListHooks from 'hooks/infraMonitoring/useGetHostList';
+import * as appContextHooks from 'providers/App/App';
+import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 
@@ -17,7 +16,7 @@ jest.mock('lib/getMinMax', () => ({
 	default: jest.fn().mockImplementation(() => ({
 		minTime: 1713734400000,
 		maxTime: 1713738000000,
-		isValidTimeFormat: jest.fn().mockReturnValue(true),
+		isValidShortHandDateTimeFormat: jest.fn().mockReturnValue(true),
 	})),
 }));
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
@@ -33,19 +32,6 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 
 const queryClient = new QueryClient();
 
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
 	useSelector: (): any => ({
@@ -59,12 +45,16 @@ jest.mock('react-redux', () => ({
 		},
 	}),
 }));
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn().mockReturnValue({
-		pathname: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
-	}),
-}));
+
+jest.mock('react-router-dom', () => {
+	const ROUTES = jest.requireActual('constants/routes').default;
+	return {
+		...jest.requireActual('react-router-dom'),
+		useLocation: jest.fn().mockReturnValue({
+			pathname: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
+		}),
+	};
+});
 jest.mock('react-router-dom-v5-compat', () => {
 	const actual = jest.requireActual('react-router-dom-v5-compat');
 	return {

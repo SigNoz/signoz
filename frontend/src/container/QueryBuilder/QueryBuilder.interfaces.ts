@@ -1,6 +1,6 @@
+import { ReactNode } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
-import { ReactNode } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -17,8 +17,9 @@ export type QueryBuilderConfig =
 	| {
 			queryVariant: 'static';
 			initialDataSource: DataSource;
+			signalSource?: string;
 	  }
-	| { queryVariant: 'dropdown' };
+	| { queryVariant: 'dropdown'; signalSource?: string };
 
 export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
@@ -29,5 +30,16 @@ export type QueryBuilderProps = {
 	isListViewPanel?: boolean;
 	showFunctions?: boolean;
 	showOnlyWhereClause?: boolean;
+	showOnlyTraceOperator?: boolean;
+	showTraceViewSelector?: boolean;
+	showTraceOperator?: boolean;
 	version: string;
+	onChangeTraceView?: (view: TraceView) => void;
+	onSignalSourceChange?: (value: string) => void;
+	signalSourceChangeEnabled?: boolean;
 };
+
+export enum TraceView {
+	SPANS = 'spans',
+	TRACES = 'traces',
+}

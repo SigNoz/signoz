@@ -1,57 +1,64 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-empty */
-import { TelemetryFieldKey } from 'api/v5/v5';
 import { useEffect, useState } from 'react';
+import { TelemetryFieldKey } from 'api/v5/v5';
+import { has } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 import { FormattingOptions, Preferences } from '../types';
 
-// Generic preferences loader that works with any config
-async function preferencesLoader<T>(config: {
+const migrateColumns = (columns: any): any =>
+	columns.map((column: any) => {
+		if (has(column, 'key') && !has(column, 'name')) {
+			return { ...column, name: column.key };
+		}
+		return column;
+	});
+
+// Generic preferences loader that works with any config (synchronous version)
+function preferencesLoader<T>(config: {
 	priority: readonly string[];
 	[key: string]: any;
-}): Promise<T> {
-	const findValidLoader = async (): Promise<T> => {
-		// Try each loader in priority order
-		const results = await Promise.all(
-			config.priority.map(async (source) => ({
-				source,
-				result: await config[source](),
-			})),
-		);
+}): T {
+	// Try each loader in priority order synchronously
+	const results = config.priority.map((source: string) => ({
+		source,
+		result: config[source](),
+	}));
 
-		// Find valid columns and formatting independently
-		const validColumnsResult = results.find(
-			({ result }) => result.columns?.length,
-		);
-		const validFormattingResult = results.find(({ result }) => result.formatting);
+	// Find valid columns and formatting independently
+	const validColumnsResult = results.find(
+		({ result }) => result.columns?.length,
+	);
+	const validFormattingResult = results.find(({ result }) => result.formatting);
 
-		// Combine valid results or fallback to default
-		const finalResult = {
-			columns: validColumnsResult?.result.columns || config.default().columns,
-			formatting:
-				validFormattingResult?.result.formatting || config.default().formatting,
-		};
+	const migratedColumns = validColumnsResult?.result.columns
+		? migrateColumns(validColumnsResult.result.columns)
+		: undefined;
 
-		return finalResult as T;
+	// Combine valid results or fallback to default
+	const finalResult = {
+		columns: migratedColumns || config.default().columns,
+		formatting:
+			validFormattingResult?.result.formatting || config.default().formatting,
 	};
 
-	return findValidLoader();
+	return finalResult as T;
 }
 
 // Use the generic loader with specific configs
-async function logsPreferencesLoader(): Promise<{
+function logsPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
 	formatting: FormattingOptions;
-}> {
+} {
 	return preferencesLoader(logsLoaderConfig);
 }
 
-async function tracesPreferencesLoader(): Promise<{
+function tracesPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
-}> {
+} {
 	return preferencesLoader(tracesLoaderConfig);
 }
 
@@ -68,29 +75,36 @@ export function usePreferenceLoader({
 	loading: boolean;
 	error: Error | null;
 } {
-	const [preferences, setPreferences] = useState<Preferences | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [preferences, setPreferences] = useState<Preferences | null>(() => {
+		if (dataSource === DataSource.LOGS) {
+			const { columns, formatting } = logsPreferencesLoader();
+			return { columns, formatting };
+		}
+		if (dataSource === DataSource.TRACES) {
+			const { columns } = tracesPreferencesLoader();
+			return { columns };
+		}
+		return null;
+	});
 	const [error, setError] = useState<Error | null>(null);
 
 	useEffect((): void => {
-		async function loadPreferences(): Promise<void> {
-			setLoading(true);
+		function loadPreferences(): void {
 			setError(null);
 
 			try {
 				if (dataSource === DataSource.LOGS) {
-					const { columns, formatting } = await logsPreferencesLoader();
+					const { columns, formatting } = logsPreferencesLoader();
 					setPreferences({ columns, formatting });
 				}
 
 				if (dataSource === DataSource.TRACES) {
-					const { columns } = await tracesPreferencesLoader();
+					const { columns } = tracesPreferencesLoader();
 					setPreferences({ columns });
 				}
 			} catch (e) {
 				setError(e as Error);
 			} finally {
-				setLoading(false);
 				// Reset reSync back to false after loading is complete
 				if (reSync) {
 					setReSync(false);
@@ -99,10 +113,10 @@ export function usePreferenceLoader({
 		}
 
 		// Only load preferences on initial mount or when reSync is true
-		if (loading || reSync) {
+		if (reSync) {
 			loadPreferences();
 		}
-	}, [dataSource, reSync, setReSync, loading]);
+	}, [dataSource, reSync, setReSync]);
 
-	return { preferences, loading, error };
+	return { preferences, loading: false, error };
 }

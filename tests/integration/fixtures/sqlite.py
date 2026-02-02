@@ -1,8 +1,8 @@
-import sqlite3
 from collections import namedtuple
 from typing import Any, Generator
 
 import pytest
+from sqlalchemy import create_engine, sql
 
 from fixtures import dev, types
 
@@ -22,7 +22,11 @@ def sqlite(
     def create() -> types.TestContainerSQL:
         tmpdir = tmpfs("sqlite")
         path = tmpdir / "signoz.db"
-        connection = sqlite3.connect(path, check_same_thread=False)
+
+        engine = create_engine(f"sqlite:///{path}")
+        with engine.connect() as conn:
+            result = conn.execute(sql.text("SELECT 1"))
+            assert result.fetchone()[0] == 1
 
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
@@ -30,7 +34,7 @@ def sqlite(
                 host_configs={},
                 container_configs={},
             ),
-            conn=connection,
+            conn=engine,
             env={
                 "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
                 "SIGNOZ_SQLSTORE_SQLITE_PATH": str(path),
@@ -42,14 +46,19 @@ def sqlite(
 
     def restore(cache: dict) -> types.TestContainerSQL:
         path = cache["env"].get("SIGNOZ_SQLSTORE_SQLITE_PATH")
-        conn = sqlite3.connect(path, check_same_thread=False)
+
+        engine = create_engine(f"sqlite:///{path}")
+        with engine.connect() as conn:
+            result = conn.execute(sql.text("SELECT 1"))
+            assert result.fetchone()[0] == 1
+
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
                 id="",
                 host_configs={},
                 container_configs={},
             ),
-            conn=conn,
+            conn=engine,
             env=cache["env"],
         )
 

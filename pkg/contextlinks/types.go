@@ -1,6 +1,9 @@
 package contextlinks
 
-import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+import (
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+)
 
 // TODO(srikanthccv): Fix the URL management
 type URLShareableTimeRange struct {
@@ -38,3 +41,5 @@ type URLShareableOptions struct {
 	Format        string            `json:"format"`
 	SelectColumns []v3.AttributeKey `json:"selectColumns"`
 }
+
+var PredefinedAlertLabels = []string{ruletypes.LabelThresholdName, ruletypes.LabelSeverityName, ruletypes.LabelLastSeen}

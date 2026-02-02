@@ -1,3 +1,4 @@
+import { I18nextProvider } from 'react-i18next';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -5,7 +6,6 @@ import {
 	IntegrationType,
 	RequestIntegrationBtn,
 } from 'pages/Integrations/RequestIntegrationBtn';
-import { I18nextProvider } from 'react-i18next';
 import i18n from 'ReactI18';
 
 describe('Request AWS integration', () => {
@@ -57,7 +57,8 @@ describe('Request AWS integration', () => {
 		expect(capturedPayload.attributes).toEqual({
 			screen: 'AWS integration details',
 			integration: 's3 sync',
-			tenant_url: 'localhost',
+			deployment_url: 'localhost',
+			user_email: null,
 		});
 	});
 });

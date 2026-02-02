@@ -9,8 +9,7 @@ x-common: &common
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
-  # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
-  image: clickhouse/clickhouse-server:24.1.2-alpine
+  image: clickhouse/clickhouse-server:25.5.6
   tty: true
   labels:
     signoz.io/scrape: "true"
@@ -36,9 +35,11 @@ x-clickhouse-defaults: &clickhouse-defaults
     nofile:
       soft: 262144
       hard: 262144
+  environment:
+    - CLICKHOUSE_SKIP_USER_SETUP=1
 x-zookeeper-defaults: &zookeeper-defaults
   !!merge <<: *common
-  image: bitnami/zookeeper:3.7.1
+  image: signoz/zookeeper:3.7.1
   user: root
   labels:
     signoz.io/scrape: "true"
@@ -61,7 +62,7 @@ x-db-depend: &db-depend
 services:
   init-clickhouse:
     !!merge <<: *common
-    image: clickhouse/clickhouse-server:24.1.2-alpine
+    image: clickhouse/clickhouse-server:25.5.6
     container_name: signoz-init-clickhouse
     command:
       - bash
@@ -110,7 +111,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:${VERSION:-v0.91.0}
+    image: signoz/signoz:${VERSION:-v0.110.1}
     container_name: signoz
     command:
       - --config=/root/config/prometheus.yml
@@ -143,7 +144,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.128.2}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.129.13}
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -165,7 +166,7 @@ services:
         condition: service_healthy
   schema-migrator-sync:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.128.2}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.13}
     container_name: schema-migrator-sync
     command:
       - sync
@@ -177,7 +178,7 @@ services:
     restart: on-failure
   schema-migrator-async:
     !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.128.2}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.129.13}
     container_name: schema-migrator-async
     command:
       - async

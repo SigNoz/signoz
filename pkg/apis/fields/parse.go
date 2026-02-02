@@ -12,6 +12,7 @@ import (
 func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, error) {
 	var req telemetrytypes.FieldKeySelector
 	var signal telemetrytypes.Signal
+	var source telemetrytypes.Source
 	var err error
 
 	signalStr := r.URL.Query().Get("signal")
@@ -19,6 +20,13 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 		signal = telemetrytypes.Signal{String: valuer.NewString(signalStr)}
 	} else {
 		signal = telemetrytypes.SignalUnspecified
+	}
+
+	sourceStr := r.URL.Query().Get("source")
+	if sourceStr != "" {
+		source = telemetrytypes.Source{String: valuer.NewString(sourceStr)}
+	} else {
+		source = telemetrytypes.SourceUnspecified
 	}
 
 	if r.URL.Query().Get("limit") != "" {
@@ -72,10 +80,22 @@ func parseFieldKeyRequest(r *http.Request) (*telemetrytypes.FieldKeySelector, er
 
 	name := r.URL.Query().Get("searchText")
 
+	if name != "" && fieldContext == telemetrytypes.FieldContextUnspecified {
+		parsedFieldKey := telemetrytypes.GetFieldKeyFromKeyText(name)
+		if parsedFieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, signal) {
+				name = parsedFieldKey.Name
+				fieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
+
 	req = telemetrytypes.FieldKeySelector{
 		StartUnixMilli:    startUnixMilli,
 		EndUnixMilli:      endUnixMilli,
 		Signal:            signal,
+		Source:            source,
 		Name:              name,
 		FieldContext:      fieldContext,
 		FieldDataType:     fieldDataType,
@@ -93,6 +113,16 @@ func parseFieldValueRequest(r *http.Request) (*telemetrytypes.FieldValueSelector
 	}
 
 	name := r.URL.Query().Get("name")
+	if name != "" && keySelector.FieldContext == telemetrytypes.FieldContextUnspecified {
+		parsedFieldKey := telemetrytypes.GetFieldKeyFromKeyText(name)
+		if parsedFieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, keySelector.Signal) {
+				name = parsedFieldKey.Name
+				keySelector.FieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
 	keySelector.Name = name
 	existingQuery := r.URL.Query().Get("existingQuery")
 	value := r.URL.Query().Get("searchText")
@@ -111,4 +141,22 @@ func parseFieldValueRequest(r *http.Request) (*telemetrytypes.FieldValueSelector
 	}
 
 	return &req, nil
+}
+
+func isContextValidForSignal(ctx telemetrytypes.FieldContext, signal telemetrytypes.Signal) bool {
+	if ctx == telemetrytypes.FieldContextResource ||
+		ctx == telemetrytypes.FieldContextAttribute ||
+		ctx == telemetrytypes.FieldContextScope {
+		return true
+	}
+
+	switch signal.StringValue() {
+	case telemetrytypes.SignalLogs.StringValue():
+		return ctx == telemetrytypes.FieldContextLog || ctx == telemetrytypes.FieldContextBody
+	case telemetrytypes.SignalTraces.StringValue():
+		return ctx == telemetrytypes.FieldContextSpan || ctx == telemetrytypes.FieldContextEvent || ctx == telemetrytypes.FieldContextTrace
+	case telemetrytypes.SignalMetrics.StringValue():
+		return ctx == telemetrytypes.FieldContextMetric
+	}
+	return true
 }

@@ -1,8 +1,9 @@
+import { useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { useLocation } from 'react-router-dom';
 import { render } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { ColumnUnitSelector } from '../ColumnUnitSelector';
 
@@ -18,8 +19,6 @@ const compositeQueryParam = {
 					key: 'signoz_latency',
 					dataType: 'float64',
 					type: 'ExponentialHistogram',
-					isColumn: true,
-					isJSON: false,
 					id: 'signoz_latency--float64--ExponentialHistogram--true',
 				},
 				timeAggregation: '',
@@ -40,13 +39,11 @@ const compositeQueryParam = {
 						key: 'service_name',
 						dataType: 'string',
 						type: 'tag',
-						isColumn: false,
-						isJSON: false,
 						id: 'service_name--string--tag--false',
 					},
 				],
 				legend: '',
-				reduceTo: 'avg',
+				reduceTo: ReduceOperators.AVG,
 			},
 		],
 		queryFormulas: [
@@ -57,6 +54,7 @@ const compositeQueryParam = {
 				legend: '',
 			},
 		],
+		queryTraceOperator: [],
 	},
 	promql: [
 		{
@@ -75,6 +73,7 @@ const compositeQueryParam = {
 		},
 	],
 	id: '12e1d311-cb47-4b76-af68-65d8e85c9e0d',
+	unit: '',
 };
 
 jest.mock('react-router-dom', () => ({
@@ -101,7 +100,12 @@ describe('Column unit selector panel unit test', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		const { getByText } = render(
 			<QueryBuilderProvider>
-				<ColumnUnitSelector columnUnits={{}} setColumnUnits={(): void => {}} />,
+				<ColumnUnitSelector
+					columnUnits={{}}
+					setColumnUnits={(): void => {}}
+					isNewDashboard={false}
+				/>
+				,
 			</QueryBuilderProvider>,
 		);
 

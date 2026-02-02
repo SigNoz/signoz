@@ -38,6 +38,7 @@ func newConfig() factory.Config {
 			ExcludedRoutes: []string{
 				"/api/v1/logs/tail",
 				"/api/v3/logs/livetail",
+				"/api/v1/export_raw_data",
 			},
 		},
 		Logging: Logging{

@@ -3,10 +3,12 @@ package querybuilder
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -14,27 +16,29 @@ import (
 )
 
 type aggExprRewriter struct {
+	logger           *slog.Logger
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	jsonBodyPrefix   string
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 }
 
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
 
 func NewAggExprRewriter(
+	settings factory.ProviderSettings,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *aggExprRewriter {
+	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
+
 	return &aggExprRewriter{
+		logger:           set.Logger(),
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
-		jsonBodyPrefix:   jsonBodyPrefix,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
@@ -70,11 +74,10 @@ func (r *aggExprRewriter) Rewrite(
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(keys,
+	visitor := newExprVisitor(r.logger, keys,
 		r.fullTextColumn,
 		r.fieldMapper,
 		r.conditionBuilder,
-		r.jsonBodyPrefix,
 		r.jsonKeyToKey,
 	)
 	// Rewrite the first select item (our expression)
@@ -117,11 +120,11 @@ func (r *aggExprRewriter) RewriteMulti(
 // exprVisitor walks FunctionExpr nodes and applies the mappers.
 type exprVisitor struct {
 	chparser.DefaultASTVisitor
+	logger           *slog.Logger
 	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
 	fullTextColumn   *telemetrytypes.TelemetryFieldKey
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
-	jsonBodyPrefix   string
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
 	Modified         bool
 	chArgs           []any
@@ -129,19 +132,19 @@ type exprVisitor struct {
 }
 
 func newExprVisitor(
+	logger *slog.Logger,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *exprVisitor {
 	return &exprVisitor{
+		logger:           logger,
 		fieldKeys:        fieldKeys,
 		fullTextColumn:   fullTextColumn,
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
-		jsonBodyPrefix:   jsonBodyPrefix,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
 }
@@ -152,7 +155,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 
 	aggFunc, ok := AggreFuncMap[valuer.NewString(name)]
 	if !ok {
-		return nil
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unrecognized function: %s", name)
 	}
 
 	var args []chparser.Expr
@@ -180,22 +183,22 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
 		origPred := args[len(args)-1].String()
-		whereClause, _, err := PrepareWhereClause(
+		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
+				Logger:           v.logger,
 				FieldKeys:        v.fieldKeys,
 				FieldMapper:      v.fieldMapper,
 				ConditionBuilder: v.conditionBuilder,
 				FullTextColumn:   v.fullTextColumn,
-				JsonBodyPrefix:   v.jsonBodyPrefix,
 				JsonKeyToKey:     v.jsonKeyToKey,
-			},
+			}, 0, 0,
 		)
 		if err != nil {
 			return err
 		}
 
-		newPred, chArgs := whereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+		newPred, chArgs := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
 		newPred = strings.TrimPrefix(newPred, "WHERE")
 		parsedPred, err := parseFragment(newPred)
 		if err != nil {
@@ -209,7 +212,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := args[i].String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -227,9 +230,9 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType)
+			expr, exprArgs, err := CollisionHandledFinalExpr(context.Background(), &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey)
 			if err != nil {
-				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", orig)
+				return err
 			}
 			v.chArgs = append(v.chArgs, exprArgs...)
 			newCol := expr

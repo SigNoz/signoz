@@ -1,26 +1,32 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './LogsFormatOptionsMenu.styles.scss';
-
-import { Button, Input, InputNumber, Tooltip, Typography } from 'antd';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Check, ChevronLeft, ChevronRight, Minus, Plus, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	Check,
+	ChevronLeft,
+	ChevronRight,
+	Minus,
+	Plus,
+	Sliders,
+	X,
+} from 'lucide-react';
+
+import './LogsFormatOptionsMenu.styles.scss';
 
 interface LogsFormatOptionsMenuProps {
-	title: string;
 	items: any;
 	selectedOptionFormat: any;
 	config: OptionsMenuConfig;
 }
 
-export default function LogsFormatOptionsMenu({
-	title,
+function OptionsMenu({
 	items,
 	selectedOptionFormat,
 	config,
@@ -46,7 +52,9 @@ export default function LogsFormatOptionsMenu({
 
 	const onChange = useCallback(
 		(key: LogViewMode) => {
-			if (!format) return;
+			if (!format) {
+				return;
+			}
 
 			format.onChange(key);
 		},
@@ -142,7 +150,9 @@ export default function LogsFormatOptionsMenu({
 	}
 
 	const handleKeyDown = (e: KeyboardEvent): void => {
-		if (!selectedValue) return;
+		if (!selectedValue) {
+			return;
+		}
 
 		const optionsData = addColumn?.options || [];
 
@@ -344,7 +354,7 @@ export default function LogsFormatOptionsMenu({
 					</div>
 					<div className="horizontal-line" />
 					<div className="menu-container">
-						<div className="title"> {title} </div>
+						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
 							{items.map(
@@ -441,3 +451,39 @@ export default function LogsFormatOptionsMenu({
 		</div>
 	);
 }
+
+function LogsFormatOptionsMenu({
+	items,
+	selectedOptionFormat,
+	config,
+}: LogsFormatOptionsMenuProps): JSX.Element {
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+	return (
+		<Popover
+			content={
+				<OptionsMenu
+					items={items}
+					selectedOptionFormat={selectedOptionFormat}
+					config={config}
+				/>
+			}
+			trigger="click"
+			placement="bottomRight"
+			arrow={false}
+			open={isPopoverOpen}
+			onOpenChange={setIsPopoverOpen}
+			rootClassName="format-options-popover"
+			destroyTooltipOnHide
+		>
+			<Tooltip title="Options">
+				<Button
+					className="periscope-btn ghost"
+					icon={<Sliders size={14} />}
+					data-testid="periscope-btn-format-options"
+				/>
+			</Tooltip>
+		</Popover>
+	);
+}
+
+export default LogsFormatOptionsMenu;

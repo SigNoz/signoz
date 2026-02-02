@@ -1,9 +1,9 @@
+import { useCallback, useEffect, useMemo } from 'react';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { useCallback, useEffect, useMemo } from 'react';
 
 // Initialize dayjs plugins
 dayjs.extend(utc);
@@ -41,7 +41,9 @@ function useTimezoneFormatter({
 	}, [cache, userTimezone]);
 
 	const clearCacheEntries = useCallback(() => {
-		if (cache.size <= CACHE_SIZE_LIMIT) return;
+		if (cache.size <= CACHE_SIZE_LIMIT) {
+			return;
+		}
 
 		// Sort entries by timestamp (oldest first)
 		const sortedEntries = Array.from(cache.entries()).sort(

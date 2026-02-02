@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import '../../EntityDetailsUtils/entityDetails.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -26,7 +27,7 @@ import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/util
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
@@ -38,9 +39,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -63,6 +61,8 @@ import {
 	getDeploymentMetricsQueryPayload,
 } from './constants';
 import { DeploymentDetailsProps } from './DeploymentDetails.interfaces';
+
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 function DeploymentDetails({
 	deployment,
@@ -125,8 +125,6 @@ function DeploymentDetails({
 						key: QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s_deployment_name--string--resource--false',
 					},
 					op: '=',
@@ -138,8 +136,6 @@ function DeploymentDetails({
 						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s_deployment_name--string--resource--false',
 					},
 					op: '=',
@@ -170,8 +166,6 @@ function DeploymentDetails({
 						key: QUERY_KEYS.K8S_OBJECT_KIND,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
@@ -183,8 +177,6 @@ function DeploymentDetails({
 						key: QUERY_KEYS.K8S_OBJECT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',

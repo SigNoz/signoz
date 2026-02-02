@@ -94,6 +94,8 @@ type SigNozAgentConfig struct {
 	IngestionKey string `json:"ingestion_key"`
 	SigNozAPIUrl string `json:"signoz_api_url"`
 	SigNozAPIKey string `json:"signoz_api_key"`
+
+	Version string `json:"version,omitempty"`
 }
 
 type GenerateConnectionUrlResponse struct {
@@ -114,8 +116,10 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	// TODO(Raj): parameterized this in follow up changes
-	agentVersion := "v0.0.5"
+	agentVersion := "v0.0.8"
+	if req.AgentConfig.Version != "" {
+		agentVersion = req.AgentConfig.Version
+	}
 
 	connectionUrl := fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",

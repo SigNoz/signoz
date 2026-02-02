@@ -1,15 +1,17 @@
-import './QueryBuilderV2.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2Provider } from './QueryBuilderV2Context';
 import QueryFooter from './QueryV2/QueryFooter/QueryFooter';
 import { QueryV2 } from './QueryV2/QueryV2';
+import TraceOperator from './QueryV2/TraceOperator/TraceOperator';
+
+import './QueryBuilderV2.styles.scss';
 
 export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	config,
@@ -18,15 +20,20 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	queryComponents,
 	isListViewPanel = false,
 	showOnlyWhereClause = false,
+	showTraceOperator = false,
 	version,
+	onSignalSourceChange,
+	signalSourceChangeEnabled = false,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
 		addNewBuilderQuery,
 		addNewFormula,
 		handleSetConfig,
+		addTraceOperator,
 		panelType,
 		initialDataSource,
+		handleRunQuery,
 	} = useQueryBuilder();
 
 	const containerRef = useRef(null);
@@ -53,6 +60,11 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		currentDataSource,
 		newPanelType,
 	]);
+
+	const isMultiQueryAllowed = useMemo(
+		() => !isListViewPanel || showTraceOperator,
+		[showTraceOperator, isListViewPanel],
+	);
 
 	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
@@ -97,11 +109,79 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		listViewTracesFilterConfigs,
 	]);
 
+	const traceOperator = useMemo((): IBuilderTraceOperator | undefined => {
+		if (
+			currentQuery.builder.queryTraceOperator &&
+			currentQuery.builder.queryTraceOperator.length > 0
+		) {
+			return currentQuery.builder.queryTraceOperator[0];
+		}
+
+		return undefined;
+	}, [currentQuery.builder.queryTraceOperator]);
+
+	const hasAtLeastOneTraceQuery = useMemo(
+		() =>
+			currentQuery.builder.queryData.some(
+				(query) => query.dataSource === DataSource.TRACES,
+			),
+		[currentQuery.builder.queryData],
+	);
+
+	const hasTraceOperator = useMemo(
+		() => showTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
+		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+	);
+
+	const shouldShowFooter = useMemo(
+		() =>
+			(!showOnlyWhereClause && !isListViewPanel) ||
+			(currentDataSource === DataSource.TRACES && showTraceOperator),
+		[isListViewPanel, showTraceOperator, showOnlyWhereClause, currentDataSource],
+	);
+
+	const showQueryList = useMemo(
+		() => (!showOnlyWhereClause && !isListViewPanel) || showTraceOperator,
+		[isListViewPanel, showOnlyWhereClause, showTraceOperator],
+	);
+
+	const showFormula = useMemo(() => {
+		if (currentDataSource === DataSource.TRACES) {
+			return !isListViewPanel;
+		}
+
+		return true;
+	}, [isListViewPanel, currentDataSource]);
+
+	const showAddTraceOperator = useMemo(
+		() => showTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
+		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+	);
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>): void => {
+			const target = e.target as HTMLElement | null;
+			const tagName = target?.tagName || '';
+
+			const isInputElement =
+				['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) ||
+				(target?.getAttribute('contenteditable') || '').toLowerCase() === 'true';
+
+			// Allow input elements in qb to run the query when Cmd/Ctrl + Enter is pressed
+			if (isInputElement && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+				e.preventDefault();
+				e.stopPropagation();
+				handleRunQuery();
+			}
+		},
+		[handleRunQuery],
+	);
+
 	return (
 		<QueryBuilderV2Provider>
 			<div className="query-builder-v2">
-				<div className="qb-content-container">
-					{isListViewPanel && (
+				<div className="qb-content-container" onKeyDownCapture={handleKeyDown}>
+					{!isMultiQueryAllowed ? (
 						<QueryV2
 							ref={containerRef}
 							key={currentQuery.builder.queryData[0].queryName}
@@ -109,15 +189,19 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							query={currentQuery.builder.queryData[0]}
 							filterConfigs={queryFilterConfigs}
 							queryComponents={queryComponents}
+							isMultiQueryAllowed={isMultiQueryAllowed}
+							showTraceOperator={showTraceOperator}
+							hasTraceOperator={hasTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
 							isListViewPanel={isListViewPanel}
+							onSignalSourceChange={onSignalSourceChange || ((): void => {})}
+							signalSourceChangeEnabled={signalSourceChangeEnabled}
+							queriesCount={1}
 						/>
-					)}
-
-					{!isListViewPanel &&
+					) : (
 						currentQuery.builder.queryData.map((query, index) => (
 							<QueryV2
 								ref={containerRef}
@@ -127,12 +211,20 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								filterConfigs={queryFilterConfigs}
 								queryComponents={queryComponents}
 								version={version}
+								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
+								showTraceOperator={showTraceOperator}
+								hasTraceOperator={hasTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
 								isListViewPanel={isListViewPanel}
+								signalSource={query.source as 'meter' | ''}
+								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
+								signalSourceChangeEnabled={signalSourceChangeEnabled}
+								queriesCount={currentQuery.builder.queryData.length}
 							/>
-						))}
+						))
+					)}
 
 					{!showOnlyWhereClause && currentQuery.builder.queryFormulas.length > 0 && (
 						<div className="qb-formulas-container">
@@ -157,15 +249,25 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						</div>
 					)}
 
-					{!showOnlyWhereClause && !isListViewPanel && (
+					{shouldShowFooter && (
 						<QueryFooter
+							showAddFormula={showFormula}
 							addNewBuilderQuery={addNewBuilderQuery}
 							addNewFormula={addNewFormula}
+							addTraceOperator={addTraceOperator}
+							showAddTraceOperator={showAddTraceOperator}
+						/>
+					)}
+
+					{hasTraceOperator && (
+						<TraceOperator
+							isListViewPanel={isListViewPanel}
+							traceOperator={traceOperator as IBuilderTraceOperator}
 						/>
 					)}
 				</div>
 
-				{!showOnlyWhereClause && !isListViewPanel && (
+				{showQueryList && (
 					<div className="query-names-section">
 						{currentQuery.builder.queryData.map((query) => (
 							<div key={query.queryName} className="query-name">

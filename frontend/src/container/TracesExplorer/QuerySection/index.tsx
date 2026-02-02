@@ -1,10 +1,10 @@
+import { memo, useCallback, useMemo } from 'react';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
-import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 function QuerySection(): JSX.Element {
@@ -37,11 +37,15 @@ function QuerySection(): JSX.Element {
 		};
 	}, [panelTypes, renderOrderBy]);
 
+	const isListViewPanel = useMemo(
+		() => panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE,
+		[panelTypes],
+	);
+
 	return (
 		<QueryBuilderV2
-			isListViewPanel={
-				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
-			}
+			isListViewPanel={isListViewPanel}
+			showTraceOperator
 			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 			queryComponents={queryComponents}
 			panelType={panelTypes}

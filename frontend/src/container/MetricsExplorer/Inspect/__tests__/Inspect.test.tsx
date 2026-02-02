@@ -1,13 +1,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as useInspectMetricsHooks from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
 import * as useGetMetricDetailsHooks from 'hooks/metricsExplorer/useGetMetricDetails';
 import * as appContextHooks from 'providers/App/App';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Provider } from 'react-redux';
 import store from 'store';
 
 import ROUTES from '../../../../constants/routes';
@@ -75,12 +75,6 @@ jest
 		},
 		isLoading: false,
 	} as any);
-
-jest.mock('uplot', () =>
-	jest.fn().mockImplementation(() => ({
-		destroy: jest.fn(),
-	})),
-);
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),

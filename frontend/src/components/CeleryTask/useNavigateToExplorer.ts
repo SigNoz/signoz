@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -5,8 +7,6 @@ import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
@@ -19,6 +19,7 @@ export interface NavigateToExplorerProps {
 	endTime?: number;
 	sameTab?: boolean;
 	shouldResolveQuery?: boolean;
+	widgetQuery?: Query;
 }
 
 export function useNavigateToExplorer(): (
@@ -30,27 +31,49 @@ export function useNavigateToExplorer(): (
 	);
 
 	const prepareQuery = useCallback(
-		(selectedFilters: TagFilterItem[], dataSource: DataSource): Query => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData
-					.map((item) => ({
-						...item,
-						dataSource,
-						aggregateOperator: MetricAggregateOperator.NOOP,
-						filters: {
-							...item.filters,
-							items: [...(item.filters?.items || []), ...selectedFilters],
-							op: item.filters?.op || 'AND',
-						},
-						groupBy: [],
-						disabled: false,
-					}))
-					.slice(0, 1),
-				queryFormulas: [],
-			},
-		}),
+		(
+			selectedFilters: TagFilterItem[],
+			dataSource: DataSource,
+			query?: Query,
+		): Query => {
+			const widgetQuery = query || currentQuery;
+			return {
+				...widgetQuery,
+				builder: {
+					...widgetQuery.builder,
+					queryData: widgetQuery.builder.queryData
+						.map((item) => {
+							// filter out filters with unique ids
+							const seen = new Set();
+							const filterItems = [
+								...(item.filters?.items || []),
+								...selectedFilters,
+							].filter((item) => {
+								if (seen.has(item.id)) {
+									return false;
+								}
+								seen.add(item.id);
+								return true;
+							});
+
+							return {
+								...item,
+								dataSource,
+								aggregateOperator: MetricAggregateOperator.NOOP,
+								filters: {
+									...item.filters,
+									items: filterItems,
+									op: item.filters?.op || 'AND',
+								},
+								groupBy: [],
+								disabled: false,
+							};
+						})
+						.slice(0, 1),
+					queryFormulas: [],
+				},
+			};
+		},
 		[currentQuery],
 	);
 
@@ -67,6 +90,7 @@ export function useNavigateToExplorer(): (
 				endTime,
 				sameTab,
 				shouldResolveQuery,
+				widgetQuery,
 			} = props;
 			const urlParams = new URLSearchParams();
 			if (startTime && endTime) {
@@ -77,7 +101,7 @@ export function useNavigateToExplorer(): (
 				urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 			}
 
-			let preparedQuery = prepareQuery(filters, dataSource);
+			let preparedQuery = prepareQuery(filters, dataSource, widgetQuery);
 
 			if (shouldResolveQuery) {
 				await getUpdatedQuery({

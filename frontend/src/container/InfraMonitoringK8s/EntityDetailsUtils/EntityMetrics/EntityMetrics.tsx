@@ -1,5 +1,5 @@
-import './entityMetrics.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
@@ -14,7 +14,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -24,8 +24,6 @@ import {
 } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
@@ -33,6 +31,8 @@ import { Options } from 'uplot';
 import { FeatureKeys } from '../../../../constants/features';
 import { useMultiIntersectionObserver } from '../../../../hooks/useMultiIntersectionObserver';
 import { useAppContext } from '../../../../providers/App/App';
+
+import './entityMetrics.styles.scss';
 
 interface EntityMetricsProps<T> {
 	timeRange: {
@@ -105,7 +105,7 @@ function EntityMetrics<T>({
 				signal,
 			}: QueryFunctionContext): Promise<
 				SuccessResponse<MetricRangePayloadProps>
-			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, signal),
+			> => GetMetricQueryRange(payload, ENTITY_VERSION_V4, undefined, signal),
 			enabled: !!payload && visibilities[index],
 			keepPreviousData: true,
 		})),
@@ -115,6 +115,13 @@ function EntityMetrics<T>({
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 	const { currentQuery } = useQueryBuilder();
+	const legendScrollPositionRef = useRef<{
+		scrollTop: number;
+		scrollLeft: number;
+	}>({
+		scrollTop: 0,
+		scrollLeft: 0,
+	});
 
 	const chartData = useMemo(
 		() =>
@@ -184,6 +191,13 @@ function EntityMetrics<T>({
 					maxTimeScale: graphTimeIntervals[idx].end,
 					onDragSelect: (start, end) => onDragSelect(start, end, idx),
 					query: currentQuery,
+					legendScrollPosition: legendScrollPositionRef.current,
+					setLegendScrollPosition: (position: {
+						scrollTop: number;
+						scrollLeft: number;
+					}) => {
+						legendScrollPositionRef.current = position;
+					},
 				});
 			}),
 		[
@@ -244,6 +258,8 @@ function EntityMetrics<T>({
 						defaultRelativeTime="5m"
 						isModalTimeSelection={isModalTimeSelection}
 						modalSelectedInterval={selectedInterval}
+						modalInitialStartTime={timeRange.startTime * 1000}
+						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
 				</div>
 			</div>

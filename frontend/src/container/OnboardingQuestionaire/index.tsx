@@ -1,5 +1,5 @@
-import './OnboardingQuestionaire.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery } from 'react-query';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import updateProfileAPI from 'api/onboarding/updateProfile';
@@ -14,19 +14,18 @@ import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingIn
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
 
 import {
 	AboutSigNozQuestions,
 	SignozDetails,
 } from './AboutSigNozQuestions/AboutSigNozQuestions';
 import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
-import { OnboardingHeader } from './OnboardingHeader/OnboardingHeader';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
 import OrgQuestions, { OrgData, OrgDetails } from './OrgQuestions/OrgQuestions';
+
+import './OnboardingQuestionaire.styles.scss';
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -46,7 +45,7 @@ const INITIAL_ORG_DETAILS: OrgDetails = {
 };
 
 const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
-	interestInSignoz: '',
+	interestInSignoz: [],
 	otherInterestInSignoz: '',
 	discoverSignoz: '',
 };
@@ -57,7 +56,6 @@ const INITIAL_OPTIMISE_SIGNOZ_DETAILS: OptimiseSignozDetails = {
 	services: 0,
 };
 
-const BACK_BUTTON_EVENT_NAME = 'Org Onboarding: Back Button Clicked';
 const NEXT_BUTTON_EVENT_NAME = 'Org Onboarding: Next Button Clicked';
 const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
 
@@ -145,6 +143,9 @@ function OnboardingQuestionaire(): JSX.Element {
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
+
+				// Allow user to proceed even if API fails
+				setCurrentStep(4);
 			},
 		},
 	);
@@ -174,10 +175,16 @@ function OnboardingQuestionaire(): JSX.Element {
 					? (orgDetails?.otherTool as string)
 					: (orgDetails?.observabilityTool as string),
 			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
-			reasons_for_interest_in_signoz:
-				signozDetails?.interestInSignoz === 'Others'
-					? (signozDetails?.otherInterestInSignoz as string)
-					: (signozDetails?.interestInSignoz as string),
+			reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
+				'Others',
+			)
+				? ([
+						...(signozDetails?.interestInSignoz?.filter(
+							(item) => item !== 'Others',
+						) || []),
+						signozDetails?.otherInterestInSignoz,
+				  ] as string[])
+				: (signozDetails?.interestInSignoz as string[]),
 			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
 			number_of_services: optimiseSignozDetails?.services as number,
@@ -198,15 +205,14 @@ function OnboardingQuestionaire(): JSX.Element {
 
 	return (
 		<div className="onboarding-questionaire-container">
-			<div className="onboarding-questionaire-header">
-				<OnboardingHeader />
-			</div>
-
 			<div className="onboarding-questionaire-content">
 				{currentStep === 1 && (
 					<OrgQuestions
 						currentOrgData={currentOrgData}
-						orgDetails={orgDetails}
+						orgDetails={{
+							...orgDetails,
+							usesOtel: orgDetails.usesOtel ?? null,
+						}}
 						onNext={(orgDetails: OrgDetails): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 1,
@@ -223,13 +229,6 @@ function OnboardingQuestionaire(): JSX.Element {
 					<AboutSigNozQuestions
 						signozDetails={signozDetails}
 						setSignozDetails={setSignozDetails}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 2,
-								prevPageID: 1,
-							});
-							setCurrentStep(1);
-						}}
 						onNext={(): void => {
 							logEvent(NEXT_BUTTON_EVENT_NAME, {
 								currentPageID: 2,
@@ -246,13 +245,6 @@ function OnboardingQuestionaire(): JSX.Element {
 						isUpdatingProfile={isUpdatingProfile}
 						optimiseSignozDetails={optimiseSignozDetails}
 						setOptimiseSignozDetails={setOptimiseSignozDetails}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 3,
-								prevPageID: 2,
-							});
-							setCurrentStep(2);
-						}}
 						onNext={handleUpdateProfile}
 						onWillDoLater={handleUpdateProfile}
 					/>
@@ -263,13 +255,6 @@ function OnboardingQuestionaire(): JSX.Element {
 						isLoading={updatingOrgOnboardingStatus}
 						teamMembers={teamMembers}
 						setTeamMembers={setTeamMembers}
-						onBack={(): void => {
-							logEvent(BACK_BUTTON_EVENT_NAME, {
-								currentPageID: 4,
-								prevPageID: 3,
-							});
-							setCurrentStep(3);
-						}}
 						onNext={handleOnboardingComplete}
 					/>
 				)}

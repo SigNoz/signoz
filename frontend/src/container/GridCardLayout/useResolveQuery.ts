@@ -1,12 +1,13 @@
-import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
+import { getSubstituteVars } from 'api/dashboard/substitute_vars';
+import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AppState } from 'store/reducers';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -32,7 +33,12 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const queryRangeMutation = useMutation(getQueryRangeFormat);
+	const queryRangeMutation = useMutation(getSubstituteVars);
+
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
+	);
 
 	const getUpdatedQuery = useCallback(
 		async ({
@@ -40,22 +46,23 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			selectedDashboard,
 		}: UseUpdatedQueryOptions): Promise<Query> => {
 			// Prepare query payload with resolved variables
-			const { queryPayload } = prepareQueryRangePayload({
+			const { queryPayload } = prepareQueryRangePayloadV5({
 				query: widgetConfig.query,
 				graphType: getGraphType(widgetConfig.panelTypes),
 				selectedTime: widgetConfig.timePreferance,
 				globalSelectedInterval,
 				variables: getDashboardVariables(selectedDashboard?.data?.variables),
 				originalGraphType: widgetConfig.panelTypes,
+				dynamicVariables: dashboardDynamicVariables,
 			});
 
 			// Execute query and process results
 			const queryResult = await queryRangeMutation.mutateAsync(queryPayload);
 
 			// Map query data from API response
-			return mapQueryDataFromApi(queryResult.compositeQuery, widgetConfig?.query);
+			return mapQueryDataFromApi(queryResult.data.compositeQuery);
 		},
-		[globalSelectedInterval, queryRangeMutation],
+		[dashboardDynamicVariables, globalSelectedInterval, queryRangeMutation],
 	);
 
 	return {

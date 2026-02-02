@@ -1,9 +1,9 @@
+import { memo, useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { useOrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/useOrderByFilter';
 import { selectStyle } from 'container/QueryBuilder/filters/QueryBuilderSearch/config';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { memo, useMemo } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { StringOperators } from 'types/common/queryBuilder';
 
@@ -34,7 +34,7 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 		const keysOptions = createOptions(data?.payload?.attributeKeys || []);
 
 		const customOptions = createOptions([
-			{ key: 'timestamp', isColumn: true, type: '', dataType: DataTypes.EMPTY },
+			{ key: 'timestamp', type: '', dataType: DataTypes.EMPTY },
 		]);
 
 		const baseOptions = [

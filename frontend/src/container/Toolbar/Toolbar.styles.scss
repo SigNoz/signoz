@@ -14,12 +14,18 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
+
+		.right-toolbar-actions-container {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
 	}
 
 	.timeRange {
 		display: flex;
 		align-items: center;
-		gap: 16px;
+		gap: 8px;
 	}
 }
 

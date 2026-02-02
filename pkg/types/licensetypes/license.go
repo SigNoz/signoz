@@ -3,7 +3,6 @@ package licensetypes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -21,7 +20,7 @@ type StorableLicense struct {
 	Key             string         `bun:"key,type:text,notnull,unique"`
 	Data            map[string]any `bun:"data,type:text"`
 	LastValidatedAt time.Time      `bun:"last_validated_at,notnull"`
-	OrgID           valuer.UUID    `bun:"org_id,type:text,notnull" json:"orgID"`
+	OrgID           valuer.UUID    `bun:"org_id,type:text,notnull" json:"orgId"`
 }
 
 // this data excludes ID and Key
@@ -113,9 +112,9 @@ func extractKeyFromMapStringInterface[T any](data map[string]interface{}, key st
 		if value, ok := val.(T); ok {
 			return value, nil
 		}
-		return zeroValue, fmt.Errorf("%s key is not a valid %s", key, reflect.TypeOf(zeroValue))
+		return zeroValue, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s key is not a valid %s", key, reflect.TypeOf(zeroValue))
 	}
-	return zeroValue, fmt.Errorf("%s key is missing", key)
+	return zeroValue, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s key is missing", key)
 }
 
 func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {

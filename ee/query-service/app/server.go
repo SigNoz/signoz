@@ -3,10 +3,18 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/gorilla/handlers"
 
@@ -23,7 +31,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -44,35 +51,16 @@ import (
 	"go.uber.org/zap"
 )
 
-type ServerOptions struct {
-	Config                     signoz.Config
-	SigNoz                     *signoz.SigNoz
-	HTTPHostPort               string
-	PrivateHostPort            string
-	PreferSpanMetrics          bool
-	FluxInterval               string
-	FluxIntervalForTraceDetail string
-	Cluster                    string
-	GatewayUrl                 string
-	Jwt                        *authtypes.JWT
-}
-
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
 	config      signoz.Config
 	signoz      *signoz.SigNoz
-	jwt         *authtypes.JWT
 	ruleManager *baserules.Manager
 
 	// public http router
 	httpConn     net.Listener
 	httpServer   *http.Server
 	httpHostPort string
-
-	// private http
-	privateConn     net.Listener
-	privateHTTP     *http.Server
-	privateHostPort string
 
 	opampServer *opamp.Server
 
@@ -83,8 +71,19 @@ type Server struct {
 }
 
 // NewServer creates and initializes Server
-func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) (*Server, error) {
+func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	gatewayProxy, err := gateway.NewProxy(config.Gateway.URL.String(), gateway.RoutePrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 10000,
+			MaxCost:     1 << 27, // 128 MB
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +94,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Prometheus,
 		signoz.TelemetryStore.Cluster(),
 		config.Querier.FluxInterval,
+		cacheForTraceDetail,
 		signoz.Cache,
+		nil,
 	)
 
 	rm, err := makeRulesManager(
@@ -104,10 +105,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		signoz.Alertmanager,
 		signoz.SQLStore,
 		signoz.TelemetryStore,
+		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
 		signoz.Querier,
-		signoz.Instrumentation.Logger(),
+		signoz.Instrumentation.ToProviderSettings(),
+		signoz.QueryParser,
 	)
 
 	if err != nil {
@@ -169,7 +172,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 		FluxInterval:                  config.Querier.FluxInterval,
 		Gateway:                       gatewayProxy,
 		GatewayUrl:                    config.Gateway.URL.String(),
-		JWT:                           jwt,
+		GlobalConfig:                  config.Global,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts, signoz)
@@ -180,10 +183,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	s := &Server{
 		config:             config,
 		signoz:             signoz,
-		jwt:                jwt,
 		ruleManager:        rm,
 		httpHostPort:       baseconst.HTTPHostPort,
-		privateHostPort:    baseconst.PrivateHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 		usageManager:       usageManager,
 	}
@@ -195,13 +196,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz, jwt *authtypes.JWT) 
 	}
 
 	s.httpServer = httpServer
-
-	privateServer, err := s.createPrivateServer(apiHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	s.privateHTTP = privateServer
 
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents, agentConfMgr, signoz.Instrumentation,
@@ -215,41 +209,21 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 	return s.unavailableChannel
 }
 
-func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
-	r := baseapp.NewRouter()
-
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
-	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
-		s.config.APIServer.Timeout.ExcludedRoutes,
-		s.config.APIServer.Timeout.Default,
-		s.config.APIServer.Timeout.Max,
-	).Wrap)
-	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
-
-	apiHandler.RegisterPrivateRoutes(r)
-
-	c := cors.New(cors.Options{
-		//todo(amol): find out a way to add exact domain or
-		// ip here for alert manager
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
-	})
-
-	handler := c.Handler(r)
-	handler = handlers.CompressHandler(handler)
-
-	return &http.Server{
-		Handler: handler,
-	}, nil
-}
-
 func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
 	r := baseapp.NewRouter()
-	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger())
+	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz, s.signoz.Modules.RoleGetter)
 
-	r.Use(middleware.NewAuth(s.jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(otelmux.Middleware(
+		"apiserver",
+		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
+		otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()),
+		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
+		otelmux.WithFilter(func(r *http.Request) bool {
+			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
+		}),
+		otelmux.WithPublicEndpoint(),
+	))
+	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
@@ -257,6 +231,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
 	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewComment().Wrap)
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
@@ -273,6 +248,11 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.MetricExplorerRoutes(r, am)
 	apiHandler.RegisterTraceFunnelsRoutes(r, am)
 
+	err := s.signoz.APIServer.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
@@ -283,7 +263,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	handler = handlers.CompressHandler(handler)
 
-	err := web.AddToRouter(r)
+	err = web.AddToRouter(r)
 	if err != nil {
 		return nil, err
 	}
@@ -308,19 +288,6 @@ func (s *Server) initListeners() error {
 	}
 
 	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
-
-	// listen on private port to support internal services
-	privateHostPort := s.privateHostPort
-
-	if privateHostPort == "" {
-		return fmt.Errorf("baseconst.PrivateHostPort is required")
-	}
-
-	s.privateConn, err = net.Listen("tcp", privateHostPort)
-	if err != nil {
-		return err
-	}
-	zap.L().Info(fmt.Sprintf("Query server started listening on private port %s...", s.privateHostPort))
 
 	return nil
 }
@@ -360,26 +327,6 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}()
 
-	var privatePort int
-	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
-		privatePort = port
-	}
-
-	go func() {
-		zap.L().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.privateHostPort))
-
-		switch err := s.privateHTTP.Serve(s.privateConn); err {
-		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
-			// normal exit, nothing to do
-			zap.L().Info("private http server closed")
-		default:
-			zap.L().Error("Could not start private HTTP server", zap.Error(err))
-		}
-
-		s.unavailableChannel <- healthcheck.Unavailable
-
-	}()
-
 	go func() {
 		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
 		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
@@ -399,12 +346,6 @@ func (s *Server) Stop(ctx context.Context) error {
 		}
 	}
 
-	if s.privateHTTP != nil {
-		if err := s.privateHTTP.Shutdown(ctx); err != nil {
-			return err
-		}
-	}
-
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
@@ -417,33 +358,29 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(
-	ch baseint.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	logger *slog.Logger,
-) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
+	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
+	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
 		TelemetryStore:      telemetryStore,
+		MetadataStore:       metadataStore,
 		Prometheus:          prometheus,
 		Context:             context.Background(),
 		Logger:              zap.L(),
 		Reader:              ch,
 		Querier:             querier,
-		SLogger:             logger,
+		SLogger:             providerSettings.Logger,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		PrepareTestRuleFunc: rules.TestNotification,
 		Alertmanager:        alertmanager,
-		SQLStore:            sqlstore,
 		OrgGetter:           orgGetter,
+		RuleStore:           ruleStore,
+		MaintenanceStore:    maintenanceStore,
+		SqlStore:            sqlstore,
+		QueryParser:         queryParser,
 	}
 
 	// create Manager

@@ -1,6 +1,7 @@
-import './MySettings.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
 import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
@@ -9,13 +10,14 @@ import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { MonitorCog, Moon, Sun } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
+import LicenseSection from './LicenseSection';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
+
+import './MySettings.styles.scss';
 
 function MySettings(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -80,7 +82,9 @@ function MySettings(): JSX.Element {
 	];
 
 	const [theme, setTheme] = useState(() => {
-		if (autoSwitch) return 'auto';
+		if (autoSwitch) {
+			return 'auto';
+		}
 		return isDarkMode ? 'dark' : 'light';
 	});
 
@@ -102,12 +106,28 @@ function MySettings(): JSX.Element {
 		}
 	};
 
+	useEffect(() => {
+		if (autoSwitch) {
+			setTheme('auto');
+			return;
+		}
+
+		if (isDarkMode) {
+			setTheme('dark');
+		} else {
+			setTheme('light');
+		}
+	}, [autoSwitch, isDarkMode]);
+
 	const handleSideNavPinnedChange = (checked: boolean): void => {
 		logEvent('Account Settings: Sidebar Pinned Changed', {
 			pinned: checked,
 		});
 		// Optimistically update the UI
 		setSideNavPinned(checked);
+
+		// Save to localStorage immediately for instant feedback
+		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, checked.toString());
 
 		// Update the context immediately
 		const save = {
@@ -130,6 +150,8 @@ function MySettings(): JSX.Element {
 						name: USER_PREFERENCES.SIDENAV_PINNED,
 						value: !checked,
 					} as UserPreference);
+					// Also revert localStorage
+					setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, (!checked).toString());
 					showErrorNotification(notifications, error as AxiosError);
 				},
 			},
@@ -211,6 +233,8 @@ function MySettings(): JSX.Element {
 					</div>
 				</div>
 			</div>
+
+			<LicenseSection />
 		</div>
 	);
 }

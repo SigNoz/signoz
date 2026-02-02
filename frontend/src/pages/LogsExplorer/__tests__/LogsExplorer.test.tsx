@@ -1,4 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter } from 'react-router-dom-v5-compat';
+// https://virtuoso.dev/mocking-in-tests/
+import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -11,9 +14,6 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-// https://virtuoso.dev/mocking-in-tests/
-import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -27,20 +27,6 @@ jest.mock('react-router-dom', () => ({
 		pathname: `${ROUTES.LOGS_EXPLORER}`,
 	}),
 }));
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
-});
 
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
@@ -82,7 +68,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		preferences: {
 			columns: [],
 			formatting: {
-				maxLines: 2,
+				maxLines: 1,
 				format: 'table',
 				fontSize: 'small',
 				version: 1,
@@ -105,7 +91,6 @@ const logsQueryServerRequest = (): void =>
 describe('Logs Explorer Tests', () => {
 	test('Logs Explorer default view test without data', async () => {
 		const {
-			getByText,
 			getByRole,
 			queryByText,
 			getByTestId,
@@ -123,13 +108,10 @@ describe('Logs Explorer Tests', () => {
 			</MemoryRouter>,
 		);
 
-		// check the presence of frequency chart content
-		expect(getByText(frequencyChartContent)).toBeInTheDocument();
-
-		// toggle the chart and check it gets removed from the DOM
+		// by default is hidden, toggle the chart and check it's visibility
 		const histogramToggle = getByRole('switch');
 		fireEvent.click(histogramToggle);
-		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
+		expect(queryByText(frequencyChartContent)).toBeInTheDocument();
 
 		// check the presence of search bar and query builder and absence of clickhouse
 		const searchView = getByTestId('search-view');
@@ -210,6 +192,7 @@ describe('Logs Explorer Tests', () => {
 									initialQueryBuilderFormValues,
 									initialQueryBuilderFormValues,
 								],
+								queryTraceOperator: [],
 							},
 						},
 						setSupersetQuery: jest.fn(),
@@ -219,6 +202,10 @@ describe('Logs Explorer Tests', () => {
 						panelType: PANEL_TYPES.TIME_SERIES,
 						isEnabledQuery: false,
 						lastUsedQuery: 0,
+						handleSetTraceOperatorData: noop,
+						removeAllQueryBuilderEntities: noop,
+						removeTraceOperator: noop,
+						addTraceOperator: noop,
 						setLastUsedQuery: noop,
 						handleSetQueryData: noop,
 						handleSetFormulaData: noop,
@@ -252,7 +239,7 @@ describe('Logs Explorer Tests', () => {
 		);
 
 		const queries = queryAllByText(
-			"Enter your filter query (e.g., status = 'error' AND service = 'frontend')",
+			"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 		);
 		expect(queries.length).toBe(1);
 	});
@@ -277,10 +264,10 @@ describe('Logs Explorer Tests', () => {
 		const histogramToggle = getByRole('switch');
 		expect(histogramToggle).toBeInTheDocument();
 		expect(histogramToggle).toBeChecked();
-		expect(queryByText(frequencyChartContent)).toBeInTheDocument();
 
 		// toggle the chart and check it gets removed from the DOM
 		await fireEvent.click(histogramToggle);
+		expect(histogramToggle).not.toBeChecked();
 		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
 	});
 });

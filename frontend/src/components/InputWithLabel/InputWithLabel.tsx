@@ -1,9 +1,9 @@
-import './InputWithLabel.styles.scss';
-
+import { useState } from 'react';
 import { Button, Input, Typography } from 'antd';
 import cx from 'classnames';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+
+import './InputWithLabel.styles.scss';
 
 function InputWithLabel({
 	label,
@@ -17,7 +17,7 @@ function InputWithLabel({
 	closeIcon,
 }: {
 	label: string;
-	initialValue?: string | number;
+	initialValue?: string | number | null;
 	placeholder: string;
 	type?: string;
 	onClose?: () => void;
@@ -49,6 +49,7 @@ function InputWithLabel({
 				value={inputValue}
 				onChange={handleChange}
 				name={label.toLowerCase()}
+				data-testid={`input-${label}`}
 			/>
 			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			{onClose && (

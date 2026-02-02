@@ -1,24 +1,28 @@
-import './PiePanelWrapper.styles.scss';
-
+import { useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
+import { getPieChartClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
+import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { isNaN } from 'lodash-es';
-import { useRef, useState } from 'react';
+import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
 import { lightenColor, tooltipStyles } from './utils';
+
+import './PiePanelWrapper.styles.scss';
 
 // reference: https://www.youtube.com/watch?v=bL3P9CqQkKw
 function PiePanelWrapper({
 	queryResponse,
 	widget,
+	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const [active, setActive] = useState<{
 		label: string;
@@ -48,6 +52,7 @@ function PiePanelWrapper({
 		label: string;
 		value: string;
 		color: string;
+		record: any;
 	}[] = [].concat(
 		...(panelData
 			.map((d) => {
@@ -55,6 +60,7 @@ function PiePanelWrapper({
 				return {
 					label,
 					value: d?.values?.[0]?.[1],
+					record: d,
 					color:
 						widget?.customLegendColors?.[label] ||
 						generateColor(
@@ -98,6 +104,7 @@ function PiePanelWrapper({
 	const formattedTotal = getYAxisFormattedValue(
 		totalValue.toString(),
 		widget?.yAxisUnit || 'none',
+		widget?.decimalPrecision,
 	);
 
 	// Extract numeric part and unit separately for styling
@@ -115,7 +122,9 @@ function PiePanelWrapper({
 		baseSize: number;
 		innerRadius: number;
 	}): number => {
-		if (!text) return baseSize;
+		if (!text) {
+			return baseSize;
+		}
 
 		const { length } = text;
 		// More aggressive scaling for very long numbers
@@ -142,6 +151,29 @@ function PiePanelWrapper({
 		return active.color === color ? color : lightenedColor;
 	};
 
+	const {
+		coordinates,
+		popoverPosition,
+		clickedData,
+		onClose,
+		onClick,
+		subMenu,
+		setSubMenu,
+	} = useCoordinates();
+
+	const { menuItemsConfig } = useGraphContextMenu({
+		widgetId: widget.id || '',
+		query: widget.query,
+		graphData: clickedData,
+		onClose,
+		coordinates,
+		subMenu,
+		setSubMenu,
+		contextLinks: widget.contextLinks,
+		panelType: widget.panelTypes,
+		queryRange: queryResponse,
+	});
+
 	return (
 		<div className="piechart-wrapper">
 			{!pieChartData.length && <div className="piechart-no-data">No data</div>}
@@ -165,7 +197,7 @@ function PiePanelWrapper({
 									height={size}
 								>
 									{
-										// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+										// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, sonarjs/cognitive-complexity
 										(pie) =>
 											pie.arcs.map((arc) => {
 												const { label } = arc.data;
@@ -190,6 +222,7 @@ function PiePanelWrapper({
 												const displayValue = getYAxisFormattedValue(
 													arc.data.value,
 													widget?.yAxisUnit || 'none',
+													widget?.decimalPrecision,
 												);
 
 												// Determine text anchor based on position in the circle
@@ -225,6 +258,17 @@ function PiePanelWrapper({
 														onMouseLeave={(): void => {
 															hideTooltip();
 															setActive(null);
+														}}
+														onClick={(e): void => {
+															if (enableDrillDown) {
+																const data = getPieChartClickData(arc);
+																if (data && data?.queryName) {
+																	onClick(
+																		{ x: e.clientX, y: e.clientY },
+																		{ ...data, label: data.label },
+																	);
+																}
+															}
 														}}
 													>
 														<path d={arcPath || ''} fill={getFillColor(arcFill)} />
@@ -284,6 +328,13 @@ function PiePanelWrapper({
 											})
 									}
 								</Pie>
+								<ContextMenu
+									coordinates={coordinates}
+									popoverPosition={popoverPosition}
+									title={menuItemsConfig.header as string}
+									items={menuItemsConfig.items}
+									onClose={onClose}
+								/>
 
 								{/* Add total value in the center */}
 								<text

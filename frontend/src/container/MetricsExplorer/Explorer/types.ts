@@ -1,7 +1,9 @@
-import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
+import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
+import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 
 export enum ExplorerTabs {
 	TIME_SERIES = 'time-series',
@@ -10,6 +12,17 @@ export enum ExplorerTabs {
 
 export interface TimeSeriesProps {
 	showOneChartPerQuery: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	areAllMetricUnitsSame: boolean;
+	isMetricUnitsLoading: boolean;
+	isMetricUnitsError: boolean;
+	metricUnits: (string | undefined)[];
+	metricNames: string[];
+	metrics: (MetricMetadata | undefined)[];
+	handleOpenMetricDetails: (metricName: string) => void;
+	yAxisUnit: string | undefined;
+	setYAxisUnit: (unit: string) => void;
+	showYAxisUnitSelector: boolean;
 }
 
 export interface RelatedMetricsProps {

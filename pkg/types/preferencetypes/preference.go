@@ -40,16 +40,16 @@ type UpdatablePreference struct {
 type StorableOrgPreference struct {
 	bun.BaseModel `bun:"table:org_preference"`
 	types.Identifiable
-	Name  Name        `bun:"preference_id,type:text,notnull"`
-	Value string      `bun:"preference_value,type:text,notnull"`
+	Name  Name        `bun:"name,type:text,notnull"`
+	Value string      `bun:"value,type:text,notnull"`
 	OrgID valuer.UUID `bun:"org_id,type:text,notnull"`
 }
 
 type StorableUserPreference struct {
 	bun.BaseModel `bun:"table:user_preference"`
 	types.Identifiable
-	Name   Name        `bun:"preference_id,type:text,notnull"`
-	Value  string      `bun:"preference_value,type:text,notnull"`
+	Name   Name        `bun:"name,type:text,notnull"`
+	Value  string      `bun:"value,type:text,notnull"`
 	UserID valuer.UUID `bun:"user_id,type:text,notnull"`
 }
 
@@ -140,7 +140,7 @@ func NewAvailablePreference() map[Name]Preference {
 			Name:          NameNavShortcuts,
 			Description:   "A list of shortcuts to be shown in the navigation.",
 			ValueType:     ValueTypeArray,
-			DefaultValue:  MustNewValue([]any{}, ValueTypeArray),
+			DefaultValue:  MustNewValue([]any{"services", "logs", "traces", "infrastructure"}, ValueTypeArray),
 			AllowedScopes: []Scope{ScopeUser},
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
@@ -153,6 +153,24 @@ func NewAvailablePreference() map[Name]Preference {
 			AllowedScopes: []Scope{ScopeUser},
 			AllowedValues: []string{},
 			Value:         MustNewValue("", ValueTypeString),
+		},
+		NameSpanDetailsPinnedAttributes: {
+			Name:          NameSpanDetailsPinnedAttributes,
+			Description:   "List of pinned attributes in span details drawer.",
+			ValueType:     ValueTypeArray,
+			DefaultValue:  MustNewValue([]any{}, ValueTypeArray),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue([]any{}, ValueTypeArray),
+		},
+		NameSpanPercentileResourceAttributes: {
+			Name:          NameSpanPercentileResourceAttributes,
+			Description:   "Additional resource attributes for span percentile filtering (beyond mandatory name and service.name).",
+			ValueType:     ValueTypeArray,
+			DefaultValue:  MustNewValue([]any{"deployment.environment"}, ValueTypeArray),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
 	}
 }
@@ -173,7 +191,7 @@ func NewPreference(name Name, scope Scope, available map[Name]Preference) (*Pref
 		ValueType:     preference.ValueType,
 		DefaultValue:  preference.DefaultValue,
 		AllowedScopes: preference.AllowedScopes,
-		Value:         preference.DefaultValue,
+		Value:         preference.Value,
 	}, nil
 }
 

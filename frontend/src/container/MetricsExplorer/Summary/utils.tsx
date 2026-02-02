@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import { ColumnType } from 'antd/es/table';
@@ -10,6 +11,7 @@ import {
 	SamplesData,
 	TimeseriesData,
 } from 'api/metricsExplorer/getMetricsTreeMap';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import {
 	BarChart,
 	BarChart2,
@@ -17,7 +19,6 @@ import {
 	Diff,
 	Gauge,
 } from 'lucide-react';
-import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';
@@ -199,8 +200,8 @@ export const formatDataForMetricsTable = (
 		),
 		metric_type: <MetricTypeRenderer type={metric.type} />,
 		unit: (
-			<ValidateRowValueWrapper value={metric.unit}>
-				{metric.unit}
+			<ValidateRowValueWrapper value={getUniversalNameFromMetricUnit(metric.unit)}>
+				{getUniversalNameFromMetricUnit(metric.unit)}
 			</ValidateRowValueWrapper>
 		),
 		[TreemapViewType.SAMPLES]: (

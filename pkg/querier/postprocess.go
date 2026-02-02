@@ -29,6 +29,8 @@ func getqueryInfo(spec any) queryInfo {
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+	case qbtypes.QueryBuilderTraceOperator:
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
 	case qbtypes.QueryBuilderFormula:
 		return queryInfo{Name: s.Name, Disabled: s.Disabled}
 	case qbtypes.PromQuery:
@@ -68,6 +70,11 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
 				result = postProcessMetricQuery(q, result, spec, req)
+				typedResults[spec.Name] = result
+			}
+		case qbtypes.QueryBuilderTraceOperator:
+			if result, ok := typedResults[spec.Name]; ok {
+				result = postProcessTraceOperator(q, result, spec, req)
 				typedResults[spec.Name] = result
 			}
 		}
@@ -110,6 +117,10 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
 		for name := range typedResults {
+			if req.SkipFillGaps(name) {
+				continue
+			}
+
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
 			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
 			// empty time series if it doesn't exist
@@ -206,6 +217,26 @@ func postProcessMetricQuery(
 	return result
 }
 
+// postProcessTraceOperator applies postprocessing to a trace operator query result
+func postProcessTraceOperator(
+	q *querier,
+	result *qbtypes.Result,
+	query qbtypes.QueryBuilderTraceOperator,
+	req *qbtypes.QueryRangeRequest,
+) *qbtypes.Result {
+
+	result = q.applySeriesLimit(result, query.Limit, query.Order)
+
+	// Apply functions if any
+	if len(query.Functions) > 0 {
+		step := query.StepInterval.Duration.Milliseconds()
+		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
+		result = q.applyFunctions(result, functions)
+	}
+
+	return result
+}
+
 // applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field
 func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
@@ -287,13 +318,14 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 		}
 
 		// Check if we're dealing with time series or scalar data
-		if req.RequestType == qbtypes.RequestTypeTimeSeries {
+		switch req.RequestType {
+		case qbtypes.RequestTypeTimeSeries:
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result
 			}
-		} else if req.RequestType == qbtypes.RequestTypeScalar {
+		case qbtypes.RequestTypeScalar:
 			result := q.processScalarFormula(ctx, results, formula, req)
 			if result != nil {
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
@@ -322,9 +354,8 @@ func (q *querier) processTimeSeriesFormula(
 		}
 	}
 
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	// Create formula evaluator
-	// TODO(srikanthccv): add conditional default zero
-	canDefaultZero := make(map[string]bool)
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
@@ -474,7 +505,7 @@ func (q *querier) processScalarFormula(
 		}
 	}
 
-	canDefaultZero := make(map[string]bool)
+	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
 		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
@@ -551,10 +582,13 @@ func (q *querier) filterDisabledQueries(results map[string]*qbtypes.Result, req 
 }
 
 // formatScalarResultsAsTable formats scalar results as a unified table for UI display
-func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result, _ *qbtypes.QueryRangeRequest) map[string]any {
+func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]any {
 	if len(results) == 0 {
 		return map[string]any{"table": &qbtypes.ScalarData{}}
 	}
+
+	// apply default sorting if no order specified
+	applyDefaultSort := !req.HasOrderSpecified()
 
 	// Convert all results to ScalarData first
 	scalarResults := make(map[string]*qbtypes.ScalarData)
@@ -570,13 +604,13 @@ func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result,
 	if len(scalarResults) == 1 {
 		for _, sd := range scalarResults {
 			if hasMultipleQueries(sd) {
-				return map[string]any{"table": deduplicateRows(sd)}
+				return map[string]any{"table": deduplicateRows(sd, applyDefaultSort)}
 			}
 		}
 	}
 
 	// Otherwise merge all results
-	merged := mergeScalarData(scalarResults)
+	merged := mergeScalarData(scalarResults, applyDefaultSort)
 	return map[string]any{"table": merged}
 }
 
@@ -657,7 +691,7 @@ func hasMultipleQueries(sd *qbtypes.ScalarData) bool {
 }
 
 // deduplicateRows removes duplicate rows based on group columns
-func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
+func deduplicateRows(sd *qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.ScalarData {
 	// Find group column indices
 	groupIndices := []int{}
 	for i, col := range sd.Columns {
@@ -666,8 +700,9 @@ func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
 		}
 	}
 
-	// Build unique rows map
+	// Build unique rows map, preserve order
 	uniqueRows := make(map[string][]any)
+	var keyOrder []string
 	for _, row := range sd.Data {
 		key := buildRowKey(row, groupIndices)
 		if existing, found := uniqueRows[key]; found {
@@ -681,17 +716,20 @@ func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
 			rowCopy := make([]any, len(row))
 			copy(rowCopy, row)
 			uniqueRows[key] = rowCopy
+			keyOrder = append(keyOrder, key)
 		}
 	}
 
-	// Convert back to slice
+	// Convert back to slice, preserve the original order
 	data := make([][]any, 0, len(uniqueRows))
-	for _, row := range uniqueRows {
-		data = append(data, row)
+	for _, key := range keyOrder {
+		data = append(data, uniqueRows[key])
 	}
 
-	// Sort by first aggregation column
-	sortByFirstAggregation(data, sd.Columns)
+	// sort by first aggregation (descending) if no order was specified
+	if applyDefaultSort {
+		sortByFirstAggregation(data, sd.Columns)
+	}
 
 	return &qbtypes.ScalarData{
 		Columns: sd.Columns,
@@ -700,7 +738,7 @@ func deduplicateRows(sd *qbtypes.ScalarData) *qbtypes.ScalarData {
 }
 
 // mergeScalarData merges multiple scalar data results
-func mergeScalarData(results map[string]*qbtypes.ScalarData) *qbtypes.ScalarData {
+func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.ScalarData {
 	// Collect unique group columns
 	groupCols := []string{}
 	groupColMap := make(map[string]*qbtypes.ColumnDescriptor)
@@ -740,10 +778,12 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData) *qbtypes.ScalarData
 		}
 	}
 
-	// Merge rows
+	// Merge rows, preserve order
 	rowMap := make(map[string][]any)
+	var keyOrder []string
 
-	for queryName, sd := range results {
+	for _, queryName := range queryNames {
+		sd := results[queryName]
 		// Create index mappings
 		groupMap := make(map[string]int)
 		for i, col := range sd.Columns {
@@ -772,6 +812,7 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData) *qbtypes.ScalarData
 					newRow[i] = "n/a"
 				}
 				rowMap[key] = newRow
+				keyOrder = append(keyOrder, key)
 			}
 
 			// Set aggregation values for this query
@@ -795,14 +836,16 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData) *qbtypes.ScalarData
 		}
 	}
 
-	// Convert to slice
+	// Convert to slice, preserving insertion order
 	data := make([][]any, 0, len(rowMap))
-	for _, row := range rowMap {
-		data = append(data, row)
+	for _, key := range keyOrder {
+		data = append(data, rowMap[key])
 	}
 
-	// Sort by first aggregation column
-	sortByFirstAggregation(data, columns)
+	// sort by first aggregation (descending) if no order was specified
+	if applyDefaultSort {
+		sortByFirstAggregation(data, columns)
+	}
 
 	return &qbtypes.ScalarData{
 		Columns: columns,
@@ -858,7 +901,7 @@ func sortByFirstAggregation(data [][]any, columns []*qbtypes.ColumnDescriptor) {
 
 // compareValues compares two values for sorting (handles n/a and numeric types)
 func compareValues(a, b any) int {
-	// Handle n/a values
+	// n/a values gets pushed to the end
 	if a == "n/a" && b == "n/a" {
 		return 0
 	}

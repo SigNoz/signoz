@@ -40,11 +40,13 @@ type ClickhouseConfig struct {
 }
 
 type QuerySettings struct {
-	MaxExecutionTime                    int `mapstructure:"max_execution_time"`
-	MaxExecutionTimeLeaf                int `mapstructure:"max_execution_time_leaf"`
-	TimeoutBeforeCheckingExecutionSpeed int `mapstructure:"timeout_before_checking_execution_speed"`
-	MaxBytesToRead                      int `mapstructure:"max_bytes_to_read"`
-	MaxResultRows                       int `mapstructure:"max_result_rows"`
+	MaxExecutionTime                    int    `mapstructure:"max_execution_time"`
+	MaxExecutionTimeLeaf                int    `mapstructure:"max_execution_time_leaf"`
+	TimeoutBeforeCheckingExecutionSpeed int    `mapstructure:"timeout_before_checking_execution_speed"`
+	MaxBytesToRead                      int    `mapstructure:"max_bytes_to_read"`
+	MaxResultRows                       int    `mapstructure:"max_result_rows"`
+	IgnoreDataSkippingIndices           string `mapstructure:"ignore_data_skipping_indices"`
+	SecondaryIndicesEnableBulkFiltering bool   `mapstructure:"secondary_indices_enable_bulk_filtering"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

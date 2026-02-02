@@ -12,29 +12,29 @@ func TestGetTraceTimeRangeMulti(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
-		traceIDs  []string
-		expectErr bool
+		name     string
+		traceIDs []string
+		expectOK bool
 	}{
 		{
-			name:      "single trace ID",
-			traceIDs:  []string{"trace1"},
-			expectErr: false,
+			name:     "single trace ID",
+			traceIDs: []string{"trace1"},
+			expectOK: true,
 		},
 		{
-			name:      "multiple trace IDs",
-			traceIDs:  []string{"trace1", "trace2", "trace3"},
-			expectErr: false,
+			name:     "multiple trace IDs",
+			traceIDs: []string{"trace1", "trace2", "trace3"},
+			expectOK: true,
 		},
 		{
-			name:      "empty trace IDs",
-			traceIDs:  []string{},
-			expectErr: true,
+			name:     "empty trace IDs",
+			traceIDs: []string{},
+			expectOK: false,
 		},
 		{
-			name:      "trace IDs with quotes",
-			traceIDs:  []string{"'trace1'", `"trace2"`, "trace3"},
-			expectErr: false,
+			name:     "trace IDs with quotes",
+			traceIDs: []string{"'trace1'", `"trace2"`, "trace3"},
+			expectOK: true,
 		},
 	}
 
@@ -42,9 +42,9 @@ func TestGetTraceTimeRangeMulti(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			finder := &TraceTimeRangeFinder{telemetryStore: nil}
 
-			if tt.expectErr {
-				_, _, err := finder.GetTraceTimeRangeMulti(ctx, tt.traceIDs)
-				assert.Error(t, err)
+			if !tt.expectOK {
+				_, _, ok := finder.GetTraceTimeRangeMulti(ctx, tt.traceIDs)
+				assert.False(t, ok)
 			}
 		})
 	}

@@ -24,6 +24,8 @@ func TestDurationConvert(t *testing.T) {
 	assert.Equal(t, Value{F: 60, U: "s"}, timeConverter.Convert(Value{F: 1, U: "m"}, "s"))
 	// 60 m = 1 h
 	assert.Equal(t, Value{F: 1, U: "h"}, timeConverter.Convert(Value{F: 60, U: "m"}, "h"))
+	// 60 min = 1 h
+	assert.Equal(t, Value{F: 1, U: "h"}, timeConverter.Convert(Value{F: 60, U: "min"}, "h"))
 	// 168 h = 1 w
 	assert.Equal(t, Value{F: 1, U: "w"}, timeConverter.Convert(Value{F: 168, U: "h"}, "w"))
 	// 1 h = 60 m

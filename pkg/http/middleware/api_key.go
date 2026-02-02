@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -9,7 +10,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -22,10 +25,18 @@ type APIKey struct {
 	headers []string
 	logger  *slog.Logger
 	sharder sharder.Sharder
+	sfGroup *singleflight.Group
 }
 
 func NewAPIKey(store sqlstore.SQLStore, headers []string, logger *slog.Logger, sharder sharder.Sharder) *APIKey {
-	return &APIKey{store: store, uuid: authtypes.NewUUID(), headers: headers, logger: logger, sharder: sharder}
+	return &APIKey{
+		store:   store,
+		uuid:    authtypes.NewUUID(),
+		headers: headers,
+		logger:  logger,
+		sharder: sharder,
+		sfGroup: &singleflight.Group{},
+	}
 }
 
 func (a *APIKey) Wrap(next http.Handler) http.Handler {
@@ -79,8 +90,8 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 		jwt := authtypes.Claims{
 			UserID: user.ID.String(),
 			Role:   apiKey.Role,
-			Email:  user.Email,
-			OrgID:  user.OrgID,
+			Email:  user.Email.String(),
+			OrgID:  user.OrgID.String(),
 		}
 
 		ctx = authtypes.NewContextWithClaims(ctx, jwt)
@@ -97,15 +108,35 @@ func (a *APIKey) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		r = r.WithContext(ctx)
+		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeAPIKey)
+
+		comment := ctxtypes.CommentFromContext(ctx)
+		comment.Set("auth_type", ctxtypes.AuthTypeAPIKey.StringValue())
+		comment.Set("user_id", claims.UserID)
+		comment.Set("org_id", claims.OrgID)
+
+		r = r.WithContext(ctxtypes.NewContextWithComment(ctx, comment))
 
 		next.ServeHTTP(w, r)
 
-		apiKey.LastUsed = time.Now()
-		_, err = a.store.BunDB().NewUpdate().Model(&apiKey).Column("last_used").Where("token = ?", apiKeyToken).Where("revoked = false").Exec(r.Context())
-		if err != nil {
-			a.logger.ErrorContext(r.Context(), "failed to update last used of api key", "error", err)
-		}
+		lastUsedCtx := context.WithoutCancel(r.Context())
+		_, _, _ = a.sfGroup.Do(apiKey.ID.StringValue(), func() (any, error) {
+			apiKey.LastUsed = time.Now()
+			_, err = a.
+				store.
+				BunDB().
+				NewUpdate().
+				Model(&apiKey).
+				Column("last_used").
+				Where("token = ?", apiKeyToken).
+				Where("revoked = false").
+				Exec(lastUsedCtx)
+			if err != nil {
+				a.logger.ErrorContext(lastUsedCtx, "failed to update last used of api key", "error", err)
+			}
+
+			return true, nil
+		})
 
 	})
 

@@ -78,4 +78,5 @@ Need assistance? Join our Slack community:
 
 - Set up your [development environment](docs/contributing/development.md)
 - Deploy and observe [SigNoz in action with OpenTelemetry Demo Application](docs/otel-demo-docs.md)
-- Explore the [SigNoz Community Advocate Program](ADVOCATE.md), which recognises contributors who support the community, share their expertise, and help shape SigNoz's future. 
+- Explore the [SigNoz Community Advocate Program](ADVOCATE.md), which recognises contributors who support the community, share their expertise, and help shape SigNoz's future.
+- Write [integration tests](docs/contributing/go/integration.md)

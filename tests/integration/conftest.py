@@ -14,6 +14,12 @@ pytest_plugins = [
     "fixtures.signoz",
     "fixtures.logs",
     "fixtures.traces",
+    "fixtures.metrics",
+    "fixtures.driver",
+    "fixtures.idp",
+    "fixtures.idputils",
+    "fixtures.notification_channel",
+    "fixtures.alerts",
 ]
 
 
@@ -31,6 +37,12 @@ def pytest_addoption(parser: pytest.Parser):
         help="Teardown environment. Run pytest --basetemp=./tmp/ -vv --teardown src/bootstrap/setup::test_teardown to teardown your local dev environment.",
     )
     parser.addoption(
+        "--with-web",
+        action="store_true",
+        default=False,
+        help="Build and run with web. Run pytest --basetemp=./tmp/ -vv --with-web src/bootstrap/setup::test_setup to setup your local dev environment with web.",
+    )
+    parser.addoption(
         "--sqlstore-provider",
         action="store",
         default="postgres",
@@ -45,7 +57,7 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--clickhouse-version",
         action="store",
-        default="24.1.2-alpine",
+        default="25.5.6",
         help="clickhouse version",
     )
     parser.addoption(
@@ -57,6 +69,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.128.2",
+        default="v0.129.7",
         help="schema migrator version",
     )

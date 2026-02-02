@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './LogDetails.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -23,6 +24,7 @@ import {
 } from 'container/LogDetailedView/utils';
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -39,9 +41,6 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useCopyToClipboard, useLocation } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -50,15 +49,17 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 
+import './LogDetails.styles.scss';
+
 function LogDetailInner({
 	log,
 	onClose,
 	onAddToQuery,
-	onGroupByAttribute,
 	onClickActionItem,
 	selectedTab,
 	isListViewPanel = false,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -74,7 +75,9 @@ function LogDetailInner({
 	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
@@ -93,6 +96,8 @@ function LogDetailInner({
 	);
 
 	const { notifications } = useNotifications();
+
+	const { onLogCopy } = useCopyLogLink(log?.id);
 
 	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
@@ -145,6 +150,36 @@ function LogDetailInner({
 		};
 		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
 	};
+
+	const handleQueryExpressionChange = useCallback(
+		(value: string, queryIndex: number) => {
+			// update the query at the given index
+			setContextQuery((prev) => {
+				if (!prev) {
+					return prev;
+				}
+
+				return {
+					...prev,
+					builder: {
+						...prev.builder,
+						queryData: prev.builder.queryData.map((query, idx) =>
+							idx === queryIndex
+								? {
+										...query,
+										filter: {
+											...query.filter,
+											expression: value,
+										},
+								  }
+								: query,
+						),
+					},
+				};
+			});
+		},
+		[],
+	);
 
 	const handleRunQuery = (expression: string): void => {
 		let updatedContextQuery = cloneDeep(contextQuery);
@@ -288,28 +323,40 @@ function LogDetailInner({
 					</Radio.Button>
 				</Radio.Group>
 
-				{selectedView === VIEW_TYPES.JSON && (
-					<div className="json-action-btn">
+				<div className="log-detail-drawer__actions">
+					{selectedView === VIEW_TYPES.CONTEXT && (
+						<Tooltip
+							title="Show Filters"
+							placement="topLeft"
+							aria-label="Show Filters"
+						>
+							<Button
+								className="action-btn"
+								icon={<Filter size={16} />}
+								onClick={handleFilterVisible}
+							/>
+						</Tooltip>
+					)}
+
+					<Tooltip
+						title={selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'}
+						placement="topLeft"
+						aria-label={
+							selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
+						}
+					>
 						<Button
 							className="action-btn"
 							icon={<Copy size={16} />}
-							onClick={handleJSONCopy}
+							onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
 						/>
-					</div>
-				)}
-
-				{selectedView === VIEW_TYPES.CONTEXT && (
-					<Button
-						className="action-btn"
-						icon={<Filter size={16} />}
-						onClick={handleFilterVisible}
-					/>
-				)}
+					</Tooltip>
+				</div>
 			</div>
 			{isFilterVisible && contextQuery?.builder.queryData[0] && (
 				<div className="log-detail-drawer-query-container">
 					<QuerySearch
-						onChange={(): void => {}}
+						onChange={(value): void => handleQueryExpressionChange(value, 0)}
 						dataSource={DataSource.LOGS}
 						queryData={contextQuery?.builder.queryData[0]}
 						onRun={handleRunQuery}
@@ -322,10 +369,10 @@ function LogDetailInner({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onClickActionItem}
-					onGroupByAttribute={onGroupByAttribute}
 					isListViewPanel={isListViewPanel}
 					selectedOptions={options}
 					listViewPanelSelectedFields={listViewPanelSelectedFields}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
@@ -344,7 +391,8 @@ function LogDetailInner({
 					podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
 					nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
 					hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
-					logLineTimestamp={log.timestamp.toString()}
+					timestamp={log.timestamp.toString()}
+					dataSource={DataSource.LOGS}
 				/>
 			)}
 		</Drawer>

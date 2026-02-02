@@ -1,14 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
+import React from 'react';
+import { DropResult } from 'react-beautiful-dnd';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import React from 'react';
-import { DropResult } from 'react-beautiful-dnd';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -449,5 +449,59 @@ describe('ExplorerColumnsRenderer', () => {
 				fail('DragDropContext or onDragEndMock not found');
 			}
 		});
+	});
+
+	it('does not show isRoot or isEntryPoint in add column dropdown (traces, dashboard table panel)', async () => {
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							dataSource: DataSource.TRACES,
+							aggregateOperator: 'count',
+						},
+					],
+				},
+			},
+		});
+		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					data: {
+						keys: {
+							attributeKeys: [
+								{ name: 'isRoot', dataType: 'bool', type: '' },
+								{ name: 'isEntryPoint', dataType: 'bool', type: '' },
+								{ name: 'duration', dataType: 'number', type: '' },
+								{ name: 'serviceName', dataType: 'string', type: '' },
+							],
+						},
+					},
+				},
+			},
+			isLoading: false,
+			isError: false,
+		});
+
+		render(
+			<Wrapper>
+				<ExplorerColumnsRenderer
+					selectedLogFields={[]}
+					setSelectedLogFields={mockSetSelectedLogFields}
+					selectedTracesFields={[]}
+					setSelectedTracesFields={mockSetSelectedTracesFields}
+				/>
+			</Wrapper>,
+		);
+
+		await userEvent.click(screen.getByTestId('add-columns-button'));
+
+		// Visible columns should appear
+		expect(screen.getByText('duration')).toBeInTheDocument();
+		expect(screen.getByText('serviceName')).toBeInTheDocument();
+
+		// Hidden columns should NOT appear
+		expect(screen.queryByText('isRoot')).not.toBeInTheDocument();
+		expect(screen.queryByText('isEntryPoint')).not.toBeInTheDocument();
 	});
 });

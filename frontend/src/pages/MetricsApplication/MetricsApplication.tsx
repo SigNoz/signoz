@@ -1,5 +1,4 @@
-import './MetricsApplication.styles.scss';
-
+import { useParams } from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd/lib';
 import { QueryParams } from 'constants/query';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
@@ -8,18 +7,17 @@ import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useParams } from 'react-router-dom';
 
 import ApDexApplication from './ApDex/ApDexApplication';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
 import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
+import './MetricsApplication.styles.scss';
+
 function MetricsApplication(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<{
 		servicename: string;
 	}>();
-
-	const servicename = decodeURIComponent(encodedServiceName);
 
 	const activeKey = useMetricsApplicationTabKey();
 
@@ -46,7 +44,7 @@ function MetricsApplication(): JSX.Element {
 
 	const onTabChange = (tab: string): void => {
 		urlQuery.set(QueryParams.tab, tab);
-		safeNavigate(`/services/${servicename}?${urlQuery.toString()}`);
+		safeNavigate(`/services/${encodedServiceName}?${urlQuery.toString()}`);
 	};
 
 	return (

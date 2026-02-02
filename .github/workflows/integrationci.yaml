@@ -9,22 +9,52 @@ on:
       - labeled
 
 jobs:
+  fmtlint:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
+        run: |
+          cd tests/integration && uv sync
+      - name: fmt
+        run: |
+          make py-fmt
+      - name: lint
+        run: |
+          make py-lint
   test:
     strategy:
       fail-fast: false
       matrix:
         src:
           - bootstrap
-          - auth
+          - passwordauthn
+          - callbackauthn
+          - cloudintegrations
+          - dashboard
           - querier
+          - ttl
+          - preference
+          - logspipelines
+          - alerts
         sqlstore-provider:
           - postgres
           - sqlite
         clickhouse-version:
-          - 24.1.2-alpine
           - 25.5.6
+          - 25.10.1
         schema-migrator-version:
-          - v0.128.1
+          - v0.129.7
         postgres-version:
           - 15
     if: |
@@ -38,15 +68,32 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.13
-      - name: poetry
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: install
         run: |
-          python -m pip install poetry==2.1.2
-          python -m poetry config virtualenvs.in-project true
-          cd tests/integration && poetry install --no-root
+          cd tests/integration && uv sync
+      - name: webdriver
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -qqy
+          sudo apt-get -qqy install google-chrome-stable
+          CHROME_VERSION=$(google-chrome-stable --version)
+          CHROME_FULL_VERSION=${CHROME_VERSION%%.*}
+          CHROME_MAJOR_VERSION=${CHROME_FULL_VERSION//[!0-9]}
+          sudo rm /etc/apt/sources.list.d/google-chrome.list
+          export CHROMEDRIVER_VERSION=`curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROME_MAJOR_VERSION%%.*}`
+          curl -L -O "https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip
+          chmod +x chromedriver-linux64/chromedriver
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+          chromedriver -version
+          google-chrome-stable --version
       - name: run
         run: |
           cd tests/integration && \
-            poetry run pytest \
+            uv run pytest \
             --basetemp=./tmp/ \
             src/${{matrix.src}} \
             --sqlstore-provider ${{matrix.sqlstore-provider}} \

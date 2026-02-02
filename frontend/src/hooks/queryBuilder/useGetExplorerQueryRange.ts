@@ -1,12 +1,12 @@
+import { MutableRefObject, useMemo } from 'react';
+import { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { MutableRefObject, useMemo } from 'react';
-import { UseQueryOptions, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
+import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -24,7 +24,10 @@ export const useGetExplorerQueryRange = (
 	keyRef?: MutableRefObject<any>,
 	headers?: Record<string, string>,
 	selectedTimeInterval?: GetQueryResultsProps['globalSelectedInterval'],
-): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
+): UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	Error
+> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
@@ -37,7 +40,9 @@ export const useGetExplorerQueryRange = (
 			: REACT_QUERY_KEY.GET_QUERY_RANGE;
 
 	const isEnabled = useMemo(() => {
-		if (!options) return isEnabledQuery;
+		if (!options) {
+			return isEnabledQuery;
+		}
 		if (typeof options.enabled === 'boolean') {
 			return options.enabled && (!isDependentOnQB || isEnabledQuery);
 		}
@@ -63,13 +68,7 @@ export const useGetExplorerQueryRange = (
 		ENTITY_VERSION_V5,
 		{
 			...options,
-			queryKey: [
-				key,
-				selectedTimeInterval ?? globalSelectedInterval,
-				requestData,
-				minTime,
-				maxTime,
-			],
+			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
 			enabled: isEnabled,
 		},
 		headers,

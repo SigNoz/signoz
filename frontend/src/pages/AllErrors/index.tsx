@@ -1,10 +1,11 @@
-import './AllErrors.styles.scss';
-
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
@@ -16,10 +17,10 @@ import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { routes } from './config';
+
+import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
@@ -74,10 +75,24 @@ function AllErrors(): JSX.Element {
 									</Tooltip>
 								) : undefined
 							}
-							rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+							rightActions={
+								<div className="right-toolbar-actions-container">
+									<RightToolbarActions onStageRunQuery={handleRunQuery} />
+									<HeaderRightSection
+										enableAnnouncements={false}
+										enableShare
+										enableFeedback
+									/>
+								</div>
+							}
 						/>
 						<ResourceAttributesFilterV2 />
-						<RouteTab routes={routes} activeKey={pathname} history={history} />
+						<RouteTab
+							routes={routes}
+							activeKey={pathname}
+							history={history}
+							showRightSection={false}
+						/>
 					</>
 				</TypicalOverlayScrollbar>
 			</section>

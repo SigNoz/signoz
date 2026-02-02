@@ -1,8 +1,8 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -12,6 +12,7 @@ export interface NewWidgetProps {
 	selectedGraph: PANEL_TYPES;
 	yAxisUnit: Widgets['yAxisUnit'];
 	fillSpans: Widgets['fillSpans'];
+	enableDrillDown?: boolean;
 }
 
 export interface WidgetGraphProps {
@@ -32,15 +33,19 @@ export interface WidgetGraphProps {
 			UseQueryResult<SuccessResponse<MetricRangePayloadProps, unknown>, Error>
 		>
 	>;
+	enableDrillDown?: boolean;
 }
 
 export type WidgetGraphContainerProps = {
 	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
+		SuccessResponse<MetricRangePayloadProps, unknown> & {
+			warning?: Warning;
+		},
 		Error
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
 	isLoadingPanelData: boolean;
+	enableDrillDown?: boolean;
 };

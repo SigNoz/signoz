@@ -4,8 +4,8 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable react/no-this-in-sfc */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QueryAggregation.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import {
 	autocompletion,
 	closeCompletion,
@@ -27,19 +27,19 @@ import CodeMirror, {
 	ViewPlugin,
 	ViewUpdate,
 } from '@uiw/react-codemirror';
-import { Button, Popover } from 'antd';
+import { Button, Popover, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
+import { Info, TriangleAlert } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+
+import './QueryAggregation.styles.scss';
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
@@ -84,25 +84,33 @@ function getFunctionContextAtCursor(
 	let funcName: string | null = null;
 	let parenStack = 0;
 	for (let i = cursorPos - 1; i >= 0; i--) {
-		if (text[i] === ')') parenStack++;
-		else if (text[i] === '(') {
+		if (text[i] === ')') {
+			parenStack++;
+		} else if (text[i] === '(') {
 			if (parenStack === 0) {
 				openParenIndex = i;
 				const before = text.slice(0, i);
 				const match = before.match(/(\w+)\s*$/);
-				if (match) funcName = match[1].toLowerCase();
+				if (match) {
+					funcName = match[1].toLowerCase();
+				}
 				break;
 			}
 			parenStack--;
 		}
 	}
-	if (openParenIndex === -1 || !funcName) return null;
+	if (openParenIndex === -1 || !funcName) {
+		return null;
+	}
 	// Scan forwards to find the matching closing parenthesis
 	let closeParenIndex = -1;
 	let depth = 1;
 	for (let j = openParenIndex + 1; j < text.length; j++) {
-		if (text[j] === '(') depth++;
-		else if (text[j] === ')') depth--;
+		if (text[j] === '(') {
+			depth++;
+		} else if (text[j] === ')') {
+			depth--;
+		}
 		if (depth === 0) {
 			closeParenIndex = j;
 			break;
@@ -154,15 +162,23 @@ function QueryAggregationSelect({
 	const isDarkMode = useIsDarkMode();
 	const { setAggregationOptions } = useQueryBuilderV2Context();
 
+	const formatAggregations = useCallback(
+		(aggregations: any[] | undefined): string =>
+			aggregations
+				?.map(({ expression, alias }: any) =>
+					alias ? `${expression} as ${alias}` : expression,
+				)
+				.join(' ') || '',
+		[],
+	);
+
 	const [input, setInput] = useState(
-		queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
+		formatAggregations(queryData?.aggregations),
 	);
 
 	useEffect(() => {
-		setInput(
-			queryData?.aggregations?.map((i: any) => i.expression).join(' ') || '',
-		);
-	}, [queryData?.aggregations]);
+		setInput(formatAggregations(queryData?.aggregations));
+	}, [queryData?.aggregations, formatAggregations]);
 
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<
@@ -263,16 +279,20 @@ function QueryAggregationSelect({
 
 		setValidationError(validateAggregations());
 		setFunctionArgPairs(pairs);
-		setAggregationOptions(pairs);
+		setAggregationOptions(queryData.queryName, pairs);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [input, maxAggregations, validFunctions]);
 
 	// Transaction filter to limit aggregations
 	const transactionFilterExtension = useMemo(() => {
-		if (maxAggregations === undefined) return [];
+		if (maxAggregations === undefined) {
+			return [];
+		}
 
 		return EditorState.transactionFilter.of((tr: Transaction) => {
-			if (!tr.docChanged) return tr;
+			if (!tr.docChanged) {
+				return tr;
+			}
 
 			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
 			const oldMatches = [
@@ -417,7 +437,9 @@ function QueryAggregationSelect({
 		() =>
 			Object.keys(aggregateAttributeData?.data.data.keys || {}).flatMap((key) => {
 				const attributeKeys = aggregateAttributeData?.data.data.keys[key];
-				if (!attributeKeys) return [];
+				if (!attributeKeys) {
+					return [];
+				}
 
 				return attributeKeys.map((attributeKey) => ({
 					label: attributeKey.name,
@@ -474,7 +496,9 @@ function QueryAggregationSelect({
 									const start = match.index ?? 0;
 									return cursorPos >= start && cursorPos <= start + match[0].length;
 								});
-								if (!isEditing) return null;
+								if (!isEditing) {
+									return null;
+								}
 							}
 						}
 
@@ -515,7 +539,9 @@ function QueryAggregationSelect({
 								const argsString = doc.slice(lastOpenParen + 1, cursorPos);
 								argsString.split(',').forEach((arg) => {
 									const trimmed = arg.trim();
-									if (trimmed) usedArgs.add(trimmed);
+									if (trimmed) {
+										usedArgs.add(trimmed);
+									}
 								});
 							}
 
@@ -639,6 +665,53 @@ function QueryAggregationSelect({
 					}
 				}}
 			/>
+
+			<Tooltip
+				title={
+					<div>
+						Aggregation functions:
+						<br />
+						<span style={{ fontSize: '12px', lineHeight: '1.4' }}>
+							• <strong>count</strong> - number of occurrences
+							<br />• <strong>sum/avg</strong> - sum/average of values
+							<br />• <strong>min/max</strong> - minimum/maximum value
+							<br />• <strong>p50/p90/p99</strong> - percentiles
+							<br />• <strong>count_distinct</strong> - unique values
+							<br />• <strong>rate</strong> - per-interval rate
+						</span>
+						<br />
+						<a
+							href="https://signoz.io/docs/userguide/query-builder-v5/#core-aggregation-functions"
+							target="_blank"
+							rel="noopener noreferrer"
+							style={{ color: '#1890ff', textDecoration: 'underline' }}
+						>
+							View documentation
+						</a>
+					</div>
+				}
+				placement="left"
+			>
+				<div
+					style={{
+						position: 'absolute',
+						top: '8px', // Match the error icon's top position
+						right: validationError ? '40px' : '8px', // Move left when error icon is shown
+						cursor: 'help',
+						zIndex: 10,
+						transition: 'right 0.2s ease',
+					}}
+				>
+					<Info
+						size={14}
+						style={{
+							opacity: 0.9,
+							color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+						}}
+					/>
+				</div>
+			</Tooltip>
+
 			{validationError && (
 				<div className="query-aggregation-error-container">
 					<Popover

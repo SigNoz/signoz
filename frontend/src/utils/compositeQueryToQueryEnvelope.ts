@@ -2,10 +2,15 @@ import {
 	convertBuilderQueriesToV5,
 	convertClickHouseQueriesToV5,
 	convertPromQueriesToV5,
+	convertTraceOperatorToV5,
 	mapPanelTypeToRequestType,
 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { TRACE_OPERATOR_QUERY_NAME } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import { BuilderQueryDataResourse } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	BuilderQueryDataResourse,
+	IBuilderTraceOperator,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { OrderBy, QueryEnvelope } from 'types/api/v5/queryRange';
 
 function convertFormulasToV5(
@@ -46,9 +51,12 @@ export function compositeQueryToQueryEnvelope(
 
 	const regularQueries: BuilderQueryDataResourse = {};
 	const formulaQueries: BuilderQueryDataResourse = {};
+	const traceOperatorQueries: BuilderQueryDataResourse = {};
 
 	Object.entries(builderQueries || {}).forEach(([queryName, queryData]) => {
-		if ('dataSource' in queryData) {
+		if (queryData.queryName === TRACE_OPERATOR_QUERY_NAME) {
+			traceOperatorQueries[queryName] = queryData;
+		} else if ('dataSource' in queryData) {
 			regularQueries[queryName] = queryData;
 		} else {
 			formulaQueries[queryName] = queryData;
@@ -64,6 +72,12 @@ export function compositeQueryToQueryEnvelope(
 	);
 	const formulaQueriesV5 = convertFormulasToV5(formulaQueries);
 
+	const traceOperatorQueriesV5 = convertTraceOperatorToV5(
+		traceOperatorQueries as Record<string, IBuilderTraceOperator>,
+		requestType,
+		panelType,
+	);
+
 	const promQueriesV5 = convertPromQueriesToV5(promQueries || {});
 	const chQueriesV5 = convertClickHouseQueriesToV5(chQueries || {});
 
@@ -72,7 +86,11 @@ export function compositeQueryToQueryEnvelope(
 
 	switch (queryType) {
 		case 'builder':
-			queries = [...builderQueriesV5, ...formulaQueriesV5];
+			queries = [
+				...builderQueriesV5,
+				...formulaQueriesV5,
+				...traceOperatorQueriesV5,
+			];
 			break;
 		case 'promql':
 			queries = [...promQueriesV5];
@@ -85,6 +103,7 @@ export function compositeQueryToQueryEnvelope(
 			queries = [
 				...builderQueriesV5,
 				...formulaQueriesV5,
+				...traceOperatorQueriesV5,
 				...promQueriesV5,
 				...chQueriesV5,
 			];

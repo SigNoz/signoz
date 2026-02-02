@@ -1,10 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
+import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import { Provider } from 'react-redux';
 import store from 'store';
 import { AlignedData } from 'uplot';
 
@@ -14,12 +14,6 @@ import {
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
-
-jest.mock('uplot', () =>
-	jest.fn().mockImplementation(() => ({
-		destroy: jest.fn(),
-	})),
-);
 
 const mockResizeObserver = jest.fn();
 mockResizeObserver.mockImplementation(() => ({

@@ -46,7 +46,7 @@ func TestModule_Update_DuplicateNameValidation(t *testing.T) {
 	userID := valuer.GenerateUUID()
 	orgID := valuer.GenerateUUID()
 	funnelName := "Duplicate Name"
-	
+
 	funnel := &traceFunnels.StorableFunnel{
 		Name:  funnelName,
 		OrgID: orgID,

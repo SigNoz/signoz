@@ -2,11 +2,15 @@ package signoz
 
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/noopanalytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
@@ -14,12 +18,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
+	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/global/signozglobal"
+	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
+	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
+	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -37,6 +52,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/opaquetokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -65,9 +86,8 @@ func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web,
 }
 
 func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
-	hook := sqlstorehook.NewLoggingFactory()
 	return factory.MustNewNamedMap(
-		sqlitesqlstore.NewFactory(hook),
+		sqlitesqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory()),
 	)
 }
 
@@ -77,7 +97,12 @@ func NewSQLSchemaProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[
 	)
 }
 
-func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+func NewSQLMigrationProviderFactories(
+	sqlstore sqlstore.SQLStore,
+	sqlschema sqlschema.SQLSchema,
+	telemetryStore telemetrystore.TelemetryStore,
+	providerSettings factory.ProviderSettings,
+) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
 	return factory.MustNewNamedMap(
 		sqlmigration.NewAddDataMigrationsFactory(),
 		sqlmigration.NewAddOrganizationFactory(),
@@ -124,12 +149,29 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore, sqlschema sqls
 		sqlmigration.NewUpdateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
+		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
+		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthTokenFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthzFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddPublicDashboardsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateAuthzFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateUserPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateOrgPreferenceFactory(sqlstore, sqlschema),
+		sqlmigration.NewRenameOrgDomainsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddResetPasswordTokenExpiryFactory(sqlstore, sqlschema),
 	)
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
-		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewSettingsFactory(), telemetrystorehook.NewLoggingFactory()),
+		clickhousetelemetrystore.NewFactory(
+			telemetrystorehook.NewSettingsFactory(),
+			telemetrystorehook.NewLoggingFactory(),
+			telemetrystorehook.NewInstrumentationFactory(),
+		),
 	)
 }
 
@@ -139,16 +181,21 @@ func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteStore) factory.NamedMap[factory.ProviderFactory[nfmanager.NotificationManager, nfmanager.Config]] {
 	return factory.MustNewNamedMap(
-		legacyalertmanager.NewFactory(sqlstore, orgGetter),
-		signozalertmanager.NewFactory(sqlstore, orgGetter),
+		rulebasednotification.NewFactory(routeStore),
 	)
 }
 
-func NewRulerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, nfManager nfmanager.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		signozruler.NewFactory(sqlstore),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager),
+	)
+}
+
+func NewRulerProviderFactories(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+	return factory.MustNewNamedMap(
+		signozruler.NewFactory(sqlstore, queryParser),
 	)
 }
 
@@ -166,15 +213,58 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, build, analyticsConfig),
+		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
-		signozquerier.NewFactory(telemetryStore, prometheus, cache),
+		signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger),
+	)
+}
+
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+	return factory.MustNewNamedMap(
+		signozapiserver.NewFactory(
+			orgGetter,
+			authz,
+			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
+			impluser.NewHandler(modules.User, modules.UserGetter),
+			implsession.NewHandler(modules.Session),
+			implauthdomain.NewHandler(modules.AuthDomain),
+			implpreference.NewHandler(modules.Preference),
+			signozglobal.NewHandler(global),
+			implpromote.NewHandler(modules.Promote),
+			handlers.FlaggerHandler,
+			modules.Dashboard,
+			handlers.Dashboard,
+			handlers.MetricsExplorer,
+			handlers.GatewayHandler,
+			modules.RoleGetter,
+			handlers.Role,
+		),
+	)
+}
+
+func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore, orgGetter organization.Getter) factory.NamedMap[factory.ProviderFactory[tokenizer.Tokenizer, tokenizer.Config]] {
+	tokenStore := sqltokenizerstore.NewStore(sqlstore)
+	return factory.MustNewNamedMap(
+		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
+		jwttokenizer.NewFactory(cache, tokenStore),
+	)
+}
+
+func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+	return factory.MustNewNamedMap(
+		signozglobal.NewFactory(),
+	)
+}
+
+func NewFlaggerProviderFactories(registry featuretypes.Registry) factory.NamedMap[factory.ProviderFactory[flagger.FlaggerProvider, flagger.Config]] {
+	return factory.MustNewNamedMap(
+		configflagger.NewFactory(registry),
 	)
 }

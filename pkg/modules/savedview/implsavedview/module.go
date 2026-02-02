@@ -3,10 +3,10 @@ package implsavedview
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -32,7 +32,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 		err = module.sqlstore.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND category LIKE ? AND name LIKE ?", orgID, sourcePage, "%"+category+"%", "%"+name+"%").Scan(ctx)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
 	}
 
 	var savedViews []*v3.SavedView
@@ -40,7 +40,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 		var compositeQuery v3.CompositeQuery
 		err = json.Unmarshal([]byte(view.Data), &compositeQuery)
 		if err != nil {
-			return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data: %s", err.Error())
 		}
 		savedViews = append(savedViews, &v3.SavedView{
 			ID:             view.ID,
@@ -61,7 +61,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 func (module *module) CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UUID, error) {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
-		return valuer.UUID{}, fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
+		return valuer.UUID{}, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
 	}
 
 	uuid := valuer.GenerateUUID()
@@ -70,7 +70,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view v3.Save
 
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		return valuer.UUID{}, fmt.Errorf("error in getting email from context")
+		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
 	createBy := claims.Email
@@ -99,7 +99,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view v3.Save
 
 	_, err = module.sqlstore.BunDB().NewInsert().Model(&dbView).Exec(ctx)
 	if err != nil {
-		return valuer.UUID{}, fmt.Errorf("error in creating saved view: %s", err.Error())
+		return valuer.UUID{}, errors.WrapInternalf(err, errors.CodeInternal, "error in creating saved view")
 	}
 	return uuid, nil
 }
@@ -108,13 +108,13 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 	var view types.SavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&view).Where("org_id = ? AND id = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved view")
 	}
 
 	var compositeQuery v3.CompositeQuery
 	err = json.Unmarshal([]byte(view.Data), &compositeQuery)
 	if err != nil {
-		return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in unmarshalling explorer query data")
 	}
 	return &v3.SavedView{
 		ID:             view.ID,
@@ -134,12 +134,12 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.SavedView) error {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
-		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling explorer query data")
 	}
 
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		return fmt.Errorf("error in getting email from context")
+		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
 	updatedAt := time.Now()
@@ -153,7 +153,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("error in updating saved view: %s", err.Error())
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in updating saved view")
 	}
 	return nil
 }
@@ -165,7 +165,7 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("error in deleting explorer query: %s", err.Error())
+		return errors.WrapInternalf(err, errors.CodeInternal, "error in deleting explorer query")
 	}
 	return nil
 }

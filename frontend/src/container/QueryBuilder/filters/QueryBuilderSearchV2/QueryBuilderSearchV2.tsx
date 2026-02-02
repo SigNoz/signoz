@@ -1,6 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './QueryBuilderSearchV2.styles.scss';
-
+import {
+	KeyboardEvent,
+	ReactElement,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
@@ -31,16 +38,9 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import type { BaseSelectRef } from 'rc-select';
-import {
-	KeyboardEvent,
-	ReactElement,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -68,11 +68,13 @@ import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
+import './QueryBuilderSearchV2.styles.scss';
+
 export interface ITag {
 	id?: string;
 	key: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number | boolean;
+	value: (string | number | boolean)[] | string | number | boolean;
 }
 
 interface CustomTagProps {
@@ -246,6 +248,16 @@ function QueryBuilderSearchV2(
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
+	const { selectedDashboard } = useDashboard();
+
+	const dynamicVariables = useMemo(
+		() =>
+			Object.values(selectedDashboard?.data?.variables || {})?.filter(
+				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
+			),
+		[selectedDashboard],
+	);
+
 	const { data, isFetching } = useGetAggregateKeys(
 		{
 			searchText: searchValue?.split(' ')[0],
@@ -288,7 +300,8 @@ function QueryBuilderSearchV2(
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
 			searchText: isArray(currentFilterItem?.value)
-				? currentFilterItem?.value?.[currentFilterItem.value.length - 1] || ''
+				? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
+				  ''
 				: currentFilterItem?.value?.toString() || '',
 		},
 		{
@@ -321,8 +334,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 								// eslint-disable-next-line sonarjs/no-duplicate-string
 								id: 'body--string----true',
 							},
@@ -352,8 +363,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								isColumn: true,
-								isJSON: false,
 								id: 'body--string----true',
 							},
 							op: OPERATORS.CONTAINS,
@@ -455,7 +464,7 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
-				handleRunQuery(false, true);
+				handleRunQuery();
 				setIsOpen(false);
 			}
 		},
@@ -481,8 +490,6 @@ function QueryBuilderSearchV2(
 							key: 'body',
 							dataType: DataTypes.String,
 							type: '',
-							isColumn: true,
-							isJSON: false,
 							id: 'body--string----true',
 						},
 						op: OPERATORS.CONTAINS,
@@ -596,8 +603,6 @@ function QueryBuilderSearchV2(
 						key: tagKey,
 						dataType: DataTypes.EMPTY,
 						type: '',
-						isColumn: false,
-						isJSON: false,
 					},
 					op: tagOperator,
 					value: '',
@@ -693,8 +698,6 @@ function QueryBuilderSearchV2(
 										key: tagKey,
 										dataType: DataTypes.EMPTY,
 										type: '',
-										isColumn: false,
-										isJSON: false,
 									},
 								},
 						  ]
@@ -728,8 +731,6 @@ function QueryBuilderSearchV2(
 										key: tagKey,
 										dataType: DataTypes.EMPTY,
 										type: '',
-										isColumn: false,
-										isJSON: false,
 									},
 								},
 						  ]
@@ -792,14 +793,30 @@ function QueryBuilderSearchV2(
 			const values: string[] = [];
 			const { tagValue } = getTagToken(searchValue);
 			if (isArray(tagValue)) {
-				if (!isEmpty(tagValue[tagValue.length - 1]))
+				if (!isEmpty(tagValue[tagValue.length - 1])) {
 					values.push(tagValue[tagValue.length - 1]);
-			} else if (!isEmpty(tagValue)) values.push(tagValue);
+				}
+			} else if (!isEmpty(tagValue)) {
+				values.push(tagValue);
+			}
 
 			if (attributeValues?.payload) {
 				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
 				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
 				values.push(...(attributeValues?.payload?.[key] || []));
+
+				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
+				const variableName = dynamicVariables?.find(
+					(variable) =>
+						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
+				)?.name;
+
+				if (variableName) {
+					const variableValue = `$${variableName}`;
+					if (!values.includes(variableValue)) {
+						values.unshift(variableValue);
+					}
+				}
 			}
 
 			setDropdownOptions(
@@ -819,6 +836,8 @@ function QueryBuilderSearchV2(
 		searchValue,
 		suggestionsData?.payload?.attributes,
 		operatorConfigKey,
+		currentFilterItem?.key?.key,
+		dynamicVariables,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page
@@ -944,7 +963,9 @@ function QueryBuilderSearchV2(
 							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
-								if (!isDisabled) tagEditHandler(value);
+								if (!isDisabled) {
+									tagEditHandler(value);
+								}
 							}}
 						>
 							{chipValue}

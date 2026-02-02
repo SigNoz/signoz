@@ -134,6 +134,19 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrInValues,
 		},
 		{
+			name: "Contains operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         521509198310,
+			expectedSQL:   "LOWER(JSONExtractString(labels, 'user.id')) LIKE LOWER(?)",
+			expectedArgs:  []any{"%521509198310%"},
+			expectedError: nil,
+		},
+		{
 			name: "Not In operator - metric_name",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "metric_name",
@@ -221,7 +234,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb)
+            cond, err := conditionBuilder.ConditionFor(ctx, &tc.key, tc.operator, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
@@ -276,7 +289,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb)
+                cond, err := conditionBuilder.ConditionFor(ctx, &key, tc.operator, tc.value, sb, 0, 0)
 				sb.Where(cond)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)

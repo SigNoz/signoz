@@ -41,15 +41,16 @@ export default class FilterQueryParser extends Parser {
 	public static readonly NOT = 20;
 	public static readonly AND = 21;
 	public static readonly OR = 22;
-	public static readonly HAS = 23;
-	public static readonly HASANY = 24;
-	public static readonly HASALL = 25;
-	public static readonly BOOL = 26;
-	public static readonly NUMBER = 27;
-	public static readonly QUOTED_TEXT = 28;
-	public static readonly KEY = 29;
-	public static readonly WS = 30;
-	public static readonly FREETEXT = 31;
+	public static readonly HASTOKEN = 23;
+	public static readonly HAS = 24;
+	public static readonly HASANY = 25;
+	public static readonly HASALL = 26;
+	public static readonly BOOL = 27;
+	public static readonly NUMBER = 28;
+	public static readonly QUOTED_TEXT = 29;
+	public static readonly KEY = 30;
+	public static readonly WS = 31;
+	public static readonly FREETEXT = 32;
 	public static readonly EOF = Token.EOF;
 	public static readonly RULE_query = 0;
 	public static readonly RULE_expression = 1;
@@ -87,6 +88,7 @@ export default class FilterQueryParser extends Parser {
                                                              "CONTAINS", 
                                                              "IN", "NOT", 
                                                              "AND", "OR", 
+                                                             "HASTOKEN", 
                                                              "HAS", "HASANY", 
                                                              "HASALL", "BOOL", 
                                                              "NUMBER", "QUOTED_TEXT", 
@@ -220,7 +222,7 @@ export default class FilterQueryParser extends Parser {
 			this.state = 53;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 3215982594) !== 0)) {
+			while (((((_la - 1)) & ~0x1F) === 0 && ((1 << (_la - 1)) & 3218604033) !== 0)) {
 				{
 				this.state = 51;
 				this._errHandler.sync(this);
@@ -242,7 +244,8 @@ export default class FilterQueryParser extends Parser {
 				case 27:
 				case 28:
 				case 29:
-				case 31:
+				case 30:
+				case 32:
 					{
 					this.state = 50;
 					this.unaryExpression();
@@ -808,7 +811,7 @@ export default class FilterQueryParser extends Parser {
 			{
 			this.state = 190;
 			_la = this._input.LA(1);
-			if(!(_la===28 || _la===31)) {
+			if(!(_la===29 || _la===32)) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -841,7 +844,7 @@ export default class FilterQueryParser extends Parser {
 			{
 			this.state = 192;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 58720256) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 125829120) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -996,7 +999,7 @@ export default class FilterQueryParser extends Parser {
 			{
 			this.state = 214;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 1006632960) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 2013265920) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1045,7 +1048,7 @@ export default class FilterQueryParser extends Parser {
 		return localctx;
 	}
 
-	public static readonly _serializedATN: number[] = [4,1,31,219,2,0,7,0,2,
+	public static readonly _serializedATN: number[] = [4,1,32,219,2,0,7,0,2,
 	1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,2,9,7,9,2,
 	10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,1,0,
 	1,0,1,0,1,1,1,1,1,2,1,2,1,2,5,2,43,8,2,10,2,12,2,46,9,2,1,3,1,3,1,3,1,3,
@@ -1060,7 +1063,7 @@ export default class FilterQueryParser extends Parser {
 	10,9,12,9,189,9,9,1,10,1,10,1,11,1,11,1,11,1,11,1,11,1,12,1,12,1,12,5,12,
 	201,8,12,10,12,12,12,204,9,12,1,13,1,13,1,13,3,13,209,8,13,1,14,1,14,1,
 	14,1,14,1,15,1,15,1,16,1,16,1,16,0,0,17,0,2,4,6,8,10,12,14,16,18,20,22,
-	24,26,28,30,32,0,5,1,0,7,8,1,0,13,14,2,0,28,28,31,31,1,0,23,25,1,0,26,29,
+	24,26,28,30,32,0,5,1,0,7,8,1,0,13,14,2,0,29,29,32,32,1,0,23,26,1,0,27,30,
 	235,0,34,1,0,0,0,2,37,1,0,0,0,4,39,1,0,0,0,6,47,1,0,0,0,8,57,1,0,0,0,10,
 	70,1,0,0,0,12,149,1,0,0,0,14,163,1,0,0,0,16,180,1,0,0,0,18,182,1,0,0,0,
 	20,190,1,0,0,0,22,192,1,0,0,0,24,197,1,0,0,0,26,208,1,0,0,0,28,210,1,0,
@@ -1112,7 +1115,7 @@ export default class FilterQueryParser extends Parser {
 	0,0,205,209,3,32,16,0,206,209,3,30,15,0,207,209,3,28,14,0,208,205,1,0,0,
 	0,208,206,1,0,0,0,208,207,1,0,0,0,209,27,1,0,0,0,210,211,5,3,0,0,211,212,
 	3,18,9,0,212,213,5,4,0,0,213,29,1,0,0,0,214,215,7,4,0,0,215,31,1,0,0,0,
-	216,217,5,29,0,0,217,33,1,0,0,0,11,44,51,53,57,70,149,163,180,187,202,208];
+	216,217,5,30,0,0,217,33,1,0,0,0,11,44,51,53,57,70,149,163,180,187,202,208];
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
@@ -1646,6 +1649,9 @@ export class FunctionCallContext extends ParserRuleContext {
 	}
 	public RPAREN(): TerminalNode {
 		return this.getToken(FilterQueryParser.RPAREN, 0);
+	}
+	public HASTOKEN(): TerminalNode {
+		return this.getToken(FilterQueryParser.HASTOKEN, 0);
 	}
 	public HAS(): TerminalNode {
 		return this.getToken(FilterQueryParser.HAS, 0);

@@ -3,9 +3,10 @@ package valuer
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 var _ Valuer = (*String)(nil)
@@ -50,7 +51,7 @@ func (enum String) Value() (driver.Value, error) {
 
 func (enum *String) Scan(val interface{}) error {
 	if enum == nil {
-		return fmt.Errorf("string: (nil \"%s\")", reflect.TypeOf(enum).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "string: (nil \"%s\")", reflect.TypeOf(enum).String())
 	}
 
 	if val == nil {
@@ -61,7 +62,7 @@ func (enum *String) Scan(val interface{}) error {
 
 	str, ok := val.(string)
 	if !ok {
-		return fmt.Errorf("string: (non-string \"%s\")", reflect.TypeOf(val).String())
+		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "string: (non-string \"%s\")", reflect.TypeOf(val).String())
 	}
 
 	*enum = NewString(str)
@@ -71,4 +72,8 @@ func (enum *String) Scan(val interface{}) error {
 func (enum *String) UnmarshalText(text []byte) error {
 	*enum = NewString(string(text))
 	return nil
+}
+
+func (enum String) MarshalText() (text []byte, err error) {
+	return []byte(enum.StringValue()), nil
 }

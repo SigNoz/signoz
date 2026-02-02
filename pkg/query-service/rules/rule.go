@@ -24,10 +24,13 @@ type Rule interface {
 	HoldDuration() time.Duration
 	State() model.AlertState
 	ActiveAlerts() []*ruletypes.Alert
+	// ActiveAlertsLabelFP returns a map of active alert labels fingerprint
+	ActiveAlertsLabelFP() map[uint64]struct{}
 
 	PreferredChannels() []string
 
-	Eval(context.Context, time.Time) (interface{}, error)
+	// Eval evaluates the rule at the given timestamp and returns the number of active alerts.
+	Eval(context.Context, time.Time) (int, error)
 	String() string
 	SetLastError(error)
 	LastError() error

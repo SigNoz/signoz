@@ -10,14 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -77,7 +76,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	ingestionUrl, signozApiUrl, apiErr := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
+	signozApiUrl, apiErr := ah.getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't deduce ingestion url and signoz api url",
@@ -85,7 +84,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	result.IngestionUrl = ingestionUrl
+	result.IngestionUrl = ah.opts.GlobalConfig.IngestionURL.String()
 	result.SigNozAPIUrl = signozApiUrl
 
 	gatewayUrl := ah.opts.GatewayUrl
@@ -168,95 +167,66 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
 ) (*types.User, *basemodel.ApiError) {
-	cloudIntegrationUser := fmt.Sprintf("%s-integration", cloudProvider)
-	email := fmt.Sprintf("%s@signoz.io", cloudIntegrationUser)
+	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
+	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
-	integrationUserResult, err := ah.Signoz.Modules.User.GetUserByEmailInOrg(ctx, orgId, email)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, basemodel.NotFoundError(fmt.Errorf("couldn't look for integration user: %w", err))
-	}
-
-	if integrationUserResult != nil {
-		return &integrationUserResult.User, nil
-	}
-
-	zap.L().Info(
-		"cloud integration user not found. Attempting to create the user",
-		zap.String("cloudProvider", cloudProvider),
-	)
-
-	newUser, err := types.NewUser(cloudIntegrationUser, email, types.RoleViewer.String(), orgId)
-	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf(
-			"couldn't create cloud integration user: %w", err,
-		))
-	}
-
-	password, err := types.NewFactorPassword(uuid.NewString())
-
-	integrationUser, err := ah.Signoz.Modules.User.CreateUserWithPassword(ctx, newUser, password)
+	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId))
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
-	return integrationUser, nil
+	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
+
+	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(ctx, cloudIntegrationUser, user.WithFactorPassword(password))
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't look for integration user: %w", err))
+	}
+
+	return cloudIntegrationUser, nil
 }
 
-func getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
-	string, string, *basemodel.ApiError,
+func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
+	string, *basemodel.ApiError,
 ) {
-	url := fmt.Sprintf(
-		"%s%s",
-		strings.TrimSuffix(constants.ZeusURL, "/"),
-		"/v2/deployments/me",
-	)
-
+	// TODO: remove this struct from here
 	type deploymentResponse struct {
-		Status string `json:"status"`
-		Error  string `json:"error"`
-		Data   struct {
-			Name string `json:"name"`
-
-			ClusterInfo struct {
-				Region struct {
-					DNS string `json:"dns"`
-				} `json:"region"`
-			} `json:"cluster"`
-		} `json:"data"`
+		Name        string `json:"name"`
+		ClusterInfo struct {
+			Region struct {
+				DNS string `json:"dns"`
+			} `json:"region"`
+		} `json:"cluster"`
 	}
 
-	resp, apiErr := requestAndParseResponse[deploymentResponse](
-		ctx, url, map[string]string{"X-Signoz-Cloud-Api-Key": licenseKey}, nil,
-	)
-
-	if apiErr != nil {
-		return "", "", basemodel.WrapApiError(
-			apiErr, "couldn't query for deployment info",
-		)
-	}
-
-	if resp.Status != "success" {
-		return "", "", basemodel.InternalError(fmt.Errorf(
-			"couldn't query for deployment info: status: %s, error: %s",
-			resp.Status, resp.Error,
+	respBytes, err := ah.Signoz.Zeus.GetDeployment(ctx, licenseKey)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't query for deployment info: error: %w", err,
 		))
 	}
 
-	regionDns := resp.Data.ClusterInfo.Region.DNS
-	deploymentName := resp.Data.Name
+	resp := new(deploymentResponse)
+
+	err = json.Unmarshal(respBytes, resp)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't unmarshal deployment info response: error: %w", err,
+		))
+	}
+
+	regionDns := resp.ClusterInfo.Region.DNS
+	deploymentName := resp.Name
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge
-		return "", "", basemodel.InternalError(fmt.Errorf(
+		return "", basemodel.InternalError(fmt.Errorf(
 			"deployment info response not in expected shape. couldn't determine region dns and deployment name",
 		))
 	}
 
-	ingestionUrl := fmt.Sprintf("https://ingest.%s", regionDns)
-
 	signozApiUrl := fmt.Sprintf("https://%s.%s", deploymentName, regionDns)
 
-	return ingestionUrl, signozApiUrl, nil
+	return signozApiUrl, nil
 }
 
 type ingestionKey struct {

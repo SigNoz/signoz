@@ -18,6 +18,14 @@ type Sample struct {
 	Metric labels.Labels
 
 	IsMissing bool
+
+	// IsRecovering is true if the sample is part of a recovering alert.
+	IsRecovering bool
+
+	Target         float64
+	RecoveryTarget *float64
+
+	TargetUnit string
 }
 
 func (s Sample) String() string {

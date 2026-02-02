@@ -4,7 +4,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 export const namespaceWidgetInfo = [
@@ -155,8 +155,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodCpuUtilizationKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -171,8 +169,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -189,7 +185,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -198,8 +194,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sContainerCpuRequestKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerCpuRequestKey,
 								type: 'Gauge',
 							},
@@ -214,8 +208,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -232,7 +224,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -241,8 +233,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodCpuUtilizationKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -257,8 +247,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -275,7 +263,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'C',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'min',
@@ -284,8 +272,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodCpuUtilizationKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -300,8 +286,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -318,13 +302,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'D',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'max',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -360,8 +345,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodMemoryUsageKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -376,8 +359,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -394,7 +375,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -403,8 +384,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sContainerMemoryRequestKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sContainerMemoryRequestKey,
 								type: 'Gauge',
 							},
@@ -419,8 +398,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -437,7 +414,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -446,8 +423,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodMemoryWorkingSetKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryWorkingSetKey,
 								type: 'Gauge',
 							},
@@ -462,8 +437,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -480,7 +453,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'C',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -489,8 +462,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodMemoryRssKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryRssKey,
 								type: 'Gauge',
 							},
@@ -505,8 +476,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -523,7 +492,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'D',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -532,8 +501,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodMemoryUsageKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -548,8 +515,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -566,7 +531,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'E',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'min',
@@ -575,8 +540,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodMemoryUsageKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -591,8 +554,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -609,13 +570,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'F',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'max',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -651,8 +613,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodCpuUtilizationKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodCpuUtilizationKey,
 								type: 'Gauge',
 							},
@@ -667,8 +627,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -683,8 +641,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sPodNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -694,13 +650,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: 20,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -736,8 +693,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodMemoryUsageKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodMemoryUsageKey,
 								type: 'Gauge',
 							},
@@ -752,8 +707,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -768,8 +721,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sPodNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sPodNameKey,
 									type: 'tag',
 								},
@@ -779,13 +730,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: 10,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'avg',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -821,8 +773,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sPodNetworkIoKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkIoKey,
 								type: 'Sum',
 							},
@@ -837,8 +787,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -853,16 +801,12 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'interface',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'direction',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
@@ -872,13 +816,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'rate',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -914,8 +859,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.String,
 								id: k8sPodNetworkErrorsKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sPodNetworkErrorsKey,
 								type: 'Sum',
 							},
@@ -930,8 +873,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -946,16 +887,12 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: 'interface',
-									isColumn: false,
-									isJSON: false,
 									key: 'interface',
 									type: 'tag',
 								},
 								{
 									dataType: DataTypes.String,
 									id: 'direction',
-									isColumn: false,
-									isJSON: false,
 									key: 'direction',
 									type: 'tag',
 								},
@@ -965,13 +902,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'avg',
+							reduceTo: ReduceOperators.AVG,
 							spaceAggregation: 'sum',
 							stepInterval: 60,
 							timeAggregation: 'increase',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1007,8 +945,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sStatefulsetCurrentPodsKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sStatefulsetCurrentPodsKey,
 								type: 'Gauge',
 							},
@@ -1023,8 +959,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sStatefulsetNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sStatefulsetNameKey,
 											type: 'tag',
 										},
@@ -1039,8 +973,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sStatefulsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sStatefulsetNameKey,
 									type: 'tag',
 								},
@@ -1050,7 +982,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1059,8 +991,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sStatefulsetDesiredPodsKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sStatefulsetDesiredPodsKey,
 								type: 'Gauge',
 							},
@@ -1075,8 +1005,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1091,8 +1019,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sStatefulsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sStatefulsetNameKey,
 									type: 'tag',
 								},
@@ -1102,7 +1028,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1111,8 +1037,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sStatefulsetUpdatedPodsKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sStatefulsetUpdatedPodsKey,
 								type: 'Gauge',
 							},
@@ -1127,8 +1051,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1143,8 +1065,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sStatefulsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sStatefulsetNameKey,
 									type: 'tag',
 								},
@@ -1154,13 +1074,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'C',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1196,8 +1117,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sReplicasetDesiredKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sReplicasetDesiredKey,
 								type: 'Gauge',
 							},
@@ -1212,8 +1131,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1228,8 +1145,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sReplicasetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sReplicasetNameKey,
 									type: 'tag',
 								},
@@ -1245,7 +1160,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1254,8 +1169,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sReplicasetAvailableKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sReplicasetAvailableKey,
 								type: 'Gauge',
 							},
@@ -1270,8 +1183,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1286,8 +1197,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sReplicasetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sReplicasetNameKey,
 									type: 'tag',
 								},
@@ -1303,13 +1212,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1345,8 +1255,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sDaemonsetDesiredScheduledNamespacesKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sDaemonsetDesiredScheduledNamespacesKey,
 								type: 'Gauge',
 							},
@@ -1361,8 +1269,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1377,8 +1283,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sDaemonsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sDaemonsetNameKey,
 									type: 'tag',
 								},
@@ -1388,7 +1292,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1397,8 +1301,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sDaemonsetCurrentScheduledNamespacesKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sDaemonsetCurrentScheduledNamespacesKey,
 								type: 'Gauge',
 							},
@@ -1413,8 +1315,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1429,8 +1329,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sDaemonsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sDaemonsetNameKey,
 									type: 'tag',
 								},
@@ -1440,7 +1338,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1449,8 +1347,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sDaemonsetReadyNamespacesKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sDaemonsetReadyNamespacesKey,
 								type: 'Gauge',
 							},
@@ -1465,8 +1361,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1481,8 +1375,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sDaemonsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sDaemonsetNameKey,
 									type: 'tag',
 								},
@@ -1492,7 +1384,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'C',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1501,8 +1393,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sDaemonsetMisscheduledNamespacesKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sDaemonsetMisscheduledNamespacesKey,
 								type: 'Gauge',
 							},
@@ -1517,8 +1407,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1533,8 +1421,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sDaemonsetNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sDaemonsetNameKey,
 									type: 'tag',
 								},
@@ -1544,13 +1430,14 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'D',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{
@@ -1586,8 +1473,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sDeploymentDesiredKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sDeploymentDesiredKey,
 								type: 'Gauge',
 							},
@@ -1602,8 +1487,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1618,8 +1501,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sDeploymentNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sDeploymentNameKey,
 									type: 'tag',
 								},
@@ -1629,7 +1510,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'latest',
@@ -1638,8 +1519,6 @@ export const getNamespaceMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: k8sDeploymentAvailableKey,
-								isColumn: true,
-								isJSON: false,
 								key: k8sDeploymentAvailableKey,
 								type: 'Gauge',
 							},
@@ -1654,8 +1533,6 @@ export const getNamespaceMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: k8sNamespaceNameKey,
-											isColumn: false,
-											isJSON: false,
 											key: k8sNamespaceNameKey,
 											type: 'tag',
 										},
@@ -1670,8 +1547,6 @@ export const getNamespaceMetricsQueryPayload = (
 								{
 									dataType: DataTypes.String,
 									id: k8sDeploymentNameKey,
-									isColumn: false,
-									isJSON: false,
 									key: k8sDeploymentNameKey,
 									type: 'tag',
 								},
@@ -1681,7 +1556,7 @@ export const getNamespaceMetricsQueryPayload = (
 							limit: null,
 							orderBy: [],
 							queryName: 'B',
-							reduceTo: 'last',
+							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
 							timeAggregation: 'avg',
@@ -1695,6 +1570,7 @@ export const getNamespaceMetricsQueryPayload = (
 							queryName: 'F1',
 						},
 					],
+					queryTraceOperator: [],
 				},
 				clickhouse_sql: [
 					{

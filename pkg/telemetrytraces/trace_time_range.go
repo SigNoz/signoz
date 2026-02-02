@@ -2,7 +2,6 @@ package telemetrytraces
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -19,14 +18,14 @@ func NewTraceTimeRangeFinder(telemetryStore telemetrystore.TelemetryStore) *Trac
 	}
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, err error) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, ok bool) {
 	traceIDs := []string{traceID}
 	return f.GetTraceTimeRangeMulti(ctx, traceIDs)
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, err error) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, ok bool) {
 	if len(traceIDs) == 0 {
-		return 0, 0, fmt.Errorf("no trace IDs provided")
+		return 0, 0, false
 	}
 
 	cleanedIDs := make([]string, len(traceIDs))
@@ -51,12 +50,9 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 
 	row := f.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...)
 
-	err = row.Scan(&startNano, &endNano)
+	err := row.Scan(&startNano, &endNano)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, 0, fmt.Errorf("traces not found: %v", cleanedIDs)
-		}
-		return 0, 0, fmt.Errorf("failed to query trace time range: %w", err)
+		return 0, 0, false
 	}
 
 	if startNano > 1_000_000_000 {
@@ -64,5 +60,5 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	}
 	endNano += 1_000_000_000
 
-	return startNano, endNano, nil
+	return startNano, endNano, true
 }

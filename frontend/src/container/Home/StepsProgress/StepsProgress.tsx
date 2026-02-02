@@ -1,8 +1,8 @@
-import './StepsProgress.styles.scss';
-
 import { Progress } from 'antd';
 
 import { ChecklistItem } from '../HomeChecklist/HomeChecklist';
+
+import './StepsProgress.styles.scss';
 
 function StepsProgress({
 	checklistItems,

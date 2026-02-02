@@ -2,9 +2,9 @@ package telemetrytypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -30,6 +30,9 @@ var (
 	// int64 and number are synonyms for float64
 	FieldDataTypeArrayInt64  = FieldDataType{valuer.NewString("[]int64")}
 	FieldDataTypeArrayNumber = FieldDataType{valuer.NewString("[]number")}
+
+	FieldDataTypeArrayObject  = FieldDataType{valuer.NewString("[]object")}
+	FieldDataTypeArrayDynamic = FieldDataType{valuer.NewString("[]dynamic")}
 
 	// Map string representations to FieldDataType values
 	// We want to handle all the possible string representations of the data types.
@@ -99,6 +102,10 @@ func (f FieldDataType) CHDataType() string {
 	return "String"
 }
 
+func (f FieldDataType) IsArray() bool {
+	return strings.HasPrefix(f.StringValue(), "[]") || strings.HasSuffix(f.StringValue(), "[]")
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface
 func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 	var str string
@@ -123,7 +130,7 @@ func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 // Scan implements the sql.Scanner interface
 func (f *FieldDataType) Scan(value interface{}) error {
 	if f == nil {
-		return fmt.Errorf("fielddatatype: nil receiver")
+		return errors.NewInternalf(errors.CodeInternal, "fielddatatype: nil receiver")
 	}
 
 	if value == nil {
@@ -133,7 +140,7 @@ func (f *FieldDataType) Scan(value interface{}) error {
 
 	str, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("fielddatatype: expected string, got %T", value)
+		return errors.NewInternalf(errors.CodeInternal, "fielddatatype: expected string, got %T", value)
 	}
 
 	// Normalize the string

@@ -41,7 +41,7 @@ describe('logsUpdaterConfig', () => {
 	const mockPreferences: Preferences = {
 		columns: [],
 		formatting: {
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table' as LogViewMode,
 			fontSize: 'small' as FontSize,
 			version: 1,
@@ -68,7 +68,6 @@ describe('logsUpdaterConfig', () => {
 				name: 'new-column',
 				fieldContext: '',
 				fieldDataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -79,10 +78,9 @@ describe('logsUpdaterConfig', () => {
 					key: 'old-column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 		});
 
 		logsUpdater.updateColumns(newColumns, PreferenceMode.DIRECT);
@@ -99,7 +97,7 @@ describe('logsUpdaterConfig', () => {
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
 		expect(storedData.selectColumns).toEqual(newColumns);
-		expect(storedData.maxLines).toBe(2); // Should preserve other fields
+		expect(storedData.maxLines).toBe(1); // Should preserve other fields
 
 		// Should not update saved view preferences
 		expect(setSavedViewPreferences).not.toHaveBeenCalled();
@@ -117,7 +115,6 @@ describe('logsUpdaterConfig', () => {
 				name: 'new-column',
 				fieldContext: '',
 				fieldDataType: DataTypes.String,
-				isColumn: true,
 			},
 		];
 
@@ -154,10 +151,9 @@ describe('logsUpdaterConfig', () => {
 					key: 'column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 		});
 
@@ -183,7 +179,6 @@ describe('logsUpdaterConfig', () => {
 				key: 'column',
 				type: 'tag',
 				dataType: DataTypes.String,
-				isColumn: true,
 			},
 		]); // Should preserve columns
 	});
@@ -209,10 +204,9 @@ describe('logsUpdaterConfig', () => {
 					key: 'column',
 					type: 'tag',
 					dataType: DataTypes.String,
-					isColumn: true,
 				},
 			],
-			maxLines: 2,
+			maxLines: 1,
 			format: 'table',
 		});
 
@@ -222,7 +216,7 @@ describe('logsUpdaterConfig', () => {
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
-		expect(storedData.maxLines).toBe(2); // Should remain the same
+		expect(storedData.maxLines).toBe(1); // Should remain the same
 		expect(storedData.format).toBe('table'); // Should remain the same
 
 		// Should update saved view preferences

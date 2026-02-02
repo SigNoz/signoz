@@ -70,7 +70,7 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 			NewAddColumn().
 			Table("notification_channels").
 			ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").
-			Exec(ctx); err != nil && err != ErrNoExecute {
+			Exec(ctx); err != nil {
 			return err
 		}
 	}

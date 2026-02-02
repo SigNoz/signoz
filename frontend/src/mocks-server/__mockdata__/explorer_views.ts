@@ -1,3 +1,5 @@
+import { ReduceOperators } from 'types/common/queryBuilder';
+
 export const explorerView = {
 	status: 'success',
 	data: [
@@ -22,8 +24,6 @@ export const explorerView = {
 							key: 'component',
 							dataType: 'string',
 							type: 'tag',
-							isColumn: true,
-							isJSON: false,
 						},
 						filters: {
 							op: 'AND',
@@ -33,8 +33,6 @@ export const explorerView = {
 										key: 'component',
 										dataType: 'string',
 										type: 'tag',
-										isColumn: true,
-										isJSON: false,
 									},
 									value: 'test-component',
 									op: '!=',
@@ -46,15 +44,11 @@ export const explorerView = {
 								key: 'component',
 								dataType: 'string',
 								type: 'tag',
-								isColumn: true,
-								isJSON: false,
 							},
 							{
 								key: 'client-uuid',
 								dataType: 'string',
 								type: 'resource',
-								isColumn: false,
-								isJSON: false,
 							},
 						],
 						expression: 'A',
@@ -68,7 +62,7 @@ export const explorerView = {
 								order: 'desc',
 							},
 						],
-						reduceTo: 'sum',
+						reduceTo: ReduceOperators.SUM,
 						ShiftBy: 0,
 					},
 				},
@@ -98,8 +92,6 @@ export const explorerView = {
 							key: '',
 							dataType: '',
 							type: '',
-							isColumn: false,
-							isJSON: false,
 						},
 						filters: {
 							op: 'AND',
@@ -109,8 +101,6 @@ export const explorerView = {
 										key: 'httpMethod',
 										dataType: 'string',
 										type: 'tag',
-										isColumn: true,
-										isJSON: false,
 									},
 									value: 'GET',
 									op: '=',
@@ -128,7 +118,7 @@ export const explorerView = {
 								order: 'desc',
 							},
 						],
-						reduceTo: 'avg',
+						reduceTo: ReduceOperators.AVG,
 						timeAggregation: 'rate',
 						spaceAggregation: 'sum',
 						ShiftBy: 0,

@@ -1,5 +1,9 @@
 // ===================== Base Types =====================
 
+import { ReduceOperators } from 'types/common/queryBuilder';
+
+import { Warning } from '..';
+
 export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
 
 export type RequestType =
@@ -12,6 +16,7 @@ export type RequestType =
 
 export type QueryType =
 	| 'builder_query'
+	| 'builder_trace_operator'
 	| 'builder_formula'
 	| 'builder_sub_query'
 	| 'builder_join'
@@ -65,7 +70,7 @@ export type FunctionName =
 	| 'runningDiff'
 	| 'log2'
 	| 'log10'
-	| 'cumSum'
+	| 'cumulativeSum'
 	| 'ewma3'
 	| 'ewma5'
 	| 'ewma7'
@@ -125,14 +130,13 @@ export interface VariableItem {
 
 export interface TelemetryFieldKey {
 	name: string;
+	key?: string;
 	description?: string;
 	unit?: string;
 	signal?: SignalType;
 	fieldContext?: FieldContext;
 	fieldDataType?: FieldDataType;
 	materialized?: boolean;
-	isColumn?: boolean;
-	isJSON?: boolean;
 	isIndexed?: boolean;
 }
 
@@ -168,6 +172,7 @@ export interface FunctionArg {
 export interface QueryFunction {
 	name: FunctionName;
 	args?: FunctionArg[];
+	namedArgs?: Record<string, string | number>;
 }
 
 // ===================== Aggregation Types =====================
@@ -187,7 +192,7 @@ export interface MetricAggregation {
 	temporality: Temporality;
 	timeAggregation: TimeAggregation;
 	spaceAggregation: SpaceAggregation;
-	reduceTo?: string;
+	reduceTo?: ReduceOperators;
 }
 
 export interface SecondaryAggregation {
@@ -204,7 +209,7 @@ export interface SecondaryAggregation {
 
 export interface BaseBuilderQuery {
 	name?: string;
-	stepInterval?: Step;
+	stepInterval?: Step | null;
 	disabled?: boolean;
 	filter?: Filter;
 	groupBy?: GroupByKey[];
@@ -218,6 +223,7 @@ export interface BaseBuilderQuery {
 	secondaryAggregations?: SecondaryAggregation[];
 	functions?: QueryFunction[];
 	legend?: string;
+	expression?: string; // for trace operator
 }
 
 export interface TraceBuilderQuery extends BaseBuilderQuery {
@@ -235,10 +241,17 @@ export interface MetricBuilderQuery extends BaseBuilderQuery {
 	aggregations?: MetricAggregation[];
 }
 
+export interface MeterBuilderQuery extends BaseBuilderQuery {
+	signal: 'metrics';
+	source: 'meter';
+	aggregations?: MetricAggregation[];
+}
+
 export type BuilderQuery =
 	| TraceBuilderQuery
 	| LogBuilderQuery
-	| MetricBuilderQuery;
+	| MetricBuilderQuery
+	| MeterBuilderQuery;
 
 export interface QueryBuilderFormula {
 	name: string;
@@ -416,8 +429,9 @@ export type QueryRangeDataV5 =
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;
-	data: QueryRangeDataV5;
+	data: QueryRangeDataV5 & { warning?: string[] };
 	meta: ExecStats;
+	warning?: Warning;
 }
 
 // ===================== Payload Types for API Functions =====================

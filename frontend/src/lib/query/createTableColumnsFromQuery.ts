@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
 import {
@@ -10,7 +11,6 @@ import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
-import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -125,7 +125,9 @@ const addLabels = (
 	dynamicColumns: DynamicColumns,
 	columnId?: string,
 ): void => {
-	if (isValueExist('dataIndex', label, dynamicColumns)) return;
+	if (isValueExist('dataIndex', label, dynamicColumns)) {
+		return;
+	}
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -237,37 +239,6 @@ const addOperatorFormulaColumns = (
 	}
 };
 
-const transformColumnTitles = (
-	dynamicColumns: DynamicColumns,
-): DynamicColumns =>
-	dynamicColumns.map((item) => {
-		if (isFormula(item.field as string)) {
-			return item;
-		}
-
-		const sameValues = dynamicColumns.filter(
-			(column) => column.title === item.title,
-		);
-
-		if (sameValues.length > 1) {
-			return {
-				...item,
-				dataIndex: `${item.title} - ${get(
-					item.query,
-					'queryName',
-					get(item.query, 'name', ''),
-				)}`,
-				title: `${item.title} - ${get(
-					item.query,
-					'queryName',
-					get(item.query, 'name', ''),
-				)}`,
-			};
-		}
-
-		return item;
-	});
-
 const processTableColumns = (
 	table: NonNullable<QueryDataV3['table']>,
 	currentStagedQuery:
@@ -321,7 +292,9 @@ const processSeriesColumns = (
 	series.forEach((seria) => {
 		seria.labelsArray?.forEach((lab) => {
 			Object.keys(lab).forEach((label) => {
-				if (label === currentQuery?.queryName) return;
+				if (label === currentQuery?.queryName) {
+					return;
+				}
 
 				addLabels(currentStagedQuery, label, dynamicColumns);
 			});
@@ -369,7 +342,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		}
 	});
 
-	return transformColumnTitles(dynamicColumns);
+	return dynamicColumns;
 };
 
 const fillEmptyRowCells = (
@@ -393,7 +366,9 @@ const findSeriaValueFromAnotherQuery = (
 	currentLabels: Record<string, string>,
 	nextQuery: QueryDataV3 | null,
 ): SeriesItem | null => {
-	if (!nextQuery || !nextQuery.series) return null;
+	if (!nextQuery || !nextQuery.series) {
+		return null;
+	}
 
 	let value = null;
 
@@ -401,7 +376,9 @@ const findSeriaValueFromAnotherQuery = (
 
 	nextQuery.series.forEach((seria) => {
 		const localLabelEntries = Object.entries(seria.labels);
-		if (localLabelEntries.length !== labelEntries.length) return;
+		if (localLabelEntries.length !== labelEntries.length) {
+			return;
+		}
 
 		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
@@ -477,7 +454,9 @@ const fillDataFromSeries = (
 	const { series, queryName } = currentQuery;
 	const isEqualQuery = isEqualQueriesByLabel(equalQueriesByLabels, queryName);
 
-	if (!series) return;
+	if (!series) {
+		return;
+	}
 
 	series.forEach((seria) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
@@ -486,7 +465,9 @@ const fillDataFromSeries = (
 
 		columns.forEach((column) => {
 			if (queryName === column.field) {
-				if (seria.values.length === 0) return;
+				if (seria.values.length === 0) {
+					return;
+				}
 
 				fillAggregationData(
 					column,
@@ -509,7 +490,9 @@ const fillDataFromSeries = (
 				return;
 			}
 
-			if (isEqualQuery) return;
+			if (isEqualQuery) {
+				return;
+			}
 
 			fillLabelsData(column, seria, unusedColumnsKeys);
 
@@ -522,16 +505,20 @@ const fillDataFromList = (
 	listItem: ListItem,
 	columns: DynamicColumns,
 ): void => {
+	const listData = listItem.data || {};
 	columns.forEach((column) => {
-		if (isFormula(column.field)) return;
+		if (isFormula(column.field)) {
+			return;
+		}
 
-		Object.keys(listItem.data).forEach((label) => {
+		Object.keys(listData).forEach((label) => {
 			if (column.dataIndex === label) {
-				if (listItem.data[label as ListItemKey] !== '') {
-					if (isObject(listItem.data[label as ListItemKey])) {
-						column.data.push(JSON.stringify(listItem.data[label as ListItemKey]));
+				const listValue = listData[label as ListItemKey];
+				if (listValue !== '') {
+					if (isObject(listValue)) {
+						column.data.push(JSON.stringify(listValue));
 					} else {
-						column.data.push(listItem.data[label as ListItemKey].toString());
+						column.data.push(listValue?.toString() ?? '');
 					}
 				} else {
 					column.data.push('N/A');
@@ -561,7 +548,9 @@ const fillDataFromTable = (
 ): void => {
 	const { table } = currentQuery;
 
-	if (!table || !table.rows) return;
+	if (!table || !table.rows) {
+		return;
+	}
 
 	table.rows.forEach((row) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
@@ -569,7 +558,7 @@ const fillDataFromTable = (
 		);
 
 		columns.forEach((column) => {
-			const rowData = row.data;
+			const rowData = row.data || {};
 			const columnField = column.id || column.title || column.field;
 
 			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {
@@ -634,9 +623,9 @@ const generateData = (
 
 	for (let i = 0; i < rowsLength; i += 1) {
 		const rowData: RowData = dynamicColumns.reduce((acc, item) => {
-			const { dataIndex } = item;
+			const { dataIndex, id } = item;
 
-			acc[dataIndex] = item.data[i];
+			acc[id || dataIndex] = item.data[i];
 			acc.key = uuid();
 
 			return acc;
@@ -655,25 +644,22 @@ const generateTableColumns = (
 	const columns: ColumnsType<RowData> = dynamicColumns.reduce<
 		ColumnsType<RowData>
 	>((acc, item) => {
+		const dataIndex = item.id || item.dataIndex;
 		const column: ColumnType<RowData> = {
-			dataIndex: item.dataIndex,
+			dataIndex,
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
-			render: renderColumnCell && renderColumnCell[item.dataIndex],
+			render: renderColumnCell && renderColumnCell[dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(
-					a[`${item.dataIndex}_without_unit`] ?? a[item.dataIndex],
-				);
-				const valueB = Number(
-					b[`${item.dataIndex}_without_unit`] ?? b[item.dataIndex],
-				);
+				const valueA = Number(a[`${dataIndex}_without_unit`] ?? a[dataIndex]);
+				const valueB = Number(b[`${dataIndex}_without_unit`] ?? b[dataIndex]);
 
 				if (!isNaN(valueA) && !isNaN(valueB)) {
 					return valueA - valueB;
 				}
 
-				return ((a[item.dataIndex] as string) || '').localeCompare(
-					(b[item.dataIndex] as string) || '',
+				return ((a[dataIndex] as string) || '').localeCompare(
+					(b[dataIndex] as string) || '',
 				);
 			},
 		};
@@ -682,6 +668,72 @@ const generateTableColumns = (
 	}, []);
 
 	return columns;
+};
+
+/**
+ * Gets the appropriate column unit with fallback logic
+ * New syntax: queryName.expression -> unit
+ * Old syntax: queryName -> unit (fallback)
+ *
+ * Examples:
+ * - New syntax: "A.count()" -> looks for "A.count()" first, then falls back to "A"
+ * - Old syntax: "A" -> looks for "A" directly
+ * - Mixed: "A.avg(test)" -> looks for "A.avg(test)" first, then falls back to "A"
+ *
+ * @param columnKey - The column identifier (could be queryName.expression or queryName)
+ * @param columnUnits - The column units mapping
+ * @returns The unit string (none if the unit is set to empty string) or undefined if not found
+ */
+export const getColumnUnit = (
+	columnKey: string,
+	columnUnits: Record<string, string>,
+): string | undefined => {
+	// First try the exact match (new syntax: queryName.expression)
+	if (columnUnits[columnKey] !== undefined) {
+		return columnUnits[columnKey] || 'none';
+	}
+
+	// Fallback to old syntax: extract queryName from queryName.expression
+	if (columnKey.includes('.')) {
+		const queryName = columnKey.split('.')[0];
+		if (columnUnits[queryName] !== undefined) {
+			return columnUnits[queryName] || 'none';
+		}
+	}
+
+	return undefined;
+};
+
+/**
+ * Gets the appropriate column width with fallback logic
+ * New syntax: queryName.expression -> width
+ * Old syntax: queryName -> width (fallback)
+ *
+ * Examples:
+ * - New syntax: "A.count()" -> looks for "A.count()" first, then falls back to "A"
+ * - Old syntax: "A" -> looks for "A" directly
+ * - Mixed: "A.avg(test)" -> looks for "A.avg(test)" first, then falls back to "A"
+ *
+ * @param columnKey - The column identifier (could be queryName.expression or queryName)
+ * @param columnWidths - The column widths mapping
+ * @returns The width number or undefined if not found
+ */
+export const getColumnWidth = (
+	columnKey: string,
+	columnWidths: Record<string, number>,
+): number | undefined => {
+	// First try the exact match (new syntax: queryName.expression)
+	if (columnWidths[columnKey]) {
+		return columnWidths[columnKey];
+	}
+
+	// Fallback to old syntax: extract queryName from queryName.expression
+	if (columnKey.includes('.')) {
+		const queryName = columnKey.split('.')[0];
+		return columnWidths[queryName];
+	}
+
+	return undefined;
 };
 
 export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({

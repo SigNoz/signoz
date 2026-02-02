@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 // this file contains common structs and methods used by
@@ -58,7 +59,8 @@ type Alert struct {
 	LastSentAt time.Time
 	ValidUntil time.Time
 
-	Missing bool
+	Missing      bool
+	IsRecovering bool
 }
 
 func (a *Alert) NeedsSending(ts time.Time, resendDelay time.Duration) bool {
@@ -104,18 +106,19 @@ const (
 )
 
 type RuleCondition struct {
-	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
-	CompareOp         CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
-	Target            *float64           `yaml:"target,omitempty" json:"target,omitempty"`
-	AlertOnAbsent     bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
-	AbsentFor         uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty"`
+	CompareOp         CompareOp          `json:"op,omitempty"`
+	Target            *float64           `json:"target,omitempty"`
+	AlertOnAbsent     bool               `json:"alertOnAbsent,omitempty"`
+	AbsentFor         uint64             `json:"absentFor,omitempty"`
 	MatchType         MatchType          `json:"matchType,omitempty"`
 	TargetUnit        string             `json:"targetUnit,omitempty"`
 	Algorithm         string             `json:"algorithm,omitempty"`
 	Seasonality       string             `json:"seasonality,omitempty"`
 	SelectedQuery     string             `json:"selectedQueryName,omitempty"`
-	RequireMinPoints  bool               `yaml:"requireMinPoints,omitempty" json:"requireMinPoints,omitempty"`
-	RequiredNumPoints int                `yaml:"requiredNumPoints,omitempty" json:"requiredNumPoints,omitempty"`
+	RequireMinPoints  bool               `json:"requireMinPoints,omitempty"`
+	RequiredNumPoints int                `json:"requiredNumPoints,omitempty"`
+	Thresholds        *RuleThresholdData `json:"thresholds,omitempty"`
 }
 
 func (rc *RuleCondition) GetSelectedQueryName() string {
@@ -131,9 +134,29 @@ func (rc *RuleCondition) GetSelectedQueryName() string {
 				for name := range rc.CompositeQuery.BuilderQueries {
 					queryNames[name] = struct{}{}
 				}
+
+				for _, query := range rc.CompositeQuery.Queries {
+					switch spec := query.Spec.(type) {
+					case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+						queryNames[spec.Name] = struct{}{}
+					case qbtypes.QueryBuilderFormula:
+						queryNames[spec.Name] = struct{}{}
+					}
+				}
 			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
 				for name := range rc.CompositeQuery.ClickHouseQueries {
 					queryNames[name] = struct{}{}
+				}
+
+				for _, query := range rc.CompositeQuery.Queries {
+					switch spec := query.Spec.(type) {
+					case qbtypes.ClickHouseQuery:
+						queryNames[spec.Name] = struct{}{}
+					}
 				}
 			}
 		}
@@ -166,23 +189,28 @@ func (rc *RuleCondition) IsValid() bool {
 	}
 
 	if rc.QueryType() == v3.QueryTypeBuilder {
-		if rc.Target == nil {
-			return false
-		}
-		if rc.CompareOp == "" {
+		if rc.Thresholds == nil {
 			return false
 		}
 	}
 	if rc.QueryType() == v3.QueryTypePromQL {
 
-		if len(rc.CompositeQuery.PromQueries) == 0 {
+		if len(rc.CompositeQuery.PromQueries) == 0 && len(rc.CompositeQuery.Queries) == 0 {
 			return false
 		}
 	}
 	return true
 }
 
-// QueryType is a short hand method to get query type
+// ShouldEval checks if the further series should be evaluated at all for alerts.
+func (rc *RuleCondition) ShouldEval(series *v3.Series) bool {
+	if rc == nil {
+		return true
+	}
+	return !rc.RequireMinPoints || len(series.Points) >= rc.RequiredNumPoints
+}
+
+// QueryType is a shorthand method to get query type
 func (rc *RuleCondition) QueryType() v3.QueryType {
 	if rc.CompositeQuery != nil {
 		return rc.CompositeQuery.QueryType
@@ -199,10 +227,9 @@ func (rc *RuleCondition) String() string {
 	return string(data)
 }
 
-// prepareRuleGeneratorURL creates an appropriate url
-// for the rule. the URL is sent in slack messages as well as
-// to other systems and allows backtracking to the rule definition
-// from the third party systems.
+// PrepareRuleGeneratorURL creates an appropriate url for the rule. The URL is
+// sent in Slack messages as well as to other systems and allows backtracking
+// to the rule definition from the third party systems.
 func PrepareRuleGeneratorURL(ruleId string, source string) string {
 	if source == "" {
 		return source

@@ -1,15 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import '../OnboardingQuestionaire.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@signozhq/button';
+import { Checkbox } from '@signozhq/checkbox';
+import { Input } from '@signozhq/input';
+import { Radio, Typography } from 'antd';
+import { RadioChangeEvent } from 'antd/es/radio';
 import logEvent from 'api/common/logEvent';
 import editOrg from 'api/organization/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import '../OnboardingQuestionaire.styles.scss';
 
 export interface OrgData {
 	id: string;
@@ -38,6 +41,8 @@ const observabilityTools = {
 	AzureAppMonitor: 'Azure App Monitor',
 	GCPNativeO11yTools: 'GCP-native o11y tools',
 	Honeycomb: 'Honeycomb',
+	None: 'None/Starting fresh',
+	Others: 'Others',
 };
 
 function OrgQuestions({
@@ -45,16 +50,13 @@ function OrgQuestions({
 	orgDetails,
 	onNext,
 }: OrgQuestionsProps): JSX.Element {
-	const { user, updateOrg } = useAppContext();
+	const { updateOrg } = useAppContext();
 	const { notifications } = useNotifications();
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 
 	const [organisationName, setOrganisationName] = useState<string>(
 		orgDetails?.organisationName || '',
-	);
-	const [usesObservability, setUsesObservability] = useState<boolean | null>(
-		orgDetails?.usesObservability || null,
 	);
 	const [observabilityTool, setObservabilityTool] = useState<string | null>(
 		orgDetails?.observabilityTool || null,
@@ -70,11 +72,12 @@ function OrgQuestions({
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	const [usesOtel, setUsesOtel] = useState<boolean | null>(
-		orgDetails?.usesOtel || null,
-	);
+	const [usesOtel, setUsesOtel] = useState<boolean | null>(orgDetails.usesOtel);
 
 	const handleOrgNameUpdate = async (): Promise<void> => {
+		const usesObservability =
+			!observabilityTool?.includes('None') && observabilityTool !== null;
+
 		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
 		if (
 			!currentOrgData ||
@@ -152,16 +155,16 @@ function OrgQuestions({
 	};
 
 	const isValidUsesObservability = (): boolean => {
-		if (usesObservability === null) {
-			return false;
-		}
-
-		if (usesObservability && (!observabilityTool || observabilityTool === '')) {
+		if (!observabilityTool || observabilityTool === '') {
 			return false;
 		}
 
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-		if (usesObservability && observabilityTool === 'Others' && otherTool === '') {
+		if (
+			!observabilityTool?.includes('None') &&
+			observabilityTool === 'Others' &&
+			otherTool === ''
+		) {
 			return false;
 		}
 
@@ -177,13 +180,21 @@ function OrgQuestions({
 			setIsNextDisabled(true);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		organisationName,
-		usesObservability,
-		usesOtel,
-		observabilityTool,
-		otherTool,
-	]);
+	}, [organisationName, usesOtel, observabilityTool, otherTool]);
+
+	const createObservabilityToolHandler = (tool: string) => (
+		checked: boolean,
+	): void => {
+		if (checked) {
+			setObservabilityTool(tool);
+		} else if (observabilityTool === tool) {
+			setObservabilityTool(null);
+		}
+	};
+
+	const handleOtelChange = (value: string): void => {
+		setUsesOtel(value === 'yes');
+	};
 
 	const handleOnNext = (): void => {
 		handleOrgNameUpdate();
@@ -191,25 +202,27 @@ function OrgQuestions({
 
 	return (
 		<div className="questions-container">
-			<Typography.Title level={3} className="title">
-				Welcome, {user?.displayName}!
-			</Typography.Title>
-			<Typography.Paragraph className="sub-title">
-				We&apos;ll help you get the most out of SigNoz, whether you&apos;re new to
-				observability or a seasoned pro.
-			</Typography.Paragraph>
+			<div className="onboarding-header-section">
+				<div className="onboarding-header-icon">🎉</div>
+				<Typography.Title level={4} className="onboarding-header-title">
+					Welcome to SigNoz Cloud
+				</Typography.Title>
+				<Typography.Paragraph className="onboarding-header-subtitle">
+					Let&apos;s get you started
+				</Typography.Paragraph>
+			</div>
 
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
 						<label className="question" htmlFor="organisationName">
-							Your Organisation Name
+							Name of your company
 						</label>
-						<input
+						<Input
 							type="text"
 							name="organisationName"
 							id="organisationName"
-							placeholder="For eg. Simpsonville..."
+							placeholder="e.g. Simpsonville"
 							autoComplete="off"
 							value={organisationName}
 							onChange={(e): void => setOrganisationName(e.target.value)}
@@ -217,150 +230,100 @@ function OrgQuestions({
 					</div>
 
 					<div className="form-group">
-						<label className="question" htmlFor="usesObservability">
-							Do you currently use any observability/monitoring tool?
+						<label className="question" htmlFor="observabilityTool">
+							Which observability tool do you currently use?
 						</label>
-
-						<div className="two-column-grid">
-							<Button
-								type="primary"
-								name="usesObservability"
-								className={`onboarding-questionaire-button ${
-									usesObservability === true ? 'active' : ''
-								}`}
-								onClick={(): void => {
-									setUsesObservability(true);
-								}}
-							>
-								Yes{' '}
-								{usesObservability === true && (
-									<CheckCircle size={12} color={Color.BG_FOREST_500} />
-								)}
-							</Button>
-							<Button
-								type="primary"
-								className={`onboarding-questionaire-button ${
-									usesObservability === false ? 'active' : ''
-								}`}
-								onClick={(): void => {
-									setUsesObservability(false);
-									setObservabilityTool(null);
-									setOtherTool('');
-								}}
-							>
-								No{' '}
-								{usesObservability === false && (
-									<CheckCircle size={12} color={Color.BG_FOREST_500} />
-								)}
-							</Button>
+						<div className="observability-tools-checkbox-container">
+							{Object.entries(observabilityTools).map(([tool, label]) => {
+								if (tool === 'Others') {
+									return (
+										<div
+											key={tool}
+											className="checkbox-item observability-tool-checkbox-item observability-tool-others-item"
+										>
+											<Checkbox
+												id={`checkbox-${tool}`}
+												checked={observabilityTool === tool}
+												onCheckedChange={createObservabilityToolHandler(tool)}
+												labelName={observabilityTool === 'Others' ? '' : label}
+											/>
+											{observabilityTool === 'Others' && (
+												<Input
+													type="text"
+													className="onboarding-questionaire-other-input"
+													placeholder="What tool do you currently use?"
+													value={otherTool || ''}
+													autoFocus
+													onChange={(e): void => setOtherTool(e.target.value)}
+												/>
+											)}
+										</div>
+									);
+								}
+								return (
+									<div
+										key={tool}
+										className="checkbox-item observability-tool-checkbox-item"
+									>
+										<Checkbox
+											id={`checkbox-${tool}`}
+											checked={observabilityTool === tool}
+											onCheckedChange={createObservabilityToolHandler(tool)}
+											labelName={label}
+										/>
+									</div>
+								);
+							})}
 						</div>
 					</div>
-
-					{usesObservability && (
-						<div className="form-group">
-							<label className="question" htmlFor="observabilityTool">
-								Which observability tool do you currently use?
-							</label>
-							<div className="two-column-grid">
-								{Object.keys(observabilityTools).map((tool) => (
-									<Button
-										key={tool}
-										type="primary"
-										className={`onboarding-questionaire-button ${
-											observabilityTool === tool ? 'active' : ''
-										}`}
-										onClick={(): void => setObservabilityTool(tool)}
-									>
-										{observabilityTools[tool as keyof typeof observabilityTools]}
-
-										{observabilityTool === tool && (
-											<CheckCircle size={12} color={Color.BG_FOREST_500} />
-										)}
-									</Button>
-								))}
-
-								{observabilityTool === 'Others' ? (
-									<Input
-										type="text"
-										className="onboarding-questionaire-other-input"
-										placeholder="Please specify the tool"
-										value={otherTool || ''}
-										autoFocus
-										addonAfter={
-											otherTool && otherTool !== '' ? (
-												<CheckCircle size={12} color={Color.BG_FOREST_500} />
-											) : (
-												''
-											)
-										}
-										onChange={(e): void => setOtherTool(e.target.value)}
-									/>
-								) : (
-									<button
-										type="button"
-										className={`onboarding-questionaire-button ${
-											observabilityTool === 'Others' ? 'active' : ''
-										}`}
-										onClick={(): void => setObservabilityTool('Others')}
-									>
-										Others
-									</button>
-								)}
-							</div>
-						</div>
-					)}
 
 					<div className="form-group">
 						<div className="question">Do you already use OpenTelemetry?</div>
-						<div className="two-column-grid">
-							<Button
-								type="primary"
-								name="usesObservability"
-								className={`onboarding-questionaire-button ${
-									usesOtel === true ? 'active' : ''
-								}`}
-								onClick={(): void => {
-									setUsesOtel(true);
-								}}
+						<div className="opentelemetry-radio-container">
+							<Radio.Group
+								value={((): string | undefined => {
+									if (usesOtel === true) {
+										return 'yes';
+									}
+									if (usesOtel === false) {
+										return 'no';
+									}
+									return undefined;
+								})()}
+								onChange={(e: RadioChangeEvent): void =>
+									handleOtelChange(e.target.value)
+								}
+								className="opentelemetry-radio-group"
 							>
-								Yes{' '}
-								{usesOtel === true && (
-									<CheckCircle size={12} color={Color.BG_FOREST_500} />
-								)}
-							</Button>
-							<Button
-								type="primary"
-								className={`onboarding-questionaire-button ${
-									usesOtel === false ? 'active' : ''
-								}`}
-								onClick={(): void => {
-									setUsesOtel(false);
-								}}
-							>
-								No{' '}
-								{usesOtel === false && (
-									<CheckCircle size={12} color={Color.BG_FOREST_500} />
-								)}
-							</Button>
+								<div className="opentelemetry-radio-items-wrapper">
+									<Radio value="yes" className="opentelemetry-radio-item">
+										Yes
+									</Radio>
+									<Radio value="no" className="opentelemetry-radio-item">
+										No
+									</Radio>
+								</div>
+							</Radio.Group>
 						</div>
 					</div>
 				</div>
 
-				<div className="next-prev-container">
-					<Button
-						type="primary"
-						className={`next-button ${isNextDisabled ? 'disabled' : ''}`}
-						onClick={handleOnNext}
-						disabled={isNextDisabled}
-					>
-						Next
-						{isLoading ? (
-							<Loader2 className="animate-spin" />
+				<Button
+					variant="solid"
+					color="primary"
+					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
+					onClick={handleOnNext}
+					disabled={isNextDisabled}
+					suffixIcon={
+						isLoading ? (
+							<Loader2 className="animate-spin" size={12} />
 						) : (
-							<ArrowRight size={14} />
-						)}
-					</Button>
-				</div>
+							<ArrowRight size={12} />
+						)
+					}
+				>
+					Next
+				</Button>
 			</div>
 		</div>
 	);

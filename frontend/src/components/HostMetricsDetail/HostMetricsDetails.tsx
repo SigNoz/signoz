@@ -1,5 +1,6 @@
-import './HostMetricsDetail.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -24,7 +25,7 @@ import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/c
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
@@ -37,9 +38,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -60,6 +58,8 @@ import HostMetricLogsDetailedView from './HostMetricsLogs/HostMetricLogsDetailed
 import HostMetricTraces from './HostMetricTraces/HostMetricTraces';
 import Metrics from './Metrics/Metrics';
 import Processes from './Processes/Processes';
+
+import './HostMetricsDetail.styles.scss';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function HostMetricsDetails({
 	host,
@@ -119,8 +119,6 @@ function HostMetricsDetails({
 						key: 'host.name',
 						dataType: DataTypes.String,
 						type: 'resource',
-						isColumn: false,
-						isJSON: false,
 						id: 'host.name--string--resource--false',
 					},
 					op: '=',
@@ -452,8 +450,12 @@ function HostMetricsDetails({
 										size="small"
 										strokeColor={((): string => {
 											const cpuPercent = Number((host.cpu * 100).toFixed(1));
-											if (cpuPercent >= 90) return Color.BG_SAKURA_500;
-											if (cpuPercent >= 60) return Color.BG_AMBER_500;
+											if (cpuPercent >= 90) {
+												return Color.BG_SAKURA_500;
+											}
+											if (cpuPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"
@@ -465,8 +467,12 @@ function HostMetricsDetails({
 										size="small"
 										strokeColor={((): string => {
 											const memoryPercent = Number((host.memory * 100).toFixed(1));
-											if (memoryPercent >= 90) return Color.BG_CHERRY_500;
-											if (memoryPercent >= 60) return Color.BG_AMBER_500;
+											if (memoryPercent >= 90) {
+												return Color.BG_CHERRY_500;
+											}
+											if (memoryPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"

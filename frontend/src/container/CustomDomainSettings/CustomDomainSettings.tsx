@@ -1,7 +1,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './CustomDomainSettings.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
@@ -21,10 +22,9 @@ import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData'
 import { useNotifications } from 'hooks/useNotifications';
 import { InfoIcon, Link2, Pencil } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useCopyToClipboard } from 'react-use';
 import { HostsProps } from 'types/api/customDomain/types';
+
+import './CustomDomainSettings.styles.scss';
 
 interface CustomDomainSettingsProps {
 	subdomain: string;
@@ -266,7 +266,10 @@ export default function CustomDomainSettings(): JSX.Element {
 						<div className="custom-domain-settings-modal-error">
 							{updateDomainError.status === 409 ? (
 								<Alert
-									message="You’ve already updated the custom domain once today. To make further changes, please contact our support team for assistance."
+									message={
+										(updateDomainError?.response?.data as { error?: string })?.error ||
+										'You’ve already updated the custom domain once today. To make further changes, please contact our support team for assistance.'
+									}
 									type="warning"
 									className="update-limit-reached-error"
 								/>

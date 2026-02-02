@@ -37,6 +37,31 @@ type QueryBuilderFormula struct {
 	Legend string `json:"legend,omitempty"`
 }
 
+// Copy creates a deep copy of the QueryBuilderFormula
+func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
+	c := f
+
+	if f.Order != nil {
+		c.Order = make([]OrderBy, len(f.Order))
+		for i, o := range f.Order {
+			c.Order[i] = o.Copy()
+		}
+	}
+
+	if f.Functions != nil {
+		c.Functions = make([]Function, len(f.Functions))
+		for i, fn := range f.Functions {
+			c.Functions[i] = fn.Copy()
+		}
+	}
+
+	if f.Having != nil {
+		c.Having = f.Having.Copy()
+	}
+
+	return c
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
 func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderFormula
@@ -45,6 +70,43 @@ func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*f = QueryBuilderFormula(temp)
+	return nil
+}
+
+// Validate checks if the QueryBuilderFormula fields are valid
+func (f QueryBuilderFormula) Validate() error {
+	// Validate name is not blank
+	if strings.TrimSpace(f.Name) == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"formula name cannot be blank",
+		)
+	}
+
+	// Validate expression is not blank
+	if strings.TrimSpace(f.Expression) == "" {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"formula expression cannot be blank",
+		)
+	}
+
+	// Validate functions if present
+	for i, fn := range f.Functions {
+		if err := fn.Validate(); err != nil {
+			fnId := fmt.Sprintf("function #%d", i+1)
+			if f.Name != "" {
+				fnId = fmt.Sprintf("function #%d in formula '%s'", i+1, f.Name)
+			}
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid %s: %s",
+				fnId,
+				err.Error(),
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -128,10 +190,28 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression")
 	}
 
+	// Normalize canDefaultZero keys to match variable casing from expression
+	normalizedCanDefaultZero := make(map[string]bool)
+	vars := expression.Vars()
+	for _, variable := range vars {
+		// If exact match exists, use it
+		if val, ok := canDefaultZero[variable]; ok {
+			normalizedCanDefaultZero[variable] = val
+			continue
+		}
+		// Otherwise try case-insensitive lookup
+		for k, v := range canDefaultZero {
+			if strings.EqualFold(k, variable) {
+				normalizedCanDefaultZero[variable] = v
+				break
+			}
+		}
+	}
+
 	evaluator := &FormulaEvaluator{
 		expression:     expression,
-		variables:      expression.Vars(),
-		canDefaultZero: canDefaultZero,
+		variables:      vars,
+		canDefaultZero: normalizedCanDefaultZero,
 		aggRefs:        make(map[string]aggregationRef),
 	}
 
@@ -256,6 +336,16 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		// We are only interested in the time series data for the queries that are
 		// involved in the formula expression.
 		data, exists := timeSeriesData[aggRef.QueryName]
+		if !exists {
+			// try case-insensitive lookup
+			for k, v := range timeSeriesData {
+				if strings.EqualFold(k, aggRef.QueryName) {
+					data = v
+					exists = true
+					break
+				}
+			}
+		}
 		if !exists {
 			continue
 		}
@@ -520,6 +610,9 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	rad180 := 180 / math.Pi
 
 	// Mathematical functions
+	funcs["abs"] = func(args ...any) (any, error) {
+		return math.Abs(args[0].(float64)), nil
+	}
 	funcs["exp"] = func(args ...any) (any, error) {
 		return math.Exp(args[0].(float64)), nil
 	}
@@ -598,7 +691,7 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 // GetSupportedFunctions returns the list of supported function names
 func GetSupportedFunctions() []string {
 	return []string{
-		"exp", "log", "ln", "exp2", "log2", "exp10", "log10",
+		"abs", "exp", "log", "ln", "exp2", "log2", "exp10", "log10",
 		"sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma",
 		"sin", "cos", "tan", "asin", "acos", "atan",
 		"degrees", "radians", "now",

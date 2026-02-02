@@ -1,12 +1,16 @@
-import './QueryAggregation.styles.scss';
-
+import { useMemo } from 'react';
+import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useMemo } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	IBuilderTraceOperator,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QueryAggregationSelect from './QueryAggregationSelect';
+
+import './QueryAggregation.styles.scss';
 
 function QueryAggregationOptions({
 	dataSource,
@@ -19,7 +23,7 @@ function QueryAggregationOptions({
 	panelType?: string;
 	onAggregationIntervalChange: (value: number) => void;
 	onChange?: (value: string) => void;
-	queryData: IBuilderQuery;
+	queryData: IBuilderQuery | IBuilderTraceOperator;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
 		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
@@ -39,7 +43,10 @@ function QueryAggregationOptions({
 	};
 
 	return (
-		<div className="query-aggregation-container">
+		<div
+			className="query-aggregation-container"
+			data-testid="query-aggregation-container"
+		>
 			<div className="aggregation-container">
 				<QueryAggregationSelect
 					onChange={onChange}
@@ -53,12 +60,34 @@ function QueryAggregationOptions({
 
 				{showAggregationInterval && (
 					<div className="query-aggregation-interval">
-						<div className="query-aggregation-interval-label">every</div>
+						<Tooltip
+							title={
+								<div>
+									Set the time interval for aggregation
+									<br />
+									<a
+										href="https://signoz.io/docs/userguide/query-builder-v5/#time-aggregation-windows"
+										target="_blank"
+										rel="noopener noreferrer"
+										style={{ color: '#1890ff', textDecoration: 'underline' }}
+									>
+										Learn about step intervals
+									</a>
+								</div>
+							}
+							placement="top"
+						>
+							<div
+								className="metrics-aggregation-section-content-item-label"
+								style={{ cursor: 'help' }}
+							>
+								every
+							</div>
+						</Tooltip>
+
 						<div className="query-aggregation-interval-input-container">
 							<InputWithLabel
-								initialValue={
-									queryData?.stepInterval ? queryData?.stepInterval : undefined
-								}
+								initialValue={queryData?.stepInterval ? queryData?.stepInterval : null}
 								className="query-aggregation-interval-input"
 								label="Seconds"
 								placeholder="Auto"

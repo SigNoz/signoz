@@ -1,55 +1,56 @@
+import { useCallback } from 'react';
+import { Button } from 'antd';
+import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { Home, LifeBuoy } from 'lucide-react';
+import { handleContactSupport } from 'pages/Integrations/utils';
+
 import './ErrorBoundaryFallback.styles.scss';
 
-import { BugOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
-import ROUTES from 'constants/routes';
-import Slack from 'container/SideNav/Slack';
-import { Home, TriangleAlert } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
 function ErrorBoundaryFallback(): JSX.Element {
-	const { t } = useTranslation(['errorDetails']);
-
-	const onClickSlackHandler = (): void => {
-		window.open('https://signoz.io/slack', '_blank');
-	};
-
 	const handleReload = (): void => {
 		// Go to home page
 		window.location.href = ROUTES.HOME;
 	};
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
+	const handleSupport = useCallback(() => {
+		handleContactSupport(isCloudUserVal);
+	}, [isCloudUserVal]);
+
 	return (
 		<div className="error-boundary-fallback-container">
-			<div className="error-icon">
-				<TriangleAlert size={48} />
-			</div>
-			<div className="title">
-				<BugOutlined />
-				<Typography.Title type="danger" level={4} style={{ margin: 0 }}>
-					{t('something_went_wrong')}
-				</Typography.Title>
-			</div>
+			<div className="error-boundary-fallback-content">
+				<div className="error-icon">
+					<img src="/Images/cloud.svg" alt="error-cloud-icon" />
+				</div>
+				<div className="title">Something went wrong :/</div>
 
-			<p>{t('contact_if_issue_exists')}</p>
+				<div className="description">
+					Our team is getting on top to resolve this. Please reach out to support if
+					the issue persists.
+				</div>
 
-			<div className="actions">
-				<Button
-					type="primary"
-					onClick={handleReload}
-					icon={<Home size={16} />}
-					className="periscope-btn primary"
-				>
-					Go Home
-				</Button>
+				<div className="actions">
+					<Button
+						type="primary"
+						onClick={handleReload}
+						icon={<Home size={16} />}
+						className="periscope-btn primary"
+					>
+						Go to Home
+					</Button>
 
-				<Button
-					className="periscope-btn secondary"
-					type="default"
-					onClick={onClickSlackHandler}
-					icon={<Slack />}
-				>
-					Slack Support
-				</Button>
+					<Button
+						className="periscope-btn secondary"
+						type="default"
+						onClick={handleSupport}
+						icon={<LifeBuoy size={16} />}
+					>
+						Contact Support
+					</Button>
+				</div>
 			</div>
 		</div>
 	);

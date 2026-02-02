@@ -24,11 +24,13 @@ export const DATE_TIME_FORMATS = {
 	TIME_SECONDS: 'HH:mm:ss',
 	TIME_UTC: 'HH:mm:ss (UTC Z)',
 	TIME_UTC_MS: 'HH:mm:ss.SSS (UTC Z)',
+	TIME_SPAN_PERCENTILE: 'HH:mm:ss MMM DD',
 
 	// Short date formats
 	DATE_SHORT: 'MM/DD',
 	YEAR_SHORT: 'YY',
 	YEAR_MONTH: 'YY-MM',
+	SPAN_POPOVER_DATE: 'D/M/YY - HH:mm:ss',
 
 	// Month name formats
 	MONTH_DATE_FULL: 'MMMM DD, YYYY',
@@ -39,6 +41,8 @@ export const DATE_TIME_FORMATS = {
 	MONTH_DATETIME_SECONDS: 'MMM DD YYYY HH:mm:ss',
 	MONTH_DATETIME_FULL: 'MMMM DD, YYYY HH:mm',
 	MONTH_DATETIME_FULL_SECONDS: 'MMM DD, YYYY, HH:mm:ss',
+	DD_MMM_YYYY_HH_MM: 'DD MMM YYYY, HH:mm',
+	DD_MMM_YYYY_HH_MM_SS: 'DD MMM YYYY, HH:mm:ss',
 
 	// Ordinal formats (1st, 2nd, 3rd, etc)
 	ORDINAL_DATE: 'Do MMM YYYY',

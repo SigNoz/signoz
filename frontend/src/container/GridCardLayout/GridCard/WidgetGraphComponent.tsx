@@ -1,5 +1,13 @@
-import '../GridCardLayout.styles.scss';
-
+import {
+	Dispatch,
+	RefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -20,17 +28,9 @@ import {
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	RefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
@@ -42,10 +42,11 @@ import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
 
+import '../GridCardLayout.styles.scss';
+
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
-	errorMessage,
 	version,
 	threshold,
 	headerMenuList,
@@ -62,10 +63,10 @@ function WidgetGraphComponent({
 	customErrorMessage,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
+	enableDrillDown,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
-	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { pathname, search } = useLocation();
 
@@ -85,7 +86,9 @@ function WidgetGraphComponent({
 	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
-		if (!lineChartRef.current) return;
+		if (!lineChartRef.current) {
+			return;
+		}
 
 		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
@@ -109,7 +112,9 @@ function WidgetGraphComponent({
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const onDeleteHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== widget.id,
@@ -129,7 +134,9 @@ function WidgetGraphComponent({
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
@@ -139,7 +146,9 @@ function WidgetGraphComponent({
 	};
 
 	const onCloneHandler = async (): Promise<void> => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const uuid = v4();
 
@@ -177,16 +186,28 @@ function WidgetGraphComponent({
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+					if (setLayouts) {
+						setLayouts(updatedDashboard.data?.data?.layout || []);
+					}
 					if (setSelectedDashboard && updatedDashboard.data) {
 						setSelectedDashboard(updatedDashboard.data);
 					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
 					});
+
+					const clonedWidget = updatedDashboard.data?.data?.widgets?.find(
+						(w) => w.id === uuid,
+					) as Widgets;
+
 					const queryParams = {
-						graphType: widget?.panelTypes,
-						widgetId: uuid,
+						[QueryParams.graphType]: clonedWidget?.panelTypes,
+						[QueryParams.widgetId]: uuid,
+						...(clonedWidget?.query && {
+							[QueryParams.compositeQuery]: encodeURIComponent(
+								JSON.stringify(clonedWidget.query),
+							),
+						}),
 					};
 					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
 				},
@@ -226,6 +247,8 @@ function WidgetGraphComponent({
 	const onToggleModelHandler = (): void => {
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
+		existingSearchParams.delete(QueryParams.compositeQuery);
+		existingSearchParams.delete(QueryParams.graphType);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
 			const {
@@ -302,19 +325,8 @@ function WidgetGraphComponent({
 			style={{
 				height: '100%',
 			}}
-			onMouseOver={(): void => {
-				setHovered(true);
-			}}
-			onFocus={(): void => {
-				setHovered(true);
-			}}
-			onMouseOut={(): void => {
-				setHovered(false);
-			}}
-			onBlur={(): void => {
-				setHovered(false);
-			}}
 			id={widget.id}
+			className="widget-graph-component-container"
 		>
 			<Modal
 				destroyOnClose
@@ -354,19 +366,20 @@ function WidgetGraphComponent({
 					onClickHandler={onClickHandler ?? graphClickHandler}
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
+					enableDrillDown={
+						enableDrillDown && widget?.query?.queryType === EQueryType.QUERY_BUILDER
+					}
 				/>
 			</Modal>
 
 			<div className="drag-handle">
 				<WidgetHeader
-					parentHover={hovered}
 					title={widget?.title}
 					widget={widget}
 					onView={handleOnView}
 					onDelete={handleOnDelete}
 					onClone={onCloneHandler}
 					queryResponse={queryResponse}
-					errorMessage={errorMessage}
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
@@ -387,7 +400,10 @@ function WidgetGraphComponent({
 			)}
 			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div
-					className={cx('widget-graph-container', widget.panelTypes)}
+					className={cx(
+						'widget-graph-container',
+						`${widget.panelTypes}-panel-container`,
+					)}
 					ref={graphRef}
 				>
 					<PanelWrapper
@@ -405,6 +421,7 @@ function WidgetGraphComponent({
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
 						customSeries={customSeries}
 						customOnRowClick={customOnRowClick}
+						enableDrillDown={enableDrillDown}
 					/>
 				</div>
 			)}
@@ -417,6 +434,7 @@ WidgetGraphComponent.defaultProps = {
 	setLayout: undefined,
 	onClickHandler: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
+	enableDrillDown: false,
 };
 
 export default WidgetGraphComponent;

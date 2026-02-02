@@ -2,12 +2,16 @@ package factory
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+)
+
+var (
+	ErrCodeInvalidRegistry = errors.MustNewCode("invalid_registry")
 )
 
 type Registry struct {
@@ -20,11 +24,11 @@ type Registry struct {
 // New creates a new registry of services. It needs at least one service in the input.
 func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, error) {
 	if logger == nil {
-		return nil, fmt.Errorf("cannot build registry, logger is required")
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidRegistry, "cannot build registry, logger is required")
 	}
 
 	if len(services) == 0 {
-		return nil, fmt.Errorf("cannot build registry, at least one service is required")
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidRegistry, "cannot build registry, at least one service is required")
 	}
 
 	m, err := NewNamedMap(services...)

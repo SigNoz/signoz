@@ -1,10 +1,11 @@
 import { SelectProps } from 'antd';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IBuilderTraceOperator,
 	IClickHouseQuery,
 	IPromQLQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -53,7 +54,11 @@ export const getUpdatedStepInterval = (evalWindow?: string): number => {
 
 export const getSelectedQueryOptions = (
 	queries: Array<
-		IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery
+		| IBuilderQuery
+		| IBuilderTraceOperator
+		| IBuilderFormula
+		| IClickHouseQuery
+		| IPromQLQuery
 	>,
 ): SelectProps['options'] =>
 	queries

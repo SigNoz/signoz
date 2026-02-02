@@ -7,7 +7,11 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	LogsAggregatorOperator,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 export const getTraceToLogsQuery = (
@@ -18,9 +22,7 @@ export const getTraceToLogsQuery = (
 	const key: BaseAutocompleteData = {
 		id: uuid(),
 		dataType: DataTypes.String,
-		isColumn: true,
 		type: '',
-		isJSON: false,
 		key: 'trace_id',
 	};
 
@@ -60,7 +62,7 @@ export const getTraceToLogsQuery = (
 					legend: '',
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 					stepInterval: getStep({
 						start: minTime,
 						end: maxTime,
@@ -69,6 +71,7 @@ export const getTraceToLogsQuery = (
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 	};
 

@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
-import { useEffect, useState } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -44,7 +44,6 @@ const createFilterItem = (config: SpanFilterConfig): TagFilterItem => ({
 	key: {
 		key: config.key,
 		dataType: undefined,
-		isColumn: false,
 		type: config?.type,
 	},
 	op: '=',
@@ -78,8 +77,12 @@ function SpanScopeSelector({
 					filter.value === 'true',
 			);
 
-		if (hasFilter('isRoot')) return SpanScope.ROOT_SPANS;
-		if (hasFilter('isEntryPoint')) return SpanScope.ENTRYPOINT_SPANS;
+		if (hasFilter('isRoot')) {
+			return SpanScope.ROOT_SPANS;
+		}
+		if (hasFilter('isEntryPoint')) {
+			return SpanScope.ENTRYPOINT_SPANS;
+		}
 		return SpanScope.ALL_SPANS;
 	};
 
@@ -104,7 +107,9 @@ function SpanScopeSelector({
 			currentFilters: TagFilterItem[] = [],
 			isTargetQuery: boolean,
 		): TagFilterItem[] => {
-			if (!isTargetQuery) return currentFilters;
+			if (!isTargetQuery) {
+				return currentFilters;
+			}
 
 			const nonScopeFilters = currentFilters.filter(
 				(filter) =>

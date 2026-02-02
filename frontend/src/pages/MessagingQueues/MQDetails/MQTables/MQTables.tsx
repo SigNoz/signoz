@@ -1,7 +1,8 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/require-default-props */
-import './MQTables.styles.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Skeleton, Table, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
@@ -9,7 +10,6 @@ import {
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
-import { isNumber } from 'chart.js/helpers';
 import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -29,12 +29,12 @@ import {
 	SelectedTimelineQuery,
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
+
+import './MQTables.styles.scss';
 
 const INITIAL_PAGE_SIZE = 10;
 
@@ -72,10 +72,7 @@ export function getColumns(
 			'ingestion_rate',
 			'byte_rate',
 		].includes(column.name)
-			? (value: number | string): string => {
-					if (!isNumber(value)) return value.toString();
-					return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
-			  }
+			? formatNumericValue
 			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
 					children:
 						column.name === 'service_name' ? (

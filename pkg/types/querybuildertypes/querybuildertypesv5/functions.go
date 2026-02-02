@@ -1,10 +1,13 @@
 package querybuildertypesv5
 
 import (
+	"fmt"
 	"math"
 	"slices"
 	"strconv"
+	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -32,6 +35,46 @@ var (
 	FunctionNameAnomaly       = FunctionName{valuer.NewString("anomaly")}
 	FunctionNameFillZero      = FunctionName{valuer.NewString("fillZero")}
 )
+
+// Validate checks if the FunctionName is valid and one of the known types
+func (fn FunctionName) Validate() error {
+	validFunctions := []FunctionName{
+		FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameRunningDiff,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumulativeSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7,
+		FunctionNameTimeShift,
+		FunctionNameAnomaly,
+		FunctionNameFillZero,
+	}
+
+	if slices.Contains(validFunctions, fn) {
+		return nil
+	}
+
+	// Format valid functions as comma-separated string
+	var validFunctionNames []string
+	for _, fn := range validFunctions {
+		validFunctionNames = append(validFunctionNames, fn.StringValue())
+	}
+
+	return errors.NewInvalidInputf(
+		errors.CodeInvalidInput,
+		"invalid function name: %s",
+		fn.StringValue(),
+	).WithAdditional(fmt.Sprintf("valid functions are: %s", strings.Join(validFunctionNames, ", ")))
+}
 
 // ApplyFunction applies the given function to the result data
 func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
@@ -110,6 +153,61 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		return funcFillZero(result, int64(start), int64(end), int64(step))
 	}
 	return result
+}
+
+// ValidateArgs validates the arguments for the given function
+func (fn Function) ValidateArgs() error {
+	// Extract the function name and arguments
+	name := fn.Name
+	args := fn.Args
+
+	switch name {
+	case FunctionNameCutOffMin, FunctionNameCutOffMax, FunctionNameClampMin, FunctionNameClampMax:
+		if len(args) == 0 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"threshold value is required for function %s",
+				name.StringValue(),
+			)
+		}
+		_, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"threshold value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	case FunctionNameEWMA3, FunctionNameEWMA5, FunctionNameEWMA7:
+		if len(args) == 0 {
+			return nil // alpha is optional for EWMA functions
+		}
+		_, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"alpha value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	case FunctionNameTimeShift:
+		if len(args) == 0 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"time shift value is required for function %s",
+				name.StringValue(),
+			)
+		}
+		_, err := parseFloat64Arg(args[0].Value)
+		if err != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"time shift value must be a floating value for function %s",
+				name.StringValue(),
+			)
+		}
+	}
+	return nil
 }
 
 // parseFloat64Arg parses an argument to float64
@@ -376,7 +474,7 @@ func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
 		return result
 	}
 
-	alignedStart := start - (start % (step * 1000))
+	alignedStart := start - (start % step)
 	alignedEnd := end
 
 	existingValues := make(map[int64]*TimeSeriesValue)
@@ -386,7 +484,7 @@ func funcFillZero(result *TimeSeries, start, end, step int64) *TimeSeries {
 
 	filledValues := make([]*TimeSeriesValue, 0)
 
-	for ts := alignedStart; ts <= alignedEnd; ts += step * 1000 {
+	for ts := alignedStart; ts <= alignedEnd; ts += step {
 		if val, exists := existingValues[ts]; exists {
 			filledValues = append(filledValues, val)
 		} else {

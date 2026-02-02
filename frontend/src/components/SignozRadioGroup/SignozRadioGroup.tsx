@@ -1,11 +1,12 @@
-import './SignozRadioGroup.styles.scss';
-
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/es/radio';
 
+import './SignozRadioGroup.styles.scss';
+
 interface Option {
 	value: string;
-	label: string;
+	label: string | React.ReactNode;
+	icon?: React.ReactNode;
 }
 
 interface SignozRadioGroupProps {
@@ -37,7 +38,10 @@ function SignozRadioGroup({
 					value={option.value}
 					className={value === option.value ? 'selected_view tab' : 'tab'}
 				>
-					{option.label}
+					<div className="view-title-container">
+						{option.icon && <div className="icon-container">{option.icon}</div>}
+						{option.label}
+					</div>
 				</Radio.Button>
 			))}
 		</Radio.Group>

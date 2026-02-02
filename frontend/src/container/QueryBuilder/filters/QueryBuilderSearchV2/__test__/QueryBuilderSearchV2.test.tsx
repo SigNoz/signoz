@@ -1,4 +1,6 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	act,
 	fireEvent,
@@ -11,7 +13,6 @@ import {
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -90,6 +91,11 @@ const renderWithContext = (props = {}): RenderResult => {
 	);
 };
 
+// Constants to fix linter errors
+const TYPE_TAG = 'tag';
+const IS_COLUMN_FALSE = false;
+const IS_JSON_FALSE = false;
+
 const mockAggregateKeysData = {
 	payload: {
 		attributeKeys: [
@@ -97,10 +103,16 @@ const mockAggregateKeysData = {
 				// eslint-disable-next-line sonarjs/no-duplicate-string
 				key: 'http.status',
 				dataType: DataTypes.String,
-				type: 'tag',
-				isColumn: false,
-				isJSON: false,
+				type: TYPE_TAG,
 				id: 'http.status--string--tag--false',
+			},
+			{
+				key: 'service.name',
+				dataType: DataTypes.String,
+				type: TYPE_TAG,
+				isColumn: IS_COLUMN_FALSE,
+				isJSON: IS_JSON_FALSE,
+				id: 'service.name--string--tag--false',
 			},
 		],
 	},
@@ -130,6 +142,30 @@ jest.mock('hooks/queryBuilder/useGetAggregateValues', () => ({
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: jest.fn(),
+	}),
+}));
+
+// Mock dashboard provider with dynamic variables
+const mockDashboard = {
+	data: {
+		variables: {
+			service: {
+				id: 'service',
+				name: 'service',
+				type: 'DYNAMIC',
+				dynamicVariablesAttribute: 'service.name',
+				description: '',
+				sort: 'DISABLED',
+				multiSelect: false,
+				showALLOption: false,
+			},
+		},
+	},
+};
+
+jest.mock('providers/Dashboard/Dashboard', () => ({
+	useDashboard: (): any => ({
+		selectedDashboard: mockDashboard,
 	}),
 }));
 
@@ -189,6 +225,69 @@ describe('Suggestion Key -> Operator -> Value Flow', () => {
 						key: expect.objectContaining({ key: 'http.status' }),
 						op: '=',
 						value: '200',
+					}),
+				]),
+			}),
+		);
+	});
+});
+
+describe('Dynamic Variable Suggestions', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	it('should suggest dynamic variable when key matches a variable attribute', async () => {
+		const { container } = renderWithContext();
+
+		// Get the combobox input
+		const combobox = container.querySelector(
+			'.query-builder-search-v2 .ant-select-selection-search-input',
+		) as HTMLInputElement;
+
+		// Focus and type to trigger key suggestions for service.name
+		await act(async () => {
+			fireEvent.focus(combobox);
+			fireEvent.change(combobox, { target: { value: 'service.' } });
+		});
+
+		// Wait for dropdown to appear
+		await screen.findByRole('listbox');
+
+		// Select service.name key from suggestions
+		const serviceNameOption = await screen.findByText('service.name');
+		await act(async () => {
+			fireEvent.click(serviceNameOption);
+		});
+
+		// Select equals operator
+		await act(async () => {
+			const equalsOption = screen.getByText('=');
+			fireEvent.click(equalsOption);
+		});
+
+		// Should show value suggestions including the dynamic variable
+		// For 'service.name', we expect to see '$service' as the first suggestion
+		const variableSuggestion = await screen.findByText('$service');
+		expect(variableSuggestion).toBeInTheDocument();
+
+		// Regular values should still be shown
+		expect(screen.getByText('200')).toBeInTheDocument();
+		expect(screen.getByText('404')).toBeInTheDocument();
+
+		// Select the variable suggestion
+		await act(async () => {
+			fireEvent.click(variableSuggestion);
+		});
+
+		// Verify the query was updated with the variable as value
+		expect(mockOnChange).toHaveBeenCalledWith(
+			expect.objectContaining({
+				items: expect.arrayContaining([
+					expect.objectContaining({
+						key: expect.objectContaining({ key: 'service.name' }),
+						op: '=',
+						value: '$service',
 					}),
 				]),
 			}),

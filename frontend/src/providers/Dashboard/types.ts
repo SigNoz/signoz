@@ -1,6 +1,6 @@
-import dayjs from 'dayjs';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
+import dayjs from 'dayjs';
 import { SuccessResponseV2 } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
@@ -45,6 +45,7 @@ export interface IDashboardContext {
 			| null
 			| undefined,
 		allSelected: boolean,
+		isDynamic?: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;

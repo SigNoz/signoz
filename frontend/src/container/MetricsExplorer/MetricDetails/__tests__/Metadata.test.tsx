@@ -2,10 +2,75 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import {
+	UniversalYAxisUnit,
+	YAxisUnitSelectorProps,
+} from 'components/YAxisUnitSelector/types';
 import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import * as useNotificationsHooks from 'hooks/useNotifications';
+import { SelectOption } from 'types/common/select';
 
 import Metadata from '../Metadata';
+
+// Mock antd select for testing
+jest.mock('antd', () => ({
+	...jest.requireActual('antd'),
+	Select: ({
+		children,
+		onChange,
+		value,
+		'data-testid': dataTestId,
+		options,
+	}: {
+		children: React.ReactNode;
+		onChange: (value: string) => void;
+		value: string;
+		'data-testid': string;
+		options: SelectOption<string, string>[];
+	}): JSX.Element => (
+		<select
+			data-testid={dataTestId}
+			value={value}
+			onChange={(e): void => onChange?.(e.target.value)}
+		>
+			{options?.map((option: SelectOption<string, string>) => (
+				<option key={option.value} value={option.value}>
+					{option.label}
+				</option>
+			))}
+			{children}
+		</select>
+	),
+}));
+jest.mock(
+	'components/YAxisUnitSelector',
+	() =>
+		function MockYAxisUnitSelector({
+			onChange,
+			value,
+			'data-testid': dataTestId,
+		}: YAxisUnitSelectorProps): JSX.Element {
+			return (
+				<select
+					data-testid={dataTestId}
+					value={value}
+					onChange={(e): void => onChange?.(e.target.value as UniversalYAxisUnit)}
+				>
+					<option value="">Please select a unit</option>
+					<option value="By">Bytes (B)</option>
+					<option value="s">Seconds (s)</option>
+					<option value="ms">Milliseconds (ms)</option>
+				</select>
+			);
+		},
+);
+
+jest.mock('react-query', () => ({
+	...jest.requireActual('react-query'),
+	useQueryClient: (): { invalidateQueries: () => void } => ({
+		invalidateQueries: jest.fn(),
+	}),
+}));
 
 const mockUseUpdateMetricMetadata = jest.fn();
 jest
@@ -75,7 +140,10 @@ describe('Metadata', () => {
 		render(
 			<Metadata
 				metricName={mockMetricName}
-				metadata={mockMetricMetadata}
+				metadata={{
+					...mockMetricMetadata,
+					unit: '',
+				}}
 				refetchMetricDetails={mockRefetchMetricDetails}
 			/>,
 		);
@@ -90,6 +158,24 @@ describe('Metadata', () => {
 			target: { value: 'Updated description' },
 		});
 
+		const metricTypeSelect = screen.getByTestId('metric-type-select');
+		expect(metricTypeSelect).toBeInTheDocument();
+		fireEvent.change(metricTypeSelect, {
+			target: { value: MetricType.SUM },
+		});
+
+		const temporalitySelect = screen.getByTestId('temporality-select');
+		expect(temporalitySelect).toBeInTheDocument();
+		fireEvent.change(temporalitySelect, {
+			target: { value: Temporality.CUMULATIVE },
+		});
+
+		const unitSelect = screen.getByTestId('unit-select');
+		expect(unitSelect).toBeInTheDocument();
+		fireEvent.change(unitSelect, {
+			target: { value: 'By' },
+		});
+
 		const saveButton = screen.getByText('Save');
 		expect(saveButton).toBeInTheDocument();
 		fireEvent.click(saveButton);
@@ -99,6 +185,10 @@ describe('Metadata', () => {
 				metricName: mockMetricName,
 				payload: expect.objectContaining({
 					description: 'Updated description',
+					metricType: MetricType.SUM,
+					temporality: Temporality.CUMULATIVE,
+					unit: 'By',
+					isMonotonic: true,
 				}),
 			}),
 			expect.objectContaining({
@@ -218,5 +308,22 @@ describe('Metadata', () => {
 
 		const editButton2 = screen.getByText('Edit');
 		expect(editButton2).toBeInTheDocument();
+	});
+
+	it('should not allow editing of unit if it is already set', () => {
+		render(
+			<Metadata
+				metricName={mockMetricName}
+				metadata={mockMetricMetadata}
+				refetchMetricDetails={mockRefetchMetricDetails}
+			/>,
+		);
+
+		const editButton = screen.getByText('Edit');
+		expect(editButton).toBeInTheDocument();
+		fireEvent.click(editButton);
+
+		const unitSelect = screen.queryByTestId('unit-select');
+		expect(unitSelect).not.toBeInTheDocument();
 	});
 });

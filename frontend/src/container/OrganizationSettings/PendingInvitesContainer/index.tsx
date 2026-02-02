@@ -1,19 +1,19 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Space, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
-import get from 'api/v1/invite/get';
-import deleteInvite from 'api/v1/invite/id/delete';
-import { ResizeTable } from 'components/ResizeTable';
-import { INVITE_MEMBERS_HASH } from 'constants/app';
-import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
-import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { SuccessResponseV2 } from 'types/api';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Form, Space, Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
+import get from 'api/v1/invite/get';
+import deleteInvite from 'api/v1/invite/id/delete';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import { ResizeTable } from 'components/ResizeTable';
+import { INVITE_MEMBERS_HASH } from 'constants/app';
+import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { PendingInvite } from 'types/api/user/getPendingInvites';
 import { ROLES } from 'types/roles';
@@ -48,10 +48,7 @@ function PendingInvitesContainer(): JSX.Element {
 		}
 	}, [state.error, state.value, t, notifications]);
 
-	const getPendingInvitesResponse = useQuery<
-		SuccessResponseV2<PendingInvite[]>,
-		APIError
-	>({
+	const { data, isLoading, error, isError, refetch } = useQuery({
 		queryFn: get,
 		queryKey: ['getPendingInvites', user?.accessJwt],
 	});
@@ -90,20 +87,11 @@ function PendingInvitesContainer(): JSX.Element {
 	}, [hash, toggleModal]);
 
 	useEffect(() => {
-		if (
-			getPendingInvitesResponse.status === 'success' &&
-			getPendingInvitesResponse?.data?.data
-		) {
-			const data = getParsedInviteData(
-				getPendingInvitesResponse?.data?.data || [],
-			);
-			setDataSource(data);
+		if (data?.data) {
+			const parsedData = getParsedInviteData(data?.data || []);
+			setDataSource(parsedData);
 		}
-	}, [
-		getParsedInviteData,
-		getPendingInvitesResponse?.data?.data,
-		getPendingInvitesResponse.status,
-	]);
+	}, [data, getParsedInviteData]);
 
 	const onRevokeHandler = async (id: string): Promise<void> => {
 		try {
@@ -180,20 +168,19 @@ function PendingInvitesContainer(): JSX.Element {
 	];
 
 	return (
-		<div>
+		<div className="pending-invites-container-wrapper">
 			<InviteUserModal
 				form={form}
 				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
-				setDataSource={setDataSource}
 				toggleModal={toggleModal}
-				shouldCallApi
+				onClose={refetch}
 			/>
 
-			<Space direction="vertical" size="middle">
+			<div className="pending-invites-container">
 				<TitleWrapper>
 					<Typography.Title level={3}>
 						{t('pending_invites')}
-						{getPendingInvitesResponse.status !== 'loading' && dataSource && (
+						{dataSource && (
 							<div className="members-count"> ({dataSource.length})</div>
 						)}
 					</Typography.Title>
@@ -210,15 +197,18 @@ function PendingInvitesContainer(): JSX.Element {
 						</Button>
 					</Space>
 				</TitleWrapper>
-				<ResizeTable
-					columns={columns}
-					tableLayout="fixed"
-					dataSource={dataSource}
-					pagination={false}
-					loading={getPendingInvitesResponse.status === 'loading'}
-					bordered
-				/>
-			</Space>
+				{!isError && (
+					<ResizeTable
+						columns={columns}
+						tableLayout="fixed"
+						dataSource={dataSource}
+						pagination={false}
+						loading={isLoading}
+						bordered
+					/>
+				)}
+				{isError && <ErrorContent error={error as APIError} />}
+			</div>
 		</div>
 	);
 }

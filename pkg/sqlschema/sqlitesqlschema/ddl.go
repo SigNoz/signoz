@@ -1,10 +1,11 @@
 package sqlitesqlschema
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 )
@@ -12,6 +13,7 @@ import (
 // Inspired by https://github.com/go-gorm/sqlite
 
 var (
+	ErrCodeInvalidDDL  = errors.MustNewCode("invalid_ddl")
 	sqliteSeparator    = "`|\"|'|\t"
 	sqliteIdentQuote   = "`|\"|'"
 	uniqueRegexp       = regexp.MustCompile(fmt.Sprintf(`^(?:CONSTRAINT [%v]?[\w-]+[%v]? )?UNIQUE (.*)$`, sqliteSeparator, sqliteSeparator))
@@ -40,12 +42,12 @@ const (
 func parseCreateTable(str string, fmter sqlschema.SQLFormatter) (*sqlschema.Table, []*sqlschema.UniqueConstraint, error) {
 	sections := tableRegexp.FindStringSubmatch(str)
 	if len(sections) == 0 {
-		return nil, nil, errors.New("invalid DDL")
+		return nil, nil, errors.New(errors.TypeInternal, ErrCodeInvalidDDL, "invalid DDL")
 	}
 
 	tableNameSections := tableNameRegexp.FindStringSubmatch(str)
 	if len(tableNameSections) == 0 {
-		return nil, nil, errors.New("invalid DDL")
+		return nil, nil, errors.New(errors.TypeInternal, ErrCodeInvalidDDL, "invalid DDL")
 	}
 
 	tableName := sqlschema.TableName(tableNameSections[1])
@@ -97,14 +99,14 @@ func parseCreateTable(str string, fmter sqlschema.SQLFormatter) (*sqlschema.Tabl
 		}
 
 		if bracketLevel < 0 {
-			return nil, nil, errors.New("invalid DDL, unbalanced brackets")
+			return nil, nil, errors.New(errors.TypeInternal, ErrCodeInvalidDDL, "invalid DDL, unbalanced brackets")
 		}
 
 		buf += string(c)
 	}
 
 	if bracketLevel != 0 {
-		return nil, nil, errors.New("invalid DDL, unbalanced brackets")
+		return nil, nil, errors.New(errors.TypeInternal, ErrCodeInvalidDDL, "invalid DDL, unbalanced brackets")
 	}
 
 	if buf != "" {
@@ -249,7 +251,7 @@ func parseAllColumns(in string) ([]sqlschema.ColumnName, error) {
 				quote = ']'
 				continue
 			} else if s[i] == ')' {
-				return columns, fmt.Errorf("unexpected token: %s", string(s[i]))
+				return columns, errors.NewInternalf(ErrCodeInvalidDDL, "unexpected token: %s", string(s[i]))
 			}
 			state = parseAllColumnsState_ReadingRawName
 			name = append(name, s[i])
@@ -265,7 +267,7 @@ func parseAllColumns(in string) ([]sqlschema.ColumnName, error) {
 				columns = append(columns, sqlschema.ColumnName(name))
 			}
 			if isQuote(s[i]) {
-				return nil, fmt.Errorf("unexpected token: %s", string(s[i]))
+				return nil, errors.NewInternalf(ErrCodeInvalidDDL, "unexpected token: %s", string(s[i]))
 			}
 			if isSpace(s[i]) {
 				state = parseAllColumnsState_EndOfName
@@ -300,14 +302,14 @@ func parseAllColumns(in string) ([]sqlschema.ColumnName, error) {
 				state = parseAllColumnsState_State_End
 				continue
 			}
-			return nil, fmt.Errorf("unexpected token: %s", string(s[i]))
+			return nil, errors.Newf(errors.TypeInternal, ErrCodeInvalidDDL, "unexpected token: %s", string(s[i]))
 		case parseAllColumnsState_State_End:
 			// break is automatic in Go switch statements
 		}
 	}
 
 	if state != parseAllColumnsState_State_End {
-		return nil, errors.New("unexpected end")
+		return nil, errors.New(errors.TypeInternal, ErrCodeInvalidDDL, "unexpected end")
 	}
 
 	return columns, nil

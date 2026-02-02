@@ -1,46 +1,81 @@
-import { Col } from 'antd';
-import Spinner from 'components/Spinner';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Switch, Typography } from 'antd';
+import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { themeColors } from 'constants/theme';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import GoToTop from 'container/GoToTop';
-import FiltersInput from 'container/LiveLogs/FiltersInput';
-import LiveLogsTopNav from 'container/LiveLogsTopNav';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useEventSourceEvent } from 'hooks/useEventSourceEvent';
-import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import { ILog } from 'types/api/logs/log';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { validateQuery } from 'utils/queryValidationUtils';
 
-import { idObject } from '../constants';
-import ListViewPanel from '../ListViewPanel';
 import LiveLogsList from '../LiveLogsList';
+import { ILiveLogsLog } from '../LiveLogsList/types';
+import LiveLogsListChart from '../LiveLogsListChart';
 import { QueryHistoryState } from '../types';
-import { prepareQueryByFilter } from '../utils';
-import { ContentWrapper, LiveLogsChart, Wrapper } from './styles';
 
-function LiveLogsContainer(): JSX.Element {
+import './LiveLogsContainer.styles.scss';
+
+interface LiveLogsContainerProps {
+	handleChangeSelectedView?: ChangeViewFunctionType;
+}
+
+function LiveLogsContainer({
+	handleChangeSelectedView,
+}: LiveLogsContainerProps): JSX.Element {
 	const location = useLocation();
-	const [logs, setLogs] = useState<ILog[]>([]);
+	const [logs, setLogs] = useState<ILiveLogsLog[]>([]);
+	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] = useState(
+		true,
+	);
 
-	const { stagedQuery } = useQueryBuilder();
+	const listQuery = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
+
+		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
+	}, [stagedQuery]);
 
 	const queryLocationState = location.state as QueryHistoryState;
 
-	const batchedEventsRef = useRef<ILog[]>([]);
+	const batchedEventsRef = useRef<ILiveLogsLog[]>([]);
 
-	const { selectedTime: globalSelectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const prevFilterExpressionRef = useRef<string | null>(null);
+
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
+
+	const formatItems = [
+		{
+			key: 'raw',
+			label: 'Raw',
+			data: {
+				title: 'max lines per row',
+			},
+		},
+		{
+			key: 'list',
+			label: 'Default',
+		},
+		{
+			key: 'table',
+			label: 'Column',
+			data: {
+				title: 'columns',
+			},
+		},
+	];
 
 	const {
 		handleStartOpenConnection,
@@ -53,7 +88,7 @@ function LiveLogsContainer(): JSX.Element {
 
 	const compositeQuery = useGetCompositeQueryParam();
 
-	const updateLogs = useCallback((newLogs: ILog[]) => {
+	const updateLogs = useCallback((newLogs: ILiveLogsLog[]) => {
 		setLogs((prevState) =>
 			[...newLogs, ...prevState].slice(0, MAX_LOGS_LIST_SIZE),
 		);
@@ -67,7 +102,7 @@ function LiveLogsContainer(): JSX.Element {
 	}, 500);
 
 	const batchLiveLog = useCallback(
-		(log: ILog): void => {
+		(log: ILiveLogsLog): void => {
 			batchedEventsRef.current.push(log);
 
 			debouncedUpdateLogs();
@@ -77,7 +112,7 @@ function LiveLogsContainer(): JSX.Element {
 
 	const handleGetLiveLogs = useCallback(
 		(event: MessageEvent<string>) => {
-			const data: ILog = JSON.parse(event.data);
+			const data: ILiveLogsLog = JSON.parse(event?.data);
 
 			batchLiveLog(data);
 		},
@@ -91,72 +126,76 @@ function LiveLogsContainer(): JSX.Element {
 	useEventSourceEvent('message', handleGetLiveLogs);
 	useEventSourceEvent('error', handleError);
 
-	const getPreparedQuery = useCallback(
-		(query: Query): Query => {
-			const firstLogId: string | null = logs.length ? logs[0].id : null;
-
-			const preparedQuery: Query = prepareQueryByFilter(
-				query,
-				idObject,
-				firstLogId,
-			);
-
-			return preparedQuery;
-		},
-		[logs],
-	);
-
 	const openConnection = useCallback(
-		(query: Query) => {
-			const { queryPayload } = prepareQueryRangePayload({
-				query,
-				graphType: PANEL_TYPES.LIST,
-				selectedTime: 'GLOBAL_TIME',
-				globalSelectedInterval: globalSelectedTime,
-			});
-
-			const encodedQueryPayload = encodeURIComponent(JSON.stringify(queryPayload));
-			const queryString = `q=${encodedQueryPayload}`;
-
-			handleStartOpenConnection({ queryString });
+		(filterExpression?: string | null) => {
+			handleStartOpenConnection(filterExpression || '');
 		},
-		[globalSelectedTime, handleStartOpenConnection],
+		[handleStartOpenConnection],
 	);
 
 	const handleStartNewConnection = useCallback(
-		(query: Query) => {
+		(filterExpression?: string | null) => {
 			handleCloseConnection();
 
-			const preparedQuery = getPreparedQuery(query);
-
-			openConnection(preparedQuery);
+			openConnection(filterExpression);
 		},
-		[getPreparedQuery, handleCloseConnection, openConnection],
+		[handleCloseConnection, openConnection],
 	);
 
 	useEffect(() => {
-		if (!compositeQuery) return;
+		const currentFilterExpression =
+			currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
 
+		// Check if filterExpression has actually changed
 		if (
-			(initialLoading && !isConnectionLoading) ||
-			compositeQuery.id !== stagedQuery?.id
+			!prevFilterExpressionRef.current ||
+			prevFilterExpressionRef.current !== currentFilterExpression
 		) {
-			handleStartNewConnection(compositeQuery);
+			const validationResult = validateQuery(currentFilterExpression || '');
+
+			if (validationResult.isValid) {
+				setLogs([]);
+				batchedEventsRef.current = [];
+				handleStartNewConnection(currentFilterExpression);
+			}
+
+			prevFilterExpressionRef.current = currentFilterExpression || null;
 		}
-	}, [
-		compositeQuery,
-		initialLoading,
-		stagedQuery,
-		isConnectionLoading,
-		openConnection,
-		handleStartNewConnection,
-	]);
+	}, [currentQuery, handleStartNewConnection]);
+
+	useEffect(() => {
+		if (initialLoading && !isConnectionLoading) {
+			const currentFilterExpression =
+				currentQuery?.builder.queryData[0]?.filter?.expression?.trim() || '';
+
+			const validationResult = validateQuery(currentFilterExpression || '');
+
+			if (validationResult.isValid) {
+				handleStartNewConnection(currentFilterExpression);
+				prevFilterExpressionRef.current = currentFilterExpression || null;
+			} else {
+				handleStartNewConnection(null);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [initialLoading, isConnectionLoading, handleStartNewConnection]);
 
 	useEffect((): (() => void) | undefined => {
-		if (isConnectionError && reconnectDueToError && compositeQuery) {
+		if (isConnectionError && reconnectDueToError) {
 			// Small delay to prevent immediate reconnection attempts
 			const reconnectTimer = setTimeout(() => {
-				handleStartNewConnection(compositeQuery);
+				const fallbackFilterExpression =
+					prevFilterExpressionRef.current ||
+					currentQuery?.builder.queryData[0]?.filter?.expression?.trim() ||
+					null;
+
+				const validationResult = validateQuery(fallbackFilterExpression || '');
+
+				if (validationResult.isValid) {
+					handleStartNewConnection(fallbackFilterExpression);
+				} else {
+					handleStartNewConnection(null);
+				}
 			}, 1000);
 
 			return (): void => clearTimeout(reconnectTimer);
@@ -167,53 +206,68 @@ function LiveLogsContainer(): JSX.Element {
 		reconnectDueToError,
 		compositeQuery,
 		handleStartNewConnection,
+		currentQuery,
 	]);
 
-	useEffect(() => {
-		const prefetchedList = queryLocationState?.listQueryPayload[0]?.list;
+	// clean up the connection when the component unmounts
+	useEffect(
+		() => (): void => {
+			handleCloseConnection();
+		},
+		[handleCloseConnection],
+	);
 
-		if (prefetchedList) {
-			const prefetchedLogs: ILog[] = prefetchedList
-				.map((item) => ({
-					...item.data,
-					timestamp: item.timestamp,
-				}))
-				.reverse();
-
-			updateLogs(prefetchedLogs);
-		}
-	}, [queryLocationState, updateLogs]);
+	const handleToggleFrequencyChart = useCallback(() => {
+		setShowLiveLogsFrequencyChart(!showLiveLogsFrequencyChart);
+	}, [showLiveLogsFrequencyChart]);
 
 	return (
-		<Wrapper>
-			<LiveLogsTopNav />
-			<ContentWrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
-				<Col span={24}>
-					<FiltersInput />
-				</Col>
-				{initialLoading && logs.length === 0 ? (
-					<Col span={24}>
-						<Spinner style={{ height: 'auto' }} tip="Fetching Logs" />
-					</Col>
-				) : (
-					<>
-						<Col span={24}>
-							<LiveLogsChart
-								initialData={queryLocationState?.graphQueryPayload || null}
-							/>
-						</Col>
-						<Col span={24}>
-							<ListViewPanel />
-						</Col>
-						<Col span={24}>
-							<LiveLogsList logs={logs} />
-						</Col>
-					</>
+		<div className="live-logs-container">
+			<div className="live-logs-content">
+				<div className="live-logs-settings-panel">
+					<div className="live-logs-frequency-chart-view-controller">
+						<Typography>Frequency chart</Typography>
+						<Switch
+							size="small"
+							checked={showLiveLogsFrequencyChart}
+							defaultChecked
+							onChange={handleToggleFrequencyChart}
+						/>
+					</div>
+
+					<LogsFormatOptionsMenu
+						items={formatItems}
+						selectedOptionFormat={options.format}
+						config={config}
+					/>
+				</div>
+
+				{showLiveLogsFrequencyChart && (
+					<div className="live-logs-chart-container">
+						<LiveLogsListChart
+							initialData={queryLocationState?.graphQueryPayload || null}
+							className="live-logs-chart"
+							isShowingLiveLogs
+						/>
+					</div>
 				)}
-				<GoToTop />
-			</ContentWrapper>
-		</Wrapper>
+
+				<div className="live-logs-list-container">
+					<LiveLogsList
+						logs={logs}
+						isLoading={initialLoading && logs.length === 0}
+						handleChangeSelectedView={handleChangeSelectedView}
+					/>
+				</div>
+			</div>
+
+			<GoToTop />
+		</div>
 	);
 }
+
+LiveLogsContainer.defaultProps = {
+	handleChangeSelectedView: undefined,
+};
 
 export default LiveLogsContainer;

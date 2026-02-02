@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -22,7 +23,6 @@ type logQueryStatementBuilder struct {
 	aggExprRewriter           qbtypes.AggExprRewriter
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonBodyPrefix string
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
@@ -36,7 +36,6 @@ func NewLogQueryStatementBuilder(
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	jsonBodyPrefix string,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
@@ -49,7 +48,6 @@ func NewLogQueryStatementBuilder(
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
-		jsonBodyPrefix:            jsonBodyPrefix,
 		jsonKeyToKey:              jsonKeyToKey,
 	}
 }
@@ -68,18 +66,18 @@ func (b *logQueryStatementBuilder) Build(
 	end = querybuilder.ToNanoSecs(end)
 
 	keySelectors := getKeySelectors(query)
-	keys, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
 
-	b.adjustKeys(ctx, keys, query)
+	query = b.adjustKeys(ctx, keys, query, requestType)
 
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
 	switch requestType {
-	case qbtypes.RequestTypeRaw:
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
 		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
@@ -87,7 +85,7 @@ func (b *logQueryStatementBuilder) Build(
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
 	}
 
-	return nil, fmt.Errorf("unsupported request type: %s", requestType)
+	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []*telemetrytypes.FieldKeySelector {
@@ -106,8 +104,22 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.TelemetryFieldKey.Name)
-		keySelectors = append(keySelectors, selectors...)
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          groupBy.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  groupBy.FieldContext,
+			FieldDataType: groupBy.FieldDataType,
+		})
+	}
+
+	for idx := range query.SelectFields {
+		selectField := query.SelectFields[idx]
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          selectField.Name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  selectField.FieldContext,
+			FieldDataType: selectField.FieldDataType,
+		})
 	}
 
 	for idx := range query.Order {
@@ -121,80 +133,86 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalLogs
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
 	return keySelectors
 }
 
-func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) {
-	// for group by / order by, if there is a key
-	// that exactly matches the name of intrinsic field but has
-	// a field context or data type that doesn't match the field context or data type of the
-	// intrinsic field,
-	// and there is no additional key present in the data with the incoming key match,
-	// then override the given context with
-	// intrinsic field context and data type
-	// Why does that happen? Because we have a lot of dashboards created by users and shared over web
-	// that has incorrect context or data type populated so we fix it
-	// note: this override happens only when there is no match; if there is a match,
-	// we can't make decision on behalf of users so we let it use unmodified
+func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {
 
-	// example: {"key": "severity_text","type": "tag","dataType": "string"}
-	// This is sent as "tag", when it's not, this was earlier managed with
-	// `isColumn`, which we don't have in v5 (because it's not a user concern whether it's mat col or not)
-	// Such requests as-is look for attributes, the following code exists to handle them
-	checkMatch := func(k *telemetrytypes.TelemetryFieldKey) {
-		var overallMatch bool
+	// Always ensure timestamp and id are present in keys map
+	keys["id"] = append([]*telemetrytypes.TelemetryFieldKey{{
+		Name:          "id",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}}, keys["id"]...)
 
-		findMatch := func(staticKeys map[string]telemetrytypes.TelemetryFieldKey) bool {
-			// for a given key `k`, iterate over the metadata keys `keys`
-			// and see if there is any exact match
-			match := false
-			for _, mapKey := range keys[k.Name] {
-				if mapKey.FieldContext == k.FieldContext && mapKey.FieldDataType == k.FieldDataType {
-					match = true
-				}
-			}
-			// we don't have exact match, then it's doesn't exist in attribute or resource attribute
-			// use the intrinsic/calculated field
-			if !match {
-				b.logger.InfoContext(ctx, "overriding the field context and data type", "key", k.Name)
-				k.FieldContext = staticKeys[k.Name].FieldContext
-				k.FieldDataType = staticKeys[k.Name].FieldDataType
-			}
-			return match
-		}
+	keys["timestamp"] = append([]*telemetrytypes.TelemetryFieldKey{{
+		Name:          "timestamp",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	}}, keys["timestamp"]...)
 
-		if _, ok := IntrinsicFields[k.Name]; ok {
-			overallMatch = overallMatch || findMatch(IntrinsicFields)
-		}
+	/*
+		Adjust keys for alias expressions in aggregations
+	*/
+	actions := querybuilder.AdjustKeysForAliasExpressions(&query, requestType)
 
-		if !overallMatch {
-			// check if all the key for the given field have been materialized, if so
-			// set the key to materialized
-			materilized := true
-			for _, key := range keys[k.Name] {
-				materilized = materilized && key.Materialized
-			}
-			k.Materialized = materilized
-		}
+	/*
+		Check if user is using multiple contexts or data types for same field name
+		Idea is to use a super set of keys that can satisfy all the usages
+
+		For example, lets consider model_id exists in both attributes and resources
+		And user is trying to use `attribute.model_id` and `model_id`.
+
+		In this case, we'll remove the context from `attribute.model_id`
+		and make it just `model_id` and remove the duplicate entry.
+
+		Same goes with data types.
+		Consider user is using http.status_code:number and http.status_code
+		In this case, we'll remove the data type from http.status_code:number
+		and make it just http.status_code and remove the duplicate entry.
+	*/
+
+	actions = append(actions, querybuilder.AdjustDuplicateKeys(&query)...)
+
+	/*
+		Now adjust each key to have correct context and data type
+		Here we try to make intelligent guesses which work for all users (not just majority)
+		Reason for doing this is to not create an unexpected behavior for users
+	*/
+	for idx := range query.SelectFields {
+		actions = append(actions, b.adjustKey(&query.SelectFields[idx], keys)...)
 	}
-
 	for idx := range query.GroupBy {
-		checkMatch(&query.GroupBy[idx].TelemetryFieldKey)
+		actions = append(actions, b.adjustKey(&query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		checkMatch(&query.Order[idx].Key.TelemetryFieldKey)
+		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
-	keys["id"] = []*telemetrytypes.TelemetryFieldKey{
-		{
-			Name:          "id",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
+	for _, action := range actions {
+		// TODO: change to debug level once we are confident about the behavior
+		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
 	}
+
+	return query
+}
+
+func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
+
+	// First check if it matches with any intrinsic fields
+	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
+	if _, ok := IntrinsicFields[key.Name]; ok {
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
+		return querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)
+	}
+
+	return querybuilder.AdjustKey(key, keys, nil)
+
 }
 
 // buildListQuery builds a query for list panel type
@@ -219,16 +237,50 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select default columns
-	sb.Select(
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string",
-	)
+	// Select timestamp and id by default
+	sb.Select(LogsV2TimestampColumn)
+	sb.SelectMore(LogsV2IDColumn)
+	if len(query.SelectFields) == 0 {
+		// Select all default columns
+		sb.SelectMore(LogsV2TraceIDColumn)
+		sb.SelectMore(LogsV2SpanIDColumn)
+		sb.SelectMore(LogsV2TraceFlagsColumn)
+		sb.SelectMore(LogsV2SeverityTextColumn)
+		sb.SelectMore(LogsV2SeverityNumberColumn)
+		sb.SelectMore(LogsV2ScopeNameColumn)
+		sb.SelectMore(LogsV2ScopeVersionColumn)
+		sb.SelectMore(LogsV2BodyColumn)
+		if querybuilder.BodyJSONQueryEnabled {
+			sb.SelectMore(LogsV2BodyJSONColumn)
+			sb.SelectMore(LogsV2BodyPromotedColumn)
+		}
+		sb.SelectMore(LogsV2AttributesStringColumn)
+		sb.SelectMore(LogsV2AttributesNumberColumn)
+		sb.SelectMore(LogsV2AttributesBoolColumn)
+		sb.SelectMore(LogsV2ResourcesStringColumn)
+		sb.SelectMore(LogsV2ScopeStringColumn)
 
-	// From table
+	} else {
+		// Select specified columns
+		for index := range query.SelectFields {
+			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
+				continue
+			}
+
+			// get column expression for the field - use array index directly to avoid pointer to loop variable
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
+			if err != nil {
+				return nil, err
+			}
+			sb.SelectMore(colExpr)
+		}
+	}
+
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
 	if err != nil {
 		return nil, err
 	}
@@ -258,11 +310,16 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
@@ -296,10 +353,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
+
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
@@ -321,8 +379,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
 
+	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +427,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -393,7 +453,6 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		}
 
 		combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
 		mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 		// Stitch it all together:  WITH … SELECT …
@@ -401,11 +460,16 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		finalArgs = querybuilder.PrependArgs(cteArgs, mainArgs)
 	}
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 // buildScalarQuery builds a query for scalar panel type
@@ -436,10 +500,11 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
+
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
@@ -465,11 +530,11 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		}
 	}
 
-	// From table
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	warnings, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+
 	if err != nil {
 		return nil, err
 	}
@@ -511,11 +576,16 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
-	return &qbtypes.Statement{
-		Query:    finalSQL,
-		Args:     finalArgs,
-		Warnings: warnings,
-	}, nil
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }
 
 // buildFilterCondition builds SQL condition from filter expression
@@ -526,41 +596,48 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) ([]string, error) {
+) (*querybuilder.PreparedWhereClause, error) {
 
-	var filterWhereClause *sqlbuilder.WhereClause
-	var warnings []string
+	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
-		filterWhereClause, warnings, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
-			JsonBodyPrefix:     b.jsonBodyPrefix,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-		})
+		}, start, end)
 
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if filterWhereClause != nil {
-		sb.AddWhereClause(filterWhereClause)
+	if preparedWhereClause != nil {
+		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 
 	// add time filter
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := end / querybuilder.NsToSeconds
+	var endBucket uint64
+	if end != 0 {
+		endBucket = end / querybuilder.NsToSeconds
+	}
 
-	sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.L("timestamp", fmt.Sprintf("%d", end)), sb.GE("ts_bucket_start", startBucket), sb.LE("ts_bucket_start", endBucket))
+	if start != 0 {
+		sb.Where(sb.GE("timestamp", fmt.Sprintf("%d", start)), sb.GE("ts_bucket_start", startBucket))
+	}
+	if end != 0 {
+		sb.Where(sb.L("timestamp", fmt.Sprintf("%d", end)), sb.LE("ts_bucket_start", endBucket))
+	}
 
-	return warnings, nil
+	return preparedWhereClause, nil
 }
 
 func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) (int, bool) {
@@ -598,7 +675,6 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-
 	return b.resourceFilterStmtBuilder.Build(
 		ctx,
 		start,

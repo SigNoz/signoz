@@ -1,3 +1,5 @@
+import React from 'react';
+import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -7,18 +9,14 @@ import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
-import { QueryBuilderContext } from 'providers/QueryBuilder';
-import React from 'react';
-import { I18nextProvider } from 'react-i18next';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-import { VirtuosoMockContext } from 'react-virtuoso';
-import i18n from 'ReactI18';
 import {
 	act,
+	AllTheProviders,
 	fireEvent,
 	render,
 	RenderResult,
 	screen,
+	userEvent,
 	waitFor,
 } from 'tests/test-utils';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -89,20 +87,6 @@ getStateSpy.mockImplementation(() => {
 	}
 
 	return originalState;
-});
-
-jest.mock('uplot', () => {
-	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
-	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
-	return {
-		paths,
-		default: uplotMock,
-	};
 });
 
 jest.mock('react-router-dom', () => ({
@@ -277,9 +261,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		act(() => {
 			renderResult = render(
 				<VirtuosoMockContext.Provider value={{ viewportHeight, itemHeight }}>
-					<I18nextProvider i18n={i18n}>
-						<LogsExplorer />
-					</I18nextProvider>
+					<LogsExplorer />
 				</VirtuosoMockContext.Provider>,
 			);
 		});
@@ -453,13 +435,14 @@ function LogsExplorerWithMockContext({
 	);
 
 	return (
-		<MemoryRouter>
-			<QueryBuilderContext.Provider value={contextValue as any}>
-				<VirtuosoMockContext.Provider value={virtuosoContextValue}>
-					<LogsExplorer />
-				</VirtuosoMockContext.Provider>
-			</QueryBuilderContext.Provider>
-		</MemoryRouter>
+		<AllTheProviders
+			queryBuilderOverrides={contextValue as any}
+			initialRoute="/logs"
+		>
+			<VirtuosoMockContext.Provider value={virtuosoContextValue}>
+				<LogsExplorer />
+			</VirtuosoMockContext.Provider>
+		</AllTheProviders>
 	);
 }
 
@@ -535,16 +518,15 @@ describe('Logs Explorer -> stage and run query', () => {
 		const initialStart = initialPayload.start;
 		const initialEnd = initialPayload.end;
 
-		// Click the Stage & Run Query button
-		await act(async () => {
-			fireEvent.click(
-				screen.getByRole('button', {
-					name: /stage & run query/i,
-				}),
-			);
-		});
+		// Click the Run Query button
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		await user.click(
+			screen.getByRole('button', {
+				name: /run query/i,
+			}),
+		);
 
-		// Wait for additional API calls to be made after clicking Stage & Run Query
+		// Wait for additional API calls to be made after clicking Run Query
 		await waitFor(
 			() => {
 				expect(capturedPayloads.length).toBeGreaterThan(1);

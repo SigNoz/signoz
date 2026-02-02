@@ -2,7 +2,8 @@ package authtypes
 
 import (
 	"context"
-	"errors"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type uuidKey struct{}
@@ -24,7 +25,7 @@ func (u *UUID) ContextFromRequest(ctx context.Context, values ...string) (contex
 	}
 
 	if value == "" {
-		return ctx, errors.New("missing Authorization header")
+		return ctx, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "missing Authorization header")
 	}
 
 	return NewContextWithUUID(ctx, value), nil

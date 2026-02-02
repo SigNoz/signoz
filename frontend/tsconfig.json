@@ -31,7 +31,7 @@
 		],
 		"types": ["node", "jest"]
 	},
-	"exclude": ["node_modules", "src/parser/*.ts"],
+	"exclude": ["node_modules", "src/parser/*.ts", "src/parser/TraceOperatorParser/*.ts", "orval.config.ts"],
 	"include": [
 		"./src",
 		"./src/**/*.ts",

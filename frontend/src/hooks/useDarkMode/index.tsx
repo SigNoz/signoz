@@ -1,8 +1,3 @@
-import { theme as antdTheme } from 'antd';
-import { ThemeConfig } from 'antd/es/config-provider/context';
-import get from 'api/browser/localstorage/get';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	createContext,
 	Dispatch,
@@ -14,6 +9,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { theme as antdTheme } from 'antd';
+import { ThemeConfig } from 'antd/es/config-provider/context';
+import get from 'api/browser/localstorage/get';
+import set from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { THEME_MODE } from './constant';
 
@@ -22,6 +22,7 @@ export const ThemeContext = createContext({
 	toggleTheme: (): void => {},
 	autoSwitch: false,
 	setAutoSwitch: ((): void => {}) as Dispatch<SetStateAction<boolean>>,
+	setTheme: ((): void => {}) as Dispatch<SetStateAction<string>>,
 });
 
 // Hook to detect system theme preference
@@ -44,7 +45,9 @@ export const useSystemTheme = (): 'light' | 'dark' => {
 };
 
 export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
-	const [theme, setTheme] = useState(get(LOCALSTORAGE.THEME) || THEME_MODE.DARK);
+	const [theme, setThemeState] = useState(
+		get(LOCALSTORAGE.THEME) || THEME_MODE.DARK,
+	);
 	const [autoSwitch, setAutoSwitch] = useState(
 		get(LOCALSTORAGE.THEME_AUTO_SWITCH) === 'true',
 	);
@@ -55,7 +58,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 		if (autoSwitch) {
 			const newTheme = systemTheme === 'dark' ? THEME_MODE.DARK : THEME_MODE.LIGHT;
 			if (newTheme !== theme) {
-				setTheme(newTheme);
+				setThemeState(newTheme);
 				set(LOCALSTORAGE.THEME, newTheme);
 			}
 		}
@@ -68,14 +71,24 @@ export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 
 	const toggleTheme = useCallback((): void => {
 		if (theme === THEME_MODE.LIGHT) {
-			setTheme(THEME_MODE.DARK);
+			setThemeState(THEME_MODE.DARK);
 			set(LOCALSTORAGE.THEME, THEME_MODE.DARK);
 		} else {
-			setTheme(THEME_MODE.LIGHT);
+			setThemeState(THEME_MODE.LIGHT);
 			set(LOCALSTORAGE.THEME, THEME_MODE.LIGHT);
 		}
 		set(LOCALSTORAGE.THEME_ANALYTICS_V1, '');
 	}, [theme]);
+
+	const setTheme = useCallback(
+		(newTheme: SetStateAction<string>): void => {
+			const themeValue =
+				typeof newTheme === 'function' ? newTheme(theme) : newTheme;
+			setThemeState(themeValue);
+			set(LOCALSTORAGE.THEME, themeValue);
+		},
+		[theme],
+	);
 
 	const value = useMemo(
 		() => ({
@@ -83,8 +96,9 @@ export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 			toggleTheme,
 			autoSwitch,
 			setAutoSwitch,
+			setTheme,
 		}),
-		[theme, toggleTheme, autoSwitch, setAutoSwitch],
+		[theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme],
 	);
 
 	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -99,14 +113,15 @@ interface ThemeMode {
 	toggleTheme: () => void;
 	autoSwitch: boolean;
 	setAutoSwitch: Dispatch<SetStateAction<boolean>>;
+	setTheme: (newTheme: string) => void;
 }
 
 export const useThemeMode = (): ThemeMode => {
-	const { theme, toggleTheme, autoSwitch, setAutoSwitch } = useContext(
+	const { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme } = useContext(
 		ThemeContext,
 	);
 
-	return { theme, toggleTheme, autoSwitch, setAutoSwitch };
+	return { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme };
 };
 
 export const useIsDarkMode = (): boolean => {

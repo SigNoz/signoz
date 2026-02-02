@@ -1,0 +1,88 @@
+.time-input-container {
+	display: flex;
+	align-items: center;
+	gap: 0;
+
+	.time-input-field {
+		width: 40px;
+		height: 32px;
+		background-color: var(--bg-ink-400);
+		border: 1px solid var(--bg-slate-400);
+		color: var(--bg-vanilla-100);
+		font-family: 'Space Mono', monospace;
+		font-size: 14px;
+		font-weight: 600;
+		text-align: center;
+		border-radius: 4px;
+
+		&::placeholder {
+			color: var(--bg-vanilla-400);
+			font-family: 'Space Mono', monospace;
+		}
+
+		&:hover {
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&:focus {
+			border-color: var(--bg-vanilla-300);
+			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+			outline: none;
+		}
+
+		&:disabled {
+			background-color: var(--bg-ink-300);
+			color: var(--bg-vanilla-400);
+			cursor: not-allowed;
+
+			&:hover {
+				border-color: var(--bg-slate-400);
+			}
+		}
+	}
+
+	.time-input-separator {
+		color: var(--bg-vanilla-400);
+		font-size: 14px;
+		font-weight: 600;
+		margin: 0 4px;
+		user-select: none;
+	}
+}
+
+.lightMode {
+	.time-input-container {
+		.time-input-field {
+			background-color: var(--bg-vanilla-300);
+			border: 1px solid var(--bg-vanilla-300);
+			color: var(--bg-ink-400);
+
+			&::placeholder {
+				color: var(--bg-ink-300);
+			}
+
+			&:hover {
+				border-color: var(--bg-ink-300);
+			}
+
+			&:focus {
+				border-color: var(--bg-ink-300);
+				box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+			}
+
+			&:disabled {
+				background-color: var(--bg-vanilla-300);
+				color: var(--bg-ink-300);
+				cursor: not-allowed;
+
+				&:hover {
+					border-color: var(--bg-vanilla-300);
+				}
+			}
+		}
+
+		.time-input-separator {
+			color: var(--bg-ink-300);
+		}
+	}
+}

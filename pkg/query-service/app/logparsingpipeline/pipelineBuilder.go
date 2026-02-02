@@ -437,7 +437,7 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 	// should come out to be (attributes.test != nil && attributes.test["a.b"]?.value != nil)
 	collectionNotNilCheck, err := fieldNotNilCheck(parts[0])
 	if err != nil {
-		return "", errors.WithAdditional(err, "couldn't generate nil check for %s", parts[0])
+		return "", errors.WithAdditionalf(err, "couldn't generate nil check for %s", parts[0])
 	}
 
 	// generate nil check for entire path.

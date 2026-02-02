@@ -12,7 +12,7 @@ import ServiceMetricTable from './ServiceMetricTable';
 function ServiceMetricsApplication({
 	topLevelOperations,
 }: ServiceMetricsProps): JSX.Element {
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -26,18 +26,10 @@ function ServiceMetricsApplication({
 		() =>
 			getQueryRangeRequestData({
 				topLevelOperations,
-				minTime,
-				maxTime,
 				globalSelectedInterval,
 				dotMetricsEnabled,
 			}),
-		[
-			globalSelectedInterval,
-			maxTime,
-			minTime,
-			topLevelOperations,
-			dotMetricsEnabled,
-		],
+		[globalSelectedInterval, topLevelOperations, dotMetricsEnabled],
 	);
 	return (
 		<ServiceMetricTable

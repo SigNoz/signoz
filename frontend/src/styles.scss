@@ -26,18 +26,6 @@ body {
 	box-sizing: border-box;
 }
 
-// Theme transition animations
-* {
-	transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease,
-		box-shadow 0.3s ease;
-}
-
-// For components that shouldn't transition (like loading spinners, animations)
-.no-transition,
-.no-transition * {
-	transition: none !important;
-}
-
 // Respect user's reduced motion preference
 @media (prefers-reduced-motion: reduce) {
 	* {
@@ -178,7 +166,7 @@ body {
 						height: 11px;
 						flex-shrink: 0;
 						cursor: pointer;
-						transition: all 0.2s ease;
+						transition: transform 0.2s ease;
 						position: relative;
 
 						&:hover {
@@ -292,7 +280,7 @@ body {
 					height: 11px;
 					flex-shrink: 0;
 					cursor: pointer;
-					transition: all 0.2s ease;
+					transition: transform 0.2s ease;
 					position: relative;
 
 					&:hover {
@@ -401,14 +389,14 @@ body {
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
-	background: rgba(0, 0, 0);
+	background: var(--bg-ink-300);
 	-webkit-font-smoothing: antialiased;
-	color: #fff;
+	color: var(--bg-vanilla-100);
 	z-index: 10000;
 	// pointer-events: none;
 	overflow: auto;
 	max-height: 480px !important;
-	max-width: 240px !important;
+	max-width: 300px !important;
 	border-radius: 5px;
 	border: 1px solid rgba(255, 255, 255, 0.1);
 
@@ -571,6 +559,12 @@ body {
 }
 
 .lightMode {
+	#overlay {
+		color: var(--bg-ink-500);
+		background: var(--bg-vanilla-100);
+		border: 1px solid var(--bg-vanilla-300);
+	}
+
 	.ant-dropdown-menu {
 		border: 1px solid var(--bg-vanilla-300);
 		background: var(--bg-vanilla-100);
@@ -754,4 +748,8 @@ notifications	-  2050
 
 .service-map-container {
 	padding: 0px 8px;
+}
+
+.cursor-pointer {
+	cursor: pointer;
 }

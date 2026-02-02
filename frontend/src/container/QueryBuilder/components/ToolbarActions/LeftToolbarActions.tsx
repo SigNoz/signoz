@@ -1,11 +1,11 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './ToolbarActions.styles.scss';
-
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+
+import './ToolbarActions.styles.scss';
 
 interface LeftToolbarActionsProps {
 	items: any;
@@ -20,7 +20,6 @@ const activeTab = 'active-tab';
 export default function LeftToolbarActions({
 	items,
 	selectedView,
-
 	onChangeSelectedView,
 	showFilter,
 	handleFilterVisibilityChange,

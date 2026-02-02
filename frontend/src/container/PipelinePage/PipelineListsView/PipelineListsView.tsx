@@ -1,14 +1,3 @@
-import './styles.scss';
-
-import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Card, Form, Modal, Table, Typography } from 'antd';
-import { ExpandableConfig } from 'antd/es/table/interface';
-import logEvent from 'api/common/logEvent';
-import savePipeline from 'api/pipeline/post';
-import { useNotifications } from 'hooks/useNotifications';
-import { isEqual, isUndefined } from 'lodash-es';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { useErrorModal } from 'providers/ErrorModalProvider';
 import React, {
 	useCallback,
 	useEffect,
@@ -19,6 +8,15 @@ import React, {
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { Card, Form, Modal, Table, Typography } from 'antd';
+import { ExpandableConfig } from 'antd/es/table/interface';
+import logEvent from 'api/common/logEvent';
+import savePipeline from 'api/pipeline/post';
+import { useNotifications } from 'hooks/useNotifications';
+import { isEqual, isUndefined } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import {
 	ActionMode,
@@ -55,6 +53,8 @@ import {
 	getTableColumn,
 	getUpdatedRow,
 } from './utils';
+
+import './styles.scss';
 
 function PipelinesListEmptyState(): JSX.Element {
 	const { t } = useTranslation(['pipeline']);

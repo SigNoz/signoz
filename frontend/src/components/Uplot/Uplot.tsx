@@ -1,11 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './Uplot.styles.scss';
-
-import * as Sentry from '@sentry/react';
-import { Typography } from 'antd';
-import { ToggleGraphProps } from 'components/Graph/types';
-import { LineChart } from 'lucide-react';
-import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	forwardRef,
 	memo,
@@ -14,9 +7,16 @@ import {
 	useImperativeHandle,
 	useRef,
 } from 'react';
+import * as Sentry from '@sentry/react';
+import { Typography } from 'antd';
+import { ToggleGraphProps } from 'components/Graph/types';
+import { LineChart } from 'lucide-react';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
+
+import './Uplot.styles.scss';
 
 export interface UplotProps {
 	options: uPlot.Options;
@@ -62,7 +62,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		useEffect(() => {
 			onCreateRef.current = onCreate;
 			onDeleteRef.current = onDelete;
-		});
+		}, [onCreate, onDelete]);
 
 		const destroy = useCallback((chart: uPlot | null) => {
 			if (chart) {
@@ -71,16 +71,31 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 				chartRef.current = null;
 			}
 
-			// remove chart tooltip on cleanup
+			// Clean up tooltip overlay that might be detached
 			const overlay = document.getElementById('overlay');
-
 			if (overlay) {
+				// Remove all child elements from overlay
+				while (overlay.firstChild) {
+					overlay.removeChild(overlay.firstChild);
+				}
 				overlay.style.display = 'none';
 			}
+
+			// Clean up any remaining tooltips that might be detached
+			const tooltips = document.querySelectorAll(
+				'.uplot-tooltip, .tooltip-container',
+			);
+			tooltips.forEach((tooltip) => {
+				if (tooltip && tooltip.parentNode) {
+					tooltip.parentNode.removeChild(tooltip);
+				}
+			});
 		}, []);
 
 		const create = useCallback(() => {
-			if (targetRef.current === null) return;
+			if (targetRef.current === null) {
+				return;
+			}
 
 			// If data is empty, hide cursor
 			if (data && data[0] && data[0]?.length === 0) {

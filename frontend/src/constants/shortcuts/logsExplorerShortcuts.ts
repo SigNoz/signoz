@@ -10,9 +10,9 @@ export const LogsExplorerShortcuts = {
 export const LogsExplorerShortcutsName = {
 	StageAndRunQuery: `${
 		userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'
-	}+enter`,
+	} + enter`,
 	FocusTheSearchBar: 's',
-	ShowAllFilters: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}+/`,
+	ShowAllFilters: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'} + /`,
 };
 
 export const LogsExplorerShortcutsDescription = {

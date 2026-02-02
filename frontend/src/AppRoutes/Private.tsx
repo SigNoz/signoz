@@ -1,3 +1,6 @@
+import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { matchPath, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getAll from 'api/v1/user/get';
@@ -9,9 +12,6 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { matchPath, useLocation } from 'react-router-dom';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
@@ -245,6 +245,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			history.replace(newLocation);
 			return;
 		}
+
+		// if the current route is public dashboard then don't redirect to login
+		const isPublicDashboard = currentRoute?.path === ROUTES.PUBLIC_DASHBOARD;
+
+		if (isPublicDashboard) {
+			return;
+		}
+
 		// if the current route
 		if (currentRoute) {
 			const { isPrivate, key } = currentRoute;

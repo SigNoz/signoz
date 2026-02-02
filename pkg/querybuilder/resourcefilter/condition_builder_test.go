@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,18 @@ func TestConditionBuilder(t *testing.T) {
 			expectedArgs: []any{"%banana%", "%k8s.namespace.name%", `%k8s.namespace.name%banana%`},
 		},
 		{
+			name: "Contains operator - string attribute number value",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:          "company.id",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			op:           qbtypes.FilterOperatorContains,
+			value:        521509198310,
+			expected:     "LOWER(simpleJSONExtractString(labels, 'company.id')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)",
+			expectedArgs: []any{"%521509198310%", "%company.id%", `%company.id%521509198310%`},
+		},
+		{
 			name: "string_not_contains",
 			key: &telemetrytypes.TelemetryFieldKey{
 				Name:         "k8s.namespace.name",
@@ -130,6 +143,61 @@ func TestConditionBuilder(t *testing.T) {
 			expected:     "simpleJSONHas(labels, 'k8s.namespace.name') <> ?",
 			expectedArgs: []any{true},
 		},
+		{
+			name: "number_equals",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorEqual,
+			value:        1,
+			expected:     "simpleJSONExtractString(labels, 'test_num') = ? AND labels LIKE ? AND labels LIKE ?",
+			expectedArgs: []any{"1", "%test_num%", "%test_num\":\"1%"},
+		},
+		{
+			name: "number_gt",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorGreaterThan,
+			value:        1,
+			expected:     "simpleJSONExtractString(labels, 'test_num') > ? AND labels LIKE ?",
+			expectedArgs: []any{"1", "%test_num%"},
+		},
+		{
+			name: "number_in",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorIn,
+			value:        []any{1, 2},
+			expected:     "(simpleJSONExtractString(labels, 'test_num') = ? OR simpleJSONExtractString(labels, 'test_num') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
+			expectedArgs: []any{"1", "2", "%test_num%", "%test_num\":\"1%", "%test_num\":\"2%"},
+		},
+		{
+			name: "number_between",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "test_num",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorBetween,
+			value:        []any{1, 2},
+			expected:     "labels LIKE ? AND simpleJSONExtractString(labels, 'test_num') BETWEEN ? AND ?",
+			expectedArgs: []any{"%test_num%", "1", "2"},
+		},
+		{
+			name: "string_regexp",
+			key: &telemetrytypes.TelemetryFieldKey{
+				Name:         "k8s.namespace.name",
+				FieldContext: telemetrytypes.FieldContextResource,
+			},
+			op:           querybuildertypesv5.FilterOperatorRegexp,
+			value:        "ban.*",
+			expected:     "match(simpleJSONExtractString(labels, 'k8s.namespace.name'), ?) AND labels LIKE ?",
+			expectedArgs: []any{"ban.*", "%k8s.namespace.name%"},
+		},
 	}
 
 	fm := NewFieldMapper()
@@ -138,7 +206,7 @@ func TestConditionBuilder(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(context.Background(), tc.key, tc.op, tc.value, sb)
+			cond, err := conditionBuilder.ConditionFor(context.Background(), tc.key, tc.op, tc.value, sb, 0, 0)
 			sb.Where(cond)
 
 			if tc.expectedErr != nil {
