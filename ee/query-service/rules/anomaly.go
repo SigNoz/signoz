@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/transition"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -235,26 +234,13 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 		}
 	}
 
-	// Track last timestamp with data points for missing data alerts
-	if queryResult != nil && len(queryResult.AnomalyScores) > 0 {
-		r.SetLastTimestampWithDatapoints(ts)
+	// Check for missing data alerts
+	hasData := queryResult != nil && len(queryResult.AnomalyScores) > 0
+	if missingDataVector, shouldReturn := r.CheckMissingDataAlert(ctx, ts, hasData); shouldReturn {
+		return *missingDataVector, nil
 	}
 
 	var resultVector ruletypes.Vector
-
-	// if the data is missing for `For` duration then we should send alert
-	if r.Condition().AlertOnAbsent && r.LastTimestampWithDatapoints().Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(ts) {
-		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
-		lbls := labels.NewBuilder(labels.Labels{})
-		if !r.LastTimestampWithDatapoints().IsZero() {
-			lbls.Set(ruletypes.LabelLastSeen, r.LastTimestampWithDatapoints().Format(constants.AlertTimeFormat))
-		}
-		resultVector = append(resultVector, ruletypes.Sample{
-			Metric:    lbls.Labels(),
-			IsMissing: true,
-		})
-		return resultVector, nil
-	}
 
 	if queryResult == nil {
 		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", r.GetSelectedQuery())
@@ -310,26 +296,13 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 
 	queryResult := transition.ConvertV5TimeSeriesDataToV4Result(qbResult)
 
-	// Track last timestamp with data points for missing data alerts
-	if queryResult != nil && len(queryResult.AnomalyScores) > 0 {
-		r.SetLastTimestampWithDatapoints(ts)
+	// Check for missing data alerts
+	hasData := queryResult != nil && len(queryResult.AnomalyScores) > 0
+	if missingDataVector, shouldReturn := r.CheckMissingDataAlert(ctx, ts, hasData); shouldReturn {
+		return *missingDataVector, nil
 	}
 
 	var resultVector ruletypes.Vector
-
-	// if the data is missing for `For` duration then we should send alert
-	if r.Condition().AlertOnAbsent && r.LastTimestampWithDatapoints().Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(ts) {
-		r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
-		lbls := labels.NewBuilder(labels.Labels{})
-		if !r.LastTimestampWithDatapoints().IsZero() {
-			lbls.Set(ruletypes.LabelLastSeen, r.LastTimestampWithDatapoints().Format(constants.AlertTimeFormat))
-		}
-		resultVector = append(resultVector, ruletypes.Sample{
-			Metric:    lbls.Labels(),
-			IsMissing: true,
-		})
-		return resultVector, nil
-	}
 
 	if queryResult == nil {
 		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", r.GetSelectedQuery())

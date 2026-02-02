@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -336,18 +338,6 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	return r.evaluationTimestamp
-}
-
-func (r *BaseRule) SetLastTimestampWithDatapoints(ts time.Time) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	r.lastTimestampWithDatapoints = ts
-}
-
-func (r *BaseRule) LastTimestampWithDatapoints() time.Time {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	return r.lastTimestampWithDatapoints
 }
 
 func (r *BaseRule) State() model.AlertState {
@@ -752,4 +742,36 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	return filteredSeries, nil
+}
+
+// CheckMissingDataAlert checks if the rule should send a missing data alert based on
+// the [ruletypes.RuleCondition.AlertOnAbsent] and [ruletypes.RuleCondition.AbsentFor]
+// conditions.
+// It returns a vector with a missing data alert if the conditions are met, nil otherwise.
+//
+// Returns:
+//   - [*ruletypes.Vector]: pointer to a vector containing the missing data alert
+//   - bool: true if a missing data alert was generated (early return should occur)
+func (r *BaseRule) CheckMissingDataAlert(ctx context.Context, ts time.Time, hasData bool) (*ruletypes.Vector, bool) {
+	// Track the last timestamp with data points for missing data alerts
+	if hasData {
+		r.lastTimestampWithDatapoints = ts
+	}
+
+	if !r.ruleCondition.AlertOnAbsent || ts.Before(r.lastTimestampWithDatapoints.Add(time.Duration(r.ruleCondition.AbsentFor)*time.Minute)) {
+		return nil, false
+	}
+
+	r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
+	lbls := labels.NewBuilder(labels.Labels{})
+	if !r.lastTimestampWithDatapoints.IsZero() {
+		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+	}
+	resultVector := ruletypes.Vector{
+		ruletypes.Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		},
+	}
+	return &resultVector, true
 }
