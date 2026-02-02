@@ -3861,7 +3861,6 @@ func (aH *APIHandler) getAWSServiceConnectionStatus(
 	definition := svcDetails.AWSServiceDefinition
 
 	strategy := definition.Strategy
-
 	if strategy == nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"service doesn't have telemetry collection strategy: %s", svcDetails.GetId(),
@@ -3869,8 +3868,10 @@ func (aH *APIHandler) getAWSServiceConnectionStatus(
 	}
 
 	result := &cloudintegrations.ServiceConnectionStatus{}
-	var errors []*model.ApiError
-	var resultLock sync.Mutex
+	var (
+		errors     []*model.ApiError
+		resultLock sync.Mutex
+	)
 
 	var wg sync.WaitGroup
 
@@ -3921,7 +3922,6 @@ func (aH *APIHandler) getAWSServiceConnectionStatus(
 	if len(errors) > 0 {
 		return nil, errors[0]
 	}
-
 	return result, nil
 }
 
