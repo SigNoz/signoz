@@ -18,12 +18,19 @@ export default function Legend({
 	config,
 	legendsPerSet = LEGENDS_PER_SET_DEFAULT,
 }: LegendProps): JSX.Element {
-	const { legendItemsMap, focusedSeriesIndex } = useLegendsSync({ config });
+	const {
+		legendItemsMap,
+		focusedSeriesIndex,
+		setFocusedSeriesIndex,
+	} = useLegendsSync({ config });
 	const {
 		onLegendClick,
 		onLegendMouseMove,
 		onLegendMouseLeave,
-	} = useLegendActions({ config });
+	} = useLegendActions({
+		setFocusedSeriesIndex,
+		focusedSeriesIndex,
+	});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 
 	// Chunk legend items into rows of LEGENDS_PER_ROW items each

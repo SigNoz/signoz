@@ -1,12 +1,18 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+} from 'react';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
-import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 export function useLegendActions({
-	config,
+	setFocusedSeriesIndex,
+	focusedSeriesIndex,
 }: {
-	config: UPlotConfigBuilder;
+	setFocusedSeriesIndex: Dispatch<SetStateAction<number | null>>;
+	focusedSeriesIndex: number | null;
 }): {
 	onLegendClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 	onFocusSeries: (seriesIndex: number | null) => void;
@@ -18,10 +24,6 @@ export function useLegendActions({
 		onToggleSeriesOnOff,
 		onToggleSeriesVisibility,
 	} = usePlotContext();
-
-	const { setFocusedSeriesIndex, focusedSeriesIndex } = useLegendsSync({
-		config,
-	});
 
 	const rafId = useRef<number | null>(null); // requestAnimationFrame id
 
