@@ -1,3 +1,27 @@
+import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
+
+export function sanitizeDashboardData(
+	selectedData: DashboardData,
+): DashboardData {
+	if (!selectedData?.variables) {
+		return selectedData;
+	}
+
+	const updatedVariables = Object.entries(selectedData.variables).reduce(
+		(acc, [key, value]) => {
+			const { selectedValue: _selectedValue, ...rest } = value;
+			acc[key] = rest;
+			return acc;
+		},
+		{} as Record<string, IDashboardVariable>,
+	);
+
+	return {
+		...selectedData,
+		variables: updatedVariables,
+	};
+}
+
 export function downloadObjectAsJson(
 	exportObj: unknown,
 	exportName: string,
