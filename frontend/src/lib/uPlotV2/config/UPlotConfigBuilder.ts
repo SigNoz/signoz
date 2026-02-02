@@ -61,7 +61,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	private tzDate: ((timestamp: number) => Date) | undefined;
 
 	private widgetId: string | undefined;
+
 	private onDragSelect: (startTime: number, endTime: number) => void;
+
+	private cleanups: Array<() => void> = [];
 
 	constructor(args?: ConfigBuilderProps) {
 		super(args ?? {});
@@ -75,7 +78,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		if (onDragSelect) {
 			this.onDragSelect = onDragSelect;
 			// Add a hook to handle the select event
-			this.addHook('setSelect', (self: uPlot): void => {
+			const cleanup = this.addHook('setSelect', (self: uPlot): void => {
 				const selection = self.select;
 				// Only trigger onDragSelect when there's an actual drag range (width > 0)
 				// A click without dragging produces width === 0, which should be ignored
@@ -85,6 +88,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 					this.onDragSelect(startTime * 1000, endTime * 1000);
 				}
 			});
+			this.cleanups.push(cleanup);
 		}
 	}
 
@@ -150,7 +154,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	addThresholds(options: ThresholdsDrawHookOptions): void {
 		if (!this.thresholds[options.scaleKey]) {
 			this.thresholds[options.scaleKey] = options;
-			this.addHook('draw', thresholdsDrawHook(options));
+			const cleanup = this.addHook('draw', thresholdsDrawHook(options));
+			this.cleanups.push(cleanup);
 		}
 	}
 
@@ -227,6 +232,13 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 			return acc;
 		}, {} as Record<number, LegendItem>);
+	}
+
+	/**
+	 * Remove all hooks and cleanup functions
+	 */
+	destroy(): void {
+		this.cleanups.forEach((cleanup) => cleanup());
 	}
 
 	/**

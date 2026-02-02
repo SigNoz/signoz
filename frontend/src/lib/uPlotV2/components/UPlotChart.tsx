@@ -57,12 +57,15 @@ export default function UPlotChart({
 	const destroyPlot = useCallback((): void => {
 		if (plotInstanceRef.current) {
 			onDestroy?.(plotInstanceRef.current);
+			// Clean up the config builder
+			config.destroy();
+
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
 			setPlotContextInitialState({ uPlotInstance: null });
 			plotRef?.(null);
 		}
-	}, [onDestroy, plotRef, setPlotContextInitialState]);
+	}, [config, onDestroy, plotRef, setPlotContextInitialState]);
 
 	/**
 	 * Initialize or reinitialize the plot
