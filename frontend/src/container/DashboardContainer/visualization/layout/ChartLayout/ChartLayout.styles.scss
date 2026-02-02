@@ -1,0 +1,22 @@
+.chart-layout {
+	position: relative;
+	display: flex;
+	width: 100%;
+	height: 100%;
+	flex-direction: column;
+
+	&--legend-right {
+		flex-direction: row;
+
+		.chart-layout__legend-wrapper {
+			padding-left: 0 !important;
+			padding-right: 12px !important;
+		}
+	}
+
+	&__legend-wrapper {
+		padding-left: 12px;
+		padding-bottom: 12px;
+		overflow: auto;
+	}
+}

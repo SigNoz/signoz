@@ -19,6 +19,7 @@ import {
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -88,6 +89,8 @@ function NewWidget({
 		setSelectedRowWidgetId,
 		columnWidths,
 	} = useDashboard();
+
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { t } = useTranslation(['dashboard']);
 
@@ -382,7 +385,7 @@ function NewWidget({
 					graphType: PANEL_TYPES.LIST,
 					selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 					globalSelectedInterval: customGlobalSelectedInterval,
-					variables: getDashboardVariables(selectedDashboard?.data.variables),
+					variables: getDashboardVariables(dashboardVariables),
 					tableParams: {
 						pagination: {
 							offset: 0,
@@ -399,7 +402,7 @@ function NewWidget({
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
-				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				variables: getDashboardVariables(dashboardVariables),
 				originalGraphType: selectedGraph || selectedWidget?.panelTypes,
 			};
 		}
@@ -413,7 +416,7 @@ function NewWidget({
 			graphType: selectedGraph,
 			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 			globalSelectedInterval: customGlobalSelectedInterval,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(dashboardVariables),
 		};
 	});
 
