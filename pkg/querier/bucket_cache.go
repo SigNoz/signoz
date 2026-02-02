@@ -17,22 +17,24 @@ import (
 
 // bucketCache implements the BucketCache interface
 type bucketCache struct {
-	cache        cache.Cache
-	logger       *slog.Logger
-	cacheTTL     time.Duration
-	fluxInterval time.Duration
+	cache                cache.Cache
+	logger               *slog.Logger
+	cacheTTL             time.Duration
+	fluxInterval         time.Duration
+	heatmapCacheRounding time.Duration
 }
 
 var _ BucketCache = (*bucketCache)(nil)
 
 // NewBucketCache creates a new BucketCache implementation
-func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration) BucketCache {
+func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration, heatmapCacheRounding time.Duration) BucketCache {
 	cacheSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier/bucket_cache")
 	return &bucketCache{
-		cache:        cache,
-		logger:       cacheSettings.Logger(),
-		cacheTTL:     cacheTTL,
-		fluxInterval: fluxInterval,
+		cache:                cache,
+		logger:               cacheSettings.Logger(),
+		cacheTTL:             cacheTTL,
+		fluxInterval:         fluxInterval,
+		heatmapCacheRounding: heatmapCacheRounding,
 	}
 }
 
@@ -49,10 +51,26 @@ func (bc *bucketCache) GetMissRanges(
 
 	bc.logger.DebugContext(ctx, "getting miss ranges", "fingerprint", q.Fingerprint(), "start", startMs, "end", endMs)
 
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
+	// Determine request type from query
+	requestType := qbtypes.RequestTypeTimeSeries
+	if hasKind, ok := q.(interface{ GetKind() qbtypes.RequestType }); ok {
+		requestType = hasKind.GetKind()
+	}
 
-	bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
+	// For heatmaps, round timestamps
+	cacheStartMs, cacheEndMs := startMs, endMs
+	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheStartMs, cacheEndMs = bc.roundHeatmapWindow(startMs, endMs)
+	}
+
+	// Generate cache key
+	var cacheKey string
+	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheKey = bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
+	} else {
+		cacheKey = bc.generateCacheKey(q)
+		bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
+	}
 
 	// Try to get cached data
 	var data qbtypes.CachedData
@@ -66,12 +84,17 @@ func (bc *bucketCache) GetMissRanges(
 		return nil, missing
 	}
 
-	// Extract step interval if this is a builder query
-	stepMs := uint64(step.Duration.Milliseconds())
-
-	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
-	bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "step", stepMs)
+	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
+		// Exact-match cache for heatmaps
+		if len(data.Buckets) == 0 {
+			missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
+		}
+	} else {
+		// Find missing ranges with step alignment
+		stepMs := uint64(step.Duration.Milliseconds())
+		missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
+		bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "step", stepMs)
+	}
 
 	// If no cached data overlaps with requested range, return empty result
 	if len(data.Buckets) == 0 {
@@ -97,13 +120,20 @@ func (bc *bucketCache) GetMissRanges(
 func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
 	// Get query window
 	startMs, endMs := q.Window()
+	isHeatmap := fresh.Type == qbtypes.RequestTypeHeatmap
+
+	// For heatmaps, round timestamps for cache key
+	cacheStartMs, cacheEndMs := startMs, endMs
+	if isHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheStartMs, cacheEndMs = bc.roundHeatmapWindow(startMs, endMs)
+	}
 
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
 	fluxBoundary := currentMs - uint64(bc.fluxInterval.Milliseconds())
 
 	// If the entire range is within flux interval, skip caching
-	if startMs >= fluxBoundary {
+	if !isHeatmap && startMs >= fluxBoundary {
 		bc.logger.DebugContext(ctx, "entire range within flux interval, skipping cache",
 			"start", startMs,
 			"end", endMs,
@@ -113,7 +143,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Adjust endMs to not include data within flux interval
 	cachableEndMs := endMs
-	if endMs > fluxBoundary {
+	if !isHeatmap && endMs > fluxBoundary {
 		cachableEndMs = fluxBoundary
 		bc.logger.DebugContext(ctx, "adjusting end time to exclude flux interval",
 			"original_end", endMs,
@@ -121,7 +151,12 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	}
 
 	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
+	var cacheKey string
+	if isHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheKey = bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
+	} else {
+		cacheKey = bc.generateCacheKey(q)
+	}
 
 	// Get existing cached data
 	var existingData qbtypes.CachedData
@@ -140,8 +175,10 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	cachableStartMs := startMs
 	stepMs := uint64(step.Duration.Milliseconds())
 
-	// If we have a step interval, adjust boundaries to only cache complete intervals
-	if stepMs > 0 {
+	if isHeatmap && bc.heatmapCacheRounding > 0 {
+		cachableStartMs = cacheStartMs
+		cachableEndMs = cacheEndMs
+	} else if stepMs > 0 {
 		// If start is not aligned, round up to next step boundary (first complete interval)
 		if startMs%stepMs != 0 {
 			cachableStartMs = ((startMs / stepMs) + 1) * stepMs
@@ -196,6 +233,19 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 	fingerprint := q.Fingerprint()
 
 	return fmt.Sprintf("v5:query:%s", fingerprint)
+}
+
+// generateCacheKeyWithWindow creates a cache key that includes rounded timestamps for heatmaps
+func (bc *bucketCache) generateCacheKeyWithWindow(q qbtypes.Query, startMs, endMs uint64) string {
+	fingerprint := q.Fingerprint()
+
+	return fmt.Sprintf("v5:query:%s:window:%d-%d", fingerprint, startMs, endMs)
+}
+
+// roundHeatmapWindow rounds start and end timestamps to the configured rounding interval
+func (bc *bucketCache) roundHeatmapWindow(startMs, endMs uint64) (uint64, uint64) {
+	roundingMs := uint64(bc.heatmapCacheRounding.Milliseconds())
+	return (startMs / roundingMs) * roundingMs, (endMs / roundingMs) * roundingMs
 }
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment

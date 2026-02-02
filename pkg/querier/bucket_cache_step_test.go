@@ -17,7 +17,7 @@ func TestBucketCacheStepAlignment(t *testing.T) {
 	ctx := context.Background()
 	orgID := valuer.UUID{}
 	cache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), cache, time.Hour, 5*time.Minute)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), cache, time.Hour, 5*time.Minute, 5*time.Minute)
 
 	// Test with 5-minute step
 	step := qbtypes.Step{Duration: 5 * time.Minute}
@@ -89,7 +89,7 @@ func TestBucketCacheNoStepInterval(t *testing.T) {
 	ctx := context.Background()
 	orgID := valuer.UUID{}
 	cache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), cache, time.Hour, 5*time.Minute)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), cache, time.Hour, 5*time.Minute, 5*time.Minute)
 
 	// Test with no step (stepMs = 0)
 	step := qbtypes.Step{Duration: 0}

@@ -166,6 +166,10 @@ func (q *builderQuery[T]) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
 }
 
+func (q *builderQuery[T]) GetKind() qbtypes.RequestType {
+	return q.kind
+}
+
 // must be a single query, ordered by timestamp (logs need an id tie-break).
 func (q *builderQuery[T]) isWindowList() bool {
 	if len(q.spec.Order) == 0 {

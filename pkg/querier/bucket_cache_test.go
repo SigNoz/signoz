@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	cacheTTL            = 1 * time.Hour
-	defaultFluxInterval = 5 * time.Minute
+	cacheTTL                    = 1 * time.Hour
+	defaultFluxInterval         = 5 * time.Minute
+	defaultHeatmapCacheRounding = 5 * time.Minute
 )
 
 // Helper function to create test cache
@@ -41,6 +42,7 @@ type mockQuery struct {
 	startMs     uint64
 	endMs       uint64
 	result      *qbtypes.Result
+	kind        qbtypes.RequestType
 }
 
 func (m *mockQuery) Fingerprint() string {
@@ -49,6 +51,10 @@ func (m *mockQuery) Fingerprint() string {
 
 func (m *mockQuery) Window() (uint64, uint64) {
 	return m.startMs, m.endMs
+}
+
+func (m *mockQuery) GetKind() qbtypes.RequestType {
+	return m.kind
 }
 
 func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
@@ -70,7 +76,7 @@ func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 // createTestBucketCache creates a test bucket cache
 func createTestBucketCache(t *testing.T) *bucketCache {
 	memCache := createTestCache(t)
-	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
+	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding).(*bucketCache)
 }
 
 func createTestTimeSeries(queryName string, startMs, endMs uint64, step uint64) *qbtypes.TimeSeriesData {
@@ -115,7 +121,7 @@ func createTestTimeSeries(queryName string, startMs, endMs uint64, step uint64) 
 
 func TestBucketCache_GetMissRanges_EmptyCache(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	query := &mockQuery{
 		fingerprint: "test-query",
@@ -133,7 +139,7 @@ func TestBucketCache_GetMissRanges_EmptyCache(t *testing.T) {
 
 func TestBucketCache_Put_And_Get(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Create a query and result
 	query := &mockQuery{
@@ -175,7 +181,7 @@ func TestBucketCache_Put_And_Get(t *testing.T) {
 
 func TestBucketCache_PartialHit(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// First query: cache data for 1000-3000ms
 	query1 := &mockQuery{
@@ -212,7 +218,7 @@ func TestBucketCache_PartialHit(t *testing.T) {
 
 func TestBucketCache_MultipleBuckets(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Cache multiple non-contiguous ranges
 	query1 := &mockQuery{
@@ -262,7 +268,7 @@ func TestBucketCache_MultipleBuckets(t *testing.T) {
 
 func TestBucketCache_FluxInterval(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Try to cache data too close to current time
 	currentMs := uint64(time.Now().UnixMilli())
@@ -293,7 +299,7 @@ func TestBucketCache_FluxInterval(t *testing.T) {
 
 func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Create time series with same labels but different time ranges
 	series1 := &qbtypes.TimeSeries{
@@ -405,7 +411,7 @@ func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 
 func TestBucketCache_RawData(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Test with raw data type
 	query := &mockQuery{
@@ -453,7 +459,7 @@ func TestBucketCache_RawData(t *testing.T) {
 
 func TestBucketCache_ScalarData(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	query := &mockQuery{
 		fingerprint: "test-query",
@@ -493,7 +499,7 @@ func TestBucketCache_ScalarData(t *testing.T) {
 
 func TestBucketCache_EmptyFingerprint(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Query with empty fingerprint should generate a fallback key
 	query := &mockQuery{
@@ -518,7 +524,7 @@ func TestBucketCache_EmptyFingerprint(t *testing.T) {
 
 func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding).(*bucketCache)
 
 	// Test with buckets that have gaps and overlaps
 	buckets := []*qbtypes.CachedBucket{
@@ -545,7 +551,7 @@ func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 
 func TestBucketCache_ConcurrentAccess(t *testing.T) {
 	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval, defaultHeatmapCacheRounding)
 
 	// Test concurrent puts and gets
 	done := make(chan bool)
@@ -1407,11 +1413,13 @@ func TestBucketCache_HeatmapExactMatch(t *testing.T) {
 	ctx := context.Background()
 	orgID := valuer.UUID{}
 
-	// Create a heatmap query
+	// Create a heatmap query with time range that works with 5-minute rounding
+	// Use time range 600000-900000 ms (10-15 minutes) which rounds to 600000-600000
 	query := &mockQuery{
 		fingerprint: "test-heatmap-query",
-		startMs:     1000,
-		endMs:       5000,
+		startMs:     600000, // 10 minutes
+		endMs:       900000, // 15 minutes
+		kind:        qbtypes.RequestTypeHeatmap,
 	}
 
 	// Create heatmap result with bounds and bucket values
@@ -1430,9 +1438,9 @@ func TestBucketCache_HeatmapExactMatch(t *testing.T) {
 							},
 							Bounds: []float64{0, 10, 20, 30}, // 3 buckets with 4 boundary points
 							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: 1000, Values: []float64{5, 3, 0}},
-								{Timestamp: 2000, Values: []float64{2, 6, 4}},
-								{Timestamp: 3000, Values: []float64{8, 1, 2}},
+								{Timestamp: 650000, Values: []float64{5, 3, 0}},
+								{Timestamp: 750000, Values: []float64{2, 6, 4}},
+								{Timestamp: 850000, Values: []float64{8, 1, 2}},
 							},
 						},
 					},
