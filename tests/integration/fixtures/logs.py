@@ -99,6 +99,8 @@ class Logs(ABC):
     severity_text: str
     severity_number: np.uint8
     body: str
+    body_json: str
+    body_json_promoted: str
     attributes_string: dict[str, str]
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
@@ -118,6 +120,8 @@ class Logs(ABC):
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
+        body_json: Optional[str] = None,
+        body_json_promoted: Optional[str] = None,
         severity_text: str = "INFO",
         trace_id: str = "",
         span_id: str = "",
@@ -161,6 +165,32 @@ class Logs(ABC):
 
         # Set body
         self.body = body
+        
+        # Set body_json - if body is JSON, parse and stringify it, otherwise use empty string
+        # ClickHouse accepts String input for JSON column
+        if body_json is not None:
+            self.body_json = body_json
+        else:
+            # Try to parse body as JSON, if successful use it, otherwise use empty string
+            try:
+                json.loads(body)
+                self.body_json = body
+            except (json.JSONDecodeError, TypeError):
+                self.body_json = ""
+        
+        # Set body_json_promoted - must be valid JSON
+        # Tests will explicitly pass promoted column's content, but we validate it
+        if body_json_promoted is not None:
+            # Validate that it's valid JSON
+            try:
+                json.loads(body_json_promoted)
+                self.body_json_promoted = body_json_promoted
+            except (json.JSONDecodeError, TypeError):
+                # If invalid, default to empty JSON object
+                self.body_json_promoted = "{}"
+        else:
+            # Default to empty JSON object (valid JSON)
+            self.body_json_promoted = "{}"
 
         # Process resources and attributes
         self.resources_string = {k: str(v) for k, v in resources.items()}
@@ -318,6 +348,8 @@ class Logs(ABC):
                 self.severity_text,
                 self.severity_number,
                 self.body,
+                self.body_json,
+                self.body_json_promoted,
                 self.attributes_string,
                 self.attributes_number,
                 self.attributes_bool,
@@ -409,6 +441,8 @@ def insert_logs(
                 "severity_text",
                 "severity_number",
                 "body",
+                "body_json",
+                "body_json_promoted",
                 "attributes_string",
                 "attributes_number",
                 "attributes_bool",
