@@ -193,7 +193,11 @@ export const useOptions = (
 					(option, index, self) =>
 						index ===
 							self.findIndex(
-								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+								(o) =>
+									o.label === option.label &&
+									o.value === option.value &&
+									(o.type || '') === (option.type || '') &&
+									(o.dataType || '') === (option.dataType || ''), // keep entries with same key but different type/dataType
 							) && option.value !== '',
 				) || []
 			).map((option) => {
