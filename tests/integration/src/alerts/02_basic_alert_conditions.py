@@ -23,7 +23,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -45,7 +45,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -67,7 +67,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -89,7 +89,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -111,7 +111,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -133,7 +133,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -155,7 +155,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -177,7 +177,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -199,7 +199,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -221,7 +221,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -243,7 +243,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -265,7 +265,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -287,7 +287,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -309,7 +309,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -331,7 +331,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -353,7 +353,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -375,7 +375,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -397,7 +397,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -419,7 +419,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -441,7 +441,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -467,7 +467,7 @@ TEST_RULES_UNIT_CONVERSION = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -489,7 +489,7 @@ TEST_RULES_UNIT_CONVERSION = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -515,7 +515,7 @@ TEST_RULES_MISCELLANEOUS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=200,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -537,7 +537,7 @@ TEST_RULES_MISCELLANEOUS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=600,
+            wait_time_seconds=180,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
