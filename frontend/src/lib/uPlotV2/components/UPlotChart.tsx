@@ -58,7 +58,9 @@ export default function UPlotChart({
 		if (plotInstanceRef.current) {
 			onDestroy?.(plotInstanceRef.current);
 			// Clean up the config builder that was used to create this plot (not the current prop)
-			configUsedForPlotRef.current?.destroy();
+			if (configUsedForPlotRef.current) {
+				configUsedForPlotRef.current.destroy();
+			}
 			configUsedForPlotRef.current = null;
 
 			plotInstanceRef.current.destroy();
