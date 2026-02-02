@@ -6,6 +6,7 @@ import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import uPlot, { AlignedData, Options } from 'uplot';
 
+import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { usePlotContext } from '../context/PlotContext';
 import { UPlotChartProps } from './types';
 
@@ -48,24 +49,24 @@ export default function UPlotChart({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
+	const configUsedForPlotRef = useRef<UPlotConfigBuilder | null>(null);
 
 	/**
 	 * Destroy the existing plot instance if present.
-	 * Clears context and notifies plotRef(null) so external consumers
-	 * (e.g. Legend's onToggleSeriesVisibility) don't hold a reference to the destroyed instance.
 	 */
 	const destroyPlot = useCallback((): void => {
 		if (plotInstanceRef.current) {
 			onDestroy?.(plotInstanceRef.current);
-			// Clean up the config builder
-			config.destroy();
+			// Clean up the config builder that was used to create this plot (not the current prop)
+			configUsedForPlotRef.current?.destroy();
+			configUsedForPlotRef.current = null;
 
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
 			setPlotContextInitialState({ uPlotInstance: null });
 			plotRef?.(null);
 		}
-	}, [config, onDestroy, plotRef, setPlotContextInitialState]);
+	}, [onDestroy, plotRef, setPlotContextInitialState]);
 
 	/**
 	 * Initialize or reinitialize the plot
@@ -100,6 +101,7 @@ export default function UPlotChart({
 		});
 
 		plotInstanceRef.current = plot;
+		configUsedForPlotRef.current = config;
 	}, [
 		config,
 		data,
