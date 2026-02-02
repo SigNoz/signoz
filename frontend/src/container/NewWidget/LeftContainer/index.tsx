@@ -25,6 +25,7 @@ function LeftContainer({
 	setSelectedTracesFields,
 	selectedWidget,
 	requestData,
+	isLoadingPanelData,
 	setRequestData,
 	setQueryResponse,
 	enableDrillDown = false,
@@ -65,7 +66,7 @@ function LeftContainer({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
-				isLoadingPanelData={queryResponse.isFetching}
+				isLoadingPanelData={isLoadingPanelData}
 				enableDrillDown={enableDrillDown}
 			/>
 			<QueryContainer className="query-section-left-container">
