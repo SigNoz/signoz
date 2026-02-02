@@ -14,6 +14,7 @@ from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
 from fixtures.traces import Traces
+from fixtures.utils import get_testdata_file_path
 
 logger = setup_logger(__name__)
 
@@ -66,7 +67,6 @@ def insert_alert_data(
     insert_metrics: Callable[[List[Metrics]], None],
     insert_traces: Callable[[List[Traces]], None],
     insert_logs: Callable[[List[Logs]], None],
-    get_testdata_file_path: Callable[[str], str],
 ) -> Callable[[List[types.AlertData]], None]:
 
     def _insert_alert_data(
