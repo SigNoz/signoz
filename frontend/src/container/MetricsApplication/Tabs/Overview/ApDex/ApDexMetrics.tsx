@@ -1,3 +1,5 @@
+import { ReactNode, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { Space, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import {
@@ -15,8 +17,6 @@ import {
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import { ReactNode, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 

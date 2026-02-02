@@ -1,6 +1,4 @@
-import './MetricDetails.styles.scss';
-import '../Summary/Summary.styles.scss';
-
+import { useCallback, useEffect, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -15,7 +13,6 @@ import logEvent from 'api/common/logEvent';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, Crosshair, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo } from 'react';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
@@ -32,6 +29,9 @@ import {
 	formatTimestampToReadableDate,
 	getMetricDetailsQuery,
 } from './utils';
+
+import './MetricDetails.styles.scss';
+import '../Summary/Summary.styles.scss';
 
 function MetricDetails({
 	onClose,

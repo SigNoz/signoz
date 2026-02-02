@@ -1,9 +1,3 @@
-import { toast } from '@signozhq/sonner';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -14,6 +8,12 @@ import {
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { toast } from '@signozhq/sonner';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

@@ -1,16 +1,16 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Integrations.styles.scss';
-
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';
-import { Dispatch, SetStateAction, useMemo } from 'react';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
+
+import './Integrations.styles.scss';
 
 export const AWS_INTEGRATION = {
 	id: INTEGRATION_TYPES.AWS_INTEGRATION,
@@ -29,11 +29,10 @@ export const AWS_INTEGRATION = {
 interface IntegrationsListProps {
 	setSelectedIntegration: (id: string) => void;
 	setActiveDetailTab: Dispatch<SetStateAction<string | null>>;
-	searchTerm: string;
 }
 
 function IntegrationsList(props: IntegrationsListProps): JSX.Element {
-	const { setSelectedIntegration, searchTerm, setActiveDetailTab } = props;
+	const { setSelectedIntegration, setActiveDetailTab } = props;
 
 	const {
 		data,
@@ -46,25 +45,15 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const filteredDataList = useMemo(() => {
-		let integrationsList: IntegrationsProps[] = [];
+	const integrationsList = useMemo(() => {
+		const baseList: IntegrationsProps[] = [AWS_INTEGRATION];
 
-		if (AWS_INTEGRATION.title.toLowerCase().includes(searchTerm.toLowerCase())) {
-			integrationsList.push(AWS_INTEGRATION);
-		}
-
-		// Add other integrations
 		if (data?.data.data.integrations) {
-			integrationsList = [
-				...integrationsList,
-				...data.data.data.integrations.filter((item) =>
-					item.title.toLowerCase().includes(searchTerm.toLowerCase()),
-				),
-			];
+			baseList.push(...data.data.data.integrations);
 		}
 
-		return integrationsList;
-	}, [data?.data.data.integrations, searchTerm]);
+		return baseList;
+	}, [data?.data.data.integrations]);
 
 	const loading = isLoading || isFetching || isRefetching;
 
@@ -104,7 +93,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 			)}
 			{!isError && (
 				<List
-					dataSource={filteredDataList}
+					dataSource={integrationsList}
 					loading={loading}
 					itemLayout="horizontal"
 					renderItem={(item): JSX.Element => (

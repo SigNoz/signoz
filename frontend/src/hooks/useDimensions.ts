@@ -1,5 +1,5 @@
-import debounce from 'lodash-es/debounce';
 import { useEffect, useState } from 'react';
+import debounce from 'lodash-es/debounce';
 
 export type Dimensions = {
 	width: number;
@@ -16,13 +16,19 @@ export function useResizeObserver<T extends HTMLElement>(
 	});
 
 	useEffect(() => {
-		const handleResize = debounce((entries: ResizeObserverEntry[]) => {
-			const entry = entries[0];
-			if (entry) {
-				const { width, height } = entry.contentRect;
-				setSize({ width, height });
-			}
-		}, debounceTime);
+		const handleResize = debounce(
+			(entries: ResizeObserverEntry[]) => {
+				const entry = entries[0];
+				if (entry) {
+					const { width, height } = entry.contentRect;
+					setSize({ width, height });
+				}
+			},
+			debounceTime,
+			{
+				leading: true,
+			},
+		);
 
 		const ro = new ResizeObserver(handleResize);
 		const referenceNode = ref.current;

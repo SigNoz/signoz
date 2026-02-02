@@ -1,3 +1,6 @@
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { generatePath, useLocation } from 'react-router-dom';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { TablePaginationConfig, TableProps } from 'antd/lib';
 import deleteAlerts from 'api/alerts/delete';
@@ -31,9 +34,6 @@ import { OrderPreferenceItems } from 'pages/Logs/config';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useAlertRule } from 'providers/Alert';
-import { useCallback, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertDef,

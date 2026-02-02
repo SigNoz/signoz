@@ -1,13 +1,13 @@
+import React, { MutableRefObject } from 'react';
+import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
-import React, { MutableRefObject } from 'react';
-import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { SuccessResponse, Warning } from 'types/api';

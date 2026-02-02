@@ -1,14 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './WarningPopover.styles.scss';
-
+import { ReactNode, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, PopoverProps } from 'antd';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown, TriangleAlert } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { ReactNode, useMemo } from 'react';
 import { Warning } from 'types/api';
+
+import './WarningPopover.styles.scss';
 
 interface WarningContentProps {
 	warning: Warning;

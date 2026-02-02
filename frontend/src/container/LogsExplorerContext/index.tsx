@@ -1,3 +1,4 @@
+import { memo, useCallback, useState } from 'react';
 import { EditFilled } from '@ant-design/icons';
 import { Modal, Typography } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
@@ -6,7 +7,6 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { memo, useCallback, useState } from 'react';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { EditButton, LogContainer, TitleWrapper } from './styles';

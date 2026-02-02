@@ -1,7 +1,3 @@
-import { Input, Slider } from 'antd';
-import { SliderRangeProps } from 'antd/es/slider';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
 import {
 	ChangeEventHandler,
 	Dispatch,
@@ -11,6 +7,10 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Input, Slider } from 'antd';
+import { SliderRangeProps } from 'antd/es/slider';
+import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 
 import { addFilter, FilterType, traceFilterKeys } from './filterUtils';
 

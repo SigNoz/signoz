@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	checkCommaInValue,
 	getTagToken,
@@ -5,7 +6,6 @@ import {
 import { Option } from 'container/QueryBuilder/type';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -193,7 +193,11 @@ export const useOptions = (
 					(option, index, self) =>
 						index ===
 							self.findIndex(
-								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+								(o) =>
+									o.label === option.label &&
+									o.value === option.value &&
+									(o.type || '') === (option.type || '') &&
+									(o.dataType || '') === (option.dataType || ''), // keep entries with same key but different type/dataType
 							) && option.value !== '',
 				) || []
 			).map((option) => {

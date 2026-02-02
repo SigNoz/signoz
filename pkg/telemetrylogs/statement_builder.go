@@ -142,6 +142,22 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 }
 
 func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {
+
+	// Always ensure timestamp and id are present in keys map
+	keys["id"] = append([]*telemetrytypes.TelemetryFieldKey{{
+		Name:          "id",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}}, keys["id"]...)
+
+	keys["timestamp"] = append([]*telemetrytypes.TelemetryFieldKey{{
+		Name:          "timestamp",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	}}, keys["timestamp"]...)
+
 	/*
 		Adjust keys for alias expressions in aggregations
 	*/
@@ -183,15 +199,6 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
 		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
-	}
-
-	keys["id"] = []*telemetrytypes.TelemetryFieldKey{
-		{
-			Name:          "id",
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextLog,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
 	}
 
 	return query

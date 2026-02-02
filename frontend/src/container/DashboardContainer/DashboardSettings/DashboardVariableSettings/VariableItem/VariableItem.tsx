@@ -1,8 +1,9 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
-import './VariableItem.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
@@ -13,10 +14,8 @@ import { CustomSelect } from 'components/NewSelect';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	createDynamicVariableToWidgetsMap,
-	getWidgetsHavingDynamicVariableAttribute,
-} from 'hooks/dashboard/utils';
+import { useWidgetsByDynamicVariableId } from 'hooks/dashboard/useWidgetsByDynamicVariableId';
+import { getWidgetsHavingDynamicVariableAttribute } from 'hooks/dashboard/utils';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
@@ -33,9 +32,6 @@ import {
 	X,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
@@ -56,6 +52,8 @@ import { TVariableMode } from '../types';
 import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
 import { WidgetSelector } from './WidgetSelector';
+
+import './VariableItem.styles.scss';
 
 const { Option } = Select;
 
@@ -243,23 +241,11 @@ function VariableItem({
 	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
 
 	const { selectedDashboard } = useDashboard();
+	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
-		const dynamicVariables = Object.values(
-			selectedDashboard?.data?.variables || {},
-		)?.filter((variable: IDashboardVariable) => variable.type === 'DYNAMIC');
-
-		const widgets =
-			selectedDashboard?.data?.widgets?.filter(
-				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
-			) || [];
-		const widgetsHavingDynamicVariables = createDynamicVariableToWidgetsMap(
-			dynamicVariables,
-			widgets as Widgets[],
-		);
-
-		if (variableData?.id && variableData.id in widgetsHavingDynamicVariables) {
-			setSelectedWidgets(widgetsHavingDynamicVariables[variableData.id] || []);
+		if (variableData?.id && variableData.id in widgetsByDynamicVariableId) {
+			setSelectedWidgets(widgetsByDynamicVariableId[variableData.id] || []);
 		} else if (dynamicVariablesSelectedValue?.name) {
 			const widgets = getWidgetsHavingDynamicVariableAttribute(
 				dynamicVariablesSelectedValue?.name,
@@ -275,6 +261,7 @@ function VariableItem({
 		selectedDashboard,
 		variableData.id,
 		variableData.name,
+		widgetsByDynamicVariableId,
 	]);
 
 	useEffect(() => {

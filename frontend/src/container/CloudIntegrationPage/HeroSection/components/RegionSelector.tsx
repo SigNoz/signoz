@@ -1,9 +1,9 @@
-import './RegionSelector.style.scss';
-
+import { Dispatch, SetStateAction } from 'react';
 import { Checkbox } from 'antd';
 import { useRegionSelection } from 'hooks/integration/aws/useRegionSelection';
-import { Dispatch, SetStateAction } from 'react';
 import { regions } from 'utils/regions';
+
+import './RegionSelector.style.scss';
 
 export function RegionSelector({
 	selectedRegions,

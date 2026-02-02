@@ -1,4 +1,3 @@
-import { noop, unset } from 'lodash-es';
 import {
 	createContext,
 	useCallback,
@@ -7,6 +6,7 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
+import { noop, unset } from 'lodash-es';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 

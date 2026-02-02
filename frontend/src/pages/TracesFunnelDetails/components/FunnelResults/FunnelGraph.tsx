@@ -1,5 +1,4 @@
-import './FunnelGraph.styles.scss';
-
+import { useCallback, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Empty, Spin } from 'antd';
 import {
@@ -16,7 +15,8 @@ import Spinner from 'components/Spinner';
 import useFunnelGraph from 'hooks/TracesFunnels/useFunnelGraph';
 import { useFunnelStepsGraphData } from 'hooks/TracesFunnels/useFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useCallback, useMemo, useState } from 'react';
+
+import './FunnelGraph.styles.scss';
 
 // Register required components
 Chart.register(

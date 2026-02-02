@@ -1,7 +1,7 @@
+import { TFunction } from 'react-i18next';
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import LogsIndexToFields from 'container/LogsIndexToFields';
-import { TFunction } from 'react-i18next';
 
 import TabLabel from './components/TabLabel';
 import { TABS_KEY, TABS_TITLE } from './constant';

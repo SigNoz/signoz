@@ -1,14 +1,12 @@
 /* eslint-disable no-nested-ternary */
-import '../MessagingQueues.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 
 import {
 	MessagingQueuesViewType,
@@ -21,6 +19,8 @@ import MetricPage from '../MQDetails/MetricPage/MetricPage';
 import MessagingQueuesDetails from '../MQDetails/MQDetails';
 import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
+
+import '../MessagingQueues.styles.scss';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();

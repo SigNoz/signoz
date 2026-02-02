@@ -1,5 +1,3 @@
-import '../../Home/HomeChecklist/HomeChecklist.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Button, Typography } from 'antd';
 import classNames from 'classnames';
@@ -7,6 +5,8 @@ import { ArrowUpRightFromSquare, RefreshCcw } from 'lucide-react';
 
 import { SPACE_AGGREGATION_LINK, TEMPORAL_AGGREGATION_LINK } from './constants';
 import { InspectionStep, StepperProps } from './types';
+
+import '../../Home/HomeChecklist/HomeChecklist.styles.scss';
 
 function Stepper({
 	inspectionStep,

@@ -1,11 +1,11 @@
-import './Tabs.styles.scss';
-
+import { useState } from 'react';
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import { History, Table } from 'lucide-react';
-import { useState } from 'react';
 
 import { ALERT_TABS } from '../constants';
+
+import './Tabs.styles.scss';
 
 export function Tabs(): JSX.Element {
 	const [selectedTab, setSelectedTab] = useState('overview');
