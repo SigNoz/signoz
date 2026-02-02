@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Form } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -5,7 +6,6 @@ import CreateAlertV2 from 'container/CreateAlertV2';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -20,8 +20,8 @@ function CreateRules(): JSX.Element {
 	const ruleTypeFromURL = queryParams.get(QueryParams.ruleType);
 	const alertTypeFromURL = queryParams.get(QueryParams.alertType);
 	const version = queryParams.get(QueryParams.version);
-	const showNewCreateAlertsPageFlag =
-		queryParams.get(QueryParams.showNewCreateAlertsPage) === 'true';
+	const showClassicCreateAlertsPageFlag =
+		queryParams.get(QueryParams.showClassicCreateAlertsPage) === 'true';
 
 	const alertType = useMemo(() => {
 		if (ruleTypeFromURL === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
@@ -45,21 +45,22 @@ function CreateRules(): JSX.Element {
 		[alertType, version],
 	);
 
+	// Load old alerts flow always for anomaly based alerts and when showClassicCreateAlertsPage is true
 	if (
-		showNewCreateAlertsPageFlag &&
-		alertType !== AlertTypes.ANOMALY_BASED_ALERT
+		showClassicCreateAlertsPageFlag ||
+		alertType === AlertTypes.ANOMALY_BASED_ALERT
 	) {
-		return <CreateAlertV2 alertType={alertType} />;
+		return (
+			<FormAlertRules
+				alertType={alertType}
+				formInstance={formInstance}
+				initialValue={initialAlertValue}
+				ruleId=""
+			/>
+		);
 	}
 
-	return (
-		<FormAlertRules
-			alertType={alertType}
-			formInstance={formInstance}
-			initialValue={initialAlertValue}
-			ruleId=""
-		/>
-	);
+	return <CreateAlertV2 alertType={alertType} />;
 }
 
 export default CreateRules;

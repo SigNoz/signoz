@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
@@ -5,7 +6,6 @@ import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphC
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { memo, useCallback, useMemo, useRef } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { getGraphType } from 'utils/getGraphType';

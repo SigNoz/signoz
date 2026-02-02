@@ -1,12 +1,10 @@
-import './LeftContainer.styles.scss';
-
+import { memo, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -15,6 +13,8 @@ import ExplorerColumnsRenderer from './ExplorerColumnsRenderer';
 import QuerySection from './QuerySection';
 import { QueryContainer } from './styles';
 import WidgetGraph from './WidgetGraph';
+
+import './LeftContainer.styles.scss';
 
 function LeftContainer({
 	selectedGraph,
@@ -64,7 +64,7 @@ function LeftContainer({
 				enableDrillDown={enableDrillDown}
 			/>
 			<QueryContainer className="query-section-left-container">
-				<QuerySection selectedGraph={selectedGraph} queryResponse={queryResponse} />
+				<QuerySection selectedGraph={selectedGraph} />
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer
 						selectedLogFields={selectedLogFields}

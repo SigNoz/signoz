@@ -10,23 +10,6 @@ import (
 )
 
 func (provider *provider) addSessionRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/login", handler.New(provider.authZ.OpenAccess(provider.sessionHandler.DeprecatedCreateSessionByEmailPassword), handler.OpenAPIDef{
-		ID:                  "DeprecatedCreateSessionByEmailPassword",
-		Tags:                []string{"sessions"},
-		Summary:             "Deprecated create session by email password",
-		Description:         "This endpoint is deprecated and will be removed in the future",
-		Request:             new(authtypes.DeprecatedPostableLogin),
-		RequestContentType:  "application/json",
-		Response:            new(authtypes.DeprecatedGettableLogin),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          true,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/sessions/email_password", handler.New(provider.authZ.OpenAccess(provider.sessionHandler.CreateSessionByEmailPassword), handler.OpenAPIDef{
 		ID:                  "CreateSessionByEmailPassword",
 		Tags:                []string{"sessions"},

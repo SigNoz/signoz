@@ -1,5 +1,4 @@
-import './FunnelStep.styles.scss';
-
+import { useMemo, useState } from 'react';
 import {
 	Button,
 	Divider,
@@ -19,11 +18,12 @@ import { ChevronDown, PencilLine } from 'lucide-react';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FunnelStepPopover from './FunnelStepPopover';
+
+import './FunnelStep.styles.scss';
 
 interface FunnelStepProps {
 	stepData: FunnelStepData;

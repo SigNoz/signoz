@@ -47,28 +47,6 @@ func (handler *handler) GetSessionContext(rw http.ResponseWriter, req *http.Requ
 	render.Success(rw, http.StatusOK, sessionContext)
 }
 
-func (handler *handler) DeprecatedCreateSessionByEmailPassword(rw http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
-	defer cancel()
-
-	body := new(authtypes.DeprecatedPostableLogin)
-	if err := binding.JSON.BindBody(req.Body, body); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	token, err := handler.module.DeprecatedCreateSessionByEmailPassword(ctx, body.Email, body.Password)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, &authtypes.DeprecatedGettableLogin{
-		AccessJWT: token.AccessToken,
-		UserID:    token.UserID.String(),
-	})
-}
-
 func (handler *handler) CreateSessionByEmailPassword(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 15*time.Second)
 	defer cancel()

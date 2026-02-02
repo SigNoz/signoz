@@ -1,6 +1,9 @@
 
 node_modules
 
+.vscode
+!.vscode/settings.json
+
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
@@ -54,7 +57,6 @@ bin/
 .local/
 */query-service/queries.active
 ee/query-service/db
-.vscode/
 # e2e
 
 e2e/node_modules/
@@ -104,7 +106,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/

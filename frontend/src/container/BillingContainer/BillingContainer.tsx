@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
-import './BillingContainer.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useMutation, useQuery } from 'react-query';
 import { CheckCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -29,15 +30,14 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery } from 'react-query';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
+
+import './BillingContainer.styles.scss';
 
 interface DataType {
 	key: string;

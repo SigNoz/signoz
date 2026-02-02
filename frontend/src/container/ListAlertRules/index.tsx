@@ -1,12 +1,12 @@
+import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { Space } from 'antd';
 import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
 import { isUndefined } from 'lodash-es';
-import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 
 import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import ListAlert from './ListAlert';

@@ -1,5 +1,5 @@
-import './WidgetHeader.styles.scss';
-
+import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import {
 	AlertOutlined,
 	CloudDownloadOutlined,
@@ -29,8 +29,6 @@ import { isEmpty } from 'lodash-es';
 import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
@@ -41,6 +39,8 @@ import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
+
+import './WidgetHeader.styles.scss';
 
 interface IWidgetHeaderProps {
 	title: ReactNode;

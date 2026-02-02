@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
@@ -7,7 +8,6 @@ import {
 	KeyboardHotkeysProvider,
 	useKeyboardHotkeys,
 } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Mock dependencies
 jest.mock('providers/cmdKProvider', () => ({

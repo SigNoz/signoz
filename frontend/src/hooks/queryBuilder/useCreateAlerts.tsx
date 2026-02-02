@@ -1,3 +1,6 @@
+import { useCallback, useMemo } from 'react';
+import { useMutation } from 'react-query';
+import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
@@ -12,9 +15,6 @@ import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariab
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useMemo } from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable, Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -41,7 +41,9 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	);
 
 	return useCallback(() => {
-		if (!widget) return;
+		if (!widget) {
+			return;
+		}
 
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {

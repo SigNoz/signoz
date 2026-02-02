@@ -1,6 +1,6 @@
-import { Card, Space, Typography } from 'antd';
 import { ReactChild } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card, Space, Typography } from 'antd';
 
 import { Container, LeftContainer, Logo } from './styles';
 

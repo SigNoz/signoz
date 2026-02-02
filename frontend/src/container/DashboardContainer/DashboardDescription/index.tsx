@@ -1,5 +1,8 @@
-import './Description.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useCopyToClipboard } from 'react-use';
 import { PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -41,11 +44,6 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useCopyToClipboard } from 'react-use';
 import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
@@ -60,6 +58,8 @@ import SettingsDrawer from './SettingsDrawer';
 import { VariablesSettingsTab } from './types';
 import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
+import './Description.styles.scss';
+
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
@@ -73,7 +73,7 @@ export function sanitizeDashboardData(
 
 	const updatedVariables = Object.entries(selectedData.variables).reduce(
 		(acc, [key, value]) => {
-			const { selectedValue, ...rest } = value;
+			const { selectedValue: _selectedValue, ...rest } = value;
 			acc[key] = rest;
 			return acc;
 		},
@@ -200,7 +200,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					message: 'Dashboard renamed successfully',
 				});
 				setIsRenameDashboardOpen(false);
-				if (updatedDashboard.data) setSelectedDashboard(updatedDashboard.data);
+				if (updatedDashboard.data) {
+					setSelectedDashboard(updatedDashboard.data);
+				}
 			},
 			onError: () => {
 				setIsRenameDashboardOpen(true);
@@ -240,7 +242,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}, [state.error, state.value, t, notifications]);
 
 	function handleAddRow(): void {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 		const id = uuid();
 
 		const newRowWidgetMap: { widgets: Layout[]; collapsed: boolean } = {
@@ -291,8 +295,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onSuccess: (updatedDashboard) => {
 				if (updatedDashboard.data) {
-					if (updatedDashboard.data.data.layout)
+					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
+					}
 					setSelectedDashboard(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}

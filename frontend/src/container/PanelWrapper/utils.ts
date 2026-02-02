@@ -63,7 +63,9 @@ const hexToRgb = (
 export const lightenColor = (color: string, opacity: number): string => {
 	// Convert the hex color to RGB format
 	const rgbColor = hexToRgb(color);
-	if (!rgbColor) return color; // Return the original color if unable to parse
+	if (!rgbColor) {
+		return color;
+	} // Return the original color if unable to parse
 
 	// Extract the RGB components
 	const { r, g, b } = rgbColor;

@@ -1,7 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-nested-ternary */
-import './DashboardVariableSelection.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
@@ -11,9 +12,6 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
 import { isEmpty, isUndefined } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -28,6 +26,8 @@ import {
 	uniqueValues,
 } from './util';
 import { getSelectValue } from './VariableItem';
+
+import './DashboardVariableSelection.styles.scss';
 
 interface DynamicVariableSelectionProps {
 	variableData: IDashboardVariable;
@@ -73,7 +73,9 @@ function DynamicVariableSelection({
 
 	// Create a dependency key from all dynamic variables
 	const dynamicVariablesKey = useMemo(() => {
-		if (!existingVariables) return 'no_variables';
+		if (!existingVariables) {
+			return 'no_variables';
+		}
 
 		const dynamicVars = Object.values(existingVariables)
 			.filter((v) => v.type === 'DYNAMIC')
@@ -380,7 +382,9 @@ function DynamicVariableSelection({
 
 			// Helper function to check if arrays have the same elements regardless of order
 			const areArraysEqualIgnoreOrder = (a: any[], b: any[]): boolean => {
-				if (a.length !== b.length) return false;
+				if (a.length !== b.length) {
+					return false;
+				}
 				const sortedA = [...a].sort();
 				const sortedB = [...b].sort();
 				return areArraysEqual(sortedA, sortedB);

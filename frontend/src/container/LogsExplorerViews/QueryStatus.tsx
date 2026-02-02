@@ -1,10 +1,10 @@
-import './QueryStatus.styles.scss';
-
+import React, { useMemo } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
 import { CircleCheck } from 'lucide-react';
-import React, { useMemo } from 'react';
+
+import './QueryStatus.styles.scss';
 
 interface IQueryStatusProps {
 	loading: boolean;

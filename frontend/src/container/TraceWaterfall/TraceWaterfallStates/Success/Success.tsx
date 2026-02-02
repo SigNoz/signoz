@@ -1,7 +1,14 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Success.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
@@ -25,19 +32,12 @@ import {
 	Leaf,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
 import Filters from './Filters/Filters';
+
+import './Success.styles.scss';
 
 // css config
 const CONNECTOR_WIDTH = 28;
@@ -438,7 +438,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		const { range } = instance;
 		// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so
 		// do not trigger the API call
-		if (spans.length < 500) return;
+		if (spans.length < 500) {
+			return;
+		}
 
 		if (range?.startIndex === 0 && instance.isScrolling) {
 			// do not trigger for trace root as nothing to fetch above

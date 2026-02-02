@@ -692,12 +692,16 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	}
 
 	// filter arrays from keys
-	if BodyJSONQueryEnabled {
+	if BodyJSONQueryEnabled && functionName != "hasToken" {
 		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, key := range keys {
 			if key.FieldDataType.IsArray() {
 				filteredKeys = append(filteredKeys, key)
 			}
+		}
+		if len(filteredKeys) == 0 {
+			v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be an array field; no array fields found", functionName))
+			return ""
 		}
 		keys = filteredKeys
 	}
@@ -830,32 +834,39 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
 	keyName := fieldKey.Name
 
-	fieldKeysForName := v.fieldKeys[keyName]
+	// GetFieldKeyFromKeyText function extracts the context prefix (attribute., resource., body.) if present
+	// extracts data type if present (e.g., :string, :int)
+	// so we need to filter the available field keys based on the provided context and data type
+	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
 
-	// if the context is explicitly provided, filter out the remaining
-	// example, resource.attr = 'value', then we don't want to search on
-	// anything other than the resource attributes
-	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
-		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
-		for _, item := range fieldKeysForName {
-			if item.FieldContext == fieldKey.FieldContext {
-				filteredKeys = append(filteredKeys, item)
-			}
+	// If user said key = 'xyz', we look up in the map for all possible field keys with name 'xyz'
+	for _, item := range v.fieldKeys[keyName] {
+		// Match items where:
+		// 1) user didn't specify context OR context matches, AND
+		// 2) user didn't specify data type OR data type matches.
+		if (fieldKey.FieldContext == telemetrytypes.FieldContextUnspecified || fieldKey.FieldContext == item.FieldContext) &&
+			(fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || fieldKey.FieldDataType == item.FieldDataType) {
+			fieldKeysForName = append(fieldKeysForName, item)
 		}
-		fieldKeysForName = filteredKeys
 	}
 
-	// if the data type is explicitly provided, filter out the remaining
-	// example, level:string = 'value', then we don't want to search on
-	// anything other than the string attributes
-	if fieldKey.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
-		for _, item := range fieldKeysForName {
-			if item.FieldDataType == fieldKey.FieldDataType {
-				filteredKeys = append(filteredKeys, item)
+	// Now consider that GetFieldKeyFromKeyText may have extracted the context which was actually part of the name
+	// If user said attribute.key = 'xyz',
+	// 1. either user meant key ( this is already handled above in fieldKeysForName )
+	// 2. or user meant `attribute.key` we look up in the map for all possible field keys with name 'attribute.key'
+
+	// Note: 
+	// If user only wants to search `attribute.key`, then they have to use `attribute.attribute.key`
+	// If user only wants to search `key`, then they have to use `key`
+	// If user wants to search both, they can use `attribute.key` and we will resolve the ambiguity
+	if fieldKey.FieldContext != telemetrytypes.FieldContextUnspecified {
+		contextPrefixedFieldName := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
+		for _, item := range v.fieldKeys[contextPrefixedFieldName] {
+			// Match items where: user didn't specify data type OR data type matches. Context filtering not needed here since context was used to construct the lookup key.
+			if fieldKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == fieldKey.FieldDataType {
+				fieldKeysForName = append(fieldKeysForName, item)
 			}
 		}
-		fieldKeysForName = filteredKeys
 	}
 
 	// for the body json search, we need to add search on the body field even
@@ -870,13 +881,6 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	}
 
 	if len(fieldKeysForName) == 0 {
-		// check if the key exists with {fieldContext}.{key}
-		// because the context could be legitimate prefix in user data, example `span.div_num = 20`
-		keyWithContext := fmt.Sprintf("%s.%s", fieldKey.FieldContext.StringValue(), fieldKey.Name)
-		if len(v.fieldKeys[keyWithContext]) > 0 {
-			return v.fieldKeys[keyWithContext]
-		}
-
 		if fieldKey.FieldContext == telemetrytypes.FieldContextBody && keyName == "" {
 			v.errors = append(v.errors, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
 		} else if !v.ignoreNotFoundKeys {

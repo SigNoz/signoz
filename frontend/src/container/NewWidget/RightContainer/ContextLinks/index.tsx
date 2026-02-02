@@ -1,6 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './styles.scss';
-
+import { Dispatch, SetStateAction } from 'react';
 import {
 	closestCenter,
 	DndContext,
@@ -19,7 +18,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Typography } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
-import { Dispatch, SetStateAction } from 'react';
 import {
 	ContextLinkProps,
 	ContextLinksData,
@@ -28,6 +26,8 @@ import {
 
 import UpdateContextLinks from './UpdateContextLinks';
 import useContextLinkModal from './useContextLinkModal';
+
+import './styles.scss';
 
 function SortableContextLink({
 	contextLink,

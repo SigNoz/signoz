@@ -1,6 +1,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './ExplorerOptions.styles.scss';
-
+import {
+	CSSProperties,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useHistory } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -56,17 +65,6 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
-import {
-	CSSProperties,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
@@ -84,6 +82,8 @@ import {
 	saveNewViewHandler,
 	setExplorerToolBarVisibility,
 } from './utils';
+
+import './ExplorerOptions.styles.scss';
 
 const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -417,7 +417,9 @@ function ExplorerOptions({
 				key,
 				viewsData?.data?.data,
 			);
-			if (!currentViewDetails) return;
+			if (!currentViewDetails) {
+				return;
+			}
 			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			if (handleChangeSelectedView) {

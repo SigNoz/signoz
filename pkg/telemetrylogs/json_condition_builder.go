@@ -1,7 +1,6 @@
 package telemetrylogs
 
 import (
-	"context"
 	"fmt"
 	"slices"
 
@@ -14,7 +13,7 @@ import (
 
 var (
 	CodeCurrentNodeNil           = errors.MustNewCode("current_node_nil")
-	CodeNextNodeNil              = errors.MustNewCode("next_node_nil")
+	CodeChildNodeNil             = errors.MustNewCode("child_node_nil")
 	CodeNestedExpressionsEmpty   = errors.MustNewCode("nested_expressions_empty")
 	CodeGroupByPlanEmpty         = errors.MustNewCode("group_by_plan_empty")
 	CodeArrayMapExpressionsEmpty = errors.MustNewCode("array_map_expressions_empty")
@@ -22,18 +21,21 @@ var (
 	CodeArrayNavigationFailed    = errors.MustNewCode("array_navigation_failed")
 )
 
-// BuildCondition builds the full WHERE condition for body_json JSON paths
-func (c *conditionBuilder) buildJSONCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey,
-	operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+type jsonConditionBuilder struct {
+	key       *telemetrytypes.TelemetryFieldKey
+	valueType telemetrytypes.JSONDataType
+}
 
-	plan, err := PlanJSON(ctx, key, operator, value, c.metadataStore)
-	if err != nil {
-		return "", err
-	}
+func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType telemetrytypes.FieldDataType) *jsonConditionBuilder {
+	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType]}
+}
+
+// BuildCondition builds the full WHERE condition for body_json JSON paths
+func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 
 	conditions := []string{}
-	for _, plan := range plan {
-		condition, err := c.emitPlannedCondition(plan, operator, value, sb)
+	for _, node := range c.key.JSONPlan {
+		condition, err := c.emitPlannedCondition(node, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
@@ -43,9 +45,9 @@ func (c *conditionBuilder) buildJSONCondition(ctx context.Context, key *telemetr
 }
 
 // emitPlannedCondition handles paths with array traversal
-func (c *conditionBuilder) emitPlannedCondition(plan *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) emitPlannedCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Build traversal + terminal recursively per-hop
-	compiled, err := c.recurseArrayHops(plan, operator, value, sb)
+	compiled, err := c.recurseArrayHops(node, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -53,12 +55,12 @@ func (c *conditionBuilder) emitPlannedCondition(plan *telemetrytypes.JSONAccessN
 }
 
 // buildTerminalCondition creates the innermost condition
-func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if node.TerminalConfig.ElemType.IsArray {
 		conditions := []string{}
 		// if the value type is not an array
 		// TODO(piyush): Confirm the Query built for Array case and add testcases for it later
-		if !node.TerminalConfig.ValueType.IsArray {
+		if !c.valueType.IsArray {
 			// if operator is a String search Operator, then we need to build one more String comparison condition along with the Strict match condition
 			if operator.IsStringSearchOperator() {
 				formattedValue := querybuilder.FormatValueForContains(value)
@@ -92,7 +94,7 @@ func (c *conditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAcces
 
 // buildPrimitiveTerminalCondition builds the condition if the terminal node is a primitive type
 // it handles the data type collisions and utilizes indexes for the condition if available
-func (c *conditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	fieldPath := node.FieldPath()
 	conditions := []string{}
 	var formattedValue any = value
@@ -163,19 +165,19 @@ func (c *conditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.
 }
 
 // buildArrayMembershipCondition handles array membership checks
-func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := node.FieldPath()
 	localKeyCopy := *node.TerminalConfig.Key
 	// create typed array out of a dynamic array
 	filteredDynamicExpr := func() string {
 		// Change the field data type from []dynamic to the value type
 		// since we've filtered the value type out of the dynamic array, we need to change the field data corresponding to the value type
-		localKeyCopy.FieldDataType = telemetrytypes.MappingJSONDataTypeToFieldDataType[telemetrytypes.ScalerTypeToArrayType[node.TerminalConfig.ValueType]]
+		localKeyCopy.FieldDataType = telemetrytypes.MappingJSONDataTypeToFieldDataType[telemetrytypes.ScalerTypeToArrayType[c.valueType]]
 
 		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
 		return fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
-			node.TerminalConfig.ValueType.StringValue(),
-			node.TerminalConfig.ValueType.StringValue(),
+			c.valueType.StringValue(),
+			c.valueType.StringValue(),
 			baseArrayDynamicExpr)
 	}
 	typedArrayExpr := func() string {
@@ -200,7 +202,7 @@ func (c *conditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JS
 }
 
 // recurseArrayHops recursively builds array traversal conditions
-func (c *conditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
 		return "", errors.NewInternalf(CodeArrayNavigationFailed, "navigation failed, current node is nil")
 	}
@@ -247,7 +249,7 @@ func (c *conditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNo
 	return sb.Or(branches...), nil
 }
 
-func (c *conditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, fieldExpr string, operator qbtypes.FilterOperator, value any) (string, error) {
+func (c *jsonConditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, fieldExpr string, operator qbtypes.FilterOperator, value any) (string, error) {
 	switch operator {
 	case qbtypes.FilterOperatorEqual:
 		return sb.E(fieldExpr, value), nil

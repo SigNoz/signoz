@@ -40,14 +40,14 @@ func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetryt
 	return valueType, parsedValue
 }
 
-func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
+func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
 	// check if the value is a int, float, string, bool
 	valueType := telemetrytypes.FieldDataTypeUnspecified
 	switch v := value.(type) {
 	case []any:
 		// take the first element and infer the type
 		if len(v) > 0 {
-			valueType, _ = inferDataType(v[0], operator, key)
+			valueType, _ = InferDataType(v[0], operator, key)
 		}
 		// convert the scaler type to the array type
 		return telemetrytypes.ScalerFieldTypeToArrayFieldType[valueType], v
@@ -85,7 +85,7 @@ func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
 }
 
 func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
-	dataType, value := inferDataType(value, operator, key)
+	dataType, value := InferDataType(value, operator, key)
 
 	// for array types, we need to extract the value from the JSON_QUERY
 	if dataType == telemetrytypes.FieldDataTypeArrayInt64 ||

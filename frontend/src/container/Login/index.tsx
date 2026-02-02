@@ -1,5 +1,5 @@
-import './Login.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Form, Input, Select, Tooltip, Typography } from 'antd';
 import getVersion from 'api/v1/version/get';
@@ -11,13 +11,13 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
 import { FormContainer, Label, ParentContainer } from './styles';
+
+import './Login.styles.scss';
 
 function parseErrors(errors: string): { message: string }[] {
 	try {
@@ -268,7 +268,9 @@ function Login(): JSX.Element {
 		isEmailValid && !versionLoading && !sessionsContextLoading;
 
 	const isSubmitButtonEnabled = useMemo((): boolean => {
-		if (!isEmailValid || isSubmitting) return false;
+		if (!isEmailValid || isSubmitting) {
+			return false;
+		}
 		const hasMultipleOrgs = (sessionsContext?.orgs.length ?? 0) > 1;
 		if (hasMultipleOrgs && !orgId) {
 			return false;

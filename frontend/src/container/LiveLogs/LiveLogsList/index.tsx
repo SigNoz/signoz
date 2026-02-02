@@ -1,5 +1,5 @@
-import './LiveLogsList.styles.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -17,13 +17,13 @@ import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useEventSource } from 'providers/EventSource';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { LiveLogsListProps } from './types';
+
+import './LiveLogsList.styles.scss';
 
 function LiveLogsList({
 	logs,
@@ -105,7 +105,9 @@ function LiveLogsList({
 	);
 
 	useEffect(() => {
-		if (!activeLogId || activeLogIndex < 0) return;
+		if (!activeLogId || activeLogIndex < 0) {
+			return;
+		}
 
 		ref?.current?.scrollToIndex({
 			index: activeLogIndex,

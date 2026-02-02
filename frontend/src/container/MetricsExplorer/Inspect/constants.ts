@@ -1,3 +1,4 @@
+import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import {
@@ -8,7 +9,6 @@ import {
 	Gauge,
 	LucideProps,
 } from 'lucide-react';
-import { ForwardRefExoticComponent, RefAttributes } from 'react';
 
 import {
 	MetricInspectionOptions,

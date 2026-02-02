@@ -1,5 +1,5 @@
-import './ConnectionStatus.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
 	CheckCircleTwoTone,
 	CloseCircleTwoTone,
@@ -16,13 +16,13 @@ import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getAttributeDataFromOnboardingStatus } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { PayloadProps as QueryServicePayloadProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
+
+import './ConnectionStatus.styles.scss';
 
 const pollingInterval = 10000;
 

@@ -332,3 +332,184 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryRangeRequest_ValidateOrderByForAggregation(t *testing.T) {
+	tests := []struct {
+		name    string
+		query   QueryBuilderQuery[TraceAggregation]
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "order by with context-prefixed alias should pass",
+			query: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Aggregations: []TraceAggregation{
+					{
+						Expression: "count()",
+						Alias:      "span.count_",
+					},
+				},
+				Order: []OrderBy{
+					{
+						Direction: OrderDirectionDesc,
+						Key: OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:         "count_",
+								FieldContext: telemetrytypes.FieldContextSpan,
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "order by with alias directly should pass",
+			query: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Aggregations: []TraceAggregation{
+					{
+						Expression: "count()",
+						Alias:      "my_count",
+					},
+				},
+				Order: []OrderBy{
+					{
+						Direction: OrderDirectionDesc,
+						Key: OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "my_count",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "order by with expression should pass",
+			query: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Aggregations: []TraceAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Order: []OrderBy{
+					{
+						Direction: OrderDirectionDesc,
+						Key: OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "count()",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "order by with invalid key should fail",
+			query: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Aggregations: []TraceAggregation{
+					{
+						Expression: "count()",
+						Alias:      "my_count",
+					},
+				},
+				Order: []OrderBy{
+					{
+						Direction: OrderDirectionDesc,
+						Key: OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "invalid_key",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "invalid order by key",
+		},
+		{
+			name: "order by with group by key should pass",
+			query: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Aggregations: []TraceAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				GroupBy: []GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+				Order: []OrderBy{
+					{
+						Direction: OrderDirectionAsc,
+						Key: OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "service.name",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "order by with resource context-prefixed alias should pass",
+			query: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Aggregations: []TraceAggregation{
+					{
+						Expression: "count()",
+						Alias:      "resource.count_",
+					},
+				},
+				Order: []OrderBy{
+					{
+						Direction: OrderDirectionDesc,
+						Key: OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:         "count_",
+								FieldContext: telemetrytypes.FieldContextResource,
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.query.Validate(RequestTypeTimeSeries)
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("validateOrderByForAggregation() expected error but got none")
+					return
+				}
+				if tt.errMsg != "" && !contains(err.Error(), tt.errMsg) {
+					t.Errorf("validateOrderByForAggregation() error = %v, want to contain %v", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("validateOrderByForAggregation() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}

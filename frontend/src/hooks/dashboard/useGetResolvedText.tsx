@@ -4,8 +4,8 @@
 // also have a prop saying max length post that you should truncate the text with "..."
 // return value should be a full text string, and a truncated text string (if max length is provided)
 
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 
 interface UseGetResolvedTextProps {
 	text: string | ReactNode;
@@ -32,13 +32,19 @@ function useGetResolvedText({
 	const isString = typeof text === 'string';
 
 	const processedDashboardVariables = useMemo(() => {
-		if (variables) return variables;
-		if (!selectedDashboard?.data.variables) return {};
+		if (variables) {
+			return variables;
+		}
+		if (!selectedDashboard?.data.variables) {
+			return {};
+		}
 
 		return Object.entries(selectedDashboard.data.variables).reduce<
 			Record<string, string | number | boolean>
 		>((acc, [, value]) => {
-			if (!value.name) return acc;
+			if (!value.name) {
+				return acc;
+			}
 
 			// Handle array values
 			if (Array.isArray(value.selectedValue)) {
@@ -99,16 +105,22 @@ function useGetResolvedText({
 				const dotMatch = match.match(
 					new RegExp(`\\{\\{\\s*\\.(${varNamePattern})\\s*\\}\\}`),
 				);
-				if (dotMatch) return dotMatch[1].trim();
+				if (dotMatch) {
+					return dotMatch[1].trim();
+				}
 				const normalMatch = match.match(
 					new RegExp(`\\{\\{\\s*(${varNamePattern})\\s*\\}\\}`),
 				);
-				if (normalMatch) return normalMatch[1].trim();
+				if (normalMatch) {
+					return normalMatch[1].trim();
+				}
 			} else if (match.startsWith('[[')) {
 				const bracketMatch = match.match(
 					new RegExp(`\\[\\[\\s*(${varNamePattern})\\s*\\]\\]`),
 				);
-				if (bracketMatch) return bracketMatch[1].trim();
+				if (bracketMatch) {
+					return bracketMatch[1].trim();
+				}
 			} else if (match.startsWith(matcher)) {
 				// For $ variables, we always want to strip the prefix
 				// unless the full match exists in processedVariables
@@ -129,7 +141,9 @@ function useGetResolvedText({
 	);
 
 	const fullText = useMemo(() => {
-		if (!isString) return text;
+		if (!isString) {
+			return text;
+		}
 
 		return (text as string)?.replace(combinedPattern, (match) => {
 			const varName = extractVarName(match);
@@ -144,7 +158,9 @@ function useGetResolvedText({
 	}, [text, processedVariables, combinedPattern, extractVarName, isString]);
 
 	const truncatedText = useMemo(() => {
-		if (!isString) return text;
+		if (!isString) {
+			return text;
+		}
 
 		const result = (text as string)?.replace(combinedPattern, (match) => {
 			const varName = extractVarName(match);

@@ -1,13 +1,13 @@
-import './CeleryOverview.styles.scss';
-
+import { useState } from 'react';
 import CeleryOverviewConfigOptions from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import CeleryOverviewTable, {
 	RowData,
 } from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { useState } from 'react';
 
 import CeleryOverviewDetails from './CeleryOverviewDetail/CeleryOverviewDetails';
+
+import './CeleryOverview.styles.scss';
 
 export default function CeleryOverview(): JSX.Element {
 	const [details, setDetails] = useState<RowData | null>(null);

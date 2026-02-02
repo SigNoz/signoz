@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
@@ -10,7 +11,6 @@ import {
 	Ellipsis,
 	Pin,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
 
 interface AttributeRecord {
 	field: string;
@@ -50,7 +50,9 @@ export default function AttributeActions({
 	}, [record.value]);
 
 	const handleFilterIn = useCallback(async (): Promise<void> => {
-		if (!onAddToQuery || isFilterInLoading) return;
+		if (!onAddToQuery || isFilterInLoading) {
+			return;
+		}
 		setIsFilterInLoading(true);
 		try {
 			await Promise.resolve(
@@ -62,7 +64,9 @@ export default function AttributeActions({
 	}, [onAddToQuery, record.field, record.value, isFilterInLoading]);
 
 	const handleFilterOut = useCallback(async (): Promise<void> => {
-		if (!onAddToQuery || isFilterOutLoading) return;
+		if (!onAddToQuery || isFilterOutLoading) {
+			return;
+		}
 		setIsFilterOutLoading(true);
 		try {
 			await Promise.resolve(

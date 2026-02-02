@@ -28,9 +28,15 @@ export const getYAxisFormattedValue = (
 	const numValue = parseFloat(value);
 
 	// Handle non-numeric or special values first.
-	if (isNaN(numValue)) return 'NaN';
-	if (numValue === Infinity) return '∞';
-	if (numValue === -Infinity) return '-∞';
+	if (isNaN(numValue)) {
+		return 'NaN';
+	}
+	if (numValue === Infinity) {
+		return '∞';
+	}
+	if (numValue === -Infinity) {
+		return '-∞';
+	}
 
 	// For all other standard formats, delegate to grafana/data's built-in formatter.
 	const computeDecimals = (): number | undefined => {
@@ -41,8 +47,12 @@ export const getYAxisFormattedValue = (
 	};
 
 	const fallbackFormat = (): string => {
-		if (precision === PrecisionOptionsEnum.FULL) return numValue.toString();
-		if (precision === 0) return Math.round(numValue).toString();
+		if (precision === PrecisionOptionsEnum.FULL) {
+			return numValue.toString();
+		}
+		if (precision === 0) {
+			return Math.round(numValue).toString();
+		}
 		return precision !== undefined
 			? numValue
 					.toFixed(precision)

@@ -1,13 +1,13 @@
-import './Events.styles.scss';
-
+import { useState } from 'react';
 import { Collapse, Input, Modal, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from 'lucide-react';
-import { useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';
 import EventAttribute from './components/EventAttribute';
+
+import './Events.styles.scss';
 
 interface IEventsTableProps {
 	span: Span;

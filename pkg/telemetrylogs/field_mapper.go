@@ -61,14 +61,10 @@ var (
 	}
 )
 
-type fieldMapper struct {
-	metadataStore telemetrytypes.MetadataStore
-}
+type fieldMapper struct {}
 
-func NewFieldMapper(metadataStore telemetrytypes.MetadataStore) qbtypes.FieldMapper {
-	return &fieldMapper{
-		metadataStore: metadataStore,
-	}
+func NewFieldMapper() qbtypes.FieldMapper {
+	return &fieldMapper{}
 }
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
@@ -150,13 +146,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
 			}
 
-			// fieldExpr := BodyJSONColumnPrefix + fmt.Sprintf("`%s`", key.Name)
-			// expr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldExpr, key.JSONDataType.StringValue())
-			// if key.Materialized {
-			// 	promotedFieldExpr := BodyPromotedColumnPrefix + fmt.Sprintf("`%s`", key.Name)
-			// 	expr = fmt.Sprintf("coalesce(%s, %s)", expr, fmt.Sprintf("dynamicElement(%s, '%s')", promotedFieldExpr, key.JSONDataType.StringValue()))
-			// }
-			return m.buildFieldForJSON(ctx, key)
+			return m.buildFieldForJSON(key)
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
@@ -245,12 +235,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 }
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern
-func (m *fieldMapper) buildFieldForJSON(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	plan, err := PlanJSON(ctx, key, qbtypes.FilterOperatorExists, nil, m.metadataStore)
-	if err != nil {
-		return "", err
-	}
-
+func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	plan := key.JSONPlan
 	if len(plan) == 0 {
 		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
 			"Could not find any valid paths for: %s", key.Name)
@@ -307,26 +293,16 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 		return "", errors.Newf(errors.TypeInternal, CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
 	}
 
-	// Build arrayMap expressions for ALL available branches at the root level
+	// Build arrayMap expressions for ALL available branches at the root level.
+	// Iterate branches in deterministic order (JSON then Dynamic) so generated SQL
 	var arrayMapExpressions []string
 	for _, node := range plan {
-		hasJSON := node.Branches[telemetrytypes.BranchJSON] != nil
-		hasDynamic := node.Branches[telemetrytypes.BranchDynamic] != nil
-
-		if hasJSON {
-			jsonExpr, err := m.buildArrayMap(node, telemetrytypes.BranchJSON)
+		for _, branchType := range node.BranchesInOrder() {
+			expr, err := m.buildArrayMap(node, branchType)
 			if err != nil {
 				return "", err
 			}
-			arrayMapExpressions = append(arrayMapExpressions, jsonExpr)
-		}
-
-		if hasDynamic {
-			dynamicExpr, err := m.buildArrayMap(node, telemetrytypes.BranchDynamic)
-			if err != nil {
-				return "", err
-			}
-			arrayMapExpressions = append(arrayMapExpressions, dynamicExpr)
+			arrayMapExpressions = append(arrayMapExpressions, expr)
 		}
 	}
 	if len(arrayMapExpressions) == 0 {
@@ -348,9 +324,9 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 		return "", errors.Newf(errors.TypeInternal, CodeCurrentNodeNil, "current node is nil while building arrayMap")
 	}
 
-	nextNode := currentNode.Branches[branchType]
-	if nextNode == nil {
-		return "", errors.Newf(errors.TypeInternal, CodeNextNodeNil, "next node is nil while building arrayMap")
+	childNode := currentNode.Branches[branchType]
+	if childNode == nil {
+		return "", errors.Newf(errors.TypeInternal, CodeChildNodeNil, "child node is nil while building arrayMap")
 	}
 
 	// Build the array expression for this level
@@ -366,32 +342,22 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	}
 
 	// If this is the terminal level, return the simple arrayMap
-	if nextNode.IsTerminal {
-		dynamicElementExpr := fmt.Sprintf("dynamicElement(%s, '%s')", nextNode.FieldPath(),
-			nextNode.TerminalConfig.ElemType.StringValue(),
+	if childNode.IsTerminal {
+		dynamicElementExpr := fmt.Sprintf("dynamicElement(%s, '%s')", childNode.FieldPath(),
+			childNode.TerminalConfig.ElemType.StringValue(),
 		)
 		return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), dynamicElementExpr, arrayExpr), nil
 	}
 
-	// For non-terminal nodes, we need to handle ALL possible branches at the next level
+	// For non-terminal nodes, we need to handle ALL possible branches at the next level.
+	// Use deterministic branch order so generated SQL is stable across environments.
 	var nestedExpressions []string
-	hasJSON := nextNode.Branches[telemetrytypes.BranchJSON] != nil
-	hasDynamic := nextNode.Branches[telemetrytypes.BranchDynamic] != nil
-
-	if hasJSON {
-		jsonNested, err := m.buildArrayMap(nextNode, telemetrytypes.BranchJSON)
+	for _, branchType := range childNode.BranchesInOrder() {
+		expr, err := m.buildArrayMap(childNode, branchType)
 		if err != nil {
 			return "", err
 		}
-		nestedExpressions = append(nestedExpressions, jsonNested)
-	}
-
-	if hasDynamic {
-		dynamicNested, err := m.buildArrayMap(nextNode, telemetrytypes.BranchDynamic)
-		if err != nil {
-			return "", err
-		}
-		nestedExpressions = append(nestedExpressions, dynamicNested)
+		nestedExpressions = append(nestedExpressions, expr)
 	}
 
 	// If we have multiple nested expressions, we need to concat them
@@ -399,7 +365,6 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	if len(nestedExpressions) == 1 {
 		nestedExpr = nestedExpressions[0]
 	} else if len(nestedExpressions) > 1 {
-		// This shouldn't happen in our current tree structure, but handle it just in case
 		nestedExpr = fmt.Sprintf("arrayConcat(%s)", strings.Join(nestedExpressions, ", "))
 	} else {
 		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")

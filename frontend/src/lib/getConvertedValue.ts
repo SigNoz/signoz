@@ -1,3 +1,17 @@
+import {
+	UniversalUnitToGrafanaUnit,
+	Y_AXIS_UNIT_NAMES,
+} from 'components/YAxisUnitSelector/constants';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
+
+// 1 byte = 8 bits
+// Or 1 bit = 1/8 bytes
+const BIT_FACTOR = 1 / 8;
+
+const DECIMAL_FACTOR = 1000;
+const BINARY_FACTOR = 1024;
+
 const unitsMapping = [
 	{
 		label: 'Data',
@@ -15,62 +29,132 @@ const unitsMapping = [
 			{
 				label: 'bits(IEC)',
 				value: 'bits',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR,
 			},
 			{
 				label: 'bits(SI)',
 				value: 'decbits',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.KILOBITS],
+				value: UniversalYAxisUnit.KILOBITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MEGABITS],
+				value: UniversalYAxisUnit.MEGABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 2,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.GIGABITS],
+				value: UniversalYAxisUnit.GIGABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 3,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TERABITS],
+				value: UniversalYAxisUnit.TERABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 4,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PETABITS],
+				value: UniversalYAxisUnit.PETABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 5,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS],
+				value: UniversalYAxisUnit.EXABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS],
+				value: UniversalYAxisUnit.ZETTABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS],
+				value: UniversalYAxisUnit.YOTTABITS,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 8,
 			},
 			{
 				label: 'kibibytes',
 				value: 'kbytes',
-				factor: 1024,
+				factor: BINARY_FACTOR,
 			},
 			{
 				label: 'kilobytes',
 				value: 'deckbytes',
-				factor: 1000,
+				factor: DECIMAL_FACTOR,
 			},
 			{
 				label: 'mebibytes',
 				value: 'mbytes',
-				factor: 1024 * 1024,
+				factor: BINARY_FACTOR ** 2,
 			},
 			{
 				label: 'megabytes',
 				value: 'decmbytes',
-				factor: 1000 * 1000,
+				factor: DECIMAL_FACTOR ** 2,
 			},
 			{
 				label: 'gibibytes',
 				value: 'gbytes',
-				factor: 1024 * 1024 * 1024,
+				factor: BINARY_FACTOR ** 3,
 			},
 			{
 				label: 'gigabytes',
 				value: 'decgbytes',
-				factor: 1000 * 1000 * 1000,
+				factor: DECIMAL_FACTOR ** 3,
 			},
 			{
 				label: 'tebibytes',
 				value: 'tbytes',
-				factor: 1024 * 1024 * 1024 * 1024,
+				factor: BINARY_FACTOR ** 4,
 			},
 			{
 				label: 'terabytes',
 				value: 'dectbytes',
-				factor: 1000 * 1000 * 1000 * 1000,
+				factor: DECIMAL_FACTOR ** 4,
 			},
 			{
 				label: 'pebibytes',
 				value: 'pbytes',
-				factor: 1024 * 1024 * 1024 * 1024 * 1024,
+				factor: BINARY_FACTOR ** 5,
 			},
 			{
 				label: 'petabytes',
 				value: 'decpbytes',
-				factor: 1000 * 1000 * 1000 * 1000 * 1000,
+				factor: DECIMAL_FACTOR ** 5,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES],
+				value: UniversalYAxisUnit.EXABYTES,
+				factor: DECIMAL_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBYTES],
+				value: UniversalYAxisUnit.EXBIBYTES,
+				factor: BINARY_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABYTES],
+				value: UniversalYAxisUnit.ZETTABYTES,
+				factor: DECIMAL_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBYTES],
+				value: UniversalYAxisUnit.ZEBIBYTES,
+				factor: BINARY_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABYTES],
+				value: UniversalYAxisUnit.YOTTABYTES,
+				factor: DECIMAL_FACTOR ** 8,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBYTES],
+				value: UniversalYAxisUnit.YOBIBYTES,
+				factor: BINARY_FACTOR ** 8,
 			},
 		],
 	},
@@ -90,44 +174,103 @@ const unitsMapping = [
 			{
 				label: 'bits/sec(IEC)',
 				value: 'binbps',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR, // 1 byte = 8 bits
 			},
 			{
 				label: 'bits/sec(SI)',
 				value: 'bps',
-				factor: 8, // 1 byte = 8 bits
+				factor: BIT_FACTOR, // 1 byte = 8 bits
 			},
 			{
 				label: 'kibibytes/sec',
 				value: 'KiBs',
-				factor: 1024,
+				factor: BINARY_FACTOR,
 			},
 			{
 				label: 'kibibits/sec',
 				value: 'Kibits',
-				factor: 8 * 1024, // 1 KiB = 8 Kibits
+				factor: BIT_FACTOR * BINARY_FACTOR, // 1 KiB = 8 Kibits
 			},
 			{
 				label: 'kilobytes/sec',
 				value: 'KBs',
-				factor: 1000,
+				factor: DECIMAL_FACTOR,
 			},
 			{
 				label: 'kilobits/sec',
 				value: 'Kbits',
-				factor: 8 * 1000, // 1 KB = 8 Kbits
+				factor: BIT_FACTOR * DECIMAL_FACTOR, // 1 KB = 8 Kbits
 			},
 			{
 				label: 'mebibytes/sec',
 				value: 'MiBs',
-				factor: 1024 * 1024,
+				factor: BINARY_FACTOR ** 2,
 			},
 			{
 				label: 'mebibits/sec',
 				value: 'Mibits',
-				factor: 8 * 1024 * 1024, // 1 MiB = 8 Mibits
+				factor: BIT_FACTOR * BINARY_FACTOR ** 2, // 1 MiB = 8 Mibits
 			},
-			// ... (other options)
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES_SECOND],
+				value: UniversalYAxisUnit.EXABYTES_SECOND,
+				factor: DECIMAL_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABYTES_SECOND],
+				value: UniversalYAxisUnit.ZETTABYTES_SECOND,
+				factor: DECIMAL_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABYTES_SECOND],
+				value: UniversalYAxisUnit.YOTTABYTES_SECOND,
+				factor: DECIMAL_FACTOR ** 8,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBYTES_SECOND],
+				value: UniversalYAxisUnit.EXBIBYTES_SECOND,
+				factor: BINARY_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBYTES_SECOND],
+				value: UniversalYAxisUnit.ZEBIBYTES_SECOND,
+				factor: BINARY_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBYTES_SECOND],
+				value: UniversalYAxisUnit.YOBIBYTES_SECOND,
+				factor: BINARY_FACTOR ** 8,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABITS_SECOND],
+				value: UniversalYAxisUnit.EXABITS_SECOND,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZETTABITS_SECOND],
+				value: UniversalYAxisUnit.ZETTABITS_SECOND,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOTTABITS_SECOND],
+				value: UniversalYAxisUnit.YOTTABITS_SECOND,
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 8,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXBIBITS_SECOND],
+				value: UniversalYAxisUnit.EXBIBITS_SECOND,
+				factor: BIT_FACTOR * BINARY_FACTOR ** 6,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ZEBIBITS_SECOND],
+				value: UniversalYAxisUnit.ZEBIBITS_SECOND,
+				factor: BIT_FACTOR * BINARY_FACTOR ** 7,
+			},
+			{
+				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.YOBIBITS_SECOND],
+				value: UniversalYAxisUnit.YOBIBITS_SECOND,
+				factor: BIT_FACTOR * BINARY_FACTOR ** 8,
+			},
 		],
 	},
 	{
@@ -268,6 +411,14 @@ function findUnitObject(
 	return unitObj || null;
 }
 
+export function getFormattedUnit(unit: string): string {
+	const isUniversalYAxisUnit = isUniversalUnit(unit);
+	if (isUniversalYAxisUnit) {
+		return UniversalUnitToGrafanaUnit[unit as UniversalYAxisUnit] || unit;
+	}
+	return unit;
+}
+
 export function convertValue(
 	value: number,
 	currentUnit?: string,
@@ -281,8 +432,12 @@ export function convertValue(
 	) {
 		return value;
 	}
-	const currentUnitObj = findUnitObject(currentUnit);
-	const targetUnitObj = findUnitObject(targetUnit);
+
+	const formattedCurrentUnit = getFormattedUnit(currentUnit);
+	const formattedTargetUnit = getFormattedUnit(targetUnit);
+
+	const currentUnitObj = findUnitObject(formattedCurrentUnit);
+	const targetUnitObj = findUnitObject(formattedTargetUnit);
 
 	if (currentUnitObj && targetUnitObj) {
 		const baseValue = value * currentUnitObj.factor;

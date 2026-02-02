@@ -1,8 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback } from 'react';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback } from 'react';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 

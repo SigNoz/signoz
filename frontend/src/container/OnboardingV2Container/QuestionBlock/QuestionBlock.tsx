@@ -1,6 +1,6 @@
+import React, { useState } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import { Avatar, Button, Flex, Input, Typography } from 'antd';
-import React, { useState } from 'react';
 
 import { Question } from '../AddDataSource/AddDataSource'; // Adjust the import path as necessary
 
@@ -73,7 +73,9 @@ function QuestionBlock({
 							const filteredOptions = group.items.filter((option) =>
 								option.toLowerCase().includes(searchQuery),
 							);
-							if (filteredOptions.length === 0) return null;
+							if (filteredOptions.length === 0) {
+								return null;
+							}
 							return (
 								<Flex gap={8} vertical key={group.id}>
 									{group.category && (

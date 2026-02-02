@@ -1,5 +1,5 @@
-import '../DashboardSettings.styles.scss';
-
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
@@ -21,12 +21,12 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
+
+import '../DashboardSettings.styles.scss';
 
 function TableRow({ children, ...props }: RowProps): JSX.Element {
 	const {
@@ -127,7 +127,9 @@ function VariablesSettings({
 	};
 
 	useEffect(() => {
-		if (!variablesSettingsTabHandle) return;
+		if (!variablesSettingsTabHandle) {
+			return;
+		}
 
 		// eslint-disable-next-line no-param-reassign
 		variablesSettingsTabHandle.current = {

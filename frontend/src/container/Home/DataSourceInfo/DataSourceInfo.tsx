@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
+import { useEffect, useState } from 'react';
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -7,7 +8,6 @@ import history from 'lib/history';
 import { Globe, Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 
 import { DOCS_LINKS } from '../constants';
