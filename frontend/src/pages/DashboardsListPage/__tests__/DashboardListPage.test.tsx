@@ -12,8 +12,9 @@ import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
-jest.mock('container/DashboardContainer/DashboardDescription', () => ({
-	sanitizeDashboardData: jest.fn(),
+jest.mock('container/DashboardContainer/DashboardDescription/utils', () => ({
+	sanitizeDashboardData: jest.fn((data) => data),
+	downloadObjectAsJson: jest.fn(),
 }));
 
 jest.mock('react-router-dom', () => ({
