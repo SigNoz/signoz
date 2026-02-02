@@ -187,7 +187,7 @@ func (m *defaultFieldMapper) getColumn(
 		case telemetrytypes.FieldDataTypeBool:
 			return indexV3Columns["attributes_bool"], nil
 		}
-	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
+	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
 			// The actual SQL will be generated in the condition builder
@@ -196,20 +196,28 @@ func (m *defaultFieldMapper) getColumn(
 
 		// TODO(srikanthccv): remove this when it's safe to remove
 		// issue with CH aliasing
+
+		/*
+			NOTE: There are fields which are deprecated for only to not show up as user suggestion and is possible that
+			they don't have a mapping in oldToNew map. So we need to look up in indexV3Columns directly for those fields.
+			For example: kind, timestamp etc.
+		*/
 		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
-			return indexV3Columns[oldToNew[key.Name]], nil
+			// Check if we have a mapping for the deprecated calculated field
+			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+				return col, nil
+			}
 		}
 		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated intrinsic field
-			if _, ok := indexV3Columns[oldToNew[key.Name]]; ok {
-				return indexV3Columns[oldToNew[key.Name]], nil
+			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+				return col, nil
 			}
 		}
 
 		if col, ok := indexV3Columns[key.Name]; ok {
 			return col, nil
 		}
-		return nil, qbtypes.ErrColumnNotFound
 	}
 	return nil, qbtypes.ErrColumnNotFound
 }
