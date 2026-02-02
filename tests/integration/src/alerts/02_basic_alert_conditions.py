@@ -310,7 +310,12 @@ TEST_RULES_MISCELLANEOUS = [
         alert_data=[
             types.AlertData(type="metrics", data_path="alerts/test_scenarios/no_data_rule_test/alert_data.jsonl"),
         ],
-        alert_expectation=types.AlertExpectation(should_alert=False, wait_time_seconds=600, expected_alerts=[]),
+        alert_expectation=types.AlertExpectation(should_alert=True, wait_time_seconds=200, expected_alerts=[
+            types.FiringAlert(labels={
+                "alertname": "[No data] no_data_rule_test",
+                "nodata": "true",
+            }),
+        ]),
     ),
     types.AlertTestCase(
         name="test_multi_threshold_rule_test",
@@ -321,11 +326,13 @@ TEST_RULES_MISCELLANEOUS = [
         alert_expectation=types.AlertExpectation(should_alert=True, wait_time_seconds=600, expected_alerts=[
                 types.FiringAlert(labels={
                     "alertname": "multi_threshold_rule_test",
-                    "threshold.name": "warning",
+                    "threshold.name": "info",
                 }),
+                # the second alert will be fired about 5 minutes after the first alert
+                # taking in consideration the group_interval of alert manager
                 types.FiringAlert(labels={
                     "alertname": "multi_threshold_rule_test",
-                    "threshold.name": "info",
+                    "threshold.name": "warning",
                 }),
             ]),
     ),

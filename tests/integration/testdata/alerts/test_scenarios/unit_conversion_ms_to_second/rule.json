@@ -8,7 +8,7 @@
       "spec": [
         {
           "name": "critical",
-          "target": 10,
+          "target": 3,
           "matchType": "1",
           "op": "1",
           "channels": [
@@ -21,6 +21,7 @@
     "compositeQuery": {
       "queryType": "builder",
       "panelType": "graph",
+      "unit": "ms",
       "queries": [
         {
           "type": "builder_query",

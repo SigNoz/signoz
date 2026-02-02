@@ -8,19 +8,20 @@
       "spec": [
         {
           "name": "critical",
-          "target": 10,
+          "target": 1.5,
           "matchType": "1",
           "op": "1",
           "channels": [
             "test channel"
           ],
-          "targetUnit": "MB"
+          "targetUnit": "MBy"
         }
       ]
     },
     "compositeQuery": {
       "queryType": "builder",
       "panelType": "graph",
+      "unit": "By",
       "queries": [
         {
           "type": "builder_query",
