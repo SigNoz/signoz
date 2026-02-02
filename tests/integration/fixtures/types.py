@@ -174,11 +174,13 @@ class AlertData:
     # path to the data file in testdata directory
     data_path: str
 
+
 @dataclass(frozen=True)
 class FiringAlert:
     # labels of the alert that is firing
     labels: dict[str, str]
     # annotations and other fields can be added later as per need
+
 
 @dataclass(frozen=True)
 class AlertExpectation:
@@ -189,4 +191,3 @@ class AlertExpectation:
     # seconds to wait for the alerts to be fired, if no
     # alerts are fired in the expected time, the test will fail
     wait_time_seconds: int
-

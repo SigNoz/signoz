@@ -112,11 +112,11 @@ def insert_alert_data(
 
     yield _insert_alert_data
 
+
 @pytest.fixture(name="collect_firing_alerts", scope="package")
 def collect_firing_alerts():
     def _collect_firing_alerts(
-        test_alert_container: types.TestContainerDocker,
-        notification_channel_name: str
+        test_alert_container: types.TestContainerDocker, notification_channel_name: str
     ) -> List[dict[str, str]]:
         # Prepare the endpoint path for the channel name, for alerts tests we have
         # used different paths for receiving alerts from each channel so that
@@ -144,15 +144,16 @@ def collect_firing_alerts():
                 labels = a["labels"]
                 alerts.append(labels)
         return alerts
+
     yield _collect_firing_alerts
 
 
 @pytest.fixture(name="verify_alert_expectation", scope="package")
 def verify_alert_expectation(
-    collect_firing_alerts: Callable[[types.TestContainerDocker, str], List[dict[str, str]]],
-) -> (
-    Callable[[types.TestContainerDocker, str, types.AlertExpectation], bool]
-):
+    collect_firing_alerts: Callable[ # pylint: disable=redefined-outer-name
+        [types.TestContainerDocker, str], List[dict[str, str]]
+    ],
+) -> Callable[[types.TestContainerDocker, str, types.AlertExpectation], bool]:
     def _verify_alerts(
         firing_alerts: list[dict[str, str]], expected_alerts: list[dict[str, str]]
     ) -> tuple[int, list[dict[str, str]]]:
@@ -181,7 +182,7 @@ def verify_alert_expectation(
                 missing_alerts.append(alert)
 
         return (fired_count, missing_alerts)
-        
+
     def _verify_alert_expectation(
         test_alert_container: types.TestContainerDocker,
         notification_channel_name: str,
@@ -192,10 +193,14 @@ def verify_alert_expectation(
         time_to_wait = datetime.now() + timedelta(
             seconds=alert_expectations.wait_time_seconds
         )
-        expected_alerts_labels = [alert.labels for alert in alert_expectations.expected_alerts]
+        expected_alerts_labels = [
+            alert.labels for alert in alert_expectations.expected_alerts
+        ]
 
         while datetime.now() < time_to_wait:
-            firing_alerts = collect_firing_alerts(test_alert_container, notification_channel_name)
+            firing_alerts = collect_firing_alerts(
+                test_alert_container, notification_channel_name
+            )
 
             if alert_expectations.should_alert:
                 # verify the number of alerts fired
@@ -204,7 +209,9 @@ def verify_alert_expectation(
                 )
 
                 if verified_count == len(alert_expectations.expected_alerts):
-                    logger.info("Got expected number of alerts: %s", {"count": verified_count})
+                    logger.info(
+                        "Got expected number of alerts: %s", {"count": verified_count}
+                    )
                     return True
             else:
                 # No alert is supposed to be fired if should_alert is False
@@ -232,6 +239,6 @@ def verify_alert_expectation(
             f"firing alerts: {firing_alerts}",
         )
 
-        return True # should not reach here
+        return True  # should not reach here
 
     yield _verify_alert_expectation
