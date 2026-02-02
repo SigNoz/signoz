@@ -36,9 +36,6 @@ export default function Legend({
 	// Chunk legend items into rows of LEGENDS_PER_ROW items each
 	const legendRows = useMemo(() => {
 		const legendItems = Object.values(legendItemsMap);
-		if (legendsPerSet >= legendItems.length) {
-			return [legendItems];
-		}
 
 		return legendItems.reduce((acc: LegendItem[][], curr, i) => {
 			if (i % legendsPerSet === 0) {
@@ -93,10 +90,7 @@ export default function Legend({
 			onMouseLeave={onLegendMouseLeave}
 		>
 			<Virtuoso
-				style={{
-					height: '100%',
-					width: '100%',
-				}}
+				className="legend-virtuoso-container"
 				data={legendRows}
 				itemContent={(index, row): JSX.Element => renderLegendRow(index, row)}
 			/>
