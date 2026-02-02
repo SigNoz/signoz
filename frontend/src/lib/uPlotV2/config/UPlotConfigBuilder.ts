@@ -68,9 +68,13 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	constructor(args?: ConfigBuilderProps) {
 		super(args ?? {});
-		const { widgetId, onDragSelect } = args ?? {};
+		const { widgetId, onDragSelect, tzDate } = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
+		}
+
+		if (tzDate) {
+			this.tzDate = tzDate;
 		}
 
 		this.onDragSelect = noop;
