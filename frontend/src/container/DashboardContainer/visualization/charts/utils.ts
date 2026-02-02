@@ -12,7 +12,7 @@ const AVG_CHAR_WIDTH = 8;
 const DEFAULT_AVG_LABEL_LENGTH = 15;
 const LEGEND_GAP = 16;
 const LEGEND_PADDING = 12;
-const LEGEND_LINE_HEIGHT = 34;
+const LEGEND_LINE_HEIGHT = 36;
 const MAX_LEGEND_WIDTH = 400;
 
 /**
@@ -92,11 +92,6 @@ export function calculateChartDimensions({
 
 	const legendRowHeight = LEGEND_LINE_HEIGHT + LEGEND_PADDING;
 
-	const maxBottomLegendHeight = Math.min(
-		80,
-		Math.max(containerHeight <= 400 ? 15 : 20, containerHeight * 0.15),
-	);
-
 	const legendItemWidth = Math.min(approxLegendItemWidth, 400);
 	const legendItemsPerRow = Math.max(
 		1,
@@ -113,24 +108,11 @@ export function calculateChartDimensions({
 			? legendRowCount * legendRowHeight - LEGEND_PADDING
 			: legendRowHeight;
 
-	const maxAllowedLegendHeight = Math.min(
-		2 * legendRowHeight,
-		maxBottomLegendHeight,
-	);
+	const maxAllowedLegendHeight = Math.min(2 * legendRowHeight, 80);
 
-	const minLegendHeight =
-		legendRowCount <= 1
-			? legendRowHeight
-			: Math.min(2 * legendRowHeight, idealBottomLegendHeight);
-
-	const legendHeightFloor =
-		containerHeight < 200
-			? Math.min(minLegendHeight, maxBottomLegendHeight)
-			: minLegendHeight;
-
-	const bottomLegendHeight = Math.max(
-		legendHeightFloor,
-		Math.min(idealBottomLegendHeight, maxAllowedLegendHeight),
+	const bottomLegendHeight = Math.min(
+		idealBottomLegendHeight,
+		maxAllowedLegendHeight,
 	);
 
 	// How many legend items per row in the Legend component.
