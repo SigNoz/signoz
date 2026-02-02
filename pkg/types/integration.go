@@ -53,7 +53,7 @@ type InstalledIntegration struct {
 
 type InstalledIntegrationConfig map[string]interface{}
 
-// For serializing from db
+// Scan scans data from db
 func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	var data []byte
 	switch v := src.(type) {
@@ -68,7 +68,7 @@ func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	return json.Unmarshal(data, c)
 }
 
-// For serializing to db
+// Value serializes data to db
 func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 	filterSetJson, err := json.Marshal(c)
 	if err != nil {
@@ -140,6 +140,7 @@ func DefaultAccountConfig() AccountConfig {
 	}
 }
 
+// AccountConfig is a cloud provider-agnostic config for a cloud account
 type AccountConfig struct {
 	// AWS Config
 	EnabledRegions []string `json:"regions,omitempty"`
@@ -149,7 +150,7 @@ type AccountConfig struct {
 	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
 }
 
-// For serializing from db
+// Scan scans data from db
 func (c *AccountConfig) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -164,7 +165,7 @@ func (c *AccountConfig) Scan(src any) error {
 	return json.Unmarshal(data, c)
 }
 
-// For serializing to db
+// Value serializes data to db
 func (c *AccountConfig) Value() (driver.Value, error) {
 	if c == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "cloud account config is nil")
@@ -182,7 +183,7 @@ type AgentReport struct {
 	Data            map[string]any `json:"data"`
 }
 
-// For serializing from db
+// Scan scans data from db
 func (r *AgentReport) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -197,7 +198,7 @@ func (r *AgentReport) Scan(src any) error {
 	return json.Unmarshal(data, r)
 }
 
-// For serializing to db
+// Value serializes data to db
 func (r *AgentReport) Value() (driver.Value, error) {
 	if r == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")
@@ -237,7 +238,7 @@ type CloudServiceConfig struct {
 	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
-// For serializing from db
+// Scan scans data from db
 func (c *CloudServiceConfig) Scan(src any) error {
 	var data []byte
 	switch src := src.(type) {
@@ -252,7 +253,7 @@ func (c *CloudServiceConfig) Scan(src any) error {
 	return json.Unmarshal(data, c)
 }
 
-// For serializing to db
+// Value serializes data to db
 func (c *CloudServiceConfig) Value() (driver.Value, error) {
 	if c == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "cloud service config is nil")

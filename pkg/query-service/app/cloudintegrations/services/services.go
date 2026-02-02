@@ -27,10 +27,6 @@ type (
 	}
 )
 
-func (a *AzureServicesProvider) CloudProvider(ctx context.Context) (string, error) {
-	return types.CloudProviderAzure, nil
-}
-
 func (a *AzureServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*AzureServiceDefinition, error) {
 	return a.definitions, nil
 }
@@ -42,10 +38,6 @@ func (a *AzureServicesProvider) GetServiceDefinition(ctx context.Context, servic
 	}
 
 	return def, nil
-}
-
-func (a *AWSServicesProvider) CloudProvider(ctx context.Context) (string, error) {
-	return types.CloudProviderAWS, nil
 }
 
 func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*AWSServiceDefinition, error) {
@@ -197,31 +189,6 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (Definition,
 
 	return serviceDef, nil
 }
-
-//func validateServiceDefinition(s any) error {
-//	// Validate dashboard data
-//	seenDashboardIds := map[string]interface{}{}
-//
-//	switch def := s.(type) {
-//	case AWSServiceDefinition:
-//
-//	case AzureServiceDefinition:
-//		for _, dd := range def.Assets.Dashboards {
-//			if _, seen := seenDashboardIds[dd.Id]; seen {
-//				return fmt.Errorf("multiple dashboards found with id %s", dd.Id)
-//			}
-//			seenDashboardIds[dd.Id] = nil
-//		}
-//
-//		if def.Strategy == nil {
-//			return fmt.Errorf("telemetry_collection_strategy is required")
-//		}
-//	default:
-//		return fmt.Errorf("unsupported service definition type %T", s)
-//	}
-//
-//	return nil
-//}
 
 func ParseStructWithJsonTagsFromMap(data map[string]any, target interface{}) error {
 	mapJson, err := json.Marshal(data)

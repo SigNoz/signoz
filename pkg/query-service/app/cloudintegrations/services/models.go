@@ -16,7 +16,7 @@ type Metadata struct {
 type Definition interface {
 	GetId() string
 	Validate() error
-	PopulateDashboardIDs(svcId string)
+	PopulateDashboardURLs(svcId string)
 }
 
 var _ Definition = &AWSServiceDefinition{}
@@ -24,16 +24,11 @@ var _ Definition = &AzureServiceDefinition{}
 
 type AWSServiceDefinition struct {
 	Metadata
-
-	Overview string `json:"overview"` // markdown
-
-	Assets Assets `json:"assets"`
-
-	SupportedSignals SupportedSignals `json:"supported_signals"`
-
-	DataCollected DataCollected `json:"data_collected"`
-
-	Strategy *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
+	Overview         string                 `json:"overview"` // markdown
+	Assets           Assets                 `json:"assets"`
+	SupportedSignals SupportedSignals       `json:"supported_signals"`
+	DataCollected    DataCollected          `json:"data_collected"`
+	Strategy         *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
 }
 
 func (def *AWSServiceDefinition) GetId() string {
@@ -57,10 +52,11 @@ func (def *AWSServiceDefinition) Validate() error {
 	return nil
 }
 
-func (def *AWSServiceDefinition) PopulateDashboardIDs(serviceId string) {
+func (def *AWSServiceDefinition) PopulateDashboardURLs(serviceId string) {
 	for i := range def.Assets.Dashboards {
 		dashboardId := def.Assets.Dashboards[i].Id
-		def.Assets.Dashboards[i].Url = GetCloudIntegrationDashboardID(types.CloudProviderAWS, serviceId, dashboardId)
+		url := "/dashboard/" + GetCloudIntegrationDashboardID(types.CloudProviderAWS, serviceId, dashboardId)
+		def.Assets.Dashboards[i].Url = url
 	}
 }
 
@@ -78,10 +74,11 @@ type AzureServiceDefinition struct {
 	Strategy *AzureCollectionStrategy `json:"telemetry_collection_strategy"`
 }
 
-func (def *AzureServiceDefinition) PopulateDashboardIDs(svcId string) {
+func (def *AzureServiceDefinition) PopulateDashboardURLs(svcId string) {
 	for i := range def.Assets.Dashboards {
 		dashboardId := def.Assets.Dashboards[i].Id
-		def.Assets.Dashboards[i].Url = GetCloudIntegrationDashboardID(types.CloudProviderAzure, svcId, dashboardId)
+		url := "/dashboard/" + GetCloudIntegrationDashboardID(types.CloudProviderAzure, svcId, dashboardId)
+		def.Assets.Dashboards[i].Url = url
 	}
 }
 

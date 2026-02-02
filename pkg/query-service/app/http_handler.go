@@ -3501,7 +3501,7 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
 
 	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionCommand),
+		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnection),
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
@@ -3559,72 +3559,66 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) CloudIntegrationsGenerateConnectionCommand(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsGenerateConnection(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(fmt.Errorf("invalid cloud provider: %s", cloudProvider)), nil)
 	}
 
-	req := cloudintegrations.GenerateConnectionCommandRequest{}
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	switch cloudProvider {
 	case types.CloudProviderAWS:
-		awsReq := new(cloudintegrations.AWSConnectionUrlRequest)
-		if err := json.NewDecoder(r.Body).Decode(awsReq); err != nil {
+		req := new(cloudintegrations.GetAWSConnectionUrlReq)
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			RespondError(w, model.BadRequest(err), nil)
 			return
 		}
 
-		req.AWSConnectionUrlRequest = awsReq
+		req.OrgID = claims.OrgID
+		res, err := aH.CloudIntegrationsController.GetAWSConnectionUrl(r.Context(), req)
+		if err != nil {
+			RespondError(w, err, nil)
+			return
+		}
+
+		aH.Respond(w, res)
+		return
 	case types.CloudProviderAzure:
-		azureReq := new(cloudintegrations.AzureConnectionCommandRequest)
-		if err := json.NewDecoder(r.Body).Decode(azureReq); err != nil {
+		req := new(cloudintegrations.GetAzureConnectionCommandReq)
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			RespondError(w, model.BadRequest(err), nil)
 			return
 		}
 
-		if _, ok := cloudintegrations.ValidAzureRegions[azureReq.AccountConfig.DeploymentRegion]; !ok {
-			RespondError(w, model.BadRequest(fmt.Errorf("invalid azure region: %s", azureReq.AccountConfig.DeploymentRegion)), nil)
+		if _, ok := cloudintegrations.ValidAzureRegions[req.AccountConfig.DeploymentRegion]; !ok {
+			RespondError(w, model.BadRequest(fmt.Errorf("invalid azure region: %s", req.AccountConfig.DeploymentRegion)), nil)
 			return
 		}
 
-		if len(azureReq.AccountConfig.EnabledResourceGroups) < 1 {
+		if len(req.AccountConfig.EnabledResourceGroups) < 1 {
 			RespondError(w, model.BadRequest(fmt.Errorf("at least one resource group must be enabled")), nil)
 			return
 		}
 
-		req.AzureConnectionCommandRequest = azureReq
-	}
+		req.OrgID = claims.OrgID
+		res, err := aH.CloudIntegrationsController.GetAzureConnectionCommand(r.Context(), req)
+		if err != nil {
+			RespondError(w, err, nil)
+			return
+		}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+		aH.Respond(w, res)
 		return
-	}
-
-	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionCommand(
-		r.Context(), claims.OrgID, cloudProvider, req,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	switch cloudProvider {
-	case types.CloudProviderAWS:
-		aH.Respond(w, result.AWSConnectionUrl)
-	case types.CloudProviderAzure:
-		aH.Respond(w, result.AzureConnectionCommand)
 	}
 }
 
-func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsGetAccountStatus(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -3655,8 +3649,8 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *ht
 		RespondError(w, model.BadRequest(err), nil)
 	}
 
-	req := cloudintegrations.AgentCheckInRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	req := new(cloudintegrations.AgentCheckInRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
@@ -3689,9 +3683,7 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *ht
 	}
 }
 
-func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -3723,9 +3715,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
 	aH.Respond(w, result)
 }
 
-func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -3739,10 +3729,7 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
-		r.Context(), claims.OrgID, cloudProvider, accountId,
-	)
-
+	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(r.Context(), claims.OrgID, cloudProvider, accountId)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3751,9 +3738,7 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 	aH.Respond(w, result)
 }
 
-func (aH *APIHandler) CloudIntegrationsListServices(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsListServices(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -3772,14 +3757,12 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 		return
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.ListServices(
-		r.Context(), claims.OrgID, cloudProvider, cloudAccountId,
-	)
-
+	resp, apiErr := aH.CloudIntegrationsController.ListServices(r.Context(), claims.OrgID, cloudProvider, cloudAccountId)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
+
 	aH.Respond(w, resp)
 }
 
@@ -4041,9 +4024,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 	return nil, nil
 }
 
-func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
-	w http.ResponseWriter, r *http.Request,
-) {
+func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if err := types.ValidateCloudProvider(cloudProvider); err != nil {
 		RespondError(w, model.BadRequest(err), nil)

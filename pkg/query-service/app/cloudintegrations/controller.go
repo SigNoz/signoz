@@ -26,6 +26,15 @@ type Controller struct {
 	azureServiceDefinitions *services.AzureServicesProvider
 }
 
+type ConnectedAccountsListResponse struct {
+	Accounts []types.Account `json:"accounts"`
+}
+
+type GenerateConnectionCommandRequest struct {
+	AWSConnectionUrlRequest       *GetAWSConnectionUrlReq
+	AzureConnectionCommandRequest *GetAzureConnectionCommandReq
+}
+
 func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 	accountsRepo, err := newCloudProviderAccountsRepository(sqlStore)
 	if err != nil {
@@ -55,19 +64,13 @@ func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 	}, nil
 }
 
-type ConnectedAccountsListResponse struct {
-	Accounts []types.Account `json:"accounts"`
-}
-
-func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cloudProvider string) (
-	*ConnectedAccountsListResponse, *model.ApiError,
-) {
+func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId, cloudProvider string) (*ConnectedAccountsListResponse, *model.ApiError) {
 	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgId, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
 
-	connectedAccounts := []types.Account{}
+	connectedAccounts := make([]types.Account, 0)
 	for _, a := range accountRecords {
 		connectedAccounts = append(connectedAccounts, a.Account())
 	}
@@ -77,27 +80,22 @@ func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cl
 	}, nil
 }
 
-type GenerateConnectionCommandRequest struct {
-	AWSConnectionUrlRequest       *AWSConnectionUrlRequest
-	AzureConnectionCommandRequest *AzureConnectionCommandRequest
-}
-
-type AWSConnectionUrlRequest struct {
+type GetAWSConnectionUrlReq struct {
 	// Optional. To be specified for updates.
 	// TODO: evaluate and remove if not needed.
-	AccountId *string `json:"account_id,omitempty"`
-
-	AccountConfig types.AccountConfig `json:"account_config"`
-
-	AgentConfig SigNozAgentConfig `json:"agent_config"`
+	AccountId     *string               `json:"account_id,omitempty"`
+	AccountConfig *types.AccountConfig  `json:"account_config"`
+	AgentConfig   *SigNozAWSAgentConfig `json:"agent_config"`
+	OrgID         string
 }
 
-type AzureConnectionCommandRequest struct {
-	AgentConfig   SigNozAzureAgentConfig `json:"agent_config"`
-	AccountConfig types.AccountConfig    `json:"account_config"`
+type GetAzureConnectionCommandReq struct {
+	AgentConfig   *SigNozAzureAgentConfig `json:"agent_config"`
+	AccountConfig *types.AccountConfig    `json:"account_config"`
+	OrgID         string
 }
 
-type SigNozAgentConfig struct {
+type SigNozAWSAgentConfig struct {
 	// The region in which SigNoz agent should be installed.
 	Region string `json:"region"`
 
@@ -118,51 +116,74 @@ type SigNozAzureAgentConfig struct {
 	Version string `json:"version,omitempty"`
 }
 
-type GenerateConnectionResponse struct {
-	AWSConnectionUrl       *AWSConnectionUrlResponse
-	AzureConnectionCommand *AzureConnectionCommandResponse
-}
-
-type AWSConnectionUrlResponse struct {
+type GetAWSConnectionUrlRes struct {
 	AccountId     string `json:"account_id"`
 	ConnectionUrl string `json:"connection_url"`
 }
 
-type AzureConnectionCommandResponse struct {
+type GetAzureConnectionCommandRes struct {
 	AccountId                   string `json:"account_id"`
 	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
 	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
 }
 
-func (c *Controller) GenerateConnectionCommand(ctx context.Context, orgId string, cloudProvider string, req GenerateConnectionCommandRequest) (*GenerateConnectionResponse, *model.ApiError) {
-	switch cloudProvider {
-	case types.CloudProviderAWS:
-		resp, err := c.getConnectionUrlForAWS(ctx, orgId, req.AWSConnectionUrlRequest)
-		if err != nil {
-			return nil, err
-		}
-
-		return &GenerateConnectionResponse{
-			AWSConnectionUrl: resp,
-		}, nil
-	case types.CloudProviderAzure:
-		resp, err := c.getConnectionUrlForAzure(ctx, orgId, req.AzureConnectionCommandRequest)
-		if err != nil {
-			return nil, err
-		}
-
-		return &GenerateConnectionResponse{
-			AzureConnectionCommand: resp,
-		}, nil
-	default:
-		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
-	}
+type AccountStatusResponse struct {
+	Id             string              `json:"id"`
+	CloudAccountId *string             `json:"cloud_account_id,omitempty"`
+	Status         types.AccountStatus `json:"status"`
 }
 
-func (c *Controller) getConnectionUrlForAWS(ctx context.Context, orgId string,
-	req *AWSConnectionUrlRequest) (*AWSConnectionUrlResponse, *model.ApiError) {
+type AgentCheckInRequest struct {
+	ID        string `json:"account_id"`
+	AccountID string `json:"cloud_account_id"`
+	// Arbitrary cloud specific Agent data
+	Data map[string]any `json:"data,omitempty"`
+}
+
+type AWSAgentCheckInResponse struct {
+	AccountId      string     `json:"account_id"`
+	CloudAccountId string     `json:"cloud_account_id"`
+	RemovedAt      *time.Time `json:"removed_at"`
+
+	IntegrationConfig AWSAgentIntegrationConfig `json:"integration_config"`
+}
+
+type AWSAgentIntegrationConfig struct {
+	EnabledRegions              []string                        `json:"enabled_regions"`
+	TelemetryCollectionStrategy *services.AWSCollectionStrategy `json:"telemetry,omitempty"`
+}
+
+type AzureAgentIntegrationConfig struct {
+	DeploymentRegion            string                            `json:"deployment_region"` // will not be changed once set
+	EnabledResourceGroups       []string                          `json:"resource_groups"`
+	TelemetryCollectionStrategy *services.AzureCollectionStrategy `json:"telemetry,omitempty"`
+}
+
+type AzureAgentCheckInResponse struct {
+	AccountId         string                      `json:"account_id"`
+	CloudAccountId    string                      `json:"cloud_account_id"`
+	RemovedAt         *time.Time                  `json:"removed_at"`
+	IntegrationConfig AzureAgentIntegrationConfig `json:"integration_config"`
+}
+
+func (c *Controller) GetAccountStatus(ctx context.Context, orgId, cloudProvider, accountId string) (*AccountStatusResponse, *model.ApiError) {
+	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	resp := AccountStatusResponse{
+		Id:             account.ID.StringValue(),
+		CloudAccountId: account.AccountID,
+		Status:         account.Status(),
+	}
+
+	return &resp, nil
+}
+
+func (c *Controller) GetAWSConnectionUrl(ctx context.Context, req *GetAWSConnectionUrlReq) (*GetAWSConnectionUrlRes, *model.ApiError) {
 	account, apiErr := c.accountsRepo.upsert(
-		ctx, orgId, types.CloudProviderAWS, nil, &req.AccountConfig,
+		ctx, req.OrgID, types.CloudProviderAWS, nil, req.AccountConfig,
 		nil, nil, nil,
 	)
 	if apiErr != nil {
@@ -195,16 +216,15 @@ func (c *Controller) getConnectionUrlForAWS(ctx context.Context, orgId string,
 		connectionUrl += fmt.Sprintf("&%s=%s", qp, url.QueryEscape(value))
 	}
 
-	return &AWSConnectionUrlResponse{
+	return &GetAWSConnectionUrlRes{
 		AccountId:     account.ID.StringValue(),
 		ConnectionUrl: connectionUrl,
 	}, nil
 }
 
-func (c *Controller) getConnectionUrlForAzure(ctx context.Context, orgId string,
-	req *AzureConnectionCommandRequest) (*AzureConnectionCommandResponse, *model.ApiError) {
+func (c *Controller) GetAzureConnectionCommand(ctx context.Context, req *GetAzureConnectionCommandReq) (*GetAzureConnectionCommandRes, *model.ApiError) {
 	account, apiErr := c.accountsRepo.upsert(
-		ctx, orgId, types.CloudProviderAzure, nil, &req.AccountConfig,
+		ctx, req.OrgID, types.CloudProviderAzure, nil, req.AccountConfig,
 		nil, nil, nil,
 	)
 	if apiErr != nil {
@@ -223,73 +243,14 @@ func (c *Controller) getConnectionUrlForAzure(ctx context.Context, orgId string,
 		"--action-on-unmanage", "deleteAll", "--deny-settings-mode", "denyDelete", "--parameters", fmt.Sprintf("rgName=%s", "signoz-integration-rg"),
 		fmt.Sprintf("rgLocation=%s", req.AccountConfig.DeploymentRegion)}
 
-	return &AzureConnectionCommandResponse{
+	return &GetAzureConnectionCommandRes{
 		AccountId:                   account.ID.String(),
 		AzureShellConnectionCommand: "az create",
 		AzureCliConnectionCommand:   strings.Join(cliCommand, " "),
 	}, nil
 }
 
-type AccountStatusResponse struct {
-	Id             string              `json:"id"`
-	CloudAccountId *string             `json:"cloud_account_id,omitempty"`
-	Status         types.AccountStatus `json:"status"`
-}
-
-func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider string, accountId string) (
-	*AccountStatusResponse, *model.ApiError,
-) {
-	account, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	resp := AccountStatusResponse{
-		Id:             account.ID.StringValue(),
-		CloudAccountId: account.AccountID,
-		Status:         account.Status(),
-	}
-
-	return &resp, nil
-}
-
-type AgentCheckInRequest struct {
-	ID        string `json:"account_id"`
-	AccountID string `json:"cloud_account_id"`
-	// Arbitrary cloud specific Agent data
-	Data map[string]any `json:"data,omitempty"`
-}
-
-type AWSAgentCheckInResponse struct {
-	AccountId      string     `json:"account_id"`
-	CloudAccountId string     `json:"cloud_account_id"`
-	RemovedAt      *time.Time `json:"removed_at"`
-
-	IntegrationConfig AWSIntegrationConfigForAgent `json:"integration_config"`
-}
-
-type AWSIntegrationConfigForAgent struct {
-	EnabledRegions []string `json:"enabled_regions"`
-
-	TelemetryCollectionStrategy *services.AWSCollectionStrategy `json:"telemetry,omitempty"`
-}
-
-type AzureAgentCheckInResponse struct {
-	AccountId      string     `json:"account_id"`
-	CloudAccountId string     `json:"cloud_account_id"`
-	RemovedAt      *time.Time `json:"removed_at"`
-
-	IntegrationConfig AzureIntegrationConfigForAgent `json:"integration_config"`
-}
-
-type AzureIntegrationConfigForAgent struct {
-	DeploymentRegion      string   `json:"deployment_region"`
-	EnabledResourceGroups []string `json:"resource_groups"`
-
-	TelemetryCollectionStrategy *services.AzureCollectionStrategy `json:"telemetry,omitempty"`
-}
-
-func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*AWSAgentCheckInResponse, error) {
+func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider string, req *AgentCheckInRequest) (*AWSAgentCheckInResponse, error) {
 	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
 	if apiErr != nil {
 		return nil, apiErr
@@ -308,7 +269,7 @@ func (c *Controller) CheckInAsAWSAgent(ctx context.Context, orgId, cloudProvider
 	}, nil
 }
 
-func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*AzureAgentCheckInResponse, error) {
+func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvider string, req *AgentCheckInRequest) (*AzureAgentCheckInResponse, error) {
 	account, apiErr := c.upsertCloudIntegrationAccount(ctx, orgId, cloudProvider, req)
 	if apiErr != nil {
 		return nil, apiErr
@@ -327,7 +288,7 @@ func (c *Controller) CheckInAsAzureAgent(ctx context.Context, orgId, cloudProvid
 	}, nil
 }
 
-func (c *Controller) upsertCloudIntegrationAccount(ctx context.Context, orgId, cloudProvider string, req AgentCheckInRequest) (*types.CloudIntegration, *model.ApiError) {
+func (c *Controller) upsertCloudIntegrationAccount(ctx context.Context, orgId, cloudProvider string, req *AgentCheckInRequest) (*types.CloudIntegration, *model.ApiError) {
 	existingAccount, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, req.ID)
 	if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 		return nil, apiErr
@@ -363,9 +324,9 @@ func (c *Controller) upsertCloudIntegrationAccount(ctx context.Context, orgId, c
 	return account, nil
 }
 
-func (c *Controller) getAWSAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AWSIntegrationConfigForAgent, error) {
+func (c *Controller) getAWSAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AWSAgentIntegrationConfig, error) {
 	// prepare and return integration config to be consumed by agent
-	agentConfig := &AWSIntegrationConfigForAgent{
+	agentConfig := &AWSAgentIntegrationConfig{
 		EnabledRegions: []string{},
 		TelemetryCollectionStrategy: &services.AWSCollectionStrategy{
 			Provider:   types.CloudProviderAWS,
@@ -403,9 +364,9 @@ func (c *Controller) getAWSAgentConfig(ctx context.Context, account *types.Cloud
 	return agentConfig, nil
 }
 
-func (c *Controller) getAzureAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AzureIntegrationConfigForAgent, error) {
+func (c *Controller) getAzureAgentConfig(ctx context.Context, account *types.CloudIntegration) (*AzureAgentIntegrationConfig, error) {
 	// prepare and return integration config to be consumed by agent
-	agentConfig := &AzureIntegrationConfigForAgent{
+	agentConfig := &AzureAgentIntegrationConfig{
 		TelemetryCollectionStrategy: &services.AzureCollectionStrategy{
 			Provider:     types.CloudProviderAzure,
 			AzureMetrics: make([]*services.AzureMetricsStrategy, 0),
@@ -426,6 +387,18 @@ type UpdateAccountConfigRequest struct {
 }
 
 func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
+	// for azure, preserve deployment region if already set
+	if cloudProvider == types.CloudProviderAzure {
+		account, err := c.accountsRepo.get(ctx, orgId, cloudProvider, accountId)
+		if err != nil && err.Type() != model.ErrorNotFound {
+			return nil, model.WrapApiError(err, "couldn't get cloud account")
+		}
+
+		if account != nil && account.Config != nil {
+			req.Config.DeploymentRegion = account.Config.DeploymentRegion
+		}
+	}
+
 	accountRecord, apiErr := c.accountsRepo.upsert(
 		ctx, orgId, cloudProvider, &accountId, &req.Config, nil, nil, nil,
 	)
@@ -571,7 +544,7 @@ func (c *Controller) GetServiceDetails(
 		}
 
 		if enabled {
-			details.Definition.PopulateDashboardIDs(serviceId)
+			details.Definition.PopulateDashboardURLs(serviceId)
 		}
 	}
 
@@ -653,12 +626,12 @@ func (c *Controller) UpdateServiceConfig(
 	}, nil
 }
 
-// All dashboards that are available based on cloud integrations configuration
+// AvailableDashboards lists all dashboards that are available based on cloud integrations configuration
 // across all cloud providers
 func (c *Controller) AvailableDashboards(ctx context.Context, orgId valuer.UUID) ([]*dashboardtypes.Dashboard, *model.ApiError) {
-	allDashboards := []*dashboardtypes.Dashboard{}
+	allDashboards := make([]*dashboardtypes.Dashboard, 0)
 
-	for _, provider := range []string{"aws"} {
+	for _, provider := range []string{types.CloudProviderAWS, types.CloudProviderAzure} {
 		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, orgId, provider)
 		if apiErr != nil {
 			return nil, model.WrapApiError(
