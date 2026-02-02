@@ -7,7 +7,7 @@ import pytest
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
-from fixtures.fs import get_testdata_file_path
+from fixtures.utils import get_testdata_file_path
 from fixtures.logger import setup_logger
 
 # test cases match type and compare operators
