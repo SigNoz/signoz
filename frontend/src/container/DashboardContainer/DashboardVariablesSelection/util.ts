@@ -1,6 +1,7 @@
 import { OptionData } from 'components/NewSelect/types';
 import { isEmpty, isNull } from 'lodash-es';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
 	a: (string | number | boolean)[],
@@ -21,7 +22,7 @@ export function areArraysEqual(
 
 export const convertVariablesToDbFormat = (
 	variblesArr: IDashboardVariable[],
-): Dashboard['data']['variables'] =>
+): IDashboardVariables =>
 	variblesArr.reduce((result, obj: IDashboardVariable) => {
 		const { id } = obj;
 
