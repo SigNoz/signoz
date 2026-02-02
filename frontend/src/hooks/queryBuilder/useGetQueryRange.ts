@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -8,8 +10,6 @@ import {
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse, Warning } from 'types/api';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';

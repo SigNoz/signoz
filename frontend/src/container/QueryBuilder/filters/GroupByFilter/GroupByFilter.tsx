@@ -1,3 +1,12 @@
+import {
+	memo,
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useQueryClient } from 'react-query';
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
@@ -9,15 +18,6 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 // ** Components
 // ** Helpers
 import { isEqual, uniqWith } from 'lodash-es';
-import {
-	memo,
-	ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -98,7 +98,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			async () =>
 				getAggregateKeys({
 					aggregateAttribute: query.aggregateAttribute?.key || '',
-					dataSource: query.dataSource,
+					dataSource: dataSource,
 					aggregateOperator: query.aggregateOperator || '',
 					searchText,
 				}),
@@ -109,7 +109,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 		isFocused,
 		query.aggregateAttribute?.key,
 		query.aggregateOperator,
-		query.dataSource,
+		dataSource,
 		queryClient,
 		searchText,
 	]);

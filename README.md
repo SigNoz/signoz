@@ -66,6 +66,17 @@ Read [more](https://signoz.io/metrics-and-dashboards/).
 
 ![metrics-n-dashboards-cover](https://github.com/user-attachments/assets/a536fd71-1d2c-4681-aa7e-516d754c47a5)
 
+### LLM Observability
+
+Monitor and debug your LLM applications with comprehensive observability. Track LLM calls, analyze token usage, monitor performance, and gain insights into your AI application's behavior in production.
+
+SigNoz LLM observability helps you understand how your language models are performing, identify issues with prompts and responses, track token usage and costs, and optimize your AI applications for better performance and reliability.
+
+[Get started with LLM Observability →](https://signoz.io/docs/llm-observability/)
+
+![llm-observability-cover](https://github.com/user-attachments/assets/a6cc0ca3-59df-48f9-9c16-7c843fccff96)
+
+
 ### Alerts
 
 Use alerts in SigNoz to get notified when anything unusual happens in your application. You can set alerts on any type of telemetry signal (logs, metrics, traces), create thresholds and set up a notification channel to get notified. Advanced features like alert history and anomaly detection can help you create smarter alerts.

@@ -1,5 +1,4 @@
-import './HostMetricLogs.styles.scss';
-
+import { useMemo } from 'react';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -7,12 +6,13 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { VIEWS } from '../constants';
 import HostMetricsLogs from './HostMetricsLogs';
+
+import './HostMetricLogs.styles.scss';
 
 interface Props {
 	timeRange: {

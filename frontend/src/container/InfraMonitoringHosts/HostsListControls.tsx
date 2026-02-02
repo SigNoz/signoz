@@ -1,12 +1,12 @@
-import './InfraMonitoring.styles.scss';
-
+import { useCallback, useMemo } from 'react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+
+import './InfraMonitoring.styles.scss';
 
 function HostsListControls({
 	handleFiltersChange,

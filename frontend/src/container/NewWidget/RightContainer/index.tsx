@@ -1,7 +1,15 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './RightContainer.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { UseQueryResult } from 'react-query';
 import type { InputRef } from 'antd';
 import {
 	AutoComplete,
@@ -18,6 +26,7 @@ import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
 	ItemsProps,
 } from 'container/DashboardContainer/ComponentsSlider/menuItems';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
@@ -27,17 +36,6 @@ import {
 	Spline,
 	SquareArrowOutUpRight,
 } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
@@ -72,6 +70,8 @@ import LegendColors from './LegendColors/LegendColors';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
+
+import './RightContainer.styles.scss';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -131,7 +131,7 @@ function RightContainer({
 	enableDrillDown = false,
 	isNewDashboard,
 }: RightContainerProps): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 	const [inputValue, setInputValue] = useState(title);
 	const [autoCompleteOpen, setAutoCompleteOpen] = useState(false);
 	const [cursorPos, setCursorPos] = useState(0);
@@ -173,16 +173,12 @@ function RightContainer({
 
 	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
 
-	// Get dashboard variables
-	const dashboardVariables = useMemo<VariableOption[]>(() => {
-		if (!selectedDashboard?.data?.variables) {
-			return [];
-		}
-		return Object.entries(selectedDashboard.data.variables).map(([, value]) => ({
+	const dashboardVariableOptions = useMemo<VariableOption[]>(() => {
+		return Object.entries(dashboardVariables).map(([, value]) => ({
 			value: value.name || '',
 			label: value.name || '',
 		}));
-	}, [selectedDashboard?.data?.variables]);
+	}, [dashboardVariables]);
 
 	const updateCursorAndDropdown = (value: string, pos: number): void => {
 		setCursorPos(pos);
@@ -274,7 +270,7 @@ function RightContainer({
 			<section className="name-description">
 				<Typography.Text className="typography">Name</Typography.Text>
 				<AutoComplete
-					options={dashboardVariables}
+					options={dashboardVariableOptions}
 					value={inputValue}
 					onChange={onInputChange}
 					onSelect={onSelect}

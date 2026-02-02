@@ -1,7 +1,7 @@
-import './StepsHeader.styles.scss';
-
 import { Divider } from 'antd';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+
+import './StepsHeader.styles.scss';
 
 function StepsHeader(): JSX.Element {
 	return (

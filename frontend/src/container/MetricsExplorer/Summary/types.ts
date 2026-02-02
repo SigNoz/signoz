@@ -1,5 +1,5 @@
-import { MetricsTreeMapResponse } from 'api/metricsExplorer/getMetricsTreeMap';
 import React from 'react';
+import { MetricsTreeMapResponse } from 'api/metricsExplorer/getMetricsTreeMap';
 import {
 	IBuilderQuery,
 	TagFilter,

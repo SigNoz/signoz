@@ -1,6 +1,6 @@
-import './BillingPage.styles.scss';
-
 import BillingContainer from 'container/BillingContainer/BillingContainer';
+
+import './BillingPage.styles.scss';
 
 function BillingPage(): JSX.Element {
 	return (

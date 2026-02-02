@@ -1,7 +1,7 @@
+import { useMemo } from 'react';
 import { Select, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAppContext } from 'providers/App/App';
-import { useMemo } from 'react';
 
 import { useCreateAlertState } from '../context';
 import {

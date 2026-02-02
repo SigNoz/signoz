@@ -1,3 +1,4 @@
+import { useQueries } from 'react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -10,7 +11,6 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { useQueries } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	TagFilter,

@@ -1,7 +1,7 @@
+import { useMemo } from 'react';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/FunnelMetricsTable';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo } from 'react';
 import { LatencyOptions } from 'types/api/traceFunnels';
 
 import { useFunnelOverview, useFunnelStepsOverview } from './useFunnels';

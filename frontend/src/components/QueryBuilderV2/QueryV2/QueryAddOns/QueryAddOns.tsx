@@ -1,6 +1,5 @@
 /* eslint-disable react/require-default-props */
-import './QueryAddOns.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -11,12 +10,13 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
 import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import HavingFilter from './HavingFilter/HavingFilter';
+
+import './QueryAddOns.styles.scss';
 
 interface AddOn {
 	icon: React.ReactNode;

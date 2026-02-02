@@ -1,5 +1,4 @@
-import '../OnboardingV2.styles.scss';
-
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -16,16 +15,18 @@ import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
+import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links.json';
+
+import '../OnboardingV2.styles.scss';
 
 const { Header } = Layout;
 
@@ -148,6 +149,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const { org } = useAppContext();
 
+	const { data: globalConfig } = useGetGlobalConfig();
+
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
 	const [searchQuery, setSearchQuery] = useState<string>('');
@@ -231,6 +234,16 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		if (selectedEnvironment) {
 			urlObj.searchParams.set('environment', selectedEnvironment);
+		}
+
+		const ingestionUrl = globalConfig?.data?.ingestion_url;
+
+		if (ingestionUrl) {
+			const parts = ingestionUrl.split('.');
+			if (parts?.length > 1 && parts[0]?.includes('ingest')) {
+				const region = parts[1];
+				urlObj.searchParams.set('region', region);
+			}
 		}
 
 		// Step 3: Return the updated URL as a string

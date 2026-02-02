@@ -1,12 +1,12 @@
-import './JsonFlattening.styles.scss';
-
+import { useEffect, useState } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Form, Input, Space, Switch, Tooltip } from 'antd';
-import { useEffect, useState } from 'react';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { PREDEFINED_MAPPING } from '../config';
 import KeyValueList from './KeyValueList';
+
+import './JsonFlattening.styles.scss';
 
 interface JsonFlatteningProps {
 	selectedProcessorData?: ProcessorData;

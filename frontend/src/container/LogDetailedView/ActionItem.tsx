@@ -1,8 +1,8 @@
+import { memo, useCallback, useMemo } from 'react';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-import { memo, useCallback, useMemo } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 function ActionItem({

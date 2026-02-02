@@ -1,4 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -11,14 +19,6 @@ import { getRequestData } from 'container/LogsContextList/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
 import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

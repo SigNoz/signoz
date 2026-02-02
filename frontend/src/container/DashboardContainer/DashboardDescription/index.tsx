@@ -1,5 +1,8 @@
-import './Description.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useCopyToClipboard } from 'react-use';
 import { PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -18,6 +21,7 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -41,12 +45,7 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useCopyToClipboard } from 'react-use';
-import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
@@ -58,32 +57,16 @@ import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import { VariablesSettingsTab } from './types';
-import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
+import {
+	DEFAULT_ROW_NAME,
+	downloadObjectAsJson,
+	sanitizeDashboardData,
+} from './utils';
+
+import './Description.styles.scss';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
-}
-
-export function sanitizeDashboardData(
-	selectedData: DashboardData,
-): DashboardData {
-	if (!selectedData?.variables) {
-		return selectedData;
-	}
-
-	const updatedVariables = Object.entries(selectedData.variables).reduce(
-		(acc, [key, value]) => {
-			const { selectedValue: _selectedValue, ...rest } = value;
-			acc[key] = rest;
-			return acc;
-		},
-		{} as Record<string, IDashboardVariable>,
-	);
-
-	return {
-		...selectedData,
-		variables: updatedVariables,
-	};
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -119,6 +102,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				uuid: selectedDashboard.id,
 		  }
 		: ({} as DashboardData);
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { title = '', description, tags, image = Base64Icons[0] } =
 		selectedData || {};
@@ -576,7 +560,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				<section className="dashboard-description-section">{description}</section>
 			)}
 
-			{!isEmpty(selectedData.variables) && (
+			{!isEmpty(dashboardVariables) && (
 				<section className="dashboard-variables">
 					<DashboardVariableSelection />
 				</section>

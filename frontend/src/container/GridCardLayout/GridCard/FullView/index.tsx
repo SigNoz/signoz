@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './WidgetFullView.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import {
 	LoadingOutlined,
 	SearchOutlined,
@@ -25,6 +25,7 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useChartMutable } from 'hooks/useChartMutable';
@@ -37,8 +38,6 @@ import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -50,6 +49,8 @@ import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import PanelTypeSelector from './PanelTypeSelector';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
+
+import './WidgetFullView.styles.scss';
 
 function FullView({
 	widget,
@@ -79,6 +80,7 @@ function FullView({
 	}, [setCurrentGraphRef]);
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { dashboardVariables } = useDashboardVariables();
 	const { user } = useAppContext();
 
 	const [editWidget] = useComponentPermission(['edit_widget'], user.role);
@@ -114,7 +116,7 @@ function FullView({
 				graphType: getGraphType(selectedPanelType),
 				query: updatedQuery,
 				globalSelectedInterval: globalSelectedTime,
-				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				variables: getDashboardVariables(dashboardVariables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: selectedPanelType === PANEL_TYPES.TABLE,
 				originalGraphType: selectedPanelType,
@@ -125,7 +127,7 @@ function FullView({
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(dashboardVariables),
 			tableParams: {
 				pagination: {
 					offset: 0,

@@ -1,9 +1,9 @@
+import { useMemo } from 'react';
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
 import { getRemovePrefixFromKey } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 type IOperators =

@@ -1,5 +1,6 @@
-import './MQConfigOptions.styles.scss';
-
+import { useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Spin, Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
@@ -9,13 +10,12 @@ import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, Share2 } from 'lucide-react';
-import { useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
+
+import './MQConfigOptions.styles.scss';
 
 type ConfigOptionType = 'group' | 'topic' | 'partition';
 

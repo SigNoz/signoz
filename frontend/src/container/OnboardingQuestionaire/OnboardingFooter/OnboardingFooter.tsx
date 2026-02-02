@@ -1,6 +1,6 @@
-import './OnboardingFooter.styles.scss';
-
 import { Dot } from 'lucide-react';
+
+import './OnboardingFooter.styles.scss';
 
 export function OnboardingFooter(): JSX.Element {
 	return (
