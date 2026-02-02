@@ -52,7 +52,9 @@ func newBuilderQuery[T any](
 func (q *builderQuery[T]) Fingerprint() string {
 
 	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries {
+		q.spec.Signal == telemetrytypes.SignalLogs) &&
+		q.kind != qbtypes.RequestTypeTimeSeries &&
+		q.kind != qbtypes.RequestTypeHeatmap {
 		// No caching for non-timeseries queries
 		return ""
 	}
@@ -60,6 +62,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
 	parts := []string{"builder"}
+
+	// Add request type
+	parts = append(parts, fmt.Sprintf("type=%s", q.kind.StringValue()))
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
