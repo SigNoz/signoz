@@ -1401,3 +1401,117 @@ func TestBucketCache_NoCache(t *testing.T) {
 	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
 	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
 }
+
+func TestBucketCache_HeatmapExactMatch(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+
+	// Create a heatmap query
+	query := &mockQuery{
+		fingerprint: "test-heatmap-query",
+		startMs:     1000,
+		endMs:       5000,
+	}
+
+	// Create heatmap result with bounds and bucket values
+	result := &qbtypes.Result{
+		Type: qbtypes.RequestTypeHeatmap,
+		Value: &qbtypes.TimeSeriesData{
+			QueryName: "A",
+			Aggregations: []*qbtypes.AggregationBucket{
+				{
+					Index: 0,
+					Alias: "__result_0",
+					Series: []*qbtypes.TimeSeries{
+						{
+							Labels: []*qbtypes.Label{
+								{Key: telemetrytypes.TelemetryFieldKey{Name: "service"}, Value: "api"},
+							},
+							Bounds: []float64{0, 10, 20, 30}, // 3 buckets with 4 boundary points
+							Values: []*qbtypes.TimeSeriesValue{
+								{Timestamp: 1000, Values: []float64{5, 3, 0}},
+								{Timestamp: 2000, Values: []float64{2, 6, 4}},
+								{Timestamp: 3000, Values: []float64{8, 1, 2}},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Put the result in cache
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	time.Sleep(10 * time.Millisecond)
+
+	// Test exact match - same time range should return cached data
+	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
+	require.NotNil(t, cached, "exact match should return cached data")
+	assert.Len(t, missing, 0, "exact match should have no missing ranges")
+
+	// Verify the cached data structure
+	assert.Equal(t, qbtypes.RequestTypeHeatmap, cached.Type)
+	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	require.True(t, ok)
+	require.Len(t, tsData.Aggregations, 1)
+
+	series := tsData.Aggregations[0].Series[0]
+
+	// Verify bounds are preserved
+	assert.Equal(t, []float64{0, 10, 20, 30}, series.Bounds, "bounds should be preserved")
+
+	// Verify values are preserved
+	require.Len(t, series.Values, 3)
+	assert.Equal(t, []float64{5, 3, 0}, series.Values[0].Values)
+	assert.Equal(t, []float64{2, 6, 4}, series.Values[1].Values)
+	assert.Equal(t, []float64{8, 1, 2}, series.Values[2].Values)
+}
+
+func TestBucketCache_HeatmapDifferentTimeRange(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+
+	// Create and cache a heatmap query for time range 1000-5000
+	query1 := &mockQuery{
+		fingerprint: "test-heatmap-different-range",
+		startMs:     1000,
+		endMs:       5000,
+	}
+
+	result := &qbtypes.Result{
+		Type: qbtypes.RequestTypeHeatmap,
+		Value: &qbtypes.TimeSeriesData{
+			QueryName: "A",
+			Aggregations: []*qbtypes.AggregationBucket{
+				{
+					Index: 0,
+					Series: []*qbtypes.TimeSeries{
+						{
+							Bounds: []float64{0, 10, 20, 30},
+							Values: []*qbtypes.TimeSeriesValue{
+								{Timestamp: 1000, Values: []float64{5, 3, 0}},
+								{Timestamp: 2000, Values: []float64{2, 6, 4}},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	bc.Put(ctx, orgID, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	time.Sleep(10 * time.Millisecond)
+
+	// Query with different time range - should have missing ranges
+	query2 := &mockQuery{
+		fingerprint: "test-heatmap-different-range",
+		startMs:     3000,
+		endMs:       7000,
+	}
+
+	_, missing := bc.GetMissRanges(ctx, orgID, query2, qbtypes.Step{Duration: 1000 * time.Millisecond})
+
+	assert.True(t, len(missing) > 0, "different time range should have missing ranges")
+}

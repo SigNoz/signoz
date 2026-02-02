@@ -680,6 +680,163 @@ func (b *logQueryStatementBuilder) buildResourceFilterCTE(
 	)
 }
 
+func (b *logQueryStatementBuilder) buildHeatmapHistogramCTE(
+	ctx context.Context,
+	aggExpr qbtypes.LogAggregation,
+	index int,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+	resourceFilterCTEName string,
+) (cteName, cteSQL string, cteArgs []any, rawFieldName string, preparedWhereClause *querybuilder.PreparedWhereClause, err error) {
+	rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+		ctx, aggExpr.Expression,
+		uint64(query.StepInterval.Seconds()),
+		keys,
+	)
+	if err != nil {
+		return "", "", nil, "", nil, err
+	}
+
+	// Extract the raw field name from rewritten histogram
+	fieldName := querybuilder.ExtractFieldFromHistogramExpr(rewritten)
+	if fieldName == "" {
+		return "", "", nil, "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to extract field for histogram aggregation")
+	}
+
+	histSB := sqlbuilder.NewSelectBuilder()
+	histSB.Select(fmt.Sprintf("%s AS buckets_%d", rewritten, index))
+	histSB.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	if resourceFilterCTEName != "" {
+		histSB.Where(fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM %s)", resourceFilterCTEName))
+	}
+
+	preparedWhereClause, err = b.addFilterCondition(ctx, histSB, start, end, query, keys, variables)
+	if err != nil {
+		return "", "", nil, "", nil, err
+	}
+
+	histSQL, histArgs := histSB.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
+	cteName = fmt.Sprintf("__histogram_%d", index)
+
+	return cteName, histSQL, histArgs, fieldName, preparedWhereClause, nil
+}
+
+func (b *logQueryStatementBuilder) buildHeatmapBucketsCTE(
+	histogramCTEName string,
+	index int,
+) (cteName, cteSQL string, cteArgs []any) {
+	bucketsSB := sqlbuilder.NewSelectBuilder()
+	bucketsSB.Select(fmt.Sprintf(
+		"arrayJoin(arrayMap(i -> (i, buckets_%d[i].1, buckets_%d[i].2), range(1, length(buckets_%d) + 1))) AS bucket_%d",
+		index, index, index, index,
+	))
+	bucketsSB.From(histogramCTEName)
+
+	bucketsSQL, bucketsArgs := bucketsSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	cteName = fmt.Sprintf("__buckets_%d", index)
+
+	return cteName, bucketsSQL, bucketsArgs
+}
+
+func (b *logQueryStatementBuilder) buildHeatmapCountsCTE(
+	ctx context.Context,
+	bucketsCTEName string,
+	fieldExpr string,
+	index int,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+	resourceFilterCTEName string,
+) (cteName, cteSQL string, cteArgs []any, err error) {
+	countsSB := sqlbuilder.NewSelectBuilder()
+	countsSB.Select(fmt.Sprintf(
+		"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts",
+		int64(query.StepInterval.Seconds()),
+	))
+	countsSB.SelectMore(fmt.Sprintf("bucket_%d.1 AS bucket_idx_%d", index, index))
+	countsSB.SelectMore(fmt.Sprintf("count() AS cnt_%d", index))
+
+	var allGroupByArgs []any
+	for _, gb := range query.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return "", "", nil, err
+		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		countsSB.SelectMore(colExpr)
+	}
+
+	countsSB.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	countsSB.SQL(fmt.Sprintf("CROSS JOIN %s", bucketsCTEName))
+	if resourceFilterCTEName != "" {
+		countsSB.Where(fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM %s)", resourceFilterCTEName))
+	}
+
+	_, err = b.addFilterCondition(ctx, countsSB, start, end, query, keys, variables)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	countsSB.Where(fmt.Sprintf("%s >= bucket_%d.2 AND %s < bucket_%d.3", fieldExpr, index, fieldExpr, index))
+	countsSB.GroupBy(fmt.Sprintf("ts, bucket_idx_%d", index))
+	// Add GroupBy fields to GROUP BY clause
+	for _, gb := range query.GroupBy {
+		countsSB.GroupBy(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	}
+
+	countsSQL, countsArgs := countsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
+	cteName = fmt.Sprintf("__counts_%d", index)
+
+	return cteName, countsSQL, countsArgs, nil
+}
+
+func (b *logQueryStatementBuilder) buildHeatmapTimestampsCTE(
+	ctx context.Context,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (cteName, cteSQL string, cteArgs []any, err error) {
+	tsSB := sqlbuilder.NewSelectBuilder()
+	tsSB.Select(fmt.Sprintf(
+		"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts",
+		int64(query.StepInterval.Seconds()),
+	))
+
+	var allGroupByArgs []any
+	for _, gb := range query.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		if err != nil {
+			return "", "", nil, err
+		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		tsSB.SelectMore(colExpr)
+	}
+
+	tsSB.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+
+	_, err = b.addFilterCondition(ctx, tsSB, start, end, query, keys, variables)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	tsSB.GroupBy("ts")
+	// Add GroupBy fields to GROUP BY clause
+	for _, gb := range query.GroupBy {
+		tsSB.GroupBy(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	}
+
+	tsSQL, tsArgs := tsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
+	cteName = "__timestamps"
+
+	return cteName, tsSQL, tsArgs, nil
+}
+
 func (b *logQueryStatementBuilder) buildHeatmapQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -690,97 +847,84 @@ func (b *logQueryStatementBuilder) buildHeatmapQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments        []string
+		cteArgs             [][]any
+		preparedWhereClause *querybuilder.PreparedWhereClause
 	)
 
+	resourceFilterCTEName := ""
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
+		resourceFilterCTEName = "__resource_filter"
 	}
 
-	fieldExprs := make([]string, 0, len(query.Aggregations))
-	allHistArgs := make([][]any, 0, len(query.Aggregations))
-
 	for i, aggExpr := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-			ctx, aggExpr.Expression,
-			uint64(query.StepInterval.Seconds()),
-			keys,
+		histCTEName, histSQL, histArgs, fieldExpr, whereClause, err := b.buildHeatmapHistogramCTE(
+			ctx, aggExpr, i, query, start, end, keys, variables, resourceFilterCTEName,
 		)
 		if err != nil {
 			return nil, err
 		}
-
-		// Extract the field expression from rewritten histogram
-		var fieldExpr string
-		if strings.HasPrefix(rewritten, "histogram(") {
-			startIdx := strings.Index(rewritten, ")(")
-			if startIdx != -1 {
-				fieldExpr = rewritten[startIdx+2 : len(rewritten)-1]
-			}
+		if preparedWhereClause == nil {
+			preparedWhereClause = whereClause
 		}
-		fieldExprs = append(fieldExprs, fieldExpr)
-		allHistArgs = append(allHistArgs, chArgs)
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", histCTEName, histSQL))
+		cteArgs = append(cteArgs, histArgs)
 
-		// histogram CTE
-		histSB := sqlbuilder.NewSelectBuilder()
-		histSB.Select(fmt.Sprintf("%s AS buckets_%d", rewritten, i))
-		histSB.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+		bucketsCTEName, bucketsSQL, bucketsArgs := b.buildHeatmapBucketsCTE(histCTEName, i)
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", bucketsCTEName, bucketsSQL))
+		cteArgs = append(cteArgs, bucketsArgs)
 
-		// Add filter conditions to histogram CTE
-		_, err = b.addFilterCondition(ctx, histSB, start, end, query, keys, variables)
+		countsCTEName, countsSQL, countsArgs, err := b.buildHeatmapCountsCTE(
+			ctx, bucketsCTEName, fieldExpr, i, query, start, end, keys, variables, resourceFilterCTEName,
+		)
 		if err != nil {
 			return nil, err
 		}
-
-		histSQL, histArgs := histSB.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
-		cteFragments = append(cteFragments, fmt.Sprintf("__histogram_%d AS (%s)", i, histSQL))
-		cteArgs = append(cteArgs, histArgs)
+		cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", countsCTEName, countsSQL))
+		cteArgs = append(cteArgs, countsArgs)
 	}
 
-	sb.Select(fmt.Sprintf(
-		"toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts",
-		int64(query.StepInterval.Seconds()),
-	))
+	tsCTEName, tsSQL, tsArgs, err := b.buildHeatmapTimestampsCTE(ctx, query, start, end, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+	cteFragments = append(cteFragments, fmt.Sprintf("%s AS (%s)", tsCTEName, tsSQL))
+	cteArgs = append(cteArgs, tsArgs)
 
-	var allGroupByArgs []any
+	mainSB := sqlbuilder.NewSelectBuilder()
+	mainSB.Select("t.ts")
+
+	// Select GroupBy fields from timestamps CTE
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
-		if err != nil {
-			return nil, err
-		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
-		allGroupByArgs = append(allGroupByArgs, args...)
-		sb.SelectMore(colExpr)
+		mainSB.SelectMore(fmt.Sprintf("t.`%s` AS `%s`", gb.TelemetryFieldKey.Name, gb.TelemetryFieldKey.Name))
 		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
 	// Add result for each aggregation
-	for i, fieldExpr := range fieldExprs {
-		sb.SelectMore(fmt.Sprintf(
-			"arrayMap(i -> tuple(buckets_%d[i].1, buckets_%d[i].2, length(arrayFilter(d -> d >= buckets_%d[i].1 AND d < buckets_%d[i].2, groupArray(%s)))), range(1, length(buckets_%d) + 1)) AS __result_%d",
-			i, i, i, i, fieldExpr, i, i,
+	for i := range query.Aggregations {
+		mainSB.SelectMore(fmt.Sprintf(
+			"arrayMap(x -> (x.2, x.3, x.4), arraySort(x -> x.1, groupArray((b_%d.bucket_%d.1, b_%d.bucket_%d.2, b_%d.bucket_%d.3, ifNull(c_%d.cnt_%d, 0))))) AS __result_%d",
+			i, i, i, i, i, i, i, i, i,
 		))
 	}
 
-	// FROM base table with CROSS JOIN to histogram CTEs
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
+	mainSB.From("__timestamps t")
 	for i := range query.Aggregations {
-		sb.SQL(fmt.Sprintf("CROSS JOIN __histogram_%d", i))
+		mainSB.SQL(fmt.Sprintf("CROSS JOIN __buckets_%d b_%d", i, i))
+		joinCondition := fmt.Sprintf("c_%d.ts = t.ts AND c_%d.bucket_idx_%d = b_%d.bucket_%d.1", i, i, i, i, i)
+		for _, gb := range query.GroupBy {
+			joinCondition += fmt.Sprintf(" AND c_%d.`%s` = t.`%s`", i, gb.TelemetryFieldKey.Name, gb.TelemetryFieldKey.Name)
+		}
+		mainSB.SQL(fmt.Sprintf("LEFT JOIN __counts_%d c_%d ON %s", i, i, joinCondition))
 	}
 
-	// Add filter conditions to main query
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
-	if err != nil {
-		return nil, err
-	}
-
-	// Handle Limit with GroupBy - build a limit CTE if needed
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
+		// build the scalar “top/bottom-N” query in its own builder.
 		limitSB := sqlbuilder.NewSelectBuilder()
 		limitStmt, err := b.buildScalarQuery(ctx, limitSB, query, start, end, keys, true, variables)
 		if err != nil {
@@ -790,46 +934,38 @@ func (b *logQueryStatementBuilder) buildHeatmapQuery(
 		cteFragments = append(cteFragments, fmt.Sprintf("__limit_cte AS (%s)", limitStmt.Query))
 		cteArgs = append(cteArgs, limitStmt.Args)
 
-		// Constrain to limit CTE
-		tuple := fmt.Sprintf("(%s)", strings.Join(fieldNames, ", "))
-		sb.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
+		prefixedFieldNames := make([]string, 0, len(fieldNames))
+		for _, fn := range fieldNames {
+			prefixedFieldNames = append(prefixedFieldNames, fmt.Sprintf("t.%s", fn))
+		}
+		tuple := fmt.Sprintf("(%s)", strings.Join(prefixedFieldNames, ", "))
+		mainSB.Where(fmt.Sprintf("%s GLOBAL IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(fieldNames, ", ")))
 	}
 
-	// Build GROUP BY clause
-	sb.GroupBy("ts")
-	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
-	for i := range query.Aggregations {
-		sb.GroupBy(fmt.Sprintf("buckets_%d", i))
+	mainSB.GroupBy("t.ts")
+	for _, gb := range query.GroupBy {
+		mainSB.GroupBy(fmt.Sprintf("t.`%s`", gb.TelemetryFieldKey.Name))
 	}
 
-	// Add HAVING clause support
 	if query.Having != nil && query.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
 		rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
-		sb.Having(rewrittenExpr)
+		mainSB.Having(rewrittenExpr)
 	}
 
-	// Add ORDER BY support
 	if len(query.Order) > 0 {
 		for _, orderBy := range query.Order {
 			idx, ok := aggOrderBy(orderBy, query)
 			if ok {
-				sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+				mainSB.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 			} else {
-				sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				mainSB.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
 			}
 		}
 	}
-	sb.OrderBy("ts")
+	mainSB.OrderBy("t.ts")
 
-	// Collect all args from histograms and group by
-	var flatHistArgs []any
-	for _, args := range allHistArgs {
-		flatHistArgs = append(flatHistArgs, args...)
-	}
-	combinedArgs := append(allGroupByArgs, flatHistArgs...)
-
-	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+	mainSQL, mainArgs := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
@@ -838,6 +974,7 @@ func (b *logQueryStatementBuilder) buildHeatmapQuery(
 		Query: finalSQL,
 		Args:  finalArgs,
 	}
+
 	if preparedWhereClause != nil {
 		stmt.Warnings = preparedWhereClause.Warnings
 		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL

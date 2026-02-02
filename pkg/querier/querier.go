@@ -546,9 +546,8 @@ func (q *querier) run(
 	}
 
 	for name, query := range qs {
-		// Skip cache if NoCache is set, cache is not available, or it's a heatmap query
-		skipCache := req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" ||
-			req.RequestType == qbtypes.RequestTypeHeatmap
+		// Skip cache if NoCache is set or cache is not available
+		skipCache := req.NoCache || q.bucketCache == nil || query.Fingerprint() == ""
 
 		if skipCache {
 			if req.NoCache {
@@ -560,6 +559,25 @@ func (q *querier) run(
 			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
 				return nil, err
+			}
+			results[name] = result.Value
+			warnings = append(warnings, result.Warnings...)
+			warningsDocURL = result.WarningsDocURL
+			stats.RowsScanned += result.Stats.RowsScanned
+			stats.BytesScanned += result.Stats.BytesScanned
+			stats.DurationMS += result.Stats.DurationMS
+		} else if req.RequestType == qbtypes.RequestTypeHeatmap {
+			// Heatmap queries use exact-match caching only because histogram bucket
+			// boundaries are computed dynamically and may differ across time ranges.
+			// We cannot merge partial results from different time ranges.
+			result, err := q.executeHeatmapWithCache(ctx, orgID, query, steps[name])
+			qbEvent.HasData = qbEvent.HasData || hasData(result)
+			if err != nil {
+				return nil, err
+			}
+			switch v := result.Value.(type) {
+			case *qbtypes.TimeSeriesData:
+				v.QueryName = name
 			}
 			results[name] = result.Value
 			warnings = append(warnings, result.Warnings...)
@@ -639,6 +657,25 @@ func (q *querier) run(
 		}
 	}
 	return resp, nil
+}
+
+// executeHeatmapWithCache executes a heatmap query using exact-match caching only
+func (q *querier) executeHeatmapWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step) (*qbtypes.Result, error) {
+	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
+
+	// Exact cache hit - no missing ranges
+	if len(missingRanges) == 0 && cachedResult != nil {
+		return cachedResult, nil
+	}
+
+	// Cache miss - execute full query (partial merging not supported for heatmaps)
+	result, err := query.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	q.bucketCache.Put(ctx, orgID, query, step, result)
+	return result, nil
 }
 
 // executeWithCache executes a query using the bucket cache

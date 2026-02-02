@@ -445,7 +445,14 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 	switch resultType {
 	case qbtypes.RequestTypeTimeSeries:
 		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
-		// Raw and Scalar types are not cached, so no merge needed
+	case qbtypes.RequestTypeHeatmap:
+		// Heatmap uses exact-match caching only, so we expect a single bucket
+		if len(buckets) > 0 {
+			var tsData *qbtypes.TimeSeriesData
+			if err := json.Unmarshal(buckets[0].Value, &tsData); err == nil {
+				mergedValue = tsData
+			}
+		}
 	}
 
 	return &qbtypes.Result{
@@ -564,7 +571,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			// No aggregations at all means truly empty
 			if len(tsData.Aggregations) == 0 {
@@ -705,7 +712,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		// Trim time series data
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
 			trimmedData := &qbtypes.TimeSeriesData{}
@@ -718,6 +725,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 				for _, series := range aggBucket.Series {
 					trimmedSeries := &qbtypes.TimeSeries{
 						Labels: series.Labels,
+						Bounds: series.Bounds,
 					}
 
 					// Filter values to exclude those beyond flux boundary and partial values
@@ -772,7 +780,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			filteredData := &qbtypes.TimeSeriesData{
 				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
@@ -789,6 +797,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 				for _, series := range aggBucket.Series {
 					filteredSeries := &qbtypes.TimeSeries{
 						Labels: series.Labels,
+						Bounds: series.Bounds,
 						Values: make([]*qbtypes.TimeSeriesValue, 0, len(series.Values)),
 					}
 

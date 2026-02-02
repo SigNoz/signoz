@@ -293,3 +293,58 @@ func parseFragment(sql string) (chparser.Expr, error) {
 	}
 	return sel.SelectItems[0].Expr, nil
 }
+
+// ExtractFieldFromHistogramExpr extracts the raw field name from a rewritten histogram expression.
+func ExtractFieldFromHistogramExpr(rewritten string) string {
+	if !strings.HasPrefix(rewritten, "histogram(") {
+		return ""
+	}
+	startIdx := strings.Index(rewritten, ")(")
+	if startIdx == -1 {
+		return ""
+	}
+	fieldExpr := rewritten[startIdx+2 : len(rewritten)-1]
+	fieldExpr = strings.TrimSpace(fieldExpr)
+
+	if strings.HasPrefix(fieldExpr, "multiIf(") {
+		inner := strings.TrimPrefix(fieldExpr, "multiIf(")
+		inner = strings.TrimSuffix(inner, ")")
+		args := SplitTopLevelArgs(inner)
+		if len(args) >= 2 {
+			return strings.TrimSpace(args[1])
+		}
+	}
+	return fieldExpr
+}
+
+// SplitTopLevelArgs splits a comma-separated expression into arguments
+func SplitTopLevelArgs(expr string) []string {
+	var args []string
+	var buf strings.Builder
+	depth := 0
+	for _, r := range expr {
+		switch r {
+		case '(':
+			depth++
+			buf.WriteRune(r)
+		case ')':
+			if depth > 0 {
+				depth--
+			}
+			buf.WriteRune(r)
+		case ',':
+			if depth == 0 {
+				args = append(args, strings.TrimSpace(buf.String()))
+				buf.Reset()
+				continue
+			}
+			buf.WriteRune(r)
+		default:
+			buf.WriteRune(r)
+		}
+	}
+	if buf.Len() > 0 {
+		args = append(args, strings.TrimSpace(buf.String()))
+	}
+	return args
+}
