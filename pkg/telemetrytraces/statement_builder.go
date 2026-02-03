@@ -906,12 +906,17 @@ func (b *traceQueryStatementBuilder) buildHeatmapCountsCTE(
 	countsSB.SelectMore(fmt.Sprintf("count() AS cnt_%d", index))
 
 	var allGroupByArgs []any
+	var groupByExprs []string
 	for _, gb := range query.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
 		if err != nil {
 			return "", "", nil, err
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+
+		groupByExpr := fmt.Sprintf("toString(%s)", expr)
+		groupByExprs = append(groupByExprs, groupByExpr)
+
+		colExpr := fmt.Sprintf("%s AS `%s`", groupByExpr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		countsSB.SelectMore(colExpr)
 	}
@@ -929,9 +934,9 @@ func (b *traceQueryStatementBuilder) buildHeatmapCountsCTE(
 
 	countsSB.Where(fmt.Sprintf("%s >= bucket_%d.2 AND %s < bucket_%d.3", rawFieldName, index, rawFieldName, index))
 	countsSB.GroupBy(fmt.Sprintf("ts, bucket_idx_%d", index))
-	// Add GroupBy fields to GROUP BY clause
-	for _, gb := range query.GroupBy {
-		countsSB.GroupBy(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	// Add GroupBy fields to GROUP BY clause - use expressions, not aliases
+	for _, groupByExpr := range groupByExprs {
+		countsSB.GroupBy(groupByExpr)
 	}
 
 	countsSQL, countsArgs := countsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
@@ -954,12 +959,17 @@ func (b *traceQueryStatementBuilder) buildHeatmapTimestampsCTE(
 	))
 
 	var allGroupByArgs []any
+	var groupByExprs []string
 	for _, gb := range query.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
 		if err != nil {
 			return "", "", nil, err
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+
+		groupByExpr := fmt.Sprintf("toString(%s)", expr)
+		groupByExprs = append(groupByExprs, groupByExpr)
+
+		colExpr := fmt.Sprintf("%s AS `%s`", groupByExpr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		tsSB.SelectMore(colExpr)
 	}
@@ -973,8 +983,8 @@ func (b *traceQueryStatementBuilder) buildHeatmapTimestampsCTE(
 
 	tsSB.GroupBy("ts")
 	// Add GroupBy fields to GROUP BY clause
-	for _, gb := range query.GroupBy {
-		tsSB.GroupBy(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	for _, groupByExpr := range groupByExprs {
+		tsSB.GroupBy(groupByExpr)
 	}
 
 	tsSQL, tsArgs := tsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
