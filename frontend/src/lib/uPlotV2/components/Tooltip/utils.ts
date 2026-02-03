@@ -24,7 +24,7 @@ export function buildTooltipContent({
 	data,
 	series,
 	dataIndexes,
-	activeSeriesIdx,
+	activeSeriesIndex,
 	uPlotInstance,
 	yAxisUnit,
 	decimalPrecision,
@@ -32,7 +32,7 @@ export function buildTooltipContent({
 	data: AlignedData;
 	series: Series[];
 	dataIndexes: Array<number | null>;
-	activeSeriesIdx: number | null;
+	activeSeriesIndex: number | null;
 	uPlotInstance: uPlot;
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
@@ -55,7 +55,7 @@ export function buildTooltipContent({
 		const raw = data[idx]?.[dataIdx];
 		const value = Number(raw);
 		const displayValue = Number.isNaN(value) ? 0 : value;
-		const isActive = idx === activeSeriesIdx;
+		const isActive = idx === activeSeriesIndex;
 
 		const item: TooltipContentItem = {
 			label: String(s.label ?? ''),
