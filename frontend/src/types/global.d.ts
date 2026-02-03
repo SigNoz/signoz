@@ -20,3 +20,9 @@ declare interface WindowEventMap {
 	AFTER_LOGIN: CustomEvent;
 	LOGOUT: CustomEvent;
 }
+
+declare namespace uPlot {
+	interface Cursor {
+		_lock?: boolean;
+	}
+}
