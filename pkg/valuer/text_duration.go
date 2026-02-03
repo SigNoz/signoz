@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
+var _ Valuer = (*TextDuration)(nil)
+
 // TextDuration preserves the human-readable duration text as provided by the input.
 // It keeps the raw JSON bytes so serialization does not normalize values like
 // "90m" into "1h30m0s".
@@ -46,17 +48,23 @@ func (d TextDuration) Duration() time.Duration {
 	return d.value
 }
 
-// IsZero reports whether the parsed duration is zero.
+// IsZero implements [Valuer].
+// It returns whether the parsed duration is zero.
 func (d TextDuration) IsZero() bool {
 	return d.value == 0
 }
 
-// String implements the fmt.Stringer interface.
+// String implements the [fmt.Stringer] interface.
 func (d TextDuration) String() string {
 	if len(d.text) > 0 {
 		return d.text
 	}
 	return d.value.String()
+}
+
+// StringValue implements [Valuer].
+func (d TextDuration) StringValue() string {
+	return d.String()
 }
 
 // MarshalJSON implements the [encoding/json.Marshaler] interface.
