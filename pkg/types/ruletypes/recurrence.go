@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type RepeatType string
@@ -39,11 +39,11 @@ var RepeatOnAllMap = map[RepeatOn]time.Weekday{
 }
 
 type Recurrence struct {
-	StartTime  time.Time          `json:"startTime"`
-	EndTime    *time.Time         `json:"endTime,omitempty"`
-	Duration   types.TextDuration `json:"duration"`
-	RepeatType RepeatType         `json:"repeatType"`
-	RepeatOn   []RepeatOn         `json:"repeatOn"`
+	StartTime  time.Time           `json:"startTime"`
+	EndTime    *time.Time          `json:"endTime,omitempty"`
+	Duration   valuer.TextDuration `json:"duration"`
+	RepeatType RepeatType          `json:"repeatType"`
+	RepeatOn   []RepeatOn          `json:"repeatOn"`
 }
 
 func (r *Recurrence) Scan(src interface{}) error {

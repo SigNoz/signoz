@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -20,12 +19,12 @@ var (
 
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time)
-	GetFrequency() types.TextDuration
+	GetFrequency() valuer.TextDuration
 }
 
 type RollingWindow struct {
-	EvalWindow types.TextDuration `json:"evalWindow"`
-	Frequency  types.TextDuration `json:"frequency"`
+	EvalWindow valuer.TextDuration `json:"evalWindow"`
+	Frequency  valuer.TextDuration `json:"frequency"`
 }
 
 func (rollingWindow RollingWindow) Validate() error {
@@ -42,14 +41,14 @@ func (rollingWindow RollingWindow) NextWindowFor(curr time.Time) (time.Time, tim
 	return curr.Add(-rollingWindow.EvalWindow.Duration()), curr
 }
 
-func (rollingWindow RollingWindow) GetFrequency() types.TextDuration {
+func (rollingWindow RollingWindow) GetFrequency() valuer.TextDuration {
 	return rollingWindow.Frequency
 }
 
 type CumulativeWindow struct {
-	Schedule  CumulativeSchedule `json:"schedule"`
-	Frequency types.TextDuration `json:"frequency"`
-	Timezone  string             `json:"timezone"`
+	Schedule  CumulativeSchedule  `json:"schedule"`
+	Frequency valuer.TextDuration `json:"frequency"`
+	Timezone  string              `json:"timezone"`
 }
 
 type CumulativeSchedule struct {
@@ -221,7 +220,7 @@ func (cw CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Locatio
 	}
 }
 
-func (cumulativeWindow CumulativeWindow) GetFrequency() types.TextDuration {
+func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 	return cumulativeWindow.Frequency
 }
 

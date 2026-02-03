@@ -1,4 +1,4 @@
-package types
+package valuer
 
 import (
 	"encoding/json"

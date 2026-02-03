@@ -15,8 +15,8 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type AlertType string
@@ -40,12 +40,12 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	AlertName   string             `json:"alert,omitempty"`
-	AlertType   AlertType          `json:"alertType,omitempty"`
-	Description string             `json:"description,omitempty"`
-	RuleType    RuleType           `json:"ruleType,omitempty"`
-	EvalWindow  types.TextDuration `json:"evalWindow,omitempty"`
-	Frequency   types.TextDuration `json:"frequency,omitempty"`
+	AlertName   string              `json:"alert,omitempty"`
+	AlertType   AlertType           `json:"alertType,omitempty"`
+	Description string              `json:"description,omitempty"`
+	RuleType    RuleType            `json:"ruleType,omitempty"`
+	EvalWindow  valuer.TextDuration `json:"evalWindow,omitempty"`
+	Frequency   valuer.TextDuration `json:"frequency,omitempty"`
 
 	RuleCondition *RuleCondition    `json:"condition,omitempty"`
 	Labels        map[string]string `json:"labels,omitempty"`
@@ -71,13 +71,13 @@ type NotificationSettings struct {
 	Renotify  Renotify `json:"renotify,omitempty"`
 	UsePolicy bool     `json:"usePolicy,omitempty"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
-	NewGroupEvalDelay *types.TextDuration `json:"newGroupEvalDelay,omitempty"`
+	NewGroupEvalDelay *valuer.TextDuration `json:"newGroupEvalDelay,omitempty"`
 }
 
 type Renotify struct {
-	Enabled          bool               `json:"enabled"`
-	ReNotifyInterval types.TextDuration `json:"interval,omitempty"`
-	AlertStates      []model.AlertState `json:"alertStates,omitempty"`
+	Enabled          bool                `json:"enabled"`
+	ReNotifyInterval valuer.TextDuration `json:"interval,omitempty"`
+	AlertStates      []model.AlertState  `json:"alertStates,omitempty"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
@@ -191,11 +191,11 @@ func (r *PostableRule) processRuleDefaults() {
 	}
 
 	if r.EvalWindow.IsZero() {
-		r.EvalWindow = types.NewTextDuration(5 * time.Minute)
+		r.EvalWindow = valuer.NewTextDuration(5 * time.Minute)
 	}
 
 	if r.Frequency.IsZero() {
-		r.Frequency = types.NewTextDuration(1 * time.Minute)
+		r.Frequency = valuer.NewTextDuration(1 * time.Minute)
 	}
 
 	if r.RuleCondition != nil {
@@ -246,7 +246,7 @@ func (r *PostableRule) processRuleDefaults() {
 			r.NotificationSettings = &NotificationSettings{
 				Renotify: Renotify{
 					Enabled:          true,
-					ReNotifyInterval: types.NewTextDuration(4 * time.Hour),
+					ReNotifyInterval: valuer.NewTextDuration(4 * time.Hour),
 					AlertStates:      []model.AlertState{model.StateFiring},
 				},
 			}

@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -125,8 +124,8 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 		Evaluation: &ruletypes.EvaluationEnvelope{
 			Kind: ruletypes.RollingEvaluation,
 			Spec: ruletypes.RollingWindow{
-				EvalWindow: types.NewTextDuration(5 * time.Minute),
-				Frequency:  types.NewTextDuration(1 * time.Minute),
+				EvalWindow: valuer.NewTextDuration(5 * time.Minute),
+				Frequency:  valuer.NewTextDuration(1 * time.Minute),
 			},
 		},
 		RuleCondition: &ruletypes.RuleCondition{
@@ -707,8 +706,8 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Set newGroupEvalDelay in NotificationSettings if provided
 			if tt.newGroupEvalDelay != nil {
 				postableRule.NotificationSettings = &ruletypes.NotificationSettings{
-					NewGroupEvalDelay: func() *types.TextDuration {
-						d := types.NewTextDuration(*tt.newGroupEvalDelay)
+					NewGroupEvalDelay: func() *valuer.TextDuration {
+						d := valuer.NewTextDuration(*tt.newGroupEvalDelay)
 						return &d
 					}(),
 				}

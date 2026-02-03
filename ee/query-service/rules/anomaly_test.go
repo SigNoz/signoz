@@ -50,8 +50,8 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(evalWindow),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(evalWindow),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,
@@ -157,8 +157,8 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(evalWindow),
-			Frequency:  ruletypes.Duration(time.Minute),
+			EvalWindow: valuer.NewTextDuration(evalWindow),
+			Frequency:  valuer.NewTextDuration(time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp:     ruletypes.ValueIsAbove,

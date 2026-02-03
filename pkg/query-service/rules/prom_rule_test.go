@@ -20,7 +20,6 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -42,8 +41,8 @@ func TestPromRuleEval(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: types.NewTextDuration(5 * time.Minute),
-			Frequency:  types.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -749,8 +748,8 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: types.NewTextDuration(5 * time.Minute),
-			Frequency:  types.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1008,8 +1007,8 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: types.NewTextDuration(5 * time.Minute),
-			Frequency:  types.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1119,8 +1118,8 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: types.NewTextDuration(5 * time.Minute),
-			Frequency:  types.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1354,8 +1353,8 @@ func TestPromRule_NoData(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(5 * time.Minute),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,
@@ -1477,8 +1476,8 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(evalWindow),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: valuer.NewTextDuration(evalWindow),
+			Frequency:  valuer.NewTextDuration(1 * time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp:     ruletypes.ValueIsAbove,
@@ -1628,8 +1627,8 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: types.NewTextDuration(evalWindow),
-			Frequency:  types.NewTextDuration(time.Minute),
+			EvalWindow: valuer.NewTextDuration(evalWindow),
+			Frequency:  valuer.NewTextDuration(time.Minute),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,
