@@ -71,12 +71,12 @@ type NotificationSettings struct {
 	Renotify  Renotify `json:"renotify,omitempty"`
 	UsePolicy bool     `json:"usePolicy,omitempty"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
-	NewGroupEvalDelay *valuer.TextDuration `json:"newGroupEvalDelay,omitempty"`
+	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero"`
 }
 
 type Renotify struct {
 	Enabled          bool                `json:"enabled"`
-	ReNotifyInterval valuer.TextDuration `json:"interval,omitempty"`
+	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero"`
 	AlertStates      []model.AlertState  `json:"alertStates,omitempty"`
 }
 

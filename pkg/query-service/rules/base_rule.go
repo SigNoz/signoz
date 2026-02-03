@@ -94,7 +94,7 @@ type BaseRule struct {
 	evaluation ruletypes.Evaluation
 
 	// newGroupEvalDelay is the grace period for new alert groups
-	newGroupEvalDelay *time.Duration
+	newGroupEvalDelay time.Duration
 
 	queryParser queryparser.QueryParser
 }
@@ -176,9 +176,8 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
-	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
-		newGroupEvalDelay := p.NotificationSettings.NewGroupEvalDelay.Duration()
-		baseRule.newGroupEvalDelay = &newGroupEvalDelay
+	if p.NotificationSettings != nil {
+		baseRule.newGroupEvalDelay = p.NotificationSettings.NewGroupEvalDelay.Duration()
 	}
 
 	if baseRule.evalWindow == 0 {
@@ -552,7 +551,7 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 
 // ShouldSkipNewGroups returns true if new group filtering should be applied
 func (r *BaseRule) ShouldSkipNewGroups() bool {
-	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
+	return r.newGroupEvalDelay > 0
 }
 
 // isFilterNewSeriesSupported checks if the query is supported for new series filtering
