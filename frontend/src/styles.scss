@@ -542,10 +542,10 @@ body {
 }
 
 .ant-tooltip {
-	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
+	--antd-arrow-background-color: var(--l2-background);
 
 	.ant-tooltip-inner {
-		background-color: var(--bg-slate-400, #1d212d);
+		background-color: var(--l2-background);
 	}
 	.flexBtn {
 		display: flex;
