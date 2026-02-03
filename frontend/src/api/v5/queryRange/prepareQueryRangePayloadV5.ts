@@ -58,7 +58,6 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.LIST:
 			return 'raw';
 		case PANEL_TYPES.HISTOGRAM:
-			return 'distribution';
 		case PANEL_TYPES.DISTRIBUTION:
 			return 'distribution';
 		default:

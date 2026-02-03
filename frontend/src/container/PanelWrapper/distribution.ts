@@ -38,7 +38,7 @@ export function buildDistributionData(
 ): DistributionData {
 	if (!queryResult || queryResult.length === 0) {
 		return {
-			data: ([[0], [0]] as unknown) as AlignedData,
+			data: ([[0]] as unknown) as AlignedData,
 			bucketLabels: [],
 			series: [],
 		};
