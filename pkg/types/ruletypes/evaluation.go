@@ -28,10 +28,10 @@ type RollingWindow struct {
 }
 
 func (rollingWindow RollingWindow) Validate() error {
-	if rollingWindow.EvalWindow.Duration() <= 0 {
+	if !rollingWindow.EvalWindow.IsPositive() {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
 	}
-	if rollingWindow.Frequency.Duration() <= 0 {
+	if !rollingWindow.Frequency.IsPositive() {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
 	}
 	return nil
@@ -79,7 +79,7 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	if _, err := time.LoadLocation(cumulativeWindow.Timezone); err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is invalid")
 	}
-	if cumulativeWindow.Frequency.Duration() <= 0 {
+	if !cumulativeWindow.Frequency.IsPositive() {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
 	}
 	return nil

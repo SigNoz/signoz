@@ -54,6 +54,11 @@ func (d TextDuration) IsZero() bool {
 	return d.value == 0
 }
 
+// IsPositive whether the duration is greater than zero.
+func (d TextDuration) IsPositive() bool {
+	return d.value > 0
+}
+
 // String implements the [fmt.Stringer] interface.
 func (d TextDuration) String() string {
 	if len(d.text) > 0 {
