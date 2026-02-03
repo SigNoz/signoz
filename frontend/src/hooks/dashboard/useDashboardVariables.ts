@@ -5,9 +5,11 @@ import {
 	IDashboardVariables,
 } from '../../providers/Dashboard/store/dashboardVariablesStore';
 
-export const useDashboardVariables = (): {
+export interface IUseDashboardVariablesReturn {
 	dashboardVariables: IDashboardVariables;
-} => {
+}
+
+export const useDashboardVariables = (): IUseDashboardVariablesReturn => {
 	const dashboardVariables = useSyncExternalStore(
 		dashboardVariablesStore.subscribe,
 		dashboardVariablesStore.getSnapshot,
