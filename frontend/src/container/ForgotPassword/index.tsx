@@ -119,9 +119,8 @@ function ForgotPassword({
 							Check your email
 						</Typography.Title>
 						<Typography.Paragraph className="login-form-description">
-							We&apos;ve sent a password reset link to <strong>{watchedEmail}</strong>.
-							Please check your inbox and follow the instructions to reset your
-							password.
+							We&apos;ve sent a password reset link to your email. Please check your
+							inbox and follow the instructions to reset your password.
 						</Typography.Paragraph>
 					</div>
 
