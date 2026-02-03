@@ -87,7 +87,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         rule_path="alerts/test_scenarios/threshold_above_average/rule.json",
         alert_data=[
             types.AlertData(
-                type="metrics",
+                type="traces",
                 data_path="alerts/test_scenarios/threshold_above_average/alert_data.jsonl",
             ),
         ],
