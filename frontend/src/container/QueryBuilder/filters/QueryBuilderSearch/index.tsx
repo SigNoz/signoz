@@ -356,7 +356,10 @@ function QueryBuilderSearch({
 
 	// conditional changes here to use a seperate component to render the example queries based on the option group label
 	const customRendererForLogsExplorer = options.map((option) => (
-		<Select.Option key={option.label} value={option.value}>
+		<Select.Option
+			key={`${option.label}-${option.type || ''}-${option.dataType || ''}`}
+			value={option.value}
+		>
 			<OptionRendererForLogs
 				label={option.label}
 				value={option.value}
@@ -371,6 +374,7 @@ function QueryBuilderSearch({
 	return (
 		<div className="query-builder-search-container">
 			<Select
+				data-testid={'qb-search-select'}
 				ref={selectRef}
 				getPopupContainer={popupContainer}
 				transitionName=""
@@ -488,7 +492,10 @@ function QueryBuilderSearch({
 				{isLogsExplorerPage
 					? customRendererForLogsExplorer
 					: options.map((option) => (
-							<Select.Option key={option.label} value={option.value}>
+							<Select.Option
+								key={`${option.label}-${option.type || ''}-${option.dataType || ''}`}
+								value={option.value}
+							>
 								<OptionRenderer
 									label={option.label}
 									value={option.value}

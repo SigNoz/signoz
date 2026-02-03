@@ -4,9 +4,8 @@ import {
 	getTagToken,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { isEmpty } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';
@@ -32,16 +31,12 @@ export const useOptions = (
 	const operators = useOperators(key, keys);
 
 	// get matching dynamic variables to suggest
-	const { selectedDashboard } = useDashboard();
-
-	const dynamicVariables = useMemo(
-		() =>
-			Object.values(selectedDashboard?.data?.variables || {})?.filter(
-				(variable: IDashboardVariable) => variable.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
+	const dashboardDynamicVariables = useDashboardVariablesByType(
+		'DYNAMIC',
+		'values',
 	);
-	const variableName = dynamicVariables?.find(
+
+	const variableName = dashboardDynamicVariables?.find(
 		(variable) => variable?.dynamicVariablesAttribute === key,
 	)?.name;
 
@@ -193,7 +188,11 @@ export const useOptions = (
 					(option, index, self) =>
 						index ===
 							self.findIndex(
-								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+								(o) =>
+									o.label === option.label &&
+									o.value === option.value &&
+									(o.type || '') === (option.type || '') &&
+									(o.dataType || '') === (option.dataType || ''), // keep entries with same key but different type/dataType
 							) && option.value !== '',
 				) || []
 			).map((option) => {
