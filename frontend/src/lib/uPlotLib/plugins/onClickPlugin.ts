@@ -2,6 +2,7 @@
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { TimeSeriesData } from 'types/api/v5/queryRange';
 
 function isSeriesValueValid(seriesValue: number | undefined | null): boolean {
 	return (
@@ -103,6 +104,203 @@ export const getFocusedSeriesAtPosition = (
 
 	return null;
 };
+
+const getClickCoordinates = (
+	u: uPlot,
+	event: MouseEvent,
+): {
+	mouseX: number;
+	mouseY: number;
+	absoluteMouseX: number;
+	absoluteMouseY: number;
+	xValue: number;
+	yValue: number;
+} => ({
+	mouseX: event.offsetX + 40,
+	mouseY: event.offsetY + 40,
+	absoluteMouseX: event.clientX,
+	absoluteMouseY: event.clientY,
+	xValue: u.posToVal(event.offsetX, 'x'),
+	yValue: u.posToVal(event.offsetY, 'y'),
+});
+
+const getAxesData = (u: uPlot): { xAxis: any; yAxis: any } => ({
+	xAxis: u.axes[0],
+	yAxis: u.axes[1],
+});
+
+const getActualDataTimestamp = (
+	u: uPlot,
+	event: MouseEvent,
+	fallbackTimestamp: number,
+): number => {
+	const dataIndex = u.posToIdx(event.offsetX);
+	const timestamp = u.data?.[0]?.[dataIndex];
+	return timestamp !== undefined ? (timestamp as number) : fallbackTimestamp;
+};
+
+const getFocusedMetricData = (
+	focusedSeriesData: ReturnType<typeof getFocusedSeriesAtPosition>,
+	apiResult: Array<{ metric?: Record<string, string>; queryName?: string }>,
+): {
+	metric: Record<string, string>;
+	outputMetric: { queryName: string; inFocusOrNot: boolean };
+} => {
+	const outputMetric = { queryName: '', inFocusOrNot: false };
+	if (focusedSeriesData && focusedSeriesData.seriesIndex <= apiResult.length) {
+		const { metric: focusedMetric, queryName } =
+			apiResult[focusedSeriesData.seriesIndex - 1] || {};
+		return {
+			metric: focusedMetric || {},
+			outputMetric: { queryName: queryName || '', inFocusOrNot: true },
+		};
+	}
+
+	return { metric: {}, outputMetric };
+};
+
+const getHeatmapMetric = (
+	heatmapTimeSeriesData: TimeSeriesData,
+): { metric: Record<string, string>; queryName: string } => {
+	const series = heatmapTimeSeriesData.aggregations?.[0]?.series?.[0];
+	const metric: Record<string, string> = {};
+	if (Array.isArray(series?.labels)) {
+		series.labels.forEach((label: any) => {
+			if (label?.key?.name && label?.value !== undefined) {
+				metric[label.key.name] = String(label.value);
+			}
+		});
+	} else if (series?.labels && typeof series.labels === 'object') {
+		Object.entries(series.labels).forEach(([key, value]) => {
+			metric[key] = String(value);
+		});
+	}
+
+	return { metric, queryName: heatmapTimeSeriesData.queryName || '' };
+};
+
+const getHeatmapCellAtCursor = (
+	u: uPlot,
+	coords: ReturnType<typeof getClickCoordinates>,
+	bucketLabels: string[],
+): {
+	bucketIdx: number;
+	timestampSec: number;
+	count: number;
+} | null => {
+	const yData = u.data[1] as any;
+	const ys = yData as number[];
+	const xs = yData?.xs as number[];
+	const counts = yData?.counts as number[];
+
+	if (!xs || !ys || !counts || xs.length === 0 || ys.length === 0) {
+		return null;
+	}
+
+	const dlen = xs.length;
+	const yBinQty = dlen - ys.lastIndexOf(ys[0]);
+	if (!yBinQty || yBinQty <= 0) {
+		return null;
+	}
+	const xBinQty = dlen / yBinQty;
+	const xBinIncr = xs[yBinQty] - xs[0];
+	const bucketSizeSec = Number.isFinite(xBinIncr) && xBinIncr > 0 ? xBinIncr : 0;
+
+	const bucketIdx = Math.floor(coords.yValue);
+	if (bucketIdx < 0 || bucketIdx >= bucketLabels.length) {
+		return null;
+	}
+
+	const scaleMin = (u.scales.x as any)?.min;
+	const xStart = Number.isFinite(scaleMin) ? (scaleMin as number) : xs[0];
+	let timeIdx = 0;
+	if (bucketSizeSec > 0) {
+		timeIdx = Math.floor((coords.xValue - xStart) / bucketSizeSec);
+	}
+	if (timeIdx < 0) {
+		timeIdx = 0;
+	}
+	if (timeIdx >= xBinQty) {
+		timeIdx = xBinQty - 1;
+	}
+
+	const bucketStartSec = xStart + timeIdx * bucketSizeSec;
+	const eps = 1e-6;
+	let dataTimeIdx = -1;
+	for (let i = 0; i < xBinQty; i++) {
+		const timeVal = xs[i * yBinQty];
+		if (Math.abs(timeVal - bucketStartSec) < eps) {
+			dataTimeIdx = i;
+			break;
+		}
+	}
+
+	const count =
+		dataTimeIdx >= 0 ? counts[dataTimeIdx * yBinQty + bucketIdx] || 0 : 0;
+
+	return { bucketIdx, timestampSec: bucketStartSec, count };
+};
+
+const handleHeatmapClick = (
+	opts: OnClickPluginOpts,
+	u: uPlot,
+	coords: ReturnType<typeof getClickCoordinates>,
+	axesData: { xAxis: any; yAxis: any },
+): boolean => {
+	if (!opts.isHeatmap || !opts.heatmapTimeSeriesData || !opts.bucketLabels) {
+		return false;
+	}
+
+	const cell = getHeatmapCellAtCursor(u, coords, opts.bucketLabels);
+	if (cell) {
+		const { metric, queryName } = getHeatmapMetric(opts.heatmapTimeSeriesData);
+		metric.clickedTimestamp = String(cell.timestampSec);
+
+		// Add range filters for heatmap drill-down
+		const bounds = opts.heatmapBounds;
+		if (
+			opts.aggregateAttributeKey &&
+			bounds &&
+			cell.bucketIdx >= 0 &&
+			cell.bucketIdx < bounds.length - 1
+		) {
+			const fieldNames = opts.aggregateAttributeKey
+				.split(',')
+				.map((f) => f.trim());
+			for (const fieldName of fieldNames) {
+				metric[`${fieldName}_min`] = String(bounds[cell.bucketIdx]);
+				metric[`${fieldName}_max`] = String(bounds[cell.bucketIdx + 1]);
+			}
+		}
+
+		const outputMetric = { queryName, inFocusOrNot: true };
+		const focusedSeries = {
+			seriesIndex: 1,
+			seriesName: opts.bucketLabels[cell.bucketIdx] || '',
+			value: cell.count,
+			color: '',
+			show: true,
+			isFocused: true,
+		};
+
+		opts.onClick(
+			cell.timestampSec,
+			cell.bucketIdx,
+			coords.mouseX,
+			coords.mouseY,
+			metric,
+			outputMetric,
+			coords.absoluteMouseX,
+			coords.absoluteMouseY,
+			axesData,
+			focusedSeries,
+		);
+
+		return true;
+	}
+
+	return false;
+};
 export interface OnClickPluginOpts {
 	onClick: (
 		xValue: number,
@@ -132,6 +330,11 @@ export interface OnClickPluginOpts {
 		} | null,
 	) => void;
 	apiResponse?: MetricRangePayloadProps;
+	isHeatmap?: boolean;
+	bucketLabels?: string[];
+	heatmapBounds?: number[];
+	heatmapTimeSeriesData?: TimeSeriesData;
+	aggregateAttributeKey?: string;
 }
 
 function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
@@ -141,72 +344,39 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 		init: (u: uPlot) => {
 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 			handleClick = function (event: MouseEvent) {
-				// relative coordinates
-				const mouseX = event.offsetX + 40;
-				const mouseY = event.offsetY + 40;
+				const coords = getClickCoordinates(u, event);
+				const axesData = getAxesData(u);
 
-				// absolute coordinates
-				const absoluteMouseX = event.clientX;
-				const absoluteMouseY = event.clientY;
+				if (handleHeatmapClick(opts, u, coords, axesData)) {
+					return;
+				}
 
-				// Convert pixel positions to data values
-				// do not use mouseX and mouseY here as it offsets the timestamp as well
-				const xValue = u.posToVal(event.offsetX, 'x');
-				const yValue = u.posToVal(event.offsetY, 'y');
-
-				// Get the focused/highlighted series (the one that would be bold in hover)
+				// Standard time-series click handling
 				const focusedSeriesData = getFocusedSeriesAtPosition(event, u);
+				const apiResult = (opts.apiResponse?.data?.result || []) as Array<{
+					metric?: Record<string, string>;
+					queryName?: string;
+				}>;
+				const { metric, outputMetric } = getFocusedMetricData(
+					focusedSeriesData,
+					apiResult,
+				);
+				const actualDataTimestamp = getActualDataTimestamp(u, event, coords.xValue);
 
-				let metric = {};
-				const apiResult = opts.apiResponse?.data?.result || [];
-				const outputMetric = {
-					queryName: '',
-					inFocusOrNot: false,
-				};
-
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				if (
-					focusedSeriesData &&
-					focusedSeriesData.seriesIndex <= apiResult.length
-				) {
-					const { metric: focusedMetric, queryName } =
-						apiResult[focusedSeriesData.seriesIndex - 1] || {};
-					metric = focusedMetric;
-					outputMetric.queryName = queryName;
-					outputMetric.inFocusOrNot = true;
-				}
-
-				// Get the actual data point timestamp from the focused series
-				let actualDataTimestamp = xValue; // fallback to click position timestamp
-				if (focusedSeriesData) {
-					// Get the data index from the focused series
-					const dataIndex = u.posToIdx(event.offsetX);
-					// Get the actual timestamp from the x-axis data (u.data[0])
-					if (u.data[0] && u.data[0][dataIndex] !== undefined) {
-						actualDataTimestamp = u.data[0][dataIndex];
-					}
-				}
-
-				metric = {
+				const metricWithTimestamp = {
 					...metric,
-					clickedTimestamp: actualDataTimestamp,
-				};
-
-				const axesData = {
-					xAxis: u.axes[0],
-					yAxis: u.axes[1],
+					clickedTimestamp: actualDataTimestamp.toString(),
 				};
 
 				opts.onClick(
-					xValue,
-					yValue,
-					mouseX,
-					mouseY,
-					metric,
+					coords.xValue,
+					coords.yValue,
+					coords.mouseX,
+					coords.mouseY,
+					metricWithTimestamp,
 					outputMetric,
-					absoluteMouseX,
-					absoluteMouseY,
+					coords.absoluteMouseX,
+					coords.absoluteMouseY,
 					axesData,
 					focusedSeriesData,
 				);

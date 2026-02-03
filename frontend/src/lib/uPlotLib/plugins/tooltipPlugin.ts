@@ -79,6 +79,8 @@ const generateTooltipContent = (
 	timezone?: string,
 	colorMapping?: Record<string, string>,
 	query?: Query,
+	isHeatmapChart?: boolean,
+	bucketLabels?: string[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -109,11 +111,13 @@ const generateTooltipContent = (
 			const item = series[index];
 
 			if (index === 0) {
-				if (isBillingUsageGraphs) {
+				if (isHeatmapChart && bucketLabels) {
+					tooltipTitle = bucketLabels[idx] || `Bucket ${idx}`;
+				} else if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
 						.format(DATE_TIME_FORMATS.MONTH_YEAR);
-				} else {
+				} else if (!isHistogramGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
 						.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
@@ -213,7 +217,7 @@ const generateTooltipContent = (
 
 	const headerDiv = document.createElement('div');
 	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
-	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
+	headerDiv.textContent = tooltipTitle;
 	container.appendChild(headerDiv);
 
 	// Use DocumentFragment for better performance when adding multiple elements
@@ -252,11 +256,126 @@ const generateTooltipContent = (
 	return container;
 };
 
+/* eslint-disable sonarjs/cognitive-complexity */
+const generateHeatmapTooltipContent = ({
+	u,
+	cursorX,
+	cursorY,
+	bucketLabels,
+	timeBucketIntervalSec,
+	formatDate,
+	decimalPrecision,
+	colorMapping,
+	heatmapColors,
+}: {
+	u: uPlot;
+	cursorX: number;
+	cursorY: number;
+	bucketLabels: string[];
+	timeBucketIntervalSec: number;
+	formatDate: (ms: number) => string;
+	decimalPrecision?: PrecisionOption;
+	colorMapping?: Record<string, string>;
+	heatmapColors?: string[];
+}): HTMLElement | null => {
+	const yData = u.data[1] as any;
+	const ys = yData as number[];
+	const xs = yData?.xs as number[];
+	const counts = yData?.counts as number[];
+
+	if (!xs || !ys || !counts || xs.length === 0 || ys.length === 0) {
+		return null;
+	}
+
+	const dlen = xs.length;
+	const yBinQty = dlen - ys.lastIndexOf(ys[0]);
+	if (!yBinQty || yBinQty <= 0) {
+		return null;
+	}
+	const xBinQty = dlen / yBinQty;
+
+	// Clamp bucket index
+	let bucketIdx = Math.floor(cursorY);
+	if (bucketIdx < 0) {
+		bucketIdx = 0;
+	}
+	if (bucketIdx >= yBinQty) {
+		bucketIdx = yBinQty - 1;
+	}
+	if (bucketIdx < 0 || bucketIdx >= bucketLabels.length) {
+		return null;
+	}
+
+	// Find nearest time bucket (like timeseries tooltip behavior)
+	// This ensures tooltip stays visible even when cursor is in gaps
+	let timeIdx = 0;
+	let minDistance = Infinity;
+	const xBinIncr = xBinQty > 1 ? xs[yBinQty] - xs[0] : timeBucketIntervalSec;
+
+	for (let i = 0; i < xBinQty; i++) {
+		const xStart = xs[i * yBinQty];
+		const xCenter = xStart + xBinIncr * 0.5;
+		const distance = Math.abs(cursorX - xCenter);
+		if (distance < minDistance) {
+			minDistance = distance;
+			timeIdx = i;
+		}
+	}
+
+	const flatIdx = timeIdx * yBinQty + bucketIdx;
+	const count = counts[flatIdx] || 0;
+
+	const bucketStartSec = xs[timeIdx * yBinQty];
+	const bucketEndSec =
+		timeIdx < xBinQty - 1
+			? xs[(timeIdx + 1) * yBinQty]
+			: bucketStartSec + timeBucketIntervalSec;
+
+	const timestamp = bucketStartSec * 1000;
+	const nextTimestamp = bucketEndSec * 1000;
+	const timeRange = `${formatDate(timestamp)} → ${formatDate(nextTimestamp)}`;
+	const label = bucketLabels[bucketIdx] || `Bucket ${bucketIdx}`;
+	const tooltipValue = getToolTipValue(count, undefined, decimalPrecision);
+	const color =
+		colorMapping?.['_heatmap'] ||
+		(heatmapColors && heatmapColors[heatmapColors.length - 1]) ||
+		'#6347D9';
+
+	const container = document.createElement('div');
+	container.classList.add('tooltip-container');
+
+	const headerDiv = document.createElement('div');
+	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
+	headerDiv.textContent = timeRange;
+	container.appendChild(headerDiv);
+
+	const row = document.createElement('div');
+	row.classList.add('tooltip-content-row', 'tooltip-content');
+
+	const squareBox = document.createElement('div');
+	squareBox.classList.add('pointSquare');
+	squareBox.style.borderColor = color;
+
+	const text = document.createElement('div');
+	text.classList.add('tooltip-data-point');
+	text.textContent = `${label} : ${tooltipValue}`;
+	text.style.color = color;
+
+	row.appendChild(squareBox);
+	row.appendChild(text);
+	container.appendChild(row);
+
+	return container;
+};
+/* eslint-enable sonarjs/cognitive-complexity */
+
 type ToolTipPluginProps = {
 	apiResponse: MetricRangePayloadProps | undefined;
 	yAxisUnit?: string;
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
+	isHeatmapChart?: boolean;
+	bucketLabels?: string[];
 	isMergedSeries?: boolean;
 	decimalPrecision?: PrecisionOption;
 	stackBarChart?: boolean;
@@ -265,6 +384,9 @@ type ToolTipPluginProps = {
 	timezone?: string;
 	colorMapping?: Record<string, string>;
 	query?: Query;
+	timeBucketIntervalSec?: number;
+	formatDate?: (ms: number) => string;
+	heatmapColors?: string[];
 };
 
 const tooltipPlugin = ({
@@ -272,6 +394,8 @@ const tooltipPlugin = ({
 	yAxisUnit,
 	isBillingUsageGraphs,
 	isHistogramGraphs,
+	isHeatmapChart,
+	bucketLabels,
 	isMergedSeries,
 	stackBarChart,
 	isDarkMode,
@@ -280,6 +404,9 @@ const tooltipPlugin = ({
 	colorMapping,
 	query,
 	decimalPrecision,
+	timeBucketIntervalSec,
+	formatDate,
+	heatmapColors,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 ToolTipPluginProps): any => {
 	let over: HTMLElement;
@@ -365,19 +492,16 @@ ToolTipPluginProps): any => {
 			syncRect: (u: any, rect: DOMRect): void => {
 				cachedBBox = rect;
 			},
-			setCursor: (u: {
-				cursor: { left: any; top: any; idx: any };
-				data: any[];
-				series: uPlot.Options['series'];
-			}): void => {
+			// eslint-disable-next-line sonarjs/cognitive-complexity
+			setCursor: (u: any): void => {
 				if (!overlay) {
 					return;
 				}
 
 				const { left, top, idx } = u.cursor;
 
-				// Early return if not active or no valid index
-				if (!isActive || !Number.isInteger(idx)) {
+				// Early return if not active or no valid index (non-heatmap)
+				if (!isActive || (!isHeatmapChart && !Number.isInteger(idx))) {
 					if (isActive) {
 						// Clear tooltip content efficiently using replaceChildren
 						overlay.replaceChildren();
@@ -391,6 +515,36 @@ ToolTipPluginProps): any => {
 					left: left + bbox.left,
 					top: top + bbox.top,
 				};
+
+				if (isHeatmapChart && bucketLabels && timeBucketIntervalSec && formatDate) {
+					const content = generateHeatmapTooltipContent({
+						u,
+						cursorX: u.posToVal(left, 'x'),
+						cursorY: u.posToVal(top, 'y'),
+						bucketLabels,
+						timeBucketIntervalSec,
+						formatDate,
+						decimalPrecision,
+						colorMapping,
+						heatmapColors,
+					});
+
+					if (!content) {
+						hideOverlay();
+						return;
+					}
+
+					if (customTooltipElement) {
+						content.appendChild(customTooltipElement);
+					}
+					overlay.replaceChildren(content);
+					placement(overlay, anchor, 'right', 'start', {
+						bound,
+						followCursor: { x: anchor.left, y: anchor.top, offset: 12 },
+					});
+					showOverlay();
+					return;
+				}
 
 				const content = generateTooltipContent(
 					apiResult,
@@ -407,6 +561,8 @@ ToolTipPluginProps): any => {
 					timezone,
 					colorMapping,
 					query,
+					isHeatmapChart,
+					bucketLabels,
 				);
 
 				// Only show tooltip if there's actual content

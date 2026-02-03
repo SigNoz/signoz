@@ -201,12 +201,19 @@ function UplotPanelWrapper({
 
 					// Use the stepInterval from the specific query, fallback to default
 					const stepInterval = specificQuery?.spec?.stepInterval || 60;
-					timeRange = getTimeRangeFromStepInterval(
+					const clickedTimestamp = metric?.clickedTimestamp
+						? Number(metric.clickedTimestamp)
+						: xValue;
+					const timeRangeInSeconds = getTimeRangeFromStepInterval(
 						stepInterval,
-						metric?.clickedTimestamp || xValue, // Use the clicked timestamp if available, otherwise use the click position timestamp
+						clickedTimestamp,
 						specificQuery?.spec?.signal === DataSource.METRICS &&
 							isApmMetric(specificQuery?.spec?.aggregations[0]?.metricName),
 					);
+					timeRange = {
+						startTime: timeRangeInSeconds.startTime * 1000,
+						endTime: timeRangeInSeconds.endTime * 1000,
+					};
 				}
 			}
 

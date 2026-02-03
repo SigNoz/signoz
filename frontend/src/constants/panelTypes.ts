@@ -15,6 +15,7 @@ export const PANEL_TYPES_COMPONENT_MAP = {
 	[PANEL_TYPES.LIST]: LogsPanelComponent,
 	[PANEL_TYPES.EMPTY_WIDGET]: null,
 	[PANEL_TYPES.BAR]: Uplot,
+	[PANEL_TYPES.HEATMAP]: null,
 } as const;
 
 export const getComponentForPanelType = (
@@ -31,6 +32,7 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.BAR]: Uplot,
 		[PANEL_TYPES.PIE]: null,
 		[PANEL_TYPES.HISTOGRAM]: Uplot,
+		[PANEL_TYPES.HEATMAP]: null,
 		[PANEL_TYPES.EMPTY_WIDGET]: null,
 	};
 
