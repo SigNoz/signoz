@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -478,6 +479,10 @@ func (c *Controller) ListServices(
 
 			summaries = append(summaries, summary)
 		}
+
+		sort.Slice(summaries, func(i, j int) bool {
+			return summaries[i].Metadata.Title < summaries[j].Metadata.Title
+		})
 	case types.CloudProviderAzure:
 		definitions, err := c.azureServiceDefinitions.ListServiceDefinitions(ctx)
 		if err != nil {
@@ -492,6 +497,10 @@ func (c *Controller) ListServices(
 
 			summaries = append(summaries, summary)
 		}
+
+		sort.Slice(summaries, func(i, j int) bool {
+			return summaries[i].Metadata.Title < summaries[j].Metadata.Title
+		})
 	}
 
 	return &ListServicesResponse{
