@@ -39,7 +39,7 @@ export default function Tooltip({
 				data: uPlotInstance.data,
 				series: uPlotInstance.series,
 				dataIndexes,
-				activeSeriesIdx: seriesIndex,
+				activeSeriesIndex: seriesIndex,
 				uPlotInstance,
 				yAxisUnit,
 				decimalPrecision,

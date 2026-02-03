@@ -1,5 +1,5 @@
+import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/Legend';
 import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
-
 export interface ChartDimensions {
 	width: number;
 	height: number;
@@ -13,7 +13,6 @@ const DEFAULT_AVG_LABEL_LENGTH = 15;
 const LEGEND_GAP = 16;
 const LEGEND_PADDING = 12;
 const LEGEND_LINE_HEIGHT = 36;
-const MAX_LEGEND_WIDTH = 400;
 
 /**
  * Average text width from series labels (for legendsPerSet).
