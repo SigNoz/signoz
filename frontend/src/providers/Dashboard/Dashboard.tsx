@@ -46,7 +46,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
 import { useDashboardVariables } from '../../hooks/dashboard/useDashboardVariables';
-import { updateDashboardVariablesStore } from './store/dashboardVariablesStore';
+import { setDashboardVariablesStore } from './store/dashboardVariablesStore';
 import {
 	DashboardSortOrder,
 	IDashboardContext,
@@ -205,7 +205,7 @@ export function DashboardProvider({
 		const updatedVariables = selectedDashboard?.data.variables || {};
 
 		if (!isEqual(existingVariables, updatedVariables)) {
-			updateDashboardVariablesStore(updatedVariables);
+			setDashboardVariablesStore(updatedVariables);
 		}
 	}, [selectedDashboard]);
 
