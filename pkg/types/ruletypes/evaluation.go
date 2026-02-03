@@ -150,8 +150,8 @@ func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Tim
 	return windowStart.In(time.UTC), currInTZ.In(time.UTC)
 }
 
-func (cw CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Location) time.Time {
-	schedule := cw.Schedule
+func (cumulativeWindow CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Location) time.Time {
+	schedule := cumulativeWindow.Schedule
 
 	switch schedule.Type {
 	case ScheduleTypeHourly:

@@ -11,28 +11,28 @@ import (
 func TestRollingWindow_EvaluationTime(t *testing.T) {
 	tests := []struct {
 		name       string
-		evalWindow time.Duration
+		evalWindow valuer.TextDuration
 		current    time.Time
 		wantStart  time.Time
 		wantEnd    time.Time
 	}{
 		{
 			name:       "5 minute rolling window",
-			evalWindow: 5 * time.Minute,
+			evalWindow: valuer.MustParseTextDuration("5m"),
 			current:    time.Date(2023, 12, 1, 12, 30, 0, 0, time.UTC),
 			wantStart:  time.Date(2023, 12, 1, 12, 25, 0, 0, time.UTC),
 			wantEnd:    time.Date(2023, 12, 1, 12, 30, 0, 0, time.UTC),
 		},
 		{
 			name:       "1 hour rolling window",
-			evalWindow: time.Hour,
+			evalWindow: valuer.MustParseTextDuration("1h"),
 			current:    time.Date(2023, 12, 1, 15, 45, 30, 0, time.UTC),
 			wantStart:  time.Date(2023, 12, 1, 14, 45, 30, 0, time.UTC),
 			wantEnd:    time.Date(2023, 12, 1, 15, 45, 30, 0, time.UTC),
 		},
 		{
 			name:       "30 second rolling window",
-			evalWindow: 30 * time.Second,
+			evalWindow: valuer.MustParseTextDuration("30s"),
 			current:    time.Date(2023, 12, 1, 12, 30, 15, 0, time.UTC),
 			wantStart:  time.Date(2023, 12, 1, 12, 29, 45, 0, time.UTC),
 			wantEnd:    time.Date(2023, 12, 1, 12, 30, 15, 0, time.UTC),
@@ -42,8 +42,8 @@ func TestRollingWindow_EvaluationTime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rw := &RollingWindow{
-				EvalWindow: valuer.NewTextDuration(tt.evalWindow),
-				Frequency:  valuer.NewTextDuration(1 * time.Minute),
+				EvalWindow: tt.evalWindow,
+				Frequency:  valuer.MustParseTextDuration("1m"),
 			}
 
 			gotStart, gotEnd := rw.NextWindowFor(tt.current)
@@ -71,7 +71,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(15),
 				},
-				Frequency: valuer.NewTextDuration(5 * time.Minute),
+				Frequency: valuer.MustParseTextDuration("5m"),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -85,7 +85,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Frequency: valuer.NewTextDuration(1 * time.Hour),
+				Frequency: valuer.MustParseTextDuration("1h"),
 				Timezone:  "Asia/Kolkata",
 			},
 			current: time.Date(2025, 3, 15, 15, 30, 0, 0, time.UTC),
@@ -100,7 +100,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:    intPtr(14),
 					Minute:  intPtr(0),
 				},
-				Frequency: valuer.NewTextDuration(24 * time.Hour),
+				Frequency: valuer.MustParseTextDuration("24h"),
 				Timezone:  "America/New_York",
 			},
 			current: time.Date(2025, 3, 18, 19, 0, 0, 0, time.UTC), // Tuesday
@@ -115,7 +115,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:   intPtr(0),
 					Minute: intPtr(0),
 				},
-				Frequency: valuer.NewTextDuration(24 * time.Hour),
+				Frequency: valuer.MustParseTextDuration("24h"),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
@@ -127,7 +127,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 				Schedule: CumulativeSchedule{
 					Type: ScheduleTypeHourly,
 				},
-				Frequency: valuer.NewTextDuration(5 * time.Minute),
+				Frequency: valuer.MustParseTextDuration("5m"),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -757,8 +757,8 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 			jsonInput: `{"kind":"rolling","spec":{"evalWindow":"5m","frequency":"1m"}}`,
 			wantKind:  RollingEvaluation,
 			wantSpec: RollingWindow{
-				EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-				Frequency:  valuer.NewTextDuration(1 * time.Minute),
+				EvalWindow: valuer.MustParseTextDuration("5m"),
+				Frequency:  valuer.MustParseTextDuration("1m"),
 			},
 		},
 		{
@@ -770,7 +770,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Frequency: valuer.NewTextDuration(2 * time.Minute),
+				Frequency: valuer.MustParseTextDuration("2m"),
 				Timezone:  "UTC",
 			},
 		},
