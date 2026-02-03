@@ -40,13 +40,13 @@ type BaseRule struct {
 	// evalWindow is the time window used for evaluating the rule
 	// i.e. each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
-	evalWindow time.Duration
+	evalWindow valuer.TextDuration
 	// holdDuration is the duration for which the alert waits before firing
-	holdDuration time.Duration
+	holdDuration valuer.TextDuration
 
 	// evalDelay is the delay in evaluation of the rule
 	// this is useful in cases where the data is not available immediately
-	evalDelay time.Duration
+	evalDelay valuer.TextDuration
 
 	// holds the static set of labels and annotations for the rule
 	// these are the same for all alerts created for this rule
@@ -115,7 +115,7 @@ func WithSendUnmatched() RuleOption {
 
 func WithEvalDelay(dur time.Duration) RuleOption {
 	return func(r *BaseRule) {
-		r.evalDelay = dur
+		r.evalDelay = valuer.NewTextDuration(dur)
 	}
 }
 
@@ -163,7 +163,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		source:            p.Source,
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
-		evalWindow:        p.EvalWindow.Duration(),
+		evalWindow:        p.EvalWindow,
 		labels:            qslabels.FromMap(p.Labels),
 		annotations:       qslabels.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
@@ -180,8 +180,8 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		baseRule.newGroupEvalDelay = p.NotificationSettings.NewGroupEvalDelay.Duration()
 	}
 
-	if baseRule.evalWindow == 0 {
-		baseRule.evalWindow = 5 * time.Minute
+	if baseRule.evalWindow.IsZero() {
+		baseRule.evalWindow = valuer.NewTextDuration(5 * time.Minute)
 	}
 
 	for _, opt := range opts {
@@ -245,15 +245,15 @@ func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 }
 
 func (r *BaseRule) EvalDelay() time.Duration {
-	return r.evalDelay
+	return r.evalDelay.Duration()
 }
 
 func (r *BaseRule) EvalWindow() time.Duration {
-	return r.evalWindow
+	return r.evalWindow.Duration()
 }
 
 func (r *BaseRule) HoldDuration() time.Duration {
-	return r.holdDuration
+	return r.holdDuration.Duration()
 }
 
 func (r *BaseRule) ID() string                          { return r.id }
@@ -280,7 +280,7 @@ func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 
-	if r.evalDelay > 0 {
+	if r.evalDelay.IsPositive() {
 		start = start - r.evalDelay.Milliseconds()
 		end = end - r.evalDelay.Milliseconds()
 	}

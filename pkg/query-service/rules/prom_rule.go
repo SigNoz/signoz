@@ -332,7 +332,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			continue
 		}
 
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
 			a.State = model.StateFiring
 			a.FiredAt = ts
 			state := model.StateFiring
@@ -396,7 +396,7 @@ func (r *PromRule) String() string {
 	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        valuer.NewTextDuration(r.evalWindow),
+		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,

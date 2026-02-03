@@ -157,3 +157,8 @@ func (d *TextDuration) Scan(value any) error {
 func (d TextDuration) Equal(d2 TextDuration) bool {
 	return d.value == d2.value
 }
+
+// Milliseconds returns the duration as an integer millisecond count.
+func (d TextDuration) Milliseconds() int64 {
+	return d.value.Milliseconds()
+}

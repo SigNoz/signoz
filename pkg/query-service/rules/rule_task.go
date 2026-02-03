@@ -78,6 +78,7 @@ func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 func (g *RuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
+// TODO: remove (unused)?
 func (g *RuleTask) Interval() time.Duration { return g.frequency }
 
 func (g *RuleTask) Pause(b bool) {
