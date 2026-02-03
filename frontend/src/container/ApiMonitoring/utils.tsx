@@ -638,7 +638,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -685,7 +685,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -733,7 +733,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -780,7 +780,7 @@ export const getEndPointsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: 'tag',
+											type: '',
 										},
 										op: '=',
 										value: domainName,
@@ -2198,7 +2198,7 @@ export const getEndPointZeroStateQueryPayload = (
 									key: {
 										key: SPAN_ATTRIBUTES.SERVER_NAME,
 										dataType: DataTypes.String,
-										type: 'tag',
+										type: '',
 									},
 									op: '=',
 									value: domainName,
@@ -2793,7 +2793,7 @@ export const getStatusCodeBarChartWidgetData = (
 								key: {
 									dataType: DataTypes.String,
 									key: SPAN_ATTRIBUTES.SERVER_NAME,
-									type: 'tag',
+									type: '',
 								},
 								op: '=',
 								value: domainName,
