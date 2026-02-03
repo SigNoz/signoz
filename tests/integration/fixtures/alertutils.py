@@ -15,7 +15,7 @@ logger = setup_logger(__name__)
 
 def collect_webhook_firing_alerts(
     webhook_test_container: types.TestContainerDocker, notification_channel_name: str
-) -> List[dict[str, str]]:
+) -> List[types.FiringAlert]:
     # Prepare the endpoint path for the channel name, for alerts tests we have
     # used different paths for receiving alerts from each channel so that
     # multiple rules can be tested in isolation.
@@ -40,8 +40,7 @@ def collect_webhook_firing_alerts(
         alert_body = alert_body.replace("\n", "")
         alert_dict = json.loads(alert_body)  # parse the alert body into a dictionary
         for a in alert_dict["alerts"]:
-            labels = a["labels"]
-            alerts.append(labels)
+            alerts.append(types.FiringAlert(labels=a["labels"]))
     return alerts
 
 
@@ -93,11 +92,13 @@ def verify_webhook_alert_expectation(
         firing_alerts = collect_webhook_firing_alerts(
             test_alert_container, notification_channel_name
         )
+        firing_alert_labels = [alert.labels for alert in firing_alerts]
 
         if alert_expectations.should_alert:
-            # verify the number of alerts fired
+            # verify the number of alerts fired, currently we're only verifying the labels of the alerts
+            # but there could be verification of annotations and other fields in the FiringAlert
             (verified_count, missing_alerts) = _verify_alerts_labels(
-                firing_alerts, expected_alerts_labels
+                firing_alert_labels, expected_alerts_labels
             )
 
             if verified_count == len(alert_expectations.expected_alerts):
