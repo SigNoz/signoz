@@ -92,16 +92,9 @@ export interface ScaleProps {
  * Props for configuring a series
  */
 
-export enum FillStyle {
+export enum LineStyle {
 	Solid = 'solid',
-	Dash = 'dash',
-	Dot = 'dot',
-	Square = 'square',
-}
-
-export interface LineStyle {
-	dash?: Array<number>;
-	fill?: FillStyle;
+	Dashed = 'dashed',
 }
 
 export enum DrawStyle {
@@ -141,6 +134,7 @@ export interface SeriesProps {
 	lineInterpolation?: LineInterpolation;
 	lineStyle?: LineStyle;
 	lineWidth?: number;
+	lineCap?: Series.Cap;
 
 	// Points config
 	pointColor?: string;
