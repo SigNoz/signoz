@@ -1,4 +1,4 @@
-import { TOOLTIP_OFFSET } from './types';
+import { TOOLTIP_OFFSET, TooltipLayoutInfo, TooltipViewState } from './types';
 
 export function isPlotInViewport(
 	rect: uPlot.BBox,
@@ -63,7 +63,7 @@ export function calculateHorizontalOffset(
 	return 0;
 }
 
-export function calculateTooltipPosition(
+export function calculateTooltipOffset(
 	clientX: number,
 	clientY: number,
 	tooltipWidth: number,
@@ -103,4 +103,57 @@ export function buildTransform(
 	const reflectY = vOffset === 0 ? '' : 'translateY(-100%)';
 
 	return `translateX(${translateX}px) ${reflectX} translateY(${translateY}px) ${reflectY}`;
+}
+
+/**
+ * React view state for the tooltip.
+ *
+ * This is the minimal data needed to render:
+ * - current position / CSS style
+ * - whether the tooltip is visible or pinned
+ * - the React node to show as contents
+ * - the associated uPlot instance (for children)
+ *
+ * All interaction logic lives in the controller; that logic calls
+ * `updateState` to push the latest snapshot into React.
+ */
+export function createInitialViewState(): TooltipViewState {
+	return {
+		style: { transform: '', pointerEvents: 'none' },
+		isHovering: false,
+		isPinned: false,
+		contents: null,
+		plot: null,
+		dismiss: (): void => {},
+	};
+}
+
+/**
+ * Creates and wires a ResizeObserver that keeps track of the rendered
+ * tooltip size. This is used by the controller to place the tooltip
+ * on the correct side of the cursor and avoid clipping the viewport.
+ */
+export function createLayoutObserver(
+	layoutRef: React.MutableRefObject<TooltipLayoutInfo | undefined>,
+): TooltipLayoutInfo {
+	const layout: TooltipLayoutInfo = {
+		width: 0,
+		height: 0,
+		observer: new ResizeObserver((entries) => {
+			const current = layoutRef.current;
+			if (!current) {
+				return;
+			}
+			for (const entry of entries) {
+				if (entry.borderBoxSize?.length) {
+					current.width = entry.borderBoxSize[0].inlineSize;
+					current.height = entry.borderBoxSize[0].blockSize;
+				} else {
+					current.width = entry.contentRect.width;
+					current.height = entry.contentRect.height;
+				}
+			}
+		}),
+	};
+	return layout;
 }

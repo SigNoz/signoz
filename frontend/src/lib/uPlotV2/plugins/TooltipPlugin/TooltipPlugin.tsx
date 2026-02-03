@@ -3,10 +3,6 @@ import { createPortal } from 'react-dom';
 import cx from 'classnames';
 import uPlot from 'uplot';
 
-import type {
-	TooltipControllerContext,
-	TooltipControllerState,
-} from './tooltipController';
 import {
 	createInitialControllerState,
 	createSetCursorHandler,
@@ -18,70 +14,20 @@ import {
 } from './tooltipController';
 import {
 	DashboardCursorSync,
+	TooltipControllerContext,
+	TooltipControllerState,
 	TooltipLayoutInfo,
 	TooltipPluginProps,
 	TooltipViewState,
 } from './types';
+import { createInitialViewState, createLayoutObserver } from './utils';
 
 import './TooltipPlugin.styles.scss';
 
-const INTERACTIVE_CONTAINER = '.tooltip-plugin-container';
+const INTERACTIVE_CONTAINER_CLASSNAME = '.tooltip-plugin-container';
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
 const HOVER_DISMISS_DELAY_MS = 100;
-
-/**
- * React view state for the tooltip.
- *
- * This is the minimal data needed to render:
- * - current position / CSS style
- * - whether the tooltip is visible or pinned
- * - the React node to show as contents
- * - the associated uPlot instance (for children)
- *
- * All interaction logic lives in the controller; that logic calls
- * `updateState` to push the latest snapshot into React.
- */
-function createInitialViewState(): TooltipViewState {
-	return {
-		style: { transform: '', pointerEvents: 'none' },
-		isHovering: false,
-		isPinned: false,
-		contents: null,
-		plot: null,
-		dismiss: (): void => {},
-	};
-}
-
-/**
- * Creates and wires a ResizeObserver that keeps track of the rendered
- * tooltip size. This is used by the controller to place the tooltip
- * on the correct side of the cursor and avoid clipping the viewport.
- */
-function createLayoutObserver(
-	layoutRef: React.MutableRefObject<TooltipLayoutInfo | undefined>,
-): TooltipLayoutInfo {
-	const layout: TooltipLayoutInfo = {
-		width: 0,
-		height: 0,
-		observer: new ResizeObserver((entries) => {
-			const current = layoutRef.current;
-			if (!current) {
-				return;
-			}
-			for (const entry of entries) {
-				if (entry.borderBoxSize?.length) {
-					current.width = entry.borderBoxSize[0].inlineSize;
-					current.height = entry.borderBoxSize[0].blockSize;
-				} else {
-					current.width = entry.contentRect.width;
-					current.height = entry.contentRect.height;
-				}
-			}
-		}),
-	};
-	return layout;
-}
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function TooltipPlugin({
@@ -91,7 +37,7 @@ export default function TooltipPlugin({
 	maxHeight = 400,
 	syncMode = DashboardCursorSync.None,
 	syncKey = '_tooltip_sync_global_',
-	isPinningTooltipEnabled = false,
+	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const portalRoot = useRef<HTMLElement>(document.body);
@@ -145,7 +91,7 @@ export default function TooltipPlugin({
 		// outside the tooltip container while it is pinned.
 		const onOutsideInteraction = (event: Event): void => {
 			const target = event.target as HTMLElement;
-			if (!target.closest(INTERACTIVE_CONTAINER)) {
+			if (!target.closest(INTERACTIVE_CONTAINER_CLASSNAME)) {
 				dismissTooltip();
 			}
 		};
@@ -193,13 +139,13 @@ export default function TooltipPlugin({
 		// Hide the tooltip and reset the uPlot cursor. This is used
 		// both when the user unpins and when interaction ends.
 		function dismissTooltip(): void {
-			const wasPinned = controller.pinned;
+			const isPinnedBeforeDismiss = controller.pinned;
 			controller.pinned = false;
 			controller.hoverActive = false;
 			if (controller.plot) {
 				controller.plot.setCursor({ left: -10, top: -10 });
 			}
-			scheduleRender(wasPinned);
+			scheduleRender(isPinnedBeforeDismiss);
 		}
 
 		// Build the React node to be rendered inside the tooltip by
@@ -297,7 +243,7 @@ export default function TooltipPlugin({
 		const handleInit = (u: uPlot): void => {
 			controller.plot = u;
 			updateState({ plot: u });
-			if (isPinningTooltipEnabled) {
+			if (canPinTooltip) {
 				overClickHandler = (event: MouseEvent): void =>
 					handleUPlotOverClick(u, event);
 				u.over.addEventListener('click', overClickHandler);
@@ -324,7 +270,7 @@ export default function TooltipPlugin({
 			renderRef,
 			syncMode,
 			syncKey,
-			isPinningTooltipEnabled,
+			canPinTooltip,
 			createTooltipContents,
 			scheduleRender,
 			dismissTooltip,

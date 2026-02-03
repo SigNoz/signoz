@@ -1,48 +1,13 @@
-import type React from 'react';
 import uPlot from 'uplot';
 
-import type { TooltipRenderArgs } from '../../components/types';
-import {
-	DashboardCursorSync,
-	TooltipLayoutInfo,
-	TooltipViewState,
-} from './types';
+import { TooltipControllerContext, TooltipControllerState } from './types';
 import {
 	buildTransform,
-	calculateTooltipPosition,
+	calculateTooltipOffset,
 	isPlotInViewport,
 } from './utils';
 
 const WINDOW_OFFSET = 16;
-
-/**
- * Mutable, non-React state that drives tooltip behaviour:
- * - whether the tooltip is active / pinned
- * - where it should be positioned
- * - which series / data indexes are active
- *
- * This state lives outside of React so that uPlot hooks and DOM
- * event handlers can update it freely without causing re‑renders
- * on every tiny interaction. React is only updated when a render
- * is explicitly scheduled from the plugin.
- */
-export interface TooltipControllerState {
-	plot: uPlot | null;
-	hoverActive: boolean;
-	anySeriesActive: boolean;
-	pinned: boolean;
-	style: TooltipViewState['style'];
-	horizontalOffset: number;
-	verticalOffset: number;
-	seriesIndexes: Array<number | null>;
-	focusedSeriesIndex: number | null;
-	cursorDrivenBySync: boolean;
-	plotWithinViewport: boolean;
-	windowWidth: number;
-	windowHeight: number;
-	renderScheduled: boolean;
-	pendingPinnedUpdate: boolean;
-}
 
 export function createInitialControllerState(): TooltipControllerState {
 	return {
@@ -108,32 +73,6 @@ export function isScrollEventInPlot(
 	);
 }
 
-/**
- * Context passed to uPlot hook handlers.
- *
- * It gives the handlers access to:
- * - the shared controller state
- * - layout / container refs
- * - the React `updateState` function
- * - render & dismiss helpers from the plugin
- */
-export interface TooltipControllerContext {
-	controller: TooltipControllerState;
-	layoutRef: React.MutableRefObject<TooltipLayoutInfo | undefined>;
-	containerRef: React.RefObject<HTMLDivElement | null>;
-	rafId: React.MutableRefObject<number | null>;
-	updateState: (updates: Partial<TooltipViewState>) => void;
-	renderRef: React.MutableRefObject<
-		(args: TooltipRenderArgs) => React.ReactNode
-	>;
-	syncMode: DashboardCursorSync;
-	syncKey: string;
-	isPinningTooltipEnabled: boolean;
-	createTooltipContents: () => React.ReactNode;
-	scheduleRender: (updatePinned?: boolean) => void;
-	dismissTooltip: () => void;
-}
-
 export function shouldShowTooltipForSync(
 	controller: TooltipControllerState,
 	syncTooltipWithDashboard: boolean,
@@ -187,7 +126,7 @@ export function createSetCursorHandler(
 		}
 
 		const { width: layoutWidth, height: layoutHeight } = layout;
-		const offsets = calculateTooltipPosition(
+		const offsets = calculateTooltipOffset(
 			clientX,
 			clientY,
 			layoutWidth,
