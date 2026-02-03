@@ -10,7 +10,6 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.utils import get_testdata_file_path
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
@@ -151,7 +150,7 @@ def collect_firing_alerts():
 
 @pytest.fixture(name="verify_alert_expectation", scope="package")
 def verify_alert_expectation(
-    collect_firing_alerts: Callable[ # pylint: disable=redefined-outer-name
+    collect_firing_alerts: Callable[  # pylint: disable=redefined-outer-name
         [types.TestContainerDocker, str], List[dict[str, str]]
     ],
 ) -> Callable[[types.TestContainerDocker, str, types.AlertExpectation], bool]:
