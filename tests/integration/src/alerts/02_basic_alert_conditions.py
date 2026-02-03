@@ -15,6 +15,10 @@ from fixtures.logger import setup_logger
 from fixtures.utils import get_testdata_file_path
 
 # test cases match type and compare operators
+# most alerts have wait time of 180 seconds as 
+# we've poistioned the alert data to fire the alert on first or second eval or rule manager
+# therefore most alert should trigger in about 2 mins + 1 minute is group_wait of alert manager
+# considering this, most alerts should be triggered in about 3 mins
 TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     types.AlertTestCase(
         name="test_threshold_above_at_least_once",
@@ -549,7 +553,9 @@ TEST_RULES_MISCELLANEOUS = [
         ],
         alert_expectation=types.AlertExpectation(
             should_alert=True,
-            wait_time_seconds=180,
+            # the second alert will be fired about 5 minutes after the first alert
+            # taking in consideration the group_interval of alert manager
+            wait_time_seconds=500,
             expected_alerts=[
                 types.FiringAlert(
                     labels={
@@ -557,8 +563,6 @@ TEST_RULES_MISCELLANEOUS = [
                         "threshold.name": "info",
                     }
                 ),
-                # the second alert will be fired about 5 minutes after the first alert
-                # taking in consideration the group_interval of alert manager
                 types.FiringAlert(
                     labels={
                         "alertname": "multi_threshold_rule_test",
