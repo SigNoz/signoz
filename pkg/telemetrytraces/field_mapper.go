@@ -187,7 +187,12 @@ func (m *defaultFieldMapper) getColumn(
 		case telemetrytypes.FieldDataTypeBool:
 			return indexV3Columns["attributes_bool"], nil
 		}
-	case telemetrytypes.FieldContextSpan:
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextUnspecified:
+		/*
+			TODO: This is incorrect, we cannot assume all unspecified context fields are span context.
+			User could be referring to attributes, but we cannot fix this until we fix where_clause vistior
+			https://github.com/SigNoz/signoz/pull/10102
+		*/
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
 			// The actual SQL will be generated in the condition builder
