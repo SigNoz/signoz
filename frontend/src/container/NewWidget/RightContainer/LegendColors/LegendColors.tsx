@@ -67,6 +67,7 @@ function LegendColors({
 	const isDarkMode = useIsDarkMode();
 
 	// Get legend labels from query response or current query
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const legendLabels = useMemo(() => {
 		const payload = queryResponse?.data?.payload as any;
 
@@ -77,13 +78,36 @@ function LegendColors({
 		}
 
 		if (payload?.data?.result) {
-			return payload.data.result.map((item: any) =>
-				getLegend(
-					item,
-					currentQuery,
-					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
-				),
-			);
+			const labels: string[] = [];
+
+			payload.data.result.forEach((item: any) => {
+				if (item.boundValues) {
+					const labelsObj: Record<string, string> = item.metric || {};
+
+					let legendName: string;
+					if (Object.keys(labelsObj).length > 0) {
+						legendName = getLabelName(
+							labelsObj,
+							item.queryName || '',
+							item.legend || '',
+						);
+					} else {
+						legendName = item.queryName || item.metaData?.alias || 'Count';
+					}
+
+					labels.push(legendName);
+				} else {
+					labels.push(
+						getLegend(
+							item,
+							currentQuery,
+							getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+						),
+					);
+				}
+			});
+
+			return labels;
 		}
 
 		// Fallback to query data if no response available

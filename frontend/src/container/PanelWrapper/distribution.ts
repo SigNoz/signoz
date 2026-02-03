@@ -1,3 +1,4 @@
+import getLabelName from 'lib/getLabelName';
 import { AlignedData } from 'uplot';
 
 export type DistributionSeriesInfo = {
@@ -5,6 +6,7 @@ export type DistributionSeriesInfo = {
 	legend: string;
 	queryName: string;
 	totalCount: number;
+	labels?: Record<string, string>;
 };
 
 export type DistributionData = {
@@ -29,6 +31,7 @@ function formatBucketValue(val: number): string {
 	return parseFloat(val.toFixed(2)).toString();
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function buildDistributionData(
 	queryResult: any[] | undefined,
 	bucketZoomRange?: { start: number; end: number } | null,
@@ -81,29 +84,39 @@ export function buildDistributionData(
 	const seriesInfo: DistributionSeriesInfo[] = [];
 
 	queryResult.forEach((res) => {
-		const bucketValueMap = new Map<string, number>();
-		let total = 0;
-
 		if (res.boundValues) {
-			res.boundValues.forEach((b: any) => {
-				const key = `${b.lowerBound}-${b.upperBound}`;
-				bucketValueMap.set(key, b.value);
-				total += b.value;
+			const bucketValueMap = new Map<string, number>();
+			let total = 0;
+
+			res.boundValues.forEach((bucket: any) => {
+				const key = `${bucket.lowerBound}-${bucket.upperBound}`;
+				bucketValueMap.set(key, bucket.value);
+				total += bucket.value;
+			});
+
+			const alignedCounts = sortedBuckets.map((globalBucket) => {
+				const key = `${globalBucket.start}-${globalBucket.end}`;
+				return bucketValueMap.get(key) || 0;
+			});
+
+			const labelsObj: Record<string, string> = res.metric || {};
+
+			let legendName: string;
+			if (Object.keys(labelsObj).length > 0) {
+				legendName = getLabelName(labelsObj, res.queryName || '', res.legend || '');
+			} else {
+				legendName = res.queryName || res.metaData?.alias || 'Count';
+			}
+
+			seriesData.push(alignedCounts);
+			seriesInfo.push({
+				name: legendName,
+				legend: res.legend || '',
+				queryName: res.queryName || '',
+				totalCount: total,
+				labels: labelsObj,
 			});
 		}
-
-		const alignedCounts = sortedBuckets.map((globalBucket) => {
-			const key = `${globalBucket.start}-${globalBucket.end}`;
-			return bucketValueMap.get(key) || 0;
-		});
-
-		seriesData.push(alignedCounts);
-		seriesInfo.push({
-			name: res.metric?.name || res.queryName || '',
-			legend: res.legend || '',
-			queryName: res.queryName || '',
-			totalCount: total,
-		});
 	});
 
 	return {

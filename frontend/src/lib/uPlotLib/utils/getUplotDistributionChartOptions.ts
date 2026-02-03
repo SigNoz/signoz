@@ -14,6 +14,7 @@ export type DistributionSeriesConfig = {
 	name: string;
 	legend: string;
 	queryName: string;
+	labels?: Record<string, string>;
 };
 
 type GetUplotDistributionChartOptionsProps = {
@@ -42,7 +43,7 @@ const paths = (
 	idx0: number,
 	idx1: number,
 ): uPlot.Series.Paths | null => {
-	const renderer = bars && bars({ size: [1], align: 0 });
+	const renderer = bars && bars({ size: [0.6], align: 0 });
 	return (renderer && renderer(u, seriesIdx, idx0, idx1)) || null;
 };
 
@@ -72,7 +73,9 @@ const createSeriesConfig = (
 	const bucketSeries: uPlot.Series = { label: 'Bucket' };
 
 	const dataSeries = seriesConfigs.map((config, idx) => {
-		const label = getLabelName({}, config.queryName, config.legend);
+		const label =
+			config.name ||
+			getLabelName(config.labels || {}, config.queryName, config.legend);
 		const color =
 			customLegendColors?.[label] ||
 			generateColor(
@@ -225,6 +228,7 @@ export const getUplotDistributionChartOptions = ({
 				isDarkMode,
 				isDistributionChart: true,
 				bucketLabels,
+				colorMapping: customLegendColors,
 			}),
 			onClickPlugin({
 				onClick: onClickHandler ?? _noop,

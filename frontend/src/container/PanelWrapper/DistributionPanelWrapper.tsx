@@ -62,6 +62,7 @@ function DistributionPanelWrapper({
 	});
 
 	const clickHandlerWithContextMenu = useCallback(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(...args: any[]) => {
 			const [
 				,
@@ -148,6 +149,7 @@ function DistributionPanelWrapper({
 					name: s.name,
 					legend: s.legend,
 					queryName: s.queryName,
+					labels: s.labels,
 				})),
 				customLegendColors: widget.customLegendColors,
 				isLogScale: widget.isLogScale,

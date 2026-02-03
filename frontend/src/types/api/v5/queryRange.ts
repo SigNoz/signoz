@@ -408,6 +408,7 @@ export interface DistributionBucket {
 export interface DistributionAggregation {
 	index: number;
 	alias: string;
+	labels?: Label[];
 	buckets: DistributionBucket[];
 }
 

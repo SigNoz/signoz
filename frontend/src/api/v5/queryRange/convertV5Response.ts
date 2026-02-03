@@ -268,29 +268,41 @@ function convertRawData(
 }
 
 /**
- * Converts V5 DistributionData to legacy format
+ * Converts V5 DistributionData to result format
  */
 function convertDistributionData(
 	distributionData: DistributionData,
 	legendMap: Record<string, string>,
-): any {
+): any[] {
 	// eslint-disable-line @typescript-eslint/no-explicit-any
-	// Convert V5 distribution format to legacy histogram format
-	const boundValues =
-		distributionData.aggregations?.flatMap(
-			(aggregation) =>
-				aggregation.buckets?.map((bucket) => ({
-					lowerBound: bucket.lowerBound,
-					upperBound: bucket.upperBound,
-					value: bucket.count,
-				})) || [],
-		) || [];
+	if (
+		!distributionData.aggregations ||
+		distributionData.aggregations.length === 0
+	) {
+		return [];
+	}
 
-	return {
-		queryName: distributionData.queryName,
-		legend: legendMap[distributionData.queryName] || distributionData.queryName,
-		boundValues,
-	};
+	return distributionData.aggregations.map((aggregation) => {
+		const labels: Record<string, string> = {};
+		if (aggregation.labels && Array.isArray(aggregation.labels)) {
+			aggregation.labels.forEach((label: any) => {
+				if (label?.key?.name && label?.value !== undefined) {
+					labels[label.key.name] = String(label.value);
+				}
+			});
+		}
+
+		return {
+			queryName: distributionData.queryName,
+			legend: legendMap[distributionData.queryName] || distributionData.queryName,
+			metric: labels,
+			aggregation: {
+				index: aggregation.index,
+				alias: aggregation.alias,
+				buckets: aggregation.buckets,
+			},
+		};
+	});
 }
 
 /**
@@ -340,11 +352,12 @@ function convertV5DataByType(
 		}
 		case 'distribution': {
 			const distributionData = v5Data.data.results as DistributionData[];
+			const result = distributionData.flatMap((distribution) =>
+				convertDistributionData(distribution, legendMap),
+			);
 			return {
 				resultType: 'distribution',
-				result: distributionData.map((distribution) =>
-					convertDistributionData(distribution, legendMap),
-				),
+				result,
 			};
 		}
 		default:

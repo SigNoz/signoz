@@ -86,6 +86,11 @@ export interface QueryDataV3 {
 		}[];
 		columns: Column[];
 	};
+	boundValues?: Array<{
+		lowerBound: number;
+		upperBound: number;
+		value: number;
+	}>;
 }
 
 export interface Props {

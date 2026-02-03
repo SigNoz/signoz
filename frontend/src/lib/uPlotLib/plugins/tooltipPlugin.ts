@@ -123,49 +123,75 @@ const generateTooltipContent = (
 						.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 				}
 			} else if (item.show) {
-				const {
-					metric = {},
-					queryName = '',
-					legend = '',
-					quantity = [],
-					unit = '',
-				} = seriesList[index - 1] || {};
-
-				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
-
-				const dataIngested = quantity[idx];
-				const baseLabelName = getLabelName(metric, queryName || '', legend || '');
-
+				let metric = {};
+				let queryName = '';
+				let legend = '';
+				let quantity: number[] = [];
+				let unit = '';
 				let label = '';
-				if (isMergedSeries) {
-					label = '';
-				} else if (query) {
-					label = getLegend(seriesList[index - 1], query, baseLabelName);
+				let color = '';
+
+				if (isDistributionChart) {
+					label = item.label || '';
+					const strokeColor = typeof item.stroke === 'string' ? item.stroke : '';
+					color =
+						colorMapping?.[label] ||
+						strokeColor ||
+						generateColor(
+							label,
+							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+						);
+					queryName = '';
 				} else {
-					label = baseLabelName;
-				}
+					const seriesData = seriesList[index - 1] || {};
+					metric = seriesData.metric || {};
+					queryName = seriesData.queryName || '';
+					legend = seriesData.legend || '';
+					quantity = seriesData.quantity || [];
+					unit = seriesData.unit || '';
 
-				let color =
-					colorMapping?.[label] ||
-					generateColor(
-						label,
-						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-					);
+					const baseLabelName = getLabelName(metric, queryName, legend);
 
-				// O(1) lookup instead of O(n) search for billing graph colors
-				if (isBillingUsageGraphs && seriesColorMap) {
-					const billingColor = seriesColorMap.get(label);
-					if (billingColor) {
-						color = billingColor;
+					if (isMergedSeries) {
+						label = '';
+					} else if (query) {
+						label = getLegend(seriesData, query, baseLabelName);
+					} else {
+						label = baseLabelName;
+					}
+
+					color =
+						colorMapping?.[label] ||
+						generateColor(
+							label,
+							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+						);
+
+					// O(1) lookup instead of O(n) search for billing graph colors
+					if (isBillingUsageGraphs && seriesColorMap) {
+						const billingColor = seriesColorMap.get(label);
+						if (billingColor) {
+							color = billingColor;
+						}
 					}
 				}
 
+				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
+				const dataIngested = quantity[idx];
 				let tooltipItemLabel = label;
+
+				if (isDistributionChart && (!Number.isFinite(value) || value <= 0)) {
+					continue;
+				}
 
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit, decimalPrecision);
 					const dataIngestedFormated = getToolTipValue(dataIngested);
-					if (duplicatedLegendLabels[label] || label in formattedData) {
+
+					if (
+						!isDistributionChart &&
+						(duplicatedLegendLabels[label] || label in formattedData)
+					) {
 						duplicatedLegendLabels[label] = true;
 						const tempDataObj = formattedData[label];
 
@@ -179,7 +205,7 @@ const generateTooltipContent = (
 							delete formattedData[label];
 						}
 
-						tooltipItemLabel = `${queryName}: ${label}`;
+						tooltipItemLabel = isDistributionChart ? label : `${queryName}: ${label}`;
 					}
 
 					const dataObj = {
@@ -191,7 +217,7 @@ const generateTooltipContent = (
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
-						queryName,
+						queryName: queryName || '',
 						textContent: isBillingUsageGraphs
 							? `${tooltipItemLabel} : $${tooltipValue} - ${dataIngestedFormated} ${unit}`
 							: `${tooltipItemLabel} : ${tooltipValue}`,
