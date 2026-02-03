@@ -110,6 +110,8 @@ export default function TooltipPlugin({
 		// subsequent mouse moves do not move the crosshair.
 		function updateCursorLock(): void {
 			if (controller.plot) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore uPlot cursor lock is not working as expected
 				controller.plot.cursor._lock = controller.pinned;
 			}
 		}
