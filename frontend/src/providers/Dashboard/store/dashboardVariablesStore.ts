@@ -10,5 +10,5 @@ export const dashboardVariablesStore = createStore<IDashboardVariables>({});
 export function setDashboardVariablesStore(
 	variables: Partial<IDashboardVariables>,
 ): void {
-	dashboardVariablesStore.set(() => variables);
+	dashboardVariablesStore.set(() => ({ ...variables }));
 }
