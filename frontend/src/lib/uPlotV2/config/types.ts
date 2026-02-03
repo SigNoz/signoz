@@ -28,6 +28,7 @@ export abstract class ConfigBuilder<P, T> {
 export interface ConfigBuilderProps {
 	widgetId?: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
+	tzDate?: uPlot.LocalDateFromUnix;
 }
 
 /**
