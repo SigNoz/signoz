@@ -42,6 +42,7 @@ export default function TooltipPlugin({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const portalRoot = useRef<HTMLElement>(document.body);
 	const rafId = useRef<number | null>(null);
+	const dismissTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layoutRef = useRef<TooltipLayoutInfo>();
 	const renderRef = useRef(render);
 	renderRef.current = render;
@@ -169,6 +170,7 @@ export default function TooltipPlugin({
 		function performRender(): void {
 			controller.renderScheduled = false;
 			rafId.current = null;
+			dismissTimeoutId.current = null;
 
 			if (controller.pendingPinnedUpdate) {
 				applyPinnedSideEffects();
@@ -184,19 +186,32 @@ export default function TooltipPlugin({
 			});
 		}
 
+		// Cancel any pending render to prevent race conditions
+		function cancelPendingRender(): void {
+			if (rafId.current != null) {
+				cancelAnimationFrame(rafId.current);
+				rafId.current = null;
+			}
+			if (dismissTimeoutId.current != null) {
+				clearTimeout(dismissTimeoutId.current);
+				dismissTimeoutId.current = null;
+			}
+		}
+
 		// Throttle React re-renders:
 		// - use rAF while hovering for smooth updates
 		// - use a small timeout when hiding to avoid flicker when
 		//   briefly leaving and re-entering the plot.
 		function scheduleRender(updatePinned = false): void {
 			if (!controller.renderScheduled) {
-				if (!controller.hoverActive) {
-					setTimeout(performRender, HOVER_DISMISS_DELAY_MS);
-				} else {
-					if (rafId.current != null) {
-						cancelAnimationFrame(rafId.current);
-					}
+				cancelPendingRender();
+				if (controller.hoverActive) {
 					rafId.current = requestAnimationFrame(performRender);
+				} else {
+					dismissTimeoutId.current = setTimeout(
+						performRender,
+						HOVER_DISMISS_DELAY_MS,
+					);
 				}
 				controller.renderScheduled = true;
 			}
@@ -300,10 +315,7 @@ export default function TooltipPlugin({
 			window.removeEventListener('scroll', handleScroll, true);
 			document.removeEventListener('mousedown', onOutsideInteraction, true);
 			document.removeEventListener('keydown', onOutsideInteraction, true);
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-				rafId.current = null;
-			}
+			cancelPendingRender();
 			removeReadyHook();
 			removeInitHook();
 			removeSetDataHook();

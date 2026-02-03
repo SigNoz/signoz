@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash-es';
 import uPlot from 'uplot';
 
 import { TooltipControllerContext, TooltipControllerState } from './types';
@@ -169,18 +170,25 @@ export function createSetLegendHandler(
 			return;
 		}
 
-		controller.seriesIndexes = controller.plot.cursor.idxs.slice();
-		controller.anySeriesActive = controller.seriesIndexes.some(
-			(v, i) => i > 0 && v != null,
+		const newSeriesIndexes = controller.plot.cursor.idxs.slice();
+		const anySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
+
+		// Skip scheduling if legend data is unchanged
+		const seriesIndexesChanged = !isEqual(
+			controller.seriesIndexes,
+			newSeriesIndexes,
 		);
+
+		controller.seriesIndexes = newSeriesIndexes;
+		controller.anySeriesActive = anySeriesActive;
 		controller.cursorDrivenBySync = u.cursor.event == null;
 
-		// Track transitions into / out of hover so we can avoid
-		// unnecessary renders when nothing visible has changed.
 		const previousHover = controller.hoverActive;
 		updateHoverState(controller, syncTooltipWithDashboard);
+		const hoverStateChanged = controller.hoverActive !== previousHover;
 
-		if (controller.hoverActive || controller.hoverActive !== previousHover) {
+		// Only schedule when legend data or hover state has meaningfully changed
+		if (seriesIndexesChanged || hoverStateChanged) {
 			ctx.scheduleRender();
 		}
 	};
