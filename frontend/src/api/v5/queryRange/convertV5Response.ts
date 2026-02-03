@@ -268,13 +268,12 @@ function convertRawData(
 }
 
 /**
- * Converts V5 DistributionData to result format
+ * Converts V5 DistributionData to legacy format
  */
 function convertDistributionData(
 	distributionData: DistributionData,
 	legendMap: Record<string, string>,
-): any[] {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
+): QueryDataV3[] {
 	if (
 		!distributionData.aggregations ||
 		distributionData.aggregations.length === 0
@@ -285,22 +284,31 @@ function convertDistributionData(
 	return distributionData.aggregations.map((aggregation) => {
 		const labels: Record<string, string> = {};
 		if (aggregation.labels && Array.isArray(aggregation.labels)) {
-			aggregation.labels.forEach((label: any) => {
+			aggregation.labels.forEach((label) => {
 				if (label?.key?.name && label?.value !== undefined) {
 					labels[label.key.name] = String(label.value);
 				}
 			});
 		}
 
+		const boundValues = (aggregation.buckets || []).map((bucket) => ({
+			lowerBound: bucket.lowerBound,
+			upperBound: bucket.upperBound,
+			value: bucket.count,
+		}));
+
 		return {
 			queryName: distributionData.queryName,
 			legend: legendMap[distributionData.queryName] || distributionData.queryName,
+			series: null,
+			list: null,
 			metric: labels,
-			aggregation: {
-				index: aggregation.index,
+			metaData: {
 				alias: aggregation.alias,
-				buckets: aggregation.buckets,
+				index: aggregation.index,
+				queryName: distributionData.queryName,
 			},
+			boundValues,
 		};
 	});
 }
