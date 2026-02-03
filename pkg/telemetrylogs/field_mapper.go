@@ -72,7 +72,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		columns := []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]}
+		columns := []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}
 		return columns, nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {

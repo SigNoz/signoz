@@ -581,6 +581,81 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelectors(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	// releaseTime1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime2 := time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime3 := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
+
+	values := [][]any{
+		{
+			"logs",
+			"body_json",
+			"JSON()",
+			"body",
+			"__all__",
+			uint64(releaseTime2.UnixNano()),
+		},
+		{
+			"logs",
+			"body_promoted",
+			"JSON()",
+			"body",
+			"user.name",
+			uint64(releaseTime3.UnixNano()),
+		},
+		{
+			"traces",
+			"resources_string",
+			"map()",
+			telemetrytypes.FieldContextResource,
+			"__all__",
+			uint64(releaseTime2.UnixNano()),
+		},
+		{
+			telemetrytypes.SignalTraces,
+			"resource",
+			"JSON()",
+			telemetrytypes.FieldContextResource,
+			"__all__",
+			uint64(releaseTime3.UnixNano()),
+		},
+	}
+
+	selectors := []*telemetrytypes.EvolutionSelector{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			FieldContext: telemetrytypes.FieldContextBody,
+			FieldName:    "user.name",
+		},
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "service.name",
+		},
+	}
+
+	query := `SELECT signal, column_name, column_type, field_context, field_name, release_time FROM signoz_metadata\.distributed_column_evolution_metadata WHERE ` +
+		`\(\(signal = \? AND \(field_context = \? AND \(field_name = \? OR field_name = \?\)\)\) OR ` +
+		`\(signal = \? AND \(field_context = \? AND \(field_name = \? OR field_name = \?\)\)\)\) ` +
+		`ORDER BY release_time ASC`
+	rows := createMockRows(values)
+	mock.ExpectQuery(query).WithArgs(
+		telemetrytypes.SignalLogs, telemetrytypes.FieldContextBody, selectors[0].FieldName, "__all__",
+		telemetrytypes.SignalTraces, telemetrytypes.FieldContextResource, selectors[1].FieldName, "__all__",
+	).WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	_, err := metadata.GetColumnEvolutionMetadataMulti(ctx, selectors)
+	require.NoError(t, err)
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestKeyEvolutionMetadata_Get_Multi_EmptyResultFromClickHouse(t *testing.T) {
 	ctx := context.Background()
 

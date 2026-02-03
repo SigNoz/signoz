@@ -36,13 +36,16 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if columns[0].IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
-		valueType, value := InferDataType(value, operator, key)
-		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
-		if err != nil {
-			return "", err
+	// Note: handle this along with ColumnFor.
+	for _, column := range columns {
+		if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+			valueType, value := InferDataType(value, operator, key)
+			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
+			if err != nil {
+				return "", err
+			}
+			return cond, nil
 		}
-		return cond, nil
 	}
 
 	if operator.IsStringSearchOperator() {
@@ -184,6 +187,11 @@ func (c *conditionBuilder) conditionFor(
 			if err != nil {
 				return "", err
 			}
+
+			if len(newColumns) == 0 {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", fieldName)
+			}
+
 			// This mean tblFieldName has multiIf already present so I can just return exists or not exists
 			if len(newColumns) > 1 {
 				if operator == qbtypes.FilterOperatorExists {

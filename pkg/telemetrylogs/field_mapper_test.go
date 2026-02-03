@@ -27,7 +27,7 @@ func TestGetColumn(t *testing.T) {
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			expectedCol:   []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]},
+			expectedCol:   []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]},
 			expectedError: nil,
 		},
 		{

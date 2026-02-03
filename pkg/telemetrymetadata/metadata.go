@@ -1814,40 +1814,35 @@ func (c *CachedEvolutionEntry) UnmarshalBinary(data []byte) error {
 }
 
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "release_time")
 	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
 	sb.OrderBy("release_time ASC")
 
+	var clauses []string
 	for _, selector := range selectors {
-		var clauses []string
+		var clause string
 		if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
-
 			if selector.FieldName != "" {
 				// Match both provided field_name and "__all__"
-				clauses = append(clauses,
-					sb.And(
-						sb.E("field_context", selector.FieldContext),
-						sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
-					),
+				clause = sb.And(
+					sb.E("field_context", selector.FieldContext),
+					sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
 				)
 			} else {
 				// Only match context, accept any name
-				clauses = append(clauses, sb.E("field_context", selector.FieldContext))
+				clause = sb.E("field_context", selector.FieldContext)
 			}
 		} else if selector.FieldName != "" {
-			// Only match by field name on any context
-			clauses = append(clauses,
+			// match the corresponding field name and "__all__"
+			clause = sb.Or(
 				sb.E("field_name", selector.FieldName),
 				sb.E("field_name", "__all__"),
 			)
 		}
-
-		sb.Where(sb.And(sb.E("signal", selector.Signal), sb.Or(clauses...)))
+		clauses = append(clauses, sb.And(sb.E("signal", selector.Signal), clause))
 	}
+	sb.Where(sb.Or(clauses...))
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 

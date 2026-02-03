@@ -1,29 +1,22 @@
 package telemetrytypes
 
 import (
-	"context"
 	"time"
-
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type EvolutionEntry struct {
-	Signal       Signal
-	ColumnName   string
-	ColumnType   string
-	FieldContext FieldContext
-	FieldName    string
-	ReleaseTime  time.Time
+	Signal       Signal       `json:"signal"`
+	ColumnName   string       `json:"column_name"`
+	ColumnType   string       `json:"column_type"`
+	FieldContext FieldContext `json:"field_context"`
+	FieldName    string       `json:"field_name"`
+	ReleaseTime  time.Time    `json:"release_time"`
 }
 
 type EvolutionSelector struct {
 	Signal       Signal
 	FieldContext FieldContext
 	FieldName    string
-}
-
-type ColumnEvolutionMetadataStore interface {
-	Get(ctx context.Context, orgId valuer.UUID, keyName string) []*EvolutionEntry
 }
 
 func GetEvolutionMetadataUniqueKey(selector *EvolutionSelector) string {
