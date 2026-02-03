@@ -145,3 +145,10 @@ func (d *TextDuration) Scan(value any) error {
 			"cannot scan type %T into TextDuration", value)
 	}
 }
+
+// Equal reports the two TextDuration represent the same underlying duration values.
+//
+// Note that the String representations for them can be different.
+func (d TextDuration) Equal(d2 TextDuration) bool {
+	return d.value == d2.value
+}

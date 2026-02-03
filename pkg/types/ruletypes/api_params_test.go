@@ -327,10 +327,10 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 
 				// Verify evaluation window matches rule settings
 				if window, ok := rule.Evaluation.Spec.(RollingWindow); ok {
-					if window.EvalWindow.Duration() != rule.EvalWindow.Duration() {
+					if !window.EvalWindow.Equal(rule.EvalWindow) {
 						t.Errorf("Expected Evaluation EvalWindow %v, got %v", rule.EvalWindow, window.EvalWindow)
 					}
-					if window.Frequency.Duration() != rule.Frequency.Duration() {
+					if !window.Frequency.Equal(rule.Frequency) {
 						t.Errorf("Expected Evaluation Frequency %v, got %v", rule.Frequency, window.Frequency)
 					}
 				} else {
@@ -457,10 +457,10 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 					t.Fatal("Expected Evaluation to be populated")
 				}
 				if window, ok := rule.Evaluation.Spec.(RollingWindow); ok {
-					if window.EvalWindow.Duration() != rule.EvalWindow.Duration() {
+					if !window.EvalWindow.Equal(rule.EvalWindow) {
 						t.Errorf("Expected Evaluation EvalWindow to be overwritten to %v, got %v", rule.EvalWindow, window.EvalWindow)
 					}
-					if window.Frequency.Duration() != rule.Frequency.Duration() {
+					if !window.Frequency.Equal(rule.Frequency) {
 						t.Errorf("Expected Evaluation Frequency to be overwritten to %v, got %v", rule.Frequency, window.Frequency)
 					}
 				} else {

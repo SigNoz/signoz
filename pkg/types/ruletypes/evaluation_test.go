@@ -849,10 +849,10 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					t.Fatalf("Expected RollingWindow spec, got %T", envelope.Spec)
 				}
 				wantSpec := tt.wantSpec.(RollingWindow)
-				if gotSpec.EvalWindow.Duration() != wantSpec.EvalWindow.Duration() {
+				if !gotSpec.EvalWindow.Equal(wantSpec.EvalWindow) {
 					t.Errorf("RollingWindow.EvalWindow = %v, want %v", gotSpec.EvalWindow, wantSpec.EvalWindow)
 				}
-				if gotSpec.Frequency.Duration() != wantSpec.Frequency.Duration() {
+				if !gotSpec.Frequency.Equal(wantSpec.Frequency) {
 					t.Errorf("RollingWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 			case CumulativeEvaluation:
@@ -868,7 +868,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					(gotSpec.Schedule.Minute != nil && wantSpec.Schedule.Minute != nil && *gotSpec.Schedule.Minute != *wantSpec.Schedule.Minute) {
 					t.Errorf("CumulativeWindow.Schedule.Minute = %v, want %v", gotSpec.Schedule.Minute, wantSpec.Schedule.Minute)
 				}
-				if gotSpec.Frequency.Duration() != wantSpec.Frequency.Duration() {
+				if !gotSpec.Frequency.Equal(wantSpec.Frequency) {
 					t.Errorf("CumulativeWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 				if gotSpec.Timezone != wantSpec.Timezone {
