@@ -234,18 +234,12 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 		}
 	}
 
-	// Handle missing data alerts
-	hasData := queryResult != nil && len(queryResult.AnomalyScores) > 0
+	hasData := len(queryResult.AnomalyScores) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
 	var resultVector ruletypes.Vector
-
-	if queryResult == nil {
-		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", r.GetSelectedQuery())
-		return resultVector, nil
-	}
 
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
@@ -296,18 +290,12 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 
 	queryResult := transition.ConvertV5TimeSeriesDataToV4Result(qbResult)
 
-	// Handle missing data alerts
-	hasData := queryResult != nil && len(queryResult.AnomalyScores) > 0
+	hasData := len(queryResult.AnomalyScores) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
 	var resultVector ruletypes.Vector
-
-	if queryResult == nil {
-		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", r.GetSelectedQuery())
-		return resultVector, nil
-	}
 
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
 	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))

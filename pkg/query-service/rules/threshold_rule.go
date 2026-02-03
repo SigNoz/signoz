@@ -461,7 +461,6 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		}
 	}
 
-	// Handle missing data alerts
 	hasData := queryResult != nil && len(queryResult.Series) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil
@@ -525,7 +524,6 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 		}
 	}
 
-	// Handle missing data alerts
 	hasData := queryResult != nil && len(queryResult.Series) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil

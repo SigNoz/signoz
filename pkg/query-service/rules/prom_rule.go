@@ -143,13 +143,10 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 	matrixToProcess := r.matrixToV3Series(res)
 
-	// Handle missing data alerts
 	hasData := len(matrixToProcess) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil
 	}
-
-	var resultVector ruletypes.Vector
 
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
@@ -161,6 +158,8 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 			matrixToProcess = filteredSeries
 		}
 	}
+
+	var resultVector ruletypes.Vector
 
 	for _, series := range matrixToProcess {
 		if !r.Condition().ShouldEval(series) {
