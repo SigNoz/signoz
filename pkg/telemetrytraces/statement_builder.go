@@ -895,7 +895,7 @@ func (b *traceQueryStatementBuilder) buildDistributionQuery(
 		return nil, err
 	}
 
-	// Add GROUP BY clause if there are group by fields
+	// Add GROUP BY clause
 	if len(query.GroupBy) > 0 {
 		mainSB.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	}

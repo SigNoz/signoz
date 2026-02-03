@@ -570,14 +570,16 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 
 				key := aggKey{index: resultID, labelKey: labelsKey}
 
-				if agg, exists := aggregationMap[key]; exists {
-					agg.Buckets = append(agg.Buckets, buckets...)
-				} else {
-					aggregationMap[key] = &qbtypes.DistributionAggregation{
-						Index:   resultID,
-						Alias:   "__result_" + strconv.Itoa(resultID),
-						Labels:  lblObjs,
-						Buckets: buckets,
+				if len(buckets) > 0 {
+					if agg, exists := aggregationMap[key]; exists {
+						agg.Buckets = append(agg.Buckets, buckets...)
+					} else {
+						aggregationMap[key] = &qbtypes.DistributionAggregation{
+							Index:   resultID,
+							Alias:   "__result_" + strconv.Itoa(resultID),
+							Labels:  lblObjs,
+							Buckets: buckets,
+						}
 					}
 				}
 			}
