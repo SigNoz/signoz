@@ -127,7 +127,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         rule_path="alerts/test_scenarios/threshold_below_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
-                type="metrics",
+                type="logs",
                 data_path="alerts/test_scenarios/threshold_below_at_least_once/alert_data.jsonl",
             ),
         ],
@@ -149,7 +149,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         rule_path="alerts/test_scenarios/threshold_below_all_the_time/rule.json",
         alert_data=[
             types.AlertData(
-                type="metrics",
+                type="logs",
                 data_path="alerts/test_scenarios/threshold_below_all_the_time/alert_data.jsonl",
             ),
         ],
@@ -652,6 +652,9 @@ def test_basic_alert_rule_conditions(
         "rule created with id: %s",
         {"rule_id": rule_id, "rule_name": rule_data["alert"]},
     )
+
+    # import time
+    # time.sleep(100000)
 
     # Verify alert expectation
     verify_alert_expectation(

@@ -1,7 +1,7 @@
 {
   "alert": "threshold_below_all_the_time",
   "ruleType": "threshold_rule",
-  "alertType": "METRIC_BASED_ALERT",
+  "alertType": "LOGS_BASED_ALERT",
   "condition": {
     "thresholds": {
       "kind": "basic",
@@ -26,21 +26,18 @@
           "type": "builder_query",
           "spec": {
             "name": "A",
-            "signal": "metrics",
-            "source": "",
+            "signal": "logs",
             "stepInterval": null,
             "disabled": false,
             "filter": {
-              "expression": ""
+              "expression": "body CONTAINS 'payment success'"
             },
             "having": {
               "expression": ""
             },
             "aggregations": [
               {
-                "metricName": "cpu_percent_threshold_below_all_the_time",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "expression": "count()"
               }
             ]
           }
