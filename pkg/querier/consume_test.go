@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestReadAsDistribution tests the time series consumption with multiple
-func TestReadAsDistribution(t *testing.T) {
+// TestReadAsHeatmap tests the time series consumption with multiple
+func TestReadAsHeatmap(t *testing.T) {
 	columns := []cmock.ColumnType{
 		{Name: "ts", Type: "DateTime"},
 		{Name: "__result_0", Type: "Float64"},
@@ -30,14 +30,14 @@ func TestReadAsDistribution(t *testing.T) {
 
 	rows := cmock.NewRows(columns, rowsData)
 
-	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_distribution_query")
+	result, err := consume(rows, qbtypes.RequestTypeHeatmap, nil, qbtypes.Step{}, "test_heatmap_query")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
 	timeSeriesData, ok := result.(*qbtypes.TimeSeriesData)
 	require.True(t, ok, "expected *qbtypes.TimeSeriesData, got %T", result)
 
-	assert.Equal(t, "test_distribution_query", timeSeriesData.QueryName)
+	assert.Equal(t, "test_heatmap_query", timeSeriesData.QueryName)
 	require.Len(t, timeSeriesData.Aggregations, 1)
 
 	agg := timeSeriesData.Aggregations[0]

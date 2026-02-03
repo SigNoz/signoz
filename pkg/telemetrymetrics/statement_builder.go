@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -660,20 +661,20 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 
 	query.GroupBy = origGroupBy
 
-	combined := querybuilder.CombineCTEs(cteFragments)
-
-	finalArgs := []any{}
-	for _, a := range cteArgs {
-		finalArgs = append(finalArgs, a...)
+	// Build GroupBy field expressions
+	var groupByExprs []string
+	for _, gb := range query.GroupBy {
+		groupByExprs = append(groupByExprs, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
 	}
 
-	tsExpr := "ts"
-	finalTsExpr := "toUnixTimestamp(ts) * 1000 AS ts"
-	groupByKeys := []string{"ts", "bin_upper"}
-	orderByKeys := []string{"ts", "bin_upper"}
+	groupByKeys := append([]string{"ts", "bin_upper"}, groupByExprs...)
+	orderByKeys := append([]string{"ts", "bin_upper"}, groupByExprs...)
 
 	inner := sqlbuilder.NewSelectBuilder()
-	inner.Select(tsExpr)
+	inner.Select("ts")
+	for _, field := range groupByExprs {
+		inner.SelectMore(field)
+	}
 	inner.SelectMore("toFloat64OrNull(le) AS bin_upper")
 	inner.SelectMore("sum(value) AS cumulative_value")
 	inner.From("__spatial_aggregation_cte")
@@ -684,10 +685,17 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	inner.OrderBy(orderByKeys...)
 	innerQ, innerArgs := inner.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	binCTE := sqlbuilder.NewSelectBuilder()
-	lagOver := "PARTITION BY ts ORDER BY bin_upper"
+	lagOverPartition := "ts"
+	if len(groupByExprs) > 0 {
+		lagOverPartition = "ts, " + strings.Join(groupByExprs, ", ")
+	}
+	lagOver := fmt.Sprintf("PARTITION BY %s ORDER BY bin_upper", lagOverPartition)
 
-	binCTE.Select(tsExpr)
+	binCTE := sqlbuilder.NewSelectBuilder()
+	binCTE.Select("ts")
+	for _, field := range groupByExprs {
+		binCTE.SelectMore(field)
+	}
 	binCTE.SelectMore(fmt.Sprintf("lagInFrame(bin_upper, 1, toFloat64(0)) OVER (%s) AS bin_lower", lagOver))
 	binCTE.SelectMore("bin_upper")
 	binCTE.SelectMore(fmt.Sprintf("greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (%s), toFloat64(0)) AS value", lagOver))
@@ -695,20 +703,40 @@ func (b *MetricQueryStatementBuilder) buildHeatmapQuery(
 	binCTE.OrderBy(orderByKeys...)
 	binQ, binArgs := binCTE.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(finalTsExpr)
-	sb.SelectMore("groupArray([bin_lower, bin_upper, value]) AS __result_0")
-	sb.From("(" + binQ + ")")
-	sb.GroupBy("ts")
-	sb.Having("length(__result_0) > 0")
-	sb.OrderBy("ts")
+	cteFragments = append(cteFragments, fmt.Sprintf("__bins AS (%s)", binQ))
+	cteArgs = append(cteArgs, binArgs)
 
-	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	// Group by timestamp and GroupBy fields
+	mainSB := sqlbuilder.NewSelectBuilder()
+	mainSB.Select("toUnixTimestamp(ts) * 1000 AS ts")
+	for _, field := range groupByExprs {
+		mainSB.SelectMore(fmt.Sprintf("%s AS %s", field, field))
+	}
+	mainSB.SelectMore("groupArray([bin_lower, bin_upper, value]) AS __result_0")
+	mainSB.From("__bins")
+	mainSB.GroupBy(append([]string{"ts"}, groupByExprs...)...)
+	mainSB.Having("length(__result_0) > 0")
 
-	finalQuery := combined + q
+	// Handle HAVING clause
+	if query.Having != nil && query.Having.Expression != "" {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+		mainSB.Having(rewrittenExpr)
+	}
+
+	mainSB.OrderBy("ts")
+
+	mainSQL, mainArgs := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	combined := querybuilder.CombineCTEs(cteFragments)
+	finalQuery := combined + mainSQL
+
+	// Combine all args
+	allCTEArgs := append(cteArgs, innerArgs, binArgs)
+	finalArgs := querybuilder.PrependArgs(allCTEArgs, mainArgs)
 
 	return &qbtypes.Statement{
 		Query: finalQuery,
-		Args:  append(finalArgs, append(innerArgs, append(binArgs, a...)...)...),
+		Args:  finalArgs,
 	}, nil
 }
