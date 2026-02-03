@@ -877,6 +877,35 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	}, nil
 }
 
+func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) {
+	if b.operator.Having != nil && b.operator.Having.Expression != "" {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
+		sb.Having(rewrittenExpr)
+	}
+}
+
+func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn []string) {
+	b.ctes = append(b.ctes, cteNode{
+		name:      name,
+		sql:       sql,
+		args:      args,
+		dependsOn: dependsOn,
+	})
+	b.cteNameToIndex[name] = len(b.ctes) - 1
+}
+
+func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
+	for i, agg := range b.operator.Aggregations {
+		if k.Key.Name == agg.Alias ||
+			k.Key.Name == agg.Expression ||
+			k.Key.Name == fmt.Sprintf("__result_%d", i) {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
 func (b *traceOperatorCTEBuilder) buildDistributionQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -955,33 +984,4 @@ func (b *traceOperatorCTEBuilder) buildDistributionQuery(ctx context.Context, se
 		Query: sql,
 		Args:  args,
 	}, nil
-}
-
-func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) {
-	if b.operator.Having != nil && b.operator.Having.Expression != "" {
-		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
-		sb.Having(rewrittenExpr)
-	}
-}
-
-func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn []string) {
-	b.ctes = append(b.ctes, cteNode{
-		name:      name,
-		sql:       sql,
-		args:      args,
-		dependsOn: dependsOn,
-	})
-	b.cteNameToIndex[name] = len(b.ctes) - 1
-}
-
-func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
-	for i, agg := range b.operator.Aggregations {
-		if k.Key.Name == agg.Alias ||
-			k.Key.Name == agg.Expression ||
-			k.Key.Name == fmt.Sprintf("__result_%d", i) {
-			return i, true
-		}
-	}
-	return 0, false
 }
