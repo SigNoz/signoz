@@ -82,7 +82,8 @@ function ForgotPassword({
 			{
 				data: {
 					email: values.email,
-					orgId: values.orgId,
+					// Use initialOrgId as fallback when orgId field is hidden (single org)
+					orgId: values.orgId || initialOrgId,
 					frontendBaseURL: window.location.origin,
 				},
 			},
