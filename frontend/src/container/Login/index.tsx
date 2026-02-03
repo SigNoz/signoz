@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Button } from '@signozhq/button';
-import { Form, Input, Select, Tooltip, Typography } from 'antd';
+import { Form, Input, Select, Typography } from 'antd';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
@@ -220,6 +220,52 @@ function Login(): JSX.Element {
 		}
 	};
 
+	const handleForgotPasswordClick = (): void => {
+		const email = form.getFieldValue('email');
+
+		if (!email || !sessionsContext || !sessionsContext.orgs.length) {
+			return;
+		}
+
+		// const orgsTemp = [
+		// 	{
+		// 		id: 'd17e0a2d-2faa-49a1-999a-acb52a461ae1',
+		// 		name: 'brtbrt',
+		// 		authNSupport: {
+		// 			callback: [
+		// 				{
+		// 					provider: 'google_auth',
+		// 					url:
+		// 						'https://accounts.google.com/o/oauth2/v2/auth?client_id=30557428044-0058iehnomsviqfvrmq7sv1cg7qjkglf.apps.googleusercontent.com&hd=signoz.io&redirect_uri=http%3A%2F%2Flocalhost%3A3301%2Fapi%2Fv1%2Fcomplete%2Fgoogle&response_type=code&scope=email+profile&state=http%3A%2F%2Flocalhost%3A3301%2Flogin%3Fdomain_id%3D04a07400%253A1e1e%253A4b0d%253Ab417%253A6d0699b08582',
+		// 				},
+		// 			],
+		// 			password: [],
+		// 		},
+		// 	},
+		// 	{
+		// 		id: 'd17e0a2d-2faa-49a1-999a-acb52a461ae2',
+		// 		name: 'vwr',
+		// 		authNSupport: {
+		// 			callback: [
+		// 				{
+		// 					provider: 'google_auth',
+		// 					url:
+		// 						'https://accounts.google.com/o/oauth2/v2/auth?client_id=30557428044-0058iehnomsviqfvrmq7sv1cg7qjkglf.apps.googleusercontent.com&hd=signoz.io&redirect_uri=http%3A%2F%2Flocalhost%3A3301%2Fapi%2Fv1%2Fcomplete%2Fgoogle&response_type=code&scope=email+profile&state=http%3A%2F%2Flocalhost%3A3301%2Flogin%3Fdomain_id%3D04a07400%253A1e1e%253A4b0d%253Ab417%253A6d0699b08582',
+		// 				},
+		// 			],
+		// 			password: [],
+		// 		},
+		// 	},
+		// ];
+
+		history.push(ROUTES.FORGOT_PASSWORD, {
+			email,
+			orgId: sessionsOrgId,
+			// orgs: orgsTemp,
+			orgs: sessionsContext.orgs,
+		});
+	};
+
 	useEffect(() => {
 		if (callbackAuthError) {
 			setErrorMessage(
@@ -345,11 +391,12 @@ function Login(): JSX.Element {
 						<ParentContainer>
 							<div className="password-label-container">
 								<Label htmlFor="Password">Password</Label>
-								<Tooltip title="Ask your admin to reset your password and send you a new invite link">
-									<Typography.Link className="forgot-password-link">
-										Forgot password?
-									</Typography.Link>
-								</Tooltip>
+								<Typography.Link
+									className="forgot-password-link"
+									onClick={handleForgotPasswordClick}
+								>
+									Forgot password?
+								</Typography.Link>
 							</div>
 							<FormContainer.Item name="password">
 								<Input.Password
