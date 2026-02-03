@@ -234,6 +234,11 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 		}
 	}
 
+	hasData := len(queryResult.AnomalyScores) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
+
 	var resultVector ruletypes.Vector
 
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
@@ -284,6 +289,11 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	}
 
 	queryResult := transition.ConvertV5TimeSeriesDataToV4Result(qbResult)
+
+	hasData := len(queryResult.AnomalyScores) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
 
 	var resultVector ruletypes.Vector
 
