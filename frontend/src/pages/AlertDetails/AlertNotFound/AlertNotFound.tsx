@@ -62,9 +62,8 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 						<img src="/Icons/broom.svg" alt="no-data" className="broom-img" />
 						<Typography.Text className="text">
 							You clicked on the Alert notification link received when testing a new
-							Alert rule. Don&apos;t worry this will take you to a live alert after the
-							Alert rule is live. Once the alert rule is saved, future notifications
-							will link to actual alerts.
+							Alert rule. Once the alert rule is saved, future notifications will link
+							to actual alerts.
 						</Typography.Text>
 					</div>
 				)}
