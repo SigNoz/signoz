@@ -149,7 +149,9 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		}, start, end)
+			StartNs:          start,
+			EndNs:            end,
+		})
 		if err != nil {
 			return "", []any{}, err
 		}
@@ -233,7 +235,9 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		}, start, end)
+			StartNs:          start,
+			EndNs:            end,
+		})
 		if err != nil {
 			return "", nil, err
 		}
@@ -298,7 +302,9 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		}, start, end)
+			StartNs:          start,
+			EndNs:            end,
+		})
 		if err != nil {
 			return "", nil, err
 		}

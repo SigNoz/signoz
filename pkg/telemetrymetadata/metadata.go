@@ -1070,7 +1070,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-		}, 0, 0)
+		})
 		if err == nil {
 			sb.AddWhereClause(whereClause.WhereClause)
 		} else {

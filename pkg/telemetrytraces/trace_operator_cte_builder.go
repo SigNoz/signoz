@@ -238,7 +238,9 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
 				SkipResourceFilter: true,
-			}, b.start, b.end,
+				StartNs:            b.start,
+				EndNs:              b.end,
+			},
 		)
 		if err != nil {
 			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", "error", err, "filter", query.Filter.Expression)

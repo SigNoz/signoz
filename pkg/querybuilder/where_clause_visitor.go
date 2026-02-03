@@ -93,7 +93,7 @@ type PreparedWhereClause struct {
 }
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
 
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -127,8 +127,6 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 	}
 	tokens.Reset()
 
-	opts.StartNs = startNs
-	opts.EndNs = endNs
 	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
@@ -737,13 +735,13 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			if key.FieldContext == telemetrytypes.FieldContextBody {
 				var err error
 				if BodyJSONQueryEnabled {
-					fieldName, err = v.fieldMapper.FieldFor(context.Background(), v.startNs, v.endNs, key)
+					fieldName, err = v.fieldMapper.FieldFor(v.context, v.startNs, v.endNs, key)
 					if err != nil {
 						v.errors = append(v.errors, fmt.Sprintf("failed to get field name for key %s: %s", key.Name, err.Error()))
 						return ""
 					}
 				} else {
-					fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+					fieldName, _ = v.jsonKeyToKey(v.context, key, qbtypes.FilterOperatorUnknown, value)
 				}
 			} else {
 				// TODO(add docs for json body search)

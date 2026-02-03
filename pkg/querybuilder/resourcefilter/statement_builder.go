@@ -172,7 +172,9 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			// there is no need for "key" not found error for resource filtering
 			IgnoreNotFoundKeys: true,
 			Variables:          variables,
-		}, start, end)
+			StartNs:            start,
+			EndNs:              end,
+		})
 
 		if err != nil {
 			return err

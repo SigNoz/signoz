@@ -254,15 +254,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		case schema.ColumnTypeEnumJSON:
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
-				switch column.Type.GetType() {
-				case schema.ColumnTypeEnumJSON:
-					// TODO: Update here to support multiple types
-					exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-					existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
-				case schema.ColumnTypeEnumMap:
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
-				}
+				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
+				existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
 			case telemetrytypes.FieldContextBody:
 				if key.JSONDataType == nil {
 					return "", qbtypes.ErrColumnNotFound

@@ -45,6 +45,8 @@ func TestFilterExprLogs(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
+		StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
+		EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
 	}
 
 	testCases := []struct {
@@ -2403,7 +2405,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, uint64(releaseTime.Add(-5*time.Minute).UnixNano()), uint64(releaseTime.Add(5*time.Minute).UnixNano()))
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2522,7 +2524,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
