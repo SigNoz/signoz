@@ -43,6 +43,8 @@ class MetricsTimeSeries(ABC):
         resource_attrs: dict[str, str] = {},
         scope_attrs: dict[str, str] = {},
     ) -> None:
+        # Add metric_name to the labels to support promql queries
+        labels["__name__"] = metric_name
         self.env = env
         self.metric_name = metric_name
         self.temporality = temporality
