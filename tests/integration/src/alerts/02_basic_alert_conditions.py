@@ -77,6 +77,14 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
                     labels={
                         "alertname": "threshold_above_in_total",
                         "threshold.name": "critical",
+                        "service": "server",
+                    },
+                ),
+                types.FiringAlert(
+                    labels={
+                        "alertname": "threshold_above_in_total",
+                        "threshold.name": "critical",
+                        "service": "api",
                     }
                 ),
             ],

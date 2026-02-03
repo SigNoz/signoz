@@ -33,6 +33,13 @@
             "filter": {
               "expression": ""
             },
+            "groupBy": [
+              {
+                "name": "service",
+                "fieldDataType": "",
+                "fieldContext": ""
+              }
+            ],
             "having": {
               "expression": ""
             },
@@ -64,7 +71,9 @@
     "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
   },
   "notificationSettings": {
-    "groupBy": [],
+    "groupBy": [
+      "service"
+    ],
     "usePolicy": false,
     "renotify": {
       "enabled": false,
