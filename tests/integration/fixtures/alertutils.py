@@ -132,3 +132,15 @@ def verify_webhook_alert_expectation(
     )
 
     return True  # should not reach here
+
+
+def update_rule_channel_name(rule_data: dict, channel_name: str):
+    """
+    updates the channel name in the thresholds
+    so alert notification are sent to the given channel
+    """
+    thresholds = rule_data["condition"]["thresholds"]
+    if "kind" in thresholds and thresholds["kind"] == "basic":
+        # loop over all the sepcs and update the channels
+        for spec in thresholds["spec"]:
+            spec["channels"] = [channel_name]

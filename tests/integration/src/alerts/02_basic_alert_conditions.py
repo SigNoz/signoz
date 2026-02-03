@@ -7,6 +7,10 @@ import pytest
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
+from fixtures.alertutils import (
+    update_rule_channel_name,
+    verify_webhook_alert_expectation,
+)
 from fixtures.logger import setup_logger
 from fixtures.utils import get_testdata_file_path
 
@@ -562,18 +566,6 @@ TEST_RULES_MISCELLANEOUS = [
 logger = setup_logger(__name__)
 
 
-def _update_rule_channel_name(rule_data: dict, channel_name: str):
-    """
-    updates the channel name in the thresholds
-    so alert notification are sent to the given channel
-    """
-    thresholds = rule_data["condition"]["thresholds"]
-    if "kind" in thresholds and thresholds["kind"] == "basic":
-        # loop over all the sepcs and update the channels
-        for spec in thresholds["spec"]:
-            spec["channels"] = [channel_name]
-
-
 @pytest.mark.parametrize(
     "alert_test_case",
     TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS
@@ -590,9 +582,6 @@ def test_basic_alert_rule_conditions(
     create_alert_rule: Callable[[dict], str],
     # Alert data insertion related fixtures
     insert_alert_data: Callable[[List[types.AlertData], datetime], None],
-    verify_alert_expectation: Callable[
-        [types.TestContainerDocker, str, types.AlertExpectation], bool
-    ],
     alert_test_case: types.AlertTestCase,
 ):
     # Prepare notification channel name and webhook endpoint
@@ -646,18 +635,15 @@ def test_basic_alert_rule_conditions(
     with open(rule_path, "r", encoding="utf-8") as f:
         rule_data = json.loads(f.read())
     # Update the channel name in the rule data
-    _update_rule_channel_name(rule_data, notification_channel_name)
+    update_rule_channel_name(rule_data, notification_channel_name)
     rule_id = create_alert_rule(rule_data)
     logger.info(
         "rule created with id: %s",
         {"rule_id": rule_id, "rule_name": rule_data["alert"]},
     )
 
-    # import time
-    # time.sleep(100000)
-
     # Verify alert expectation
-    verify_alert_expectation(
+    verify_webhook_alert_expectation(
         notification_channel,
         notification_channel_name,
         alert_test_case.alert_expectation,
