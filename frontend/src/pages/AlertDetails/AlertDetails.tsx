@@ -96,10 +96,20 @@ function AlertDetails(): JSX.Element {
 		return params.get(QueryParams.isTestAlert) === 'true';
 	}, [params]);
 
-	useEffect(() => {
+	const getDocumentTile = useMemo(() => {
 		const alertTitle = alertDetailsResponse?.payload?.data?.alert;
-		document.title = alertTitle || document.title;
-	}, [alertDetailsResponse?.payload?.data?.alert, isRefetching]);
+		if (alertTitle) {
+			return alertTitle;
+		}
+		if (isTestAlert) {
+			return 'Test Alert';
+		}
+		return 'Alert Not Found';
+	}, [alertDetailsResponse?.payload?.data?.alert, isTestAlert]);
+
+	useEffect(() => {
+		document.title = getDocumentTile;
+	}, [getDocumentTile]);
 
 	const alertRuleDetails = useMemo(
 		() => alertDetailsResponse?.payload?.data as PostableAlertRuleV2 | undefined,

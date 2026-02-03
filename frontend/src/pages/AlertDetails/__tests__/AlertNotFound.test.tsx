@@ -66,18 +66,20 @@ describe('AlertNotFound', () => {
 	});
 
 	it('should navigate to the list all alerts page when the check all rules button is clicked', async () => {
+		const user = userEvent.setup();
 		render(<AlertNotFound isTestAlert={false} />);
-		await userEvent.click(screen.getByText('Check all rules'));
+		await user.click(screen.getByText('Check all rules'));
 		expect(mockSafeNavigate).toHaveBeenCalledWith(ROUTES.LIST_ALL_ALERT);
 	});
 
 	it('should navigate to the correct support page for cloud users when button is clicked', async () => {
+		const user = userEvent.setup();
 		useGetTenantLicenseSpy.mockReturnValueOnce({
 			isCloudUser: true,
 		} as ReturnType<typeof useGetTenantLicense.useGetTenantLicense>);
 
 		render(<AlertNotFound isTestAlert={false} />);
-		await userEvent.click(screen.getByText('Contact Support'));
+		await user.click(screen.getByText('Contact Support'));
 		expect(history.push).toHaveBeenCalledWith('/support');
 	});
 
