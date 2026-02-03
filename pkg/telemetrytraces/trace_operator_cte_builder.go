@@ -978,7 +978,6 @@ func (b *traceOperatorCTEBuilder) buildHeatmapCountsCTE(
 	countsSB.SelectMore(fmt.Sprintf("count() AS cnt_%d", index))
 
 	var allGroupByArgs []any
-	var groupByExprs []string
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
@@ -994,7 +993,6 @@ func (b *traceOperatorCTEBuilder) buildHeatmapCountsCTE(
 		}
 
 		groupByExpr := fmt.Sprintf("toString(%s)", expr)
-		groupByExprs = append(groupByExprs, groupByExpr)
 
 		colExpr := fmt.Sprintf("%s AS `%s`", groupByExpr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
@@ -1006,10 +1004,7 @@ func (b *traceOperatorCTEBuilder) buildHeatmapCountsCTE(
 
 	countsSB.Where(fmt.Sprintf("%s >= bucket_%d.2 AND %s < bucket_%d.3", rawFieldName, index, rawFieldName, index))
 	countsSB.GroupBy(fmt.Sprintf("ts, bucket_idx_%d", index))
-	// Add GroupBy fields to GROUP BY clause
-	for _, groupByExpr := range groupByExprs {
-		countsSB.GroupBy(groupByExpr)
-	}
+	countsSB.GroupBy(querybuilder.GroupByKeys(b.operator.GroupBy)...)
 
 	countsSQL, countsArgs := countsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
 	cteName = fmt.Sprintf("__counts_op_%d", index)
@@ -1029,7 +1024,6 @@ func (b *traceOperatorCTEBuilder) buildHeatmapTimestampsCTE(
 	))
 
 	var allGroupByArgs []any
-	var groupByExprs []string
 	for _, gb := range b.operator.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(
 			ctx,
@@ -1045,7 +1039,6 @@ func (b *traceOperatorCTEBuilder) buildHeatmapTimestampsCTE(
 		}
 
 		groupByExpr := fmt.Sprintf("toString(%s)", expr)
-		groupByExprs = append(groupByExprs, groupByExpr)
 
 		colExpr := fmt.Sprintf("%s AS `%s`", groupByExpr, gb.TelemetryFieldKey.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
@@ -1055,10 +1048,7 @@ func (b *traceOperatorCTEBuilder) buildHeatmapTimestampsCTE(
 	tsSB.From(selectFromCTE)
 
 	tsSB.GroupBy("ts")
-	// Add GroupBy fields to GROUP BY clause
-	for _, groupByExpr := range groupByExprs {
-		tsSB.GroupBy(groupByExpr)
-	}
+	tsSB.GroupBy(querybuilder.GroupByKeys(b.operator.GroupBy)...)
 
 	tsSQL, tsArgs := tsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
 	cteName = "__timestamps_op"
