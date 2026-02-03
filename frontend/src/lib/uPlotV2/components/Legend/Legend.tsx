@@ -11,6 +11,7 @@ import { useLegendActions } from './useLegendActions';
 
 import './Legend.styles.scss';
 
+export const MAX_LEGEND_WIDTH = 320;
 const LEGENDS_PER_SET_DEFAULT = 5;
 
 export default function Legend({
@@ -36,9 +37,6 @@ export default function Legend({
 	// Chunk legend items into rows of LEGENDS_PER_ROW items each
 	const legendRows = useMemo(() => {
 		const legendItems = Object.values(legendItemsMap);
-		if (legendsPerSet >= legendItems.length) {
-			return [legendItems];
-		}
 
 		return legendItems.reduce((acc: LegendItem[][], curr, i) => {
 			if (i % legendsPerSet === 0) {
@@ -69,6 +67,7 @@ export default function Legend({
 								'legend-item-off': !item.show,
 								'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
 							})}
+							style={{ maxWidth: `min(${MAX_LEGEND_WIDTH}px, 100%)` }}
 						>
 							<div
 								className="legend-marker"
@@ -93,10 +92,7 @@ export default function Legend({
 			onMouseLeave={onLegendMouseLeave}
 		>
 			<Virtuoso
-				style={{
-					height: '100%',
-					width: '100%',
-				}}
+				className="legend-virtuoso-container"
 				data={legendRows}
 				itemContent={(index, row): JSX.Element => renderLegendRow(index, row)}
 			/>

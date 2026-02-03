@@ -12,6 +12,24 @@
 	&:has(.legend-item-focused) .legend-item.legend-item-focused {
 		opacity: 1;
 	}
+
+	.legend-virtuoso-container {
+		height: 100%;
+		width: 100%;
+
+		&::-webkit-scrollbar {
+			width: 0.3rem;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--bg-slate-100);
+			border-radius: 0.5rem;
+		}
+	}
 }
 
 .legend-row {
@@ -41,7 +59,6 @@
 	gap: 6px;
 	padding: 4px 8px;
 	border-radius: 4px;
-	max-width: min(400px, 100%);
 	cursor: pointer;
 
 	&.legend-item-off {
@@ -87,5 +104,15 @@
 
 	&:hover {
 		background: rgba(255, 255, 255, 0.05);
+	}
+}
+
+.lightMode {
+	.legend-container {
+		.legend-virtuoso-container {
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-vanilla-400);
+			}
+		}
 	}
 }
