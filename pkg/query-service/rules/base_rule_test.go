@@ -697,7 +697,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				telemetryStore,
 				prometheustest.New(context.Background(), settings, prometheus.Config{}, telemetryStore),
 				"",
-				time.Duration(time.Second),
+				time.Second,
 				nil,
 				readerCache,
 				options,
@@ -706,10 +706,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Set newGroupEvalDelay in NotificationSettings if provided
 			if tt.newGroupEvalDelay != nil {
 				postableRule.NotificationSettings = &ruletypes.NotificationSettings{
-					NewGroupEvalDelay: func() *valuer.TextDuration {
-						d := valuer.NewTextDuration(*tt.newGroupEvalDelay)
-						return &d
-					}(),
+					NewGroupEvalDelay: valuer.NewTextDuration(*tt.newGroupEvalDelay),
 				}
 			}
 
