@@ -13,7 +13,7 @@ const DEFAULT_AVG_LABEL_LENGTH = 15;
 const LEGEND_GAP = 16;
 const LEGEND_PADDING = 12;
 const LEGEND_LINE_HEIGHT = 36;
-const MAX_LEGEND_WIDTH = 400;
+const MAX_LEGEND_WIDTH = 320;
 
 /**
  * Average text width from series labels (for legendsPerSet).
