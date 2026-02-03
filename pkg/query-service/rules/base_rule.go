@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -740,4 +742,27 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	return filteredSeries, nil
+}
+
+// HandleMissingDataAlert handles missing data alert logic by tracking the last timestamp
+// with data points and checking if a missing data alert should be sent based on the
+// [ruletypes.RuleCondition.AlertOnAbsent] and [ruletypes.RuleCondition.AbsentFor] conditions.
+//
+// Returns a pointer to the missing data alert if conditions are met, nil otherwise.
+func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, hasData bool) *ruletypes.Sample {
+	// Track the last timestamp with data points for missing data alerts
+	if hasData {
+		r.lastTimestampWithDatapoints = ts
+	}
+
+	if !r.ruleCondition.AlertOnAbsent || ts.Before(r.lastTimestampWithDatapoints.Add(time.Duration(r.ruleCondition.AbsentFor)*time.Minute)) {
+		return nil
+	}
+
+	r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
+	lbls := labels.NewBuilder(labels.Labels{})
+	if !r.lastTimestampWithDatapoints.IsZero() {
+		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+	}
+	return &ruletypes.Sample{Metric: lbls.Labels(), IsMissing: true}
 }
