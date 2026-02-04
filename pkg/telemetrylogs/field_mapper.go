@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -106,6 +107,9 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_json if feature flag is enabled and we have a body condition builder
 				if querybuilder.BodyJSONQueryEnabled {
+					// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
+					// i.e return both the body json and body json promoted and let the evolutions decide which one to use
+					// based on the query range time.
 					return []*schema.Column{logsV2Columns[LogsV2BodyJSONColumn]}, nil
 				}
 				// Fall back to legacy body column
@@ -120,18 +124,24 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 }
 
 // selectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
-// Assumes: evolutions are sorted and there's exactly one evolution per column.
 // Logic:
 //   - Finds the latest base evolution (<= tsStartTime) across ALL columns
 //   - Rejects all evolutions before this latest base evolution
+//   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
+//   - - The case where there can be new version for same evolution and data is not present in between them is not handled as of now.
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
 func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64, fieldName string) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
 
+	// sort the evolutions by ReleaseTime ascending
+	sort.Slice(evolutions, func(i, j int) bool {
+		return evolutions[i].ReleaseTime.Before(evolutions[j].ReleaseTime)
+	})
+
 	tsStartTime := time.Unix(0, int64(tsStart))
 	tsEndTime := time.Unix(0, int64(tsEnd))
 
-	// Build evolution map: column name -> evolution (one evolution per column)
+	// Build evolution map: column name -> evolution
 	evolutionMap := make(map[string]*telemetrytypes.EvolutionEntry)
 	for _, evolution := range evolutions {
 		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName]; exists {

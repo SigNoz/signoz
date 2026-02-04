@@ -36,7 +36,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// Note: handle this along with ColumnFor.
+	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
 		if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
 			valueType, value := InferDataType(value, operator, key)

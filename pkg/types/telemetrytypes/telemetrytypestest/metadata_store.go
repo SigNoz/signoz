@@ -100,8 +100,8 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 	// fetch and add evolutions
 	for k, v := range result {
 		keys := v
-		metadataKeySelectors := getMetadataKeySelectors(keys)
-		evolutions, err := m.GetColumnEvolutionMetadataMulti(ctx, metadataKeySelectors)
+		evolutionMetadataKeySelectors := getEvolutionMetadataKeySelectors(keys)
+		evolutions, err := m.GetColumnEvolutionMetadataMulti(ctx, evolutionMetadataKeySelectors)
 		if err != nil {
 			return nil, false, err
 		}
@@ -129,16 +129,13 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 	return result, true, nil
 }
 
-func getMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
+func getEvolutionMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
 	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
 	for _, keySelector := range keySelectors {
 		selector := &telemetrytypes.EvolutionSelector{
 			Signal:       keySelector.Signal,
 			FieldContext: keySelector.FieldContext,
 			FieldName:    keySelector.Name,
-		}
-		if keySelector.FieldContext == telemetrytypes.FieldContextBody {
-			selector.FieldName = keySelector.Name
 		}
 		metadataKeySelectors = append(metadataKeySelectors, selector)
 	}

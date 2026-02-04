@@ -428,7 +428,7 @@ func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
 	}
 
 	rows := createMockRows(values)
-	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnRows(rows)
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnRows(rows)
 
 	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
@@ -476,7 +476,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 	}
 
 	rows := createMockRows(values)
-	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnRows(rows)
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnRows(rows)
 
 	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selector := &telemetrytypes.EvolutionSelector{
@@ -663,7 +663,7 @@ func TestKeyEvolutionMetadata_Get_Multi_EmptyResultFromClickHouse(t *testing.T) 
 	mock := telemetryStore.Mock()
 
 	rows := createMockRows([][]any{})
-	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnRows(rows)
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnRows(rows)
 
 	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selector := &telemetrytypes.EvolutionSelector{
@@ -683,7 +683,7 @@ func TestKeyEvolutionMetadata_Get_Multi_ClickHouseQueryError(t *testing.T) {
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := telemetryStore.Mock()
 
-	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource).WillReturnError(assert.AnError)
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnError(assert.AnError)
 
 	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
 	selector := &telemetrytypes.EvolutionSelector{

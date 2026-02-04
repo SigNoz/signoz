@@ -571,8 +571,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// fetch and add evolutions
-	metadataKeySelectors := getMetadataKeySelectors(keys)
-	evolutions, err := t.GetColumnEvolutionMetadataMulti(ctx, metadataKeySelectors)
+	evolutionMetadataKeySelectors := getEvolutionMetadataKeySelectors(keys)
+	evolutions, err := t.GetColumnEvolutionMetadataMulti(ctx, evolutionMetadataKeySelectors)
 	if err != nil {
 		return nil, false, err
 	}
@@ -598,16 +598,13 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	return keys, complete, nil
 }
 
-func getMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
+func getEvolutionMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
 	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
 	for _, keySelector := range keySelectors {
 		selector := &telemetrytypes.EvolutionSelector{
 			Signal:       keySelector.Signal,
 			FieldContext: keySelector.FieldContext,
-			FieldName:    "__all__", // Hardcoded for now
-		}
-		if keySelector.FieldContext == telemetrytypes.FieldContextBody {
-			selector.FieldName = keySelector.Name
+			FieldName:    keySelector.Name,
 		}
 		metadataKeySelectors = append(metadataKeySelectors, selector)
 	}
@@ -1823,24 +1820,19 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	var clauses []string
 	for _, selector := range selectors {
 		var clause string
+
 		if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
-			if selector.FieldName != "" {
-				// Match both provided field_name and "__all__"
-				clause = sb.And(
-					sb.E("field_context", selector.FieldContext),
-					sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
-				)
-			} else {
-				// Only match context, accept any name
-				clause = sb.E("field_context", selector.FieldContext)
-			}
-		} else if selector.FieldName != "" {
-			// match the corresponding field name and "__all__"
-			clause = sb.Or(
-				sb.E("field_name", selector.FieldName),
-				sb.E("field_name", "__all__"),
-			)
+			clause = sb.E("field_context", selector.FieldContext)
 		}
+
+		if selector.FieldName != "" {
+			clause = sb.And(clause,
+				sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
+			)
+		} else {
+			clause = sb.And(clause, sb.E("field_name", "__all__"))
+		}
+
 		clauses = append(clauses, sb.And(sb.E("signal", selector.Signal), clause))
 	}
 	sb.Where(sb.Or(clauses...))
