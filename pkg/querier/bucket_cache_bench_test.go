@@ -201,7 +201,7 @@ func BenchmarkBucketCache_FindMissingRangesWithStep(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				missing := bc.findMissingRangesWithStep(buckets, startMs, endMs, stepMs)
+				missing := bc.findMissingRangesWithStep(buckets, startMs, endMs, stepMs, qbtypes.RequestTypeTimeSeries)
 				_ = missing
 			}
 		})

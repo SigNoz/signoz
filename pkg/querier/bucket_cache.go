@@ -57,20 +57,26 @@ func (bc *bucketCache) GetMissRanges(
 		requestType = hasKind.GetKind()
 	}
 
-	// For heatmaps, round timestamps
-	cacheStartMs, cacheEndMs := startMs, endMs
+	// For heatmaps with rounding enabled
 	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
-		cacheStartMs, cacheEndMs = bc.roundHeatmapWindow(startMs, endMs)
+		cacheStartMs, cacheEndMs := bc.roundHeatmapWindow(startMs, endMs)
+		windowCacheKey := bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
+
+		var windowData qbtypes.CachedData
+		err := bc.cache.Get(ctx, orgID, windowCacheKey, &windowData)
+		if err == nil && len(windowData.Buckets) > 0 {
+			relevantBuckets := bc.filterRelevantBuckets(windowData.Buckets, cacheStartMs, cacheEndMs)
+			if len(relevantBuckets) > 0 {
+				mergedResult := bc.mergeBuckets(ctx, relevantBuckets, windowData.Warnings)
+				mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs)
+				return mergedResult, nil // No missing ranges for exact window match
+			}
+		}
 	}
 
-	// Generate cache key
-	var cacheKey string
-	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
-		cacheKey = bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
-	} else {
-		cacheKey = bc.generateCacheKey(q)
-		bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
-	}
+	// Generate base cache key
+	cacheKey := bc.generateCacheKey(q)
+	bc.logger.DebugContext(ctx, "base cache key", "cache_key", cacheKey)
 
 	// Try to get cached data
 	var data qbtypes.CachedData
@@ -84,17 +90,9 @@ func (bc *bucketCache) GetMissRanges(
 		return nil, missing
 	}
 
-	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
-		// Exact-match cache for heatmaps
-		if len(data.Buckets) == 0 {
-			missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
-		}
-	} else {
-		// Find missing ranges with step alignment
-		stepMs := uint64(step.Duration.Milliseconds())
-		missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
-		bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "step", stepMs)
-	}
+	// Find missing ranges with step alignment
+	stepMs := uint64(step.Duration.Milliseconds())
+	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs, requestType)
 
 	// If no cached data overlaps with requested range, return empty result
 	if len(data.Buckets) == 0 {
@@ -122,12 +120,6 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	startMs, endMs := q.Window()
 	isHeatmap := fresh.Type == qbtypes.RequestTypeHeatmap
 
-	// For heatmaps, round timestamps for cache key
-	cacheStartMs, cacheEndMs := startMs, endMs
-	if isHeatmap && bc.heatmapCacheRounding > 0 {
-		cacheStartMs, cacheEndMs = bc.roundHeatmapWindow(startMs, endMs)
-	}
-
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
 	fluxBoundary := currentMs - uint64(bc.fluxInterval.Milliseconds())
@@ -150,20 +142,6 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 			"cachable_end", cachableEndMs)
 	}
 
-	// Generate cache key
-	var cacheKey string
-	if isHeatmap && bc.heatmapCacheRounding > 0 {
-		cacheKey = bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
-	} else {
-		cacheKey = bc.generateCacheKey(q)
-	}
-
-	// Get existing cached data
-	var existingData qbtypes.CachedData
-	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData); err != nil {
-		existingData = qbtypes.CachedData{}
-	}
-
 	// Trim the result to exclude data within flux interval
 	trimmedResult := bc.trimResultToFluxBoundary(fresh, cachableEndMs)
 	if trimmedResult == nil {
@@ -175,10 +153,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	cachableStartMs := startMs
 	stepMs := uint64(step.Duration.Milliseconds())
 
-	if isHeatmap && bc.heatmapCacheRounding > 0 {
-		cachableStartMs = cacheStartMs
-		cachableEndMs = cacheEndMs
-	} else if stepMs > 0 {
+	if stepMs > 0 {
 		// If start is not aligned, round up to next step boundary (first complete interval)
 		if startMs%stepMs != 0 {
 			cachableStartMs = ((startMs / stepMs) + 1) * stepMs
@@ -204,9 +179,15 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	// Convert trimmed result to buckets with adjusted boundaries
 	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs)
 
-	// If no fresh buckets and no existing data, don't cache
-	if len(freshBuckets) == 0 && len(existingData.Buckets) == 0 {
+	// If no fresh buckets, don't cache
+	if len(freshBuckets) == 0 {
 		return
+	}
+
+	baseCacheKey := bc.generateCacheKey(q)
+	var existingData qbtypes.CachedData
+	if err := bc.cache.Get(ctx, orgID, baseCacheKey, &existingData); err != nil {
+		existingData = qbtypes.CachedData{}
 	}
 
 	// Merge with existing buckets
@@ -222,9 +203,24 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		Warnings: uniqueWarnings,
 	}
 
-	// Marshal and store in cache
-	if err := bc.cache.Set(ctx, orgID, cacheKey, &updatedData, bc.cacheTTL); err != nil {
-		bc.logger.ErrorContext(ctx, "error setting cached data", "error", err)
+	// Store in base cache
+	if err := bc.cache.Set(ctx, orgID, baseCacheKey, &updatedData, bc.cacheTTL); err != nil {
+		bc.logger.ErrorContext(ctx, "error setting base cached data", "error", err)
+	}
+
+	// For heatmaps with rounding enabled
+	if isHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheStartMs, cacheEndMs := bc.roundHeatmapWindow(startMs, endMs)
+		windowCacheKey := bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
+
+		windowData := qbtypes.CachedData{
+			Buckets:  freshBuckets,
+			Warnings: trimmedResult.Warnings,
+		}
+
+		if err := bc.cache.Set(ctx, orgID, windowCacheKey, &windowData, bc.cacheTTL); err != nil {
+			bc.logger.ErrorContext(ctx, "error setting window cached data", "error", err)
+		}
 	}
 }
 
@@ -249,10 +245,21 @@ func (bc *bucketCache) roundHeatmapWindow(startMs, endMs uint64) (uint64, uint64
 }
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment
-func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
+func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64, requestType qbtypes.RequestType) []*qbtypes.TimeRange {
 	// When step is 0 or window is too small to be cached, use simple algorithm
 	if stepMs == 0 || (startMs+stepMs) > endMs {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
+	}
+
+	if requestType == qbtypes.RequestTypeHeatmap && len(buckets) > 0 {
+		for _, bucket := range buckets {
+			if bucket.StartMs <= startMs && bucket.EndMs >= endMs {
+				// Cache fully covers the range - no missing data
+				return nil
+			}
+		}
+		// Return the entire range as missing
+		return []*qbtypes.TimeRange{{From: startMs, To: endMs}}
 	}
 
 	// When no buckets exist, handle partial windows specially
@@ -493,16 +500,8 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 	// Merge values based on type
 	var mergedValue any
 	switch resultType {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
-	case qbtypes.RequestTypeHeatmap:
-		// Heatmap uses exact-match caching only, so we expect a single bucket
-		if len(buckets) > 0 {
-			var tsData *qbtypes.TimeSeriesData
-			if err := json.Unmarshal(buckets[0].Value, &tsData); err == nil {
-				mergedValue = tsData
-			}
-		}
 	}
 
 	return &qbtypes.Result{

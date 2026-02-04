@@ -535,7 +535,7 @@ func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
 	}
 
 	// Query range that spans all buckets
-	missing := bc.findMissingRangesWithStep(buckets, 500, 6500, 500)
+	missing := bc.findMissingRangesWithStep(buckets, 500, 6500, 500, qbtypes.RequestTypeTimeSeries)
 
 	// Expected missing ranges: 500-1000, 2000-2500, 4000-5000, 6000-6500
 	assert.Len(t, missing, 4)
@@ -1174,7 +1174,7 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Mock current time for flux boundary tests
-			result := bc.findMissingRangesWithStep(tt.buckets, tt.startMs, tt.endMs, tt.stepMs)
+			result := bc.findMissingRangesWithStep(tt.buckets, tt.startMs, tt.endMs, tt.stepMs, qbtypes.RequestTypeTimeSeries)
 
 			// Compare lengths first
 			assert.Len(t, result, len(tt.expectedMiss), tt.description)
@@ -1522,4 +1522,265 @@ func TestBucketCache_HeatmapDifferentTimeRange(t *testing.T) {
 	_, missing := bc.GetMissRanges(ctx, orgID, query2, qbtypes.Step{Duration: 1000 * time.Millisecond})
 
 	assert.True(t, len(missing) > 0, "different time range should have missing ranges")
+}
+
+func TestBucketCache_HeatmapHybridCaching(t *testing.T) {
+	config := cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 1000,
+			MaxCost:     1 << 26,
+		},
+	}
+	memCache, err := cachetest.New(config)
+	require.NoError(t, err)
+
+	bc := NewBucketCache(
+		instrumentationtest.New().ToProviderSettings(),
+		memCache,
+		1*time.Hour,
+		5*time.Minute,
+		5*time.Minute, // 5-minute rounding for window cache
+	)
+
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+
+	// Create a 4-hour heatmap query
+	query4h := &mockQuery{
+		fingerprint: "test-heatmap",
+		startMs:     1000000,
+		endMs:       1000000 + (4 * 60 * 60 * 1000), // 4 hours
+		kind:        qbtypes.RequestTypeHeatmap,
+	}
+
+	// Create heatmap data with histogram buckets
+	heatmapData := &qbtypes.TimeSeriesData{
+		QueryName: "A",
+		Aggregations: []*qbtypes.AggregationBucket{
+			{
+				Index: 0,
+				Series: []*qbtypes.TimeSeries{
+					{
+						Labels: []*qbtypes.Label{
+							{
+								Key: telemetrytypes.TelemetryFieldKey{
+									Name:          "le",
+									FieldDataType: telemetrytypes.FieldDataTypeString,
+								},
+								Value: "100",
+							},
+						},
+						Bounds: []float64{0, 100, 500, 1000, 2000, 5000}, // Histogram bucket boundaries
+						Values: []*qbtypes.TimeSeriesValue{
+							{Timestamp: 1000000, Value: 10},
+							{Timestamp: 1000000 + (1 * 60 * 60 * 1000), Value: 20}, // 1 hour
+							{Timestamp: 1000000 + (2 * 60 * 60 * 1000), Value: 30}, // 2 hours
+							{Timestamp: 1000000 + (3 * 60 * 60 * 1000), Value: 40}, // 3 hours
+						},
+					},
+				},
+			},
+		},
+	}
+
+	result4h := &qbtypes.Result{
+		Type:  qbtypes.RequestTypeHeatmap,
+		Value: heatmapData,
+		Stats: qbtypes.ExecStats{
+			RowsScanned:  1000,
+			BytesScanned: 10000,
+			DurationMS:   100,
+		},
+	}
+
+	// Cache the 4-hour result
+	bc.Put(ctx, orgID, query4h, qbtypes.Step{Duration: 60 * time.Second}, result4h)
+	time.Sleep(10 * time.Millisecond)
+
+	t.Run("exact_window_match", func(t *testing.T) {
+		// Query the same 4-hour window - should hit window cache
+		cached, missing := bc.GetMissRanges(ctx, orgID, query4h, qbtypes.Step{Duration: 60 * time.Second})
+
+		assert.NotNil(t, cached)
+		assert.Len(t, missing, 0, "Should have no missing ranges for exact window match")
+
+		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+		require.True(t, ok)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 1)
+
+		// Should have all 4 values
+		assert.Len(t, tsData.Aggregations[0].Series[0].Values, 4)
+		// Should preserve histogram bucket boundaries
+		assert.Equal(t, []float64{0, 100, 500, 1000, 2000, 5000}, tsData.Aggregations[0].Series[0].Bounds)
+	})
+
+	t.Run("zoom_in_2_hours", func(t *testing.T) {
+		// Query a 2-hour window within the cached 4-hour range (zoom in)
+		query2h := &mockQuery{
+			fingerprint: "test-heatmap",
+			startMs:     1000000 + (1 * 60 * 60 * 1000), // Start at 1 hour
+			endMs:       1000000 + (3 * 60 * 60 * 1000), // End at 3 hours (2-hour window)
+			kind:        qbtypes.RequestTypeHeatmap,
+		}
+
+		cached, _ := bc.GetMissRanges(ctx, orgID, query2h, qbtypes.Step{Duration: 60 * time.Second})
+
+		assert.NotNil(t, cached, "Should have cached data from partial hit")
+		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+		require.True(t, ok)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 1)
+
+		series := tsData.Aggregations[0].Series[0]
+
+		// Should have only 2 values (filtered to 2-hour window)
+		assert.Len(t, series.Values, 2, "Should have 2 values for 2-hour window")
+		assert.Equal(t, int64(1000000+(1*60*60*1000)), series.Values[0].Timestamp)
+		assert.Equal(t, float64(20), series.Values[0].Value)
+		assert.Equal(t, int64(1000000+(2*60*60*1000)), series.Values[1].Timestamp)
+		assert.Equal(t, float64(30), series.Values[1].Value)
+
+		// Should preserve the same histogram bucket boundaries from 4-hour query
+		assert.Equal(t, []float64{0, 100, 500, 1000, 2000, 5000}, series.Bounds,
+			"Should preserve histogram bucket boundaries from original query")
+	})
+
+	t.Run("zoom_in_1_hour", func(t *testing.T) {
+		// Query a 1-hour window within the cached 4-hour range
+		query1h := &mockQuery{
+			fingerprint: "test-heatmap",
+			startMs:     1000000 + (2 * 60 * 60 * 1000), // Start at 2 hours
+			endMs:       1000000 + (3 * 60 * 60 * 1000), // End at 3 hours (1-hour window)
+			kind:        qbtypes.RequestTypeHeatmap,
+		}
+
+		cached, _ := bc.GetMissRanges(ctx, orgID, query1h, qbtypes.Step{Duration: 60 * time.Second})
+
+		assert.NotNil(t, cached)
+		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+		require.True(t, ok)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 1)
+
+		series := tsData.Aggregations[0].Series[0]
+
+		// Should have only 1 value (filtered to 1-hour window)
+		assert.Len(t, series.Values, 1)
+		assert.Equal(t, int64(1000000+(2*60*60*1000)), series.Values[0].Timestamp)
+		assert.Equal(t, float64(30), series.Values[0].Value)
+
+		// Should preserve histogram bucket boundaries
+		assert.Equal(t, []float64{0, 100, 500, 1000, 2000, 5000}, series.Bounds)
+	})
+
+	t.Run("partial_overlap", func(t *testing.T) {
+		// Query a range that partially overlaps with cached data
+		queryPartial := &mockQuery{
+			fingerprint: "test-heatmap",
+			startMs:     1000000 + (3 * 60 * 60 * 1000),                        // Start at 3 hours
+			endMs:       1000000 + (3 * 60 * 60 * 1000) + (2 * 60 * 60 * 1000), // End at 5 hours (extends beyond cache)
+			kind:        qbtypes.RequestTypeHeatmap,
+		}
+
+		cached, missing := bc.GetMissRanges(ctx, orgID, queryPartial, qbtypes.Step{Duration: 60 * time.Second})
+
+		// Should get partial cache hit for the overlapping part
+		assert.NotNil(t, cached)
+		assert.True(t, len(missing) >= 1, "Should have at least one missing range for data beyond cached range")
+
+		// The last missing range should be for data beyond the cached 4-hour window
+		lastMissing := missing[len(missing)-1]
+		t.Logf("Last missing range: From=%d, To=%d", lastMissing.From, lastMissing.To)
+		assert.True(t, lastMissing.To > 1000000+(4*60*60*1000), "Last missing range should extend beyond 4-hour cache")
+
+		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+		require.True(t, ok)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 1)
+
+		series := tsData.Aggregations[0].Series[0]
+
+		// Should have 1 value from cached data (at 3 hours)
+		assert.Len(t, series.Values, 1)
+		assert.Equal(t, int64(1000000+(3*60*60*1000)), series.Values[0].Timestamp)
+	})
+}
+
+// TestBucketCache_HeatmapWindowCachePriority tests that window cache is checked first
+func TestBucketCache_HeatmapWindowCachePriority(t *testing.T) {
+	config := cache.Config{
+		Provider: "memory",
+		Memory: cache.Memory{
+			NumCounters: 10 * 1000,
+			MaxCost:     1 << 26,
+		},
+	}
+	memCache, err := cachetest.New(config)
+	require.NoError(t, err)
+
+	bc := NewBucketCache(
+		instrumentationtest.New().ToProviderSettings(),
+		memCache,
+		1*time.Hour,
+		5*time.Minute,
+		5*time.Minute,
+	)
+
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+
+	// Create a "last 1 hour" query (common pattern)
+	currentMs := uint64(time.Now().UnixMilli())
+	query1h := &mockQuery{
+		fingerprint: "test-heatmap-last-1h",
+		startMs:     currentMs - (60 * 60 * 1000), // 1 hour ago
+		endMs:       currentMs,
+		kind:        qbtypes.RequestTypeHeatmap,
+	}
+
+	heatmapData := &qbtypes.TimeSeriesData{
+		QueryName: "A",
+		Aggregations: []*qbtypes.AggregationBucket{
+			{
+				Index: 0,
+				Series: []*qbtypes.TimeSeries{
+					{
+						Bounds: []float64{0, 100, 500, 1000},
+						Values: []*qbtypes.TimeSeriesValue{
+							{Timestamp: int64(currentMs - (30 * 60 * 1000)), Value: 10},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	result := &qbtypes.Result{
+		Type:  qbtypes.RequestTypeHeatmap,
+		Value: heatmapData,
+	}
+
+	// Cache the result
+	bc.Put(ctx, orgID, query1h, qbtypes.Step{Duration: 60 * time.Second}, result)
+	time.Sleep(10 * time.Millisecond)
+
+	// Query again with the same "last 1 hour" pattern (rounded to same window)
+	query1hAgain := &mockQuery{
+		fingerprint: "test-heatmap-last-1h",
+		startMs:     currentMs - (60 * 60 * 1000),
+		endMs:       currentMs,
+		kind:        qbtypes.RequestTypeHeatmap,
+	}
+
+	cached, missing := bc.GetMissRanges(ctx, orgID, query1hAgain, qbtypes.Step{Duration: 60 * time.Second})
+
+	// Should hit window cache (exact match)
+	assert.NotNil(t, cached)
+	assert.Len(t, missing, 0, "Should have no missing ranges for window cache hit")
+
+	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	require.True(t, ok)
+	assert.Len(t, tsData.Aggregations[0].Series[0].Values, 1)
 }

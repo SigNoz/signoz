@@ -567,9 +567,6 @@ func (q *querier) run(
 			stats.BytesScanned += result.Stats.BytesScanned
 			stats.DurationMS += result.Stats.DurationMS
 		} else if req.RequestType == qbtypes.RequestTypeHeatmap {
-			// Heatmap queries use exact-match caching only because histogram bucket
-			// boundaries are computed dynamically and may differ across time ranges.
-			// We cannot merge partial results from different time ranges.
 			result, err := q.executeHeatmapWithCache(ctx, orgID, query, steps[name])
 			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
@@ -659,7 +656,7 @@ func (q *querier) run(
 	return resp, nil
 }
 
-// executeHeatmapWithCache executes a heatmap query using exact-match caching only
+// executeHeatmapWithCache executes a heatmap query with cache support
 func (q *querier) executeHeatmapWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step) (*qbtypes.Result, error) {
 	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
 
@@ -931,6 +928,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 					// Create a copy to avoid modifying the cached data
 					seriesCopy := &qbtypes.TimeSeries{
 						Labels: series.Labels,
+						Bounds: series.Bounds,
 						Values: make([]*qbtypes.TimeSeriesValue, len(series.Values)),
 					}
 					copy(seriesCopy.Values, series.Values)
