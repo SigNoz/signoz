@@ -399,9 +399,22 @@ export interface RawData {
 	rows: RawRow[];
 }
 
+export interface DistributionBucket {
+	lowerBound: number;
+	upperBound: number;
+	count: number;
+}
+
+export interface DistributionAggregation {
+	index: number;
+	alias: string;
+	labels?: Label[];
+	buckets: DistributionBucket[];
+}
+
 export interface DistributionData {
-	// Structure to be defined based on requirements
-	[key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+	queryName: string;
+	aggregations: DistributionAggregation[];
 }
 
 // Response data structures with results array

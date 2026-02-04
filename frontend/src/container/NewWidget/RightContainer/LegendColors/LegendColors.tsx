@@ -67,15 +67,47 @@ function LegendColors({
 	const isDarkMode = useIsDarkMode();
 
 	// Get legend labels from query response or current query
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const legendLabels = useMemo(() => {
-		if (queryResponse?.data?.payload?.data?.result) {
-			return queryResponse.data.payload.data.result.map((item: any) =>
-				getLegend(
-					item,
-					currentQuery,
-					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
-				),
+		const payload = queryResponse?.data?.payload as any;
+
+		if (payload?.data?.newResult?.data?.result) {
+			return payload.data.newResult.data.result.map((item: any) =>
+				getLabelName({}, item.queryName || '', item.legend || ''),
 			);
+		}
+
+		if (payload?.data?.result) {
+			const labels: string[] = [];
+
+			payload.data.result.forEach((item: any) => {
+				if (item.boundValues) {
+					const labelsObj: Record<string, string> = item.metric || {};
+
+					let legendName: string;
+					if (Object.keys(labelsObj).length > 0) {
+						legendName = getLabelName(
+							labelsObj,
+							item.queryName || '',
+							item.legend || '',
+						);
+					} else {
+						legendName = item.queryName || item.metaData?.alias || 'Count';
+					}
+
+					labels.push(legendName);
+				} else {
+					labels.push(
+						getLegend(
+							item,
+							currentQuery,
+							getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
+						),
+					);
+				}
+			});
+
+			return labels;
 		}
 
 		// Fallback to query data if no response available

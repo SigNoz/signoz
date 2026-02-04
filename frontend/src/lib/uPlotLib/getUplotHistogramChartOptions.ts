@@ -16,6 +16,7 @@ import tooltipPlugin from './plugins/tooltipPlugin';
 import { drawStyles } from './utils/constants';
 import { generateColor } from './utils/generateColor';
 import getAxes from './utils/getAxes';
+import { toggleSeriesVisibility } from './utils/getSeriesData';
 
 // Extended uPlot interface with custom properties
 interface ExtendedUPlot extends uPlot {
@@ -251,21 +252,11 @@ export const getUplotHistogramChartOptions = ({
 
 									if (graphsVisibilityStates) {
 										setGraphsVisibilityStates?.((prev) => {
-											const newGraphVisibilityStates = [...prev];
-											// Show only this series / show all behavior
-											if (
-												newGraphVisibilityStates[index + 1] &&
-												newGraphVisibilityStates.every((value, i) =>
-													i === index + 1 ? value : !value,
-												)
-											) {
-												// If only this series is visible, show all
-												newGraphVisibilityStates.fill(true);
-											} else {
-												// Otherwise, show only this series
-												newGraphVisibilityStates.fill(false);
-												newGraphVisibilityStates[index + 1] = true;
-											}
+											const newGraphVisibilityStates = toggleSeriesVisibility(
+												prev,
+												index + 1,
+											);
+
 											saveLegendEntriesToLocalStorage({
 												options: self,
 												graphVisibilityState: newGraphVisibilityStates,

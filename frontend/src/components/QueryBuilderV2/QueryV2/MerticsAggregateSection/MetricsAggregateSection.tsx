@@ -45,10 +45,16 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		[query.aggregations],
 	);
 
-	const isHistogram = useMemo(
-		() => query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM,
+	const isDistributionPanel = panelType === PANEL_TYPES.DISTRIBUTION;
+
+	const isHistogramMetric = useMemo(
+		() =>
+			query.aggregateAttribute?.type === ATTRIBUTE_TYPES.HISTOGRAM ||
+			query.aggregateAttribute?.type === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
 		[query.aggregateAttribute?.type],
 	);
+
+	const useHistogramLayout = isHistogramMetric && !isDistributionPanel;
 
 	useEffect(() => {
 		setAggregationOptions(query.queryName, [
@@ -93,10 +99,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	return (
 		<div
 			className={cx('metrics-aggregate-section', {
-				'is-histogram': isHistogram,
+				'is-histogram': useHistogramLayout,
 			})}
 		>
-			{!isHistogram && (
+			{!useHistogramLayout && (
 				<div className="non-histogram-container">
 					<div className="metrics-time-aggregation-section">
 						<div className="metrics-aggregation-section-content">
@@ -122,6 +128,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										value={queryAggregation.timeAggregation || ''}
 										onChange={handleChangeOperator}
 										operators={operators}
+										disabled={disableOperatorSelector}
 										className="metrics-operators-select"
 									/>
 								</div>
@@ -219,7 +226,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 				</div>
 			)}
 
-			{isHistogram && (
+			{useHistogramLayout && (
 				<div className="metrics-space-aggregation-section">
 					<div className="metrics-aggregation-section-content">
 						<div className="metrics-aggregation-section-content-item">

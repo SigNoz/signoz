@@ -273,13 +273,44 @@ function convertRawData(
 function convertDistributionData(
 	distributionData: DistributionData,
 	legendMap: Record<string, string>,
-): any {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
-	// Convert V5 distribution format to legacy histogram format
-	return {
-		...distributionData,
-		legendMap,
-	};
+): QueryDataV3[] {
+	if (
+		!distributionData.aggregations ||
+		distributionData.aggregations.length === 0
+	) {
+		return [];
+	}
+
+	return distributionData.aggregations.map((aggregation) => {
+		const labels: Record<string, string> = {};
+		if (aggregation.labels && Array.isArray(aggregation.labels)) {
+			aggregation.labels.forEach((label) => {
+				if (label?.key?.name && label?.value !== undefined) {
+					labels[label.key.name] = String(label.value);
+				}
+			});
+		}
+
+		const boundValues = (aggregation.buckets || []).map((bucket) => ({
+			lowerBound: bucket.lowerBound,
+			upperBound: bucket.upperBound,
+			value: bucket.count,
+		}));
+
+		return {
+			queryName: distributionData.queryName,
+			legend: legendMap[distributionData.queryName] || distributionData.queryName,
+			series: null,
+			list: null,
+			metric: labels,
+			metaData: {
+				alias: aggregation.alias,
+				index: aggregation.index,
+				queryName: distributionData.queryName,
+			},
+			boundValues,
+		};
+	});
 }
 
 /**
@@ -329,11 +360,12 @@ function convertV5DataByType(
 		}
 		case 'distribution': {
 			const distributionData = v5Data.data.results as DistributionData[];
+			const result = distributionData.flatMap((distribution) =>
+				convertDistributionData(distribution, legendMap),
+			);
 			return {
 				resultType: 'distribution',
-				result: distributionData.map((distribution) =>
-					convertDistributionData(distribution, legendMap),
-				),
+				result,
 			};
 		}
 		default:

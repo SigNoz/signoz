@@ -445,7 +445,7 @@ func (dashboard *Dashboard) getQueryRequestTypeFromPanelType(panelType string) q
 		return querybuildertypesv5.RequestTypeTrace
 	case "list":
 		return querybuildertypesv5.RequestTypeRaw
-	case "histogram":
+	case "histogram", "distribution":
 		return querybuildertypesv5.RequestTypeDistribution
 	}
 

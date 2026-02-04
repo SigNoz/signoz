@@ -79,6 +79,8 @@ const generateTooltipContent = (
 	timezone?: string,
 	colorMapping?: Record<string, string>,
 	query?: Query,
+	isDistributionChart?: boolean,
+	bucketLabels?: string[],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -109,59 +111,87 @@ const generateTooltipContent = (
 			const item = series[index];
 
 			if (index === 0) {
-				if (isBillingUsageGraphs) {
+				if (isDistributionChart && bucketLabels) {
+					tooltipTitle = bucketLabels[idx] || `Bucket ${idx}`;
+				} else if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
 						.format(DATE_TIME_FORMATS.MONTH_YEAR);
-				} else {
+				} else if (!isHistogramGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
 						.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 				}
 			} else if (item.show) {
-				const {
-					metric = {},
-					queryName = '',
-					legend = '',
-					quantity = [],
-					unit = '',
-				} = seriesList[index - 1] || {};
-
-				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
-
-				const dataIngested = quantity[idx];
-				const baseLabelName = getLabelName(metric, queryName || '', legend || '');
-
+				let metric = {};
+				let queryName = '';
+				let legend = '';
+				let quantity: number[] = [];
+				let unit = '';
 				let label = '';
-				if (isMergedSeries) {
-					label = '';
-				} else if (query) {
-					label = getLegend(seriesList[index - 1], query, baseLabelName);
+				let color = '';
+
+				if (isDistributionChart) {
+					label = item.label || '';
+					const strokeColor = typeof item.stroke === 'string' ? item.stroke : '';
+					color =
+						colorMapping?.[label] ||
+						strokeColor ||
+						generateColor(
+							label,
+							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+						);
+					queryName = '';
 				} else {
-					label = baseLabelName;
-				}
+					const seriesData = seriesList[index - 1] || {};
+					metric = seriesData.metric || {};
+					queryName = seriesData.queryName || '';
+					legend = seriesData.legend || '';
+					quantity = seriesData.quantity || [];
+					unit = seriesData.unit || '';
 
-				let color =
-					colorMapping?.[label] ||
-					generateColor(
-						label,
-						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-					);
+					const baseLabelName = getLabelName(metric, queryName, legend);
 
-				// O(1) lookup instead of O(n) search for billing graph colors
-				if (isBillingUsageGraphs && seriesColorMap) {
-					const billingColor = seriesColorMap.get(label);
-					if (billingColor) {
-						color = billingColor;
+					if (isMergedSeries) {
+						label = '';
+					} else if (query) {
+						label = getLegend(seriesData, query, baseLabelName);
+					} else {
+						label = baseLabelName;
+					}
+
+					color =
+						colorMapping?.[label] ||
+						generateColor(
+							label,
+							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+						);
+
+					// O(1) lookup instead of O(n) search for billing graph colors
+					if (isBillingUsageGraphs && seriesColorMap) {
+						const billingColor = seriesColorMap.get(label);
+						if (billingColor) {
+							color = billingColor;
+						}
 					}
 				}
 
+				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
+				const dataIngested = quantity[idx];
 				let tooltipItemLabel = label;
+
+				if (isDistributionChart && (!Number.isFinite(value) || value <= 0)) {
+					continue;
+				}
 
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit, decimalPrecision);
 					const dataIngestedFormated = getToolTipValue(dataIngested);
-					if (duplicatedLegendLabels[label] || label in formattedData) {
+
+					if (
+						!isDistributionChart &&
+						(duplicatedLegendLabels[label] || label in formattedData)
+					) {
 						duplicatedLegendLabels[label] = true;
 						const tempDataObj = formattedData[label];
 
@@ -175,7 +205,7 @@ const generateTooltipContent = (
 							delete formattedData[label];
 						}
 
-						tooltipItemLabel = `${queryName}: ${label}`;
+						tooltipItemLabel = isDistributionChart ? label : `${queryName}: ${label}`;
 					}
 
 					const dataObj = {
@@ -187,7 +217,7 @@ const generateTooltipContent = (
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
-						queryName,
+						queryName: queryName || '',
 						textContent: isBillingUsageGraphs
 							? `${tooltipItemLabel} : $${tooltipValue} - ${dataIngestedFormated} ${unit}`
 							: `${tooltipItemLabel} : ${tooltipValue}`,
@@ -213,7 +243,7 @@ const generateTooltipContent = (
 
 	const headerDiv = document.createElement('div');
 	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
-	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
+	headerDiv.textContent = tooltipTitle;
 	container.appendChild(headerDiv);
 
 	// Use DocumentFragment for better performance when adding multiple elements
@@ -257,6 +287,8 @@ type ToolTipPluginProps = {
 	yAxisUnit?: string;
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
+	isDistributionChart?: boolean;
+	bucketLabels?: string[];
 	isMergedSeries?: boolean;
 	decimalPrecision?: PrecisionOption;
 	stackBarChart?: boolean;
@@ -272,6 +304,8 @@ const tooltipPlugin = ({
 	yAxisUnit,
 	isBillingUsageGraphs,
 	isHistogramGraphs,
+	isDistributionChart,
+	bucketLabels,
 	isMergedSeries,
 	stackBarChart,
 	isDarkMode,
@@ -407,6 +441,8 @@ ToolTipPluginProps): any => {
 					timezone,
 					colorMapping,
 					query,
+					isDistributionChart,
+					bucketLabels,
 				);
 
 				// Only show tooltip if there's actual content
