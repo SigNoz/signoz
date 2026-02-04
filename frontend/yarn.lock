@@ -5033,10 +5033,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/design-tokens@2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.0.tgz#37461add52f1eb02a311b49fc2a6995db960d870"
-  integrity sha512-PlygWoUAVlgLqjc/1bgxDsef0tlOnTm2GTZd0iiaj9jeVzM4lba/dmskw1H+fDXhz1/TFMrgTqPJVkaeZaoy3Q==
+"@signozhq/design-tokens@2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.1.tgz#9c36d433fd264410713cc0c5ebdd75ce0ebecba3"
+  integrity sha512-SdziCHg5Lwj+6oY6IRUPplaKZ+kTHjbrlhNj//UoAJ8aQLnRdR2F/miPzfSi4vrYw88LtXxNA9J9iJyacCp37A==
 
 "@signozhq/icons@^0.1.0":
   version "0.1.0"
