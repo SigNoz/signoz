@@ -9,16 +9,17 @@ import {
 import type { SeriesVisibilityItem } from 'container/DashboardContainer/visualization/panels/types';
 import { updateSeriesVisibilityToLocalStorage } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import type uPlot from 'uplot';
-
 export interface PlotContextInitialState {
 	uPlotInstance: uPlot | null;
 	widgetId?: string;
+	shouldSavePreferences?: boolean;
 }
 export interface IPlotContext {
 	setPlotContextInitialState: (state: PlotContextInitialState) => void;
 	onToggleSeriesVisibility: (seriesIndex: number) => void;
 	onToggleSeriesOnOff: (seriesIndex: number) => void;
 	onFocusSeries: (seriesIndex: number | null) => void;
+	syncSeriesVisibilityToLocalStorage: () => void;
 }
 
 export const PlotContext = createContext<IPlotContext | null>(null);
@@ -29,58 +30,27 @@ export const PlotContextProvider = ({
 	const uPlotInstanceRef = useRef<uPlot | null>(null);
 	const activeSeriesIndex = useRef<number | undefined>(undefined);
 	const widgetIdRef = useRef<string | undefined>(undefined);
+	const shouldSavePreferencesRef = useRef<boolean>(false);
 
 	const setPlotContextInitialState = useCallback(
-		({ uPlotInstance, widgetId }: PlotContextInitialState): void => {
+		({
+			uPlotInstance,
+			widgetId,
+			shouldSavePreferences,
+		}: PlotContextInitialState): void => {
 			uPlotInstanceRef.current = uPlotInstance;
 			widgetIdRef.current = widgetId;
 			activeSeriesIndex.current = undefined;
+			shouldSavePreferencesRef.current = !!shouldSavePreferences;
 		},
 		[],
 	);
 
-	const onToggleSeriesVisibility = useCallback((seriesIndex: number): void => {
+	const syncSeriesVisibilityToLocalStorage = useCallback((): void => {
 		const plot = uPlotInstanceRef.current;
 		if (!plot) {
 			return;
 		}
-
-		const isReset = activeSeriesIndex.current === seriesIndex;
-		activeSeriesIndex.current = isReset ? undefined : seriesIndex;
-
-		plot.batch(() => {
-			plot.series.forEach((_, index) => {
-				if (index === 0) {
-					return;
-				}
-				const currentSeriesIndex = index;
-				plot.setSeries(currentSeriesIndex, {
-					show: isReset || currentSeriesIndex === seriesIndex,
-				});
-			});
-			if (widgetIdRef.current) {
-				const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
-					(series) => ({
-						label: series.label ?? '',
-						show: series.show ?? true,
-					}),
-				);
-				updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
-			}
-		});
-	}, []);
-
-	const onToggleSeriesOnOff = useCallback((seriesIndex: number): void => {
-		const plot = uPlotInstanceRef.current;
-		if (!plot) {
-			return;
-		}
-
-		const series = plot.series[seriesIndex];
-		if (!series) {
-			return;
-		}
-		plot.setSeries(seriesIndex, { show: !series.show });
 		if (widgetIdRef.current) {
 			const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
 				(series) => ({
@@ -91,6 +61,53 @@ export const PlotContextProvider = ({
 			updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
 		}
 	}, []);
+
+	const onToggleSeriesVisibility = useCallback(
+		(seriesIndex: number): void => {
+			const plot = uPlotInstanceRef.current;
+			if (!plot) {
+				return;
+			}
+
+			const isReset = activeSeriesIndex.current === seriesIndex;
+			activeSeriesIndex.current = isReset ? undefined : seriesIndex;
+
+			plot.batch(() => {
+				plot.series.forEach((_, index) => {
+					if (index === 0) {
+						return;
+					}
+					const currentSeriesIndex = index;
+					plot.setSeries(currentSeriesIndex, {
+						show: isReset || currentSeriesIndex === seriesIndex,
+					});
+				});
+				if (widgetIdRef.current && shouldSavePreferencesRef.current) {
+					syncSeriesVisibilityToLocalStorage();
+				}
+			});
+		},
+		[syncSeriesVisibilityToLocalStorage],
+	);
+
+	const onToggleSeriesOnOff = useCallback(
+		(seriesIndex: number): void => {
+			const plot = uPlotInstanceRef.current;
+			if (!plot) {
+				return;
+			}
+
+			const series = plot.series[seriesIndex];
+			if (!series) {
+				return;
+			}
+			plot.setSeries(seriesIndex, { show: !series.show });
+			if (widgetIdRef.current && shouldSavePreferencesRef.current) {
+				syncSeriesVisibilityToLocalStorage();
+			}
+		},
+		[syncSeriesVisibilityToLocalStorage],
+	);
 
 	const onFocusSeries = useCallback((seriesIndex: number | null): void => {
 		const plot = uPlotInstanceRef.current;
@@ -113,12 +130,14 @@ export const PlotContextProvider = ({
 			setPlotContextInitialState,
 			onToggleSeriesOnOff,
 			onFocusSeries,
+			syncSeriesVisibilityToLocalStorage,
 		}),
 		[
 			onToggleSeriesVisibility,
 			setPlotContextInitialState,
 			onToggleSeriesOnOff,
 			onFocusSeries,
+			syncSeriesVisibilityToLocalStorage,
 		],
 	);
 

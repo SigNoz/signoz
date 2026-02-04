@@ -13,6 +13,7 @@ import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplor
 import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
 import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
 import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
@@ -183,6 +184,7 @@ function WidgetGraph({
 			}}
 		>
 			<PanelWrapper
+				panelMode={PanelMode.EDIT}
 				widget={selectedWidget}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}

@@ -11,6 +11,7 @@ import {
 	DEFAULT_CURSOR_CONFIG,
 	DEFAULT_PLOT_CONFIG,
 	LegendItem,
+	PreferencesSource,
 } from './types';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
@@ -35,6 +36,9 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	Partial<Options>
 > {
 	series: UPlotSeriesBuilder[] = [];
+
+	private preferencesSource: PreferencesSource = PreferencesSource.IN_MEMORY;
+	private shouldSavePreferences = false;
 
 	private axes: Record<string, UPlotAxisBuilder> = {};
 
@@ -64,11 +68,15 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	private onDragSelect: (startTime: number, endTime: number) => void;
 
-	private cleanups: Array<() => void> = [];
-
 	constructor(args?: ConfigBuilderProps) {
 		super(args ?? {});
-		const { widgetId, onDragSelect, tzDate } = args ?? {};
+		const {
+			widgetId,
+			onDragSelect,
+			tzDate,
+			preferencesSource,
+			shouldSavePreferences,
+		} = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
 		}
@@ -77,23 +85,36 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			this.tzDate = tzDate;
 		}
 
-		this.onDragSelect = noop;
+		if (preferencesSource) {
+			this.preferencesSource = preferencesSource;
+		}
 
+		if (shouldSavePreferences) {
+			this.shouldSavePreferences = shouldSavePreferences;
+		}
+
+		this.onDragSelect = noop;
 		if (onDragSelect) {
 			this.onDragSelect = onDragSelect;
-			// Add a hook to handle the select event
-			const cleanup = this.addHook('setSelect', (self: uPlot): void => {
+			this.addHook('setSelect', (self: uPlot): void => {
 				const selection = self.select;
 				// Only trigger onDragSelect when there's an actual drag range (width > 0)
 				// A click without dragging produces width === 0, which should be ignored
 				if (selection && selection.width > 0) {
 					const startTime = self.posToVal(selection.left, 'x');
 					const endTime = self.posToVal(selection.left + selection.width, 'x');
+
 					this.onDragSelect(startTime * 1000, endTime * 1000);
 				}
 			});
-			this.cleanups.push(cleanup);
 		}
+	}
+
+	/**
+	 * Get the save preferences
+	 */
+	getShouldSavePreferences(): boolean {
+		return this.shouldSavePreferences;
 	}
 
 	/**
@@ -158,8 +179,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	addThresholds(options: ThresholdsDrawHookOptions): void {
 		if (!this.thresholds[options.scaleKey]) {
 			this.thresholds[options.scaleKey] = options;
-			const cleanup = this.addHook('draw', thresholdsDrawHook(options));
-			this.cleanups.push(cleanup);
+			this.addHook('draw', thresholdsDrawHook(options));
 		}
 	}
 
@@ -216,9 +236,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const visibilityMap = this.widgetId
-			? getStoredSeriesVisibility(this.widgetId)
-			: null;
+		const visibilityMap =
+			this.widgetId && this.preferencesSource === PreferencesSource.LOCAL_STORAGE
+				? getStoredSeriesVisibility(this.widgetId)
+				: null;
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
 			const label = seriesConfig.label ?? '';
@@ -239,13 +260,6 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
-	 * Remove all hooks and cleanup functions
-	 */
-	destroy(): void {
-		this.cleanups.forEach((cleanup) => cleanup());
-	}
-
-	/**
 	 * Get the widget id
 	 */
 	getWidgetId(): string | undefined {
@@ -260,9 +274,26 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
+		let visibilityMap: Map<string, boolean> | null = null;
+		if (
+			this.widgetId &&
+			this.preferencesSource === PreferencesSource.LOCAL_STORAGE
+		) {
+			visibilityMap = getStoredSeriesVisibility(this.widgetId);
+		}
+
 		config.series = [
 			{ value: (): string => '' }, // Base series for timestamp
-			...this.series.map((s) => s.getConfig()),
+			...this.series.map((s) => {
+				// Apply visibility map to the series
+				const series = s.getConfig();
+				const label = series.label ?? '';
+				const visible = visibilityMap?.get(label) ?? series.show ?? true;
+				return {
+					...series,
+					show: visible,
+				};
+			}),
 		];
 		config.axes = Object.values(this.axes).map((a) => a.getConfig());
 		config.scales = this.scales.reduce(

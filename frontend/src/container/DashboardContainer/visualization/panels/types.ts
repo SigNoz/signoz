@@ -13,3 +13,9 @@ export interface GraphVisibilityState {
 	name: string;
 	dataIndex: SeriesVisibilityItem[];
 }
+
+export enum PanelMode {
+	VIEW = 'VIEW',
+	EDIT = 'EDIT',
+	DASHBOARD = 'DASHBOARD',
+}
