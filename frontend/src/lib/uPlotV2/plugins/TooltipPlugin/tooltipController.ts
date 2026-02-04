@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash-es';
 import uPlot from 'uplot';
 
 import { TooltipControllerContext, TooltipControllerState } from './types';
@@ -13,7 +14,7 @@ export function createInitialControllerState(): TooltipControllerState {
 	return {
 		plot: null,
 		hoverActive: false,
-		anySeriesActive: false,
+		isAnySeriesActive: false,
 		pinned: false,
 		style: { transform: '', pointerEvents: 'none' },
 		horizontalOffset: 0,
@@ -24,7 +25,6 @@ export function createInitialControllerState(): TooltipControllerState {
 		plotWithinViewport: false,
 		windowWidth: window.innerWidth - WINDOW_OFFSET,
 		windowHeight: window.innerHeight - WINDOW_OFFSET,
-		renderScheduled: false,
 		pendingPinnedUpdate: false,
 	};
 }
@@ -79,7 +79,7 @@ export function shouldShowTooltipForSync(
 ): boolean {
 	return (
 		controller.plotWithinViewport &&
-		controller.anySeriesActive &&
+		controller.isAnySeriesActive &&
 		syncTooltipWithDashboard
 	);
 }
@@ -87,7 +87,7 @@ export function shouldShowTooltipForSync(
 export function shouldShowTooltipForInteraction(
 	controller: TooltipControllerState,
 ): boolean {
-	return controller.focusedSeriesIndex != null || controller.anySeriesActive;
+	return controller.focusedSeriesIndex != null || controller.isAnySeriesActive;
 }
 
 export function updateHoverState(
@@ -169,18 +169,30 @@ export function createSetLegendHandler(
 			return;
 		}
 
-		controller.seriesIndexes = controller.plot.cursor.idxs.slice();
-		controller.anySeriesActive = controller.seriesIndexes.some(
-			(v, i) => i > 0 && v != null,
+		const newSeriesIndexes = controller.plot.cursor.idxs.slice();
+		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
+
+		const previousCursorDrivenBySync = controller.cursorDrivenBySync;
+
+		// Skip scheduling if legend data is unchanged
+		const seriesIndexesChanged = !isEqual(
+			controller.seriesIndexes,
+			newSeriesIndexes,
 		);
+
+		controller.seriesIndexes = newSeriesIndexes;
+		controller.isAnySeriesActive = isAnySeriesActive;
 		controller.cursorDrivenBySync = u.cursor.event == null;
 
-		// Track transitions into / out of hover so we can avoid
-		// unnecessary renders when nothing visible has changed.
 		const previousHover = controller.hoverActive;
 		updateHoverState(controller, syncTooltipWithDashboard);
+		const hoverStateChanged = controller.hoverActive !== previousHover;
 
-		if (controller.hoverActive || controller.hoverActive !== previousHover) {
+		const cursorDrivenBySyncChanged =
+			controller.cursorDrivenBySync !== previousCursorDrivenBySync;
+
+		// Only schedule when legend data, hover state, or sync‑driven state has changed
+		if (seriesIndexesChanged || hoverStateChanged || cursorDrivenBySyncChanged) {
 			ctx.scheduleRender();
 		}
 	};
