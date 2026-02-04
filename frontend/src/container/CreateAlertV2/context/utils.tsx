@@ -305,5 +305,7 @@ export const createAlertReducer = (
 					action.action,
 				),
 			};
+		default:
+			return state;
 	}
 };
