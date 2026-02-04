@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { ArrowLeft, Plus, Settings, X } from 'lucide-react';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 // import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -33,16 +33,8 @@ const useDashboardVarConfig = ({
 	};
 	// contextItems: React.ReactNode;
 } => {
-	const { selectedDashboard } = useDashboard();
+	const dashboardDynamicVariables = useDashboardVariablesByType('DYNAMIC');
 	const { onValueUpdate, createVariable } = useDashboardVariableUpdate();
-
-	const dynamicDashboardVariables = useMemo(
-		(): [string, IDashboardVariable][] =>
-			Object.entries(selectedDashboard?.data?.variables || {}).filter(
-				([, value]) => value.name && value.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
-	);
 
 	// Function to determine the source from query data
 	const getSourceFromQuery = useCallback(():
@@ -116,7 +108,7 @@ const useDashboardVarConfig = ({
 			<>
 				{' '}
 				{Object.entries(fieldVariables).map(([fieldName, value]) => {
-					const dashboardVar = dynamicDashboardVariables.find(
+					const dashboardVar = dashboardDynamicVariables.find(
 						([, dynamicValue]) =>
 							dynamicValue.dynamicVariablesAttribute === fieldName,
 					);
@@ -178,7 +170,7 @@ const useDashboardVarConfig = ({
 		),
 		[
 			fieldVariables,
-			dynamicDashboardVariables,
+			dashboardDynamicVariables,
 			handleSetVariable,
 			handleUnsetVariable,
 			handleCreateVariable,

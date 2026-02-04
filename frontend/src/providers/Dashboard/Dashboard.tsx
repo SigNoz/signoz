@@ -45,6 +45,8 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
+import { useDashboardVariables } from '../../hooks/dashboard/useDashboardVariables';
+import { setDashboardVariablesStore } from './store/dashboardVariablesStore';
 import {
 	DashboardSortOrder,
 	IDashboardContext,
@@ -196,6 +198,16 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
+	const dashboardVariables = useDashboardVariables();
+
+	useEffect(() => {
+		const existingVariables = dashboardVariables;
+		const updatedVariables = selectedDashboard?.data.variables || {};
+
+		if (!isEqual(existingVariables, updatedVariables)) {
+			setDashboardVariablesStore(updatedVariables);
+		}
+	}, [selectedDashboard]);
 
 	const {
 		currentDashboard,

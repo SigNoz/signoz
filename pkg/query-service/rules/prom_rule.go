@@ -17,7 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 )
@@ -142,6 +142,12 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	}
 
 	matrixToProcess := r.matrixToV3Series(res)
+
+	hasData := len(matrixToProcess) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
+
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
@@ -154,6 +160,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	}
 
 	var resultVector ruletypes.Vector
+
 	for _, series := range matrixToProcess {
 		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
@@ -243,6 +250,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		for name, value := range r.annotations.Map() {
 			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
 		}
+		if result.IsMissing {
+			lb.Set(qslabels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(qslabels.NoDataLabel, "true")
+		}
 
 		lbs := lb.Labels()
 		h := lbs.Hash()
@@ -265,6 +276,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			Value:             result.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+			Missing:           result.IsMissing,
 			IsRecovering:      result.IsRecovering,
 		}
 	}
