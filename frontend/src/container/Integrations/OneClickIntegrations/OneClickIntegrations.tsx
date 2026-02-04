@@ -7,15 +7,13 @@ import './OneClickIntegrations.styles.scss';
 
 interface OneClickIntegrationsProps {
 	setSelectedIntegration: (integration: IntegrationsProps) => void;
-	setActiveDetailTab: (tab: string) => void;
 }
 
 function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
-	const { setSelectedIntegration, setActiveDetailTab } = props;
+	const { setSelectedIntegration } = props;
 
 	const handleSelectedIntegration = (integration: IntegrationsProps): void => {
 		setSelectedIntegration(integration);
-		setActiveDetailTab('configuration');
 	};
 
 	return (

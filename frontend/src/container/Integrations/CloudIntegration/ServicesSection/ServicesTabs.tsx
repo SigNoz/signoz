@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import type { SelectProps, TabsProps } from 'antd';
-import { Select, Tabs } from 'antd';
+import type { SelectProps } from 'antd';
+import { Select } from 'antd';
 import { getAwsServices } from 'api/integration/aws';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -106,17 +106,9 @@ function ServicesSection(): JSX.Element {
 }
 
 function ServicesTabs(): JSX.Element {
-	const tabItems: TabsProps['items'] = [
-		{
-			key: 'services',
-			label: 'Services For Integration',
-			children: <ServicesSection />,
-		},
-	];
-
 	return (
 		<div className="services-tabs">
-			<Tabs defaultActiveKey="services" items={tabItems} />
+			<ServicesSection />
 		</div>
 	);
 }

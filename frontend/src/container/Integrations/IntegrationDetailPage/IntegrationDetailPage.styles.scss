@@ -1,323 +1,324 @@
-.integration-detail-content {
+.integration-details-container {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	margin: 12px 0px 20px 0px;
+	padding: 16px;
 
-	.error-container {
-		display: flex;
-		border-radius: 6px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
-		align-items: center;
-		justify-content: center;
-		flex-direction: column;
-
-		.error-content {
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			height: 300px;
-			gap: 15px;
-
-			.error-btns {
-				display: flex;
-				flex-direction: row;
-				gap: 16px;
-				align-items: center;
-
-				.retry-btn {
-					display: flex;
-					align-items: center;
-				}
-
-				.contact-support {
-					display: flex;
-					align-items: center;
-					gap: 4px;
-					cursor: pointer;
-
-					.text {
-						color: var(--text-robin-400);
-						font-weight: 500;
-					}
-				}
-			}
-
-			.error-state-svg {
-				height: 40px;
-				width: 40px;
-			}
-		}
-	}
-
-	.loading-integration-details {
+	.integration-details-content-container {
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
 
-		.skeleton-1 {
-			height: 125px;
-			width: 100%;
-		}
-		.skeleton-2 {
-			height: 250px;
-			width: 100%;
-		}
-	}
-
-	.all-integrations-btn {
-		width: fit-content;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		height: 24px;
-		padding-left: 0px;
-		color: #c0c1c3;
-		font-family: Inter;
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 18px; /* 128.571% */
-	}
-
-	.all-integrations-btn:hover {
-		&.ant-btn-text {
-			background-color: unset !important;
-		}
-	}
-
-	.integration-connection-header {
-		display: flex;
-		flex-direction: column;
-		padding: 16px;
-		gap: 12px;
-		border-radius: 6px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
-
-		.integration-detail-header {
+		.error-container {
 			display: flex;
-			gap: 10px;
-			justify-content: space-between;
+			border-radius: 6px;
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
 
-			.image-container {
-				height: 40px;
-				width: 40px;
-				flex-shrink: 0;
-				border-radius: 2px;
-				border: 1px solid var(--bg-ink-50);
-				background: var(--bg-ink-300);
+			.error-content {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				height: 300px;
+				gap: 15px;
+
+				.error-btns {
+					display: flex;
+					flex-direction: row;
+					gap: 16px;
+					align-items: center;
+
+					.retry-btn {
+						display: flex;
+						align-items: center;
+					}
+
+					.contact-support {
+						display: flex;
+						align-items: center;
+						gap: 4px;
+						cursor: pointer;
+
+						.text {
+							color: var(--text-robin-400);
+							font-weight: 500;
+						}
+					}
+				}
+
+				.error-state-svg {
+					height: 40px;
+					width: 40px;
+				}
+			}
+		}
+
+		.loading-integration-details {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+
+			.skeleton-1 {
+				height: 125px;
+				width: 100%;
+			}
+			.skeleton-2 {
+				height: 250px;
+				width: 100%;
+			}
+		}
+
+		.integration-connection-header {
+			display: flex;
+			flex-direction: column;
+			padding: 16px;
+			gap: 12px;
+			border-radius: 6px;
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+
+			.integration-detail-header {
+				display: flex;
+				gap: 10px;
+				justify-content: space-between;
+
+				.image-container {
+					height: 40px;
+					width: 40px;
+					flex-shrink: 0;
+					border-radius: 2px;
+					border: 1px solid var(--bg-ink-50);
+					background: var(--bg-ink-300);
+					display: flex;
+					align-items: center;
+					justify-content: center;
+
+					.image {
+						height: 24px;
+						width: 24px;
+					}
+				}
+				.details {
+					display: flex;
+					flex-direction: column;
+					.heading {
+						color: var(--bg-vanilla-100);
+						font-family: Inter;
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 500;
+						line-height: 20px; /* 142.857% */
+						letter-spacing: -0.07px;
+					}
+
+					.description {
+						color: var(--bg-vanilla-400);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 150% */
+					}
+				}
+
+				.configure-btn {
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					align-self: flex-start;
+					gap: 2px;
+					flex-shrink: 0;
+					min-width: 143px;
+					height: 30px;
+					padding: 6px;
+					border-radius: 2px;
+					border: 1px solid var(--bg-ink-50);
+					background: var(--bg-robin-500);
+					color: var(--bg-vanilla-100);
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 10px; /* 83.333% */
+					letter-spacing: 0.12px;
+					box-shadow: none;
+
+					&.test-connection {
+						border-radius: 2px;
+						border: 1px solid var(--bg-slate-400);
+						background: var(--bg-ink-300);
+						color: var(--bg-vanilla-400);
+					}
+				}
+			}
+
+			.connection-container {
+				padding: 0 18px;
+				height: 37px;
+				display: flex;
+				align-items: center;
+
+				.connection-text {
+					margin: 0px;
+					padding: 0px 0px 0px 10px;
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 22px; /* 157.143% */
+					letter-spacing: -0.07px;
+				}
+			}
+
+			.testingConnection {
+				border-radius: 4px;
+				border: 1px solid rgba(255, 205, 86, 0.1);
+				background: rgba(255, 205, 86, 0.1);
+				color: var(--bg-amber-400);
+			}
+
+			.connected {
+				border-radius: 4px;
+				border: 1px solid rgba(37, 225, 146, 0.1);
+				background: rgba(37, 225, 146, 0.1);
+				color: var(--bg-forest-400);
+			}
+
+			.connectionFailed {
+				border-radius: 4px;
+				border: 1px solid rgba(218, 85, 101, 0.2);
+				background: rgba(218, 85, 101, 0.06);
+				color: var(--bg-cherry-500);
+			}
+
+			.noDataSinceLong {
+				border-radius: 4px;
+				border: 1px solid rgba(78, 116, 248, 0.1);
+				background: rgba(78, 116, 248, 0.1);
+				color: var(--bg-robin-400);
+			}
+		}
+
+		.integration-detail-container {
+			border-radius: 6px;
+			padding: 10px 16px;
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400, #121317);
+
+			.integration-tab-btns {
 				display: flex;
 				align-items: center;
 				justify-content: center;
+				padding: 8px 8px 18px 8px !important;
 
-				.image {
-					height: 24px;
-					width: 24px;
-				}
-			}
-			.details {
-				display: flex;
-				flex-direction: column;
-				.heading {
+				.typography {
 					color: var(--bg-vanilla-100);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
-					font-weight: 500;
+					font-weight: 400;
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
 				}
+			}
 
-				.description {
-					color: var(--bg-vanilla-400);
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 18px; /* 150% */
+			.integration-tab-btns:hover {
+				&.ant-btn-text {
+					background-color: unset !important;
 				}
 			}
 
-			.configure-btn {
+			.ant-tabs-nav-list {
+				gap: 24px;
+			}
+
+			.ant-tabs-nav {
+				padding: 0px !important;
+			}
+
+			.ant-tabs-tab {
+				padding: 0 !important;
+			}
+
+			.ant-tabs-tab + .ant-tabs-tab {
+				margin: 0px !important;
+			}
+		}
+
+		.uninstall-integration-bar {
+			display: flex;
+			justify-content: space-between;
+			padding: 16px;
+			border-radius: 4px;
+			border: 1px solid rgba(218, 85, 101, 0.2);
+			background: rgba(218, 85, 101, 0.06);
+			gap: 32px;
+
+			.unintall-integration-bar-text {
 				display: flex;
-				justify-content: center;
-				align-items: center;
-				align-self: flex-start;
-				gap: 2px;
-				flex-shrink: 0;
-				min-width: 143px;
-				height: 30px;
-				padding: 6px;
+				flex-direction: column;
+				gap: 6px;
+
+				.heading {
+					color: var(--bg-cherry-500);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: normal;
+					letter-spacing: -0.07px;
+				}
+
+				.subtitle {
+					color: var(--bg-cherry-300);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 22px; /* 157.143% */
+					letter-spacing: -0.07px;
+				}
+			}
+
+			.uninstall-integration-btn {
 				border-radius: 2px;
-				border: 1px solid var(--bg-ink-50);
-				background: var(--bg-robin-500);
+				background: var(--bg-cherry-500);
+				border: none !important;
+				padding: 9px 13px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
 				color: var(--bg-vanilla-100);
+				text-align: center;
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 500;
-				line-height: 10px; /* 83.333% */
-				letter-spacing: 0.12px;
-				box-shadow: none;
+				line-height: 13.3px; /* 110.833% */
+			}
 
-				&.test-connection {
-					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
-					color: var(--bg-vanilla-400);
+			.uninstall-integration-btn:hover {
+				&.ant-btn-default {
+					color: var(--bg-vanilla-100) !important;
 				}
 			}
 		}
 
-		.connection-container {
-			padding: 0 18px;
-			height: 37px;
-			display: flex;
-			align-items: center;
-
-			.connection-text {
-				margin: 0px;
-				padding: 0px 0px 0px 10px;
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 22px; /* 157.143% */
-				letter-spacing: -0.07px;
-			}
-		}
-
-		.testingConnection {
-			border-radius: 4px;
-			border: 1px solid rgba(255, 205, 86, 0.1);
-			background: rgba(255, 205, 86, 0.1);
-			color: var(--bg-amber-400);
-		}
-
-		.connected {
-			border-radius: 4px;
-			border: 1px solid rgba(37, 225, 146, 0.1);
-			background: rgba(37, 225, 146, 0.1);
-			color: var(--bg-forest-400);
-		}
-
-		.connectionFailed {
-			border-radius: 4px;
-			border: 1px solid rgba(218, 85, 101, 0.2);
-			background: rgba(218, 85, 101, 0.06);
-			color: var(--bg-cherry-500);
-		}
-
-		.noDataSinceLong {
-			border-radius: 4px;
-			border: 1px solid rgba(78, 116, 248, 0.1);
-			background: rgba(78, 116, 248, 0.1);
-			color: var(--bg-robin-400);
-		}
-	}
-
-	.integration-detail-container {
-		border-radius: 6px;
-		padding: 10px 16px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400, #121317);
-
-		.integration-tab-btns {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 8px 8px 18px 8px !important;
-
-			.typography {
-				color: var(--bg-vanilla-100);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
-			}
-		}
-
-		.integration-tab-btns:hover {
-			&.ant-btn-text {
-				background-color: unset !important;
-			}
-		}
-
-		.ant-tabs-nav-list {
-			gap: 24px;
-		}
-
-		.ant-tabs-nav {
-			padding: 0px !important;
-		}
-
-		.ant-tabs-tab {
-			padding: 0 !important;
-		}
-
-		.ant-tabs-tab + .ant-tabs-tab {
-			margin: 0px !important;
-		}
-	}
-
-	.uninstall-integration-bar {
-		display: flex;
-		padding: 16px;
-		border-radius: 4px;
-		border: 1px solid rgba(218, 85, 101, 0.2);
-		background: rgba(218, 85, 101, 0.06);
-		gap: 32px;
-
-		.unintall-integration-bar-text {
+		.loading-container {
 			display: flex;
 			flex-direction: column;
-			gap: 6px;
+			gap: 8px;
 
-			.heading {
-				color: var(--bg-cherry-500);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: normal;
-				letter-spacing: -0.07px;
-			}
+			.skeleton-item {
+				height: 160px;
+				width: 100%;
 
-			.subtitle {
-				color: var(--bg-cherry-300);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 22px; /* 157.143% */
-				letter-spacing: -0.07px;
-			}
-		}
-
-		.uninstall-integration-btn {
-			border-radius: 2px;
-			background: var(--bg-cherry-500);
-			border: none !important;
-			padding: 9px 13px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: var(--bg-vanilla-100);
-			text-align: center;
-			font-family: Inter;
-			font-size: 12px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 13.3px; /* 110.833% */
-		}
-
-		.uninstall-integration-btn:hover {
-			&.ant-btn-default {
-				color: var(--bg-vanilla-100) !important;
+				border-radius: 6px;
+				border: 1px solid var(--bg-slate-500);
+				background: var(--bg-ink-400);
 			}
 		}
 	}
@@ -555,16 +556,6 @@
 			}
 		}
 
-		.all-integrations-btn {
-			color: var(--bg-slate-300);
-		}
-
-		.all-integrations-btn:hover {
-			&.ant-btn-text {
-				background-color: unset !important;
-			}
-		}
-
 		.integration-connection-header {
 			border: 1px solid rgba(53, 59, 76, 0.2);
 			background: var(--bg-vanilla-100);
@@ -646,6 +637,13 @@
 				&.ant-btn-default {
 					color: var(--bg-vanilla-300) !important;
 				}
+			}
+		}
+
+		.loading-container {
+			.skeleton-item {
+				border: 1px solid rgba(53, 59, 76, 0.2);
+				background: var(--bg-vanilla-100);
 			}
 		}
 	}

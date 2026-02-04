@@ -20,6 +20,7 @@ import {
 	Home,
 	InfrastructureMonitoring,
 	Integrations,
+	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -380,6 +381,13 @@ const routes: AppRoutes[] = [
 		component: WorkspaceAccessRestricted,
 		isPrivate: true,
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
+	},
+	{
+		path: ROUTES.INTEGRATIONS_DETAIL,
+		exact: true,
+		component: IntegrationsDetailsPage,
+		isPrivate: true,
+		key: 'INTEGRATIONS_DETAIL',
 	},
 	{
 		path: ROUTES.INTEGRATIONS,

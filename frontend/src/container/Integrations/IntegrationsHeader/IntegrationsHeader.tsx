@@ -3,7 +3,7 @@ import { Button } from '@signozhq/button';
 import { Input } from '@signozhq/input';
 import { Flex, Typography } from 'antd';
 import ROUTES from 'constants/routes';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, Cable } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { routePermission } from 'utils/permission';
 
@@ -48,7 +48,8 @@ function IntegrationsHeader(): JSX.Element {
 					variant="solid"
 					color="secondary"
 					className="request-integration-btn"
-					prefixIcon={<Plus size={14} />}
+					prefixIcon={<Cable size={14} />}
+					size="sm"
 				>
 					Request Integration
 				</Button>

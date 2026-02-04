@@ -255,6 +255,12 @@ export const Integrations = Loadable(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
 		),
 );
+export const IntegrationsDetailsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsDetailsPage" */ 'pages/IntegrationsDetailsPage'
+		),
+);
 
 export const MessagingQueuesMainPage = Loadable(
 	() =>

@@ -14,12 +14,12 @@ export const INTEGRATION_TELEMETRY_EVENTS = {
 };
 
 export const INTEGRATION_TYPES = {
-	AWS_INTEGRATION: 'aws',
-	AZURE_INTEGRATION: 'azure',
+	AWS: 'aws',
+	AZURE: 'azure',
 };
 
 export const AWS_INTEGRATION = {
-	id: INTEGRATION_TYPES.AWS_INTEGRATION,
+	id: INTEGRATION_TYPES.AWS,
 	title: 'Amazon Web Services',
 	description: 'One click setup for AWS monitoring with SigNoz',
 	author: {
@@ -33,7 +33,7 @@ export const AWS_INTEGRATION = {
 };
 
 export const AZURE_INTEGRATION = {
-	id: INTEGRATION_TYPES.AZURE_INTEGRATION,
+	id: INTEGRATION_TYPES.AZURE,
 	title: 'Microsoft Azure',
 	description: 'One click setup for Azure monitoring with SigNoz',
 	author: {

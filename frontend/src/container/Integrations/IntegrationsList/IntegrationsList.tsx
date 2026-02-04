@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Badge } from '@signozhq/badge';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Skeleton, Typography } from 'antd';
@@ -13,11 +13,10 @@ import './IntegrationsList.styles.scss';
 
 interface IntegrationsListProps {
 	setSelectedIntegration: (integration: IntegrationsProps) => void;
-	setActiveDetailTab: Dispatch<SetStateAction<string | null>>;
 }
 
 function IntegrationsList(props: IntegrationsListProps): JSX.Element {
-	const { setSelectedIntegration, setActiveDetailTab } = props;
+	const { setSelectedIntegration } = props;
 
 	const {
 		data,
@@ -42,7 +41,6 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 	const handleSelectedIntegration = (integration: IntegrationsProps): void => {
 		setSelectedIntegration(integration);
-		setActiveDetailTab('configuration');
 	};
 
 	const renderError = (): JSX.Element => {
@@ -86,8 +84,11 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 			{loading && (
 				<div className="loading-container">
-					<Skeleton.Input active size="large" className="skeleton-1" />
-					<Skeleton.Input active size="large" className="skeleton-2" />
+					<Skeleton.Input active size="large" className="skeleton-item" />
+					<Skeleton.Input active size="large" className="skeleton-item" />
+					<Skeleton.Input active size="large" className="skeleton-item" />
+					<Skeleton.Input active size="large" className="skeleton-item" />
+					<Skeleton.Input active size="large" className="skeleton-item" />
 				</div>
 			)}
 

@@ -1,12 +1,18 @@
+import { useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Typography } from 'antd';
+import { Flex, Skeleton, Typography } from 'antd';
+import ROUTES from 'constants/routes';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
-import { IntegrationsProps } from 'types/api/integrations/types';
 
+import CloudIntegration from '../CloudIntegration/CloudIntegration';
+import { INTEGRATION_TYPES } from '../constants';
+import { IntegrationType } from '../types';
 import { handleContactSupport } from '../utils';
 import IntegrationDetailContent from './IntegrationDetailContent';
 import IntegrationDetailHeader from './IntegrationDetailHeader';
@@ -16,20 +22,13 @@ import { getConnectionStatesFromConnectionStatus } from './utils';
 
 import './IntegrationDetailPage.styles.scss';
 
-interface IntegrationDetailPageProps {
-	selectedIntegration: IntegrationsProps;
-	setSelectedIntegration: (integration: IntegrationsProps | null) => void;
-	activeDetailTab: string;
-	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
-	const {
-		selectedIntegration,
-		setSelectedIntegration,
-		activeDetailTab,
-		setActiveDetailTab,
-	} = props;
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function IntegrationDetailPage(): JSX.Element {
+	const history = useHistory();
+	const { integrationId } = useParams<{ integrationId?: string }>();
+	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(
+		'overview',
+	);
 
 	const {
 		data,
@@ -39,7 +38,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		isRefetching,
 		isError,
 	} = useGetIntegration({
-		integrationId: selectedIntegration.id,
+		integrationId: integrationId || '',
 	});
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
@@ -48,7 +47,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		data: integrationStatus,
 		isLoading: isStatusLoading,
 	} = useGetIntegrationStatus({
-		integrationId: selectedIntegration.id,
+		integrationId: integrationId || '',
 	});
 
 	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
@@ -62,15 +61,31 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		),
 	);
 
+	if (
+		integrationId === INTEGRATION_TYPES.AWS ||
+		integrationId === INTEGRATION_TYPES.AZURE
+	) {
+		return (
+			<CloudIntegration
+				type={
+					integrationId === INTEGRATION_TYPES.AWS
+						? IntegrationType.AWS_SERVICES
+						: IntegrationType.AZURE_SERVICES
+				}
+			/>
+		);
+	}
+
 	return (
-		<div className="integration-detail-content">
+		<div className="integration-details-container">
 			<Flex justify="space-between" align="center">
 				<Button
-					type="text"
-					icon={<ArrowLeft size={14} />}
+					variant="link"
+					color="secondary"
+					prefixIcon={<ArrowLeft size={14} />}
 					className="all-integrations-btn"
 					onClick={(): void => {
-						setSelectedIntegration(null);
+						history.push(ROUTES.INTEGRATIONS);
 					}}
 				>
 					All Integrations
@@ -90,10 +105,10 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 						</Typography.Text>
 						<div className="error-btns">
 							<Button
-								type="primary"
-								className="retry-btn"
+								variant="solid"
+								color="primary"
 								onClick={(): Promise<any> => refetch()}
-								icon={<RotateCw size={14} />}
+								prefixIcon={<RotateCw size={14} />}
 							>
 								Retry
 							</Button>
@@ -111,9 +126,9 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 			)}
 
 			{!isError && (
-				<div className="integration-detail-content-container">
+				<div className="integration-details-content-container">
 					<IntegrationDetailHeader
-						id={selectedIntegration.id}
+						id={integrationId || ''}
 						title={defaultTo(integrationData?.title, '')}
 						description={defaultTo(integrationData?.description, '')}
 						icon={defaultTo(integrationData?.icon, '')}
@@ -126,11 +141,17 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 						setActiveDetailTab={setActiveDetailTab}
 					/>
 
+					{loading && (
+						<div className="loading-container">
+							<Skeleton.Input active size="large" className="skeleton-item" />
+						</div>
+					)}
+
 					{!isError && !loading && integrationData && (
 						<IntegrationDetailContent
-							activeDetailTab={activeDetailTab}
+							activeDetailTab={activeDetailTab || 'overview'}
 							integrationData={integrationData}
-							integrationId={selectedIntegration.id}
+							integrationId={integrationId || ''}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
 					)}
@@ -140,7 +161,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 						connectionStatus !== ConnectionStates.NotInstalled && (
 							<IntergrationsUninstallBar
 								integrationTitle={defaultTo(integrationData?.title, '')}
-								integrationId={selectedIntegration.id}
+								integrationId={integrationId || ''}
 								onUnInstallSuccess={refetch}
 								connectionStatus={connectionStatus}
 							/>

@@ -131,6 +131,17 @@
 			}
 		}
 	}
+
+	.loading-container {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		.skeleton-item {
+			height: 32px;
+			width: 100%;
+		}
+	}
 }
 
 .integrations-list {

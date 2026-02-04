@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { IntegrationType } from 'container/Integrations/types';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check } from 'lucide-react';
-import { IntegrationType } from 'container/Integrations/types';
 
 import './Integrations.styles.scss';
 

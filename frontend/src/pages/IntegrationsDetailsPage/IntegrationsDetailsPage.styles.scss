@@ -1,0 +1,25 @@
+.integrations-details-page {
+	width: 100%;
+
+	.loading-container {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+
+		.skeleton-item {
+			height: 160px;
+			width: 100%;
+			border-radius: 6px;
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+		}
+	}
+}
+
+.lightMode {
+	.loading-container {
+		.skeleton-item {
+			background-color: var(--bg-vanilla-300);
+		}
+	}
+}

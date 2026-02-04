@@ -8,6 +8,6 @@ export const useGetAllIntegrations = (): UseQueryResult<
 	AxiosError
 > =>
 	useQuery<AxiosResponse<AllIntegrationsProps>, AxiosError>({
-		queryKey: ['Integrations'],
+		queryKey: ['all-integrations'],
 		queryFn: () => getAllIntegrations(),
 	});
