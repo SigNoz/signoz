@@ -23,6 +23,7 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 		formula?: IBuilderFormula;
 		isListViewPanel?: boolean;
 		entityVersion: string;
+		savePreviousQuery?: boolean;
 	};
 
 // Generic type that can work with both legacy and V5 query types
