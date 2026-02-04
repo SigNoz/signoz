@@ -1110,6 +1110,39 @@ export interface RenderErrorResponseDTO {
 	status?: string;
 }
 
+export interface RoletypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface TypesChangePasswordRequestDTO {
 	/**
 	 * @type string
@@ -1310,6 +1343,21 @@ export interface TypesPostableAcceptInviteDTO {
 	token?: string;
 }
 
+export interface TypesPostableForgotPasswordDTO {
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseURL?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+}
+
 export interface TypesPostableInviteDTO {
 	/**
 	 * @type string
@@ -1341,6 +1389,11 @@ export interface TypesPostableResetPasswordDTO {
 }
 
 export interface TypesResetPasswordTokenDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	expiresAt?: Date;
 	/**
 	 * @type string
 	 */
@@ -1682,6 +1735,42 @@ export type GetPublicDashboardWidgetQueryRange200 = {
 	status?: string;
 };
 
+export type ListRoles200 = {
+	/**
+	 * @type array
+	 */
+	data?: RoletypesRoleDTO[];
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type CreateRole201 = {
+	data?: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type DeleteRolePathParameters = {
+	id: string;
+};
+export type GetRolePathParameters = {
+	id: string;
+};
+export type GetRole200 = {
+	data?: RoletypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type PatchRolePathParameters = {
+	id: string;
+};
 export type ListUsers200 = {
 	/**
 	 * @type array

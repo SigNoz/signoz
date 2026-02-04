@@ -30,7 +30,7 @@
 	font-size: 15.4px;
 	font-weight: 500;
 	line-height: 17.5px;
-	color: var(--text-neutral-dark-50, #eceef2);
+	color: var(--text-neutral-dark-50);
 	white-space: nowrap;
 }
 
@@ -41,7 +41,7 @@
 	gap: 8px;
 	height: 32px;
 	padding: 10px 16px;
-	background: var(--bg-ink-400, #121317);
+	background: var(--bg-ink-400);
 	border: none;
 	border-radius: 2px;
 	cursor: pointer;
@@ -52,13 +52,13 @@
 		font-size: 11px;
 		font-weight: 500;
 		line-height: 1;
-		color: var(--text-neutral-dark-100, #adb4c2);
+		color: var(--text-neutral-dark-100);
 		text-align: center;
 	}
 
 	svg {
 		flex-shrink: 0;
-		color: var(--text-neutral-dark-100, #adb4c2);
+		color: var(--text-neutral-dark-100);
 	}
 
 	&:hover {
@@ -68,15 +68,15 @@
 
 .lightMode {
 	.auth-header-logo-text {
-		color: var(--text-neutral-light-100, #62636c);
+		color: var(--text-neutral-light-100);
 	}
 
 	.auth-header-help-button {
-		background: var(--bg-vanilla-200, #f5f5f5);
+		background: var(--bg-vanilla-200);
 
 		span,
 		svg {
-			color: var(--text-neutral-light-200, #80828d);
+			color: var(--text-neutral-light-200);
 		}
 	}
 }
