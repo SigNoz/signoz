@@ -116,18 +116,18 @@ func (setter *setter) Patch(ctx context.Context, orgID valuer.UUID, role *rolety
 	return setter.store.Update(ctx, orgID, roletypes.NewStorableRoleFromRole(role))
 }
 
-func (setter *setter) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
+func (setter *setter) PatchObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
 	_, err := setter.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	additionTuples, err := roletypes.GetAdditionTuples(name, orgID, relation, additions)
+	additionTuples, err := roletypes.GetAdditionTuples(id, orgID, relation, additions)
 	if err != nil {
 		return err
 	}
 
-	deletionTuples, err := roletypes.GetDeletionTuples(name, orgID, relation, deletions)
+	deletionTuples, err := roletypes.GetDeletionTuples(id, orgID, relation, deletions)
 	if err != nil {
 		return err
 	}

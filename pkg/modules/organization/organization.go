@@ -18,7 +18,7 @@ type Getter interface {
 
 type Setter interface {
 	// Create creates the given organization
-	Create(context.Context, *types.Organization, func(context.Context, valuer.UUID) error) error
+	Create(context.Context, *types.Organization) error
 
 	// Update updates the given organization
 	Update(context.Context, *types.Organization) error

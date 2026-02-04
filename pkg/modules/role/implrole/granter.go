@@ -20,11 +20,31 @@ func NewGranter(store roletypes.Store, authz authz.AuthZ) role.Granter {
 }
 
 func (granter *granter) Grant(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+	role, err := granter.store.GetByOrgIDAndName(ctx, orgID, name)
+	if err != nil {
+		return err
+	}
+
 	tuples, err := authtypes.TypeableRole.Tuples(
 		subject,
 		authtypes.RelationAssignee,
 		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, name),
+			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
+		},
+		orgID,
+	)
+	if err != nil {
+		return err
+	}
+	return granter.authz.Write(ctx, tuples, nil)
+}
+
+func (granter *granter) GrantByID(ctx context.Context, orgID valuer.UUID, id valuer.UUID, subject string) error {
+	tuples, err := authtypes.TypeableRole.Tuples(
+		subject,
+		authtypes.RelationAssignee,
+		[]authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, id.StringValue()),
 		},
 		orgID,
 	)
@@ -49,11 +69,16 @@ func (granter *granter) ModifyGrant(ctx context.Context, orgID valuer.UUID, exis
 }
 
 func (granter *granter) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+	role, err := granter.store.GetByOrgIDAndName(ctx, orgID, name)
+	if err != nil {
+		return err
+	}
+
 	tuples, err := authtypes.TypeableRole.Tuples(
 		subject,
 		authtypes.RelationAssignee,
 		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, name),
+			authtypes.MustNewSelector(authtypes.TypeRole, role.ID.StringValue()),
 		},
 		orgID,
 	)

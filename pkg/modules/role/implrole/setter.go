@@ -40,7 +40,7 @@ func (setter *setter) Patch(_ context.Context, _ valuer.UUID, _ *roletypes.Role)
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (setter *setter) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ authtypes.Relation, _, _ []*authtypes.Object) error {
+func (setter *setter) PatchObjects(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ authtypes.Relation, _, _ []*authtypes.Object) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }
 

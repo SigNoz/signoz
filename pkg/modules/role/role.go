@@ -26,7 +26,7 @@ type Setter interface {
 	Patch(context.Context, valuer.UUID, *roletypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
+	PatchObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -51,6 +51,9 @@ type Getter interface {
 type Granter interface {
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, string, string) error
+
+	// Grants a role to the subject based on role id.
+	GrantByID(context.Context, valuer.UUID, valuer.UUID, string) error
 
 	// Revokes a granted role from the subject based on role name.
 	Revoke(context.Context, valuer.UUID, string, string) error

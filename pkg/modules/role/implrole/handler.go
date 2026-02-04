@@ -169,7 +169,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = role.PatchMetadata(req.Description)
+	err = role.PatchMetadata(req.Name, req.Description)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -222,7 +222,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.setter.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, patchableObjects.Additions, patchableObjects.Deletions)
+	err = handler.setter.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), id, relation, patchableObjects.Additions, patchableObjects.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -83,7 +83,7 @@ def test_create_and_get_public_dashboard(
         assert row["name"] == "signoz-anonymous"
 
         # verify the tuple creation for role
-        tuple_object_id = f"organization/{row["org_id"]}/role/signoz-anonymous"
+        tuple_object_id = f"organization/{row["org_id"]}/role/{row["id"]}"
         tuple_result = conn.execute(
             sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
             {"object_id": tuple_object_id},
@@ -206,6 +206,7 @@ def test_public_dashboard_widget_query_range(
         ),
         timeout=2,
     )
+    print(resp.json())
     assert resp.status_code == HTTPStatus.OK
     assert resp.json().get("status") == "success"
 

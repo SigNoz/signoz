@@ -24,7 +24,7 @@ var (
 )
 
 var (
-	roleNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
+	RoleNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
 )
 
 var (
@@ -81,6 +81,7 @@ type PostableRole struct {
 }
 
 type PatchableRole struct {
+	Name        *string `json:"name"`
 	Description *string `json:"description"`
 }
 
@@ -137,12 +138,15 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 
 }
 
-func (role *Role) PatchMetadata(description *string) error {
+func (role *Role) PatchMetadata(name, description *string) error {
 	err := role.CanEditDelete()
 	if err != nil {
 		return err
 	}
 
+	if name != nil {
+		role.Name = *name
+	}
 	if description != nil {
 		role.Description = *description
 	}
@@ -198,8 +202,8 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name is missing from the request")
 	}
 
-	if match := roleNameRegex.MatchString(shadowRole.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", roleNameRegex.String())
+	if match := RoleNameRegex.MatchString(shadowRole.Name); !match {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", RoleNameRegex.String())
 	}
 
 	role.Name = shadowRole.Name
@@ -210,6 +214,7 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	type shadowPatchableRole struct {
+		Name        *string `json:"name"`
 		Description *string `json:"description"`
 	}
 
@@ -218,16 +223,23 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if shadowRole.Description == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, description must be present")
+	if shadowRole.Name == nil && shadowRole.Description == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, at least one of name or description must be present")
 	}
 
+	if shadowRole.Name != nil {
+		if match := RoleNameRegex.MatchString(*shadowRole.Name); !match {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", RoleNameRegex.String())
+		}
+	}
+
+	role.Name = shadowRole.Name
 	role.Description = shadowRole.Description
 
 	return nil
 }
 
-func GetAdditionTuples(name string, orgID valuer.UUID, relation authtypes.Relation, additions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Relation, additions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
@@ -235,7 +247,7 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation authtypes.Relati
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
 				authtypes.TypeableRole,
-				name,
+				id.String(),
 				orgID,
 				&authtypes.RelationAssignee,
 			),
@@ -253,7 +265,7 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation authtypes.Relati
 	return tuples, nil
 }
 
-func GetDeletionTuples(name string, orgID valuer.UUID, relation authtypes.Relation, deletions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetDeletionTuples(id valuer.UUID, orgID valuer.UUID, relation authtypes.Relation, deletions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {
@@ -261,7 +273,7 @@ func GetDeletionTuples(name string, orgID valuer.UUID, relation authtypes.Relati
 		transactionTuples, err := typeable.Tuples(
 			authtypes.MustNewSubject(
 				authtypes.TypeableRole,
-				name,
+				id.String(),
 				orgID,
 				&authtypes.RelationAssignee,
 			),
