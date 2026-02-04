@@ -1,10 +1,6 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable react/display-name */
 import { jest } from '@jest/globals';
-// import { within } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-// import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { render, screen, userEvent } from 'tests/test-utils';
 import {
 	Having,
@@ -26,21 +22,27 @@ import {
 jest.mock(
 	'../QueryV2/QueryAggregation/QueryAggregation',
 	() =>
-		function () {
+		function QueryAggregation(): JSX.Element {
 			return <div>QueryAggregation</div>;
 		},
 );
 jest.mock(
 	'../QueryV2/MerticsAggregateSection/MetricsAggregateSection',
 	() =>
-		function () {
+		function MetricsAggregateSection(): JSX.Element {
 			return <div>MetricsAggregateSection</div>;
 		},
 );
 // Mock networked children to avoid axios during unit tests
-jest.mock('../QueryV2/QuerySearch/QuerySearch', () => () => <div />);
+jest.mock(
+	'../QueryV2/QuerySearch/QuerySearch',
+	() =>
+		function QuerySearch(): JSX.Element {
+			return <div>QuerySearch</div>;
+		},
+);
 jest.mock('container/QueryBuilder/filters', () => ({
-	AggregatorFilter: () => <div />,
+	AggregatorFilter: (): JSX.Element => <div />,
 }));
 // Mock hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder');

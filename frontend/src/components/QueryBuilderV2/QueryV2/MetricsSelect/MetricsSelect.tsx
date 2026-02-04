@@ -93,17 +93,15 @@ export const MetricsSelect = memo(function MetricsSelect({
 	);
 
 	const getDefaultQueryFromSource = useCallback(
-		(source: string): IBuilderQuery => {
-			if (source === 'meter') {
-				return {
-					...defaultMeterQuery.builder.queryData[0],
-					source: 'meter',
-					queryName: query.queryName,
-				};
-			}
+		(selectedSource: string): IBuilderQuery => {
+			const isMeter = selectedSource === 'meter';
+			const baseQuery = isMeter
+				? defaultMeterQuery.builder.queryData[0]
+				: defaultMetricsQuery.builder.queryData[0];
+
 			return {
-				...defaultMetricsQuery.builder.queryData[0],
-				source: '',
+				...baseQuery,
+				source: isMeter ? 'meter' : '',
 				queryName: query.queryName,
 			};
 		},
@@ -142,11 +140,9 @@ export const MetricsSelect = memo(function MetricsSelect({
 			// remove the new query key from session storage
 			removeKeyFromPreviousQuery(newQueryKey);
 
-			if (savedQuery) {
-				newQueryData = savedQuery;
-			} else {
-				newQueryData = getDefaultQueryFromSource(newSignalSource);
-			}
+			newQueryData = savedQuery
+				? savedQuery
+				: getDefaultQueryFromSource(newSignalSource);
 		} else {
 			newQueryData = getDefaultQueryFromSource(value);
 		}
