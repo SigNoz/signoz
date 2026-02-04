@@ -50,9 +50,6 @@ export const saveAsPreviousQuery = (
 	key: string,
 	query: IBuilderQuery,
 ): void => {
-	// allow only one previous query to be stored for now.
-	// In future, remove the clear to allow multiple keys to accumulate.
-	clearPreviousQuery();
 	const previousQuery = getPreviousQueryFromStore();
 	previousQuery[key] = query;
 	writePreviousQueryToStore(previousQuery);
