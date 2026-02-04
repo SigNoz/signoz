@@ -230,6 +230,11 @@ func postProcessTraceOperator(
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
+	if distData, ok := result.Value.(*qbtypes.DistributionData); ok {
+		result = q.applyDistributionLimit(result, distData, query.Limit, query.Order)
+		return result
+	}
+
 	result = q.applySeriesLimit(result, query.Limit, query.Order)
 
 	// Apply functions if any

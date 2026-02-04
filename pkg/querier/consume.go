@@ -475,7 +475,7 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 			return nil, err
 		}
 
-		var lblVals []string
+		var lblPairs []string
 		var lblObjs []*qbtypes.Label
 
 		for idx, ptr := range scan {
@@ -493,7 +493,7 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 			// Extract label values
 			switch v := ptr.(type) {
 			case *string:
-				lblVals = append(lblVals, *v)
+				lblPairs = append(lblPairs, fmt.Sprintf("%s=%s", name, *v))
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: *v,
@@ -505,7 +505,7 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 					var empty string
 					val = &empty
 				}
-				lblVals = append(lblVals, *val)
+				lblPairs = append(lblPairs, fmt.Sprintf("%s=%s", name, *val))
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: *val,
@@ -513,7 +513,7 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				lblVals = append(lblVals, fmt.Sprint(val))
+				lblPairs = append(lblPairs, fmt.Sprintf("%s=%v", name, val))
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: val,
@@ -523,7 +523,7 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 				tempVal := reflect.ValueOf(ptr)
 				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
 					val := numericAsFloat(tempVal.Elem().Elem().Interface())
-					lblVals = append(lblVals, fmt.Sprint(val))
+					lblPairs = append(lblPairs, fmt.Sprintf("%s=%v", name, val))
 					lblObjs = append(lblObjs, &qbtypes.Label{
 						Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 						Value: val,
@@ -532,8 +532,8 @@ func readAsDistribution(rows driver.Rows, queryName string) (any, error) {
 			}
 		}
 
-		sort.Strings(lblVals)
-		labelsKey := strings.Join(lblVals, ",")
+		sort.Strings(lblPairs)
+		labelsKey := strings.Join(lblPairs, ",")
 
 		// Process histogram data for each result column
 		for resultID, colIdx := range resultCols {
