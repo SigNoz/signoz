@@ -44,7 +44,7 @@ describe('AlertNotFound', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				"You clicked on the Alert notification link received when testing a new Alert rule. Don't worry this will take you to a live alert after the Alert rule is live. Once the alert rule is saved, future notifications will link to actual alerts.",
+				'You clicked on the Alert notification link received when testing a new Alert rule. Once the alert rule is saved, future notifications will link to actual alerts.',
 			),
 		).toBeInTheDocument();
 	});
