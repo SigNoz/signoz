@@ -112,7 +112,7 @@ def verify_webhook_alert_expectation(
                 break
 
         # wait for some time before checking again
-        time.sleep(10)
+        time.sleep(1)
 
     # We've waited but we didn't get the expected number of alerts
 
