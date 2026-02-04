@@ -1,3 +1,4 @@
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { render } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -11,6 +12,7 @@ describe('Table panel wrappper tests', () => {
 	it('table should render fine with the query response and column units', () => {
 		const { container, getByText } = render(
 			<TablePanelWrapper
+				panelMode={PanelMode.DASHBOARD}
 				widget={(tablePanelWidgetQuery as unknown) as Widgets}
 				queryResponse={(tablePanelQueryResponse as unknown) as any}
 				onDragSelect={(): void => {}}
