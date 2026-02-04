@@ -16,7 +16,7 @@ export const Label = styled.label`
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 1;
-	color: var(--levels-l1-foreground, #eceef2);
+	color: var(--l1-foreground);
 
 	.lightMode & {
 		color: var(--text-ink-500);

@@ -4,7 +4,7 @@
 	position: relative;
 	min-height: 100vh;
 	width: 100%;
-	background: var(--bg-neutral-dark-1000, #0a0c10);
+	background: var(--bg-neutral-dark-1000);
 	display: flex;
 	flex-direction: column;
 }
@@ -33,7 +33,7 @@
 .bg-dot-pattern {
 	background: radial-gradient(
 		circle,
-		var(--bg-neutral-dark-50, #eceef2) 1px,
+		var(--bg-neutral-dark-50) 1px,
 		transparent 1px
 	);
 	background-size: 12px 12px;
@@ -85,8 +85,8 @@
 	height: 100%;
 	background-image: repeating-linear-gradient(
 		to bottom,
-		var(--bg-ink-200, #23262e) 0px,
-		var(--bg-ink-200, #23262e) 4px,
+		var(--bg-ink-200) 0px,
+		var(--bg-ink-200) 4px,
 		transparent 4px,
 		transparent 8px
 	);
@@ -146,7 +146,7 @@
 
 .lightMode {
 	.auth-page-wrapper {
-		background: var(--bg-base-white, #ffffff);
+		background: var(--bg-base-white);
 	}
 
 	.bg-dot-pattern {
@@ -172,8 +172,8 @@
 	.auth-page-line-right {
 		background-image: repeating-linear-gradient(
 			to bottom,
-			var(--bg-vanilla-300, #e9e9e9) 0px,
-			var(--bg-vanilla-300, #e9e9e9) 4px,
+			var(--bg-vanilla-300) 0px,
+			var(--bg-vanilla-300) 4px,
 			transparent 4px,
 			transparent 8px
 		);
