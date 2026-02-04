@@ -1,11 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import AlertNotFound from '../AlertNotFound';
-
-import { userEvent } from 'tests/test-utils';
 import ROUTES from 'constants/routes';
-
 import * as useGetTenantLicense from 'hooks/useGetTenantLicense';
 import * as useSafeNavigate from 'hooks/useSafeNavigate';
+import { userEvent } from 'tests/test-utils';
+
+import AlertNotFound from '../AlertNotFound';
 
 jest.mock('lib/history', () => ({
 	__esModule: true,
@@ -25,6 +24,7 @@ const useSafeNavigateSpy = jest.spyOn(useSafeNavigate, 'useSafeNavigate');
 
 describe('AlertNotFound', () => {
 	beforeEach(() => {
+		mockSafeNavigate.mockClear();
 		window.open = jest.fn();
 		useGetTenantLicenseSpy.mockReturnValue({
 			isCloudUser: false,

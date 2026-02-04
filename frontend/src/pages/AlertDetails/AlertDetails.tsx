@@ -1,15 +1,17 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { Breadcrumb, Button, Divider, Empty } from 'antd';
+import { Breadcrumb, Button, Divider } from 'antd';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
@@ -18,11 +20,9 @@ import {
 } from 'types/api/alerts/alertTypesV2';
 
 import AlertHeader from './AlertHeader/AlertHeader';
+import AlertNotFound from './AlertNotFound';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 import { AlertDetailsStatusRendererProps } from './types';
-import { QueryParams } from 'constants/query';
-import AlertNotFound from './AlertNotFound';
-import useUrlQuery from 'hooks/useUrlQuery';
 
 import './AlertDetails.styles.scss';
 
@@ -80,7 +80,6 @@ BreadCrumbItem.defaultProps = {
 function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
-	const { t } = useTranslation(['alerts']);
 	const params = useUrlQuery();
 
 	const {
@@ -104,8 +103,11 @@ function AlertDetails(): JSX.Element {
 		if (isTestAlert) {
 			return 'Test Alert';
 		}
+		if (isLoading) {
+			return document.title;
+		}
 		return 'Alert Not Found';
-	}, [alertDetailsResponse?.payload?.data?.alert, isTestAlert]);
+	}, [alertDetailsResponse?.payload?.data?.alert, isTestAlert, isLoading]);
 
 	useEffect(() => {
 		document.title = getDocumentTile;
