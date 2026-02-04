@@ -64,12 +64,16 @@ function ForgotPassword({
 	const hasMultipleOrgs = orgs.length > 1;
 
 	const isSubmitEnabled = useMemo((): boolean => {
+		if (isLoading) {
+			return false;
+		}
+
 		if (!watchedEmail?.trim()) {
 			return false;
 		}
 
 		return !(hasMultipleOrgs && !selectedOrgId);
-	}, [watchedEmail, hasMultipleOrgs, selectedOrgId]);
+	}, [watchedEmail, hasMultipleOrgs, selectedOrgId, isLoading]);
 
 	const handleSubmit = (): void => {
 		const values = form.getFieldsValue();
