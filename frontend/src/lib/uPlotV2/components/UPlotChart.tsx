@@ -6,7 +6,6 @@ import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import uPlot, { AlignedData, Options } from 'uplot';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { usePlotContext } from '../context/PlotContext';
 import { UPlotChartProps } from './types';
 
@@ -49,7 +48,6 @@ export default function UPlotChart({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
-	const configUsedForPlotRef = useRef<UPlotConfigBuilder | null>(null);
 
 	/**
 	 * Destroy the existing plot instance if present.
@@ -99,7 +97,6 @@ export default function UPlotChart({
 		});
 
 		plotInstanceRef.current = plot;
-		configUsedForPlotRef.current = config;
 	}, [
 		config,
 		data,
