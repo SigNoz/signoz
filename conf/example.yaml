@@ -300,10 +300,8 @@ user:
       allow_self: true
       # The duration within which a user can reset their password.
       max_token_lifetime: 6h
-
-################### Root User ###################
-rootuser:
-  # The email of the root user.
-  email: root@example.com
-  # The password of the root user.
-  password: Str0ngP@ssw0rd!
+  root:
+    # The email of the root user.
+    email: root@example.com
+    # The password of the root user.
+    password: Str0ngP@ssw0rd!

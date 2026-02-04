@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/rootuser"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -14,10 +15,10 @@ import (
 type module struct {
 	store    types.RootUserStore
 	settings factory.ScopedProviderSettings
-	config   rootuser.Config
+	config   user.RootUserConfig
 }
 
-func NewModule(store types.RootUserStore, providerSettings factory.ProviderSettings, config rootuser.Config) rootuser.Module {
+func NewModule(store types.RootUserStore, providerSettings factory.ProviderSettings, config user.RootUserConfig) rootuser.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/rootuser/implrootuser")
 	return &module{
 		store:    store,

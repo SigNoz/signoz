@@ -6,8 +6,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/rootuser"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -15,10 +19,11 @@ type reconciler struct {
 	store     types.RootUserStore
 	settings  factory.ScopedProviderSettings
 	orgGetter organization.Getter
-	config    rootuser.Config
+	config    user.RootUserConfig
+	granter   role.Granter
 }
 
-func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings, orgGetter organization.Getter, config rootuser.Config) rootuser.Reconciler {
+func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings, orgGetter organization.Getter, config user.RootUserConfig, granter role.Granter) rootuser.Reconciler {
 	scopedSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/rootuser/implrootuser/reconciler")
 
 	return &reconciler{
@@ -26,16 +31,18 @@ func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings,
 		settings:  scopedSettings,
 		orgGetter: orgGetter,
 		config:    config,
+		granter:   granter,
 	}
 }
 
 func (r *reconciler) Reconcile(ctx context.Context) error {
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciling root user(s)", "config", r.config)
 	if !r.config.IsConfigured() {
-		r.settings.Logger().InfoContext(ctx, "Root user is not configured, skipping reconciliation")
+		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user is not configured, skipping reconciliation")
 		return nil
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Reconciling root user(s)")
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciling root user(s)")
 
 	// get the organizations that are owned by this instance of signoz
 	orgs, err := r.orgGetter.ListByOwnedKeyRange(ctx)
@@ -44,22 +51,22 @@ func (r *reconciler) Reconcile(ctx context.Context) error {
 	}
 
 	if len(orgs) == 0 {
-		r.settings.Logger().InfoContext(ctx, "No organizations owned by this instance of signoz, skipping reconciliation")
+		r.settings.Logger().InfoContext(ctx, "Reconciler: No organizations owned by this instance of signoz, skipping reconciliation")
 		return nil
 	}
 
 	for _, org := range orgs {
-		r.settings.Logger().InfoContext(ctx, "Reconciling root user for organization", "organization_id", org.ID, "organization_name", org.Name)
+		r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciling root user for organization", "organization_id", org.ID, "organization_name", org.Name)
 
 		err := r.reconcileRootUserForOrg(ctx, org)
 		if err != nil {
-			return errors.WrapInternalf(err, errors.CodeInternal, "failed to reconcile root user for organization", "organization_id", org.ID, "organization_name", org.Name)
+			return errors.WrapInternalf(err, errors.CodeInternal, "Reconciler: failed to reconcile root user for organization %s (%s)", org.Name, org.ID)
 		}
 
-		r.settings.Logger().InfoContext(ctx, "Root user reconciled for organization", "organization_id", org.ID, "organization_name", org.Name)
+		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user reconciled for organization", "organization_id", org.ID, "organization_name", org.Name)
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Reconciliation complete")
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciliation complete")
 
 	return nil
 }
@@ -90,14 +97,21 @@ func (r *reconciler) createRootUserForOrg(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Creating new root user for organization", "organization_id", orgID, "email", r.config.Email)
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Creating new root user for organization", "organization_id", orgID, "email", r.config.Email)
 
 	err = r.store.Create(ctx, rootUser)
 	if err != nil {
 		return err
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Root user created for organization", "organization_id", orgID, "email", r.config.Email)
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user created for organization", "organization_id", orgID, "email", r.config.Email)
+
+	err = r.granter.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, rootUser.ID.StringValue(), rootUser.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user granted admin role for organization", "organization_id", orgID, "email", r.config.Email)
 
 	return nil
 }
@@ -120,14 +134,21 @@ func (r *reconciler) updateRootUserForOrg(ctx context.Context, orgID valuer.UUID
 	}
 
 	if needsUpdate {
-		r.settings.Logger().InfoContext(ctx, "Updating root user for organization", "organization_id", orgID, "email", r.config.Email)
+		r.settings.Logger().InfoContext(ctx, "Reconciler: Updating root user for organization", "organization_id", orgID, "email", r.config.Email)
 		err := r.store.Update(ctx, orgID, rootUser.ID, rootUser)
 		if err != nil {
 			return err
 		}
-		r.settings.Logger().InfoContext(ctx, "Root user updated for organization", "organization_id", orgID, "email", r.config.Email)
+		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user updated for organization", "organization_id", orgID, "email", r.config.Email)
 		return nil
 	}
+
+	err := r.granter.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, rootUser.ID.StringValue(), rootUser.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
+	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user granted admin role for organization", "organization_id", orgID, "email", r.config.Email)
 
 	return nil
 }

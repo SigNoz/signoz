@@ -108,6 +108,8 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
+	SIGNOZ_USER_ROOT_EMAIL=root@example.com \
+	SIGNOZ_USER_ROOT_PASSWORD=Str0ngP@ssw0rd! \
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
 

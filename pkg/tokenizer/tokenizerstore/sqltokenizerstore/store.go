@@ -2,6 +2,7 @@ package sqltokenizerstore
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -34,6 +35,7 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 }
 
 func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
+	// try to get the user from the user table - this will be most common case
 	user := new(types.User)
 
 	err := store.
@@ -43,11 +45,36 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		Model(user).
 		Where("id = ?", userID).
 		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
+	// if err != nil {
+	// 	return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
+	// }
+
+	if err == nil {
+		// we found the user, return the identity
+		return authtypes.NewIdentity(userID, user.OrgID, user.Email, types.Role(user.Role)), nil
 	}
 
-	return authtypes.NewIdentity(userID, user.OrgID, user.Email, types.Role(user.Role)), nil
+	if err != sql.ErrNoRows {
+		// this is not a not found error, return the error, something else went wrong
+		return nil, err
+	}
+
+	// if the user not found, try to find that in root_user table
+	rootUser := new(types.RootUser)
+
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(rootUser).
+		Where("id = ?", userID).
+		Scan(ctx)
+
+	if err == nil {
+		return authtypes.NewIdentity(userID, rootUser.OrgID, rootUser.Email, types.RoleAdmin), nil
+	}
+
+	return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {
