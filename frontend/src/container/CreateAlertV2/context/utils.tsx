@@ -18,6 +18,7 @@ import {
 	INITIAL_ADVANCED_OPTIONS_STATE,
 	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,
+	INITIAL_CREATE_ALERT_STATE,
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from './constants';
@@ -28,6 +29,9 @@ import {
 	AlertThresholdAction,
 	AlertThresholdState,
 	CreateAlertAction,
+	CreateAlertReducerAction,
+	CreateAlertSlice,
+	CreateAlertState,
 	EvaluationWindowAction,
 	EvaluationWindowState,
 	NotificationSettingsAction,
@@ -249,5 +253,57 @@ export const notificationSettingsReducer = (
 			return action.payload;
 		default:
 			return state;
+	}
+};
+
+export const createAlertReducer = (
+	state: CreateAlertState,
+	action: CreateAlertReducerAction,
+): CreateAlertState => {
+	// Global actions
+	if ('type' in action) {
+		switch (action.type) {
+			case 'RESET':
+				return INITIAL_CREATE_ALERT_STATE;
+			case 'SET_INITIAL_STATE':
+				return action.payload;
+			default:
+				return state;
+		}
+	}
+
+	// Slice actions
+	switch (action.slice) {
+		case CreateAlertSlice.BASIC:
+			return { ...state, basic: alertCreationReducer(state.basic, action.action) };
+		case CreateAlertSlice.THRESHOLD:
+			return {
+				...state,
+				threshold: alertThresholdReducer(state.threshold, action.action),
+			};
+		case CreateAlertSlice.ADVANCED_OPTIONS:
+			return {
+				...state,
+				advancedOptions: advancedOptionsReducer(
+					state.advancedOptions,
+					action.action,
+				),
+			};
+		case CreateAlertSlice.EVALUATION_WINDOW:
+			return {
+				...state,
+				evaluationWindow: evaluationWindowReducer(
+					state.evaluationWindow,
+					action.action,
+				),
+			};
+		case CreateAlertSlice.NOTIFICATION_SETTINGS:
+			return {
+				...state,
+				notificationSettings: notificationSettingsReducer(
+					state.notificationSettings,
+					action.action,
+				),
+			};
 	}
 };
