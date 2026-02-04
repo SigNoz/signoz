@@ -466,11 +466,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		});
 	}, [manageCreditCard]);
 
-	// Set data-theme attribute once on mount (for signoz default theme)
-	useEffect(() => {
-		document.body.setAttribute('data-theme', 'default');
-	}, []);
-
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
