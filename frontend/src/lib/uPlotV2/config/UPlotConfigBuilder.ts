@@ -240,13 +240,21 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			this.widgetId && this.preferencesSource === PreferencesSource.LOCAL_STORAGE
 				? getStoredSeriesVisibility(this.widgetId)
 				: null;
+
+		// check if there is any hidden series in the visibility map
+		const isAnySeriesHidden =
+			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show);
+
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
 			const label = seriesConfig.label ?? '';
 			const seriesIndex = index + 1; // +1 because the first series is the timestamp
 
 			// Priority: stored visibility > series config > default (true)
-			const show = visibilityMap?.get(label) ?? seriesConfig.show ?? true;
+
+			const show = isAnySeriesHidden
+				? visibilityMap.get(label) ?? false
+				: seriesConfig.show ?? true;
 
 			acc[seriesIndex] = {
 				seriesIndex,
@@ -282,13 +290,19 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			visibilityMap = getStoredSeriesVisibility(this.widgetId);
 		}
 
+		// check if there is any hidden series in the visibility map
+		const isAnySeriesHidden =
+			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show);
+
 		config.series = [
 			{ value: (): string => '' }, // Base series for timestamp
 			...this.series.map((s) => {
 				// Apply visibility map to the series
 				const series = s.getConfig();
 				const label = series.label ?? '';
-				const visible = visibilityMap?.get(label) ?? series.show ?? true;
+				const visible = isAnySeriesHidden
+					? visibilityMap?.get(label) ?? false
+					: series.show ?? true;
 				return {
 					...series,
 					show: visible,

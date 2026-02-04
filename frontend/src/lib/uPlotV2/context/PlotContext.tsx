@@ -48,7 +48,7 @@ export const PlotContextProvider = ({
 
 	const syncSeriesVisibilityToLocalStorage = useCallback((): void => {
 		const plot = uPlotInstanceRef.current;
-		if (!plot || !widgetIdRef.current || !shouldSavePreferencesRef.current) {
+		if (!plot || !widgetIdRef.current) {
 			return;
 		}
 
