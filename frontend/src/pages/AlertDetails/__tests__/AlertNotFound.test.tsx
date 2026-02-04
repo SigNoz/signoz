@@ -84,8 +84,9 @@ describe('AlertNotFound', () => {
 	});
 
 	it('should navigate to the support page for self-hosted users when the contact support button is clicked', async () => {
+		const user = userEvent.setup();
 		render(<AlertNotFound isTestAlert={false} />);
-		await userEvent.click(screen.getByText('Contact Support'));
+		await user.click(screen.getByText('Contact Support'));
 		expect(window.open).toHaveBeenCalledWith('https://signoz.io/slack', '_blank');
 	});
 });

@@ -1,11 +1,11 @@
-import './AlertNotFound.styles.scss';
-
 import { Button, Typography } from 'antd';
+import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { LifeBuoy, List } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import ROUTES from 'constants/routes';
+
+import './AlertNotFound.styles.scss';
 
 interface AlertNotFoundProps {
 	isTestAlert: boolean;
