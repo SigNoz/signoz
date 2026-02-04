@@ -14,7 +14,7 @@ export function createInitialControllerState(): TooltipControllerState {
 	return {
 		plot: null,
 		hoverActive: false,
-		anySeriesActive: false,
+		isAnySeriesActive: false,
 		pinned: false,
 		style: { transform: '', pointerEvents: 'none' },
 		horizontalOffset: 0,
@@ -80,7 +80,7 @@ export function shouldShowTooltipForSync(
 ): boolean {
 	return (
 		controller.plotWithinViewport &&
-		controller.anySeriesActive &&
+		controller.isAnySeriesActive &&
 		syncTooltipWithDashboard
 	);
 }
@@ -88,7 +88,7 @@ export function shouldShowTooltipForSync(
 export function shouldShowTooltipForInteraction(
 	controller: TooltipControllerState,
 ): boolean {
-	return controller.focusedSeriesIndex != null || controller.anySeriesActive;
+	return controller.focusedSeriesIndex != null || controller.isAnySeriesActive;
 }
 
 export function updateHoverState(
@@ -171,7 +171,7 @@ export function createSetLegendHandler(
 		}
 
 		const newSeriesIndexes = controller.plot.cursor.idxs.slice();
-		const anySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
+		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
 
 		// Skip scheduling if legend data is unchanged
 		const seriesIndexesChanged = !isEqual(
@@ -180,7 +180,7 @@ export function createSetLegendHandler(
 		);
 
 		controller.seriesIndexes = newSeriesIndexes;
-		controller.anySeriesActive = anySeriesActive;
+		controller.isAnySeriesActive = isAnySeriesActive;
 		controller.cursorDrivenBySync = u.cursor.event == null;
 
 		const previousHover = controller.hoverActive;
