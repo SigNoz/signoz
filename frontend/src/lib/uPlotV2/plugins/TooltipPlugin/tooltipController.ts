@@ -25,7 +25,6 @@ export function createInitialControllerState(): TooltipControllerState {
 		plotWithinViewport: false,
 		windowWidth: window.innerWidth - WINDOW_OFFSET,
 		windowHeight: window.innerHeight - WINDOW_OFFSET,
-		renderScheduled: false,
 		pendingPinnedUpdate: false,
 	};
 }

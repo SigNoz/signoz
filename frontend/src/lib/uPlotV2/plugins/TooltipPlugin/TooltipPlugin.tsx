@@ -168,7 +168,6 @@ export default function TooltipPlugin({
 		// Push the latest controller state into React so the tooltip's
 		// DOM representation catches up with the interaction state.
 		function performRender(): void {
-			controller.renderScheduled = false;
 			rafId.current = null;
 			dismissTimeoutId.current = null;
 
@@ -202,19 +201,24 @@ export default function TooltipPlugin({
 		// - use rAF while hovering for smooth updates
 		// - use a small timeout when hiding to avoid flicker when
 		//   briefly leaving and re-entering the plot.
+		//
+		// Re-entering hover while a dismiss timeout is pending should
+		// cancel that timeout so it cannot fire with stale state.
 		function scheduleRender(updatePinned = false): void {
-			if (!controller.renderScheduled) {
-				cancelPendingRender();
-				if (controller.hoverActive) {
-					rafId.current = requestAnimationFrame(performRender);
-				} else {
-					dismissTimeoutId.current = setTimeout(
-						performRender,
-						HOVER_DISMISS_DELAY_MS,
-					);
-				}
-				controller.renderScheduled = true;
+			// Always cancel any existing pending callback first so that
+			// a newly scheduled render reflects the latest controller
+			// state (e.g. when quickly re-entering after a brief leave).
+			cancelPendingRender();
+
+			if (controller.hoverActive) {
+				rafId.current = requestAnimationFrame(performRender);
+			} else {
+				dismissTimeoutId.current = setTimeout(
+					performRender,
+					HOVER_DISMISS_DELAY_MS,
+				);
 			}
+
 			if (updatePinned) {
 				controller.pendingPinnedUpdate = true;
 			}
