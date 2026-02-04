@@ -173,6 +173,8 @@ export function createSetLegendHandler(
 		const newSeriesIndexes = controller.plot.cursor.idxs.slice();
 		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
 
+		const previousCursorDrivenBySync = controller.cursorDrivenBySync;
+
 		// Skip scheduling if legend data is unchanged
 		const seriesIndexesChanged = !isEqual(
 			controller.seriesIndexes,
@@ -187,8 +189,11 @@ export function createSetLegendHandler(
 		updateHoverState(controller, syncTooltipWithDashboard);
 		const hoverStateChanged = controller.hoverActive !== previousHover;
 
-		// Only schedule when legend data or hover state has meaningfully changed
-		if (seriesIndexesChanged || hoverStateChanged) {
+		const cursorDrivenBySyncChanged =
+			controller.cursorDrivenBySync !== previousCursorDrivenBySync;
+
+		// Only schedule when legend data, hover state, or sync‑driven state has changed
+		if (seriesIndexesChanged || hoverStateChanged || cursorDrivenBySyncChanged) {
 			ctx.scheduleRender();
 		}
 	};
