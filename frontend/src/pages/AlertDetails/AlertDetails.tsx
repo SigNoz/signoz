@@ -95,7 +95,7 @@ function AlertDetails(): JSX.Element {
 		return params.get(QueryParams.isTestAlert) === 'true';
 	}, [params]);
 
-	const getDocumentTile = useMemo(() => {
+	const getDocumentTitle = useMemo(() => {
 		const alertTitle = alertDetailsResponse?.payload?.data?.alert;
 		if (alertTitle) {
 			return alertTitle;
@@ -110,8 +110,8 @@ function AlertDetails(): JSX.Element {
 	}, [alertDetailsResponse?.payload?.data?.alert, isTestAlert, isLoading]);
 
 	useEffect(() => {
-		document.title = getDocumentTile;
-	}, [getDocumentTile]);
+		document.title = getDocumentTitle;
+	}, [getDocumentTitle]);
 
 	const alertRuleDetails = useMemo(
 		() => alertDetailsResponse?.payload?.data as PostableAlertRuleV2 | undefined,
@@ -122,6 +122,15 @@ function AlertDetails(): JSX.Element {
 		() => getCreateAlertLocalStateFromAlertDef(alertRuleDetails),
 		[alertRuleDetails],
 	);
+
+	if (
+		isError ||
+		!isValidRuleId ||
+		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200) ||
+		(!isLoading && !alertRuleDetails)
+	) {
+		return <AlertNotFound isTestAlert={isTestAlert} />;
+	}
 
 	const handleTabChange = (route: string): void => {
 		if (route === ROUTES.ALERT_HISTORY) {
@@ -134,15 +143,6 @@ function AlertDetails(): JSX.Element {
 	// Show spinner until we have alert data loaded
 	if (isLoading && !alertRuleDetails) {
 		return <Spinner />;
-	}
-
-	if (
-		isError ||
-		!isValidRuleId ||
-		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200) ||
-		(!isLoading && !alertRuleDetails)
-	) {
-		return <AlertNotFound isTestAlert={isTestAlert} />;
 	}
 
 	return (
