@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/rootuser/implrootuser"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -440,6 +441,15 @@ func New(
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	// Initialize and run the root user reconciler
+	rootUserStore := implrootuser.NewStore(sqlstore, providerSettings)
+	rootUserReconciler := implrootuser.NewReconciler(rootUserStore, providerSettings, orgGetter, config.RootUser)
+	err = rootUserReconciler.Reconcile(ctx)
+	if err != nil {
+		// Question: Should we fail the startup if the root user reconciliation fails?
 		return nil, err
 	}
 

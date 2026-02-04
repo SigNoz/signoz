@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rootuser"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -21,24 +22,26 @@ import (
 )
 
 type module struct {
-	settings   factory.ScopedProviderSettings
-	authNs     map[authtypes.AuthNProvider]authn.AuthN
-	user       user.Module
-	userGetter user.Getter
-	authDomain authdomain.Module
-	tokenizer  tokenizer.Tokenizer
-	orgGetter  organization.Getter
+	settings       factory.ScopedProviderSettings
+	authNs         map[authtypes.AuthNProvider]authn.AuthN
+	user           user.Module
+	userGetter     user.Getter
+	authDomain     authdomain.Module
+	tokenizer      tokenizer.Tokenizer
+	orgGetter      organization.Getter
+	rootUserModule rootuser.Module
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, rootUserModule rootuser.Module) session.Module {
 	return &module{
-		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
-		authNs:     authNs,
-		user:       user,
-		userGetter: userGetter,
-		authDomain: authDomain,
-		tokenizer:  tokenizer,
-		orgGetter:  orgGetter,
+		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
+		authNs:         authNs,
+		user:           user,
+		userGetter:     userGetter,
+		authDomain:     authDomain,
+		tokenizer:      tokenizer,
+		orgGetter:      orgGetter,
+		rootUserModule: rootUserModule,
 	}
 }
 
@@ -108,6 +111,18 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 }
 
 func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvider authtypes.AuthNProvider, email valuer.Email, password string, orgID valuer.UUID) (*authtypes.Token, error) {
+	// Root User Authentication
+	if module.rootUserModule != nil {
+		// Ignore root user authentication errors and continue with regular user authentication.
+		// This error can be either not found or incorrect password, in both cases we continue with regular user authentication.
+		identity, err := module.rootUserModule.Authenticate(ctx, orgID, email, password)
+		if err == nil && identity != nil {
+			// root user authentication successful
+			return module.tokenizer.CreateToken(ctx, identity, map[string]string{})
+		}
+	}
+
+	// Regular User Authentication
 	passwordAuthN, err := getProvider[authn.PasswordAuthN](authNProvider, module.authNs)
 	if err != nil {
 		return nil, err

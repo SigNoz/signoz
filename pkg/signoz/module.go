@@ -25,6 +25,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/rootuser"
+	"github.com/SigNoz/signoz/pkg/modules/rootuser/implrootuser"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
@@ -66,6 +68,7 @@ type Modules struct {
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
 	Promote         promote.Module
+	RootUser        rootuser.Module
 }
 
 func NewModules(
@@ -92,6 +95,8 @@ func NewModules(
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
+	rootUser := implrootuser.NewModule(implrootuser.NewStore(sqlstore, providerSettings), providerSettings, config.RootUser)
+
 	return Modules{
 		OrgGetter:       orgGetter,
 		OrgSetter:       orgSetter,
@@ -105,10 +110,11 @@ func NewModules(
 		TraceFunnel:     impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:   implrawdataexport.NewModule(querier),
 		AuthDomain:      implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
+		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter, rootUser),
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		RootUser:        rootUser,
 	}
 }

@@ -29,6 +29,7 @@ type Identity struct {
 	OrgID  valuer.UUID  `json:"orgId"`
 	Email  valuer.Email `json:"email"`
 	Role   types.Role   `json:"role"`
+	IsRoot bool         `json:"isRoot"`
 }
 
 type CallbackIdentity struct {
@@ -84,6 +85,17 @@ func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role
 		OrgID:  orgID,
 		Email:  email,
 		Role:   role,
+		IsRoot: false,
+	}
+}
+
+func NewRootIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email) *Identity {
+	return &Identity{
+		UserID: userID,
+		OrgID:  orgID,
+		Email:  email,
+		Role:   types.RoleAdmin,
+		IsRoot: true,
 	}
 }
 
