@@ -49,14 +49,14 @@
     },
     "selectedQueryName": "A",
     "alertOnAbsent": true,
-    "absentFor": 300,
+    "absentFor": 1,
     "requireMinPoints": false
   },
   "evaluation": {
     "kind": "rolling",
     "spec": {
       "evalWindow": "5m0s",
-      "frequency": "1m"
+      "frequency": "1s"
     }
   },
   "labels": {},
