@@ -1,6 +1,8 @@
 @import '@signozhq/design-tokens/dist/style.css';
 @import 'overlayscrollbars/overlayscrollbars.css';
 
+@import '@signozhq/design-tokens/dist/themes/signoz-tokens.css';
+
 @import './periscope.scss';
 
 /* Import fonts from CDN */
@@ -540,10 +542,10 @@ body {
 }
 
 .ant-tooltip {
-	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
+	--antd-arrow-background-color: var(--l2-background);
 
 	.ant-tooltip-inner {
-		background-color: var(--bg-slate-400, #1d212d);
+		background-color: var(--l2-background);
 	}
 	.flexBtn {
 		display: flex;
