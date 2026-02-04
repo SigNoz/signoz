@@ -61,7 +61,6 @@ export interface TooltipControllerState {
 	plotWithinViewport: boolean;
 	windowWidth: number;
 	windowHeight: number;
-	renderScheduled: boolean;
 	pendingPinnedUpdate: boolean;
 }
 
