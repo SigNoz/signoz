@@ -55,10 +55,10 @@ def test_webhook_notification_channel(
     )
 
     # TODO: @abhishekhugetech # pylint: disable=W0511
-    # Time required for Org to be registered
-    # in the alertmanager, default 1m.
+    # Time required for newly created Org to be registered in the alertmanager is 5 seconds in signoz.py
     # this will be fixed after [https://github.com/SigNoz/engineering-pod/issues/3800]
-    time.sleep(65)
+    # 10 seconds safe time for org to be registered in the alertmanager
+    time.sleep(10) 
 
     # Call test API for the notification channel
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
