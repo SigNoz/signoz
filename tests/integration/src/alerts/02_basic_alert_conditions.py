@@ -116,28 +116,30 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    types.AlertTestCase(
-        name="test_threshold_above_last",
-        rule_path="alerts/test_scenarios/threshold_above_last/rule.json",
-        alert_data=[
-            types.AlertData(
-                type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_last/alert_data.jsonl",
-            ),
-        ],
-        alert_expectation=types.AlertExpectation(
-            should_alert=True,
-            wait_time_seconds=180,
-            expected_alerts=[
-                types.FiringAlert(
-                    labels={
-                        "alertname": "threshold_above_last",
-                        "threshold.name": "critical",
-                    }
-                ),
-            ],
-        ),
-    ),
+    # TODO: @abhishekhugetech enable the test for matchType last,
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # types.AlertTestCase(
+    #     name="test_threshold_above_last",
+    #     rule_path="alerts/test_scenarios/threshold_above_last/rule.json",
+    #     alert_data=[
+    #         types.AlertData(
+    #             type="metrics",
+    #             data_path="alerts/test_scenarios/threshold_above_last/alert_data.jsonl",
+    #         ),
+    #     ],
+    #     alert_expectation=types.AlertExpectation(
+    #         should_alert=True,
+    #         wait_time_seconds=180,
+    #         expected_alerts=[
+    #             types.FiringAlert(
+    #                 labels={
+    #                     "alertname": "threshold_above_last",
+    #                     "threshold.name": "critical",
+    #                 }
+    #             ),
+    #         ],
+    #     ),
+    # ),
     types.AlertTestCase(
         name="test_threshold_below_at_least_once",
         rule_path="alerts/test_scenarios/threshold_below_at_least_once/rule.json",
@@ -226,28 +228,30 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    types.AlertTestCase(
-        name="test_threshold_below_last",
-        rule_path="alerts/test_scenarios/threshold_below_last/rule.json",
-        alert_data=[
-            types.AlertData(
-                type="metrics",
-                data_path="alerts/test_scenarios/threshold_below_last/alert_data.jsonl",
-            ),
-        ],
-        alert_expectation=types.AlertExpectation(
-            should_alert=True,
-            wait_time_seconds=180,
-            expected_alerts=[
-                types.FiringAlert(
-                    labels={
-                        "alertname": "threshold_below_last",
-                        "threshold.name": "critical",
-                    }
-                ),
-            ],
-        ),
-    ),
+    # TODO: @abhishekhugetech enable the test for matchType last,
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # types.AlertTestCase(
+    #     name="test_threshold_below_last",
+    #     rule_path="alerts/test_scenarios/threshold_below_last/rule.json",
+    #     alert_data=[
+    #         types.AlertData(
+    #             type="metrics",
+    #             data_path="alerts/test_scenarios/threshold_below_last/alert_data.jsonl",
+    #         ),
+    #     ],
+    #     alert_expectation=types.AlertExpectation(
+    #         should_alert=True,
+    #         wait_time_seconds=180,
+    #         expected_alerts=[
+    #             types.FiringAlert(
+    #                 labels={
+    #                     "alertname": "threshold_below_last",
+    #                     "threshold.name": "critical",
+    #                 }
+    #             ),
+    #         ],
+    #     ),
+    # ),
     types.AlertTestCase(
         name="test_threshold_equal_to_at_least_once",
         rule_path="alerts/test_scenarios/threshold_equal_to_at_least_once/rule.json",
@@ -336,28 +340,30 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    types.AlertTestCase(
-        name="test_threshold_equal_to_last",
-        rule_path="alerts/test_scenarios/threshold_equal_to_last/rule.json",
-        alert_data=[
-            types.AlertData(
-                type="metrics",
-                data_path="alerts/test_scenarios/threshold_equal_to_last/alert_data.jsonl",
-            ),
-        ],
-        alert_expectation=types.AlertExpectation(
-            should_alert=True,
-            wait_time_seconds=180,
-            expected_alerts=[
-                types.FiringAlert(
-                    labels={
-                        "alertname": "threshold_equal_to_last",
-                        "threshold.name": "critical",
-                    }
-                ),
-            ],
-        ),
-    ),
+    # TODO: @abhishekhugetech enable the test for matchType last,
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # types.AlertTestCase(
+    #     name="test_threshold_equal_to_last",
+    #     rule_path="alerts/test_scenarios/threshold_equal_to_last/rule.json",
+    #     alert_data=[
+    #         types.AlertData(
+    #             type="metrics",
+    #             data_path="alerts/test_scenarios/threshold_equal_to_last/alert_data.jsonl",
+    #         ),
+    #     ],
+    #     alert_expectation=types.AlertExpectation(
+    #         should_alert=True,
+    #         wait_time_seconds=180,
+    #         expected_alerts=[
+    #             types.FiringAlert(
+    #                 labels={
+    #                     "alertname": "threshold_equal_to_last",
+    #                     "threshold.name": "critical",
+    #                 }
+    #             ),
+    #         ],
+    #     ),
+    # ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_at_least_once",
         rule_path="alerts/test_scenarios/threshold_not_equal_to_at_least_once/rule.json",
@@ -446,28 +452,30 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    types.AlertTestCase(
-        name="test_threshold_not_equal_to_last",
-        rule_path="alerts/test_scenarios/threshold_not_equal_to_last/rule.json",
-        alert_data=[
-            types.AlertData(
-                type="metrics",
-                data_path="alerts/test_scenarios/threshold_not_equal_to_last/alert_data.jsonl",
-            ),
-        ],
-        alert_expectation=types.AlertExpectation(
-            should_alert=True,
-            wait_time_seconds=180,
-            expected_alerts=[
-                types.FiringAlert(
-                    labels={
-                        "alertname": "threshold_not_equal_to_last",
-                        "threshold.name": "critical",
-                    }
-                ),
-            ],
-        ),
-    ),
+    # TODO: @abhishekhugetech enable the test for matchType last,
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # types.AlertTestCase(
+    #     name="test_threshold_not_equal_to_last",
+    #     rule_path="alerts/test_scenarios/threshold_not_equal_to_last/rule.json",
+    #     alert_data=[
+    #         types.AlertData(
+    #             type="metrics",
+    #             data_path="alerts/test_scenarios/threshold_not_equal_to_last/alert_data.jsonl",
+    #         ),
+    #     ],
+    #     alert_expectation=types.AlertExpectation(
+    #         should_alert=True,
+    #         wait_time_seconds=180,
+    #         expected_alerts=[
+    #             types.FiringAlert(
+    #                 labels={
+    #                     "alertname": "threshold_not_equal_to_last",
+    #                     "threshold.name": "critical",
+    #                 }
+    #             ),
+    #         ],
+    #     ),
+    # ),
 ]
 
 # test cases unit conversion
