@@ -117,4 +117,24 @@ export type GetSeriesProps = {
 	colorMapping?: Record<string, string>;
 };
 
+export const toggleSeriesVisibility = (
+	currentStates: boolean[],
+	seriesIndex: number,
+): boolean[] => {
+	const newStates = [...currentStates];
+
+	const isOnlyVisible =
+		newStates[seriesIndex] &&
+		newStates.every((value, i) => (i === seriesIndex ? value : !value));
+
+	if (isOnlyVisible) {
+		newStates.fill(true);
+	} else {
+		newStates.fill(false);
+		newStates[seriesIndex] = true;
+	}
+
+	return newStates;
+};
+
 export default getSeries;

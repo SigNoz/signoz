@@ -9,6 +9,7 @@ import uPlot from 'uplot';
 import onClickPlugin from '../plugins/onClickPlugin';
 import tooltipPlugin from '../plugins/tooltipPlugin';
 import getAxes from './getAxes';
+import { toggleSeriesVisibility } from './getSeriesData';
 
 export type DistributionSeriesConfig = {
 	name: string;
@@ -119,53 +120,6 @@ const calculateLogScaleRange = (u: uPlot): [number, number] => {
 	return [10 ** minPow, 10 ** maxPow];
 };
 
-const createLegendClickHandler = (
-	setGraphsVisibilityStates: (
-		updater: boolean[] | ((prev: boolean[]) => boolean[]),
-	) => void,
-) => (self: uPlot): void => {
-	const legend = self.root.querySelector('.u-legend');
-	if (!legend) {
-		return;
-	}
-
-	const seriesEls = legend.querySelectorAll('.u-series');
-	const seriesArray = Array.from(seriesEls);
-
-	seriesArray.forEach((seriesEl, index) => {
-		const thElement = seriesEl.querySelector('th');
-		if (!thElement) {
-			return;
-		}
-
-		const newThElement = thElement.cloneNode(true) as HTMLElement;
-		thElement.parentNode?.replaceChild(newThElement, thElement);
-
-		newThElement.addEventListener('click', (e) => {
-			e.preventDefault();
-			e.stopPropagation();
-
-			setGraphsVisibilityStates((prev) => {
-				const newStates = [...prev];
-				const seriesIndex = index + 1;
-
-				const isOnlyVisible =
-					newStates[seriesIndex] &&
-					newStates.every((value, i) => (i === seriesIndex ? value : !value));
-
-				if (isOnlyVisible) {
-					newStates.fill(true);
-				} else {
-					newStates.fill(false);
-					newStates[seriesIndex] = true;
-				}
-
-				return newStates;
-			});
-		});
-	});
-};
-
 const createBucketZoomHandler = (
 	onBucketZoom: (startBucket: number, endBucket: number) => void,
 ) => (self: uPlot): void => {
@@ -184,6 +138,7 @@ const createBucketZoomHandler = (
 	}
 };
 
+/* eslint-disable sonarjs/cognitive-complexity */
 export const getUplotDistributionChartOptions = ({
 	id,
 	apiResponse,
@@ -210,7 +165,36 @@ export const getUplotDistributionChartOptions = ({
 	const hooks: uPlot.Hooks.Arrays = {};
 
 	if (setGraphsVisibilityStates && graphsVisibilityStates) {
-		hooks.ready = [createLegendClickHandler(setGraphsVisibilityStates)];
+		hooks.ready = [
+			(self: uPlot): void => {
+				const legend = self.root.querySelector('.u-legend');
+				if (!legend) {
+					return;
+				}
+
+				const seriesEls = legend.querySelectorAll('.u-series');
+				const seriesArray = Array.from(seriesEls);
+
+				seriesArray.forEach((seriesEl, index) => {
+					const thElement = seriesEl.querySelector('th');
+					if (!thElement) {
+						return;
+					}
+
+					const newThElement = thElement.cloneNode(true) as HTMLElement;
+					thElement.parentNode?.replaceChild(newThElement, thElement);
+
+					newThElement.addEventListener('click', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+
+						setGraphsVisibilityStates((prev) =>
+							toggleSeriesVisibility(prev, index + 1),
+						);
+					});
+				});
+			},
+		];
 	}
 
 	if (onBucketZoom) {

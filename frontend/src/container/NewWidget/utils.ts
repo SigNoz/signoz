@@ -650,7 +650,7 @@ export function handleQueryChange(
 					newPanelType !== PANEL_TYPES.DISTRIBUTION &&
 					(dataSource === DataSource.LOGS || dataSource === DataSource.TRACES)
 				) {
-					set(tempQuery, 'aggregations', [{ expression: 'count() ' }]);
+					set(tempQuery, 'aggregations', [{ expression: 'count()' }]);
 				}
 
 				return tempQuery;
