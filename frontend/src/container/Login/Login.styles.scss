@@ -33,7 +33,7 @@
 	font-weight: 600;
 	line-height: 1;
 	letter-spacing: 0;
-	color: var(--levels-l1-foreground, #eceef2);
+	color: var(--l1-foreground);
 	margin: 0 !important;
 }
 
@@ -43,7 +43,7 @@
 	font-weight: 400;
 	line-height: 20px;
 	letter-spacing: -0.065px;
-	color: var(--semantic-secondary-foreground, #adb4c2);
+	color: var(--l2-foreground);
 	max-width: 317px;
 	margin: 0 !important;
 	text-align: center;
@@ -51,8 +51,8 @@
 
 .login-form-card {
 	width: 100%;
-	background: var(--semantic-secondary-background, #121317);
-	border: 1px solid var(--semantic-secondary-border, #23262e);
+	background: var(--bg-neutral-dark-950);
+	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	padding: 24px;
 	display: flex;
@@ -174,12 +174,12 @@
 
 			&__docs-button {
 				color: var(--bg-ink-400);
-				border-color: var(--bg-vanilla-300, #e9e9e9);
+				border-color: var(--bg-vanilla-300);
 				background: transparent;
 
 				&:hover {
 					color: var(--bg-ink-100);
-					border-color: var(--bg-vanilla-400, #d1d5db);
+					border-color: var(--bg-vanilla-400);
 					background: transparent;
 				}
 			}
@@ -230,8 +230,8 @@
 
 .login-form-input {
 	height: 32px;
-	background: var(--levels-l3-background, #23262e);
-	border: 1px solid var(--levels-l3-border, #2c303a);
+	background: var(--l3-background);
+	border: 1px solid var(--l3-border);
 	border-radius: 2px;
 	padding: 6px 8px;
 	font-family: Inter, sans-serif;
@@ -239,18 +239,18 @@
 	font-weight: 400;
 	line-height: 1;
 	letter-spacing: -0.065px;
-	color: var(--levels-l1-foreground, #eceef2);
+	color: var(--l1-foreground);
 
 	&::placeholder {
-		color: var(--levels-l3-foreground, #747b8b);
+		color: var(--l3-foreground);
 	}
 
 	&:hover {
-		border-color: var(--levels-l3-border, #2c303a);
+		border-color: var(--l3-border);
 	}
 
 	&:focus {
-		border-color: var(--semantic-primary-background, #4e74f8);
+		border-color: var(--primary);
 		box-shadow: none;
 	}
 
@@ -271,8 +271,8 @@
 			font-weight: 400 !important;
 			line-height: 1 !important;
 			letter-spacing: -0.065px !important;
-			background: var(--levels-l3-background, #23262e) !important;
-			border: 1px solid var(--levels-l3-border, #2c303a) !important;
+			background: var(--l3-background) !important;
+			border: 1px solid var(--l3-border) !important;
 			display: flex !important;
 			align-items: center !important;
 		}
@@ -296,19 +296,19 @@
 		}
 
 		.ant-select-selection-placeholder {
-			color: var(--levels-l3-foreground, #747b8b) !important;
+			color: var(--l3-foreground) !important;
 		}
 
 		.ant-select-selection-item {
-			color: var(--levels-l1-foreground, #eceef2) !important;
+			color: var(--l1-foreground) !important;
 		}
 
 		&:hover .ant-select-selector {
-			border-color: var(--levels-l3-border, #2c303a) !important;
+			border-color: var(--l3-border) !important;
 		}
 
 		&.ant-select-focused .ant-select-selector {
-			border-color: var(--semantic-primary-background, #4e74f8) !important;
+			border-color: var(--primary) !important;
 			box-shadow: none !important;
 		}
 	}
@@ -339,26 +339,26 @@
 	width: 100%;
 	height: 32px;
 	padding: 10px 16px;
-	background: var(--semantic-primary-background, #4e74f8);
+	background: var(--primary);
 	border: none;
 	border-radius: 2px;
 	font-family: Inter, sans-serif;
 	font-size: 11px;
 	font-weight: 500;
 	line-height: 1;
-	color: var(--semantic-primary-foreground, #eceef2);
+	color: var(--bg-neutral-dark-50);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
 
 	&:hover:not(:disabled) {
-		background: var(--semantic-primary-background, #4e74f8);
+		background: var(--primary);
 		opacity: 0.9;
 	}
 
 	&:disabled {
-		background: var(--semantic-primary-background, #4e74f8);
+		background: var(--primary);
 		opacity: 0.6;
 		cursor: not-allowed;
 	}
@@ -370,12 +370,12 @@
 	}
 
 	.login-form-description {
-		color: var(--text-neutral-light-200, #80828d);
+		color: var(--text-neutral-light-200);
 	}
 
 	.login-form-card {
-		background: var(--bg-base-white, #ffffff);
-		border-color: var(--bg-vanilla-300, #e9e9e9);
+		background: var(--bg-base-white);
+		border-color: var(--bg-vanilla-300);
 	}
 
 	.forgot-password-link {
@@ -383,28 +383,28 @@
 	}
 
 	.login-form-input {
-		background: var(--bg-vanilla-200, #f5f5f5);
-		border-color: var(--bg-vanilla-300, #e9e9e9);
+		background: var(--bg-vanilla-200);
+		border-color: var(--bg-vanilla-300);
 		color: var(--text-ink-500);
 
 		&::placeholder {
-			color: var(--text-neutral-light-200, #80828d);
+			color: var(--text-neutral-light-200);
 		}
 
 		&:focus {
-			border-color: var(--semantic-primary-background, #4e74f8);
+			border-color: var(--primary);
 		}
 
 		// Select component light mode styling
 		&.ant-select {
 			.ant-select-selector {
-				background: var(--bg-vanilla-200, #f5f5f5) !important;
-				border-color: var(--bg-vanilla-300, #e9e9e9) !important;
+				background: var(--bg-vanilla-200) !important;
+				border-color: var(--bg-vanilla-300) !important;
 				color: var(--text-ink-500) !important;
 			}
 
 			.ant-select-selection-placeholder {
-				color: var(--text-neutral-light-200, #80828d) !important;
+				color: var(--text-neutral-light-200) !important;
 			}
 
 			.ant-select-selection-item {
@@ -412,11 +412,11 @@
 			}
 
 			&:hover .ant-select-selector {
-				border-color: var(--bg-vanilla-300, #e9e9e9) !important;
+				border-color: var(--bg-vanilla-300) !important;
 			}
 
 			&.ant-select-focused .ant-select-selector {
-				border-color: var(--semantic-primary-background, #4e74f8) !important;
+				border-color: var(--primary) !important;
 			}
 		}
 	}
