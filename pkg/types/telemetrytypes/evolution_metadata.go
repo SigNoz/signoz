@@ -22,16 +22,3 @@ type EvolutionSelector struct {
 func GetEvolutionMetadataUniqueKey(selector *EvolutionSelector) string {
 	return selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
 }
-
-func GetEvolutionFromEvolutionsMap(key *TelemetryFieldKey, evolutions map[string][]*EvolutionEntry) []*EvolutionEntry {
-	var keyEvolutions []*EvolutionEntry
-	uniqueKey := GetEvolutionMetadataUniqueKey(&EvolutionSelector{
-		Signal:       key.Signal,
-		FieldContext: key.FieldContext,
-		FieldName:    "__all__",
-	})
-	if value, ok := evolutions[uniqueKey]; ok {
-		keyEvolutions = value
-	}
-	return keyEvolutions
-}

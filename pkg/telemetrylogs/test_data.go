@@ -1038,7 +1038,6 @@ func mockKeyEvolutionMetadata(signal telemetrytypes.Signal, fieldContext telemet
 	uniqueKey := telemetrytypes.GetEvolutionMetadataUniqueKey(&telemetrytypes.EvolutionSelector{
 		Signal:       signal,
 		FieldContext: fieldContext,
-		FieldName:    "__all__",
 	})
 	metadata[uniqueKey] = newKeyEvolutionMetadataEntry
 	return metadata

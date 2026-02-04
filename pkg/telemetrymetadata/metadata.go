@@ -577,19 +577,20 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		return nil, false, err
 	}
 	for i, key := range keys {
-		// Use the same logic as getMetadataKeySelectors to determine the selector key
-		fieldName := "__all__"
-		if keys[i].FieldContext == telemetrytypes.FieldContextBody {
-			fieldName = key.Name
+		// first check if there is evolutions that with field name as __all__
+		// then check for specific field name
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       key.Signal,
+			FieldContext: key.FieldContext,
+			FieldName:    "__all__",
 		}
-		cacheKey := telemetrytypes.GetEvolutionMetadataUniqueKey(
-			&telemetrytypes.EvolutionSelector{
-				Signal:       key.Signal,
-				FieldContext: key.FieldContext,
-				FieldName:    fieldName,
-			},
-		)
-		if keyEvolutions, ok := evolutions[cacheKey]; ok {
+
+		if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+			keys[i].Evolutions = keyEvolutions
+		}
+
+		selector.FieldName = key.Name
+		if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
 			keys[i].Evolutions = keyEvolutions
 		}
 	}
@@ -1880,24 +1881,9 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries, nil
 }
 
-// Get retrieves all metadata keys for the given selector from DB.
-// Returns an empty slice if the key is not found in cache.
-// Use cache as an enhancement
+// Get retrieves all evolutions for the given selectors from DB.
 func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
-	// deduplicated selectors
-	deduplicatedSelectors := make(map[string]*telemetrytypes.EvolutionSelector)
-	for _, selector := range selectors {
-		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
-		if _, ok := deduplicatedSelectors[key]; !ok {
-			deduplicatedSelectors[key] = selector
-		}
-	}
-	deduplicatedSelectorsList := make([]*telemetrytypes.EvolutionSelector, 0, len(deduplicatedSelectors))
-	for _, selector := range deduplicatedSelectors {
-		deduplicatedSelectorsList = append(deduplicatedSelectorsList, selector)
-	}
-
-	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, deduplicatedSelectorsList)
+	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, selectors)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}
@@ -1905,7 +1891,11 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context
 	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
 
 	for _, evolution := range evolutions {
-		key := evolution.Signal.StringValue() + ":" + evolution.FieldContext.StringValue() + ":" + evolution.FieldName
+		key := telemetrytypes.GetEvolutionMetadataUniqueKey(&telemetrytypes.EvolutionSelector{
+			Signal:       evolution.Signal,
+			FieldContext: evolution.FieldContext,
+			FieldName:    evolution.FieldName,
+		})
 		evolutionsByUniqueKey[key] = append(evolutionsByUniqueKey[key], evolution)
 	}
 	return evolutionsByUniqueKey, nil

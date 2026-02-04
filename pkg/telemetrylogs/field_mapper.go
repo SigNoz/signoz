@@ -230,10 +230,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 	var newColumns []*schema.Column
 	var evolutionsEntries []*telemetrytypes.EvolutionEntry
 	if len(key.Evolutions) > 0 {
-		// hardcoded for now, make it dynamic while supporting JSON
-		fieldName := "__all__"
 		// we will use the corresponding column and its evolution entry for the query
-		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd, fieldName)
+		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd, key.Name)
 		if err != nil {
 			return "", err
 		}

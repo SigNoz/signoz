@@ -211,13 +211,18 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	ctx := context.Background()
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, releaseTime)
 	keysMap := buildCompleteFieldKeyMap()
-	for _, keys := range keysMap {
-		for _, key := range keys {
-			key.Signal = telemetrytypes.SignalLogs
+
+	// for each key of resource attribute add evolution metadata
+	for i, telemetryKeys := range keysMap {
+		for j, telemetryKey := range telemetryKeys {
+			if telemetryKey.FieldContext == telemetrytypes.FieldContextResource {
+				keysMap[i][j].Signal = telemetrytypes.SignalLogs
+				keysMap[i][j].Evolutions = mockEvolutionData(releaseTime)
+			}
 		}
 	}
+
 	mockMetadataStore.KeysMap = keysMap
 
 	fm := NewFieldMapper()

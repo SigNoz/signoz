@@ -180,16 +180,14 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 		column := columns[0]
 		if len(key.Evolutions) > 0 {
-			// hardcoded for now, make it dynamic while supporting JSON
-			fieldName := "__all__"
 			// we will use the corresponding column and its evolution entry for the query
-			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, fieldName)
+			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, key.Name)
 			if err != nil {
 				return "", err
 			}
 
 			if len(newColumns) == 0 {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", fieldName)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
 			}
 
 			// This mean tblFieldName has multiIf already present so I can just return exists or not exists

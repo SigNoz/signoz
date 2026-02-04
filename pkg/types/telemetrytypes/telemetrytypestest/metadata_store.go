@@ -106,19 +106,20 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 			return nil, false, err
 		}
 		for i, key := range keys {
-			// Use the same logic as getMetadataKeySelectors to determine the selector key
-			fieldName := "__all__"
-			if keys[i].FieldContext == telemetrytypes.FieldContextBody {
-				fieldName = key.Name
+			// first check if there is evolutions that with field name as __all__
+			// then check for specific field name
+			selector := &telemetrytypes.EvolutionSelector{
+				Signal:       key.Signal,
+				FieldContext: key.FieldContext,
+				FieldName:    "__all__",
 			}
-			cacheKey := telemetrytypes.GetEvolutionMetadataUniqueKey(
-				&telemetrytypes.EvolutionSelector{
-					Signal:       key.Signal,
-					FieldContext: key.FieldContext,
-					FieldName:    fieldName,
-				},
-			)
-			if keyEvolutions, ok := evolutions[cacheKey]; ok {
+
+			if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+				keys[i].Evolutions = keyEvolutions
+			}
+
+			selector.FieldName = key.Name
+			if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
 				keys[i].Evolutions = keyEvolutions
 			}
 		}
@@ -134,7 +135,7 @@ func getMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) [
 		selector := &telemetrytypes.EvolutionSelector{
 			Signal:       keySelector.Signal,
 			FieldContext: keySelector.FieldContext,
-			FieldName:    "__all__", // Hardcoded for now
+			FieldName:    keySelector.Name,
 		}
 		if keySelector.FieldContext == telemetrytypes.FieldContextBody {
 			selector.FieldName = keySelector.Name
@@ -359,27 +360,18 @@ func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...
 func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
 	result := make(map[string][]*telemetrytypes.EvolutionEntry)
 
-	deduplicatedSelectors := make(map[string]*telemetrytypes.EvolutionSelector)
-	for _, selector := range selectors {
-		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
-		if _, ok := deduplicatedSelectors[key]; !ok {
-			deduplicatedSelectors[key] = selector
-		}
-	}
-
 	// Iterate over each selector
-	for _, selector := range deduplicatedSelectors {
-		if selector == nil {
-			continue
-		}
+	for i, selector := range selectors {
 		// Build the key: Signal:FieldContext:FieldName
+		selector.FieldName = "__all__"
 		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
-
-		entries, exists := m.ColumnEvolutionMetadataMap[key]
-		if exists && len(entries) > 0 {
-			// Return a copy to prevent external modification
-			result[key] = make([]*telemetrytypes.EvolutionEntry, len(entries))
-			copy(result[key], entries)
+		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
+			result[key] = entries
+		}
+		selector.FieldName = selectors[i].FieldName
+		key = telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
+		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
+			result[key] = entries
 		}
 	}
 
