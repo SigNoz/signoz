@@ -338,7 +338,7 @@ describe('CreateAlertV2 utils', () => {
 			const props = getCreateAlertLocalStateFromAlertDef(args);
 			expect(props).toBeDefined();
 			expect(props).toMatchObject({
-				basicAlertState: {
+				basic: {
 					...INITIAL_ALERT_STATE,
 					name: 'test-alert',
 					labels: {
@@ -348,10 +348,10 @@ describe('CreateAlertV2 utils', () => {
 					yAxisUnit: UniversalYAxisUnit.MINUTES,
 				},
 				// as we have already verified these utils in their respective tests
-				thresholdState: expect.any(Object),
-				advancedOptionsState: expect.any(Object),
-				evaluationWindowState: expect.any(Object),
-				notificationSettingsState: expect.any(Object),
+				threshold: expect.any(Object),
+				advancedOptions: expect.any(Object),
+				evaluationWindow: expect.any(Object),
+				notificationSettings: expect.any(Object),
 			});
 		});
 	});
