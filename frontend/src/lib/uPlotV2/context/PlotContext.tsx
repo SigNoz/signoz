@@ -48,18 +48,18 @@ export const PlotContextProvider = ({
 
 	const syncSeriesVisibilityToLocalStorage = useCallback((): void => {
 		const plot = uPlotInstanceRef.current;
-		if (!plot) {
+		if (!plot || !widgetIdRef.current || !shouldSavePreferencesRef.current) {
 			return;
 		}
-		if (widgetIdRef.current) {
-			const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
-				(series) => ({
-					label: series.label ?? '',
-					show: series.show ?? true,
-				}),
-			);
-			updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
-		}
+
+		const seriesVisibility: SeriesVisibilityItem[] = plot.series.map(
+			(series) => ({
+				label: series.label ?? '',
+				show: series.show ?? true,
+			}),
+		);
+
+		updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
 	}, []);
 
 	const onToggleSeriesVisibility = useCallback(
