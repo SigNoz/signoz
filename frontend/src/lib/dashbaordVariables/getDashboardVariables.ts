@@ -1,5 +1,5 @@
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import store from 'store';
 
 export const getDashboardVariables = (
