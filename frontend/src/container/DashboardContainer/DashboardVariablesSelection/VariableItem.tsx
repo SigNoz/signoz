@@ -16,6 +16,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { debounce, isArray, isEmpty, isString } from 'lodash-es';
+import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
@@ -24,7 +25,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE, variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
-import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
+import { areArraysEqual, checkAPIInvocation } from './util';
 
 import './DashboardVariableSelection.styles.scss';
 

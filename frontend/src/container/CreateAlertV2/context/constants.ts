@@ -196,3 +196,11 @@ export const INITIAL_NOTIFICATION_SETTINGS_STATE: NotificationSettingsState = {
 	description: NOTIFICATION_MESSAGE_PLACEHOLDER,
 	routingPolicies: false,
 };
+
+export const INITIAL_CREATE_ALERT_STATE = {
+	basic: INITIAL_ALERT_STATE,
+	threshold: INITIAL_ALERT_THRESHOLD_STATE,
+	advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
+	evaluationWindow: INITIAL_EVALUATION_WINDOW_STATE,
+	notificationSettings: INITIAL_NOTIFICATION_SETTINGS_STATE,
+};

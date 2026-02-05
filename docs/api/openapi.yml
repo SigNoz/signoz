@@ -2285,6 +2285,15 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: GetIngestionKeys
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2597,6 +2606,19 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: SearchIngestionKeys
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
