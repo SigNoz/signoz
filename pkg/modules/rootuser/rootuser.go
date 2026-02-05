@@ -26,6 +26,6 @@ type Module interface {
 }
 
 type Reconciler interface {
-	// Reconcile the root users
+	// Reconcile the root users.
 	Reconcile(ctx context.Context) error
 }
