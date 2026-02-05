@@ -14,6 +14,9 @@ import uPlot from 'uplot';
 
 import { ChartProps } from '../types';
 
+const TOOLTIP_WIDTH_PADDING = 60;
+const TOOLTIP_MIN_WIDTH = 200;
+
 export default function TimeSeries({
 	legendConfig = { position: LegendPosition.BOTTOM },
 	config,
@@ -57,7 +60,7 @@ export default function TimeSeries({
 				legendComponent={legendComponent}
 				layoutChildren={layoutChildren}
 			>
-				{({ chartWidth, chartHeight }): JSX.Element => (
+				{({ chartWidth, chartHeight, averageLegendWidth }): JSX.Element => (
 					<UPlotChart
 						config={config}
 						data={data}
@@ -78,6 +81,10 @@ export default function TimeSeries({
 								config={config}
 								canPinTooltip={canPinTooltip}
 								syncMode={syncMode}
+								maxWidth={Math.max(
+									TOOLTIP_MIN_WIDTH,
+									averageLegendWidth + TOOLTIP_WIDTH_PADDING,
+								)}
 								syncKey={syncKey}
 								render={(props: TooltipRenderArgs): React.ReactNode => (
 									<Tooltip
