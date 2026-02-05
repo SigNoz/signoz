@@ -21,7 +21,6 @@ import './DashboardVariableSelection.styles.scss';
 
 function DashboardVariableSelection(): JSX.Element | null {
 	const {
-		selectedDashboard,
 		setSelectedDashboard,
 		updateLocalStorageDashboardVariables,
 		variablesToGetUpdated,
@@ -77,14 +76,10 @@ function DashboardVariableSelection(): JSX.Element | null {
 			haveCustomValuesSelected?: boolean,
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 		): void => {
-			if (!id) {
-				return;
-			}
-
 			// For dynamic variables, only store in localStorage when NOT allSelected
 			// This makes localStorage much lighter by avoiding storing all individual values
-			const variable = dashboardVariables?.[id] || dashboardVariables?.[name];
-			const isDynamic = variable?.type === 'DYNAMIC';
+			const variable = dashboardVariables[id] || dashboardVariables[name];
+			const isDynamic = variable.type === 'DYNAMIC';
 			updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
 
 			if (allSelected) {
@@ -93,41 +88,39 @@ function DashboardVariableSelection(): JSX.Element | null {
 				updateUrlVariable(name || id, value);
 			}
 
-			if (selectedDashboard) {
-				setSelectedDashboard((prev) => {
-					if (prev) {
-						const oldVariables = prev?.data.variables;
-						// this is added to handle case where we have two different
-						// schemas for variable response
-						if (oldVariables?.[id]) {
-							oldVariables[id] = {
-								...oldVariables[id],
-								selectedValue: value,
-								allSelected,
-								haveCustomValuesSelected,
-							};
-						}
-						if (oldVariables?.[name]) {
-							oldVariables[name] = {
-								...oldVariables[name],
-								selectedValue: value,
-								allSelected,
-								haveCustomValuesSelected,
-							};
-						}
-						return {
-							...prev,
-							data: {
-								...prev?.data,
-								variables: {
-									...oldVariables,
-								},
-							},
+			setSelectedDashboard((prev) => {
+				if (prev) {
+					const oldVariables = prev?.data.variables;
+					// this is added to handle case where we have two different
+					// schemas for variable response
+					if (oldVariables?.[id]) {
+						oldVariables[id] = {
+							...oldVariables[id],
+							selectedValue: value,
+							allSelected,
+							haveCustomValuesSelected,
 						};
 					}
-					return prev;
-				});
-			}
+					if (oldVariables?.[name]) {
+						oldVariables[name] = {
+							...oldVariables[name],
+							selectedValue: value,
+							allSelected,
+							haveCustomValuesSelected,
+						};
+					}
+					return {
+						...prev,
+						data: {
+							...prev?.data,
+							variables: {
+								...oldVariables,
+							},
+						},
+					};
+				}
+				return prev;
+			});
 
 			if (dependencyData) {
 				const updatedVariables: string[] = [];
@@ -147,7 +140,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 		[
 			dashboardVariables,
 			updateLocalStorageDashboardVariables,
-			selectedDashboard,
 			dependencyData,
 			updateUrlVariable,
 			setSelectedDashboard,
