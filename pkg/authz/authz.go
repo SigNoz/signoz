@@ -29,4 +29,6 @@ type AuthZ interface {
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
 	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
+
+	RegisterOnStartupHook(func(context.Context) error)
 }

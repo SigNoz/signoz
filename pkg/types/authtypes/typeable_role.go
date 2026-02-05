@@ -9,9 +9,11 @@ var _ Typeable = new(typeableRole)
 
 type typeableRole struct{}
 
-func (typeableRole *typeableRole) Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableRole *typeableRole) Tuples(subject string, relation Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for _, selector := range selector {
+
+	selectors = append(selectors, MustNewSelector(TypeRole, wildCardSelectorString))
+	for _, selector := range selectors {
 		object := typeableRole.Prefix(orgID) + "/" + selector.String()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}

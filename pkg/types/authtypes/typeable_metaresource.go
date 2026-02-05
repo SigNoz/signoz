@@ -24,9 +24,11 @@ func MustNewTypeableMetaResource(name Name) Typeable {
 	return typeableesource
 }
 
-func (typeableMetaResource *typeableMetaResource) Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableMetaResource *typeableMetaResource) Tuples(subject string, relation Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for _, selector := range selector {
+
+	selectors = append(selectors, MustNewSelector(TypeMetaResource, wildCardSelectorString))
+	for _, selector := range selectors {
 		object := typeableMetaResource.Prefix(orgID) + "/" + selector.String()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}

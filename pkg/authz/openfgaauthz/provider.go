@@ -29,6 +29,7 @@ type provider struct {
 	openfgaServer *openfgapkgserver.Server
 	storeID       string
 	modelID       string
+	hooks         []func(context.Context) error
 	mtx           sync.RWMutex
 	stopChan      chan struct{}
 }
@@ -85,6 +86,13 @@ func (provider *provider) Start(ctx context.Context) error {
 	provider.modelID = modelID
 	provider.storeID = storeId
 	provider.mtx.Unlock()
+
+	for _, hook := range provider.hooks {
+		err := hook(ctx)
+		if err != nil {
+			return err
+		}
+	}
 
 	<-provider.stopChan
 	return nil
@@ -245,6 +253,12 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 	}
 
 	return authtypes.MustNewObjectsFromStringSlice(response.Objects), nil
+}
+
+func (provider *provider) RegisterOnStartupHook(hook func(context.Context) error) {
+	provider.mtx.Lock()
+	provider.hooks = append(provider.hooks, hook)
+	provider.mtx.Unlock()
 }
 
 func (provider *provider) getOrCreateStore(ctx context.Context, name string) (string, error) {

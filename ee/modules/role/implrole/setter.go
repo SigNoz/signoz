@@ -21,12 +21,15 @@ type setter struct {
 }
 
 func NewSetter(store roletypes.Store, authz authz.AuthZ, licensing licensing.Licensing, registry []role.RegisterTypeable) role.Setter {
-	return &setter{
+	setter := &setter{
 		store:     store,
 		authz:     authz,
 		licensing: licensing,
 		registry:  registry,
 	}
+	authz.RegisterOnStartupHook(setter.onstartup)
+
+	return setter
 }
 
 func (setter *setter) Create(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) error {
@@ -163,3 +166,5 @@ func (setter *setter) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 func (setter *setter) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{authtypes.TypeableRole, roletypes.TypeableResourcesRoles}
 }
+
+func (setter *setter) onstartup(context.Context) error { return nil }
