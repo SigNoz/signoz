@@ -18,8 +18,12 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
 	keysMap := buildCompleteFieldKeyMap()
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalLogs
+		}
+	}
 	mockMetadataStore.KeysMap = keysMap
 
 	return resourcefilter.NewLogResourceFilterStatementBuilder(
@@ -345,7 +349,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm)
@@ -455,7 +458,6 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm)
@@ -531,7 +533,6 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	cb := NewConditionBuilder(fm)
@@ -628,7 +629,6 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC))
 	fm := NewFieldMapper()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
 	cb := NewConditionBuilder(fm)

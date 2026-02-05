@@ -190,7 +190,7 @@ func (c *conditionBuilder) conditionFor(
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
 			}
 
-			// This mean tblFieldName has multiIf already present so I can just return exists or not exists
+			// This mean tblFieldName is with multiIf, we just need to do a null check.
 			if len(newColumns) > 1 {
 				if operator == qbtypes.FilterOperatorExists {
 					return sb.IsNotNull(tblFieldName), nil
@@ -198,6 +198,8 @@ func (c *conditionBuilder) conditionFor(
 					return sb.IsNull(tblFieldName), nil
 				}
 			}
+
+			// otherwise we have to find the correct exist operator based on the column type
 			column = newColumns[0]
 		}
 

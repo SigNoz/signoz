@@ -189,7 +189,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return sb.And(
 			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
 			keyIdxFilter,
-			sb.ILike(columns[0].Name, valueForIndexFilter),
+			sb.ILike(column.Name, valueForIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else

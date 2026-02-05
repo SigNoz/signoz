@@ -397,7 +397,7 @@ var (
 		{Name: "field_context", Type: "String"},
 		{Name: "field_name", Type: "String"},
 		{Name: "version", Type: "UInt32"},
-		{Name: "release_time", Type: "UInt64"},
+		{Name: "release_time", Type: "Float64"},
 	}
 )
 
@@ -420,7 +420,7 @@ func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
 			"resource",
 			"__all__",
 			uint32(0),
-			uint64(releaseTime.UnixNano()),
+			float64(releaseTime.UnixNano()),
 		},
 	}
 
@@ -466,7 +466,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 			"resource",
 			"__all__",
 			uint32(0),
-			uint64(releaseTime1.UnixNano()),
+			float64(releaseTime1.UnixNano()),
 		},
 		{
 			"logs",
@@ -475,7 +475,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 			"resource",
 			"__all__",
 			uint32(1),
-			uint64(releaseTime2.UnixNano()),
+			float64(releaseTime2.UnixNano()),
 		},
 	}
 
@@ -525,7 +525,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 			"body",
 			"__all__",
 			uint32(0),
-			uint64(releaseTime1.UnixNano()),
+			float64(releaseTime1.UnixNano()),
 		},
 		{
 			"logs",
@@ -534,7 +534,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 			"body",
 			"__all__",
 			uint32(1),
-			uint64(releaseTime2.UnixNano()),
+			float64(releaseTime2.UnixNano()),
 		},
 		{
 			"logs",
@@ -543,7 +543,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 			"body",
 			"user.name",
 			uint32(2),
-			uint64(releaseTime3.UnixNano()),
+			float64(releaseTime3.UnixNano()),
 		},
 	}
 
@@ -606,7 +606,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			"body",
 			"__all__",
 			uint32(0),
-			uint64(releaseTime2.UnixNano()),
+			float64(releaseTime2.UnixNano()),
 		},
 		{
 			"logs",
@@ -615,7 +615,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			"body",
 			"user.name",
 			uint32(1),
-			uint64(releaseTime3.UnixNano()),
+			float64(releaseTime3.UnixNano()),
 		},
 		{
 			"traces",
@@ -624,7 +624,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			telemetrytypes.FieldContextResource,
 			"__all__",
 			uint32(0),
-			uint64(releaseTime2.UnixNano()),
+			float64(releaseTime2.UnixNano()),
 		},
 		{
 			telemetrytypes.SignalTraces,
@@ -633,7 +633,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			telemetrytypes.FieldContextResource,
 			"__all__",
 			uint32(1),
-			uint64(releaseTime3.UnixNano()),
+			float64(releaseTime3.UnixNano()),
 		},
 	}
 
@@ -722,7 +722,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 			telemetrytypes.FieldContextResource,
 			"__all__",
 			uint32(0),
-			uint64(releaseTime1.UnixNano()),
+			float64(releaseTime1.UnixNano()),
 		},
 		{
 			telemetrytypes.SignalLogs,
@@ -731,7 +731,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 			telemetrytypes.FieldContextBody,
 			"__all__",
 			uint32(1),
-			uint64(releaseTime2.UnixNano()),
+			float64(releaseTime2.UnixNano()),
 		},
 	}
 

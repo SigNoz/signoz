@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/require"
 )
@@ -20,8 +19,6 @@ import (
 func TestFilterExprLogs(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	ctx := context.Background()
-	storeWithMetadata := telemetrytypestest.NewMockMetadataStore()
-	storeWithMetadata.ColumnEvolutionMetadataMap = mockKeyEvolutionMetadata(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, releaseTime)
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 

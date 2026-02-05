@@ -1029,16 +1029,3 @@ func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
 		},
 	}
 }
-
-// mockKeyEvolutionMetadata builds a mock org-scoped key evolution metadata map for a column evolution.
-func mockKeyEvolutionMetadata(signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext, releaseTime time.Time) map[string][]*telemetrytypes.EvolutionEntry {
-	metadata := make(map[string][]*telemetrytypes.EvolutionEntry)
-
-	newKeyEvolutionMetadataEntry := mockEvolutionData(releaseTime)
-	uniqueKey := telemetrytypes.GetEvolutionMetadataUniqueKey(&telemetrytypes.EvolutionSelector{
-		Signal:       signal,
-		FieldContext: fieldContext,
-	})
-	metadata[uniqueKey] = newKeyEvolutionMetadataEntry
-	return metadata
-}
