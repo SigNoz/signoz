@@ -65,7 +65,7 @@ export default function ChartLayout({
 						width: chartDimensions.legendWidth,
 					}}
 				>
-					{legendComponent(chartDimensions.legendsPerSet)}
+					{legendComponent(chartDimensions.averageLegendWidth)}
 				</div>
 			</div>
 			{layoutChildren}

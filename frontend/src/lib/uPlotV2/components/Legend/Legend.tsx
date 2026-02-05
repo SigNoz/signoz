@@ -1,23 +1,21 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { Virtuoso } from 'react-virtuoso';
-import { Tooltip as AntdTooltip } from 'antd';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { VirtuosoGrid } from 'react-virtuoso';
+import { Input, Tooltip as AntdTooltip } from 'antd';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
-import { LegendPosition } from 'types/api/dashboard/getAll';
 
-import { LegendProps } from '../types';
+import { LegendPosition, LegendProps } from '../types';
 import { useLegendActions } from './useLegendActions';
 
 import './Legend.styles.scss';
 
-export const MAX_LEGEND_WIDTH = 320;
-const LEGENDS_PER_SET_DEFAULT = 5;
+export const MAX_LEGEND_WIDTH = 240;
 
 export default function Legend({
 	position = LegendPosition.BOTTOM,
 	config,
-	legendsPerSet = LEGENDS_PER_SET_DEFAULT,
+	averageLegendWidth = MAX_LEGEND_WIDTH,
 }: LegendProps): JSX.Element {
 	const {
 		legendItemsMap,
@@ -33,54 +31,43 @@ export default function Legend({
 		focusedSeriesIndex,
 	});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
+	const [legendSearchQuery, setLegendSearchQuery] = useState('');
 
-	// Chunk legend items into rows of LEGENDS_PER_ROW items each
-	const legendRows = useMemo(() => {
-		const legendItems = Object.values(legendItemsMap);
+	const legendItems = useMemo(() => Object.values(legendItemsMap), [
+		legendItemsMap,
+	]);
 
-		return legendItems.reduce((acc: LegendItem[][], curr, i) => {
-			if (i % legendsPerSet === 0) {
-				acc.push([]);
-			}
-			acc[acc.length - 1].push(curr);
-			return acc;
-		}, [] as LegendItem[][]);
-	}, [legendItemsMap, legendsPerSet]);
+	const visibleLegendItems = useMemo(() => {
+		if (position !== LegendPosition.RIGHT || !legendSearchQuery.trim()) {
+			return legendItems;
+		}
 
-	const renderLegendRow = useCallback(
-		(rowIndex: number, row: LegendItem[]): JSX.Element => (
-			<div
-				key={rowIndex}
-				className={cx(
-					'legend-row',
-					`legend-row-${position.toLowerCase()}`,
-					legendRows.length === 1 && position === LegendPosition.BOTTOM
-						? 'legend-single-row'
-						: '',
-				)}
-			>
-				{row.map((item) => (
-					<AntdTooltip key={item.seriesIndex} title={item.label}>
-						<div
-							data-legend-item-id={item.seriesIndex}
-							className={cx('legend-item', {
-								'legend-item-off': !item.show,
-								'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
-							})}
-							style={{ maxWidth: `min(${MAX_LEGEND_WIDTH}px, 100%)` }}
-						>
-							<div
-								className="legend-marker"
-								style={{ borderColor: String(item.color) }}
-								data-is-legend-marker={true}
-							/>
-							<span className="legend-label">{item.label}</span>
-						</div>
-					</AntdTooltip>
-				))}
-			</div>
+		const query = legendSearchQuery.trim().toLowerCase();
+		return legendItems.filter((item) =>
+			item.label?.toLowerCase().includes(query),
+		);
+	}, [position, legendSearchQuery, legendItems]);
+
+	const renderLegendItem = useCallback(
+		(item: LegendItem): JSX.Element => (
+			<AntdTooltip key={item.seriesIndex} title={item.label}>
+				<div
+					data-legend-item-id={item.seriesIndex}
+					className={cx('legend-item', `legend-item-${position.toLowerCase()}`, {
+						'legend-item-off': !item.show,
+						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
+					})}
+				>
+					<div
+						className="legend-marker"
+						style={{ borderColor: String(item.color) }}
+						data-is-legend-marker={true}
+					/>
+					<span className="legend-label">{item.label}</span>
+				</div>
+			</AntdTooltip>
 		),
-		[focusedSeriesIndex, position, legendRows],
+		[focusedSeriesIndex, position],
 	);
 
 	return (
@@ -90,11 +77,28 @@ export default function Legend({
 			onClick={onLegendClick}
 			onMouseMove={onLegendMouseMove}
 			onMouseLeave={onLegendMouseLeave}
+			style={{
+				['--legend-average-width' as string]: `${averageLegendWidth + 16}px`, // 16px is the marker width
+			}}
 		>
-			<Virtuoso
-				className="legend-virtuoso-container"
-				data={legendRows}
-				itemContent={(index, row): JSX.Element => renderLegendRow(index, row)}
+			{position === LegendPosition.RIGHT && (
+				<div className="legend-search-container">
+					<Input
+						allowClear
+						placeholder="Search..."
+						value={legendSearchQuery}
+						onChange={(e): void => setLegendSearchQuery(e.target.value)}
+						className="legend-search-input"
+					/>
+				</div>
+			)}
+			<VirtuosoGrid
+				className={cx(
+					'legend-virtuoso-container',
+					`legend-virtuoso-container-${position.toLowerCase()}`,
+				)}
+				data={visibleLegendItems}
+				itemContent={(_, item): JSX.Element => renderLegendItem(item)}
 			/>
 		</div>
 	);
