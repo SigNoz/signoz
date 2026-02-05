@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { rest, server } from 'mocks-server/server';
@@ -184,12 +183,10 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(screen.getByText(/check your email/i)).toBeInTheDocument();
-				expect(
-					screen.getByText(/we've sent a password reset link/i),
-				).toBeInTheDocument();
-			});
+			expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
+			expect(
+				screen.getByText(/we've sent a password reset link/i),
+			).toBeInTheDocument();
 		});
 
 		it('shows back to login button on success screen', async () => {
@@ -206,9 +203,7 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(screen.getByTestId('back-to-login')).toBeInTheDocument();
-			});
+			expect(await screen.findByTestId('back-to-login')).toBeInTheDocument();
 		});
 
 		it('redirects to login when clicking back to login on success screen', async () => {
@@ -225,9 +220,7 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(screen.getByTestId('back-to-login')).toBeInTheDocument();
-			});
+			expect(await screen.findByTestId('back-to-login')).toBeInTheDocument();
 
 			const backToLoginButton = screen.getByTestId('back-to-login');
 			await user.click(backToLoginButton);
@@ -259,9 +252,7 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(screen.getByText(/user not found/i)).toBeInTheDocument();
-			});
+			expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
 		});
 
 		it('displays error message when API returns server error', async () => {
@@ -286,11 +277,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(
-					screen.getByText(/internal server error occurred/i),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByText(/internal server error occurred/i),
+			).toBeInTheDocument();
 		});
 
 		it('clears error message on new submission attempt', async () => {
@@ -320,17 +309,15 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			await waitFor(() => {
-				expect(screen.getByText(/user not found/i)).toBeInTheDocument();
-			});
+			expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
 
 			// Click submit again
 			await user.click(submitButton);
 
 			await waitFor(() => {
 				expect(screen.queryByText(/user not found/i)).not.toBeInTheDocument();
-				expect(screen.getByText(/check your email/i)).toBeInTheDocument();
 			});
+			expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
 		});
 	});
 
@@ -363,9 +350,7 @@ describe('ForgotPassword Component', () => {
 			await user.click(submitButton);
 
 			// Button should show loading state
-			await waitFor(() => {
-				expect(screen.getByText(/sending\.\.\./i)).toBeInTheDocument();
-			});
+			expect(await screen.findByText(/sending\.\.\./i)).toBeInTheDocument();
 		});
 
 		it('disables submit button during loading', async () => {

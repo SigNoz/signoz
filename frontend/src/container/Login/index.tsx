@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Form, Input, Select, Typography } from 'antd';
@@ -220,7 +220,7 @@ function Login(): JSX.Element {
 		}
 	};
 
-	const handleForgotPasswordClick = (): void => {
+	const handleForgotPasswordClick = useCallback((): void => {
 		const email = form.getFieldValue('email');
 
 		if (!email || !sessionsContext || !sessionsContext.orgs.length) {
@@ -232,7 +232,7 @@ function Login(): JSX.Element {
 			orgId: sessionsOrgId,
 			orgs: sessionsContext.orgs,
 		});
-	};
+	}, [form, sessionsContext, sessionsOrgId]);
 
 	useEffect(() => {
 		if (callbackAuthError) {

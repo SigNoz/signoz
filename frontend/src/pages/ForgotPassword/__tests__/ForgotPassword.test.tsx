@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { render, waitFor } from 'tests/test-utils';

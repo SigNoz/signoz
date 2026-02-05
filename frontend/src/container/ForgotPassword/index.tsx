@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Input } from '@signozhq/input';
 import { Form, Select, Typography } from 'antd';
@@ -75,7 +75,7 @@ function ForgotPassword({
 		return !(hasMultipleOrgs && !selectedOrgId);
 	}, [watchedEmail, hasMultipleOrgs, selectedOrgId, isLoading]);
 
-	const handleSubmit = (): void => {
+	const handleSubmit = useCallback((): void => {
 		const values = form.getFieldsValue();
 
 		// Clear any previous errors
@@ -104,11 +104,11 @@ function ForgotPassword({
 				},
 			},
 		);
-	};
+	}, [form, forgotPasswordMutate, initialOrgId]);
 
-	const handleBackToLogin = (): void => {
+	const handleBackToLogin = useCallback((): void => {
 		history.push(ROUTES.LOGIN);
-	};
+	}, []);
 
 	// Success screen
 	if (isSuccess) {
