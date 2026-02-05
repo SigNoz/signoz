@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderHook } from '@testing-library/react';
-import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 
 import useGetResolvedText from '../useGetResolvedText';
 
