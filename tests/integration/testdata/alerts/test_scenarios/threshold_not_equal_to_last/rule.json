@@ -55,7 +55,7 @@
     "kind": "rolling",
     "spec": {
       "evalWindow": "5m0s",
-      "frequency": "1s"
+      "frequency": "15s"
     }
   },
   "labels": {},

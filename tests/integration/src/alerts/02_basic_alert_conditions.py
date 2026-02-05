@@ -15,7 +15,7 @@ from fixtures.logger import setup_logger
 from fixtures.utils import get_testdata_file_path
 
 # test cases match type and compare operators
-# most alerts have wait time of 180 seconds as 
+# most alerts have wait time of 180 seconds as
 # we've poistioned the alert data to fire the alert on first or second eval or rule manager
 # therefore most alert should trigger in about 2 mins + 1 minute is group_wait of alert manager
 # considering this, most alerts should be triggered in about 3 mins
