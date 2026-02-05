@@ -116,7 +116,7 @@ module.exports = {
 			},
 		],
 		'import/no-extraneous-dependencies': ['error', { devDependencies: true }], // Prevents importing packages not in package.json
-		// 'import/no-cycle': 'warn', // TODO: Enable later to detect circular dependencies
+		'import/no-cycle': 'warn', // Warns about circular dependencies
 
 		// Import sorting rules
 		'simple-import-sort/imports': [
