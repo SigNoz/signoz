@@ -27,7 +27,8 @@ func (m *Recovery) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				m.logger.Error(
+				m.logger.ErrorContext(
+					r.Context(),
 					"panic recovered",
 					"err", err, "stack", string(debug.Stack()),
 				)

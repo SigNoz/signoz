@@ -14,15 +14,6 @@ const (
 	S3Sync = "s3sync"
 )
 
-type (
-	AWSServicesProvider struct {
-		definitions map[string]*AWSServiceDefinition
-	}
-	AzureServicesProvider struct {
-		definitions map[string]*AzureServiceDefinition
-	}
-)
-
 type DefinitionMetadata struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
