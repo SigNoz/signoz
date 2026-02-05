@@ -54,6 +54,17 @@ type Pagination struct {
 	Total   int `json:"total"`
 }
 
+type IngestionKeysParams struct {
+	Page    int `query:"page"`
+	PerPage int `query:"per_page"`
+}
+
+type SearchIngestionKeysParams struct {
+	Name    string `query:"name"`
+	Page    int    `query:"page"`
+	PerPage int    `query:"per_page"`
+}
+
 type GettableIngestionKeys struct {
 	Keys       []IngestionKey `json:"keys"`
 	Pagination Pagination     `json:"_pagination"`
