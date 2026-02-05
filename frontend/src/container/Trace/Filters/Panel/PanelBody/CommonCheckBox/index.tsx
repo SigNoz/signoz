@@ -1,6 +1,6 @@
-import { Button, Input } from 'antd';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Button, Input } from 'antd';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import { INITIAL_FILTER_VALUE } from 'store/reducers/trace';

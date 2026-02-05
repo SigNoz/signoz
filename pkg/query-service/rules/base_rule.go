@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
@@ -37,7 +38,7 @@ type BaseRule struct {
 
 	Threshold ruletypes.RuleThreshold
 	// evalWindow is the time window used for evaluating the rule
-	// i.e each time we lookback from the current time, we look at data for the last
+	// i.e. each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
 	evalWindow time.Duration
 	// holdDuration is the duration for which the alert waits before firing
@@ -64,28 +65,26 @@ type BaseRule struct {
 	lastError error
 	Active    map[uint64]*ruletypes.Alert
 
-	// lastTimestampWithDatapoints is the timestamp of the last datapoint we observed
-	// for this rule
-	// this is used for missing data alerts
+	// lastTimestampWithDatapoints is the timestamp of the last datapoint we
+	// observed for this rule.
+	// This is used for missing data alerts.
 	lastTimestampWithDatapoints time.Time
 
 	reader interfaces.Reader
 
 	logger *slog.Logger
 
-	// sendUnmatched sends observed metric values
-	// even if they dont match the rule condition. this is
-	// useful in testing the rule
+	// sendUnmatched sends observed metric values even if they don't match the
+	// rule condition. This is useful in testing the rule.
 	sendUnmatched bool
 
-	// sendAlways will send alert irresepective of resendDelay
-	// or other params
+	// sendAlways will send alert irrespective of resendDelay or other params
 	sendAlways bool
 
-	// TemporalityMap is a map of metric name to temporality
-	// to avoid fetching temporality for the same metric multiple times
-	// querying the v4 table on low cardinal temporality column
-	// should be fast but we can still avoid the query if we have the data in memory
+	// TemporalityMap is a map of metric name to temporality to avoid fetching
+	// temporality for the same metric multiple times.
+	// Querying the v4 table on low cardinal temporality column should be fast,
+	// but we can still avoid the query if we have the data in memory.
 	TemporalityMap map[string]map[v3.Temporality]bool
 
 	sqlstore sqlstore.SQLStore
@@ -258,17 +257,6 @@ func (r *BaseRule) HoldDuration() time.Duration {
 	return r.holdDuration
 }
 
-func (r *ThresholdRule) hostFromSource() string {
-	parsedUrl, err := url.Parse(r.source)
-	if err != nil {
-		return ""
-	}
-	if parsedUrl.Port() != "" {
-		return fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Hostname(), parsedUrl.Port())
-	}
-	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
-}
-
 func (r *BaseRule) ID() string                          { return r.id }
 func (r *BaseRule) OrgID() valuer.UUID                  { return r.orgID }
 func (r *BaseRule) Name() string                        { return r.name }
@@ -289,14 +277,13 @@ func (r *BaseRule) Unit() string {
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
-
 	st, en := r.evaluation.NextWindowFor(ts)
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 
 	if r.evalDelay > 0 {
-		start = start - int64(r.evalDelay.Milliseconds())
-		end = end - int64(r.evalDelay.Milliseconds())
+		start = start - r.evalDelay.Milliseconds()
+		end = end - r.evalDelay.Milliseconds()
 	}
 	// round to minute otherwise we could potentially miss data
 	start = start - (start % (60 * 1000))
@@ -509,7 +496,6 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 }
 
 func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {
-
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
@@ -756,4 +742,27 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	return filteredSeries, nil
+}
+
+// HandleMissingDataAlert handles missing data alert logic by tracking the last timestamp
+// with data points and checking if a missing data alert should be sent based on the
+// [ruletypes.RuleCondition.AlertOnAbsent] and [ruletypes.RuleCondition.AbsentFor] conditions.
+//
+// Returns a pointer to the missing data alert if conditions are met, nil otherwise.
+func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, hasData bool) *ruletypes.Sample {
+	// Track the last timestamp with data points for missing data alerts
+	if hasData {
+		r.lastTimestampWithDatapoints = ts
+	}
+
+	if !r.ruleCondition.AlertOnAbsent || ts.Before(r.lastTimestampWithDatapoints.Add(time.Duration(r.ruleCondition.AbsentFor)*time.Minute)) {
+		return nil
+	}
+
+	r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
+	lbls := labels.NewBuilder(labels.Labels{})
+	if !r.lastTimestampWithDatapoints.IsZero() {
+		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+	}
+	return &ruletypes.Sample{Metric: lbls.Labels(), IsMissing: true}
 }

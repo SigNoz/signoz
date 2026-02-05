@@ -131,6 +131,45 @@
 	border-top: 1px solid var(--bg-ink-200);
 	padding: 8px 14px;
 	.timezone-container {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		&__left {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+
+			.timezone__name {
+				font-size: 12px;
+				line-height: 16px;
+				color: var(--bg-robin-400);
+				font-weight: 500;
+			}
+
+			.timezone__separator {
+				font-size: 12px;
+				line-height: 16px;
+				color: var(--bg-robin-300);
+				font-weight: 500;
+			}
+
+			.timezone__offset {
+				font-size: 11px;
+				line-height: 14px;
+				color: var(--bg-robin-400);
+				font-weight: 500;
+			}
+		}
+
+		&__right {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+		}
+
 		&,
 		.timezone {
 			font-family: Inter;
@@ -138,6 +177,7 @@
 			line-height: 16px;
 			letter-spacing: -0.06px;
 		}
+
 		display: flex;
 		align-items: center;
 		color: var(--bg-vanilla-400);
@@ -156,18 +196,21 @@
 		}
 	}
 }
+
 .timezone-badge {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 0 4px;
 	border-radius: 2px;
-	background: rgba(171, 189, 255, 0.04);
-	color: var(--bg-vanilla-100);
-	font-size: 12px;
+	color: var(--bg-vanilla-400);
+	background-color: var(--bg-ink-200);
+	font-size: 9px;
 	font-weight: 400;
-	line-height: 16px;
-	letter-spacing: -0.06px;
+	line-height: 12px;
+	letter-spacing: -0.045px;
+	margin-right: 4px;
+	width: 72px;
 	cursor: pointer;
 }
 
@@ -183,6 +226,7 @@
 	font-size: 11px;
 	color: var(--bg-vanilla-400);
 	background-color: var(--bg-ink-200);
+	cursor: pointer;
 
 	&.is-live {
 		background-color: transparent;
@@ -238,11 +282,10 @@
 	.date-time-popover__footer {
 		border-color: var(--bg-vanilla-400);
 	}
+
 	.timezone-container {
 		color: var(--bg-ink-400);
-		&__clock-icon {
-			stroke: var(--bg-ink-400);
-		}
+
 		.timezone {
 			color: var(--bg-ink-100);
 			background: rgb(179 179 179 / 15%);

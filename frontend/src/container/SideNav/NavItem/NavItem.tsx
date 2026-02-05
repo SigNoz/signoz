@@ -1,12 +1,13 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './NavItem.styles.scss';
-
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Pin, PinOff } from 'lucide-react';
 
 import { SidebarItem } from '../sideNav.types';
+
+import './NavItem.styles.scss';
+import './NavItem.styles.scss';
 
 export default function NavItem({
 	item,
@@ -74,21 +75,25 @@ export default function NavItem({
 				)}
 
 				{onTogglePin && !isPinned && (
-					<Pin
-						size={12}
-						className="nav-item-pin-icon"
-						onClick={handleTogglePinClick}
-						color="var(--Vanilla-400, #c0c1c3)"
-					/>
+					<Tooltip title="Add to shortcuts" placement="right">
+						<Pin
+							size={12}
+							className="nav-item-pin-icon"
+							onClick={handleTogglePinClick}
+							color="var(--Vanilla-400, #c0c1c3)"
+						/>
+					</Tooltip>
 				)}
 
 				{onTogglePin && isPinned && (
-					<PinOff
-						size={12}
-						className="nav-item-pin-icon"
-						onClick={handleTogglePinClick}
-						color="var(--Vanilla-400, #c0c1c3)"
-					/>
+					<Tooltip title="Remove from shortcuts" placement="right">
+						<PinOff
+							size={12}
+							className="nav-item-pin-icon"
+							onClick={handleTogglePinClick}
+							color="var(--Vanilla-400, #c0c1c3)"
+						/>
+					</Tooltip>
 				)}
 			</div>
 		</div>

@@ -1,3 +1,13 @@
+import {
+	createContext,
+	PropsWithChildren,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
 import { QueryParams } from 'constants/query';
 import {
@@ -32,16 +42,6 @@ import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderIt
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
-import {
-	createContext,
-	PropsWithChildren,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {
@@ -538,7 +538,9 @@ export function QueryBuilderProvider({
 	const addNewQueryItem = useCallback(
 		(type: EQueryType.CLICKHOUSE | EQueryType.PROM) => {
 			setCurrentQuery((prevState) => {
-				if (prevState[type].length >= MAX_QUERIES) return prevState;
+				if (prevState[type].length >= MAX_QUERIES) {
+					return prevState;
+				}
 
 				const newQuery = createNewQueryTypeItem(prevState[type], type);
 
@@ -549,7 +551,9 @@ export function QueryBuilderProvider({
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
-				if (prevState[type].length >= MAX_QUERIES) return prevState;
+				if (prevState[type].length >= MAX_QUERIES) {
+					return prevState;
+				}
 
 				const newQuery = createNewQueryTypeItem(prevState[type], type);
 
@@ -564,7 +568,9 @@ export function QueryBuilderProvider({
 
 	const addNewBuilderQuery = useCallback(() => {
 		setCurrentQuery((prevState) => {
-			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+			if (prevState.builder.queryData.length >= MAX_QUERIES) {
+				return prevState;
+			}
 
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
@@ -579,7 +585,9 @@ export function QueryBuilderProvider({
 
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+			if (prevState.builder.queryData.length >= MAX_QUERIES) {
+				return prevState;
+			}
 
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
@@ -596,7 +604,9 @@ export function QueryBuilderProvider({
 	const cloneQuery = useCallback(
 		(type: string, query: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
-				if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+				if (prevState.builder.queryData.length >= MAX_QUERIES) {
+					return prevState;
+				}
 
 				const clonedQuery = cloneNewBuilderQuery(
 					prevState.builder.queryData,
@@ -613,7 +623,9 @@ export function QueryBuilderProvider({
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
-				if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+				if (prevState.builder.queryData.length >= MAX_QUERIES) {
+					return prevState;
+				}
 
 				const clonedQuery = cloneNewBuilderQuery(
 					prevState.builder.queryData,
@@ -634,7 +646,9 @@ export function QueryBuilderProvider({
 
 	const addNewFormula = useCallback(() => {
 		setCurrentQuery((prevState) => {
-			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
+			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) {
+				return prevState;
+			}
 
 			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
 
@@ -648,7 +662,9 @@ export function QueryBuilderProvider({
 		});
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
+			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) {
+				return prevState;
+			}
 
 			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
 
@@ -1067,7 +1083,9 @@ export function QueryBuilderProvider({
 
 	// Separate useEffect to handle initQueryBuilderData after pathname changes
 	useEffect(() => {
-		if (!compositeQueryParam) return;
+		if (!compositeQueryParam) {
+			return;
+		}
 
 		// Only run initQueryBuilderData if we're not in the middle of a pathname change
 		if (location.pathname === currentPathnameRef.current) {

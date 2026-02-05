@@ -6,8 +6,12 @@ const sortValues = (
 	values: TValuesDataType,
 	sortType: TSortVariableValuesType,
 ): TValuesDataType => {
-	if (sortType === 'ASC') return sortBy(values);
-	if (sortType === 'DESC') return sortBy(values).reverse();
+	if (sortType === 'ASC') {
+		return sortBy(values);
+	}
+	if (sortType === 'DESC') {
+		return sortBy(values).reverse();
+	}
 
 	return values;
 };

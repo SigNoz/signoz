@@ -1,4 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import {
+	ForwardedRef,
+	forwardRef,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { Dropdown } from 'antd';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
@@ -9,13 +16,6 @@ import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearch
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from 'lucide-react';
-import {
-	ForwardedRef,
-	forwardRef,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -42,10 +42,12 @@ export const QueryV2 = forwardRef(function QueryV2(
 		onSignalSourceChange,
 		signalSourceChangeEnabled = false,
 		queriesCount = 1,
+		savePreviousQuery = false,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
 		queriesCount: number;
+		savePreviousQuery: boolean;
 	},
 	ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
@@ -67,6 +69,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		filterConfigs,
 		isListViewPanel,
 		entityVersion: version,
+		savePreviousQuery,
 	});
 
 	const handleToggleDisableQuery = useCallback(() => {
@@ -234,6 +237,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										signalSource={signalSource as 'meter' | ''}
 										onSignalSourceChange={onSignalSourceChange}
 										signalSourceChangeEnabled={signalSourceChangeEnabled}
+										savePreviousQuery={savePreviousQuery}
 									/>
 								</div>
 							)}

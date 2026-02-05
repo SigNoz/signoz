@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useQueries } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -8,8 +10,6 @@ import {
 	getDomainMetricsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useMemo } from 'react';
-import { useQueries } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -157,8 +157,12 @@ function DomainMetrics({
 											const errorRatePercent = Number(
 												Number(formattedDomainMetricsData.errorRate).toFixed(2),
 											);
-											if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-											if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+											if (errorRatePercent >= 90) {
+												return Color.BG_SAKURA_500;
+											}
+											if (errorRatePercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
 											return Color.BG_FOREST_500;
 										})()}
 										className="progress-bar"

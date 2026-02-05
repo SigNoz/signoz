@@ -1,13 +1,3 @@
-import { apiV3 } from 'api/apiV1';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import { Logout } from 'api/utils';
-import post from 'api/v2/sessions/rotate/post';
-import afterLogin from 'AppRoutes/utils';
-import { ENVIRONMENT } from 'constants/env';
-import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
-import { useNotifications } from 'hooks/useNotifications';
 import {
 	createContext,
 	PropsWithChildren,
@@ -19,6 +9,16 @@ import {
 	useState,
 } from 'react';
 import { useQueryClient } from 'react-query';
+import { apiV3 } from 'api/apiV1';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import { Logout } from 'api/utils';
+import post from 'api/v2/sessions/rotate/post';
+import afterLogin from 'AppRoutes/utils';
+import { ENVIRONMENT } from 'constants/env';
+import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
+import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
 
 interface IEventSourceContext {
@@ -99,14 +99,18 @@ export function EventSourceProvider({
 				description: (error as APIError).getErrorMessage(),
 			});
 			setIsConnectionError(true);
-			if (!eventSourceRef.current) return;
+			if (!eventSourceRef.current) {
+				return;
+			}
 			eventSourceRef.current.close();
 			Logout();
 		}
 	}, [notifications, queryClient]);
 
 	const destroyEventSourceSession = useCallback(() => {
-		if (!eventSourceRef.current) return;
+		if (!eventSourceRef.current) {
+			return;
+		}
 
 		eventSourceRef.current.close();
 		eventSourceRef.current.removeEventListener('error', handleErrorConnection);

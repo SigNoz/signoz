@@ -2,32 +2,32 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
-
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
-
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
@@ -184,8 +184,8 @@ func TestPrepareLinksToLogs(t *testing.T) {
 		Spec: ruletypes.BasicRuleThresholds{
 			{
 				TargetValue: postableRule.RuleCondition.Target,
-				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
-				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+				MatchType:   postableRule.RuleCondition.MatchType,
+				CompareOp:   postableRule.RuleCondition.CompareOp,
 			},
 		},
 	}
@@ -245,8 +245,8 @@ func TestPrepareLinksToLogsV5(t *testing.T) {
 		Spec: ruletypes.BasicRuleThresholds{
 			{
 				TargetValue: postableRule.RuleCondition.Target,
-				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
-				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+				MatchType:   postableRule.RuleCondition.MatchType,
+				CompareOp:   postableRule.RuleCondition.CompareOp,
 			},
 		},
 	}
@@ -306,8 +306,8 @@ func TestPrepareLinksToTracesV5(t *testing.T) {
 		Spec: ruletypes.BasicRuleThresholds{
 			{
 				TargetValue: postableRule.RuleCondition.Target,
-				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
-				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+				MatchType:   postableRule.RuleCondition.MatchType,
+				CompareOp:   postableRule.RuleCondition.CompareOp,
 			},
 		},
 	}
@@ -360,8 +360,8 @@ func TestPrepareLinksToTraces(t *testing.T) {
 		Spec: ruletypes.BasicRuleThresholds{
 			{
 				TargetValue: postableRule.RuleCondition.Target,
-				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
-				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+				MatchType:   postableRule.RuleCondition.MatchType,
+				CompareOp:   postableRule.RuleCondition.CompareOp,
 			},
 		},
 	}
@@ -509,8 +509,8 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 		Spec: ruletypes.BasicRuleThresholds{
 			{
 				TargetValue: postableRule.RuleCondition.Target,
-				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
-				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+				MatchType:   postableRule.RuleCondition.MatchType,
+				CompareOp:   postableRule.RuleCondition.CompareOp,
 			},
 		},
 	}
@@ -572,8 +572,8 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 		Spec: ruletypes.BasicRuleThresholds{
 			{
 				TargetValue: postableRule.RuleCondition.Target,
-				MatchType:   ruletypes.MatchType(postableRule.RuleCondition.MatchType),
-				CompareOp:   ruletypes.CompareOp(postableRule.RuleCondition.CompareOp),
+				MatchType:   postableRule.RuleCondition.MatchType,
+				CompareOp:   postableRule.RuleCondition.CompareOp,
 			},
 		},
 	}
@@ -789,12 +789,12 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
@@ -905,12 +905,12 @@ func TestThresholdRuleNoData(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, 1, retVal.(int), "case %d", idx)
+		assert.Equal(t, 1, alertsFound, "case %d", idx)
 		for _, item := range rule.Active {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(labels.AlertNameLabel), "[No data]"), "case %d", idx)
@@ -1025,15 +1025,15 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
 		if c.expectAlerts == 0 {
-			assert.Equal(t, 0, retVal.(int), "case %d", idx)
+			assert.Equal(t, 0, alertsFound, "case %d", idx)
 		} else {
-			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_traces" {
@@ -1162,15 +1162,15 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
 		if c.expectAlerts == 0 {
-			assert.Equal(t, 0, retVal.(int), "case %d", idx)
+			assert.Equal(t, 0, alertsFound, "case %d", idx)
 		} else {
-			assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
 					if name == "related_logs" {
@@ -1260,7 +1260,7 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 
 func TestMultipleThresholdRule(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Mulitple threshold test",
+		AlertName: "Multiple threshold test",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1417,7 +1417,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
+		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Second, nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -1428,12 +1428,12 @@ func TestMultipleThresholdRule(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		retVal, err := rule.Eval(context.Background(), time.Now())
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		assert.Equal(t, c.expectAlerts, retVal.(int), "case %d", idx)
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 		if c.expectAlerts != 0 {
 			foundCount := 0
 			for _, item := range rule.Active {
@@ -1478,7 +1478,6 @@ func TestThresholdRuleEval_BasicCases(t *testing.T) {
 	}
 
 	runEvalTests(t, postableRule, tcThresholdRuleEval)
-
 }
 
 func TestThresholdRuleEval_MatchPlusCompareOps(t *testing.T) {
@@ -1510,7 +1509,6 @@ func TestThresholdRuleEval_MatchPlusCompareOps(t *testing.T) {
 	}
 
 	runEvalTests(t, postableRule, tcThresholdRuleEvalMatchPlusCompareOps)
-
 }
 
 // TestThresholdRuleEval_SendUnmatchedBypassesRecovery tests the case where the sendUnmatched is true and the recovery target is met.
@@ -2060,4 +2058,182 @@ func TestThresholdRuleEval_MultiThreshold(t *testing.T) {
 	}
 
 	runMultiThresholdEvalTests(t, postableRule, tcThresholdRuleEvalMultiThreshold)
+}
+
+func TestThresholdEval_RequireMinPoints(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "Unit test",
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: ruletypes.Duration(5 * time.Minute),
+			Frequency:  ruletypes.Duration(1 * time.Minute),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompareOp: ruletypes.ValueIsAbove,
+			MatchType: ruletypes.AtleastOnce,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						AggregateOperator:  v3.AggregateOperatorSumRate,
+						SpaceAggregation:   v3.SpaceAggregationSum,
+						TimeAggregation:    v3.TimeAggregationRate,
+						DataSource:         v3.DataSourceMetrics,
+						Expression:         "A",
+					},
+				},
+			},
+		},
+	}
+
+	cases := []struct {
+		description       string
+		requireMinPoints  bool
+		requiredNumPoints int
+		values            [][]any
+		target            float64
+		expectAlerts      int
+	}{
+		{
+			description:      "AlertCondition=false, RequireMinPoints=false",
+			requireMinPoints: false,
+			values: [][]any{
+				{100.0, "attr", time.Now()},
+				{150.0, "attr", time.Now().Add(-1 * time.Minute)},
+			},
+			target:       200,
+			expectAlerts: 0,
+		},
+		{
+			description:      "AlertCondition=true, RequireMinPoints=false",
+			requireMinPoints: false,
+			values: [][]any{
+				{100.0, "attr", time.Now()},
+				{150.0, "attr", time.Now().Add(-1 * time.Minute)},
+				{250.0, "attr", time.Now().Add(-2 * time.Minute)},
+			},
+			target:       200,
+			expectAlerts: 1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=more_than_required",
+			requireMinPoints:  true,
+			requiredNumPoints: 2,
+			values: [][]any{
+				{100.0, "attr", time.Now()},
+				{150.0, "attr", time.Now().Add(-1 * time.Minute)},
+				{250.0, "attr", time.Now().Add(-2 * time.Minute)},
+			},
+			target:       200,
+			expectAlerts: 1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=same_as_required",
+			requireMinPoints:  true,
+			requiredNumPoints: 3,
+			values: [][]any{
+				{100.0, "attr", time.Now()},
+				{150.0, "attr", time.Now().Add(-1 * time.Minute)},
+				{250.0, "attr", time.Now().Add(-2 * time.Minute)},
+			},
+			target:       200,
+			expectAlerts: 1,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=insufficient",
+			requireMinPoints:  true,
+			requiredNumPoints: 4,
+			values: [][]any{
+				{100.0, "attr", time.Now()},
+				{150.0, "attr", time.Now().Add(-1 * time.Minute)},
+				{250.0, "attr", time.Now().Add(-2 * time.Minute)},
+			},
+			target:       200,
+			expectAlerts: 0,
+		},
+		{
+			description:       "AlertCondition=true, RequireMinPoints=true, NumPoints=zero",
+			requireMinPoints:  true,
+			requiredNumPoints: 4,
+			values:            [][]any{},
+			target:            200,
+			expectAlerts:      0,
+		},
+	}
+
+	validateMetricNameColumns := []cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+		{Name: "toUInt8(__normalized)", Type: "UInt8"},
+	}
+	dataColumns := []cmock.ColumnType{
+		{Name: "value", Type: "Float64"},
+		{Name: "attr", Type: "String"},
+		{Name: "timestamp", Type: "DateTime"},
+	}
+
+	// TODO: handle tests for v5
+	for _, version := range []string{"v3", "v4"} {
+		postableRule.Version = version
+
+		for idx, c := range cases {
+			logger := instrumentationtest.New().Logger()
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+			if version == "v4" {
+				telemetryStore.Mock().
+					ExpectQuery("SELECT metric_name, toUInt8(__normalized) .*").
+					WillReturnRows(cmock.NewRows(validateMetricNameColumns, [][]any{{"signoz_calls_total", 1}}))
+			}
+			telemetryStore.Mock().
+				ExpectQuery("SELECT any").
+				WillReturnRows(cmock.NewRows(dataColumns, c.values))
+
+			rc := postableRule.RuleCondition
+			rc.Target = &c.target
+			rc.RequireMinPoints = c.requireMinPoints
+			rc.RequiredNumPoints = c.requiredNumPoints
+			rc.Thresholds = &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: ruletypes.BasicRuleThresholds{
+					{
+						Name:        postableRule.AlertName,
+						TargetValue: &c.target,
+						MatchType:   rc.MatchType,
+						CompareOp:   rc.CompareOp,
+					},
+				},
+			}
+
+			options := clickhouseReader.NewOptions("primaryNamespace")
+			readerCache, err := cachetest.New(
+				cache.Config{
+					Provider: "memory",
+					Memory: cache.Memory{
+						NumCounters: 10 * 1000,
+						MaxCost:     1 << 26,
+					},
+				},
+			)
+			require.NoError(t, err)
+
+			prometheusProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+			reader := clickhouseReader.NewReader(nil, telemetryStore, prometheusProvider, "", time.Second, nil, readerCache, options)
+
+			rule, err := NewThresholdRule("some-id", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
+			t.Run(fmt.Sprintf("%d Version=%s, %s", idx, version, c.description), func(t *testing.T) {
+				require.NoError(t, err)
+				rule.TemporalityMap = map[string]map[v3.Temporality]bool{
+					"signoz_calls_total": {v3.Delta: true},
+				}
+
+				alertsFound, err := rule.Eval(context.Background(), time.Now())
+				require.NoError(t, err)
+
+				assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
+			})
+		}
+	}
 }

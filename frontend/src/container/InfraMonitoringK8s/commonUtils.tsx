@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable prefer-destructuring */
 
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Table, Tooltip, Typography } from 'antd';
 import { Progress } from 'antd/lib';
@@ -11,7 +12,6 @@ import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { useMemo } from 'react';
 import {
 	IBuilderQuery,
 	TagFilterItem,
@@ -27,7 +27,9 @@ import {
  * Converts size in bytes to a human-readable string with appropriate units
  */
 export function formatBytes(bytes: number, decimals = 2): string {
-	if (bytes === 0) return '0 Bytes';
+	if (bytes === 0) {
+		return '0 Bytes';
+	}
 
 	const k = 1024;
 	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];

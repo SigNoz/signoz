@@ -1,12 +1,12 @@
-import './ValueGraph.styles.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
+
+import './ValueGraph.styles.scss';
 
 function Unit({
 	type,
@@ -59,7 +59,9 @@ function ValueGraph({
 	// Adjust font size based on container size
 	useEffect(() => {
 		const updateFontSize = (): void => {
-			if (!containerRef.current) return;
+			if (!containerRef.current) {
+				return;
+			}
 
 			const { width, height } = containerRef.current.getBoundingClientRect();
 			const minDimension = Math.min(width, height);

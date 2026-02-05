@@ -1,6 +1,3 @@
-import { Col, Row, Select } from 'antd';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { find } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -10,6 +7,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Col, Row, Select } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { find } from 'lodash-es';
 import { TTTLType } from 'types/api/settings/common';
 
 import {
@@ -67,11 +67,15 @@ function Retention({
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	useEffect(() => {
-		if (!interacted.current) setSelectedValue(initialValue);
+		if (!interacted.current) {
+			setSelectedValue(initialValue);
+		}
 	}, [initialValue]);
 
 	useEffect(() => {
-		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
+		if (!interacted.current) {
+			setSelectTimeUnit(initialTimeUnitValue);
+		}
 	}, [initialTimeUnitValue]);
 
 	const menuItems = availableUnits.map((option) => (
@@ -82,7 +86,9 @@ function Retention({
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
 		const selectedValue = find(availableUnits, (e) => e.value === option)?.value;
-		if (selectedValue) setSelectTimeUnit(selectedValue);
+		if (selectedValue) {
+			setSelectTimeUnit(selectedValue);
+		}
 	};
 
 	useEffect(() => {
@@ -90,7 +96,9 @@ function Retention({
 			availableUnits,
 			(timeUnit) => timeUnit.value === selectedTimeUnit,
 		)?.multiplier;
-		if (!selectedValue) setRetentionValue(null);
+		if (!selectedValue) {
+			setRetentionValue(null);
+		}
 		if (selectedValue && inverseMultiplier) {
 			setRetentionValue(selectedValue * (1 / inverseMultiplier));
 		}

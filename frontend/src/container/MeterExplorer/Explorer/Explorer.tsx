@@ -1,5 +1,4 @@
-import './Explorer.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -17,7 +16,6 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Filter } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -27,6 +25,8 @@ import { v4 as uuid } from 'uuid';
 import { MeterExplorerEventKeys, MeterExplorerEvents } from '../events';
 import TimeSeries from './TimeSeries';
 import { splitQueryIntoOneChartPerQuery } from './utils';
+
+import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
 	const {
@@ -79,7 +79,9 @@ function Explorer(): JSX.Element {
 			_isNewDashboard?: boolean,
 			queryToExport?: Query,
 		): void => {
-			if (!dashboard) return;
+			if (!dashboard) {
+				return;
+			}
 
 			const widgetId = uuid();
 

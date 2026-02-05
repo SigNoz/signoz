@@ -1,15 +1,15 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import '../OnboardingQuestionaire.styles.scss';
-
+import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
 import { Input } from '@signozhq/input';
 import TextArea from 'antd/lib/input/TextArea';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+
+import '../OnboardingQuestionaire.styles.scss';
 
 export interface SignozDetails {
 	interestInSignoz: string[] | null;

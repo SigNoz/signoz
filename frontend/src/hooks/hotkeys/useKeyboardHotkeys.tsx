@@ -1,4 +1,3 @@
-import { noop, unset } from 'lodash-es';
 import {
 	createContext,
 	useCallback,
@@ -7,6 +6,7 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
+import { noop, unset } from 'lodash-es';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 
@@ -77,7 +77,9 @@ export function KeyboardHotkeysProvider({
 	const wasExtended = useRef(false);
 
 	const handleKeyDown = (event: KeyboardEvent): void => {
-		if (event.repeat) return;
+		if (event.repeat) {
+			return;
+		}
 
 		const target = event.target as HTMLElement;
 		const isCodeMirrorEditor =
@@ -90,7 +92,9 @@ export function KeyboardHotkeysProvider({
 		}
 
 		const key = event.key?.toLowerCase();
-		if (!key) return; // Skip if key is undefined
+		if (!key) {
+			return;
+		} // Skip if key is undefined
 
 		// If a pending combo exists and a new key is pressed → extension
 		if (pendingCombo.current && !pressedKeys.current.has(key)) {
@@ -99,9 +103,15 @@ export function KeyboardHotkeysProvider({
 
 		pressedKeys.current.add(key);
 
-		if (event.shiftKey) pressedKeys.current.add('shift');
-		if (event.metaKey || event.ctrlKey) pressedKeys.current.add('meta');
-		if (event.altKey) pressedKeys.current.add('alt');
+		if (event.shiftKey) {
+			pressedKeys.current.add('shift');
+		}
+		if (event.metaKey || event.ctrlKey) {
+			pressedKeys.current.add('meta');
+		}
+		if (event.altKey) {
+			pressedKeys.current.add('alt');
+		}
 
 		const combo = normalizeChord(pressedKeys.current);
 
@@ -115,15 +125,25 @@ export function KeyboardHotkeysProvider({
 
 	const handleKeyUp = (event: KeyboardEvent): void => {
 		const key = event.key?.toLowerCase();
-		if (!key) return; // Skip if key is undefined
+		if (!key) {
+			return;
+		} // Skip if key is undefined
 
 		pressedKeys.current.delete(key);
 
-		if (!event.shiftKey) pressedKeys.current.delete('shift');
-		if (!event.metaKey && !event.ctrlKey) pressedKeys.current.delete('meta');
-		if (!event.altKey) pressedKeys.current.delete('alt');
+		if (!event.shiftKey) {
+			pressedKeys.current.delete('shift');
+		}
+		if (!event.metaKey && !event.ctrlKey) {
+			pressedKeys.current.delete('meta');
+		}
+		if (!event.altKey) {
+			pressedKeys.current.delete('alt');
+		}
 
-		if (!pendingCombo.current) return;
+		if (!pendingCombo.current) {
+			return;
+		}
 
 		// Fire only if user did NOT extend the combo
 		if (!wasExtended.current) {

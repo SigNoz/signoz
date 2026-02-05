@@ -1,5 +1,4 @@
-import './UpdateContextLinks.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
 import {
 	Button,
 	Col,
@@ -18,10 +17,11 @@ import {
 } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { Plus, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
 
 import VariablesDropdown from './VariablesDropdown';
+
+import './UpdateContextLinks.styles.scss';
 
 const { TextArea } = AntInput;
 
@@ -51,7 +51,9 @@ function UpdateContextLinks({
 
 	// Extract field variables from the widget's query (all groupBy fields from all queries)
 	const fieldVariables = useMemo(() => {
-		if (!selectedWidget?.query?.builder?.queryData) return {};
+		if (!selectedWidget?.query?.builder?.queryData) {
+			return {};
+		}
 
 		const fieldVars: Record<string, string | number | boolean> = {};
 
@@ -164,7 +166,7 @@ function UpdateContextLinks({
 			onSave(newContextLink);
 		} catch (error) {
 			// Form validation failed, don't call onSave
-			console.log('Form validation failed:', error);
+			console.error('Form validation failed:', error);
 		}
 	};
 

@@ -1,7 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { SearchOutlined } from '@ant-design/icons';
 import { Input, Spin, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useTranslation } from 'react-i18next';
 
 import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';
@@ -17,7 +17,9 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 	const isDarkMode = useIsDarkMode();
 
-	if (!config) return null;
+	if (!config) {
+		return null;
+	}
 
 	return (
 		<AddColumnWrapper direction="vertical">

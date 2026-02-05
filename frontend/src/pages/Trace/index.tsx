@@ -1,3 +1,5 @@
+import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
@@ -11,8 +13,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetInitialTraceFilter } from 'store/actions/trace/getInitialFilter';

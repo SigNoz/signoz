@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
-import './entityEvents.styles.scss';
-
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
 import { VIEWS } from 'components/HostMetricsDetail/constants';
@@ -16,13 +16,11 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { isArray } from 'lodash-es';
 import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -31,6 +29,8 @@ import {
 	getEntityEventsOrLogsQueryPayload,
 	QUERY_KEYS,
 } from '../utils';
+
+import './entityEvents.styles.scss';
 
 interface EventDataType {
 	key: string;
@@ -199,12 +199,16 @@ export default function Events({
 	);
 
 	const handlePrev = (): void => {
-		if (!formattedEntityEvents.length) return;
+		if (!formattedEntityEvents.length) {
+			return;
+		}
 		setPage(page - 1);
 	};
 
 	const handleNext = (): void => {
-		if (!formattedEntityEvents.length) return;
+		if (!formattedEntityEvents.length) {
+			return;
+		}
 		setPage(page + 1);
 	};
 

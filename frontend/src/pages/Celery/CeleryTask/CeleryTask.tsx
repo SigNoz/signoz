@@ -1,5 +1,4 @@
-import './CeleryTask.styles.scss';
-
+import { useEffect, useRef, useState } from 'react';
 import logEvent from 'api/common/logEvent';
 import CeleryTaskConfigOptions from 'components/CeleryTask/CeleryTaskConfigOptions/CeleryTaskConfigOptions';
 import CeleryTaskDetail, {
@@ -9,7 +8,8 @@ import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTas
 import { QueryParams } from 'constants/query';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useEffect, useRef, useState } from 'react';
+
+import './CeleryTask.styles.scss';
 
 export default function CeleryTask(): JSX.Element {
 	const [task, setTask] = useState<CaptureDataProps | null>(null);

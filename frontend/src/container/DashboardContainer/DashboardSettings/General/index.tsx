@@ -1,16 +1,16 @@
-import './GeneralSettings.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Col, Input, Select, Space, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { Button } from './styles';
 import { Base64Icons } from './utils';
+
+import './GeneralSettings.styles.scss';
 
 const { Option } = Select;
 
@@ -37,7 +37,9 @@ function GeneralDashboardSettings(): JSX.Element {
 	const { t } = useTranslation('common');
 
 	const onSaveHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		updateDashboardMutation.mutate(
 			{

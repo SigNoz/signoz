@@ -1,26 +1,4 @@
 /* eslint-disable no-nested-ternary */
-import { Modal } from 'antd';
-import getDashboard from 'api/v1/dashboards/id/get';
-import locked from 'api/v1/dashboards/id/lock';
-import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import ROUTES from 'constants/routes';
-import { getMinMax } from 'container/TopNav/AutoRefresh/config';
-import dayjs, { Dayjs } from 'dayjs';
-import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
-import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useTabVisibility from 'hooks/useTabFocus';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import { defaultTo, isEmpty } from 'lodash-es';
-import isEqual from 'lodash-es/isEqual';
-import isUndefined from 'lodash-es/isUndefined';
-import omitBy from 'lodash-es/omitBy';
-import { useAppContext } from 'providers/App/App';
-import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
-import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
-import { useErrorModal } from 'providers/ErrorModalProvider';
 import {
 	createContext,
 	PropsWithChildren,
@@ -35,6 +13,28 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
+import { Modal } from 'antd';
+import getDashboard from 'api/v1/dashboards/id/get';
+import locked from 'api/v1/dashboards/id/lock';
+import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import ROUTES from 'constants/routes';
+import dayjs, { Dayjs } from 'dayjs';
+import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
+import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useTabVisibility from 'hooks/useTabFocus';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
+import { getMinMaxForSelectedTime } from 'lib/getMinMax';
+import { defaultTo, isEmpty } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
+import isUndefined from 'lodash-es/isUndefined';
+import omitBy from 'lodash-es/omitBy';
+import { useAppContext } from 'providers/App/App';
+import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
+import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -45,6 +45,11 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
+import { useDashboardVariablesSelector } from '../../hooks/dashboard/useDashboardVariables';
+import {
+	setDashboardVariablesStore,
+	updateDashboardVariablesStore,
+} from './store/dashboardVariables/dashboardVariablesStore';
 import {
 	DashboardSortOrder,
 	IDashboardContext,
@@ -196,6 +201,25 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
+	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
+	const savedDashboardId = useDashboardVariablesSelector((s) => s.dashboardId);
+
+	useEffect(() => {
+		const existingVariables = dashboardVariables;
+		const updatedVariables = selectedDashboard?.data.variables || {};
+
+		if (savedDashboardId !== dashboardId) {
+			setDashboardVariablesStore({
+				dashboardId,
+				variables: updatedVariables,
+			});
+		} else if (!isEqual(existingVariables, updatedVariables)) {
+			updateDashboardVariablesStore({
+				dashboardId,
+				variables: updatedVariables,
+			});
+		}
+	}, [selectedDashboard]);
 
 	const {
 		currentDashboard,
@@ -371,7 +395,7 @@ export function DashboardProvider({
 						onOk() {
 							setSelectedDashboard(updatedDashboardData);
 
-							const { maxTime, minTime } = getMinMax(
+							const { maxTime, minTime } = getMinMaxForSelectedTime(
 								globalTime.selectedTime,
 								globalTime.minTime,
 								globalTime.maxTime,

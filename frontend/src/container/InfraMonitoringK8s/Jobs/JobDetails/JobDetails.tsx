@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import '../../EntityDetailsUtils/entityDetails.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
@@ -21,7 +22,7 @@ import {
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
@@ -33,9 +34,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -56,6 +54,8 @@ import JobTraces from '../../EntityDetailsUtils/EntityTraces';
 import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
 import { getJobMetricsQueryPayload, jobWidgetInfo } from './constants';
 import { JobDetailsProps } from './JobDetails.interfaces';
+
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 function JobDetails({
 	job,

@@ -1,14 +1,12 @@
-import './MQDetails.style.scss';
-
+import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Radio } from 'antd';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Dispatch, SetStateAction, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -19,6 +17,8 @@ import {
 	setConfigDetail,
 } from '../MessagingQueuesUtils';
 import MessagingQueuesTable from './MQTables/MQTables';
+
+import './MQDetails.style.scss';
 
 type SelectedViewType = keyof typeof MessagingQueuesViewType;
 

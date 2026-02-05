@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import { Switch } from 'antd';
 import put from 'api/v1/domains/id/put';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useState } from 'react';
 import APIError from 'types/api/error';
 import { GettableAuthDomain } from 'types/api/v1/domains/list';
 

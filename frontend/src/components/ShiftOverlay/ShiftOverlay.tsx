@@ -1,9 +1,9 @@
-import './shiftOverlay.scss';
-
 import { useMemo } from 'react';
 import ReactDOM from 'react-dom';
 
 import { formatShortcut } from './formatShortcut';
+
+import './shiftOverlay.scss';
 
 export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 export type CmdAction = {

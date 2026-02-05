@@ -1,11 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
 import _noop from 'lodash-es/noop';
-import { Dispatch, SetStateAction } from 'react';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';

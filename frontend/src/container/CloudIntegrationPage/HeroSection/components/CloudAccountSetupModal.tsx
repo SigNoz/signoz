@@ -1,12 +1,10 @@
-import './CloudAccountSetupModal.style.scss';
-
+import { useCallback } from 'react';
+import { useQueryClient } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
-import { useCallback } from 'react';
-import { useQueryClient } from 'react-query';
 
 import {
 	ActiveViewEnum,
@@ -16,6 +14,8 @@ import {
 import { RegionForm } from './RegionForm';
 import { RegionSelector } from './RegionSelector';
 import { SuccessView } from './SuccessView';
+
+import './CloudAccountSetupModal.style.scss';
 
 function CloudAccountSetupModal({
 	onClose,

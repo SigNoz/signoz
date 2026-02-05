@@ -152,17 +152,17 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.
 		}
 	}
 
-	return errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "")
+	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector, roleSelectors []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
 	if err != nil {
 		return err
 	}
 
-	tuples, err := authtypes.TypeableOrganization.Tuples(subject, translation, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, orgID.StringValue())}, orgID)
+	tuples, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
 	if err != nil {
 		return err
 	}
@@ -175,13 +175,13 @@ func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims aut
 	return nil
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, translation authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector, roleSelectors []authtypes.Selector) error {
 	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}
 
-	tuples, err := authtypes.TypeableOrganization.Tuples(subject, translation, []authtypes.Selector{authtypes.MustNewSelector(authtypes.TypeOrganization, orgID.StringValue())}, orgID)
+	tuples, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
 	if err != nil {
 		return err
 	}
@@ -195,6 +195,10 @@ func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Contex
 }
 
 func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
+	if len(additions) == 0 && len(deletions) == 0 {
+		return nil
+	}
+
 	storeID, modelID := provider.getStoreIDandModelID()
 	deletionTuplesWithoutCondition := make([]*openfgav1.TupleKeyWithoutCondition, len(deletions))
 	for idx, tuple := range deletions {

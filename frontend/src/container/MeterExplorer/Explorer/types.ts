@@ -1,5 +1,5 @@
-import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
 import { UseQueryResult } from 'react-query';
+import { RelatedMetric } from 'api/metricsExplorer/getRelatedMetrics';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
