@@ -96,6 +96,7 @@ export default function QueryFunctions({
 	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
+	const hasFunctions = functions.length > 0;
 
 	const handleAddNewFunction = (): void => {
 		const defaultFunctionStruct =
@@ -180,15 +181,13 @@ export default function QueryFunctions({
 		<div
 			className={cx(
 				'query-functions-container',
-				functions && functions.length > 0 ? 'hasFunctions' : '',
+				hasFunctions ? 'hasFunctions' : '',
 			)}
 		>
 			<Button
 				className="periscope-btn function-btn"
-				disabled={functions && functions.length > 0}
-				onClick={
-					functions && functions.length === 0 ? handleAddNewFunction : undefined
-				}
+				disabled={hasFunctions}
+				onClick={handleAddNewFunction}
 			>
 				<FunctionIcon
 					className="function-icon"
