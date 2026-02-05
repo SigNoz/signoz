@@ -1302,7 +1302,7 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'e8a043b7',
 			key: {
-				key: 'net.peer.name',
+				key: SPAN_ATTRIBUTES.SERVER_NAME,
 				dataType: DataTypes.String,
 				type: '',
 			},

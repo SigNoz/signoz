@@ -12,11 +12,8 @@ import (
 )
 
 const (
-	derivedKeyHTTPURL = "http_url" // https://signoz.io/docs/traces-management/guides/derived-fields-spans/#http_url
-
-	// todo: change this to http_host,
-	// it is not done currently as http_host is ignoring net.peer.name which needs to be fixed
-	derivedKeyHTTPHost = "external_http_url"
+	derivedKeyHTTPURL  = "http_url" // https://signoz.io/docs/traces-management/guides/derived-fields-spans/#http_url
+	derivedKeyHTTPHost = "http_host"
 )
 
 var defaultStepInterval = 60 * time.Second
