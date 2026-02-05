@@ -12,7 +12,7 @@ import type uPlot from 'uplot';
 export interface PlotContextInitialState {
 	uPlotInstance: uPlot | null;
 	widgetId?: string;
-	shouldSavePreferences?: boolean;
+	shouldSaveSelectionPreference?: boolean;
 }
 export interface IPlotContext {
 	setPlotContextInitialState: (state: PlotContextInitialState) => void;
@@ -36,12 +36,12 @@ export const PlotContextProvider = ({
 		({
 			uPlotInstance,
 			widgetId,
-			shouldSavePreferences,
+			shouldSaveSelectionPreference,
 		}: PlotContextInitialState): void => {
 			uPlotInstanceRef.current = uPlotInstance;
 			widgetIdRef.current = widgetId;
 			activeSeriesIndex.current = undefined;
-			shouldSavePreferencesRef.current = !!shouldSavePreferences;
+			shouldSavePreferencesRef.current = !!shouldSaveSelectionPreference;
 		},
 		[],
 	);

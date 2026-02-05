@@ -93,7 +93,7 @@ export default function UPlotChart({
 		setPlotContextInitialState({
 			uPlotInstance: plot,
 			widgetId: config.getWidgetId(),
-			shouldSavePreferences: config.getShouldSavePreferences(),
+			shouldSaveSelectionPreference: config.getShouldSaveSelectionPreference(),
 		});
 
 		plotInstanceRef.current = plot;

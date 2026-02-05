@@ -25,7 +25,7 @@ export abstract class ConfigBuilder<P, T> {
 /**
  * Preferences source for the uPlot config builder
  */
-export enum PreferencesSource {
+export enum SelectionPreferencesSource {
 	LOCAL_STORAGE = 'LOCAL_STORAGE',
 	IN_MEMORY = 'IN_MEMORY',
 }
@@ -37,8 +37,8 @@ export interface ConfigBuilderProps {
 	widgetId?: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	tzDate?: uPlot.LocalDateFromUnix;
-	preferencesSource?: PreferencesSource;
-	shouldSavePreferences?: boolean;
+	selectionPreferencesSource?: SelectionPreferencesSource;
+	shouldSaveSelectionPreference?: boolean;
 }
 
 /**

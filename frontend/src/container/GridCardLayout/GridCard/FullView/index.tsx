@@ -367,7 +367,7 @@ function FullView({
 								/>
 							)}
 							<PanelWrapper
-								panelMode={PanelMode.VIEW}
+								panelMode={PanelMode.STANDALONE_VIEW}
 								queryResponse={response}
 								widget={widget}
 								setRequestData={setRequestData}

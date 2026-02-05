@@ -12,7 +12,7 @@ describe('Table panel wrappper tests', () => {
 	it('table should render fine with the query response and column units', () => {
 		const { container, getByText } = render(
 			<TablePanelWrapper
-				panelMode={PanelMode.DASHBOARD}
+				panelMode={PanelMode.DASHBOARD_VIEW}
 				widget={(tablePanelWidgetQuery as unknown) as Widgets}
 				queryResponse={(tablePanelQueryResponse as unknown) as any}
 				onDragSelect={(): void => {}}

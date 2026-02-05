@@ -1,6 +1,7 @@
 import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
+import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
 import { merge } from 'lodash-es';
 import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
@@ -11,7 +12,7 @@ import {
 	DEFAULT_CURSOR_CONFIG,
 	DEFAULT_PLOT_CONFIG,
 	LegendItem,
-	PreferencesSource,
+	SelectionPreferencesSource,
 } from './types';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
@@ -37,8 +38,9 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 > {
 	series: UPlotSeriesBuilder[] = [];
 
-	private preferencesSource: PreferencesSource = PreferencesSource.IN_MEMORY;
-	private shouldSavePreferences = false;
+	private selectionPreferencesSource: SelectionPreferencesSource =
+		SelectionPreferencesSource.IN_MEMORY;
+	private shouldSaveSelectionPreference = false;
 
 	private axes: Record<string, UPlotAxisBuilder> = {};
 
@@ -74,8 +76,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			widgetId,
 			onDragSelect,
 			tzDate,
-			preferencesSource,
-			shouldSavePreferences,
+			selectionPreferencesSource,
+			shouldSaveSelectionPreference,
 		} = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
@@ -85,12 +87,12 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			this.tzDate = tzDate;
 		}
 
-		if (preferencesSource) {
-			this.preferencesSource = preferencesSource;
+		if (selectionPreferencesSource) {
+			this.selectionPreferencesSource = selectionPreferencesSource;
 		}
 
-		if (shouldSavePreferences) {
-			this.shouldSavePreferences = shouldSavePreferences;
+		if (shouldSaveSelectionPreference) {
+			this.shouldSaveSelectionPreference = shouldSaveSelectionPreference;
 		}
 
 		this.onDragSelect = noop;
@@ -111,10 +113,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
-	 * Get the save preferences
+	 * Get the save selection preferences
 	 */
-	getShouldSavePreferences(): boolean {
-		return this.shouldSavePreferences;
+	getShouldSaveSelectionPreference(): boolean {
+		return this.shouldSaveSelectionPreference;
 	}
 
 	/**
@@ -233,28 +235,38 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
+	 * Returns stored series visibility map from localStorage when preferences source is LOCAL_STORAGE, otherwise null.
+	 */
+	private getStoredVisibilityMap(): Map<string, boolean> | null {
+		if (
+			this.widgetId &&
+			this.selectionPreferencesSource === SelectionPreferencesSource.LOCAL_STORAGE
+		) {
+			return getStoredSeriesVisibility(this.widgetId);
+		}
+		return null;
+	}
+
+	/**
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const visibilityMap =
-			this.widgetId && this.preferencesSource === PreferencesSource.LOCAL_STORAGE
-				? getStoredSeriesVisibility(this.widgetId)
-				: null;
-
-		// check if there is any hidden series in the visibility map
-		const isAnySeriesHidden =
-			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show);
+		const visibilityMap = this.getStoredVisibilityMap();
+		const isAnySeriesHidden = !!(
+			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show)
+		);
 
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
 			const label = seriesConfig.label ?? '';
 			const seriesIndex = index + 1; // +1 because the first series is the timestamp
 
-			// Priority: stored visibility > series config > default (true)
-
-			const show = isAnySeriesHidden
-				? visibilityMap.get(label) ?? false
-				: seriesConfig.show ?? true;
+			const show = resolveSeriesVisibility(
+				label,
+				seriesConfig.show,
+				visibilityMap,
+				isAnySeriesHidden,
+			);
 
 			acc[seriesIndex] = {
 				seriesIndex,
@@ -282,27 +294,22 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
-		let visibilityMap: Map<string, boolean> | null = null;
-		if (
-			this.widgetId &&
-			this.preferencesSource === PreferencesSource.LOCAL_STORAGE
-		) {
-			visibilityMap = getStoredSeriesVisibility(this.widgetId);
-		}
-
-		// check if there is any hidden series in the visibility map
-		const isAnySeriesHidden =
-			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show);
+		const visibilityMap = this.getStoredVisibilityMap();
+		const isAnySeriesHidden = !!(
+			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show)
+		);
 
 		config.series = [
 			{ value: (): string => '' }, // Base series for timestamp
 			...this.series.map((s) => {
-				// Apply visibility map to the series
 				const series = s.getConfig();
 				const label = series.label ?? '';
-				const visible = isAnySeriesHidden
-					? visibilityMap?.get(label) ?? false
-					: series.show ?? true;
+				const visible = resolveSeriesVisibility(
+					label,
+					series.show,
+					visibilityMap,
+					isAnySeriesHidden,
+				);
 				return {
 					...series,
 					show: visible,

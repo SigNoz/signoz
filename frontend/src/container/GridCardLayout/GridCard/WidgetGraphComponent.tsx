@@ -408,7 +408,7 @@ function WidgetGraphComponent({
 					ref={graphRef}
 				>
 					<PanelWrapper
-						panelMode={PanelMode.DASHBOARD}
+						panelMode={PanelMode.DASHBOARD_VIEW}
 						widget={widget}
 						queryResponse={queryResponse}
 						setRequestData={setRequestData}

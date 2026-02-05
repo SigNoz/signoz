@@ -157,7 +157,7 @@ describe('PanelWrapper with DragSelect', () => {
 
 		render(
 			<PanelWrapper
-				panelMode={PanelMode.VIEW}
+				panelMode={PanelMode.STANDALONE_VIEW}
 				widget={mockWidget}
 				queryResponse={mockQueryResponse}
 				onDragSelect={mockOnDragSelect}

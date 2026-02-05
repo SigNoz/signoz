@@ -184,7 +184,7 @@ function WidgetGraph({
 			}}
 		>
 			<PanelWrapper
-				panelMode={PanelMode.EDIT}
+				panelMode={PanelMode.DASHBOARD_EDIT}
 				widget={selectedWidget}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
