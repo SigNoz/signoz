@@ -214,6 +214,6 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
 }
 
-func (module *module) deletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
+func (module *module) deletePublic(ctx context.Context, _ valuer.UUID, dashboardID valuer.UUID) error {
 	return module.store.DeletePublic(ctx, dashboardID.StringValue())
 }
