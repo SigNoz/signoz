@@ -116,7 +116,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    # TODO: @abhishekhugetech enable the test for matchType last,
+    # TODO: @abhishekhugetech enable the test for matchType last, pylint: disable=W0511
     # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
     # types.AlertTestCase(
     #     name="test_threshold_above_last",
@@ -229,7 +229,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ),
     ),
     # TODO: @abhishekhugetech enable the test for matchType last,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed, pylint: disable=W0511
     # types.AlertTestCase(
     #     name="test_threshold_below_last",
     #     rule_path="alerts/test_scenarios/threshold_below_last/rule.json",
@@ -341,7 +341,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ),
     ),
     # TODO: @abhishekhugetech enable the test for matchType last,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed, pylint: disable=W0511
     # types.AlertTestCase(
     #     name="test_threshold_equal_to_last",
     #     rule_path="alerts/test_scenarios/threshold_equal_to_last/rule.json",
@@ -453,7 +453,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         ),
     ),
     # TODO: @abhishekhugetech enable the test for matchType last,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed, pylint: disable=W0511
     # types.AlertTestCase(
     #     name="test_threshold_not_equal_to_last",
     #     rule_path="alerts/test_scenarios/threshold_not_equal_to_last/rule.json",
