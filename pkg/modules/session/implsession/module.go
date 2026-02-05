@@ -63,6 +63,19 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		orgIDs = append(orgIDs, org.ID)
 	}
 
+	// ROOT USER
+	// if this email is a root user email, we will only allow password authentication
+	if module.rootUserModule != nil {
+		rootUserContexts, err := module.getRootUserSessionContext(ctx, orgs, orgIDs, email)
+		if err != nil {
+			return nil, err
+		}
+		if rootUserContexts.Exists {
+			return rootUserContexts, nil
+		}
+	}
+
+	// REGULAR USER
 	users, err := module.userGetter.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
 	if err != nil {
 		return nil, err
@@ -116,7 +129,11 @@ func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvi
 		// Ignore root user authentication errors and continue with regular user authentication.
 		// This error can be either not found or incorrect password, in both cases we continue with regular user authentication.
 		identity, err := module.rootUserModule.Authenticate(ctx, orgID, email, password)
-		if err == nil && identity != nil {
+		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+			// something else went wrong, we should report back to the caller
+			return nil, err
+		}
+		if identity != nil {
 			// root user authentication successful
 			return module.tokenizer.CreateToken(ctx, identity, map[string]string{})
 		}
@@ -229,4 +246,33 @@ func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs ma
 	}
 
 	return provider, nil
+}
+
+func (module *module) getRootUserSessionContext(ctx context.Context, orgs []*types.Organization, orgIDs []valuer.UUID, email valuer.Email) (*authtypes.SessionContext, error) {
+	context := authtypes.NewSessionContext()
+
+	rootUsers, err := module.rootUserModule.GetByEmailAndOrgIDs(ctx, orgIDs, email)
+	if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+		// something else went wrong, report back to the caller
+		return nil, err
+	}
+
+	for _, rootUser := range rootUsers {
+		idx := slices.IndexFunc(orgs, func(org *types.Organization) bool {
+			return org.ID == rootUser.OrgID
+		})
+
+		if idx == -1 {
+			continue
+		}
+
+		org := orgs[idx]
+		if rootUser != nil {
+			context.Exists = true
+			orgContext := authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword)
+			context = context.AddOrgContext(orgContext)
+		}
+	}
+
+	return context, nil
 }

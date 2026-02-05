@@ -6,12 +6,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/rootuser"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -20,10 +17,9 @@ type reconciler struct {
 	settings  factory.ScopedProviderSettings
 	orgGetter organization.Getter
 	config    user.RootUserConfig
-	granter   role.Granter
 }
 
-func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings, orgGetter organization.Getter, config user.RootUserConfig, granter role.Granter) rootuser.Reconciler {
+func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings, orgGetter organization.Getter, config user.RootUserConfig) rootuser.Reconciler {
 	scopedSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/rootuser/implrootuser/reconciler")
 
 	return &reconciler{
@@ -31,7 +27,6 @@ func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings,
 		settings:  scopedSettings,
 		orgGetter: orgGetter,
 		config:    config,
-		granter:   granter,
 	}
 }
 
@@ -106,13 +101,6 @@ func (r *reconciler) createRootUserForOrg(ctx context.Context, orgID valuer.UUID
 
 	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user created for organization", "organization_id", orgID, "email", r.config.Email)
 
-	err = r.granter.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, rootUser.ID.StringValue(), rootUser.OrgID, nil))
-	if err != nil {
-		return err
-	}
-
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user granted admin role for organization", "organization_id", orgID, "email", r.config.Email)
-
 	return nil
 }
 
@@ -142,13 +130,6 @@ func (r *reconciler) updateRootUserForOrg(ctx context.Context, orgID valuer.UUID
 		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user updated for organization", "organization_id", orgID, "email", r.config.Email)
 		return nil
 	}
-
-	err := r.granter.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, rootUser.ID.StringValue(), rootUser.OrgID, nil))
-	if err != nil {
-		return err
-	}
-
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user granted admin role for organization", "organization_id", orgID, "email", r.config.Email)
 
 	return nil
 }

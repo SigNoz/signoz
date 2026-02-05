@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/rootuser"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -18,12 +19,13 @@ import (
 )
 
 type handler struct {
-	module root.Module
-	getter root.Getter
+	module         root.Module
+	getter         root.Getter
+	rootUserModule rootuser.Module
 }
 
-func NewHandler(module root.Module, getter root.Getter) root.Handler {
-	return &handler{module: module, getter: getter}
+func NewHandler(module root.Module, getter root.Getter, rootUserModule rootuser.Module) root.Handler {
+	return &handler{module: module, getter: getter, rootUserModule: rootUserModule}
 }
 
 func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +60,20 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	var req types.PostableInvite
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
+		return
+	}
+
+	// ROOT USER CHECK
+	// if the to-be-invited email is one of the root users, we forbid this operation
+	rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), req.Email)
+	if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+		// something else went wrong, report back to UI
+		render.Error(rw, err)
+		return
+	}
+
+	if rootUser != nil {
+		render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot invite this email id"))
 		return
 	}
 
@@ -192,6 +208,37 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ROOT USER
+	if h.rootUserModule != nil {
+		rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email))
+		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+			// something else is wrong report back in UI
+			render.Error(w, err)
+			return
+		}
+
+		if rootUser != nil {
+			// root user detected
+			rUser := types.User{
+				Identifiable: types.Identifiable{
+					ID: rootUser.ID,
+				},
+				DisplayName: "Root User",
+				Email:       rootUser.Email,
+				Role:        types.RoleAdmin,
+				OrgID:       rootUser.OrgID,
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: rootUser.CreatedAt,
+					UpdatedAt: rootUser.UpdatedAt,
+				},
+			}
+
+			render.Success(w, http.StatusOK, rUser)
+			return
+		}
+	}
+
+	// NORMAL USER
 	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)

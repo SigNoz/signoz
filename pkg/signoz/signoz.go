@@ -446,7 +446,7 @@ func New(
 
 	// Initialize and run the root user reconciler
 	rootUserStore := implrootuser.NewStore(sqlstore, providerSettings)
-	rootUserReconciler := implrootuser.NewReconciler(rootUserStore, providerSettings, orgGetter, config.User.RootUserConfig, granter)
+	rootUserReconciler := implrootuser.NewReconciler(rootUserStore, providerSettings, orgGetter, config.User.RootUserConfig)
 	err = rootUserReconciler.Reconcile(ctx)
 	if err != nil {
 		// Question: Should we fail the startup if the root user reconciliation fails?

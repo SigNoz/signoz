@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrRootUserAlreadyExists = errors.MustNewCode("root_user_already_exists")
-	ErrRootUserNotFound      = errors.MustNewCode("root_user_not_found")
+	ErrCodeRootUserAlreadyExists = errors.MustNewCode("root_user_already_exists")
+	ErrCodeRootUserNotFound      = errors.MustNewCode("root_user_not_found")
 )
 
 type RootUser struct {
@@ -55,6 +55,12 @@ type RootUserStore interface {
 
 	// Gets a root user by email and organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
 	GetByEmailAndOrgID(ctx context.Context, orgID valuer.UUID, email valuer.Email) (*RootUser, error)
+
+	// Gets a root user by organization ID and ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*RootUser, error)
+
+	// Gets all root users by email and organization IDs. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	GetByEmailAndOrgIDs(ctx context.Context, orgIDs []valuer.UUID, email valuer.Email) ([]*RootUser, error)
 
 	// Updates the password of a root user. Returns ErrCodeRootUserNotFound if a root user does not exist.
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, rootUser *RootUser) error

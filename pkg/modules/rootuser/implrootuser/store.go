@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type store struct {
@@ -28,7 +29,7 @@ func (store *store) Create(ctx context.Context, rootUser *types.RootUser) error 
 		Model(rootUser).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrRootUserAlreadyExists, "root user with email %s already exists in org %s", rootUser.Email, rootUser.OrgID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrCodeRootUserAlreadyExists, "root user with email %s already exists in org %s", rootUser.Email, rootUser.OrgID)
 	}
 
 	return nil
@@ -44,9 +45,42 @@ func (store *store) GetByEmailAndOrgID(ctx context.Context, orgID valuer.UUID, e
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrRootUserNotFound, "root user with email %s does not exist in org %s", email, orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeRootUserNotFound, "root user with email %s does not exist in org %s", email, orgID)
 	}
 	return rootUser, nil
+}
+
+func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.RootUser, error) {
+	rootUser := new(types.RootUser)
+
+	err := store.sqlstore.BunDBCtx(ctx).
+		NewSelect().
+		Model(rootUser).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeRootUserNotFound, "root user with id %s does not exist in org %s", id, orgID)
+	}
+	return rootUser, nil
+}
+
+func (store *store) GetByEmailAndOrgIDs(ctx context.Context, orgIDs []valuer.UUID, email valuer.Email) ([]*types.RootUser, error) {
+	rootUsers := []*types.RootUser{}
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&rootUsers).
+		Where("email = ?", email).
+		Where("org_id IN (?)", bun.In(orgIDs)).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeRootUserNotFound, "root user with email %s does not exist in orgs %s", email, orgIDs)
+	}
+
+	return rootUsers, nil
 }
 
 func (store *store) ExistsByOrgID(ctx context.Context, orgID valuer.UUID) (bool, error) {
@@ -74,7 +108,7 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrRootUserNotFound, "root user with id %s does not exist", id)
+		return store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeRootUserNotFound, "root user with id %s does not exist", id)
 	}
 	return nil
 }
