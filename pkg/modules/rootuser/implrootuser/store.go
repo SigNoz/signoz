@@ -28,7 +28,7 @@ func (store *store) Create(ctx context.Context, rootUser *types.RootUser) error 
 		Model(rootUser).
 		Exec(ctx)
 	if err != nil {
-		store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrRootUserAlreadyExists, "root user with email %s already exists in org %s", rootUser.Email, rootUser.OrgID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrRootUserAlreadyExists, "root user with email %s already exists in org %s", rootUser.Email, rootUser.OrgID)
 	}
 
 	return nil
