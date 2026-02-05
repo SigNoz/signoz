@@ -1183,8 +1183,8 @@ func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T)
 
 route:
   group_by: ['alertname']
-  group_wait: 1h
-  group_interval: 1h
+  group_wait: 30s
+  group_interval: 5m
   receiver: 'slack'`
 	conf, err := config.Load(confData)
 	if err != nil {
