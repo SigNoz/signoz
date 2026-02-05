@@ -5,7 +5,7 @@
 	-webkit-font-smoothing: antialiased;
 	color: var(--bg-vanilla-100);
 	border-radius: 6px;
-	padding: 1rem 1rem 0.5rem 1rem;
+	padding: 1rem 0.5rem 0.5rem 1rem;
 	border: 1px solid var(--bg-ink-100);
 	display: flex;
 	flex-direction: column;
@@ -15,6 +15,12 @@
 		background: var(--bg-vanilla-100);
 		color: var(--bg-ink-500);
 		border: 1px solid var(--bg-vanilla-300);
+
+		.uplot-tooltip-list {
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-vanilla-400);
+			}
+		}
 	}
 
 	.uplot-tooltip-header {
@@ -22,18 +28,18 @@
 		font-weight: 500;
 	}
 
-	.uplot-tooltip-list-container {
-		height: 100%;
-		.uplot-tooltip-list {
-			&::-webkit-scrollbar {
-				width: 0.3rem;
-			}
-			&::-webkit-scrollbar-corner {
-				background: transparent;
-			}
-			&::-webkit-scrollbar-thumb {
-				background: rgb(136, 136, 136);
-			}
+	.uplot-tooltip-list {
+		&::-webkit-scrollbar {
+			width: 0.3rem;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--bg-slate-100);
+			border-radius: 0.5rem;
 		}
 	}
 
