@@ -6,7 +6,6 @@ import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import uPlot, { AlignedData, Options } from 'uplot';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { usePlotContext } from '../context/PlotContext';
 import { UPlotChartProps } from './types';
 
@@ -49,7 +48,6 @@ export default function UPlotChart({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const plotInstanceRef = useRef<uPlot | null>(null);
 	const prevPropsRef = useRef<UPlotChartProps | null>(null);
-	const configUsedForPlotRef = useRef<UPlotConfigBuilder | null>(null);
 
 	/**
 	 * Destroy the existing plot instance if present.
@@ -57,12 +55,6 @@ export default function UPlotChart({
 	const destroyPlot = useCallback((): void => {
 		if (plotInstanceRef.current) {
 			onDestroy?.(plotInstanceRef.current);
-			// Clean up the config builder that was used to create this plot (not the current prop)
-			if (configUsedForPlotRef.current) {
-				configUsedForPlotRef.current.destroy();
-			}
-			configUsedForPlotRef.current = null;
-
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
 			setPlotContextInitialState({ uPlotInstance: null });
@@ -97,13 +89,14 @@ export default function UPlotChart({
 		if (plotRef) {
 			plotRef(plot);
 		}
+
 		setPlotContextInitialState({
 			uPlotInstance: plot,
 			widgetId: config.getWidgetId(),
+			shouldSaveSelectionPreference: config.getShouldSaveSelectionPreference(),
 		});
 
 		plotInstanceRef.current = plot;
-		configUsedForPlotRef.current = config;
 	}, [
 		config,
 		data,
@@ -143,11 +136,13 @@ export default function UPlotChart({
 			return;
 		}
 
-		// Check if the plot instance's container has been unmounted (e.g., after "No Data" state)
-		// If so, we need to recreate the plot with the new container
+		// Check if the plot instance's root is no longer attached to our container
+		// (e.g., after React has re‑mounted the container div). In uPlot, `root`
+		// is a child of the container, so we must compare against its parent node.
 		const isPlotOrphaned =
-			plotInstanceRef.current &&
-			plotInstanceRef.current.root !== containerRef.current;
+			!!plotInstanceRef.current &&
+			(!containerRef.current ||
+				plotInstanceRef.current.root.parentElement !== containerRef.current);
 
 		// Update dimensions without reinitializing if only size changed
 		if (
