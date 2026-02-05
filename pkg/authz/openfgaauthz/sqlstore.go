@@ -15,11 +15,13 @@ func NewSQLStore(sqlstore sqlstore.SQLStore) (storage.OpenFGADatastore, error) {
 		return sqlite.NewWithDB(sqlstore.SQLDB(), &sqlcommon.Config{
 			MaxTuplesPerWriteField: 100,
 			MaxTypesPerModelField:  100,
+			ExportMetrics:          true,
 		})
 	case "pg":
 		return postgres.NewWithDB(sqlstore.SQLDB(), nil, &sqlcommon.Config{
 			MaxTuplesPerWriteField: 100,
 			MaxTypesPerModelField:  100,
+			ExportMetrics:          true,
 		})
 	}
 	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid store type: %s", sqlstore.BunDB().Dialect().Name().String())
