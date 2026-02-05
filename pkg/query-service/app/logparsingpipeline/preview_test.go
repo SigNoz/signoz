@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/stretchr/testify/require"
@@ -25,19 +25,8 @@ func TestPipelinePreview(t *testing.T) {
 				Alias:   "pipeline1",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{
@@ -58,19 +47,8 @@ func TestPipelinePreview(t *testing.T) {
 				Alias:   "pipeline2",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{
@@ -159,19 +137,8 @@ func TestGrokParsingProcessor(t *testing.T) {
 				Alias:   "pipeline1",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{

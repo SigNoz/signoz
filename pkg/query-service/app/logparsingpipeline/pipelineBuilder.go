@@ -9,7 +9,6 @@ import (
 	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
@@ -47,11 +46,6 @@ func PreparePipelineProcessor(gettablePipelines []pipelinetypes.GettablePipeline
 			continue
 		}
 
-		filterExpr, err := queryBuilderToExpr.Parse(v.Filter)
-		if err != nil {
-			return nil, nil, err
-		}
-
 		router := []pipelinetypes.PipelineOperator{
 			{
 				ID:   "router_signoz",
@@ -59,7 +53,7 @@ func PreparePipelineProcessor(gettablePipelines []pipelinetypes.GettablePipeline
 				Routes: &[]pipelinetypes.Route{
 					{
 						Output: operators[0].ID,
-						Expr:   filterExpr,
+						Expr:   v.Filter.Expression,
 					},
 				},
 				Default: NOOP,
