@@ -6,6 +6,7 @@
 	border-radius: 4px;
 	position: fixed;
 	overflow: auto;
+	transform: translate(-1000px, -1000px); // hide the tooltip initially
 
 	&.pinned {
 		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
