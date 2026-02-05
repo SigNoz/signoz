@@ -133,9 +133,12 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 //   - Results are sorted by ReleaseTime descending (newest first)
 func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64, fieldName string) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
 
+	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
+	copy(sortedEvolutions, evolutions)
+
 	// sort the evolutions by ReleaseTime ascending
-	sort.Slice(evolutions, func(i, j int) bool {
-		return evolutions[i].ReleaseTime.Before(evolutions[j].ReleaseTime)
+	sort.Slice(sortedEvolutions, func(i, j int) bool {
+		return sortedEvolutions[i].ReleaseTime.Before(sortedEvolutions[j].ReleaseTime)
 	})
 
 	tsStartTime := time.Unix(0, int64(tsStart))
@@ -143,7 +146,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 
 	// Build evolution map: column name -> evolution
 	evolutionMap := make(map[string]*telemetrytypes.EvolutionEntry)
-	for _, evolution := range evolutions {
+	for _, evolution := range sortedEvolutions {
 		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName+":"+strconv.Itoa(int(evolution.Version))]; exists {
 			// since if there is duplicate we would just use the oldest one.
 			continue
@@ -154,7 +157,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	// Find the latest base evolution (<= tsStartTime) across ALL columns
 	// Evolutions are sorted, so we can break early
 	var latestBaseEvolutionAcrossAll *telemetrytypes.EvolutionEntry
-	for _, evolution := range evolutions {
+	for _, evolution := range sortedEvolutions {
 		if evolution.ReleaseTime.After(tsStartTime) {
 			break
 		}

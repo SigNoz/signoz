@@ -1,6 +1,7 @@
 package querybuilder
 
 import (
+	"context"
 	"log/slog"
 	"strings"
 	"testing"
@@ -54,6 +55,7 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := FilterExprVisitorOpts{
+				Context:   context.Background(),
 				FieldKeys: keys,
 				Variables: tt.variables,
 			}
