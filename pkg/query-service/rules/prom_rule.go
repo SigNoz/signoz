@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -467,6 +468,10 @@ func toCommonSeries(series promql.Series) v3.Series {
 	}
 
 	for _, f := range series.Floats {
+		// skip the point if it is nan, inf, or timestamp is zero
+		if math.IsNaN(f.F) || math.IsInf(f.F, 0) || f.T == 0 {
+			continue
+		}
 		commonSeries.Points = append(commonSeries.Points, v3.Point{
 			Timestamp: f.T,
 			Value:     f.F,
