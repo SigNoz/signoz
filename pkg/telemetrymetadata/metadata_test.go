@@ -388,14 +388,15 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 }
 
 var (
-	clickHouseQueryPatternWithFieldName    = "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*signal.*=.*field_context.*=.*field_name.*=.*field_name.*=.*"
-	clickHouseQueryPatternWithoutFieldName = "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*signal.*=.*field_context.*=.*ORDER BY.*release_time.*ASC"
+	clickHouseQueryPatternWithFieldName    = "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*version.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*signal.*=.*field_context.*=.*field_name.*=.*field_name.*=.*"
+	clickHouseQueryPatternWithoutFieldName = "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*version.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*signal.*=.*field_context.*=.*ORDER BY.*release_time.*ASC"
 	clickHouseColumns                      = []cmock.ColumnType{
 		{Name: "signal", Type: "String"},
 		{Name: "column_name", Type: "String"},
 		{Name: "column_type", Type: "String"},
 		{Name: "field_context", Type: "String"},
 		{Name: "field_name", Type: "String"},
+		{Name: "version", Type: "UInt32"},
 		{Name: "release_time", Type: "UInt64"},
 	}
 )
@@ -418,6 +419,7 @@ func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
 			"Map(LowCardinality(String), String)",
 			"resource",
 			"__all__",
+			uint32(0),
 			uint64(releaseTime.UnixNano()),
 		},
 	}
@@ -463,6 +465,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 			"Map(LowCardinality(String), String)",
 			"resource",
 			"__all__",
+			uint32(0),
 			uint64(releaseTime1.UnixNano()),
 		},
 		{
@@ -471,6 +474,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
 			"JSON()",
 			"resource",
 			"__all__",
+			uint32(1),
 			uint64(releaseTime2.UnixNano()),
 		},
 	}
@@ -520,6 +524,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 			"String",
 			"body",
 			"__all__",
+			uint32(0),
 			uint64(releaseTime1.UnixNano()),
 		},
 		{
@@ -528,6 +533,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 			"JSON()",
 			"body",
 			"__all__",
+			uint32(1),
 			uint64(releaseTime2.UnixNano()),
 		},
 		{
@@ -536,6 +542,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *
 			"JSON()",
 			"body",
 			"user.name",
+			uint32(2),
 			uint64(releaseTime3.UnixNano()),
 		},
 	}
@@ -598,6 +605,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			"JSON()",
 			"body",
 			"__all__",
+			uint32(0),
 			uint64(releaseTime2.UnixNano()),
 		},
 		{
@@ -606,6 +614,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			"JSON()",
 			"body",
 			"user.name",
+			uint32(1),
 			uint64(releaseTime3.UnixNano()),
 		},
 		{
@@ -614,6 +623,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			"map()",
 			telemetrytypes.FieldContextResource,
 			"__all__",
+			uint32(0),
 			uint64(releaseTime2.UnixNano()),
 		},
 		{
@@ -622,6 +632,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 			"JSON()",
 			telemetrytypes.FieldContextResource,
 			"__all__",
+			uint32(1),
 			uint64(releaseTime3.UnixNano()),
 		},
 	}
@@ -639,7 +650,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelec
 		},
 	}
 
-	query := `SELECT signal, column_name, column_type, field_context, field_name, release_time FROM signoz_metadata\.distributed_column_evolution_metadata WHERE ` +
+	query := `SELECT signal, column_name, column_type, field_context, field_name, version, release_time FROM signoz_metadata\.distributed_column_evolution_metadata WHERE ` +
 		`\(\(signal = \? AND \(field_context = \? AND \(field_name = \? OR field_name = \?\)\)\) OR ` +
 		`\(signal = \? AND \(field_context = \? AND \(field_name = \? OR field_name = \?\)\)\)\) ` +
 		`ORDER BY release_time ASC`
@@ -710,6 +721,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 			"Map(LowCardinality(String), String)",
 			telemetrytypes.FieldContextResource,
 			"__all__",
+			uint32(0),
 			uint64(releaseTime1.UnixNano()),
 		},
 		{
@@ -718,6 +730,7 @@ func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
 			"JSON()",
 			telemetrytypes.FieldContextBody,
 			"__all__",
+			uint32(1),
 			uint64(releaseTime2.UnixNano()),
 		},
 	}

@@ -11,6 +11,7 @@ type EvolutionEntry struct {
 	FieldContext FieldContext `json:"field_context"`
 	FieldName    string       `json:"field_name"`
 	ReleaseTime  time.Time    `json:"release_time"`
+	Version      uint32       `json:"version"`
 }
 
 type EvolutionSelector struct {

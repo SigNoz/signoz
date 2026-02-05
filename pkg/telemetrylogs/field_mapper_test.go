@@ -542,7 +542,8 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		fieldName       string
 		expectedColumns []string // column names
 		expectedEvols   []string // evolution column names
-		expectedError   error
+		expectedError   bool
+		errorStr        string
 	}{
 		{
 			name: "New evolutions after tsStartTime - should include all",
@@ -557,6 +558,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "Map(LowCardinality(String), String)",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      0,
 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 				},
 				{
@@ -565,6 +567,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "JSON()",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      1,
 					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -573,7 +576,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resource", "resources_string"}, // sorted by ReleaseTime desc
 			expectedEvols:   []string{"resource", "resources_string"},
-			expectedError:   nil,
 		},
 		{
 			name: "Columns without matching evolutions - should exclude them",
@@ -589,6 +591,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "Map(LowCardinality(String), String)",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      0,
 					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -597,7 +600,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string"},
 			expectedEvols:   []string{"resources_string"},
-			expectedError:   nil,
 		},
 		{
 			name: "New evolutions after tsEndTime - should exclude all",
@@ -612,6 +614,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "Map(LowCardinality(String), String)",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      0,
 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 				},
 				{
@@ -620,6 +623,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "JSON()",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      1,
 					ReleaseTime:  time.Date(2024, 2, 25, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -628,7 +632,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string"},
 			expectedEvols:   []string{"resources_string"},
-			expectedError:   nil,
 		},
 		{
 			name:    "Empty columns array",
@@ -640,6 +643,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "Map(LowCardinality(String), String)",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      0,
 					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -648,7 +652,8 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{},
 			expectedEvols:   []string{},
-			expectedError:   nil,
+			expectedError:   true,
+			errorStr:        "column resources_string not found",
 		},
 		{
 			name: "Duplicate evolutions - should use first encountered (oldest if sorted)",
@@ -662,6 +667,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "Map(LowCardinality(String), String)",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      0,
 					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 				},
 				{
@@ -670,6 +676,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "JSON()",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      1,
 					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
 				},
 				{
@@ -678,6 +685,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ColumnType:   "JSON()",
 					FieldContext: telemetrytypes.FieldContextResource,
 					FieldName:    "__all__",
+					Version:      1,
 					ReleaseTime:  time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
 				},
 			},
@@ -686,7 +694,47 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resource"},
 			expectedEvols:   []string{"resource"}, // should use first one (older)
-			expectedError:   nil,
+		},
+		{
+			name: "Genuine Duplicate evolutions with new version- should consider both",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      0,
+					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      1,
+					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      2,
+					ReleaseTime:  time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			fieldName:       "service.name",
+			tsStart:         uint64(time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resources_string", "resource"},
+			expectedEvols:   []string{"resources_string", "resource"}, // should use first one (older)
 		},
 		{
 			name: "Evolution exactly at tsEndTime",
@@ -717,7 +765,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string"}, // resource excluded because After(tsEnd) is true
 			expectedEvols:   []string{"resources_string"},
-			expectedError:   nil,
 		},
 		{
 			name: "Single evolution after tsStartTime - JSON body",
@@ -748,7 +795,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn}, // sorted by ReleaseTime desc (newest first)
 			expectedEvols:   []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn},
-			expectedError:   nil,
 		},
 		{
 			name: "No evolution after tsStartTime - JSON body",
@@ -779,7 +825,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{LogsV2BodyPromotedColumn},
 			expectedEvols:   []string{LogsV2BodyPromotedColumn},
-			expectedError:   nil,
 		},
 	}
 
@@ -787,8 +832,8 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			resultColumns, resultEvols, err := selectEvolutionsForColumns(tc.columns, tc.evolutions, tc.tsStart, tc.tsEnd, tc.fieldName)
 
-			if tc.expectedError != nil {
-				assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError {
+				assert.Contains(t, err.Error(), tc.errorStr)
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, len(tc.expectedColumns), len(resultColumns), "column count mismatch")
@@ -803,9 +848,12 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					resultEvolNames[i] = evol.ColumnName
 				}
 
-				assert.Equal(t, tc.expectedColumns, resultColumnNames, "column names mismatch")
-				assert.Equal(t, tc.expectedEvols, resultEvolNames, "evolution column names mismatch")
-
+				for i := range tc.expectedColumns {
+					assert.Equal(t, resultColumnNames[i], tc.expectedColumns[i], "expected column missing: "+tc.expectedColumns[i])
+				}
+				for i := range tc.expectedEvols {
+					assert.Equal(t, resultEvolNames[i], tc.expectedEvols[i], "expected evolution missing: "+tc.expectedEvols[i])
+				}
 				// Verify sorting: should be descending by ReleaseTime
 				for i := 0; i < len(resultEvols)-1; i++ {
 					assert.True(t, !resultEvols[i].ReleaseTime.Before(resultEvols[i+1].ReleaseTime),

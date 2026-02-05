@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -128,7 +129,6 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 //   - Finds the latest base evolution (<= tsStartTime) across ALL columns
 //   - Rejects all evolutions before this latest base evolution
 //   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
-//   - - The case where there can be new version for same evolution and data is not present in between them is not handled as of now.
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
 func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64, fieldName string) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
@@ -144,11 +144,11 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	// Build evolution map: column name -> evolution
 	evolutionMap := make(map[string]*telemetrytypes.EvolutionEntry)
 	for _, evolution := range evolutions {
-		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName]; exists {
+		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName+":"+strconv.Itoa(int(evolution.Version))]; exists {
 			// since if there is duplicate we would just use the oldest one.
 			continue
 		}
-		evolutionMap[evolution.ColumnName+":"+evolution.FieldName] = evolution
+		evolutionMap[evolution.ColumnName+":"+evolution.FieldName+":"+strconv.Itoa(int(evolution.Version))] = evolution
 	}
 
 	// Find the latest base evolution (<= tsStartTime) across ALL columns
@@ -161,8 +161,14 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		latestBaseEvolutionAcrossAll = evolution
 	}
 
+	// We shouldn't reach this, it basically means there is something wrong with the evolutions data
 	if latestBaseEvolutionAcrossAll == nil {
 		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
+	}
+
+	columnLookUpMap := make(map[string]*schema.Column)
+	for _, column := range columns {
+		columnLookUpMap[column.Name] = column
 	}
 
 	// Collect column-evolution pairs
@@ -172,33 +178,21 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	}
 	pairs := []colEvoPair{}
 
-	for _, column := range columns {
-		var evolution *telemetrytypes.EvolutionEntry
-		var exists bool
-
-		// First, try to find evolution with the specific fieldName
-		evolution, exists = evolutionMap[column.Name+":"+fieldName]
-
-		// If not found and fieldName is not "__all__", fall back to "__all__"
-		if !exists && fieldName != "__all__" {
-			evolution, exists = evolutionMap[column.Name+":__all__"]
-		}
-
-		if !exists {
+	for _, evolution := range evolutionMap {
+		// Reject evolutions before the latest base evolution
+		if evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
 			continue
 		}
-
 		// skip evolutions after tsEndTime
 		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
 			continue
 		}
 
-		// Reject evolutions before the latest base evolution
-		if evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
-			continue
+		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
+			return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
 		}
 
-		pairs = append(pairs, colEvoPair{column, evolution})
+		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})
 	}
 
 	// If no pairs found, fall back to latestBaseEvolutionAcrossAll for matching columns

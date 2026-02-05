@@ -1813,7 +1813,7 @@ func (c *CachedEvolutionEntry) UnmarshalBinary(data []byte) error {
 
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "release_time")
+	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
 	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
 	sb.OrderBy("release_time ASC")
 
@@ -1848,17 +1848,17 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 
 	for rows.Next() {
 		var entry telemetrytypes.EvolutionEntry
-		var releaseTimeNs uint64
+		var releaseTimeNs float64
 		if err := rows.Scan(
 			&entry.Signal,
 			&entry.ColumnName,
 			&entry.ColumnType,
 			&entry.FieldContext,
 			&entry.FieldName,
+			&entry.Version,
 			&releaseTimeNs,
 		); err != nil {
-			k.logger.WarnContext(ctx, "Failed to scan evolution entry", "error", err)
-			continue
+			return nil, err
 		}
 		// Convert nanoseconds to time.Time
 		releaseTime := time.Unix(0, int64(releaseTimeNs))
