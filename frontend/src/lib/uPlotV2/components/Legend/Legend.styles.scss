@@ -50,6 +50,16 @@
 			}
 		}
 
+		&.legend-virtuoso-container-single-row {
+			.virtuoso-grid-list {
+				grid-template-columns: repeat(
+					auto-fit,
+					minmax(var(--legend-average-width, 240px), max-content)
+				);
+				justify-content: center;
+			}
+		}
+
 		&::-webkit-scrollbar {
 			width: 0.3rem;
 		}

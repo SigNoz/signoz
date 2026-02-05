@@ -37,6 +37,17 @@ export default function Legend({
 		legendItemsMap,
 	]);
 
+	const isSingleRow = useMemo(() => {
+		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {
+			return false;
+		}
+		const containerWidth = legendContainerRef.current.clientWidth;
+
+		const totalLegendWidth = legendItems.length * (averageLegendWidth + 16);
+		const totalRows = Math.ceil(totalLegendWidth / containerWidth);
+		return totalRows <= 1;
+	}, [averageLegendWidth, legendContainerRef, legendItems.length, position]);
+
 	const visibleLegendItems = useMemo(() => {
 		if (position !== LegendPosition.RIGHT || !legendSearchQuery.trim()) {
 			return legendItems;
@@ -96,6 +107,7 @@ export default function Legend({
 				className={cx(
 					'legend-virtuoso-container',
 					`legend-virtuoso-container-${position.toLowerCase()}`,
+					{ 'legend-virtuoso-container-single-row': isSingleRow },
 				)}
 				data={visibleLegendItems}
 				itemContent={(_, item): JSX.Element => renderLegendItem(item)}

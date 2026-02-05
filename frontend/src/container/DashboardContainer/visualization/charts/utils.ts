@@ -13,7 +13,7 @@ const LEGEND_WIDTH_PERCENTILE = 0.85;
 const DEFAULT_AVG_LABEL_LENGTH = 15;
 const BASE_LEGEND_WIDTH = 16;
 const LEGEND_PADDING = 12;
-const LEGEND_LINE_HEIGHT = 36;
+const LEGEND_LINE_HEIGHT = 28;
 
 /**
  * Calculates the average width of the legend items based on the labels of the series.
