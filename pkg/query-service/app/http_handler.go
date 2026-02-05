@@ -7,11 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
-	"github.com/SigNoz/signoz/pkg/queryparser"
-
 	"io"
 	"math"
 	"net/http"
@@ -26,14 +21,18 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/errors"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
+	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 
@@ -45,7 +44,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
@@ -113,7 +111,7 @@ type APIHandler struct {
 
 	IntegrationsController *integrations.Controller
 
-	CloudIntegrationsController *cloudintegrations.Controller
+	cloudIntegrationsRegistry map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -165,7 +163,7 @@ type APIHandlerOpts struct {
 	IntegrationsController *integrations.Controller
 
 	// Cloud Provider Integrations
-	CloudIntegrationsController *cloudintegrations.Controller
+	CloudIntegrationsRegistry map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider
 
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
@@ -224,7 +222,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
 		IntegrationsController:        opts.IntegrationsController,
-		CloudIntegrationsController:   opts.CloudIntegrationsController,
+		cloudIntegrationsRegistry:     opts.CloudIntegrationsRegistry,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -1229,13 +1227,22 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboard := new(dashboardtypes.Dashboard)
-	if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
-		cloudintegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
-		if apiErr != nil {
-			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+	if integrationstypes.IsCloudIntegrationDashboardUuid(id) {
+		cloudProvider, err := integrationstypes.GetCloudProviderFromDashboardID(id)
+		if err != nil {
+			render.Error(rw, err)
 			return
 		}
-		dashboard = cloudintegrationDashboard
+
+		integrationDashboard, err := aH.cloudIntegrationsRegistry[cloudProvider].GetDashboard(ctx, &integrationstypes.GettableDashboard{
+			ID:    id,
+			OrgID: orgID,
+		})
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		dashboard = integrationDashboard
 	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
 		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
 		if apiErr != nil {
@@ -1299,11 +1306,13 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 		dashboards = append(dashboards, installedIntegrationDashboards...)
 	}
 
-	cloudIntegrationDashboards, apiErr := aH.CloudIntegrationsController.AvailableDashboards(ctx, orgID)
-	if apiErr != nil {
-		zap.L().Error("failed to get dashboards for cloud integrations", zap.Error(apiErr))
-	} else {
-		dashboards = append(dashboards, cloudIntegrationDashboards...)
+	for _, provider := range aH.cloudIntegrationsRegistry {
+		cloudIntegrationDashboards, err := provider.GetAvailableDashboards(ctx, orgID)
+		if err != nil {
+			zap.L().Error("failed to get dashboards for cloud integrations", zap.Error(apiErr))
+		} else {
+			dashboards = append(dashboards, cloudIntegrationDashboards...)
+		}
 	}
 
 	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
@@ -3279,15 +3288,15 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(w http.ResponseWriter, r *h
 		lookbackSeconds = 15 * 60
 	}
 
-	connectionStatus, apiErr := aH.calculateConnectionStatus(
+	connectionStatus, err := aH.calculateConnectionStatus(
 		r.Context(), orgID, connectionTests, lookbackSeconds,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to calculate integration connection status")
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	aH.Respond(w, connectionStatus)
+	render.Success(w, http.StatusOK, connectionStatus)
 }
 
 func (aH *APIHandler) calculateConnectionStatus(
@@ -3295,10 +3304,11 @@ func (aH *APIHandler) calculateConnectionStatus(
 	orgID valuer.UUID,
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
-) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+) (*integrations.IntegrationConnectionStatus, error) {
 	// Calculate connection status for signals in parallel
 
 	result := &integrations.IntegrationConnectionStatus{}
+	// TODO: migrate to errors package
 	errors := []*model.ApiError{}
 	var resultLock sync.Mutex
 
@@ -3496,12 +3506,14 @@ func (aH *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Reques
 	aH.Respond(w, map[string]interface{}{})
 }
 
-// cloud provider integrations
+// RegisterCloudIntegrationsRoutes register routes for cloud provider integrations
 func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
 
+	subRouter.Use(middleware.NewRecovery(aH.Signoz.Instrumentation.Logger()).Wrap)
+
 	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnection),
+		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionArtifact),
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
@@ -3537,34 +3549,12 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 	).Methods(http.MethodPost)
 }
 
-func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
-		r.Context(), claims.OrgID, cloudProvider,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) CloudIntegrationsGenerateConnection(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) CloudIntegrationsGenerateConnectionArtifact(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -3574,92 +3564,86 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnection(w http.ResponseWriter,
 		return
 	}
 
-	switch cloudProvider {
-	case types.CloudProviderAWS:
-		req := new(cloudintegrations.GetAWSConnectionUrlReq)
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			RespondError(w, model.BadRequest(err), nil)
-			return
-		}
-
-		req.OrgID = claims.OrgID
-		res, err := aH.CloudIntegrationsController.GetAWSConnectionUrl(r.Context(), req)
-		if err != nil {
-			RespondError(w, err, nil)
-			return
-		}
-
-		aH.Respond(w, res)
-		return
-	case types.CloudProviderAzure:
-		req := new(cloudintegrations.GetAzureConnectionCommandReq)
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			RespondError(w, model.BadRequest(err), nil)
-			return
-		}
-
-		if _, ok := cloudintegrations.ValidAzureRegions[req.AccountConfig.DeploymentRegion]; !ok {
-			RespondError(w, model.BadRequest(fmt.Errorf("invalid azure region: %s", req.AccountConfig.DeploymentRegion)), nil)
-			return
-		}
-
-		if len(req.AccountConfig.EnabledResourceGroups) < 1 {
-			RespondError(w, model.BadRequest(fmt.Errorf("at least one resource group must be enabled")), nil)
-			return
-		}
-
-		req.OrgID = claims.OrgID
-		res, err := aH.CloudIntegrationsController.GetAzureConnectionCommand(r.Context(), req)
-		if err != nil {
-			RespondError(w, err, nil)
-			return
-		}
-
-		aH.Respond(w, res)
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Error(w, errors.WrapInternalf(err, errors.CodeInternal, "failed to read request body"))
 		return
 	}
+
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GenerateConnectionArtifact(r.Context(), &integrationstypes.PostableConnectionArtifact{
+		OrgID: claims.OrgID,
+		Data:  reqBody,
+	})
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(w http.ResponseWriter, r *http.Request) {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].ListConnectedAccounts(r.Context(), claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, resp)
 }
 
 func (aH *APIHandler) CloudIntegrationsGetAccountStatus(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
 	accountId := mux.Vars(r)["accountId"]
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
-		r.Context(), claims.OrgID, cloudProvider, accountId,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GetAccountStatus(r.Context(), claims.OrgID, accountId)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
-	aH.Respond(w, resp)
+
+	render.Success(w, http.StatusOK, resp)
 }
 
 func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
-	req := new(cloudintegrations.AgentCheckInRequest)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+	req := new(integrationstypes.PostableAgentCheckInPayload)
+	if err = json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid request body"))
 		return
 	}
 
@@ -3669,69 +3653,93 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *ht
 		return
 	}
 
-	switch cloudProvider {
-	case types.CloudProviderAWS:
-		result, err := aH.CloudIntegrationsController.CheckInAsAWSAgent(r.Context(), claims.OrgID, cloudProvider, req)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
+	req.OrgID = claims.OrgID
 
-		aH.Respond(w, result)
-		return
-	case types.CloudProviderAzure:
-		result, err := aH.CloudIntegrationsController.CheckInAsAzureAgent(r.Context(), claims.OrgID, cloudProvider, req)
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-
-		aH.Respond(w, result)
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].AgentCheckIn(r.Context(), req)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	render.Success(w, http.StatusOK, resp)
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
 	accountId := mux.Vars(r)["accountId"]
 
-	req := cloudintegrations.UpdateAccountConfigRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Error(w, errors.WrapInternalf(err, errors.CodeInternal, "failed to read request body"))
 		return
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateAccountConfig(r.Context(), &integrationstypes.PatchableAccountConfig{
+		OrgID:     claims.OrgID,
+		AccountId: accountId,
+		Data:      reqBody,
+	})
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
-		r.Context(), claims.OrgID, cloudProvider, accountId, req,
-	)
+	render.Success(w, http.StatusOK, resp)
+	return
 
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, result)
+	//switch cloudProvider {
+	//case integrationstypes.CloudProviderAWS:
+	//	req := integrationstypes.PatchableAWSAccountConfig{}
+	//	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+	//		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid request body"))
+	//		return
+	//	}
+	//
+	//	result, err := aH.CloudIntegrationsController.UpdateAWSAccountConfig(r.Context(), claims.OrgID, accountId, req)
+	//	if err != nil {
+	//		render.Error(w, err)
+	//		return
+	//	}
+	//
+	//	render.Success(w, http.StatusOK, result)
+	//	return
+	//case integrationstypes.CloudProviderAzure:
+	//	req := integrationstypes.PatchableAzureAccountConfig{}
+	//	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
+	//		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid request body"))
+	//		return
+	//	}
+	//
+	//	result, err := aH.CloudIntegrationsController.UpdateAzureAccountConfig(r.Context(), claims.OrgID, accountId, req)
+	//	if err != nil {
+	//		render.Error(w, err)
+	//		return
+	//	}
+	//
+	//	render.Success(w, http.StatusOK, result)
+	//	return
+	//}
 }
 
 func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -3743,21 +3751,21 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, 
 		return
 	}
 
-	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(r.Context(), claims.OrgID, cloudProvider, accountId)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	result, err := aH.cloudIntegrationsRegistry[cloudProvider].DisconnectAccount(r.Context(), claims.OrgID, accountId)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	aH.Respond(w, result)
+	render.Success(w, http.StatusOK, result)
 }
 
 func (aH *APIHandler) CloudIntegrationsListServices(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -3774,13 +3782,13 @@ func (aH *APIHandler) CloudIntegrationsListServices(w http.ResponseWriter, r *ht
 		return
 	}
 
-	resp, apiErr := aH.CloudIntegrationsController.ListServices(r.Context(), claims.OrgID, cloudProvider, cloudAccountId)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].ListServices(r.Context(), claims.OrgID, cloudAccountId)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	aH.Respond(w, resp)
+	render.Success(w, http.StatusOK, resp)
 }
 
 func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, r *http.Request) {
@@ -3797,9 +3805,9 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -3812,281 +3820,306 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 		cloudAccountId = &cloudAccountIdQP
 	}
 
-	switch cloudProvider {
-	case types.CloudProviderAWS:
-		resp, apiErr := aH.CloudIntegrationsController.GetAWSServiceDetails(
-			r.Context(), claims.OrgID, serviceId, cloudAccountId,
-		)
-		if apiErr != nil {
-			render.Error(w, apiErr)
-			return
-		}
-
-		// Add connection status for the 2 signals.
-		// TODO: we want to move remove this feature as it adds very little to no value,
-		// not adding this for other cloud providers.
-		if cloudAccountId != nil && cloudProvider == types.CloudProviderAWS {
-			connStatus, apiErr := aH.getAWSServiceConnectionStatus(
-				r.Context(), orgID, *cloudAccountId, resp,
-			)
-			if apiErr != nil {
-				RespondError(w, apiErr, nil)
-				return
-			}
-			resp.ConnectionStatus = connStatus
-		}
-
-		aH.Respond(w, resp)
-		return
-	case types.CloudProviderAzure:
-		resp, apiErr := aH.CloudIntegrationsController.GetAzureServiceDetails(
-			r.Context(), claims.OrgID, serviceId, cloudAccountId,
-		)
-		if apiErr != nil {
-			render.Error(w, apiErr)
-			return
-		}
-
-		aH.Respond(w, resp)
-		return
-	}
-}
-
-func (aH *APIHandler) getAWSServiceConnectionStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	cloudAccountId string,
-	svcDetails *cloudintegrations.AWSServiceDetails,
-) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
-	definition := svcDetails.AWSServiceDefinition
-
-	strategy := definition.Strategy
-	if strategy == nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"service doesn't have telemetry collection strategy: %s", svcDetails.GetId(),
-		))
-	}
-
-	result := &cloudintegrations.ServiceConnectionStatus{}
-	var (
-		errors     []*model.ApiError
-		resultLock sync.Mutex
-	)
-
-	var wg sync.WaitGroup
-
-	// Calculate metrics connection status
-	if strategy.AWSMetrics != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			metricsConnStatus, apiErr := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
-				ctx, cloudAccountId, strategy.AWSMetrics, definition.DataCollected.Metrics,
-			)
-
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			if apiErr != nil {
-				errors = append(errors, apiErr)
-			} else {
-				result.Metrics = metricsConnStatus
-			}
-		}()
-	}
-
-	// Calculate logs connection status
-	if strategy.AWSLogs != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
-				ctx, orgID, cloudAccountId, strategy.AWSLogs,
-			)
-
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			if apiErr != nil {
-				errors = append(errors, apiErr)
-			} else {
-				result.Logs = logsConnStatus
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	if len(errors) > 0 {
-		return nil, errors[0]
-	}
-	return result, nil
-}
-
-func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
-	ctx context.Context,
-	cloudAccountId string,
-	strategy *services.AWSMetricsStrategy,
-	metricsCollectedBySvc []services.CollectedMetric,
-) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.StreamFilters) < 1 {
-		return nil, nil
-	}
-
-	expectedLabelValues := map[string]string{
-		"cloud_provider":   "aws",
-		"cloud_account_id": cloudAccountId,
-	}
-
-	metricsNamespace := strategy.StreamFilters[0].Namespace
-	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
-
-	if len(metricsNamespaceParts) >= 2 {
-		expectedLabelValues["service_namespace"] = metricsNamespaceParts[0]
-		expectedLabelValues["service_name"] = metricsNamespaceParts[1]
-	} else {
-		// metrics for single word namespaces like "CWAgent" do not
-		// have the service_namespace label populated
-		expectedLabelValues["service_name"] = metricsNamespaceParts[0]
-	}
-
-	metricNamesCollectedBySvc := []string{}
-	for _, cm := range metricsCollectedBySvc {
-		metricNamesCollectedBySvc = append(metricNamesCollectedBySvc, cm.Name)
-	}
-
-	statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-		ctx, metricNamesCollectedBySvc, expectedLabelValues,
-	)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	if statusForLastReceivedMetric != nil {
-		return &cloudintegrations.SignalConnectionStatus{
-			LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
-			LastReceivedFrom:     "signoz-aws-integration",
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	cloudAccountId string,
-	strategy *services.AWSLogsStrategy,
-) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.Subscriptions) < 1 {
-		return nil, nil
-	}
-
-	logGroupNamePrefix := strategy.Subscriptions[0].LogGroupNamePrefix
-	if len(logGroupNamePrefix) < 1 {
-		return nil, nil
-	}
-
-	logsConnTestFilter := &v3.FilterSet{
-		Operator: "AND",
-		Items: []v3.FilterItem{
-			{
-				Key: v3.AttributeKey{
-					Key:      "cloud.account.id",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeResource,
-				},
-				Operator: "=",
-				Value:    cloudAccountId,
-			},
-			{
-				Key: v3.AttributeKey{
-					Key:      "aws.cloudwatch.log_group_name",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeResource,
-				},
-				Operator: "like",
-				Value:    logGroupNamePrefix + "%",
-			},
-		},
-	}
-
-	// TODO(Raj): Receive this as a param from UI in the future.
-	lookbackSeconds := int64(30 * 60)
-
-	qrParams := &v3.QueryRangeParamsV3{
-		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
-		End:   time.Now().UnixMilli(),
-		CompositeQuery: &v3.CompositeQuery{
-			PanelType: v3.PanelTypeList,
-			QueryType: v3.QueryTypeBuilder,
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"A": {
-					PageSize:          1,
-					Filters:           logsConnTestFilter,
-					QueryName:         "A",
-					DataSource:        v3.DataSourceLogs,
-					Expression:        "A",
-					AggregateOperator: v3.AggregateOperatorNoOp,
-				},
-			},
-		},
-	}
-	queryRes, _, err := aH.querier.QueryRange(
-		ctx, orgID, qrParams,
-	)
-	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not query for integration connection status: %w", err,
-		))
-	}
-	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
-		lastLog := queryRes[0].List[0]
-
-		return &cloudintegrations.SignalConnectionStatus{
-			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
-			LastReceivedFrom:     "signoz-aws-integration",
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter, r *http.Request) {
-	cloudProviderString := mux.Vars(r)["cloudProvider"]
-
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	serviceId := mux.Vars(r)["serviceId"]
-
-	req := cloudintegrations.UpdateServiceConfigRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, err := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), claims.OrgID, cloudProvider, serviceId, &req,
-	)
-
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GetServiceDetails(r.Context(), &integrationstypes.GetServiceDetailsReq{
+		OrgID:          orgID.String(),
+		ServiceId:      serviceId,
+		CloudAccountID: cloudAccountId,
+	})
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	aH.Respond(w, result)
+	render.Success(w, http.StatusOK, resp)
+	return
+
+	//switch cloudProvider {
+	//case types.CloudProviderAWS:
+	//	resp, apiErr := aH.CloudIntegrationsController.GetAWSServiceDetails(
+	//		r.Context(), claims.OrgID, serviceId, cloudAccountId,
+	//	)
+	//	if apiErr != nil {
+	//		render.Error(w, apiErr)
+	//		return
+	//	}
+	//
+	//	// Add connection status for the 2 signals.
+	//	// TODO: we want to move remove this feature as it adds very little to no value,
+	//	// not adding this for other cloud providers.
+	//	if cloudAccountId != nil && cloudProvider == types.CloudProviderAWS {
+	//		connStatus, apiErr := aH.getAWSServiceConnectionStatus(
+	//			r.Context(), orgID, *cloudAccountId, resp,
+	//		)
+	//		if apiErr != nil {
+	//			RespondError(w, apiErr, nil)
+	//			return
+	//		}
+	//		resp.ConnectionStatus = connStatus
+	//	}
+	//
+	//	aH.Respond(w, resp)
+	//	return
+	//case types.CloudProviderAzure:
+	//	resp, apiErr := aH.CloudIntegrationsController.GetAzureServiceDetails(
+	//		r.Context(), claims.OrgID, serviceId, cloudAccountId,
+	//	)
+	//	if apiErr != nil {
+	//		render.Error(w, apiErr)
+	//		return
+	//	}
+	//
+	//	aH.Respond(w, resp)
+	//	return
+	//}
+}
+
+//func (aH *APIHandler) getAWSServiceConnectionStatus(
+//
+//	ctx context.Context,
+//	orgID valuer.UUID,
+//	cloudAccountId string,
+//	svcDetails *integrationstypes.GettableAWSServiceDetails,
+//
+//) (*integrationstypes.ServiceConnectionStatus, error) {
+//	definition := svcDetails.AWSServiceDefinition
+//
+//	strategy := definition.Strategy
+//	if strategy == nil {
+//		return nil, errors.NewInternalf(
+//			errors.CodeInternal,
+//			"service doesn't have telemetry collection strategy: %s", svcDetails.GetId(),
+//		)
+//	}
+//
+//	result := &integrationstypes.ServiceConnectionStatus{}
+//	var (
+//		errs       []error
+//		resultLock sync.Mutex
+//	)
+//
+//	var wg sync.WaitGroup
+//
+//	// Calculate metrics connection status
+//	if strategy.AWSMetrics != nil {
+//		wg.Add(1)
+//		go func() {
+//			defer wg.Done()
+//
+//			metricsConnStatus, err := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
+//				ctx, cloudAccountId, strategy.AWSMetrics, definition.DataCollected.Metrics,
+//			)
+//
+//			resultLock.Lock()
+//			defer resultLock.Unlock()
+//
+//			if err != nil {
+//				errs = append(errs, err)
+//			} else {
+//				result.Metrics = metricsConnStatus
+//			}
+//		}()
+//	}
+//
+//	// Calculate logs connection status
+//	if strategy.AWSLogs != nil {
+//		wg.Add(1)
+//		go func() {
+//			defer wg.Done()
+//
+//			logsConnStatus, err := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
+//				ctx, orgID, cloudAccountId, strategy.AWSLogs,
+//			)
+//
+//			resultLock.Lock()
+//			defer resultLock.Unlock()
+//
+//			if err != nil {
+//				errs = append(errs, err)
+//			} else {
+//				result.Logs = logsConnStatus
+//			}
+//		}()
+//	}
+//
+//	wg.Wait()
+//
+//	if len(errs) > 0 {
+//		return nil, errs[0]
+//	}
+//	return result, nil
+//}
+
+//func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
+//
+//	ctx context.Context,
+//	cloudAccountId string,
+//	strategy *integrationstypes.AWSMetricsStrategy,
+//	metricsCollectedBySvc []integrationstypes.CollectedMetric,
+//
+//) (*integrationstypes.SignalConnectionStatus, error) {
+//	if strategy == nil || len(strategy.StreamFilters) < 1 {
+//		return nil, nil
+//	}
+//
+//	expectedLabelValues := map[string]string{
+//		"cloud_provider":   "aws",
+//		"cloud_account_id": cloudAccountId,
+//	}
+//
+//	metricsNamespace := strategy.StreamFilters[0].Namespace
+//	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
+//
+//	if len(metricsNamespaceParts) >= 2 {
+//		expectedLabelValues["service_namespace"] = metricsNamespaceParts[0]
+//		expectedLabelValues["service_name"] = metricsNamespaceParts[1]
+//	} else {
+//		// metrics for single word namespaces like "CWAgent" do not
+//		// have the service_namespace label populated
+//		expectedLabelValues["service_name"] = metricsNamespaceParts[0]
+//	}
+//
+//	metricNamesCollectedBySvc := []string{}
+//	for _, cm := range metricsCollectedBySvc {
+//		metricNamesCollectedBySvc = append(metricNamesCollectedBySvc, cm.Name)
+//	}
+//
+//	// TODO: migrate to errors package
+//	statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
+//		ctx, metricNamesCollectedBySvc, expectedLabelValues,
+//	)
+//	if apiErr != nil {
+//		return nil, apiErr
+//	}
+//
+//	if statusForLastReceivedMetric != nil {
+//		return &integrationstypes.SignalConnectionStatus{
+//			LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+//			LastReceivedFrom:     "signoz-aws-integration",
+//		}, nil
+//	}
+//
+//	return nil, nil
+//}
+//
+//func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
+//
+//	ctx context.Context,
+//	orgID valuer.UUID,
+//	cloudAccountId string,
+//	strategy *integrationstypes.AWSLogsStrategy,
+//
+//) (*integrationstypes.SignalConnectionStatus, error) {
+//	if strategy == nil || len(strategy.Subscriptions) < 1 {
+//		return nil, nil
+//	}
+//
+//	logGroupNamePrefix := strategy.Subscriptions[0].LogGroupNamePrefix
+//	if len(logGroupNamePrefix) < 1 {
+//		return nil, nil
+//	}
+//
+//	logsConnTestFilter := &v3.FilterSet{
+//		Operator: "AND",
+//		Items: []v3.FilterItem{
+//			{
+//				Key: v3.AttributeKey{
+//					Key:      "cloud.account.id",
+//					DataType: v3.AttributeKeyDataTypeString,
+//					Type:     v3.AttributeKeyTypeResource,
+//				},
+//				Operator: "=",
+//				Value:    cloudAccountId,
+//			},
+//			{
+//				Key: v3.AttributeKey{
+//					Key:      "aws.cloudwatch.log_group_name",
+//					DataType: v3.AttributeKeyDataTypeString,
+//					Type:     v3.AttributeKeyTypeResource,
+//				},
+//				Operator: "like",
+//				Value:    logGroupNamePrefix + "%",
+//			},
+//		},
+//	}
+//
+//	// TODO(Raj): Receive this as a param from UI in the future.
+//	lookbackSeconds := int64(30 * 60)
+//
+//	qrParams := &v3.QueryRangeParamsV3{
+//		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+//		End:   time.Now().UnixMilli(),
+//		CompositeQuery: &v3.CompositeQuery{
+//			PanelType: v3.PanelTypeList,
+//			QueryType: v3.QueryTypeBuilder,
+//			BuilderQueries: map[string]*v3.BuilderQuery{
+//				"A": {
+//					PageSize:          1,
+//					Filters:           logsConnTestFilter,
+//					QueryName:         "A",
+//					DataSource:        v3.DataSourceLogs,
+//					Expression:        "A",
+//					AggregateOperator: v3.AggregateOperatorNoOp,
+//				},
+//			},
+//		},
+//	}
+//	queryRes, _, err := aH.querier.QueryRange(
+//		ctx, orgID, qrParams,
+//	)
+//	if err != nil {
+//		return nil, errors.WrapInternalf(err, errors.CodeInternal, "could not query for logs connection status")
+//	}
+//	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+//		lastLog := queryRes[0].List[0]
+//
+//		return &integrationstypes.SignalConnectionStatus{
+//			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+//			LastReceivedFrom:     "signoz-aws-integration",
+//		}, nil
+//	}
+//
+//	return nil, nil
+//}
+
+func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter, r *http.Request) {
+	cloudProviderString := mux.Vars(r)["cloudProvider"]
+
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	serviceId := mux.Vars(r)["serviceId"]
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Error(w, errors.WrapInternalf(err,
+			errors.CodeInternal,
+			"failed to read update service config request body",
+		))
+		return
+	}
+
+	result, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateServiceConfig(
+		r.Context(), &integrationstypes.PatchableServiceConfig{
+			OrgID:     claims.OrgID,
+			ServiceId: serviceId,
+			Config:    reqBody,
+		},
+	)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, result)
 }
 
 // logs

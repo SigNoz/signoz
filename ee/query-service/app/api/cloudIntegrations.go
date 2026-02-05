@@ -6,28 +6,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
-type CloudIntegrationConnectionParamsResponse struct {
-	IngestionUrl string `json:"ingestion_url,omitempty"`
-	IngestionKey string `json:"ingestion_key,omitempty"`
-	SigNozAPIUrl string `json:"signoz_api_url,omitempty"`
-	SigNozAPIKey string `json:"signoz_api_key,omitempty"`
-}
+// TODO: move this file with other cloud integration related code
 
 func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
@@ -44,21 +38,19 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := types.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		render.Error(w, err)
 		return
 	}
 
-	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
-	if apiErr != nil {
-		RespondError(w, basemodel.WrapApiError(
-			apiErr, "couldn't provision PAT for cloud integration:",
-		), nil)
+	apiKey, err := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	result := CloudIntegrationConnectionParamsResponse{
+	result := integrationstypes.GettableCloudIntegrationConnectionParams{
 		SigNozAPIKey: apiKey,
 	}
 
@@ -72,16 +64,17 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		// Return the API Key (PAT) even if the rest of the params can not be deduced.
 		// Params not returned from here will be requested from the user via form inputs.
 		// This enables gracefully degraded but working experience even for non-cloud deployments.
-		zap.L().Info("ingestion params and signoz api url can not be deduced since no license was found")
-		ah.Respond(w, result)
+		ah.opts.Logger.InfoContext(
+			r.Context(),
+			"ingestion params and signoz api url can not be deduced since no license was found",
+		)
+		render.Success(w, http.StatusOK, result)
 		return
 	}
 
-	signozApiUrl, apiErr := ah.getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
-	if apiErr != nil {
-		RespondError(w, basemodel.WrapApiError(
-			apiErr, "couldn't deduce ingestion url and signoz api url",
-		), nil)
+	signozApiUrl, err := ah.getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -90,46 +83,41 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 
 	gatewayUrl := ah.opts.GatewayUrl
 	if len(gatewayUrl) > 0 {
-
-		ingestionKey, apiErr := getOrCreateCloudProviderIngestionKey(
+		ingestionKeyString, err := ah.getOrCreateCloudProviderIngestionKey(
 			r.Context(), gatewayUrl, license.Key, cloudProvider,
 		)
-		if apiErr != nil {
-			RespondError(w, basemodel.WrapApiError(
-				apiErr, "couldn't get or create ingestion key",
-			), nil)
+		if err != nil {
+			render.Error(w, err)
 			return
 		}
 
-		result.IngestionKey = ingestionKey
-
+		result.IngestionKey = ingestionKeyString
 	} else {
-		zap.L().Info("ingestion key can't be deduced since no gateway url has been configured")
+		ah.opts.Logger.InfoContext(
+			r.Context(),
+			"ingestion key can't be deduced since no gateway url has been configured",
+		)
 	}
 
-	ah.Respond(w, result)
+	render.Success(w, http.StatusOK, result)
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider valuer.String) (string, *basemodel.ApiError) {
+func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider valuer.String) (string, error) {
 	integrationPATName := fmt.Sprintf("%s integration", cloudProvider)
 
-	integrationUser, apiErr := ah.getOrCreateCloudIntegrationUser(ctx, orgId, cloudProvider)
-	if apiErr != nil {
-		return "", apiErr
+	integrationUser, err := ah.getOrCreateCloudIntegrationUser(ctx, orgId, cloudProvider)
+	if err != nil {
+		return "", err
 	}
 
 	orgIdUUID, err := valuer.NewUUID(orgId)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't parse orgId: %w", err,
-		))
+		return "", err
 	}
 
 	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgIdUUID)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't list PATs: %w", err,
-		))
+		return "", err
 	}
 	for _, p := range allPats {
 		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
@@ -137,9 +125,10 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		}
 	}
 
-	zap.L().Info(
+	ah.opts.Logger.InfoContext(
+		ctx,
 		"no PAT found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider.String()),
+		slog.String("cloudProvider", cloudProvider.String()),
 	)
 
 	newPAT, err := types.NewStorableAPIKey(
@@ -149,68 +138,48 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		0,
 	)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't create cloud integration PAT: %w", err,
-		))
+		return "", err
 	}
 
 	err = ah.Signoz.Modules.User.CreateAPIKey(ctx, newPAT)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't create cloud integration PAT: %w", err,
-		))
+		return "", err
 	}
 	return newPAT.Token, nil
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationUser(
-	ctx context.Context, orgId string, cloudProvider valuer.String,
-) (*types.User, *basemodel.ApiError) {
+// TODO: move this function out of handler and use proper module structure
+func (ah *APIHandler) getOrCreateCloudIntegrationUser(ctx context.Context, orgId string, cloudProvider valuer.String) (*types.User, error) {
 	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider.String())
 	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
 	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId))
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
+		return nil, err
 	}
 
 	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
 
 	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(ctx, cloudIntegrationUser, user.WithFactorPassword(password))
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't look for integration user: %w", err))
+		return nil, err
 	}
 
 	return cloudIntegrationUser, nil
 }
 
-func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
-	string, *basemodel.ApiError,
-) {
-	// TODO: remove this struct from here
-	type deploymentResponse struct {
-		Name        string `json:"name"`
-		ClusterInfo struct {
-			Region struct {
-				DNS string `json:"dns"`
-			} `json:"region"`
-		} `json:"cluster"`
-	}
-
+// TODO: move this function out of handler and use proper module structure
+func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (string, error) {
 	respBytes, err := ah.Signoz.Zeus.GetDeployment(ctx, licenseKey)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't query for deployment info: error: %w", err,
-		))
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "couldn't query for deployment info: error")
 	}
 
-	resp := new(deploymentResponse)
+	resp := new(integrationstypes.GettableDeployment)
 
 	err = json.Unmarshal(respBytes, resp)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't unmarshal deployment info response: error: %w", err,
-		))
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "couldn't unmarshal deployment info response")
 	}
 
 	regionDns := resp.ClusterInfo.Region.DNS
@@ -218,9 +187,11 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge
-		return "", basemodel.InternalError(fmt.Errorf(
+		return "", errors.WrapInternalf(
+			err,
+			errors.CodeInternal,
 			"deployment info response not in expected shape. couldn't determine region dns and deployment name",
-		))
+		)
 	}
 
 	signozApiUrl := fmt.Sprintf("https://%s.%s", deploymentName, regionDns)
@@ -228,102 +199,85 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 	return signozApiUrl, nil
 }
 
-type ingestionKey struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-	// other attributes from gateway response not included here since they are not being used.
-}
-
-type ingestionKeysSearchResponse struct {
-	Status string         `json:"status"`
-	Data   []ingestionKey `json:"data"`
-	Error  string         `json:"error"`
-}
-
-type createIngestionKeyResponse struct {
-	Status string       `json:"status"`
-	Data   ingestionKey `json:"data"`
-	Error  string       `json:"error"`
-}
-
-func getOrCreateCloudProviderIngestionKey(
+func (ah *APIHandler) getOrCreateCloudProviderIngestionKey(
 	ctx context.Context, gatewayUrl string, licenseKey string, cloudProvider valuer.String,
-) (string, *basemodel.ApiError) {
+) (string, error) {
 	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
 
 	// see if the key already exists
-	searchResult, apiErr := requestGateway[ingestionKeysSearchResponse](
+	searchResult, err := requestGateway[integrationstypes.GettableIngestionKeysSearch](
 		ctx,
 		gatewayUrl,
 		licenseKey,
 		fmt.Sprintf("/v1/workspaces/me/keys/search?name=%s", cloudProviderKeyName),
 		nil,
+		ah.opts.Logger,
 	)
-
-	if apiErr != nil {
-		return "", basemodel.WrapApiError(
-			apiErr, "couldn't search for cloudprovider ingestion key",
-		)
+	if err != nil {
+		return "", err
 	}
 
 	if searchResult.Status != "success" {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't search for cloudprovider ingestion key: status: %s, error: %s",
+		return "", errors.NewInternalf(
+			errors.CodeInternal,
+			"couldn't search for cloud provider ingestion key: status: %s, error: %s",
 			searchResult.Status, searchResult.Error,
-		))
+		)
 	}
 
 	for _, k := range searchResult.Data {
-		if k.Name == cloudProviderKeyName {
-			if len(k.Value) < 1 {
-				// Fail early if actual response structure and expectation here ever diverge
-				return "", basemodel.InternalError(fmt.Errorf(
-					"ingestion keys search response not as expected",
-				))
-			}
-
-			return k.Value, nil
+		if k.Name != cloudProviderKeyName {
+			continue
 		}
+
+		if len(k.Value) < 1 {
+			// Fail early if actual response structure and expectation here ever diverge
+			return "", errors.NewInternalf(errors.CodeInternal, "ingestion keys search response not as expected")
+		}
+
+		return k.Value, nil
 	}
 
-	zap.L().Info(
+	ah.opts.Logger.InfoContext(
+		ctx,
 		"no existing ingestion key found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider.String()),
+		slog.String("cloudProvider", cloudProvider.String()),
 	)
-	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
+
+	createKeyResult, err := requestGateway[integrationstypes.GettableCreateIngestionKey](
 		ctx, gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
 		map[string]any{
 			"name": cloudProviderKeyName,
 			"tags": []string{"integration", cloudProvider.String()},
 		},
+		ah.opts.Logger,
 	)
-	if apiErr != nil {
-		return "", basemodel.WrapApiError(
-			apiErr, "couldn't create cloudprovider ingestion key",
-		)
+	if err != nil {
+		return "", err
 	}
 
 	if createKeyResult.Status != "success" {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't create cloudprovider ingestion key: status: %s, error: %s",
+		return "", errors.NewInternalf(
+			errors.CodeInternal,
+			"couldn't create cloud provider ingestion key: status: %s, error: %s",
 			createKeyResult.Status, createKeyResult.Error,
-		))
+		)
 	}
 
-	ingestionKey := createKeyResult.Data.Value
-	if len(ingestionKey) < 1 {
+	ingestionKeyString := createKeyResult.Data.Value
+	if len(ingestionKeyString) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge
-		return "", basemodel.InternalError(fmt.Errorf(
+		return "", errors.NewInternalf(errors.CodeInternal,
 			"ingestion key creation response not as expected",
-		))
+		)
 	}
 
-	return ingestionKey, nil
+	return ingestionKeyString, nil
 }
 
 func requestGateway[ResponseType any](
-	ctx context.Context, gatewayUrl string, licenseKey string, path string, payload any,
-) (*ResponseType, *basemodel.ApiError) {
+	ctx context.Context, gatewayUrl, licenseKey, path string, payload any, logger *slog.Logger,
+) (*ResponseType, error) {
 
 	baseUrl := strings.TrimSuffix(gatewayUrl, "/")
 	reqUrl := fmt.Sprintf("%s%s", baseUrl, path)
@@ -334,13 +288,12 @@ func requestGateway[ResponseType any](
 		"X-Consumer-Groups":      "ns:default",
 	}
 
-	return requestAndParseResponse[ResponseType](ctx, reqUrl, headers, payload)
+	return requestAndParseResponse[ResponseType](ctx, reqUrl, headers, payload, logger)
 }
 
 func requestAndParseResponse[ResponseType any](
-	ctx context.Context, url string, headers map[string]string, payload any,
-) (*ResponseType, *basemodel.ApiError) {
-
+	ctx context.Context, url string, headers map[string]string, payload any, logger *slog.Logger,
+) (*ResponseType, error) {
 	reqMethod := http.MethodGet
 	var reqBody io.Reader
 	if payload != nil {
@@ -348,18 +301,14 @@ func requestAndParseResponse[ResponseType any](
 
 		bodyJson, err := json.Marshal(payload)
 		if err != nil {
-			return nil, basemodel.InternalError(fmt.Errorf(
-				"couldn't serialize request payload to JSON: %w", err,
-			))
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't marshal payload")
 		}
-		reqBody = bytes.NewBuffer([]byte(bodyJson))
+		reqBody = bytes.NewBuffer(bodyJson)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, reqMethod, url, reqBody)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf(
-			"couldn't prepare request: %w", err,
-		))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't create req")
 	}
 
 	for k, v := range headers {
@@ -372,23 +321,26 @@ func requestAndParseResponse[ResponseType any](
 
 	response, err := client.Do(req)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't make request: %w", err))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't make req")
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		err = response.Body.Close()
+		if err != nil {
+			logger.ErrorContext(ctx, "couldn't close response body", "error", err)
+		}
+	}()
 
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't read response: %w", err))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't read response body")
 	}
 
 	var resp ResponseType
 
 	err = json.Unmarshal(respBody, &resp)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf(
-			"couldn't unmarshal gateway response into %T", resp,
-		))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't unmarshal response body")
 	}
 
 	return &resp, nil

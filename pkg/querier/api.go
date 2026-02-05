@@ -46,6 +46,17 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	//
+	//queryRangeRequest.CompositeQuery.Queries = append(queryRangeRequest.CompositeQuery.Queries, qbtypes.QueryEnvelope{
+	//	Type: qbtypes.QueryTypeBuilder,
+	//	Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+	//		Name:                  "A",
+	//		Filter: qbtypes.Filter{
+	//			Expression: "cloud.provider = 'aws' AND cloud.account.id = '443370682259' "
+	//		},
+	//		Aggregations:          ,
+	//	},
+	//})
 
 	defer func() {
 		if r := recover(); r != nil {

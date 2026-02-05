@@ -1,0 +1,679 @@
+package implawsprovider
+
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"slices"
+	"sort"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
+	integrationstore "github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/store"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/exp/maps"
+)
+
+var (
+	CodeInvalidAWSRegion  = errors.MustNewCode("invalid_aws_region")
+	CodeDashboardNotFound = errors.MustNewCode("dashboard_not_found")
+)
+
+type awsProvider struct {
+	querier               querier.Querier
+	accountsRepo          integrationstore.CloudProviderAccountsRepository
+	serviceConfigRepo     integrationstore.ServiceConfigDatabase
+	awsServiceDefinitions *services.AWSServicesProvider
+}
+
+func NewAWSCloudProvider(
+	accountsRepo integrationstore.CloudProviderAccountsRepository,
+	serviceConfigRepo integrationstore.ServiceConfigDatabase,
+	querier querier.Querier,
+) integrationstypes.CloudProvider {
+	awsServiceDefinitions, err := services.NewAWSCloudProviderServices()
+	if err != nil {
+		panic("failed to initialize AWS service definitions: " + err.Error())
+	}
+
+	return &awsProvider{
+		querier:               querier,
+		accountsRepo:          accountsRepo,
+		serviceConfigRepo:     serviceConfigRepo,
+		awsServiceDefinitions: awsServiceDefinitions,
+	}
+}
+
+func (a *awsProvider) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationstypes.GettableAccountStatus, error) {
+	accountRecord, err := a.accountsRepo.Get(ctx, orgID, a.GetName().String(), accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &integrationstypes.GettableAccountStatus{
+		Id:             accountRecord.ID.String(),
+		CloudAccountId: accountRecord.AccountID,
+		Status:         accountRecord.Status(),
+	}, nil
+}
+
+func (a *awsProvider) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationstypes.GettableConnectedAccountsList, error) {
+	accountRecords, err := a.accountsRepo.ListConnected(ctx, orgID, a.GetName().String())
+	if err != nil {
+		return nil, err
+	}
+
+	connectedAccounts := make([]*integrationstypes.Account, 0, len(accountRecords))
+	for _, r := range accountRecords {
+		connectedAccounts = append(connectedAccounts, r.Account(a.GetName()))
+	}
+
+	return &integrationstypes.GettableConnectedAccountsList{
+		Accounts: connectedAccounts,
+	}, nil
+}
+
+func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.PostableAgentCheckInPayload) (any, error) {
+	// agent can't check in unless the account is already created
+	existingAccount, err := a.accountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
+		return nil, model.BadRequest(fmt.Errorf(
+			"can't check in with new %s account id %s for account %s with existing %s id %s",
+			a.GetName().String(), req.AccountID, existingAccount.ID.StringValue(), a.GetName().String(),
+			*existingAccount.AccountID,
+		))
+	}
+
+	existingAccount, err = a.accountsRepo.GetConnectedCloudAccount(ctx, req.OrgID, a.GetName().String(), req.AccountID)
+	if existingAccount != nil && existingAccount.ID.StringValue() != req.ID {
+		return nil, model.BadRequest(fmt.Errorf(
+			"can't check in to %s account %s with id %s. already connected with id %s",
+			a.GetName().String(), req.AccountID, req.ID, existingAccount.ID.StringValue(),
+		))
+	}
+
+	agentReport := integrationstypes.AgentReport{
+		TimestampMillis: time.Now().UnixMilli(),
+		Data:            req.Data,
+	}
+
+	account, err := a.accountsRepo.Upsert(
+		ctx, req.OrgID, a.GetName().String(), &req.ID, nil, &req.AccountID, &agentReport, nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	agentConfig, err := a.getAWSAgentConfig(ctx, account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &integrationstypes.GettableAWSAgentCheckIn{
+		AccountId:         account.ID.StringValue(),
+		CloudAccountId:    *account.AccountID,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: *agentConfig,
+	}, nil
+}
+
+func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integrationstypes.CloudIntegration) (*integrationstypes.AWSAgentIntegrationConfig, error) {
+	// prepare and return integration config to be consumed by agent
+	agentConfig := &integrationstypes.AWSAgentIntegrationConfig{
+		EnabledRegions: []string{},
+		TelemetryCollectionStrategy: &integrationstypes.AWSCollectionStrategy{
+			Provider:   a.GetName(),
+			AWSMetrics: &integrationstypes.AWSMetricsStrategy{},
+			AWSLogs:    &integrationstypes.AWSLogsStrategy{},
+			S3Buckets:  map[string][]string{},
+		},
+	}
+
+	accountConfig := new(integrationstypes.AWSAccountConfig)
+	err := accountConfig.Unmarshal(account.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	if accountConfig != nil && accountConfig.EnabledRegions != nil {
+		agentConfig.EnabledRegions = accountConfig.EnabledRegions
+	}
+
+	svcConfigs, err := a.serviceConfigRepo.GetAllForAccount(
+		ctx, account.OrgID, account.ID.StringValue(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// accumulate config in a fixed order to ensure same config generated across runs
+	configuredServices := maps.Keys(svcConfigs)
+	slices.Sort(configuredServices)
+
+	for _, svcType := range configuredServices {
+		definition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, svcType)
+		if err != nil {
+			continue
+		}
+		config := svcConfigs[svcType]
+
+		serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
+		err = serviceConfig.Unmarshal(config)
+		if err != nil {
+			continue
+		}
+
+		if serviceConfig.Logs != nil && serviceConfig.Logs.Enabled {
+			if svcType == integrationstypes.S3Sync {
+				// S3 bucket sync; No cloudwatch logs are appended for this service type;
+				// Though definition is populated with a custom cloudwatch group that helps in calculating logs connection status
+				agentConfig.TelemetryCollectionStrategy.S3Buckets = serviceConfig.Logs.S3Buckets
+			} else if definition.Strategy.AWSLogs != nil { // services that includes a logs subscription
+				agentConfig.TelemetryCollectionStrategy.AWSLogs.Subscriptions = append(
+					agentConfig.TelemetryCollectionStrategy.AWSLogs.Subscriptions,
+					definition.Strategy.AWSLogs.Subscriptions...,
+				)
+			}
+		}
+
+		if serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled && definition.Strategy.AWSMetrics != nil {
+			agentConfig.TelemetryCollectionStrategy.AWSMetrics.StreamFilters = append(
+				agentConfig.TelemetryCollectionStrategy.AWSMetrics.StreamFilters,
+				definition.Strategy.AWSMetrics.StreamFilters...,
+			)
+		}
+	}
+
+	return agentConfig, nil
+}
+
+func (a *awsProvider) GetName() integrationstypes.CloudProviderType {
+	return integrationstypes.CloudProviderAWS
+}
+
+func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccountID *string) (any, error) {
+	svcConfigs := make(map[string]*integrationstypes.AWSCloudServiceConfig)
+	if cloudAccountID != nil {
+		activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), *cloudAccountID)
+		if err != nil {
+			return nil, err
+		}
+
+		serviceConfigs, err := a.serviceConfigRepo.GetAllForAccount(ctx, orgID, activeAccount.ID.String())
+		if err != nil {
+			return nil, err
+		}
+
+		for svcType, config := range serviceConfigs {
+			serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
+			err = serviceConfig.Unmarshal(config)
+			if err != nil {
+				return nil, err
+			}
+			svcConfigs[svcType] = serviceConfig
+		}
+	}
+
+	summaries := make([]integrationstypes.AWSServiceSummary, 0)
+
+	definitions, err := a.awsServiceDefinitions.ListServiceDefinitions(ctx)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't list aws service definitions: %w", err))
+	}
+
+	for _, def := range definitions {
+		summary := integrationstypes.AWSServiceSummary{
+			DefinitionMetadata: def.DefinitionMetadata,
+			Config:             nil,
+		}
+
+		summary.Config = svcConfigs[summary.Id]
+
+		summaries = append(summaries, summary)
+	}
+
+	sort.Slice(summaries, func(i, j int) bool {
+		return summaries[i].DefinitionMetadata.Title < summaries[j].DefinitionMetadata.Title
+	})
+
+	return &integrationstypes.GettableAWSServices{
+		Services: summaries,
+	}, nil
+}
+
+func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationstypes.GetServiceDetailsReq) (any, error) {
+	details := new(integrationstypes.GettableAWSServiceDetails)
+
+	awsDefinition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
+	}
+
+	details.AWSServiceDefinition = *awsDefinition
+	details.Strategy.Provider = a.GetName()
+	if req.CloudAccountID == nil {
+		return details, nil
+	}
+
+	config, err := a.getServiceConfig(ctx, &details.AWSServiceDefinition, req.OrgID, a.GetName().String(), req.ServiceId, *req.CloudAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if config == nil {
+		return details, nil
+	}
+
+	details.Config = config
+
+	connectionStatus, err := a.getServiceConnectionStatus(
+		ctx,
+		*req.CloudAccountID,
+		req.OrgID,
+		&details.AWSServiceDefinition,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	details.ConnectionStatus = connectionStatus
+
+	return details, nil
+}
+
+func (a *awsProvider) getServiceConnectionStatus(
+	ctx context.Context,
+	cloudAccountID string,
+	orgID string,
+	def *integrationstypes.AWSServiceDefinition,
+) (*integrationstypes.ServiceConnectionStatus, error) {
+	if def.Strategy == nil {
+		return nil, nil
+	}
+
+	resp := new(integrationstypes.ServiceConnectionStatus)
+
+	if def.Strategy.AWSMetrics != nil {
+		status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def.Strategy.AWSMetrics, def.DataCollected.Metrics)
+		resp.Metrics = status
+	}
+
+	if def.Strategy.AWSLogs != nil {
+		status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def.Strategy.AWSLogs, def.DataCollected.Logs)
+		resp.Logs = status
+	}
+
+	return resp, nil
+}
+
+func (a *awsProvider) getServiceMetricsConnectionStatus(
+	ctx context.Context,
+	cloudAccountID string,
+	orgID string,
+	strategy *integrationstypes.AWSMetricsStrategy,
+	metricsCollected []integrationstypes.CollectedMetric,
+) (*integrationstypes.SignalConnectionStatus, error) {
+	if strategy == nil || len(strategy.StreamFilters) < 1 || len(metricsCollected) < 1 {
+		return nil, nil
+	}
+
+	metricsAggregations := make([]qbtypes.MetricAggregation, 0, 1)
+
+	// TODO: find a way to use IN query for metrics
+	metricsAggregations = append(metricsAggregations, qbtypes.MetricAggregation{
+		MetricName:       metricsCollected[0].Name,
+		TimeAggregation:  metrictypes.TimeAggregationAvg,
+		SpaceAggregation: metrictypes.SpaceAggregationAvg,
+	})
+
+	// TODO: find a better way to write the query if there's any
+	filterExpression := fmt.Sprintf(`cloud.provider="aws" AND cloud.account.id="%s"`, cloudAccountID)
+	resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
+		SchemaVersion: "v5",
+		Start:         uint64(time.Now().Add(-time.Hour).UnixMilli()),
+		End:           uint64(time.Now().UnixMilli()),
+		RequestType:   qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{{
+				Type: qbtypes.QueryTypeBuilder,
+				Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Name:         "A",
+					Signal:       telemetrytypes.SignalMetrics,
+					Aggregations: metricsAggregations,
+					Filter: &qbtypes.Filter{
+						Expression: filterExpression,
+					},
+				},
+			}},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if resp != nil && len(resp.Data.Results) < 1 {
+		return nil, nil
+	}
+
+	queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+	if !ok {
+		return nil, nil
+	}
+
+	if queryResponse == nil ||
+		len(queryResponse.Aggregations) < 1 ||
+		len(queryResponse.Aggregations[0].Series) < 1 ||
+		len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
+		return nil, nil
+	}
+
+	return &integrationstypes.SignalConnectionStatus{
+		LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
+		LastReceivedFrom:     "signoz-aws-integration",
+	}, nil
+}
+
+func (a *awsProvider) getServiceLogsConnectionStatus(
+	ctx context.Context,
+	cloudAccountID string,
+	orgID string,
+	strategy *integrationstypes.AWSLogsStrategy,
+	logsCollected []integrationstypes.CollectedLogAttribute,
+) (*integrationstypes.SignalConnectionStatus, error) {
+	if strategy == nil || len(strategy.Subscriptions) < 1 || len(logsCollected) < 1 {
+		return nil, nil
+	}
+
+	// TODO: finish the query
+	a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
+		SchemaVersion: "v5",
+		Start:         uint64(time.Now().Add(-time.Hour).UnixMilli()),
+		End:           uint64(time.Now().UnixMilli()),
+		RequestType:   qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{{
+				Type: qbtypes.QueryTypeBuilder,
+				Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+					Name:   "A",
+					Signal: telemetrytypes.SignalLogs,
+					Aggregations: []qbtypes.LogAggregation{
+						{
+							Expression: "",
+						},
+					},
+					Filter: nil,
+				},
+			}},
+		},
+	})
+
+	return nil, nil
+}
+
+func (a *awsProvider) getServiceConfig(ctx context.Context,
+	def *integrationstypes.AWSServiceDefinition, orgID, cloudProvider, serviceId, cloudAccountId string,
+) (*integrationstypes.AWSCloudServiceConfig, error) {
+	activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID, cloudProvider, cloudAccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := a.serviceConfigRepo.Get(ctx, orgID, activeAccount.ID.StringValue(), serviceId)
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
+	err = serviceConfig.Unmarshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if config != nil && serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled {
+		def.PopulateDashboardURLs(serviceId)
+	}
+
+	return serviceConfig, nil
+}
+
+func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	accountRecords, err := a.accountsRepo.ListConnected(ctx, orgID.StringValue(), a.GetName().String())
+	if err != nil {
+		return nil, err
+	}
+
+	// for now service dashboards are only available when metrics are enabled.
+	servicesWithAvailableMetrics := map[string]*time.Time{}
+
+	for _, ar := range accountRecords {
+		if ar.AccountID != nil {
+			configsBySvcId, err := a.serviceConfigRepo.GetAllForAccount(ctx, orgID.StringValue(), ar.ID.StringValue())
+			if err != nil {
+				return nil, err
+			}
+
+			for svcId, config := range configsBySvcId {
+				serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
+				err = serviceConfig.Unmarshal(config)
+				if err != nil {
+					return nil, err
+				}
+
+				if serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled {
+					servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
+				}
+			}
+		}
+	}
+
+	svcDashboards := make([]*dashboardtypes.Dashboard, 0)
+
+	allServices, err := a.awsServiceDefinitions.ListServiceDefinitions(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list aws service definitions")
+	}
+
+	for _, svc := range allServices {
+		serviceDashboardsCreatedAt, ok := servicesWithAvailableMetrics[svc.Id]
+		if ok {
+			svcDashboards = integrationstypes.GetDashboardsFromAssets(svc.Id, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)
+			servicesWithAvailableMetrics[svc.Id] = nil
+		}
+	}
+
+	return svcDashboards, nil
+}
+
+func (a *awsProvider) GetDashboard(ctx context.Context, req *integrationstypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
+	allDashboards, err := a.GetAvailableDashboards(ctx, req.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, d := range allDashboards {
+		if d.ID == req.ID {
+			return d, nil
+		}
+	}
+
+	return nil, errors.NewNotFoundf(CodeDashboardNotFound, "dashboard with id %s not found", req.ID)
+}
+
+func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationstypes.PostableConnectionArtifact) (any, error) {
+	connection := new(integrationstypes.PostableAWSConnectionUrl)
+
+	err := connection.Unmarshal(req.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if connection.AccountConfig != nil {
+		for _, region := range connection.AccountConfig.EnabledRegions {
+			if integrationstypes.ValidAWSRegions[region] {
+				continue
+			}
+
+			return nil, errors.NewInvalidInputf(CodeInvalidAWSRegion, "invalid aws region: %s", region)
+		}
+	}
+
+	config, err := connection.AccountConfig.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := a.accountsRepo.Upsert(
+		ctx, req.OrgID, integrationstypes.CloudProviderAWS.String(), nil, config,
+		nil, nil, nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	agentVersion := "v0.0.8"
+	if connection.AgentConfig.Version != "" {
+		agentVersion = connection.AgentConfig.Version
+	}
+
+	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home", connection.AgentConfig.Region)
+	u, _ := url.Parse(baseURL)
+	u.Fragment = fmt.Sprintf("/stacks/quickcreate")
+
+	q := u.Query()
+	q.Set("region", connection.AgentConfig.Region)
+	q.Set("stackName", "signoz-integration")
+	q.Set("templateURL", fmt.Sprintf("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json", agentVersion))
+	q.Set("param_SigNozIntegrationAgentVersion", agentVersion)
+	q.Set("param_SigNozApiUrl", connection.AgentConfig.SigNozAPIUrl)
+	q.Set("param_SigNozApiKey", connection.AgentConfig.SigNozAPIKey)
+	q.Set("param_SigNozAccountId", account.ID.StringValue())
+	q.Set("param_IngestionUrl", connection.AgentConfig.IngestionUrl)
+	q.Set("param_IngestionKey", connection.AgentConfig.IngestionKey)
+
+	u.RawQuery = q.Encode()
+
+	return &integrationstypes.GettableAWSConnectionUrl{
+		AccountId:     account.ID.StringValue(),
+		ConnectionUrl: u.String(),
+	}, nil
+}
+
+func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrationstypes.PatchableServiceConfig) (any, error) {
+	definition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
+	}
+
+	serviceConfig := new(integrationstypes.PatchableAWSCloudServiceConfig)
+	err = serviceConfig.Unmarshal(req.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = serviceConfig.Config.Validate(definition); err != nil {
+		return nil, err
+	}
+
+	// can only update config for a connected cloud account id
+	_, err = a.accountsRepo.GetConnectedCloudAccount(
+		ctx, req.OrgID, a.GetName().String(), serviceConfig.CloudAccountId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceConfigBytes, err := serviceConfig.Config.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	updatedConfig, err := a.serviceConfigRepo.Upsert(
+		ctx, req.OrgID, a.GetName().String(), serviceConfig.CloudAccountId, req.ServiceId, serviceConfigBytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = serviceConfig.Unmarshal(updatedConfig); err != nil {
+		return nil, err
+	}
+
+	return &integrationstypes.PatchServiceConfigResponse{
+		ServiceId: req.ServiceId,
+		Config:    serviceConfig,
+	}, nil
+}
+
+func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrationstypes.PatchableAccountConfig) (any, error) {
+	config := new(integrationstypes.PatchableAWSAccountConfig)
+
+	err := config.Unmarshal(req.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Config == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "account config can't be null")
+	}
+
+	for _, region := range config.Config.EnabledRegions {
+		if integrationstypes.ValidAWSRegions[region] {
+			continue
+		}
+
+		return nil, errors.NewInvalidInputf(CodeInvalidAWSRegion, "invalid aws region: %s", region)
+	}
+
+	configBytes, err := config.Config.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	// account must exist to update config, but it doesn't need to be connected
+	_, err = a.accountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	accountRecord, err := a.accountsRepo.Upsert(
+		ctx, req.OrgID, a.GetName().String(), &req.AccountId, configBytes, nil, nil, nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return accountRecord.Account(a.GetName()), nil
+}
+
+func (a *awsProvider) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationstypes.CloudIntegration, error) {
+	account, err := a.accountsRepo.Get(ctx, orgID, a.GetName().String(), accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	tsNow := time.Now()
+	account, err = a.accountsRepo.Upsert(
+		ctx, orgID, a.GetName().String(), &accountID, nil, nil, nil, &tsNow,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}

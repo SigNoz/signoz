@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -26,8 +27,8 @@ func NewInstalledIntegrationsSqliteRepo(store sqlstore.SQLStore) (
 func (r *InstalledIntegrationsSqliteRepo) list(
 	ctx context.Context,
 	orgId string,
-) ([]types.InstalledIntegration, *model.ApiError) {
-	integrations := []types.InstalledIntegration{}
+) ([]integrationstypes.InstalledIntegration, *model.ApiError) {
+	integrations := []integrationstypes.InstalledIntegration{}
 
 	err := r.store.BunDB().NewSelect().
 		Model(&integrations).
@@ -44,8 +45,8 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 
 func (r *InstalledIntegrationsSqliteRepo) get(
 	ctx context.Context, orgId string, integrationTypes []string,
-) (map[string]types.InstalledIntegration, *model.ApiError) {
-	integrations := []types.InstalledIntegration{}
+) (map[string]integrationstypes.InstalledIntegration, *model.ApiError) {
+	integrations := []integrationstypes.InstalledIntegration{}
 
 	typeValues := []interface{}{}
 	for _, integrationType := range integrationTypes {
@@ -62,7 +63,7 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 		))
 	}
 
-	result := map[string]types.InstalledIntegration{}
+	result := map[string]integrationstypes.InstalledIntegration{}
 	for _, ii := range integrations {
 		result[ii.Type] = ii
 	}
@@ -74,10 +75,10 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 	ctx context.Context,
 	orgId string,
 	integrationType string,
-	config types.InstalledIntegrationConfig,
-) (*types.InstalledIntegration, *model.ApiError) {
+	config integrationstypes.InstalledIntegrationConfig,
+) (*integrationstypes.InstalledIntegration, *model.ApiError) {
 
-	integration := types.InstalledIntegration{
+	integration := integrationstypes.InstalledIntegration{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
@@ -114,7 +115,7 @@ func (r *InstalledIntegrationsSqliteRepo) delete(
 	ctx context.Context, orgId string, integrationType string,
 ) *model.ApiError {
 	_, dbErr := r.store.BunDB().NewDelete().
-		Model(&types.InstalledIntegration{}).
+		Model(&integrationstypes.InstalledIntegration{}).
 		Where("type = ?", integrationType).
 		Where("org_id = ?", orgId).
 		Exec(ctx)

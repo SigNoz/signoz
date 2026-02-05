@@ -9,60 +9,61 @@ import (
 	"io/fs"
 	"path"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	koanfJson "github.com/knadh/koanf/parsers/json"
 )
 
-const (
-	S3Sync = "s3sync"
+var (
+	CodeServiceDefinitionNotFound = errors.MustNewCode("service_definition_not_dound")
 )
 
 type (
 	AWSServicesProvider struct {
-		definitions map[string]*AWSServiceDefinition
+		definitions map[string]*integrationstypes.AWSServiceDefinition
 	}
 	AzureServicesProvider struct {
-		definitions map[string]*AzureServiceDefinition
+		definitions map[string]*integrationstypes.AzureServiceDefinition
 	}
 )
 
-func (a *AzureServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*AzureServiceDefinition, error) {
+func (a *AzureServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AzureServiceDefinition, error) {
 	return a.definitions, nil
 }
 
-func (a *AzureServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*AzureServiceDefinition, error) {
+func (a *AzureServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationstypes.AzureServiceDefinition, error) {
 	def, ok := a.definitions[serviceName]
 	if !ok {
-		return nil, fmt.Errorf("azure service definition not found: %s", serviceName)
+		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "azure service definition not found: %s", serviceName)
 	}
 
 	return def, nil
 }
 
-func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*AWSServiceDefinition, error) {
+func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AWSServiceDefinition, error) {
 	return a.definitions, nil
 }
 
-func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*AWSServiceDefinition, error) {
+func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationstypes.AWSServiceDefinition, error) {
 	def, ok := a.definitions[serviceName]
 	if !ok {
-		return nil, fmt.Errorf("aws service definition not found: %s", serviceName)
+		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "aws service definition not found: %s", serviceName)
 	}
 
 	return def, nil
 }
 
 func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
-	definitions, err := readAllServiceDefinitions(types.CloudProviderAWS)
+	definitions, err := readAllServiceDefinitions(integrationstypes.CloudProviderAWS)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceDefinitions := make(map[string]*AWSServiceDefinition)
+	serviceDefinitions := make(map[string]*integrationstypes.AWSServiceDefinition)
 	for id, def := range definitions {
-		typedDef, ok := def.(*AWSServiceDefinition)
+		typedDef, ok := def.(*integrationstypes.AWSServiceDefinition)
 		if !ok {
 			return nil, fmt.Errorf("invalid type for AWS service definition %s", id)
 		}
@@ -75,14 +76,14 @@ func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
 }
 
 func NewAzureCloudProviderServices() (*AzureServicesProvider, error) {
-	definitions, err := readAllServiceDefinitions(types.CloudProviderAzure)
+	definitions, err := readAllServiceDefinitions(integrationstypes.CloudProviderAzure)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceDefinitions := make(map[string]*AzureServiceDefinition)
+	serviceDefinitions := make(map[string]*integrationstypes.AzureServiceDefinition)
 	for id, def := range definitions {
-		typedDef, ok := def.(*AzureServiceDefinition)
+		typedDef, ok := def.(*integrationstypes.AzureServiceDefinition)
 		if !ok {
 			return nil, fmt.Errorf("invalid type for Azure service definition %s", id)
 		}
@@ -106,11 +107,11 @@ func readAllServiceDefinitions(cloudProvider valuer.String) (map[string]any, err
 
 	cloudServices, err := readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't read %s service definitions: %w", cloudProvider, err)
+		return nil, err
 	}
 
 	if len(cloudServices) < 1 {
-		return nil, fmt.Errorf("no %s services could be read", cloudProvider)
+		return nil, errors.NewInternalf(errors.CodeInternal, "no service definitions found in %s", cloudProviderDirPath)
 	}
 
 	return cloudServices, nil
@@ -119,7 +120,7 @@ func readAllServiceDefinitions(cloudProvider valuer.String) (map[string]any, err
 func readServiceDefinitionsFromDir(cloudProvider valuer.String, cloudProviderDirPath string) (map[string]any, error) {
 	svcDefDirs, err := fs.ReadDir(definitionFiles, cloudProviderDirPath)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't list integrations dirs: %w", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list integrations dirs")
 	}
 
 	svcDefs := make(map[string]any)
@@ -132,12 +133,12 @@ func readServiceDefinitionsFromDir(cloudProvider valuer.String, cloudProviderDir
 		svcDirPath := path.Join(cloudProviderDirPath, d.Name())
 		s, err := readServiceDefinition(cloudProvider, svcDirPath)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't read svc definition for %s: %w", d.Name(), err)
+			return nil, err
 		}
 
 		_, exists := svcDefs[s.GetId()]
 		if exists {
-			return nil, fmt.Errorf("duplicate service definition for id %s at %s", s.GetId(), d.Name())
+			return nil, errors.NewInternalf(errors.CodeInternal, "duplicate service definition for id %s at %s", s.GetId(), d.Name())
 		}
 		svcDefs[s.GetId()] = s
 	}
@@ -145,43 +146,44 @@ func readServiceDefinitionsFromDir(cloudProvider valuer.String, cloudProviderDir
 	return svcDefs, nil
 }
 
-func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (Definition, error) {
+func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (integrationstypes.Definition, error) {
 	integrationJsonPath := path.Join(svcDirpath, "integration.json")
 
 	serializedSpec, err := definitionFiles.ReadFile(integrationJsonPath)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't find integration.json in %s: %w", svcDirpath, err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't read integration definition in %s", svcDirpath)
 	}
 
 	integrationSpec, err := koanfJson.Parser().Unmarshal(serializedSpec)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse integration.json from %s: %w", integrationJsonPath, err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't parse integration definition in %s", svcDirpath)
 	}
 
 	hydrated, err := integrations.HydrateFileUris(integrationSpec, definitionFiles, svcDirpath)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't hydrate files referenced in service definition %s: %w", integrationJsonPath, err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't hydrate integration definition in %s", svcDirpath)
 	}
 	hydratedSpec := hydrated.(map[string]any)
 
-	var serviceDef Definition
+	var serviceDef integrationstypes.Definition
 
 	switch cloudProvider {
-	case types.CloudProviderAWS:
-		serviceDef = &AWSServiceDefinition{}
-	case types.CloudProviderAzure:
-		serviceDef = &AzureServiceDefinition{}
+	case integrationstypes.CloudProviderAWS:
+		serviceDef = &integrationstypes.AWSServiceDefinition{}
+	case integrationstypes.CloudProviderAzure:
+		serviceDef = &integrationstypes.AzureServiceDefinition{}
 	default:
-		return nil, fmt.Errorf("unsupported cloud provider: %s", cloudProvider)
+		// ideally this shouldn't happen hence throwing internal error
+		return nil, errors.NewInternalf(errors.CodeInternal, "unsupported cloud provider: %s", cloudProvider)
 	}
 
 	err = ParseStructWithJsonTagsFromMap(hydratedSpec, serviceDef)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse hydrated JSON spec read from %s: %w", integrationJsonPath, err)
+		return nil, err
 	}
 	err = serviceDef.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("invalid service definition %s: %w", serviceDef.GetId(), err)
+		return nil, err
 	}
 
 	return serviceDef, nil
@@ -190,14 +192,14 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (Defi
 func ParseStructWithJsonTagsFromMap(data map[string]any, target interface{}) error {
 	mapJson, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("couldn't marshal map to json: %w", err)
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't marshal service definition json data")
 	}
 
 	decoder := json.NewDecoder(bytes.NewReader(mapJson))
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(target)
 	if err != nil {
-		return fmt.Errorf("couldn't unmarshal json back to struct: %w", err)
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't unmarshal service definition json data")
 	}
 	return nil
 }

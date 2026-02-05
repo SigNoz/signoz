@@ -13,6 +13,7 @@ import (
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -462,7 +463,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, createdByUser.Email) {
+	if slices.Contains(integrationstypes.IntegrationUserEmails, createdByUser.Email) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
@@ -507,7 +508,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, createdByUser.Email) {
+	if slices.Contains(integrationstypes.IntegrationUserEmails, createdByUser.Email) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
