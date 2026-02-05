@@ -90,7 +90,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 			setSelectedDashboard((prev) => {
 				if (prev) {
-					const oldVariables = prev?.data.variables;
+					const oldVariables = { ...prev?.data.variables };
 					// this is added to handle case where we have two different
 					// schemas for variable response
 					if (oldVariables?.[id]) {

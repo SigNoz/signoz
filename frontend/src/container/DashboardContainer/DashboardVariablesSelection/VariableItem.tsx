@@ -4,18 +4,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import { Input, InputRef, Popover, Tooltip, Typography } from 'antd';
+import { Popover, Tooltip, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce, isArray, isEmpty, isString } from 'lodash-es';
+import { isArray, isEmpty, isString } from 'lodash-es';
 import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -25,6 +25,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE, variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
+import TextboxVariableInput from './TextboxVariableInput';
 import { areArraysEqual, checkAPIInvocation } from './util';
 
 import './DashboardVariableSelection.styles.scss';
@@ -71,15 +72,6 @@ function VariableItem({
 	const [tempSelection, setTempSelection] = useState<
 		string | string[] | undefined
 	>(undefined);
-
-	// Local state for textbox input to ensure smooth editing experience
-	const [textboxInputValue, setTextboxInputValue] = useState<string>(
-		(variableData.selectedValue?.toString() ||
-			variableData.defaultValue?.toString()) ??
-			'',
-	);
-	const [isTextboxFocused, setIsTextboxFocused] = useState<boolean>(false);
-	const textboxInputRef = useRef<InputRef>(null);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -304,7 +296,6 @@ function VariableItem({
 	};
 
 	// do not debounce the above function as we do not need debounce in select variables
-	const debouncedHandleChange = debounce(handleChange, 500);
 
 	const { selectedValue } = variableData;
 	const selectedValueStringified = useMemo(
@@ -381,7 +372,7 @@ function VariableItem({
 	}, [variableData.type, variableData.customValue]);
 
 	return (
-		<div className={`variable-item${isTextboxFocused ? ' focused' : ''}`}>
+		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
 				{variableData.description && (
@@ -393,42 +384,9 @@ function VariableItem({
 
 			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
-					<Input
-						ref={textboxInputRef}
-						placeholder="Enter value"
-						data-testid={`variable-textbox-${variableData.id}`}
-						bordered={false}
-						value={textboxInputValue}
-						title={textboxInputValue}
-						onChange={(e): void => {
-							setTextboxInputValue(e.target.value);
-						}}
-						onFocus={(): void => {
-							setIsTextboxFocused(true);
-						}}
-						onBlur={(e): void => {
-							setIsTextboxFocused(false);
-							const value = e.target.value.trim();
-							// If empty, reset to default value
-							if (!value && variableData.defaultValue) {
-								setTextboxInputValue(variableData.defaultValue.toString());
-								debouncedHandleChange(variableData.defaultValue.toString());
-							} else {
-								debouncedHandleChange(value);
-							}
-						}}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter') {
-								const value = textboxInputValue.trim();
-								if (!value && variableData.defaultValue) {
-									setTextboxInputValue(variableData.defaultValue.toString());
-									debouncedHandleChange(variableData.defaultValue.toString());
-								} else {
-									debouncedHandleChange(value);
-								}
-								textboxInputRef.current?.blur();
-							}
-						}}
+					<TextboxVariableInput
+						variableData={variableData}
+						handleChange={handleChange}
 					/>
 				) : (
 					optionsData &&
