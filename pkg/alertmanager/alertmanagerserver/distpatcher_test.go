@@ -1342,7 +1342,7 @@ route:
 			expectedMatcherValue:  "slack",
 		},
 		{
-			name: "no group_wait and group_interval uses default values",
+			name: "no group_wait and group_interval use default values",
 			confData: `receivers:
 - name: 'slack'
 
