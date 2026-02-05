@@ -201,13 +201,8 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
-	const {
-		dashboardId: savedDashboardId,
-		dashboardVariables,
-	} = useDashboardVariablesSelector((s) => ({
-		dashboardId: s.dashboardId,
-		dashboardVariables: s.variables,
-	}));
+	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
+	const savedDashboardId = useDashboardVariablesSelector((s) => s.dashboardId);
 
 	useEffect(() => {
 		const existingVariables = dashboardVariables;

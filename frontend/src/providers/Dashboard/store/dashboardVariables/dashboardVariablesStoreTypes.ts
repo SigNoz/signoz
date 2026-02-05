@@ -25,3 +25,7 @@ export interface IDashboardVariablesStoreState {
 	// Derived: dependency data for QUERY variables
 	dependencyData: IDependencyData | null;
 }
+
+export interface IUseDashboardVariablesReturn {
+	dashboardVariables: IDashboardVariablesStoreState['variables'];
+}

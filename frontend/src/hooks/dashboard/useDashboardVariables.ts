@@ -1,10 +1,11 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { dashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
-import { IDashboardVariablesStoreState } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import {
+	IDashboardVariablesStoreState,
+	IUseDashboardVariablesReturn,
+} from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 
-export const useDashboardVariables = (): {
-	dashboardVariables: IDashboardVariablesStoreState['variables'];
-} => {
+export const useDashboardVariables = (): IUseDashboardVariablesReturn => {
 	const getSnapshot = useCallback(
 		(): IDashboardVariablesStoreState['variables'] =>
 			dashboardVariablesStore.getSnapshot().variables,

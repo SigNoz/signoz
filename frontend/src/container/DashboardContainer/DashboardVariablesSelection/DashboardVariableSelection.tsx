@@ -1,8 +1,11 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
-import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
+import {
+	useDashboardVariables,
+	useDashboardVariablesSelector,
+} from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -12,13 +15,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import DynamicVariableSelection from './DynamicVariableSelection';
-import {
-	buildDependencies,
-	buildDependencyGraph,
-	buildParentDependencyGraph,
-	IDependencyData,
-	onUpdateVariableNode,
-} from './util';
+import { onUpdateVariableNode } from './util';
 import VariableItem from './VariableItem';
 
 import './DashboardVariableSelection.styles.scss';
@@ -35,26 +32,16 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
-
-	const [dependencyData, setDependencyData] = useState<IDependencyData | null>(
-		null,
+	const sortedVariablesArray = useDashboardVariablesSelector(
+		(state) => state.sortedVariablesArray,
+	);
+	const dependencyData = useDashboardVariablesSelector(
+		(state) => state.dependencyData,
 	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	const sortedVariablesArray = useMemo(() => {
-		const tableRowData: IDashboardVariable[] = [];
-
-		Object.values(dashboardVariables).forEach((value) => {
-			tableRowData.push({ ...value });
-		});
-
-		tableRowData.sort((a, b) => a.order - b.order);
-
-		return tableRowData;
-	}, [dashboardVariables]);
 
 	useEffect(() => {
 		// Initialize variables with default values if not in URL
@@ -64,28 +51,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 			updateUrlVariable,
 		);
 	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
-
-	useEffect(() => {
-		if (sortedVariablesArray.length > 0) {
-			const depGrp = buildDependencies(sortedVariablesArray);
-			const { order, graph, hasCycle, cycleNodes } = buildDependencyGraph(depGrp);
-			const parentDependencyGraph = buildParentDependencyGraph(graph);
-
-			// cleanup order to only include variables that are of type 'QUERY'
-			const cleanedOrder = order.filter((variable) => {
-				const variableData = sortedVariablesArray.find((v) => v.name === variable);
-				return variableData?.type === 'QUERY';
-			});
-
-			setDependencyData({
-				order: cleanedOrder,
-				graph,
-				parentDependencyGraph,
-				hasCycle,
-				cycleNodes,
-			});
-		}
-	}, [sortedVariablesArray]);
 
 	// this handles the case where the dependency order changes i.e. variable list updated via creation or deletion etc. and we need to refetch the variables
 	// also trigger when the global time changes
