@@ -1,8 +1,11 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
-import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
+import {
+	useDashboardVariables,
+	useDashboardVariablesSelector,
+} from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -12,13 +15,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import DynamicVariableSelection from './DynamicVariableSelection';
-import {
-	buildDependencies,
-	buildDependencyGraph,
-	buildParentDependencyGraph,
-	IDependencyData,
-	onUpdateVariableNode,
-} from './util';
+import { onUpdateVariableNode } from './util';
 import VariableItem from './VariableItem';
 
 import './DashboardVariableSelection.styles.scss';
@@ -35,11 +32,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
-
-	const [variablesTableData, setVariablesTableData] = useState<any>([]);
-
-	const [dependencyData, setDependencyData] = useState<IDependencyData | null>(
-		null,
+	const sortedVariablesArray = useDashboardVariablesSelector(
+		(state) => state.sortedVariablesArray,
+	);
+	const dependencyData = useDashboardVariablesSelector(
+		(state) => state.dependencyData,
 	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -47,24 +44,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 	);
 
 	useEffect(() => {
-		const tableRowData = [];
-
-		// eslint-disable-next-line no-restricted-syntax
-		for (const [key, value] of Object.entries(dashboardVariables)) {
-			const { id } = value;
-
-			tableRowData.push({
-				key,
-				name: key,
-				...dashboardVariables[key],
-				id,
-			});
-		}
-
-		tableRowData.sort((a, b) => a.order - b.order);
-
-		setVariablesTableData(tableRowData);
-
 		// Initialize variables with default values if not in URL
 		initializeDefaultVariables(
 			dashboardVariables,
@@ -72,30 +51,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 			updateUrlVariable,
 		);
 	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
-
-	useEffect(() => {
-		if (variablesTableData.length > 0) {
-			const depGrp = buildDependencies(variablesTableData);
-			const { order, graph, hasCycle, cycleNodes } = buildDependencyGraph(depGrp);
-			const parentDependencyGraph = buildParentDependencyGraph(graph);
-
-			// cleanup order to only include variables that are of type 'QUERY'
-			const cleanedOrder = order.filter((variable) => {
-				const variableData = variablesTableData.find(
-					(v: IDashboardVariable) => v.name === variable,
-				);
-				return variableData?.type === 'QUERY';
-			});
-
-			setDependencyData({
-				order: cleanedOrder,
-				graph,
-				parentDependencyGraph,
-				hasCycle,
-				cycleNodes,
-			});
-		}
-	}, [dashboardVariables, variablesTableData]);
 
 	// this handles the case where the dependency order changes i.e. variable list updated via creation or deletion etc. and we need to refetch the variables
 	// also trigger when the global time changes
@@ -186,45 +141,30 @@ function DashboardVariableSelection(): JSX.Element | null {
 		}
 	};
 
-	if (!dashboardVariables) {
-		return null;
-	}
-
-	const orderBasedSortedVariables = variablesTableData.sort(
-		(a: { order: number }, b: { order: number }) => a.order - b.order,
-	);
-
 	return (
 		<Row style={{ display: 'flex', gap: '12px' }}>
-			{orderBasedSortedVariables &&
-				Array.isArray(orderBasedSortedVariables) &&
-				orderBasedSortedVariables.length > 0 &&
-				orderBasedSortedVariables.map((variable) =>
-					variable.type === 'DYNAMIC' ? (
-						<DynamicVariableSelection
-							key={`${variable.name}${variable.id}${variable.order}`}
-							existingVariables={dashboardVariables}
-							variableData={{
-								name: variable.name,
-								...variable,
-							}}
-							onValueUpdate={onValueUpdate}
-						/>
-					) : (
-						<VariableItem
-							key={`${variable.name}${variable.id}}${variable.order}`}
-							existingVariables={dashboardVariables}
-							variableData={{
-								name: variable.name,
-								...variable,
-							}}
-							onValueUpdate={onValueUpdate}
-							variablesToGetUpdated={variablesToGetUpdated}
-							setVariablesToGetUpdated={setVariablesToGetUpdated}
-							dependencyData={dependencyData}
-						/>
-					),
-				)}
+			{sortedVariablesArray.map((variable) => {
+				const key = `${variable.name}${variable.id}${variable.order}`;
+
+				return variable.type === 'DYNAMIC' ? (
+					<DynamicVariableSelection
+						key={key}
+						existingVariables={dashboardVariables}
+						variableData={variable}
+						onValueUpdate={onValueUpdate}
+					/>
+				) : (
+					<VariableItem
+						key={key}
+						existingVariables={dashboardVariables}
+						variableData={variable}
+						onValueUpdate={onValueUpdate}
+						variablesToGetUpdated={variablesToGetUpdated}
+						setVariablesToGetUpdated={setVariablesToGetUpdated}
+						dependencyData={dependencyData}
+					/>
+				);
+			})}
 		</Row>
 	);
 }

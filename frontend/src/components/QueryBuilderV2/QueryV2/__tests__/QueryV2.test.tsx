@@ -11,9 +11,14 @@ import {
 	IBuilderQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { UseQueryOperations } from 'types/common/operations.types';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	QueryBuilderContextType,
+	QueryFunctionsTypes,
+} from 'types/common/queryBuilder';
 
 import '@testing-library/jest-dom';
 
@@ -45,12 +50,17 @@ const mockedUseQueryOperations = jest.mocked(
 
 describe('QueryBuilderV2 + QueryV2 - base render', () => {
 	let handleRunQueryMock: jest.MockedFunction<() => void>;
+	let handleQueryFunctionsUpdatesMock: jest.MockedFunction<() => void>;
+	let baseQBContext: QueryBuilderContextType;
 
 	beforeEach(() => {
 		const mockCloneQuery = jest.fn() as jest.MockedFunction<
 			(type: string, q: IBuilderQuery) => void
 		>;
 		handleRunQueryMock = jest.fn() as jest.MockedFunction<() => void>;
+		handleQueryFunctionsUpdatesMock = jest.fn() as jest.MockedFunction<
+			() => void
+		>;
 		const baseQuery: IBuilderQuery = {
 			queryName: 'A',
 			dataSource: DataSource.LOGS,
@@ -91,7 +101,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		const updateQueriesData: QueryBuilderContextType['updateQueriesData'] = (q) =>
 			q;
 
-		mockedUseQueryBuilder.mockReturnValue(({
+		const baseContext = ({
 			currentQuery: currentQueryObj,
 			stagedQuery: null,
 			lastUsedQuery: null,
@@ -124,7 +134,10 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			initQueryBuilderData: jest.fn(),
 			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
-		} as unknown) as QueryBuilderContextType);
+		} as unknown) as QueryBuilderContextType;
+
+		baseQBContext = baseContext;
+		mockedUseQueryBuilder.mockReturnValue(baseQBContext);
 
 		mockedUseQueryOperations.mockReturnValue({
 			isTracePanelType: false,
@@ -139,7 +152,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			handleDeleteQuery: jest.fn(),
 			handleChangeQueryData: (jest.fn() as unknown) as ReturnType<UseQueryOperations>['handleChangeQueryData'],
 			handleChangeFormulaData: jest.fn(),
-			handleQueryFunctionsUpdates: jest.fn(),
+			handleQueryFunctionsUpdates: handleQueryFunctionsUpdatesMock,
 			listOfAdditionalFormulaFilters: [],
 		});
 	});
@@ -198,5 +211,57 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		});
 
 		expect(handleRunQueryMock).toHaveBeenCalled();
+	});
+
+	it('fx button is disabled when functions already exist', () => {
+		const currentQueryBase = baseQBContext.currentQuery as Query;
+		const supersetQueryBase = baseQBContext.supersetQuery as Query;
+
+		mockedUseQueryBuilder.mockReturnValueOnce({
+			...baseQBContext,
+			currentQuery: {
+				...currentQueryBase,
+				builder: {
+					...currentQueryBase.builder,
+					queryData: [
+						{
+							...currentQueryBase.builder.queryData[0],
+							functions: [
+								{ name: QueryFunctionsTypes.TIME_SHIFT, args: [] } as QueryFunction,
+							],
+						},
+					],
+				},
+			},
+			supersetQuery: {
+				...supersetQueryBase,
+				builder: {
+					...supersetQueryBase.builder,
+					queryData: [
+						{
+							...supersetQueryBase.builder.queryData[0],
+							functions: [
+								{ name: QueryFunctionsTypes.TIME_SHIFT, args: [] } as QueryFunction,
+							],
+						},
+					],
+				},
+			},
+		});
+
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+
+		const fxButton = document.querySelector('.function-btn') as HTMLButtonElement;
+		expect(fxButton).toBeInTheDocument();
+		expect(fxButton).toBeDisabled();
+
+		const deleteButton = document.querySelector(
+			'.query-function-delete-btn',
+		) as HTMLButtonElement;
+		expect(deleteButton).toBeInTheDocument();
+		userEvent.click(deleteButton);
+		waitFor(() => {
+			expect(fxButton).not.toBeDisabled();
+		});
 	});
 });

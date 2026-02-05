@@ -42,6 +42,7 @@ export default function TooltipPlugin({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const portalRoot = useRef<HTMLElement>(document.body);
 	const rafId = useRef<number | null>(null);
+	const dismissTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layoutRef = useRef<TooltipLayoutInfo>();
 	const renderRef = useRef(render);
 	renderRef.current = render;
@@ -167,8 +168,8 @@ export default function TooltipPlugin({
 		// Push the latest controller state into React so the tooltip's
 		// DOM representation catches up with the interaction state.
 		function performRender(): void {
-			controller.renderScheduled = false;
 			rafId.current = null;
+			dismissTimeoutId.current = null;
 
 			if (controller.pendingPinnedUpdate) {
 				applyPinnedSideEffects();
@@ -184,22 +185,40 @@ export default function TooltipPlugin({
 			});
 		}
 
+		// Cancel any pending render to prevent race conditions
+		function cancelPendingRender(): void {
+			if (rafId.current != null) {
+				cancelAnimationFrame(rafId.current);
+				rafId.current = null;
+			}
+			if (dismissTimeoutId.current != null) {
+				clearTimeout(dismissTimeoutId.current);
+				dismissTimeoutId.current = null;
+			}
+		}
+
 		// Throttle React re-renders:
 		// - use rAF while hovering for smooth updates
 		// - use a small timeout when hiding to avoid flicker when
 		//   briefly leaving and re-entering the plot.
+		//
+		// Re-entering hover while a dismiss timeout is pending should
+		// cancel that timeout so it cannot fire with stale state.
 		function scheduleRender(updatePinned = false): void {
-			if (!controller.renderScheduled) {
-				if (!controller.hoverActive) {
-					setTimeout(performRender, HOVER_DISMISS_DELAY_MS);
-				} else {
-					if (rafId.current != null) {
-						cancelAnimationFrame(rafId.current);
-					}
-					rafId.current = requestAnimationFrame(performRender);
-				}
-				controller.renderScheduled = true;
+			// Always cancel any existing pending callback first so that
+			// a newly scheduled render reflects the latest controller
+			// state (e.g. when quickly re-entering after a brief leave).
+			cancelPendingRender();
+
+			if (controller.hoverActive) {
+				rafId.current = requestAnimationFrame(performRender);
+			} else {
+				dismissTimeoutId.current = setTimeout(
+					performRender,
+					HOVER_DISMISS_DELAY_MS,
+				);
 			}
+
 			if (updatePinned) {
 				controller.pendingPinnedUpdate = true;
 			}
@@ -300,10 +319,7 @@ export default function TooltipPlugin({
 			window.removeEventListener('scroll', handleScroll, true);
 			document.removeEventListener('mousedown', onOutsideInteraction, true);
 			document.removeEventListener('keydown', onOutsideInteraction, true);
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-				rafId.current = null;
-			}
+			cancelPendingRender();
 			removeReadyHook();
 			removeInitHook();
 			removeSetDataHook();
