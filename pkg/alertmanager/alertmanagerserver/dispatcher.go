@@ -569,8 +569,8 @@ func (d *Dispatcher) getOrCreateRoute(receiver string) *dispatch.Route {
 	route := &dispatch.Route{
 		RouteOpts: dispatch.RouteOpts{
 			Receiver:      receiver,
-			GroupWait:     30 * time.Second,
-			GroupInterval: 5 * time.Minute,
+			GroupWait:     d.route.RouteOpts.GroupWait,
+			GroupInterval: d.route.RouteOpts.GroupInterval,
 			GroupByAll:    false,
 		},
 		Matchers: labels.Matchers{{
