@@ -1,4 +1,4 @@
-package implrole
+package openfgaauthz
 
 import (
 	"context"

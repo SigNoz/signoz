@@ -1,6 +1,8 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/authz/signozauthzapi"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
@@ -17,8 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
-	"github.com/SigNoz/signoz/pkg/modules/role"
-	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/services"
@@ -43,10 +43,10 @@ type Handlers struct {
 	Global          global.Handler
 	FlaggerHandler  flagger.Handler
 	GatewayHandler  gateway.Handler
-	Role            role.Handler
+	AuthzHandler    authz.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger, gatewayService gateway.Gateway) Handlers {
+func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger, gatewayService gateway.Gateway, authz authz.AuthZ) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
@@ -60,6 +60,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		Global:          signozglobal.NewHandler(global),
 		FlaggerHandler:  flagger.NewHandler(flaggerService),
 		GatewayHandler:  gateway.NewHandler(gatewayService),
-		Role:            implrole.NewHandler(modules.RoleSetter, modules.RoleGetter),
+		AuthzHandler:    signozauthzapi.NewHandler(authz),
 	}
 }
