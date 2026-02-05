@@ -49,14 +49,8 @@ export function updateDashboardVariablesStore({
 		if (draft.dashboardId !== dashboardId) {
 			// If dashboardId doesn't match, we replace the entire state
 			draft.dashboardId = dashboardId;
-			draft.variables = variables;
-		} else {
-			// Otherwise, we merge the variables
-			draft.variables = {
-				...draft.variables,
-				...variables,
-			};
 		}
+		draft.variables = variables;
 
 		updateDerivedValues(draft);
 	});

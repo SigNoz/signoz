@@ -5,21 +5,6 @@ import {
 	IUseDashboardVariablesReturn,
 } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 
-export const useDashboardVariables = (): IUseDashboardVariablesReturn => {
-	const getSnapshot = useCallback(
-		(): IDashboardVariablesStoreState['variables'] =>
-			dashboardVariablesStore.getSnapshot().variables,
-		[],
-	);
-
-	const dashboardVariables = useSyncExternalStore(
-		dashboardVariablesStore.subscribe,
-		getSnapshot,
-	);
-
-	return { dashboardVariables };
-};
-
 /**
  * Generic selector hook for dashboard variables store
  * Allows granular subscriptions to any part of the store state
@@ -46,4 +31,10 @@ export const useDashboardVariablesSelector = <T>(
 	);
 
 	return useSyncExternalStore(dashboardVariablesStore.subscribe, getSnapshot);
+};
+
+export const useDashboardVariables = (): IUseDashboardVariablesReturn => {
+	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
+
+	return { dashboardVariables };
 };
