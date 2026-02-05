@@ -98,7 +98,7 @@ func (req *StatsRequest) UnmarshalJSON(data []byte) error {
 type Stat struct {
 	MetricName  string           `json:"metricName" required:"true"`
 	Description string           `json:"description" required:"true"`
-	MetricType  metrictypes.Type `json:"type" required:"true" enum:"Gauge,Sum,Histogram,Summary,ExponentialHistogram"`
+	MetricType  metrictypes.Type `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
 	MetricUnit  string           `json:"unit" required:"true"`
 	TimeSeries  uint64           `json:"timeseries" required:"true"`
 	Samples     uint64           `json:"samples" required:"true"`
@@ -112,9 +112,9 @@ type StatsResponse struct {
 
 type MetricMetadata struct {
 	Description string                  `json:"description" required:"true"`
-	MetricType  metrictypes.Type        `json:"type" required:"true" enum:"Gauge,Sum,Histogram,Summary,ExponentialHistogram"`
+	MetricType  metrictypes.Type        `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
 	MetricUnit  string                  `json:"unit" required:"true"`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"Delta,Cumulative,Unspecified"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"delta,cumulative,unspecified"`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
@@ -131,10 +131,10 @@ func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 // UpdateMetricMetadataRequest represents the payload for updating metric metadata.
 type UpdateMetricMetadataRequest struct {
 	MetricName  string                  `json:"metricName" required:"true"`
-	Type        metrictypes.Type        `json:"type" required:"true" enum:"Gauge,Sum,Histogram,Summary,ExponentialHistogram"`
+	Type        metrictypes.Type        `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
 	Description string                  `json:"description" required:"true"`
 	Unit        string                  `json:"unit" required:"true"`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"Delta,Cumulative,Unspecified"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"delta,cumulative,unspecified"`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 

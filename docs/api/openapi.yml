@@ -3923,17 +3923,17 @@ components:
           type: boolean
         temporality:
           enum:
-          - Delta
-          - Cumulative
-          - Unspecified
+          - delta
+          - cumulative
+          - unspecified
           type: string
         type:
           enum:
-          - Gauge
-          - Sum
-          - Histogram
-          - Summary
-          - ExponentialHistogram
+          - gauge
+          - sum
+          - histogram
+          - summary
+          - exponentialhistogram
           type: string
         unit:
           type: string
@@ -3958,11 +3958,11 @@ components:
           type: integer
         type:
           enum:
-          - Gauge
-          - Sum
-          - Histogram
-          - Summary
-          - ExponentialHistogram
+          - gauge
+          - sum
+          - histogram
+          - summary
+          - exponentialhistogram
           type: string
         unit:
           type: string
@@ -4073,17 +4073,17 @@ components:
           type: string
         temporality:
           enum:
-          - Delta
-          - Cumulative
-          - Unspecified
+          - delta
+          - cumulative
+          - unspecified
           type: string
         type:
           enum:
-          - Gauge
-          - Sum
-          - Histogram
-          - Summary
-          - ExponentialHistogram
+          - gauge
+          - sum
+          - histogram
+          - summary
+          - exponentialhistogram
           type: string
         unit:
           type: string

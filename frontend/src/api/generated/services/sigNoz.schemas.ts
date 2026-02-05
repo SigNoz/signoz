@@ -763,16 +763,16 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 }
 
 export enum MetricsexplorertypesMetricMetadataDTOTemporality {
-	Delta = 'Delta',
-	Cumulative = 'Cumulative',
-	Unspecified = 'Unspecified',
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
 }
 export enum MetricsexplorertypesMetricMetadataDTOType {
-	Gauge = 'Gauge',
-	Sum = 'Sum',
-	Histogram = 'Histogram',
-	Summary = 'Summary',
-	ExponentialHistogram = 'ExponentialHistogram',
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
 }
 export interface MetricsexplorertypesMetricMetadataDTO {
 	/**
@@ -784,12 +784,12 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 	 */
 	isMonotonic: boolean;
 	/**
-	 * @enum Delta,Cumulative,Unspecified
+	 * @enum delta,cumulative,unspecified
 	 * @type string
 	 */
 	temporality: MetricsexplorertypesMetricMetadataDTOTemporality;
 	/**
-	 * @enum Gauge,Sum,Histogram,Summary,ExponentialHistogram
+	 * @enum gauge,sum,histogram,summary,exponentialhistogram
 	 * @type string
 	 */
 	type: MetricsexplorertypesMetricMetadataDTOType;
@@ -800,11 +800,11 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 }
 
 export enum MetricsexplorertypesStatDTOType {
-	Gauge = 'Gauge',
-	Sum = 'Sum',
-	Histogram = 'Histogram',
-	Summary = 'Summary',
-	ExponentialHistogram = 'ExponentialHistogram',
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
 }
 export interface MetricsexplorertypesStatDTO {
 	/**
@@ -826,7 +826,7 @@ export interface MetricsexplorertypesStatDTO {
 	 */
 	timeseries: number;
 	/**
-	 * @enum Gauge,Sum,Histogram,Summary,ExponentialHistogram
+	 * @enum gauge,sum,histogram,summary,exponentialhistogram
 	 * @type string
 	 */
 	type: MetricsexplorertypesStatDTOType;
@@ -930,16 +930,16 @@ export interface MetricsexplorertypesTreemapResponseDTO {
 }
 
 export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality {
-	Delta = 'Delta',
-	Cumulative = 'Cumulative',
-	Unspecified = 'Unspecified',
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
 }
 export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOType {
-	Gauge = 'Gauge',
-	Sum = 'Sum',
-	Histogram = 'Histogram',
-	Summary = 'Summary',
-	ExponentialHistogram = 'ExponentialHistogram',
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
 }
 export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	/**
@@ -955,12 +955,12 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	 */
 	metricName: string;
 	/**
-	 * @enum Delta,Cumulative,Unspecified
+	 * @enum delta,cumulative,unspecified
 	 * @type string
 	 */
 	temporality: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality;
 	/**
-	 * @enum Gauge,Sum,Histogram,Summary,ExponentialHistogram
+	 * @enum gauge,sum,histogram,summary,exponentialhistogram
 	 * @type string
 	 */
 	type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType;
