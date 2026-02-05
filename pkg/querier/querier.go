@@ -266,14 +266,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	}
 
 	// Fetch temporality for all metrics at once
-	var metricTemporality map[string]metrictypes.Temporality
+	var metricTemporality map[string][]metrictypes.Temporality
 	if len(metricNames) > 0 {
 		var err error
-		metricTemporality, err = q.metadataStore.FetchTemporalityMulti(ctx, metricNames...)
+		metricTemporality, err = q.metadataStore.FetchTemporalityMulti(ctx, req.Start, req.End, metricNames...)
 		if err != nil {
 			q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
 			// Continue without temporality - statement builder will handle unspecified
-			metricTemporality = make(map[string]metrictypes.Temporality)
+			metricTemporality = make(map[string][]metrictypes.Temporality)
 		}
 		q.logger.DebugContext(ctx, "fetched metric temporalities", "metric_temporality", metricTemporality)
 	}
@@ -363,8 +363,12 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
-						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
-							spec.Aggregations[i].Temporality = temp
+						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && len(temp) > 0 && temp[0] != metrictypes.Unknown {
+							spec.Aggregations[i].Temporality = temp[0] // set temporality to the latest one seen
+							if len(temp) > 1 {
+								spec.Aggregations[i].IsMultiTemporality = true
+								spec.Aggregations[i].TemporalityList = temp
+							}
 						}
 					}
 					// TODO(srikanthccv): warn when the metric is missing

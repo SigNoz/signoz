@@ -21,6 +21,10 @@ const (
 	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 	IncreaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 
+	RateWithoutNegativeMultiTemporality     = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF(row_number() OVER rate_window = 1, nan, IF((max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) < 0, max(value) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)))) AS per_series_value`
+	IncreaseWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF(row_number() OVER rate_window = 1, nan, IF((max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) < 0, max(value), (max(value) - lagInFrame(max(value), 1, 0) OVER rate_window)))) AS per_series_value`
+	OthersMultiTemporality                  = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
+
 	RateWithInterpolation = `
 		CASE 
 			WHEN row_number() OVER rate_window = 1 THEN 
@@ -166,7 +170,7 @@ func (b *MetricQueryStatementBuilder) Build(
 //
 // all of this is true only for delta metrics
 func (b *MetricQueryStatementBuilder) CanShortCircuitDelta(q qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
-	if q.Aggregations[0].Temporality != metrictypes.Delta {
+	if q.Aggregations[0].IsMultiTemporality || q.Aggregations[0].Temporality != metrictypes.Delta {
 		return false
 	}
 
@@ -377,7 +381,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.LTE("unix_milli", end),
 	)
 
-	if query.Aggregations[0].Temporality != metrictypes.Unknown {
+	if !query.Aggregations[0].IsMultiTemporality && query.Aggregations[0].Temporality != metrictypes.Unknown {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 
@@ -405,10 +409,12 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggregationCTE(
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
 ) (string, []any, error) {
-	if query.Aggregations[0].Temporality == metrictypes.Delta {
+	if !query.Aggregations[0].IsMultiTemporality && query.Aggregations[0].Temporality == metrictypes.Delta {
 		return b.buildTemporalAggDelta(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
+	} else if !query.Aggregations[0].IsMultiTemporality {
+		return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
 	}
-	return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
+	return b.buildTemporalAggForMultipleTemporalities(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
 }
 
 func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
@@ -526,6 +532,58 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	default:
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", innerQuery), innerArgs, nil
 	}
+}
+
+func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
+	_ context.Context,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	timeSeriesCTE string,
+	timeSeriesCTEArgs []any,
+) (string, []any, error) {
+	stepSec := int64(query.StepInterval.Seconds())
+	sb := sqlbuilder.NewSelectBuilder()
+
+	sb.SelectMore(fmt.Sprintf(
+		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
+		stepSec,
+	))
+	for _, g := range query.GroupBy {
+		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+	}
+
+	aggForDeltaTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Delta, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
+		aggForDeltaTemporality = fmt.Sprintf("%s/%d", aggForDeltaTemporality, stepSec)
+	}
+
+	// todo: the interpolation scenario
+	switch query.Aggregations[0].TimeAggregation {
+	case metrictypes.TimeAggregationRate:
+		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality, aggForDeltaTemporality, start, start)
+		sb.SelectMore(rateExpr)
+	case metrictypes.TimeAggregationIncrease:
+		increaseExpr := fmt.Sprintf(IncreaseWithoutNegativeMultiTemporality, aggForDeltaTemporality)
+		sb.SelectMore(increaseExpr)
+	default:
+		aggForCumulativeTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Cumulative, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+		expr := fmt.Sprintf(OthersMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality)
+		sb.SelectMore(expr)
+	}
+
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
+	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
+	sb.Where(
+		sb.In("metric_name", query.Aggregations[0].MetricName),
+		sb.GTE("unix_milli", start),
+		sb.LT("unix_milli", end),
+	)
+	sb.GroupBy("fingerprint", "ts", "temporality")
+	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	queryWithoutWindow, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
+	queryWithWindowAndOrder := queryWithoutWindow + " WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint ASC, ts ASC) ORDER BY ts"
+	return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", queryWithWindowAndOrder), args, nil
 }
 
 func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(

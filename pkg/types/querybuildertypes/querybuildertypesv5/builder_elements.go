@@ -381,8 +381,13 @@ type MetricAggregation struct {
 	MetricName string `json:"metricName"`
 	// type of the metric
 	Type metrictypes.Type `json:"-"`
-	// temporality to apply to the query
+	// if false (default), Temporality will be used in the query, otherwise TemporalityList will be used
+	IsMultiTemporality bool `json:"-"`
+	// temporality to apply to the query if there is only one temporality to consider
+	// contains the latest seen temporality if there are multiple temporalities
 	Temporality metrictypes.Temporality `json:"temporality"`
+	// temporalities to apply to the query if there are multiple temporalities to consider
+	TemporalityList []metrictypes.Temporality `json:"temporality_list"`
 	// time aggregation to apply to the query
 	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
 	// space aggregation to apply to the query
@@ -407,6 +412,25 @@ func (m MetricAggregation) Copy() MetricAggregation {
 		c.ValueFilter = &valueFilterCopy
 	}
 	return c
+}
+
+func (m MetricAggregation) ContainsTemporalityOtherThanDelta() bool {
+	if !m.IsMultiTemporality {
+		return m.Temporality != metrictypes.Delta
+	}
+	for _, t := range m.TemporalityList {
+		if t != metrictypes.Delta {
+			return true
+		}
+	}
+	return false
+}
+
+func (m MetricAggregation) ContainsUnspecifiedTemporality() bool {
+	if !m.IsMultiTemporality {
+		return m.Temporality == metrictypes.Unspecified
+	}
+	return slices.Contains(m.TemporalityList, metrictypes.Unspecified)
 }
 
 type Filter struct {

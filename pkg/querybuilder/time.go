@@ -150,7 +150,7 @@ func AdjustedMetricTimeRange(start, end, step uint64, mq qbtypes.QueryBuilderQue
 		}
 	}
 	if (mq.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate || mq.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationIncrease) &&
-		mq.Aggregations[0].Temporality != metrictypes.Delta {
+		mq.Aggregations[0].ContainsTemporalityOtherThanDelta() {
 		start -= step * 1000
 	}
 	if hasRunningDiff {
