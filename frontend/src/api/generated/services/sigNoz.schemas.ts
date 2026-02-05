@@ -1851,6 +1851,19 @@ export type GetFeatures200 = {
 	status?: string;
 };
 
+export type GetIngestionKeysParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	page?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	per_page?: number;
+};
+
 export type GetIngestionKeys200 = {
 	data?: GatewaytypesGettableIngestionKeysDTO;
 	/**
@@ -1890,6 +1903,24 @@ export type DeleteIngestionKeyLimitPathParameters = {
 export type UpdateIngestionKeyLimitPathParameters = {
 	limitId: string;
 };
+export type SearchIngestionKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	page?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	per_page?: number;
+};
+
 export type SearchIngestionKeys200 = {
 	data?: GatewaytypesGettableIngestionKeysDTO;
 	/**

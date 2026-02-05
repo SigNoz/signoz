@@ -2,7 +2,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation } from 'react-query';
 import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
@@ -27,12 +26,20 @@ import {
 } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { CollapseProps } from 'antd/lib';
-import createIngestionKeyApi from 'api/IngestionKeys/createIngestionKey';
-import deleteIngestionKey from 'api/IngestionKeys/deleteIngestionKey';
-import createLimitForIngestionKeyApi from 'api/IngestionKeys/limits/createLimitsForKey';
-import deleteLimitsForIngestionKey from 'api/IngestionKeys/limits/deleteLimitsForIngestionKey';
-import updateLimitForIngestionKeyApi from 'api/IngestionKeys/limits/updateLimitsForIngestionKey';
-import updateIngestionKey from 'api/IngestionKeys/updateIngestionKey';
+import {
+	useCreateIngestionKey,
+	useCreateIngestionKeyLimit,
+	useDeleteIngestionKey,
+	useDeleteIngestionKeyLimit,
+	useGetIngestionKeys,
+	useSearchIngestionKeys,
+	useUpdateIngestionKey,
+	useUpdateIngestionKeyLimit,
+} from 'api/generated/services/gateway';
+import {
+	GatewaytypesIngestionKeyDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
@@ -44,7 +51,6 @@ import ROUTES from 'constants/routes';
 import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
 import dayjs from 'dayjs';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
-import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, isNil, isUndefined } from 'lodash-es';
@@ -66,16 +72,12 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { ErrorResponse } from 'types/api';
 import {
 	AddLimitProps,
 	LimitProps,
 	UpdateLimitProps,
 } from 'types/api/ingestionKeys/limits/types';
-import {
-	IngestionKeyProps,
-	PaginationProps,
-} from 'types/api/ingestionKeys/types';
+import { PaginationProps } from 'types/api/ingestionKeys/types';
 import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
@@ -111,6 +113,8 @@ export const showErrorNotification = (
 ): void => {
 	notifications.error({
 		message: err.message || SOMETHING_WENT_WRONG,
+		description: (err as AxiosError<RenderErrorResponseDTO>).response?.data?.error
+			?.message,
 	});
 };
 
@@ -163,12 +167,17 @@ function MultiIngestionSettings(): JSX.Element {
 	const [updatedTags, setUpdatedTags] = useState<string[]>([]);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isEditAddLimitOpen, setIsEditAddLimitOpen] = useState(false);
-	const [activeAPIKey, setActiveAPIKey] = useState<IngestionKeyProps | null>();
+	const [
+		activeAPIKey,
+		setActiveAPIKey,
+	] = useState<GatewaytypesIngestionKeyDTO | null>();
 	const [activeSignal, setActiveSignal] = useState<LimitProps | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchText, setSearchText] = useState<string>('');
-	const [dataSource, setDataSource] = useState<IngestionKeyProps[]>([]);
+	const [dataSource, setDataSource] = useState<GatewaytypesIngestionKeyDTO[]>(
+		[],
+	);
 	const [paginationParams, setPaginationParams] = useState<PaginationProps>({
 		page: 1,
 		per_page: 10,
@@ -186,7 +195,7 @@ function MultiIngestionSettings(): JSX.Element {
 	const [
 		createLimitForIngestionKeyError,
 		setCreateLimitForIngestionKeyError,
-	] = useState<ErrorResponse | null>(null);
+	] = useState<string | null>(null);
 
 	const [
 		hasUpdateLimitForIngestionKeyError,
@@ -196,7 +205,7 @@ function MultiIngestionSettings(): JSX.Element {
 	const [
 		updateLimitForIngestionKeyError,
 		setUpdateLimitForIngestionKeyError,
-	] = useState<ErrorResponse | null>(null);
+	] = useState<string | null>(null);
 
 	const { t } = useTranslation(['ingestionKeys']);
 
@@ -216,7 +225,7 @@ function MultiIngestionSettings(): JSX.Element {
 		handleFormReset();
 	};
 
-	const showDeleteModal = (apiKey: IngestionKeyProps): void => {
+	const showDeleteModal = (apiKey: GatewaytypesIngestionKeyDTO): void => {
 		setActiveAPIKey(apiKey);
 		setIsDeleteModalOpen(true);
 	};
@@ -233,7 +242,7 @@ function MultiIngestionSettings(): JSX.Element {
 		setIsAddModalOpen(false);
 	};
 
-	const showEditModal = (apiKey: IngestionKeyProps): void => {
+	const showEditModal = (apiKey: GatewaytypesIngestionKeyDTO): void => {
 		setActiveAPIKey(apiKey);
 		handleFormReset();
 		setUpdatedTags(apiKey.tags || []);
@@ -258,25 +267,63 @@ function MultiIngestionSettings(): JSX.Element {
 		setActiveSignal(null);
 	};
 
+	// Use search API when searchText is present, otherwise use normal get API
+	const isSearching = searchText.length > 0;
+
 	const {
-		data: IngestionKeys,
-		isLoading,
-		isRefetching,
-		refetch: refetchAPIKeys,
-		error,
-		isError,
-	} = useGetAllIngestionsKeys({
-		search: searchText,
-		...paginationParams,
-	});
+		data: getIngestionKeysData,
+		isLoading: isLoadingGet,
+		isRefetching: isRefetchingGet,
+		refetch: refetchGetAPIKeys,
+		error: getError,
+		isError: isGetError,
+	} = useGetIngestionKeys(
+		{
+			...paginationParams,
+		},
+		{
+			query: {
+				enabled: !isSearching,
+			},
+		},
+	);
+
+	const {
+		data: searchIngestionKeysData,
+		isLoading: isLoadingSearch,
+		isRefetching: isRefetchingSearch,
+		refetch: refetchSearchAPIKeys,
+		error: searchError,
+		isError: isSearchError,
+	} = useSearchIngestionKeys(
+		{
+			...paginationParams,
+			name: searchText,
+		},
+		{
+			query: {
+				enabled: isSearching,
+			},
+		},
+	);
+
+	// Use the appropriate data based on which API is active
+	const IngestionKeys = isSearching
+		? searchIngestionKeysData
+		: getIngestionKeysData;
+	const isLoading = isSearching ? isLoadingSearch : isLoadingGet;
+	const isRefetching = isSearching ? isRefetchingSearch : isRefetchingGet;
+	const refetchAPIKeys = isSearching ? refetchSearchAPIKeys : refetchGetAPIKeys;
+	const error = isSearching ? searchError : getError;
+	const isError = isSearching ? isSearchError : isGetError;
 
 	useEffect(() => {
-		setActiveAPIKey(IngestionKeys?.data.data[0]);
+		setActiveAPIKey(IngestionKeys?.data.data?.keys?.[0]);
 	}, [IngestionKeys]);
 
 	useEffect(() => {
-		setDataSource(IngestionKeys?.data.data || []);
-		setTotalIngestionKeys(IngestionKeys?.data?._pagination?.total || 0);
+		setDataSource(IngestionKeys?.data.data?.keys || []);
+		setTotalIngestionKeys(IngestionKeys?.data?.data?._pagination?.total || 0);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [IngestionKeys?.data?.data]);
 
@@ -297,6 +344,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const clearSearch = (): void => {
 		setSearchValue('');
+		setSearchText('');
 	};
 
 	const {
@@ -309,21 +357,27 @@ function MultiIngestionSettings(): JSX.Element {
 	const {
 		mutate: createIngestionKey,
 		isLoading: isLoadingCreateAPIKey,
-	} = useMutation(createIngestionKeyApi, {
-		onSuccess: (data) => {
-			setActiveAPIKey(data.payload);
-			setUpdatedTags([]);
-			hideAddViewModal();
-			refetchAPIKeys();
-		},
-		onError: (error) => {
-			showErrorNotification(notifications, error as AxiosError);
+	} = useCreateIngestionKey({
+		mutation: {
+			onSuccess: (_data) => {
+				// The new API returns GatewaytypesGettableCreatedIngestionKeyDTO with only id and value
+				// We rely on refetchAPIKeys to get the full key object
+				setActiveAPIKey(null);
+				setUpdatedTags([]);
+				hideAddViewModal();
+				refetchAPIKeys();
+			},
+			onError: (error) => {
+				showErrorNotification(notifications, error as AxiosError);
+			},
 		},
 	});
 
-	const { mutate: updateAPIKey, isLoading: isLoadingUpdateAPIKey } = useMutation(
-		updateIngestionKey,
-		{
+	const {
+		mutate: updateAPIKey,
+		isLoading: isLoadingUpdateAPIKey,
+	} = useUpdateIngestionKey({
+		mutation: {
 			onSuccess: () => {
 				refetchAPIKeys();
 				setIsEditModalOpen(false);
@@ -332,11 +386,13 @@ function MultiIngestionSettings(): JSX.Element {
 				showErrorNotification(notifications, error as AxiosError);
 			},
 		},
-	);
+	});
 
-	const { mutate: deleteAPIKey, isLoading: isDeleteingAPIKey } = useMutation(
-		deleteIngestionKey,
-		{
+	const {
+		mutate: deleteAPIKey,
+		isLoading: isDeleteingAPIKey,
+	} = useDeleteIngestionKey({
+		mutation: {
 			onSuccess: () => {
 				refetchAPIKeys();
 				setIsDeleteModalOpen(false);
@@ -345,49 +401,59 @@ function MultiIngestionSettings(): JSX.Element {
 				showErrorNotification(notifications, error as AxiosError);
 			},
 		},
-	);
+	});
 
 	const {
 		mutate: createLimitForIngestionKey,
 		isLoading: isLoadingLimitForKey,
-	} = useMutation(createLimitForIngestionKeyApi, {
-		onSuccess: () => {
-			setActiveSignal(null);
-			setActiveAPIKey(null);
-			setIsEditAddLimitOpen(false);
-			setUpdatedTags([]);
-			hideAddViewModal();
-			refetchAPIKeys();
-			setHasCreateLimitForIngestionKeyError(false);
-		},
-		onError: (error: ErrorResponse) => {
-			setHasCreateLimitForIngestionKeyError(true);
-			setCreateLimitForIngestionKeyError(error);
+	} = useCreateIngestionKeyLimit({
+		mutation: {
+			onSuccess: () => {
+				setActiveSignal(null);
+				setActiveAPIKey(null);
+				setIsEditAddLimitOpen(false);
+				setUpdatedTags([]);
+				hideAddViewModal();
+				refetchAPIKeys();
+				setHasCreateLimitForIngestionKeyError(false);
+			},
+			onError: (error: AxiosError<RenderErrorResponseDTO>) => {
+				setHasCreateLimitForIngestionKeyError(true);
+				setCreateLimitForIngestionKeyError(
+					error.response?.data?.error?.message || 'Failed to create limit',
+				);
+			},
 		},
 	});
 
 	const {
 		mutate: updateLimitForIngestionKey,
 		isLoading: isLoadingUpdatedLimitForKey,
-	} = useMutation(updateLimitForIngestionKeyApi, {
-		onSuccess: () => {
-			setActiveSignal(null);
-			setActiveAPIKey(null);
-			setIsEditAddLimitOpen(false);
-			setUpdatedTags([]);
-			hideAddViewModal();
-			refetchAPIKeys();
-			setHasUpdateLimitForIngestionKeyError(false);
-		},
-		onError: (error: ErrorResponse) => {
-			setHasUpdateLimitForIngestionKeyError(true);
-			setUpdateLimitForIngestionKeyError(error);
+	} = useUpdateIngestionKeyLimit({
+		mutation: {
+			onSuccess: () => {
+				setActiveSignal(null);
+				setActiveAPIKey(null);
+				setIsEditAddLimitOpen(false);
+				setUpdatedTags([]);
+				hideAddViewModal();
+				refetchAPIKeys();
+				setHasUpdateLimitForIngestionKeyError(false);
+			},
+			onError: (error: AxiosError<RenderErrorResponseDTO>) => {
+				setHasUpdateLimitForIngestionKeyError(true);
+				setUpdateLimitForIngestionKeyError(
+					error.response?.data?.error?.message || 'Failed to update limit',
+				);
+			},
 		},
 	});
 
-	const { mutate: deleteLimitForKey, isLoading: isDeletingLimit } = useMutation(
-		deleteLimitsForIngestionKey,
-		{
+	const {
+		mutate: deleteLimitForKey,
+		isLoading: isDeletingLimit,
+	} = useDeleteIngestionKeyLimit({
+		mutation: {
 			onSuccess: () => {
 				setIsDeleteModalOpen(false);
 				setIsDeleteLimitModalOpen(false);
@@ -397,13 +463,15 @@ function MultiIngestionSettings(): JSX.Element {
 				showErrorNotification(notifications, error as AxiosError);
 			},
 		},
-	);
+	});
 
 	const onDeleteHandler = (): void => {
 		clearSearch();
 
-		if (activeAPIKey) {
-			deleteAPIKey(activeAPIKey.id);
+		if (activeAPIKey && activeAPIKey.id) {
+			deleteAPIKey({
+				pathParams: { keyId: activeAPIKey.id },
+			});
 		}
 	};
 
@@ -411,13 +479,15 @@ function MultiIngestionSettings(): JSX.Element {
 		editForm
 			.validateFields()
 			.then((values) => {
-				if (activeAPIKey) {
+				if (activeAPIKey && activeAPIKey.id) {
 					updateAPIKey({
-						id: activeAPIKey.id,
+						pathParams: { keyId: activeAPIKey.id },
 						data: {
 							name: values.name,
 							tags: updatedTags,
-							expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
+							expires_at: new Date(
+								dayjs(values.expires_at).endOf('day').toISOString(),
+							),
 						},
 					});
 				}
@@ -433,12 +503,14 @@ function MultiIngestionSettings(): JSX.Element {
 			.then((values) => {
 				if (user) {
 					const requestPayload = {
-						name: values.name,
+						name: '',
 						tags: updatedTags,
-						expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
+						expires_at: new Date(dayjs(values.expires_at).endOf('day').toISOString()),
 					};
 
-					createIngestionKey(requestPayload);
+					createIngestionKey({
+						data: requestPayload,
+					});
 				}
 			})
 			.catch((errorInfo) => {
@@ -465,7 +537,7 @@ function MultiIngestionSettings(): JSX.Element {
 		formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.UTC_MONTH_COMPACT);
 
 	const showDeleteLimitModal = (
-		APIKey: IngestionKeyProps,
+		APIKey: GatewaytypesIngestionKeyDTO,
 		limit: LimitProps,
 	): void => {
 		setActiveAPIKey(APIKey);
@@ -489,7 +561,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 	/* eslint-disable sonarjs/cognitive-complexity */
 	const handleAddLimit = (
-		APIKey: IngestionKeyProps,
+		APIKey: GatewaytypesIngestionKeyDTO,
 		signalName: string,
 	): void => {
 		const {
@@ -502,7 +574,7 @@ function MultiIngestionSettings(): JSX.Element {
 		} = addEditLimitForm.getFieldsValue();
 
 		const payload: AddLimitProps = {
-			keyID: APIKey.id,
+			keyID: APIKey.id || '',
 			signal: signalName,
 			config: {},
 		};
@@ -576,11 +648,17 @@ function MultiIngestionSettings(): JSX.Element {
 			return;
 		}
 
-		createLimitForIngestionKey(payload);
+		createLimitForIngestionKey({
+			pathParams: { keyId: payload.keyID },
+			data: {
+				signal: payload.signal,
+				config: payload.config,
+			},
+		});
 	};
 
 	const handleUpdateLimit = (
-		APIKey: IngestionKeyProps,
+		APIKey: GatewaytypesIngestionKeyDTO,
 		signal: LimitProps,
 	): void => {
 		const {
@@ -644,7 +722,12 @@ function MultiIngestionSettings(): JSX.Element {
 			}
 		}
 
-		updateLimitForIngestionKey(payload);
+		updateLimitForIngestionKey({
+			pathParams: { limitId: payload.limitID },
+			data: {
+				config: payload.config,
+			},
+		});
 	};
 	/* eslint-enable sonarjs/cognitive-complexity */
 
@@ -656,7 +739,7 @@ function MultiIngestionSettings(): JSX.Element {
 	};
 
 	const enableEditLimitMode = (
-		APIKey: IngestionKeyProps,
+		APIKey: GatewaytypesIngestionKeyDTO,
 		signal: LimitProps,
 	): void => {
 		const dayCount = signal?.config?.day?.count;
@@ -703,14 +786,16 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const onDeleteLimitHandler = (): void => {
 		if (activeSignal && activeSignal.id) {
-			deleteLimitForKey(activeSignal.id);
+			deleteLimitForKey({
+				pathParams: { limitId: activeSignal.id },
+			});
 		}
 	};
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const handleCreateAlert = (
-		APIKey: IngestionKeyProps,
+		APIKey: GatewaytypesIngestionKeyDTO,
 		signal: LimitProps,
 	): void => {
 		let metricName = '';
@@ -771,31 +856,41 @@ function MultiIngestionSettings(): JSX.Element {
 		history.push(URL);
 	};
 
-	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
+	const columns: AntDTableProps<GatewaytypesIngestionKeyDTO>['columns'] = [
 		{
 			title: 'Ingestion Key',
 			key: 'ingestion-key',
 			// eslint-disable-next-line sonarjs/cognitive-complexity
-			render: (APIKey: IngestionKeyProps): JSX.Element => {
-				const createdOn = getFormattedTime(
-					APIKey.created_at,
-					formatTimezoneAdjustedTimestamp,
-				);
+			render: (APIKey: GatewaytypesIngestionKeyDTO): JSX.Element => {
+				const createdOn = APIKey?.created_at
+					? getFormattedTime(
+							dayjs(APIKey.created_at).toISOString(),
+							formatTimezoneAdjustedTimestamp,
+					  )
+					: '';
 
 				const expiresOn =
-					!APIKey?.expires_at || APIKey?.expires_at === '0001-01-01T00:00:00Z'
+					!APIKey?.expires_at ||
+					dayjs(APIKey?.expires_at).toISOString() === '0001-01-01T00:00:00.000Z'
 						? 'No Expiry'
-						: getFormattedTime(APIKey?.expires_at, formatTimezoneAdjustedTimestamp);
+						: getFormattedTime(
+								dayjs(APIKey?.expires_at).toISOString(),
+								formatTimezoneAdjustedTimestamp,
+						  );
 
-				const updatedOn = getFormattedTime(
-					APIKey?.updated_at,
-					formatTimezoneAdjustedTimestamp,
-				);
+				const updatedOn = APIKey?.updated_at
+					? getFormattedTime(
+							dayjs(APIKey.updated_at).toISOString(),
+							formatTimezoneAdjustedTimestamp,
+					  )
+					: '';
 
 				// Convert array of limits to a dictionary for quick access
 				const limitsDict: Record<string, LimitProps> = {};
-				APIKey.limits?.forEach((limitItem: LimitProps) => {
-					limitsDict[limitItem.signal] = limitItem;
+				APIKey.limits?.forEach((limitItem) => {
+					if (limitItem.signal && limitItem.id) {
+						limitsDict[limitItem.signal] = limitItem as LimitProps;
+					}
 				});
 
 				const hasLimits = (signalName: string): boolean => !!limitsDict[signalName];
@@ -812,8 +907,10 @@ function MultiIngestionSettings(): JSX.Element {
 
 									<div className="ingestion-key-value">
 										<Typography.Text>
-											{APIKey?.value.substring(0, 2)}********
-											{APIKey?.value.substring(APIKey.value.length - 2).trim()}
+											{APIKey?.value?.substring(0, 2)}********
+											{APIKey?.value
+												?.substring(APIKey?.value?.length ? APIKey.value.length - 2 : 0)
+												.trim()}
 										</Typography.Text>
 
 										<Copy
@@ -822,7 +919,9 @@ function MultiIngestionSettings(): JSX.Element {
 											onClick={(e): void => {
 												e.stopPropagation();
 												e.preventDefault();
-												handleCopyKey(APIKey.value);
+												if (APIKey?.value) {
+													handleCopyKey(APIKey.value);
+												}
 											}}
 										/>
 									</div>
@@ -854,7 +953,7 @@ function MultiIngestionSettings(): JSX.Element {
 								<Row>
 									<Col span={6}> ID </Col>
 									<Col span={12}>
-										<Typography.Text>{APIKey.id}</Typography.Text>
+										<Typography.Text>{APIKey?.id}</Typography.Text>
 									</Col>
 								</Row>
 
@@ -916,7 +1015,9 @@ function MultiIngestionSettings(): JSX.Element {
 																		<Button
 																			className="periscope-btn ghost"
 																			icon={<PenLine size={14} />}
-																			disabled={!!(activeAPIKey?.id === APIKey.id && activeSignal)}
+																			disabled={
+																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
+																			}
 																			onClick={(e): void => {
 																				e.stopPropagation();
 																				e.preventDefault();
@@ -926,7 +1027,9 @@ function MultiIngestionSettings(): JSX.Element {
 																		<Button
 																			className="periscope-btn ghost"
 																			icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
-																			disabled={!!(activeAPIKey?.id === APIKey.id && activeSignal)}
+																			disabled={
+																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
+																			}
 																			onClick={(e): void => {
 																				e.stopPropagation();
 																				e.preventDefault();
@@ -940,7 +1043,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		size="small"
 																		shape="round"
 																		icon={<PlusIcon size={14} />}
-																		disabled={!!(activeAPIKey?.id === APIKey.id && activeSignal)}
+																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={(e): void => {
 																			e.stopPropagation();
 																			e.preventDefault();
@@ -958,7 +1061,7 @@ function MultiIngestionSettings(): JSX.Element {
 														</div>
 
 														<div className="signal-limit-values">
-															{activeAPIKey?.id === APIKey.id &&
+															{activeAPIKey?.id === APIKey?.id &&
 															activeSignal?.signal === signalName &&
 															isEditAddLimitOpen ? (
 																<Form
@@ -1154,27 +1257,27 @@ function MultiIngestionSettings(): JSX.Element {
 																		</div>
 																	</div>
 
-																	{activeAPIKey?.id === APIKey.id &&
+																	{activeAPIKey?.id === APIKey?.id &&
 																		activeSignal.signal === signalName &&
 																		!isLoadingLimitForKey &&
 																		hasCreateLimitForIngestionKeyError &&
-																		createLimitForIngestionKeyError?.error && (
+																		createLimitForIngestionKeyError && (
 																			<div className="error">
-																				{createLimitForIngestionKeyError?.error}
+																				{createLimitForIngestionKeyError}
 																			</div>
 																		)}
 
-																	{activeAPIKey?.id === APIKey.id &&
+																	{activeAPIKey?.id === APIKey?.id &&
 																		activeSignal.signal === signalName &&
 																		!isLoadingLimitForKey &&
 																		hasUpdateLimitForIngestionKeyError &&
-																		updateLimitForIngestionKeyError?.error && (
+																		updateLimitForIngestionKeyError && (
 																			<div className="error">
-																				{updateLimitForIngestionKeyError?.error}
+																				{updateLimitForIngestionKeyError}
 																			</div>
 																		)}
 
-																	{activeAPIKey?.id === APIKey.id &&
+																	{activeAPIKey?.id === APIKey?.id &&
 																		activeSignal.signal === signalName &&
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
