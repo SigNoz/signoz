@@ -7,11 +7,8 @@ export type IDashboardVariables = Record<string, IDashboardVariable>;
 
 export const dashboardVariablesStore = createStore<IDashboardVariables>({});
 
-export function updateDashboardVariablesStore(
+export function setDashboardVariablesStore(
 	variables: Partial<IDashboardVariables>,
 ): void {
-	dashboardVariablesStore.update((currentVariables) => ({
-		...currentVariables,
-		...variables,
-	}));
+	dashboardVariablesStore.set(() => ({ ...variables }));
 }
