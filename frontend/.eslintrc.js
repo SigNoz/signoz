@@ -144,8 +144,23 @@ module.exports = {
 
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
+		'max-params': ['warn', 3], // a function can have max 3 params after which it should become an object
 	},
 	overrides: [
+		{
+			files: [
+				'**/*.test.{js,jsx,ts,tsx}',
+				'**/*.spec.{js,jsx,ts,tsx}',
+				'**/__tests__/**/*.{js,jsx,ts,tsx}',
+			],
+			rules: {
+				// Tests often have intentional duplication and complexity - disable SonarJS rules
+				'sonarjs/no-duplicate-string': 'off', // Tests often repeat strings
+				'sonarjs/cognitive-complexity': 'off', // Tests can be complex
+				'sonarjs/no-identical-functions': 'off', // Similar test patterns are OK
+				'sonarjs/no-small-switch': 'off', // Small switches are OK in tests
+			},
+		},
 		{
 			files: ['src/api/generated/**/*.ts'],
 			rules: {
