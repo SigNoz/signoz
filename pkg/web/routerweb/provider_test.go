@@ -85,6 +85,80 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 
 }
 
+func TestCatchAllResponsesUseNoStore(t *testing.T) {
+	t.Parallel()
+
+	web, err := New(context.Background(), factorytest.NewSettings(), web.Config{Prefix: "/", Directory: filepath.Join("testdata")})
+	require.NoError(t, err)
+
+	router := mux.NewRouter()
+	err = web.AddToRouter(router)
+	require.NoError(t, err)
+
+	listener, err := net.Listen("tcp", "localhost:0")
+	require.NoError(t, err)
+
+	server := &http.Server{
+		Handler: router,
+	}
+
+	go func() {
+		_ = server.Serve(listener)
+	}()
+	defer func() {
+		_ = server.Close()
+	}()
+
+	testCases := []struct {
+		name           string
+		path           string
+		expectNoStore  bool
+	}{
+		{
+			name:          "CatchAllForUnknownPath",
+			path:          "/does-not-exist",
+			expectNoStore: true,
+		},
+		{
+			name:          "CatchAllForAPILikePath",
+			path:          "/api/v3/licenses/active",
+			expectNoStore: true,
+		},
+		{
+			name:          "CatchAllForDirectory",
+			path:          "/assets",
+			expectNoStore: true,
+		},
+		{
+			name:          "StaticFile",
+			path:          "/assets/index.css",
+			expectNoStore: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := http.DefaultClient.Get("http://" + listener.Addr().String() + tc.path)
+			require.NoError(t, err)
+
+			defer func() {
+				_ = res.Body.Close()
+			}()
+
+			cacheControl := res.Header.Get("Cache-Control")
+			if tc.expectNoStore {
+				assert.Equal(t, "no-store", cacheControl,
+					"catch-all responses serving index.html must use no-store to prevent cache poisoning")
+			} else {
+				assert.NotEqual(t, "no-store", cacheControl,
+					"static file responses should use the cache middleware headers, not no-store")
+				assert.Contains(t, cacheControl, "no-cache",
+					"static file responses should contain no-cache from the cache middleware")
+			}
+		})
+	}
+}
+
 func TestServeHttpWithPrefix(t *testing.T) {
 	t.Parallel()
 	fi, err := os.Open(filepath.Join("testdata", indexFileName))
