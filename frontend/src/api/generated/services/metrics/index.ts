@@ -47,7 +47,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary Get metric alerts
  */
 export const getMetricAlerts = (
-	params?: GetMetricAlertsParams,
+	params: GetMetricAlertsParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricAlerts200>({
@@ -66,7 +66,7 @@ export const getGetMetricAlertsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricAlerts>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricAlertsParams,
+	params: GetMetricAlertsParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricAlerts>>,
@@ -103,7 +103,7 @@ export function useGetMetricAlerts<
 	TData = Awaited<ReturnType<typeof getMetricAlerts>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricAlertsParams,
+	params: GetMetricAlertsParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricAlerts>>,
@@ -128,7 +128,7 @@ export function useGetMetricAlerts<
  */
 export const invalidateGetMetricAlerts = async (
 	queryClient: QueryClient,
-	params?: GetMetricAlertsParams,
+	params: GetMetricAlertsParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
@@ -144,7 +144,7 @@ export const invalidateGetMetricAlerts = async (
  * @summary Get metric dashboards
  */
 export const getMetricDashboards = (
-	params?: GetMetricDashboardsParams,
+	params: GetMetricDashboardsParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricDashboards200>({
@@ -165,7 +165,7 @@ export const getGetMetricDashboardsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricDashboards>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricDashboardsParams,
+	params: GetMetricDashboardsParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricDashboards>>,
@@ -203,7 +203,7 @@ export function useGetMetricDashboards<
 	TData = Awaited<ReturnType<typeof getMetricDashboards>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricDashboardsParams,
+	params: GetMetricDashboardsParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricDashboards>>,
@@ -228,7 +228,7 @@ export function useGetMetricDashboards<
  */
 export const invalidateGetMetricDashboards = async (
 	queryClient: QueryClient,
-	params?: GetMetricDashboardsParams,
+	params: GetMetricDashboardsParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
@@ -244,7 +244,7 @@ export const invalidateGetMetricDashboards = async (
  * @summary Get metric highlights
  */
 export const getMetricHighlights = (
-	params?: GetMetricHighlightsParams,
+	params: GetMetricHighlightsParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricHighlights200>({
@@ -265,7 +265,7 @@ export const getGetMetricHighlightsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricHighlights>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricHighlightsParams,
+	params: GetMetricHighlightsParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricHighlights>>,
@@ -303,7 +303,7 @@ export function useGetMetricHighlights<
 	TData = Awaited<ReturnType<typeof getMetricHighlights>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricHighlightsParams,
+	params: GetMetricHighlightsParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricHighlights>>,
@@ -328,7 +328,7 @@ export function useGetMetricHighlights<
  */
 export const invalidateGetMetricHighlights = async (
 	queryClient: QueryClient,
-	params?: GetMetricHighlightsParams,
+	params: GetMetricHighlightsParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
@@ -526,7 +526,7 @@ export const useGetMetricAttributes = <
  * @summary Get metric metadata
  */
 export const getMetricMetadata = (
-	params?: GetMetricMetadataParams,
+	params: GetMetricMetadataParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricMetadata200>({
@@ -547,7 +547,7 @@ export const getGetMetricMetadataQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricMetadata>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricMetadataParams,
+	params: GetMetricMetadataParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricMetadata>>,
@@ -585,7 +585,7 @@ export function useGetMetricMetadata<
 	TData = Awaited<ReturnType<typeof getMetricMetadata>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: GetMetricMetadataParams,
+	params: GetMetricMetadataParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getMetricMetadata>>,
@@ -610,7 +610,7 @@ export function useGetMetricMetadata<
  */
 export const invalidateGetMetricMetadata = async (
 	queryClient: QueryClient,
-	params?: GetMetricMetadataParams,
+	params: GetMetricMetadataParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
