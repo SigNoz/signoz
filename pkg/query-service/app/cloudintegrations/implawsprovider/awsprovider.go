@@ -546,17 +546,48 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 		return nil, err
 	}
 
+	//agentVersion := "v0.0.8"
+	//if req.AgentConfig.Version != "" {
+	//	agentVersion = req.AgentConfig.Version
+	//}
+	//
+	//connectionUrl := fmt.Sprintf(
+	//	"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",
+	//	req.AgentConfig.Region, req.AgentConfig.Region,
+	//)
+	//
+	//for qp, value := range map[string]string{
+	//	"param_SigNozIntegrationAgentVersion": agentVersion,
+	//	"param_SigNozApiUrl":                  req.AgentConfig.SigNozAPIUrl,
+	//	"param_SigNozApiKey":                  req.AgentConfig.SigNozAPIKey,
+	//	"param_SigNozAccountId":               account.ID.StringValue(),
+	//	"param_IngestionUrl":                  req.AgentConfig.IngestionUrl,
+	//	"param_IngestionKey":                  req.AgentConfig.IngestionKey,
+	//	"stackName":                           "signoz-integration",
+	//	"templateURL": fmt.Sprintf(
+	//		"https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json",
+	//		agentVersion,
+	//	),
+	//} {
+	//	connectionUrl += fmt.Sprintf("&%s=%s", qp, url.QueryEscape(value))
+	//}
+	//
 	agentVersion := "v0.0.8"
 	if connection.AgentConfig.Version != "" {
 		agentVersion = connection.AgentConfig.Version
 	}
 
-	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home", connection.AgentConfig.Region)
+	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home",
+		connection.AgentConfig.Region)
 	u, _ := url.Parse(baseURL)
-	u.Fragment = fmt.Sprintf("/stacks/quickcreate")
 
 	q := u.Query()
 	q.Set("region", connection.AgentConfig.Region)
+	u.Fragment = "/stacks/quickcreate"
+
+	u.RawQuery = q.Encode()
+
+	q = u.Query()
 	q.Set("stackName", "signoz-integration")
 	q.Set("templateURL", fmt.Sprintf("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json", agentVersion))
 	q.Set("param_SigNozIntegrationAgentVersion", agentVersion)
@@ -566,11 +597,9 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 	q.Set("param_IngestionUrl", connection.AgentConfig.IngestionUrl)
 	q.Set("param_IngestionKey", connection.AgentConfig.IngestionKey)
 
-	u.RawQuery = q.Encode()
-
 	return &integrationstypes.GettableAWSConnectionUrl{
 		AccountId:     account.ID.StringValue(),
-		ConnectionUrl: u.String(),
+		ConnectionUrl: u.String() + "?&" + q.Encode(), // this format is required by AWS
 	}, nil
 }
 
