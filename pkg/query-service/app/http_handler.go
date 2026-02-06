@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"io"
 	"math"
@@ -3575,6 +3576,11 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionArtifact(w http.Respons
 		Data:  reqBody,
 	})
 	if err != nil {
+		aH.Signoz.Instrumentation.Logger().ErrorContext(r.Context(),
+			"failed to generate connection artifact for cloud integration",
+			slog.String("cloudProvider", cloudProviderString),
+			slog.String("orgID", claims.OrgID),
+		)
 		render.Error(w, err)
 		return
 	}
