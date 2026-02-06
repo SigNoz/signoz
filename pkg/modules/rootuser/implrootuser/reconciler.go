@@ -31,13 +31,13 @@ func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings,
 }
 
 func (r *reconciler) Reconcile(ctx context.Context) error {
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciling root user(s)", "config", r.config)
+	r.settings.Logger().InfoContext(ctx, "reconciler: reconciling root user(s)")
 	if !r.config.IsConfigured() {
-		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user is not configured, skipping reconciliation")
+		r.settings.Logger().InfoContext(ctx, "reconciler: root user is not configured, skipping reconciliation")
 		return nil
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciling root user(s)")
+	r.settings.Logger().InfoContext(ctx, "reconciler: reconciling root user(s)")
 
 	// get the organizations that are owned by this instance of signoz
 	orgs, err := r.orgGetter.ListByOwnedKeyRange(ctx)
@@ -46,29 +46,29 @@ func (r *reconciler) Reconcile(ctx context.Context) error {
 	}
 
 	if len(orgs) == 0 {
-		r.settings.Logger().InfoContext(ctx, "Reconciler: No organizations owned by this instance of signoz, skipping reconciliation")
+		r.settings.Logger().InfoContext(ctx, "reconciler: no organizations owned by this instance of signoz, skipping reconciliation")
 		return nil
 	}
 
 	for _, org := range orgs {
-		r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciling root user for organization", "organization_id", org.ID, "organization_name", org.Name)
+		r.settings.Logger().InfoContext(ctx, "reconciler: reconciling root user for organization", "organization_id", org.ID, "organization_name", org.Name)
 
 		err := r.reconcileRootUserForOrg(ctx, org)
 		if err != nil {
-			return errors.WrapInternalf(err, errors.CodeInternal, "Reconciler: failed to reconcile root user for organization %s (%s)", org.Name, org.ID)
+			return errors.WrapInternalf(err, errors.CodeInternal, "reconciler: failed to reconcile root user for organization %s (%s)", org.Name, org.ID)
 		}
 
-		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user reconciled for organization", "organization_id", org.ID, "organization_name", org.Name)
+		r.settings.Logger().InfoContext(ctx, "reconciler: root user reconciled for organization", "organization_id", org.ID, "organization_name", org.Name)
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Reconciliation complete")
+	r.settings.Logger().InfoContext(ctx, "reconciler: reconciliation complete")
 
 	return nil
 }
 
 func (r *reconciler) reconcileRootUserForOrg(ctx context.Context, org *types.Organization) error {
 	// check if the root user already exists for the org
-	existingRootUser, err := r.store.GetByEmailAndOrgID(ctx, org.ID, valuer.MustNewEmail(r.config.Email))
+	existingRootUser, err := r.store.GetByOrgID(ctx, org.ID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
@@ -92,14 +92,14 @@ func (r *reconciler) createRootUserForOrg(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Creating new root user for organization", "organization_id", orgID, "email", r.config.Email)
+	r.settings.Logger().InfoContext(ctx, "reconciler: creating new root user for organization", "organization_id", orgID, "email", r.config.Email)
 
 	err = r.store.Create(ctx, rootUser)
 	if err != nil {
 		return err
 	}
 
-	r.settings.Logger().InfoContext(ctx, "Reconciler: Root user created for organization", "organization_id", orgID, "email", r.config.Email)
+	r.settings.Logger().InfoContext(ctx, "reconciler: root user created for organization", "organization_id", orgID, "email", r.config.Email)
 
 	return nil
 }
@@ -122,12 +122,12 @@ func (r *reconciler) updateRootUserForOrg(ctx context.Context, orgID valuer.UUID
 	}
 
 	if needsUpdate {
-		r.settings.Logger().InfoContext(ctx, "Reconciler: Updating root user for organization", "organization_id", orgID, "email", r.config.Email)
+		r.settings.Logger().InfoContext(ctx, "reconciler: updating root user for organization", "organization_id", orgID, "email", r.config.Email)
 		err := r.store.Update(ctx, orgID, rootUser.ID, rootUser)
 		if err != nil {
 			return err
 		}
-		r.settings.Logger().InfoContext(ctx, "Reconciler: Root user updated for organization", "organization_id", orgID, "email", r.config.Email)
+		r.settings.Logger().InfoContext(ctx, "reconciler: root user updated for organization", "organization_id", orgID, "email", r.config.Email)
 		return nil
 	}
 

@@ -53,6 +53,9 @@ type RootUserStore interface {
 	// Creates a new root user. Returns ErrCodeRootUserAlreadyExists if a root user already exists for the organization.
 	Create(ctx context.Context, rootUser *RootUser) error
 
+	// Gets the root user by organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	GetByOrgID(ctx context.Context, orgID valuer.UUID) (*RootUser, error)
+
 	// Gets a root user by email and organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
 	GetByEmailAndOrgID(ctx context.Context, orgID valuer.UUID, email valuer.Email) (*RootUser, error)
 

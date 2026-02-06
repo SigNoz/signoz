@@ -35,6 +35,20 @@ func (store *store) Create(ctx context.Context, rootUser *types.RootUser) error 
 	return nil
 }
 
+func (store *store) GetByOrgID(ctx context.Context, orgID valuer.UUID) (*types.RootUser, error) {
+	rootUser := new(types.RootUser)
+
+	err := store.sqlstore.BunDBCtx(ctx).
+		NewSelect().
+		Model(rootUser).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeRootUserNotFound, "root user with org_id %s does not exist", orgID)
+	}
+	return rootUser, nil
+}
+
 func (store *store) GetByEmailAndOrgID(ctx context.Context, orgID valuer.UUID, email valuer.Email) (*types.RootUser, error) {
 	rootUser := new(types.RootUser)
 
