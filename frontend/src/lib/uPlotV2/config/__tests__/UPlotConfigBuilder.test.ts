@@ -41,6 +41,21 @@ describe('UPlotConfigBuilder', () => {
 		expect(builder.getShouldSaveSelectionPreference()).toBe(true);
 	});
 
+	it('returns widgetId from constructor args', () => {
+		const builder = new UPlotConfigBuilder({ widgetId: 'widget-123' });
+
+		expect(builder.getWidgetId()).toBe('widget-123');
+	});
+
+	it('sets tzDate from constructor and includes it in config', () => {
+		const tzDate = (ts: number): Date => new Date(ts);
+		const builder = new UPlotConfigBuilder({ tzDate });
+
+		const config = builder.getConfig();
+
+		expect(config.tzDate).toBe(tzDate);
+	});
+
 	it('does not call onDragSelect for click without drag (width === 0)', () => {
 		const onDragSelect = jest.fn();
 		const builder = new UPlotConfigBuilder({ onDragSelect });
@@ -135,6 +150,10 @@ describe('UPlotConfigBuilder', () => {
 
 		// Series: base timestamp + 2 data series
 		expect(config.series).toHaveLength(3);
+		// Base series (index 0) has a value formatter that returns empty string
+		const baseSeries = config.series?.[0] as { value?: () => string };
+		expect(typeof baseSeries?.value).toBe('function');
+		expect(baseSeries?.value?.()).toBe('');
 
 		// Legend items align with series and carry label and color from series config
 		const legendItems = builder.getLegendItems();
@@ -142,6 +161,33 @@ describe('UPlotConfigBuilder', () => {
 		expect(legendItems[1].seriesIndex).toBe(1);
 		expect(legendItems[1].label).toBe('Requests');
 		expect(legendItems[2].label).toBe('Errors');
+	});
+
+	it('merges axis when addAxis is called twice with same scaleKey', () => {
+		const builder = new UPlotConfigBuilder();
+
+		builder.addAxis({ scaleKey: 'y', label: 'Requests' });
+		builder.addAxis({ scaleKey: 'y', label: 'Updated Label', show: false });
+
+		const config = builder.getConfig();
+
+		expect(config.axes).toHaveLength(1);
+		expect(config.axes?.[0].label).toBe('Updated Label');
+		expect(config.axes?.[0].show).toBe(false);
+	});
+
+	it('merges scale when addScale is called twice with same scaleKey', () => {
+		const builder = new UPlotConfigBuilder();
+
+		builder.addScale({ scaleKey: 'y', min: 0 });
+		builder.addScale({ scaleKey: 'y', max: 100 });
+
+		const config = builder.getConfig();
+
+		// Only one scale entry for 'y' (merge path used, no duplicate added)
+		expect(config.scales).toBeDefined();
+		expect(Object.keys(config.scales ?? {})).toEqual(['y']);
+		expect(config.scales?.y?.range).toBeDefined();
 	});
 
 	it('restores visibility state from localStorage when selectionPreferencesSource is LOCAL_STORAGE', () => {
@@ -221,5 +267,65 @@ describe('UPlotConfigBuilder', () => {
 		expect(config.cursor?.drag?.setScale).toBe(false);
 		// Points configuration from DEFAULT_CURSOR_CONFIG should still be present
 		expect(config.cursor?.points).toBeDefined();
+	});
+
+	it('adds plugins and includes them in config', () => {
+		const builder = new UPlotConfigBuilder();
+		const plugin: uPlot.Plugin = {
+			opts: (): void => {},
+			hooks: {},
+		};
+
+		builder.addPlugin(plugin);
+
+		const config = builder.getConfig();
+
+		expect(config.plugins).toContain(plugin);
+	});
+
+	it('sets bands and includes them in config', () => {
+		const builder = new UPlotConfigBuilder();
+		const bands: uPlot.Band[] = [{ series: [1, 2], fill: (): string => '#000' }];
+
+		builder.setBands(bands);
+
+		const config = builder.getConfig();
+
+		expect(config.bands).toEqual(bands);
+	});
+
+	it('sets padding, legend, focus, select, tzDate and includes them in config', () => {
+		const tzDate = (ts: number): Date => new Date(ts);
+		const builder = new UPlotConfigBuilder();
+
+		builder.setPadding([10, 20, 30, 40]);
+		builder.setLegend({ show: true, live: true });
+		builder.setFocus({ alpha: 0.5 });
+		builder.setSelect({ left: 0, width: 0, top: 0, height: 0 });
+		builder.setTzDate(tzDate);
+
+		const config = builder.getConfig();
+
+		expect(config.padding).toEqual([10, 20, 30, 40]);
+		expect(config.legend).toEqual({ show: true, live: true });
+		expect(config.focus).toEqual({ alpha: 0.5 });
+		expect(config.select).toEqual({ left: 0, width: 0, top: 0, height: 0 });
+		expect(config.tzDate).toBe(tzDate);
+	});
+
+	it('does not include plugins when none added', () => {
+		const builder = new UPlotConfigBuilder();
+
+		const config = builder.getConfig();
+
+		expect(config.plugins).toBeUndefined();
+	});
+
+	it('does not include bands when empty', () => {
+		const builder = new UPlotConfigBuilder();
+
+		const config = builder.getConfig();
+
+		expect(config.bands).toBeUndefined();
 	});
 });

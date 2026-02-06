@@ -1,8 +1,13 @@
 import { themeColors } from 'constants/theme';
-import type uPlot from 'uplot';
+import uPlot from 'uplot';
 
 import type { SeriesProps } from '../types';
-import { DrawStyle, VisibilityMode } from '../types';
+import {
+	DrawStyle,
+	LineInterpolation,
+	LineStyle,
+	VisibilityMode,
+} from '../types';
 import { UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
 
 const createBaseProps = (
@@ -179,5 +184,126 @@ describe('UPlotSeriesBuilder', () => {
 
 		expect(neverConfig.points?.show).toBe(false);
 		expect(alwaysConfig.points?.show).toBe(true);
+	});
+
+	it('applies LineStyle.Dashed and lineCap to line config', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				lineStyle: LineStyle.Dashed,
+				lineCap: 'round' as CanvasLineCap,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.dash).toEqual([10, 10]);
+		expect(config.cap).toBe('round');
+	});
+
+	it('builds default paths for Line drawStyle and invokes the path builder', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				lineInterpolation: LineInterpolation.Linear,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(typeof config.paths).toBe('function');
+		const result = config.paths?.({} as uPlot, 1, 0, 10);
+		expect(result).toBeDefined();
+	});
+
+	it('uses StepBefore and StepAfter interpolation for line paths', () => {
+		const stepBeforeBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				lineInterpolation: LineInterpolation.StepBefore,
+			}),
+		);
+		const stepAfterBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				lineInterpolation: LineInterpolation.StepAfter,
+			}),
+		);
+
+		const stepBeforeConfig = stepBeforeBuilder.getConfig();
+		const stepAfterConfig = stepAfterBuilder.getConfig();
+
+		expect(typeof stepBeforeConfig.paths).toBe('function');
+		expect(typeof stepAfterConfig.paths).toBe('function');
+		expect(stepBeforeConfig.paths?.({} as uPlot, 1, 0, 5)).toBeDefined();
+		expect(stepAfterConfig.paths?.({} as uPlot, 1, 0, 5)).toBeDefined();
+	});
+
+	it('defaults to spline interpolation when lineInterpolation is Spline or undefined', () => {
+		const splineBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				lineInterpolation: LineInterpolation.Spline,
+			}),
+		);
+		const defaultBuilder = new UPlotSeriesBuilder(
+			createBaseProps({ drawStyle: DrawStyle.Line }),
+		);
+
+		const splineConfig = splineBuilder.getConfig();
+		const defaultConfig = defaultBuilder.getConfig();
+
+		expect(typeof splineConfig.paths).toBe('function');
+		expect(typeof defaultConfig.paths).toBe('function');
+	});
+
+	it('coerces non-boolean spanGaps to false', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({ spanGaps: undefined }),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.spanGaps).toBe(false);
+	});
+
+	it('preserves spanGaps true when provided as boolean', () => {
+		const builder = new UPlotSeriesBuilder(createBaseProps({ spanGaps: true }));
+
+		const config = builder.getConfig();
+
+		expect(config.spanGaps).toBe(true);
+	});
+
+	it('uses generateColor when label has no colorMapping and no lineColor', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				label: 'CustomSeries',
+				colorMapping: {},
+				lineColor: undefined,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.stroke).toBeDefined();
+		expect(typeof config.stroke).toBe('string');
+		expect((config.stroke as string).length).toBeGreaterThan(0);
+	});
+
+	it('passes through pointsFilter when provided', () => {
+		const pointsFilter: uPlot.Series.Points.Filter = jest.fn(
+			(_self, _seriesIdx, _show) => null,
+		);
+
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				pointsFilter,
+				drawStyle: DrawStyle.Line,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.points?.filter).toBe(pointsFilter);
 	});
 });

@@ -205,4 +205,152 @@ describe('UPlotAxisBuilder', () => {
 		expect(darkStroke.getConfig().stroke).toBe('white');
 		expect(lightStroke.getConfig().stroke).toBe('black');
 	});
+
+	it('uses explicit values formatter when provided', () => {
+		const customValues: uPlot.Axis.Values = jest.fn(() => ['a', 'b', 'c']);
+
+		const builder = new UPlotAxisBuilder(
+			createAxisProps({
+				scaleKey: 'y',
+				values: customValues,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.values).toBe(customValues);
+	});
+
+	it('returns undefined values for scaleKey neither x nor y', () => {
+		const builder = new UPlotAxisBuilder(createAxisProps({ scaleKey: 'custom' }));
+
+		const config = builder.getConfig();
+
+		expect(config.values).toBeUndefined();
+	});
+
+	it('omits stroke when stroke and isDarkMode are both undefined', () => {
+		const builder = new UPlotAxisBuilder(
+			createAxisProps({
+				scaleKey: 'custom',
+				stroke: undefined,
+				isDarkMode: undefined,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.stroke).toBeUndefined();
+	});
+
+	it('includes space in config when provided', () => {
+		const builder = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'y', space: 50 }),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.space).toBe(50);
+	});
+
+	it('includes PANEL_TYPES.BAR and PANEL_TYPES.PIE in X-axis datetime formatter', () => {
+		const barBuilder = new UPlotAxisBuilder(
+			createAxisProps({
+				scaleKey: 'x',
+				panelType: PANEL_TYPES.BAR,
+			}),
+		);
+		const pieBuilder = new UPlotAxisBuilder(
+			createAxisProps({
+				scaleKey: 'x',
+				panelType: PANEL_TYPES.PIE,
+			}),
+		);
+
+		expect(barBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
+		expect(pieBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
+	});
+
+	it('invokes Y-axis size calculator and delegates to getExistingAxisSize when cycleNum > 1', () => {
+		const builder = new UPlotAxisBuilder(createAxisProps({ scaleKey: 'y' }));
+
+		const config = builder.getConfig();
+		const sizeFn = config.size;
+		expect(typeof sizeFn).toBe('function');
+
+		const mockAxis = {
+			_size: 80,
+			ticks: { size: 10 },
+			font: ['12px sans-serif'],
+		};
+		const mockSelf = ({
+			axes: [mockAxis],
+			ctx: { measureText: jest.fn(() => ({ width: 60 })), font: '' },
+		} as unknown) as uPlot;
+
+		const result = (sizeFn as (
+			s: uPlot,
+			v: string[],
+			a: number,
+			c: number,
+		) => number)(
+			mockSelf,
+			['100', '200'],
+			0,
+			2, // cycleNum > 1
+		);
+
+		expect(result).toBe(80);
+	});
+
+	it('invokes Y-axis size calculator and computes from text width when cycleNum <= 1', () => {
+		const builder = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'y', gap: 8 }),
+		);
+
+		const config = builder.getConfig();
+		const sizeFn = config.size;
+		expect(typeof sizeFn).toBe('function');
+
+		const mockAxis = {
+			ticks: { size: 12 },
+			font: ['12px sans-serif'],
+		};
+		const measureText = jest.fn(() => ({ width: 48 }));
+		const mockSelf = ({
+			axes: [mockAxis],
+			ctx: {
+				measureText,
+				get font() {
+					return '';
+				},
+				set font(_v: string) {
+					/* noop */
+				},
+			},
+		} as unknown) as uPlot;
+
+		const result = (sizeFn as (
+			s: uPlot,
+			v: string[],
+			a: number,
+			c: number,
+		) => number)(mockSelf, ['10', '2000ms'], 0, 0);
+
+		expect(measureText).toHaveBeenCalledWith('2000ms');
+		expect(result).toBeGreaterThanOrEqual(12 + 8);
+	});
+
+	it('merge updates axis props', () => {
+		const builder = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'y', label: 'Original' }),
+		);
+
+		builder.merge({ label: 'Merged', yAxisUnit: 'bytes' });
+
+		const config = builder.getConfig();
+
+		expect(config.label).toBe('Merged');
+		expect(config.values).toBeDefined();
+	});
 });
