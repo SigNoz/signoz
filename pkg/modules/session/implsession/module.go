@@ -129,7 +129,7 @@ func (module *module) CreatePasswordAuthNSession(ctx context.Context, authNProvi
 		// Ignore root user authentication errors and continue with regular user authentication.
 		// This error can be either not found or incorrect password, in both cases we continue with regular user authentication.
 		identity, err := module.rootUserModule.Authenticate(ctx, orgID, email, password)
-		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) && !errors.Ast(err, errors.TypeUnauthenticated) {
 			// something else went wrong, we should report back to the caller
 			return nil, err
 		}

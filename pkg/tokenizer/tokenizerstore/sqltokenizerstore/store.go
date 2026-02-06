@@ -71,7 +71,7 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		Scan(ctx)
 
 	if err == nil {
-		return authtypes.NewIdentity(userID, rootUser.OrgID, rootUser.Email, types.RoleAdmin), nil
+		return authtypes.NewRootIdentity(userID, rootUser.OrgID, rootUser.Email), nil
 	}
 
 	return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
