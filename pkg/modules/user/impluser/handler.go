@@ -122,7 +122,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		if rootUser != nil {
-			render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot invite this email id"))
+			render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "reserved email(s) found, failed to invite users"))
 			return
 		}
 	}
