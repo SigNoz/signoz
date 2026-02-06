@@ -4376,6 +4376,10 @@ components:
           type: string
         orgId:
           type: string
+      required:
+      - orgId
+      - email
+      - frontendBaseURL
       type: object
     TypesPostableInvite:
       properties:
