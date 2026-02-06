@@ -643,12 +643,10 @@ paths:
         name: fieldDataType
         schema:
           type: string
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TelemetrytypesMetricContext'
-        in: query
-        name: metricContext
+      - in: query
+        name: metricName
+        schema:
+          type: string
       - in: query
         name: name
         schema:
@@ -731,12 +729,10 @@ paths:
         name: fieldDataType
         schema:
           type: string
-      - content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TelemetrytypesMetricContext'
-        in: query
-        name: metricContext
+      - in: query
+        name: metricName
+        schema:
+          type: string
       - in: query
         name: name
         schema:
@@ -4446,11 +4442,6 @@ components:
           type: boolean
         values:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
-      type: object
-    TelemetrytypesMetricContext:
-      properties:
-        metricName:
-          type: string
       type: object
     TelemetrytypesTelemetryFieldKey:
       properties:

@@ -274,16 +274,16 @@ type GettableFieldKeys struct {
 }
 
 type PostableFieldKeysParams struct {
-	Signal         Signal         `query:"signal"`
-	Source         Source         `query:"source"`
-	Limit          int            `query:"limit"`
-	StartUnixMilli int64          `query:"startUnixMilli"`
-	EndUnixMilli   int64          `query:"endUnixMilli"`
-	FieldContext   FieldContext   `query:"fieldContext"`
-	FieldDataType  FieldDataType  `query:"fieldDataType"`
-	MetricContext  *MetricContext `query:"metricContext"`
-	Name           string         `query:"name"`
-	SearchText     string         `query:"searchText"`
+	Signal         Signal        `query:"signal"`
+	Source         Source        `query:"source"`
+	Limit          int           `query:"limit"`
+	StartUnixMilli int64         `query:"startUnixMilli"`
+	EndUnixMilli   int64         `query:"endUnixMilli"`
+	FieldContext   FieldContext  `query:"fieldContext"`
+	FieldDataType  FieldDataType `query:"fieldDataType"`
+	MetricName     string        `query:"metricName"`
+	Name           string        `query:"name"`
+	SearchText     string        `query:"searchText"`
 }
 
 type GettableFieldValues struct {
@@ -324,6 +324,12 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 				req.Name = parsedFieldKey.Name
 				req.FieldContext = parsedFieldKey.FieldContext
 			}
+		}
+	}
+
+	if params.MetricName != "" {
+		req.MetricContext = &MetricContext{
+			MetricName: params.MetricName,
 		}
 	}
 
