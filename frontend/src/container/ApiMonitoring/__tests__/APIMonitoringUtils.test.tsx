@@ -350,7 +350,7 @@ describe('API Monitoring Utils', () => {
 					data: {
 						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/users',
-						'url.full': 'http://example.com/api/users',
+						URL_PATH_KEY: 'http://example.com/api/users',
 						A: 150, // count or other metric
 					},
 				},
@@ -358,7 +358,7 @@ describe('API Monitoring Utils', () => {
 					data: {
 						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/orders',
-						'url.full': 'http://example.com/api/orders',
+						URL_PATH_KEY: 'http://example.com/api/orders',
 						A: 75,
 					},
 				},

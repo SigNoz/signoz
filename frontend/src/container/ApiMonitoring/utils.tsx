@@ -57,12 +57,12 @@ export const getDisplayValue = (value: unknown): string =>
 	isEmptyFilterValue(value) ? '-' : String(value);
 
 export const getDomainNameFilterExpression = (domainName: string): string =>
-	`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`;
+	`http_host = '${domainName}'`;
 
 export const clientKindExpression = `kind_string = 'Client'`;
 
 /**
- * Converts filters to expression, handling http.url specially by creating (http.url OR url.full) condition
+ * Converts filters to expression, handling http.url specially by creating (http_url) condition
  * @param filters Filters to convert
  * @param baseExpression Base expression to combine with filters
  * @returns Filter expression string
@@ -80,7 +80,7 @@ export const convertFiltersWithUrlHandling = (
 		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
 	);
 
-	// If http.url filter exists, create modified filters with (http.url OR url.full)
+	// If http.url filter exists, create modified filters with (http_url)
 	if (httpUrlFilter && httpUrlFilter.value) {
 		// Remove ALL http.url filters from items (guards against duplicates)
 		const otherFilters = filters.items?.filter(
@@ -95,9 +95,9 @@ export const convertFiltersWithUrlHandling = (
 			baseExpression,
 		);
 
-		// Add the OR condition for http.url and url.full
+		// Add the OR condition for http_url
 		const urlValue = httpUrlFilter.value;
-		const urlCondition = `(http.url = '${urlValue}' OR url.full = '${urlValue}')`;
+		const urlCondition = `http_url = '${urlValue}'`;
 		return intermediateFilter.expression.trim()
 			? `${intermediateFilter.expression} AND ${urlCondition}`
 			: urlCondition;
@@ -345,7 +345,7 @@ export const formatDataForTable = (
 	return data.map((row) => {
 		const rowData: APIDomainsRowData = {
 			key: v4(),
-			domainName: row[indexMap[domainNameKey]],
+			domainName: row[indexMap['net.peer.name']] || row[indexMap[domainNameKey]],
 			endpointCount:
 				row[indexMap.endpoints] === 'n/a' || row[indexMap.endpoints] === undefined
 					? 0
@@ -371,7 +371,7 @@ export const formatDataForTable = (
 	});
 };
 
-const urlExpression = `(url.full EXISTS OR http.url EXISTS)`;
+const urlExpression = `http_url EXISTS`;
 
 export const getDomainMetricsQueryPayload = (
 	domainName: string,
@@ -595,7 +595,7 @@ const defaultGroupBy = [
 		dataType: DataTypes.String,
 		isColumn: false,
 		isJSON: false,
-		key: 'url.full',
+		key: 'http_url',
 		type: 'attribute',
 	},
 	// {
@@ -867,8 +867,8 @@ function buildFilterExpression(
 ): string {
 	const baseFilterParts = [
 		`kind_string = 'Client'`,
-		`(http.url EXISTS OR url.full EXISTS)`,
-		`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+		`http_url EXISTS`,
+		`http_host = '${domainName}'`,
 		`has_error = true`,
 	];
 	if (showStatusCodeErrors) {
@@ -910,12 +910,7 @@ export const getTopErrorsQueryPayload = (
 						filter: { expression: filterExpression },
 						groupBy: [
 							{
-								name: 'http.url',
-								fieldDataType: 'string',
-								fieldContext: 'attribute',
-							},
-							{
-								name: 'url.full',
+								name: 'http_url',
 								fieldDataType: 'string',
 								fieldContext: 'attribute',
 							},
@@ -1262,9 +1257,7 @@ export const formatTopErrorsDataForTable = (
 
 		return {
 			key: v4(),
-			endpointName: getDisplayValue(
-				rowObj[SPAN_ATTRIBUTES.URL_PATH] || rowObj['url.full'],
-			),
+			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.URL_PATH]),
 			statusCode: getDisplayValue(rowObj[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]),
 			statusMessage: getDisplayValue(rowObj.status_message),
 			count: getDisplayValue(rowObj.__result_0),
@@ -1281,10 +1274,10 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'ea16470b',
 			key: {
-				key: 'http.url',
+				key: 'http_url',
 				dataType: DataTypes.String,
 				type: 'tag',
-				id: 'http.url--string--tag--false',
+				id: 'http_url--string--tag--false',
 			},
 			op: '=',
 			value: endPointName,
@@ -1302,7 +1295,7 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'e8a043b7',
 			key: {
-				key: 'net.peer.name',
+				key: 'http_host',
 				dataType: DataTypes.String,
 				type: '',
 			},
@@ -1781,7 +1774,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+								)} AND ${clientKindExpression} AND http_url EXISTS`,
 							),
 						},
 						expression: 'A',
@@ -1794,11 +1787,6 @@ export const getEndPointDetailsQueryPayload = (
 						groupBy: [
 							{
 								key: SPAN_ATTRIBUTES.URL_PATH,
-								dataType: DataTypes.String,
-								type: 'attribute',
-							},
-							{
-								key: 'url.full',
 								dataType: DataTypes.String,
 								type: 'attribute',
 							},
@@ -2420,7 +2408,6 @@ export const statusCodeWidgetInfo = [
 interface EndPointDropDownResponseRow {
 	data: {
 		[SPAN_ATTRIBUTES.URL_PATH]: string;
-		'url.full': string;
 		A: number;
 	};
 }
@@ -2439,8 +2426,8 @@ export const getFormattedEndPointDropDownData = (
 	}
 	return data.map((row) => ({
 		key: v4(),
-		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
-		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || row.data['url.full'] || '-',
+		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
+		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
 	}));
 };
 
@@ -2933,7 +2920,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -2965,7 +2952,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -2997,7 +2984,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -3029,7 +3016,7 @@ export const getAllEndpointsWidgetData = (
 							filters,
 							`${getDomainNameFilterExpression(
 								domainName,
-							)} AND ${clientKindExpression} AND has_error = true AND (http.url EXISTS OR url.full EXISTS)`,
+							)} AND ${clientKindExpression} AND has_error = true AND http_url EXISTS`,
 						),
 					},
 					functions: [],
@@ -3067,10 +3054,10 @@ export const getAllEndpointsWidgetData = (
 			// First try to use the url from the column value
 			let urlValue = url;
 
-			// If url is empty/null and we have the record, fallback to url.full
+			// If url is empty/null and we have the record, fallback to http_url
 			if (isEmptyFilterValue(url) && record) {
-				const { 'url.full': urlFull } = record;
-				urlValue = urlFull;
+				const { http_url } = record;
+				urlValue = http_url;
 			}
 
 			if (!urlValue || urlValue === 'n/a') {
@@ -3133,7 +3120,7 @@ export const getAllEndpointsWidgetData = (
 
 	widget.customColTitles = {
 		[SPAN_ATTRIBUTES.URL_PATH]: 'Endpoint',
-		'net.peer.port': 'Port',
+		http_port: 'Port',
 	};
 
 	widget.title = (
@@ -3158,12 +3145,10 @@ export const getAllEndpointsWidgetData = (
 		</div>
 	);
 
-	widget.hiddenColumns = ['url.full'];
-
 	return widget;
 };
 
-const keysToRemove = ['http.url', 'url.full', 'A', 'B', 'C', 'F1'];
+const keysToRemove = ['http_url', 'A', 'B', 'C', 'F1'];
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,
@@ -3221,7 +3206,7 @@ export const getRateOverTimeWidgetData = (
 					filter: {
 						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
-							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+							`http_host = '${domainName}'`,
 						),
 					},
 					functions: [],
@@ -3272,7 +3257,7 @@ export const getLatencyOverTimeWidgetData = (
 					filter: {
 						expression: convertFiltersWithUrlHandling(
 							filters || { items: [], op: 'AND' },
-							`(net.peer.name = '${domainName}' OR server.address = '${domainName}')`,
+							`http_host = '${domainName}'`,
 						),
 					},
 					functions: [],

@@ -6,11 +6,11 @@
  * These tests validate the migration from V4 to V5 format for the third payload
  * in getEndPointDetailsQueryPayload (endpoint dropdown data):
  * - Filter format change: filters.items[] → filter.expression
- * - Domain handling: (net.peer.name OR server.address)
+ * - Domain handling: http_host = '${domainName}'
  * - Kind filter: kind_string = 'Client'
- * - Existence check: (http.url EXISTS OR url.full EXISTS)
+ * - Existence check: http_url EXISTS
  * - Aggregation: count() expression
- * - GroupBy: Both http.url AND url.full with type 'attribute'
+ * - GroupBy: http_url with type 'attribute'
  */
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -43,18 +43,16 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain http_host = '${domainName}'
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
 
 			// Base filter 3: Existence check
-			expect(queryA.filter?.expression).toContain(
-				'(http.url EXISTS OR url.full EXISTS)',
-			);
+			expect(queryA.filter?.expression).toContain('http_url EXISTS');
 
 			// V5 Aggregation format: aggregations array (not aggregateAttribute)
 			expect(queryA.aggregations).toBeDefined();
@@ -64,15 +62,10 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			});
 			expect(queryA).not.toHaveProperty('aggregateAttribute');
 
-			// GroupBy: Both http.url and url.full
-			expect(queryA.groupBy).toHaveLength(2);
+			// GroupBy: http_url
+			expect(queryA.groupBy).toHaveLength(1);
 			expect(queryA.groupBy).toContainEqual({
-				key: 'http.url',
-				dataType: 'string',
-				type: 'attribute',
-			});
-			expect(queryA.groupBy).toContainEqual({
-				key: 'url.full',
+				key: 'http_url',
 				dataType: 'string',
 				type: 'attribute',
 			});
@@ -120,19 +113,19 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 
 			// Exact filter expression with custom filters merged
 			expect(expression).toBe(
-				"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com') AND kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS) service.name = 'user-service' AND deployment.environment = 'production'",
+				"http_host = 'api.example.com' AND kind_string = 'Client' AND http_url EXISTS service.name = 'user-service' AND deployment.environment = 'production'",
 			);
 		});
 	});
 
 	describe('3. HTTP URL Filter Special Handling', () => {
-		it('converts http.url filter to (http.url OR url.full) expression', () => {
+		it('converts http_url filter to http_url expression', () => {
 			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
 				items: [
 					{
 						id: 'http-url-filter',
 						key: {
-							key: 'http.url',
+							key: 'http_url',
 							dataType: 'string' as any,
 							type: 'tag',
 						},
@@ -166,7 +159,7 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 
 			// CRITICAL: Exact filter expression with http.url converted to OR logic
 			expect(expression).toBe(
-				"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com') AND kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS) service.name = 'user-service' AND (http.url = '/api/users' OR url.full = '/api/users')",
+				"http_host = 'api.example.com' AND kind_string = 'Client' AND http_url EXISTS service.name = 'user-service' AND http_url = '/api/users'",
 			);
 		});
 	});

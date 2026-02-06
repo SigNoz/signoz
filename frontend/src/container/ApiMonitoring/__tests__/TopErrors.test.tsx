@@ -334,7 +334,7 @@ describe('TopErrors', () => {
 
 		// Verify all required filters are present
 		expect(filterExpression).toContain(
-			`kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS) AND (net.peer.name = 'test-domain' OR server.address = 'test-domain') AND has_error = true`,
+			`kind_string = 'Client' AND http_url EXISTS AND http_host = 'test-domain' AND has_error = true`,
 		);
 	});
 });

@@ -189,13 +189,13 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 	});
 
 	describe('4. HTTP URL Filter Handling', () => {
-		it('converts http.url filter to (http.url OR url.full) expression in both charts', () => {
+		it('converts http_url filter to http_url expression in both charts', () => {
 			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
 				items: [
 					{
 						id: 'http-url-filter',
 						key: {
-							key: 'http.url',
+							key: 'http_url',
 							dataType: 'string' as any,
 							type: 'tag',
 						},
@@ -222,12 +222,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				latencyChartQuery.query.builder.queryData[0].filter?.expression;
 
 			// CRITICAL: http.url converted to OR logic
-			expect(callsExpression).toContain(
-				"(http.url = '/api/metrics' OR url.full = '/api/metrics')",
-			);
-			expect(latencyExpression).toContain(
-				"(http.url = '/api/metrics' OR url.full = '/api/metrics')",
-			);
+			expect(callsExpression).toContain("http_url = '/api/metrics'");
+			expect(latencyExpression).toContain("http_url = '/api/metrics'");
 
 			// Base filters still present
 			expect(callsExpression).toContain('net.peer.name');
