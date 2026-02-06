@@ -125,7 +125,7 @@ func (d *TextDuration) UnmarshalText(text []byte) error {
 
 // Value implements [driver.Valuer] by delegating to the underlying duration.
 func (d TextDuration) Value() (driver.Value, error) {
-	return int64(d.value), nil
+	return d.String(), nil
 }
 
 // Scan implements [database/sql.Scanner] to read the duration from the database.

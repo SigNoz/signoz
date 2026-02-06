@@ -126,7 +126,7 @@ func TestTextDurationValueAndScan(t *testing.T) {
 
 	val, err := parsed.Value()
 	require.NoError(t, err)
-	assert.Equal(t, int64(2*time.Second), val)
+	assert.Equal(t, "2s", val)
 
 	var scanned TextDuration
 
