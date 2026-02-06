@@ -6,8 +6,8 @@
  * These tests validate the migration from V4 to V5 format for the second payload
  * in getEndPointDetailsQueryPayload (status code table data):
  * - Filter format change: filters.items[] → filter.expression
- * - URL handling: Special logic for (http.url OR url.full)
- * - Domain filter: (net.peer.name OR server.address)
+ * - URL handling: Special logic for http_url
+ * - Domain filter: http_host = '${domainName}'
  * - Kind filter: kind_string = 'Client'
  * - Kind filter: response_status_code EXISTS
  * - Three queries: A (count), B (p99 latency), C (rate)
@@ -167,7 +167,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 	});
 
 	describe('4. HTTP URL Filter Handling', () => {
-		it('converts http.url filter to (http.url OR url.full) expression', () => {
+		it('converts http_url filter to http_url expression', () => {
 			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
 				items: [
 					{
@@ -206,9 +206,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 				statusCodeQuery.query.builder.queryData[0].filter?.expression;
 
 			// CRITICAL: http.url converted to OR logic
-			expect(expression).toContain(
-				"(http.url = '/api/users' OR url.full = '/api/users')",
-			);
+			expect(expression).toContain("http_url = '/api/users'");
 
 			// Other filters still present
 			expect(expression).toContain('service.name');

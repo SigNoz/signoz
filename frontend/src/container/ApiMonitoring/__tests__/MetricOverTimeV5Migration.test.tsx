@@ -33,7 +33,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
-		it('uses new domain filter format: (net.peer.name OR server.address)', () => {
+		it('uses new domain filter format: (http_url)', () => {
 			const widget = getRateOverTimeWidgetData(
 				mockDomainName,
 				mockEndpointName,
@@ -44,7 +44,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify EXACT new filter format with OR operator
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Endpoint name is used in legend, not filter
@@ -90,7 +90,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Verify custom filters are merged into the expression

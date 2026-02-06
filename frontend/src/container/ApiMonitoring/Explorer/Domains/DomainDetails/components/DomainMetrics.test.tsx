@@ -129,9 +129,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			expect(queryA.filter.expression).toContain(
 				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
 			);
-			expect(queryA.filter.expression).toContain(
-				'url.full EXISTS OR http.url EXISTS',
-			);
+			expect(queryA.filter.expression).toContain('http_url EXISTS');
 
 			// Verify Query B - p99 latency
 			const queryB = queryData.find((q: any) => q.queryName === 'B');
