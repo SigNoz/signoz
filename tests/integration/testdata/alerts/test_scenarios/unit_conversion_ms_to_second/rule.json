@@ -40,8 +40,8 @@
             "aggregations": [
               {
                 "metricName": "duration_ms_unit_conversion_ms_to_second",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum"
               }
             ]
           }

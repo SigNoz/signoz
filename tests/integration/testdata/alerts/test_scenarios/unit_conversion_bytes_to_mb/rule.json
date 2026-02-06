@@ -40,8 +40,8 @@
             "aggregations": [
               {
                 "metricName": "disk_usage_unit_conversion_bytes_to_mb",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "timeAggregation": "latest",
+                "spaceAggregation": "max"
               }
             ]
           }

@@ -38,8 +38,8 @@
             },
             "aggregations": [
               {
-                "metricName": "disk_usage_threshold_equal_to_in_total",
-                "timeAggregation": "sum",
+                "metricName": "bytes_per_second_threshold_equal_to_in_total",
+                "timeAggregation": "rate",
                 "spaceAggregation": "sum"
               }
             ]

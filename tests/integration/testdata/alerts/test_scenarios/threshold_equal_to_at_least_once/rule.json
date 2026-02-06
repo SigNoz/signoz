@@ -38,9 +38,9 @@
             },
             "aggregations": [
               {
-                "metricName": "request_total_threshold_equal_to_at_least_once",
+                "metricName": "cpu_percent_threshold_equal_to_at_least_once",
                 "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "spaceAggregation": "max"
               }
             ]
           }

@@ -38,9 +38,9 @@
             },
             "aggregations": [
               {
-                "metricName": "disk_usage_threshold_not_equal_to_last",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "metricName": "seats_left_threshold_not_equal_to_last",
+                "timeAggregation": "latest",
+                "spaceAggregation": "min"
               }
             ]
           }

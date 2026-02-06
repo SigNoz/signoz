@@ -39,8 +39,8 @@
             "aggregations": [
               {
                 "metricName": "request_total_no_data_rule_test",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum"
               }
             ]
           }

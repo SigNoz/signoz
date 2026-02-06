@@ -8,7 +8,7 @@
       "spec": [
         {
           "name": "critical",
-          "target": 10,
+          "target": 5,
           "matchType": "1",
           "op": "4",
           "channels": [
@@ -39,8 +39,8 @@
             "aggregations": [
               {
                 "metricName": "request_total_threshold_not_equal_to_at_least_once",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum"
               }
             ]
           }

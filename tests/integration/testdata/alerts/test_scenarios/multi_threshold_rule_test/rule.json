@@ -58,9 +58,9 @@
             },
             "aggregations": [
               {
-                "metricName": "request_total_multi_threshold_rule_test",
+                "metricName": "cpu_percent_multi_threshold_rule_test",
                 "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "spaceAggregation": "max"
               }
             ]
           }

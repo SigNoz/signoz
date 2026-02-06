@@ -40,7 +40,7 @@
               {
                 "metricName": "cpu_percent_threshold_equal_to_all_the_time",
                 "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "spaceAggregation": "max"
               }
             ]
           }

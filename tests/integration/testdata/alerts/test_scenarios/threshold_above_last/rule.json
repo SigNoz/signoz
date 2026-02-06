@@ -39,8 +39,8 @@
             "aggregations": [
               {
                 "metricName": "disk_usage_threshold_above_last",
-                "timeAggregation": "avg",
-                "spaceAggregation": "avg"
+                "timeAggregation": "latest",
+                "spaceAggregation": "max"
               }
             ]
           }
