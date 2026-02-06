@@ -85,20 +85,29 @@ export default function ChartManager({
 		[tableDataSet],
 	);
 
-	const dataSource = tableDataSet.filter(
-		(item, index) => index !== 0 && item.show, // skipping the first item as it is the x-axis
+	const dataSource = useMemo(
+		() =>
+			tableDataSet.filter(
+				(item, index) => index !== 0 && item.show, // skipping the first item as it is the x-axis
+			),
+		[tableDataSet],
 	);
 
-	const columns = getGraphManagerTableColumns({
-		tableDataSet,
-		checkBoxOnChangeHandler: (_e, index) => {
-			onToggleSeriesOnOff(index);
-		},
-		graphVisibilityState,
-		labelClickedHandler: onToggleSeriesVisibility,
-		yAxisUnit,
-		isGraphDisabled: isDashboardLocked,
-	});
+	const columns = useMemo(
+		() =>
+			getGraphManagerTableColumns({
+				tableDataSet,
+				checkBoxOnChangeHandler: (_e, index) => {
+					onToggleSeriesOnOff(index);
+				},
+				graphVisibilityState,
+				labelClickedHandler: onToggleSeriesVisibility,
+				yAxisUnit,
+				isGraphDisabled: isDashboardLocked,
+			}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[tableDataSet, graphVisibilityState, yAxisUnit, isDashboardLocked],
+	);
 
 	const handleSave = useCallback((): void => {
 		syncSeriesVisibilityToLocalStorage();
