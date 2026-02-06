@@ -114,31 +114,6 @@ export const prepareUPlotConfig = ({
 
 	builder.addThresholds(thresholds);
 
-	apiResponse.data?.result?.forEach((series) => {
-		const baseLabelName = getLabelName(
-			series.metric,
-			series.queryName || '', // query
-			series.legend || '',
-		);
-
-		const label = currentQuery
-			? getLegend(series, currentQuery, baseLabelName)
-			: baseLabelName;
-
-		builder.addSeries({
-			scaleKey: 'y',
-			drawStyle: DrawStyle.Line,
-			label: label,
-			colorMapping,
-			spanGaps,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation,
-			showPoints: VisibilityMode.Never,
-			pointSize: 5,
-			isDarkMode,
-		});
-	});
-
 	if (typeof onClick === 'function') {
 		builder.addPlugin(
 			onClickPlugin({
@@ -165,6 +140,31 @@ export const prepareUPlotConfig = ({
 		isLogScale: false,
 		yAxisUnit,
 		panelType: PANEL_TYPES.TIME_SERIES,
+	});
+
+	apiResponse.data?.result?.forEach((series) => {
+		const baseLabelName = getLabelName(
+			series.metric,
+			series.queryName || '', // query
+			series.legend || '',
+		);
+
+		const label = currentQuery
+			? getLegend(series, currentQuery, baseLabelName)
+			: baseLabelName;
+
+		builder.addSeries({
+			scaleKey: 'y',
+			drawStyle: DrawStyle.Line,
+			label: label,
+			colorMapping,
+			spanGaps,
+			lineStyle: LineStyle.Solid,
+			lineInterpolation,
+			showPoints: VisibilityMode.Never,
+			pointSize: 5,
+			isDarkMode,
+		});
 	});
 	return builder;
 };

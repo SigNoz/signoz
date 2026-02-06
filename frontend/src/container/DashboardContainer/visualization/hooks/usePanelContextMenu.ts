@@ -6,7 +6,10 @@ import {
 } from 'container/PanelWrapper/utils';
 import { getUplotClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
-import { useCoordinates } from 'periscope/components/ContextMenu';
+import {
+	PopoverPosition,
+	useCoordinates,
+} from 'periscope/components/ContextMenu';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -24,10 +27,13 @@ export const usePanelContextMenu = ({
 	widget,
 	queryResponse,
 }: UseTimeSeriesContextMenuParams): {
-	coordinates: any;
-	popoverPosition: any;
+	coordinates: { x: number; y: number } | null;
+	popoverPosition: PopoverPosition | null;
 	onClose: () => void;
-	menuItemsConfig: any;
+	menuItemsConfig: {
+		header?: string | React.ReactNode;
+		items?: React.ReactNode;
+	};
 	clickHandlerWithContextMenu: (...args: any[]) => void;
 } => {
 	const {
@@ -57,9 +63,9 @@ export const usePanelContextMenu = ({
 		(...args: any[]) => {
 			const [
 				xValue,
-				,
-				,
-				,
+				_yvalue,
+				_mouseX,
+				_mouseY,
 				metric,
 				queryData,
 				absoluteMouseX,
