@@ -1126,7 +1126,7 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 
 		// User sees all attributes initially
 		expect(screen.getByText('http.method')).toBeInTheDocument();
-		expect(screen.getByText('http.url')).toBeInTheDocument();
+		expect(screen.getByText('http_url')).toBeInTheDocument();
 		expect(screen.getByText('http.status_code')).toBeInTheDocument();
 
 		// User types "method" in search
@@ -1136,7 +1136,7 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 		// User sees only matching attributes
 		await waitFor(() => {
 			expect(screen.getByText('http.method')).toBeInTheDocument();
-			expect(screen.queryByText('http.url')).not.toBeInTheDocument();
+			expect(screen.queryByText('http_url')).not.toBeInTheDocument();
 			expect(screen.queryByText('http.status_code')).not.toBeInTheDocument();
 		});
 	});
