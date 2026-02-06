@@ -1597,30 +1597,30 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) ([]metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
 	if metricName == "" {
-		return []metrictypes.Temporality{metrictypes.Unknown}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
+		return metrictypes.Unknown, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
 	}
 
 	temporalityMap, err := t.FetchTemporalityMulti(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricName)
 	if err != nil {
-		return []metrictypes.Temporality{metrictypes.Unknown}, err
+		return metrictypes.Unknown, err
 	}
 
 	temporality, ok := temporalityMap[metricName]
 	if !ok {
-		return []metrictypes.Temporality{metrictypes.Unknown}, nil
+		return metrictypes.Unknown, nil
 	}
 
 	return temporality, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	if len(metricNames) == 0 {
-		return make(map[string][]metrictypes.Temporality), nil
+		return make(map[string]metrictypes.Temporality), nil
 	}
 
-	result := make(map[string][]metrictypes.Temporality)
+	result := make(map[string]metrictypes.Temporality)
 	metricsTemporality, err := t.fetchMetricsTemporality(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
 	if err != nil {
 		return nil, err
@@ -1630,15 +1630,23 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
-		if temporality, exists := metricsTemporality[metricName]; exists {
-			result[metricName] = temporality
+		if temporality, exists := metricsTemporality[metricName]; exists && len(temporality) > 0 {
+			if len(temporality) > 1 {
+				result[metricName] = metrictypes.Multiple
+			} else {
+				result[metricName] = temporality[0]
+			}
 			continue
 		}
-		if temporality, exists := meterMetricsTemporality[metricName]; exists {
-			result[metricName] = temporality
+		if temporality, exists := meterMetricsTemporality[metricName]; exists && len(temporality) > 0 {
+			if len(temporality) > 1 {
+				result[metricName] = metrictypes.Multiple
+			} else {
+				result[metricName] = temporality[0]
+			}
 			continue
 		}
-		result[metricName] = []metrictypes.Temporality{metrictypes.Unknown}
+		result[metricName] = metrictypes.Unknown
 	}
 
 	return result, nil
@@ -1665,11 +1673,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 		sb.LT("last_reported_unix_milli", queryTimeRangeEndTs),
 	)
 
-	// group by last_reported_unix_milli to be able to sort by it
-	sb.GroupBy("metric_name", "temporality", "last_reported_unix_milli")
-
-	// to get the latest seen temporality in zeroth index
-	sb.Desc().OrderBy("last_reported_unix_milli")
+	sb.GroupBy("metric_name", "temporality")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -1721,15 +1725,11 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),
-		sb.GTE("last_reported_unix_milli", queryTimeRangeStartTs),
-		sb.LT("last_reported_unix_milli", queryTimeRangeEndTs),
+		sb.GTE("unix_milli", queryTimeRangeStartTs),
+		sb.LT("unix_milli", queryTimeRangeEndTs),
 	)
 
-	// group by last_reported_unix_milli to be able to sort by it
-	sb.GroupBy("metric_name", "temporality", "last_reported_unix_milli")
-
-	// to get the latest seen temporality in zeroth index
-	sb.Desc().OrderBy("last_reported_unix_milli")
+	sb.GroupBy("metric_name", "temporality")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 

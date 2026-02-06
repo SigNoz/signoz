@@ -19,6 +19,7 @@ var (
 	Cumulative  = Temporality{valuer.NewString("cumulative")}
 	Unspecified = Temporality{valuer.NewString("unspecified")}
 	Unknown     = Temporality{valuer.NewString("")}
+	Multiple    = Temporality{valuer.NewString("__multiple__")}
 )
 
 func (t Temporality) Value() (driver.Value, error) {

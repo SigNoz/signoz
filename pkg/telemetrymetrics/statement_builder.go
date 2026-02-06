@@ -170,7 +170,7 @@ func (b *MetricQueryStatementBuilder) Build(
 //
 // all of this is true only for delta metrics
 func (b *MetricQueryStatementBuilder) CanShortCircuitDelta(q qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
-	if q.Aggregations[0].IsMultiTemporality || q.Aggregations[0].Temporality != metrictypes.Delta {
+	if q.Aggregations[0].Temporality != metrictypes.Delta {
 		return false
 	}
 
@@ -381,7 +381,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.LTE("unix_milli", end),
 	)
 
-	if !query.Aggregations[0].IsMultiTemporality && query.Aggregations[0].Temporality != metrictypes.Unknown {
+	if query.Aggregations[0].Temporality != metrictypes.Multiple && query.Aggregations[0].Temporality != metrictypes.Unknown {
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 
@@ -409,9 +409,9 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggregationCTE(
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
 ) (string, []any, error) {
-	if !query.Aggregations[0].IsMultiTemporality && query.Aggregations[0].Temporality == metrictypes.Delta {
+	if query.Aggregations[0].Temporality == metrictypes.Delta {
 		return b.buildTemporalAggDelta(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
-	} else if !query.Aggregations[0].IsMultiTemporality {
+	} else if query.Aggregations[0].Temporality != metrictypes.Multiple {
 		return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
 	}
 	return b.buildTemporalAggForMultipleTemporalities(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)

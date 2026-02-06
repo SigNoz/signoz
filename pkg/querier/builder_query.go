@@ -80,16 +80,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 			case qbtypes.LogAggregation:
 				aggParts = append(aggParts, a.Expression)
 			case qbtypes.MetricAggregation:
-				temporalityStringVal := a.Temporality.StringValue()
-				if a.IsMultiTemporality {
-					temporalityStringVal = ""
-					for _, temporality := range a.TemporalityList {
-						temporalityStringVal += temporality.StringValue()
-					}
-				}
 				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s",
 					a.MetricName,
-					temporalityStringVal, // query fingerprint I'm guessing is not the same as a time series' fingerprint
+					a.Temporality.StringValue(), // query fingerprint I'm guessing is not the same as a time series' fingerprint
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
 				))

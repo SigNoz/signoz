@@ -814,7 +814,7 @@ func validateMetricAggregation(agg MetricAggregation) error {
 	// Validate that rate/increase are only used with appropriate temporalities
 	if agg.TimeAggregation == metrictypes.TimeAggregationRate || agg.TimeAggregation == metrictypes.TimeAggregationIncrease {
 		// For gauge metrics (Unspecified temporality), rate/increase doesn't make sense
-		if agg.ContainsUnspecifiedTemporality() {
+		if agg.Temporality == metrictypes.Unspecified {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"rate/increase aggregation cannot be used with gauge metrics (unspecified temporality)",

@@ -265,22 +265,22 @@ func (m *MockMetadataStore) SetAllValues(lookupKey string, values *telemetrytype
 }
 
 // FetchTemporality fetches the temporality for a metric
-func (m *MockMetadataStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) ([]metrictypes.Temporality, error) {
+func (m *MockMetadataStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
 	if temporality, exists := m.TemporalityMap[metricName]; exists {
-		return []metrictypes.Temporality{temporality}, nil
+		return temporality, nil
 	}
-	return []metrictypes.Temporality{metrictypes.Unknown}, nil
+	return metrictypes.Unknown, nil
 }
 
 // FetchTemporalityMulti fetches the temporality for multiple metrics
-func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
-	result := make(map[string][]metrictypes.Temporality)
+func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	result := make(map[string]metrictypes.Temporality)
 
 	for _, metricName := range metricNames {
 		if temporality, exists := m.TemporalityMap[metricName]; exists {
-			result[metricName] = []metrictypes.Temporality{temporality}
+			result[metricName] = temporality
 		} else {
-			result[metricName] = []metrictypes.Temporality{metrictypes.Unknown}
+			result[metricName] = metrictypes.Unknown
 		}
 	}
 
