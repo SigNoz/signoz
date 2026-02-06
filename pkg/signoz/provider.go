@@ -249,6 +249,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.GatewayHandler,
 			modules.RoleGetter,
 			handlers.Role,
+			handlers.Fields,
 		),
 	)
 }
