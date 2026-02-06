@@ -1,26 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
+import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
-import {
-	getTimeRangeFromStepInterval,
-	isApmMetric,
-} from 'container/PanelWrapper/utils';
-import { getUplotClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
-import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { LineInterpolation } from 'lib/uPlotV2/config/types';
-import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
+import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataSource } from 'types/common/queryBuilder';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
+
+import '../Panel.styles.scss';
 
 function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -61,75 +57,13 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
 		coordinates,
 		popoverPosition,
-		clickedData,
 		onClose,
-		subMenu,
-		onClick,
-		setSubMenu,
-	} = useCoordinates();
-	const { menuItemsConfig } = useGraphContextMenu({
-		widgetId: widget.id || '',
-		query: widget.query,
-		graphData: clickedData,
-		onClose,
-		coordinates,
-		subMenu,
-		setSubMenu,
-		contextLinks: widget.contextLinks,
-		panelType: widget.panelTypes,
-		queryRange: queryResponse,
+		menuItemsConfig,
+		clickHandlerWithContextMenu,
+	} = usePanelContextMenu({
+		widget,
+		queryResponse,
 	});
-
-	const clickHandlerWithContextMenu = useCallback(
-		(...args: any[]) => {
-			const [
-				xValue,
-				,
-				,
-				,
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-				axesData,
-				focusedSeries,
-			] = args;
-			const data = getUplotClickData({
-				metric,
-				queryData,
-				absoluteMouseX,
-				absoluteMouseY,
-				focusedSeries,
-			});
-			// Compute time range if needed and if axes data is available
-			let timeRange;
-			if (axesData && queryData?.queryName) {
-				// Get the compositeQuery from the response params
-				const compositeQuery = (queryResponse?.data?.params as any)?.compositeQuery;
-
-				if (compositeQuery?.queries) {
-					// Find the specific query by name from the queries array
-					const specificQuery = compositeQuery.queries.find(
-						(query: any) => query.spec?.name === queryData.queryName,
-					);
-
-					// Use the stepInterval from the specific query, fallback to default
-					const stepInterval = specificQuery?.spec?.stepInterval || 60;
-					timeRange = getTimeRangeFromStepInterval(
-						stepInterval,
-						metric?.clickedTimestamp || xValue, // Use the clicked timestamp if available, otherwise use the click position timestamp
-						specificQuery?.spec?.signal === DataSource.METRICS &&
-							isApmMetric(specificQuery?.spec?.aggregations[0]?.metricName),
-					);
-				}
-			}
-
-			if (data && data?.record?.queryName) {
-				onClick(data.coord, { ...data.record, label: data.label, timeRange });
-			}
-		},
-		[onClick, queryResponse],
-	);
 
 	const chartData = useMemo(() => {
 		if (!queryResponse?.data?.payload) {
@@ -197,7 +131,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		return (
 			<ChartManager
 				config={config}
-				data={chartData}
+				alignedData={chartData}
 				yAxisUnit={widget.yAxisUnit}
 				onCancel={onToggleModelHandler}
 			/>
@@ -211,7 +145,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	]);
 
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<TimeSeries
 					config={config}

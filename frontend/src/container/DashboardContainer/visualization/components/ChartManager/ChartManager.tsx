@@ -12,19 +12,34 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 
 import './ChartManager.styles.scss';
 
-interface GraphManagerProps {
+interface ChartManagerProps {
 	config: UPlotConfigBuilder;
-	data: uPlot.AlignedData;
+	alignedData: uPlot.AlignedData;
 	yAxisUnit?: string;
 	onCancel?: () => void;
 }
 
+/**
+ * ChartManager provides a tabular view to manage the visibility of
+ * individual series on a uPlot chart.
+ *
+ * It syncs with the legend state coming from the plot context and
+ * allows users to:
+ * - filter series by label
+ * - toggle individual series on/off
+ * - persist the visibility configuration to local storage.
+ *
+ * @param config - `UPlotConfigBuilder` instance used to derive chart options.
+ * @param alignedData - uPlot aligned data used to build the initial table dataset.
+ * @param yAxisUnit - Optional unit label for Y-axis values shown in the table.
+ * @param onCancel - Optional callback invoked when the user cancels the dialog.
+ */
 export default function ChartManager({
 	config,
-	data,
+	alignedData,
 	yAxisUnit,
 	onCancel,
-}: GraphManagerProps): JSX.Element {
+}: ChartManagerProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const { legendItemsMap } = useLegendsSync({
 		config,
@@ -37,23 +52,24 @@ export default function ChartManager({
 	} = usePlotContext();
 	const { isDashboardLocked } = useDashboard();
 
-	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
-		getDefaultTableDataSet(config.getConfig() as uPlot.Options, data),
+	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(() =>
+		getDefaultTableDataSet(config.getConfig() as uPlot.Options, alignedData),
 	);
 
-	const graphVisibilityState = useMemo(() => {
-		const byIndex: boolean[] = [];
-		Object.entries(legendItemsMap).forEach(([key, item]) => {
-			byIndex[Number(key)] = item.show;
-		});
-		return byIndex;
-	}, [legendItemsMap]);
+	const graphVisibilityState = useMemo(
+		() =>
+			Object.entries(legendItemsMap).reduce<boolean[]>((acc, [key, item]) => {
+				acc[Number(key)] = item.show;
+				return acc;
+			}, []),
+		[legendItemsMap],
+	);
 
 	useEffect(() => {
 		setTableDataSet(
-			getDefaultTableDataSet(config.getConfig() as uPlot.Options, data),
+			getDefaultTableDataSet(config.getConfig() as uPlot.Options, alignedData),
 		);
-	}, [data, config]);
+	}, [alignedData, config]);
 
 	const filterHandler = useCallback(
 		(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -70,7 +86,7 @@ export default function ChartManager({
 	);
 
 	const dataSource = tableDataSet.filter(
-		(item, index) => index !== 0 && item.show,
+		(item, index) => index !== 0 && item.show, // skipping the first item as it is the x-axis
 	);
 
 	const columns = getGraphManagerTableColumns({
@@ -111,13 +127,10 @@ export default function ChartManager({
 				<ResizeTable
 					columns={columns}
 					dataSource={dataSource}
+					virtual
 					rowKey="index"
+					scroll={{ y: 200 }}
 					pagination={false}
-					style={{
-						maxHeight: 200,
-						overflowX: 'hidden',
-						overflowY: 'auto',
-					}}
 				/>
 			</div>
 		</div>
