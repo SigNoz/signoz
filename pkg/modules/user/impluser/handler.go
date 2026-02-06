@@ -63,7 +63,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ROOT USER CHECK
+	// ROOT USER CHECK - START
 	// if the to-be-invited email is one of the root users, we forbid this operation
 	rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), req.Email)
 	if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
@@ -76,6 +76,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot invite this email id"))
 		return
 	}
+	// ROOT USER CHECK - END
 
 	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
@@ -109,6 +110,23 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no invites provided for invitation"))
 		return
 	}
+
+	// ROOT USER CHECK - START
+	// if the to-be-invited email is one of the root users, we forbid this operation
+	for _, invite := range req.Invites {
+		rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), invite.Email)
+		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+			// something else went wrong, report back to UI
+			render.Error(rw, err)
+			return
+		}
+
+		if rootUser != nil {
+			render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot invite this email id"))
+			return
+		}
+	}
+	// ROOT USER CHECK - END
 
 	_, err = h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &req)
 	if err != nil {
