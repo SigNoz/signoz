@@ -166,6 +166,7 @@ function StatusCodeBarCharts({
 				xValue,
 				TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
 			);
+
 			handleGraphClick({
 				xValue,
 				yValue,

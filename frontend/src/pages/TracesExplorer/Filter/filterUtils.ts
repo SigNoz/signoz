@@ -31,7 +31,7 @@ export const AllTraceFilterKeyValue: Record<string, string> = {
 	httpRoute: 'HTTP Route',
 	'http.route': 'HTTP Route',
 	httpUrl: 'HTTP URL',
-	'http.url': 'HTTP URL',
+	http_url: 'HTTP URL',
 	traceID: 'Trace ID',
 	trace_id: 'Trace ID',
 } as const;

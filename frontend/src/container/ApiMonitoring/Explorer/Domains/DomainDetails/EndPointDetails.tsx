@@ -93,7 +93,7 @@ function EndPointDetails({
 				return currentFilters; // No change needed, prevents loop
 			}
 
-			// Rebuild filters: Keep non-http.url filters and add/update http.url filter based on prop
+			// Rebuild filters: Keep non-http_url filters and add/update http_url filter based on prop
 			const otherFilters = currentFilters?.items?.filter(
 				(item) => item.key?.key !== httpUrlKey.key,
 			);
@@ -125,7 +125,7 @@ function EndPointDetails({
 		(newFilters: IBuilderQuery['filters']): void => {
 			// 1. Update local filters state immediately
 			setFilters(newFilters);
-			// Filter out http.url filter before saving to params
+			// Filter out http_url filter before saving to params
 			const filteredNewFilters = {
 				op: 'AND',
 				items:

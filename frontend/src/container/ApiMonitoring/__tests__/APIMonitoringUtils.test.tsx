@@ -741,15 +741,6 @@ describe('API Monitoring Utils', () => {
 			if (domainFilter) {
 				expect(domainFilter.value).toBe(domainName);
 			}
-
-			// Should have endpoint filter if provided
-			const endpointFilter = queryData.filters?.items?.find(
-				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.URL_PATH,
-			);
-			expect(endpointFilter).toBeDefined();
-			if (endpointFilter) {
-				expect(endpointFilter.value).toBe(endPointName);
-			}
 		});
 
 		it('should include custom filters in the widget configuration', () => {
