@@ -31,7 +31,6 @@ func NewReconciler(store types.RootUserStore, settings factory.ProviderSettings,
 }
 
 func (r *reconciler) Reconcile(ctx context.Context) error {
-	r.settings.Logger().InfoContext(ctx, "reconciler: reconciling root user(s)")
 	if !r.config.IsConfigured() {
 		r.settings.Logger().InfoContext(ctx, "reconciler: root user is not configured, skipping reconciliation")
 		return nil
