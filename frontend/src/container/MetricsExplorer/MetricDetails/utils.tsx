@@ -1,27 +1,18 @@
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
+import {
+	GetMetricMetadata200,
+	MetricsexplorertypesMetricMetadataDTOTemporality,
+	MetricsexplorertypesMetricMetadataDTOType,
+	MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality,
+	MetricsexplorertypesUpdateMetricMetadataRequestDTOType,
+} from 'api/generated/services/sigNoz.schemas';
 import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-import {
-	MetricAlert,
-	MetricAttribute,
-	MetricDashboard,
-	MetricHighlight,
-	MetricMetadata,
-	MetricMetadataState,
-} from './types';
-import {
-	GetMetricAlerts200,
-	GetMetricAttributes200,
-	GetMetricDashboards200,
-	GetMetricHighlights200,
-	GetMetricMetadata200,
-} from 'api/generated/services/sigNoz.schemas';
-import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
+import { MetricMetadata, MetricMetadataState } from './types';
 
 export function formatTimestampToReadableDate(
 	timestamp: number | string | undefined,
@@ -72,27 +63,37 @@ export function formatNumberToCompactFormat(num: number | undefined): string {
 }
 
 export function determineIsMonotonic(
-	metricType: MetricType,
-	temporality?: Temporality,
+	metricType: MetricsexplorertypesUpdateMetricMetadataRequestDTOType,
+	temporality?: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality,
 ): boolean {
 	if (
-		metricType === MetricType.HISTOGRAM ||
-		metricType === MetricType.EXPONENTIAL_HISTOGRAM
+		metricType ===
+			MetricsexplorertypesUpdateMetricMetadataRequestDTOType.histogram ||
+		metricType ===
+			MetricsexplorertypesUpdateMetricMetadataRequestDTOType.exponentialhistogram
 	) {
 		return true;
 	}
-	if (metricType === MetricType.GAUGE || metricType === MetricType.SUMMARY) {
+	if (
+		metricType === MetricsexplorertypesUpdateMetricMetadataRequestDTOType.gauge ||
+		metricType === MetricsexplorertypesUpdateMetricMetadataRequestDTOType.summary
+	) {
 		return false;
 	}
-	if (metricType === MetricType.SUM) {
-		return temporality === Temporality.CUMULATIVE;
+	if (
+		metricType === MetricsexplorertypesUpdateMetricMetadataRequestDTOType.sum
+	) {
+		return (
+			temporality ===
+			MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.cumulative
+		);
 	}
 	return false;
 }
 
 export function getMetricDetailsQuery(
 	metricName: string,
-	metricType: MetricType | undefined,
+	metricType: MetricsexplorertypesMetricMetadataDTOType | undefined,
 	filter?: { key: string; value: string },
 	groupBy?: string,
 ): Query {
@@ -100,23 +101,23 @@ export function getMetricDetailsQuery(
 	let spaceAggregation;
 	let aggregateOperator;
 	switch (metricType) {
-		case MetricType.SUM:
+		case MetricsexplorertypesMetricMetadataDTOType.sum:
 			timeAggregation = 'rate';
 			spaceAggregation = 'sum';
 			aggregateOperator = 'rate';
 			break;
-		case MetricType.GAUGE:
+		case MetricsexplorertypesMetricMetadataDTOType.gauge:
 			timeAggregation = 'avg';
 			spaceAggregation = 'avg';
 			aggregateOperator = 'avg';
 			break;
-		case MetricType.SUMMARY:
+		case MetricsexplorertypesMetricMetadataDTOType.summary:
 			timeAggregation = 'noop';
 			spaceAggregation = 'sum';
 			aggregateOperator = 'noop';
 			break;
-		case MetricType.HISTOGRAM:
-		case MetricType.EXPONENTIAL_HISTOGRAM:
+		case MetricsexplorertypesMetricMetadataDTOType.histogram:
+		case MetricsexplorertypesMetricMetadataDTOType.exponentialhistogram:
 			timeAggregation = 'noop';
 			spaceAggregation = 'p90';
 			aggregateOperator = 'noop';
@@ -186,36 +187,6 @@ export function getMetricDetailsQuery(
 	};
 }
 
-export function transformTemporality(
-	temporality: string | undefined,
-): Temporality {
-	switch (temporality) {
-		case 'delta':
-			return Temporality.DELTA;
-		case 'cumulative':
-			return Temporality.CUMULATIVE;
-		default:
-			return Temporality.DELTA;
-	}
-}
-
-export function transformMetricType(type: string | undefined): MetricType {
-	switch (type) {
-		case 'sum':
-			return MetricType.SUM;
-		case 'gauge':
-			return MetricType.GAUGE;
-		case 'summary':
-			return MetricType.SUMMARY;
-		case 'histogram':
-			return MetricType.HISTOGRAM;
-		case 'exponential_histogram':
-			return MetricType.EXPONENTIAL_HISTOGRAM;
-		default:
-			return MetricType.SUM;
-	}
-}
-
 export function transformMetricMetadata(
 	apiData: GetMetricMetadata200 | undefined,
 ): MetricMetadata | null {
@@ -225,25 +196,59 @@ export function transformMetricMetadata(
 	const { type, description, unit, temporality, isMonotonic } = apiData.data;
 
 	return {
-		metricType: transformMetricType(type),
-		description: description ?? '',
-		unit: unit ?? '',
-		temporality: transformTemporality(temporality),
-		isMonotonic: isMonotonic ?? false,
+		type,
+		description,
+		unit,
+		temporality,
+		isMonotonic,
 	};
 }
 
 export function transformUpdateMetricMetadataRequest(
+	metricName: string,
 	metricMetadata: MetricMetadataState,
 ): UpdateMetricMetadataMutationBody {
 	return {
-		type: metricMetadata.metricType,
+		metricName: metricName,
+		type: metricMetadata.type,
 		description: metricMetadata.description,
-		unit: metricMetadata.unit || '',
-		temporality: metricMetadata.temporality || '',
+		unit: metricMetadata.unit,
+		temporality:
+			metricMetadata.temporality ??
+			MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.unspecified,
 		isMonotonic: determineIsMonotonic(
-			metricMetadata.metricType,
+			metricMetadata.type,
 			metricMetadata.temporality,
 		),
 	};
+}
+
+export function transformMetricType(
+	type: MetricsexplorertypesMetricMetadataDTOType,
+): MetricsexplorertypesUpdateMetricMetadataRequestDTOType {
+	switch (type) {
+		case MetricsexplorertypesMetricMetadataDTOType.sum:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOType.sum;
+		case MetricsexplorertypesMetricMetadataDTOType.gauge:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOType.gauge;
+		case MetricsexplorertypesMetricMetadataDTOType.histogram:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOType.histogram;
+		case MetricsexplorertypesMetricMetadataDTOType.summary:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOType.summary;
+		case MetricsexplorertypesMetricMetadataDTOType.exponentialhistogram:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOType.exponentialhistogram;
+	}
+}
+
+export function transformTemporality(
+	temporality: MetricsexplorertypesMetricMetadataDTOTemporality,
+): MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality {
+	switch (temporality) {
+		case MetricsexplorertypesMetricMetadataDTOTemporality.delta:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.delta;
+		case MetricsexplorertypesMetricMetadataDTOTemporality.cumulative:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.cumulative;
+		case MetricsexplorertypesMetricMetadataDTOTemporality.unspecified:
+			return MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.unspecified;
+	}
 }

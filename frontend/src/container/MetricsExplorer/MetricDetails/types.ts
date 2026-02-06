@@ -3,9 +3,11 @@ import {
 	MetricsexplorertypesMetricAttributeDTO,
 	MetricsexplorertypesMetricDashboardDTO,
 	MetricsexplorertypesMetricHighlightsResponseDTO,
+	MetricsexplorertypesMetricMetadataDTO,
+	MetricsexplorertypesMetricMetadataDTOType,
+	MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality,
+	MetricsexplorertypesUpdateMetricMetadataRequestDTOType,
 } from 'api/generated/services/sigNoz.schemas';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 
 export interface MetricDetailsProps {
 	onClose: () => void;
@@ -31,7 +33,7 @@ export interface MetadataProps {
 
 export interface AllAttributesProps {
 	metricName: string;
-	metricType: MetricType | undefined;
+	metricType: MetricsexplorertypesMetricMetadataDTOType | undefined;
 }
 
 export interface AllAttributesValueProps {
@@ -46,19 +48,12 @@ export type MetricAlert = MetricsexplorertypesMetricAlertDTO;
 
 export type MetricDashboard = MetricsexplorertypesMetricDashboardDTO;
 
-export interface MetricMetadata {
-	metricType: MetricType;
-	description: string;
-	unit: string;
-	temporality: Temporality;
-	isMonotonic: boolean;
-}
-
+export type MetricMetadata = MetricsexplorertypesMetricMetadataDTO;
 export interface MetricMetadataState {
-	metricType: MetricType;
-	description: string | undefined;
-	temporality: Temporality | undefined;
-	unit: string | undefined;
+	type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType;
+	description: string;
+	temporality?: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality;
+	unit: string;
 }
 
 export type MetricAttribute = MetricsexplorertypesMetricAttributeDTO;
@@ -66,7 +61,7 @@ export type MetricAttribute = MetricsexplorertypesMetricAttributeDTO;
 export enum TableFields {
 	DESCRIPTION = 'description',
 	UNIT = 'unit',
-	METRIC_TYPE = 'metricType',
+	TYPE = 'type',
 	Temporality = 'temporality',
 	IS_MONOTONIC = 'isMonotonic',
 }
