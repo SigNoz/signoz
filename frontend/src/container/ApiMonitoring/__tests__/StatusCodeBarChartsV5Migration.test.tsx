@@ -10,7 +10,7 @@
  *
  * V5 Changes:
  * - Filter format change: filters.items[] → filter.expression
- * - Domain filter: (net.peer.name OR server.address)
+ * - Domain filter: (http_host)
  * - Kind filter: kind_string = 'Client'
  * - stepInterval: 60 → null
  * - Grouped by response_status_code
@@ -47,9 +47,9 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
@@ -96,9 +96,9 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
@@ -177,7 +177,7 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(callsExpression).toBe(latencyExpression);
 
 			// Verify base filters
-			expect(callsExpression).toContain('net.peer.name');
+			expect(callsExpression).toContain('http_host');
 			expect(callsExpression).toContain("kind_string = 'Client'");
 
 			// Verify custom filters are merged
@@ -226,7 +226,7 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(latencyExpression).toContain("http_url = '/api/metrics'");
 
 			// Base filters still present
-			expect(callsExpression).toContain('net.peer.name');
+			expect(callsExpression).toContain('http_host');
 			expect(callsExpression).toContain("kind_string = 'Client'");
 		});
 	});

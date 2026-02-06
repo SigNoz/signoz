@@ -153,7 +153,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				// Verify exact domain filter expression structure
 				if (queryA.filter) {
 					expect(queryA.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryA.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -171,7 +171,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				// Verify exact domain filter expression structure
 				if (queryB.filter) {
 					expect(queryB.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryB.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -185,7 +185,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				expect(queryC.aggregateOperator).toBe('count');
 				if (queryC.filter) {
 					expect(queryC.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryC.filter.expression).toContain("kind_string = 'Client'");
 					expect(queryC.filter.expression).toContain('has_error = true');
@@ -204,7 +204,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				// Verify exact domain filter expression structure
 				if (queryD.filter) {
 					expect(queryD.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryD.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -221,7 +221,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				}
 				if (queryE.filter) {
 					expect(queryE.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryE.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -291,7 +291,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 					expect(query.filter.expression).toContain('staging');
 					// Also verify domain filter is still present
 					expect(query.filter.expression).toContain(
-						"(net.peer.name = 'api.internal.com' OR server.address = 'api.internal.com')",
+						"http_host = 'api.internal.com'",
 					);
 					// Verify client kind filter is present
 					expect(query.filter.expression).toContain("kind_string = 'Client'");

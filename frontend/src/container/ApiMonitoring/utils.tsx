@@ -345,7 +345,7 @@ export const formatDataForTable = (
 	return data.map((row) => {
 		const rowData: APIDomainsRowData = {
 			key: v4(),
-			domainName: row[indexMap['net.peer.name']] || row[indexMap[domainNameKey]],
+			domainName: row[indexMap[domainNameKey]],
 			endpointCount:
 				row[indexMap.endpoints] === 'n/a' || row[indexMap.endpoints] === undefined
 					? 0

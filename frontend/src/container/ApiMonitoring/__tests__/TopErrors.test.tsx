@@ -83,7 +83,7 @@ describe('TopErrors', () => {
 									{
 										columns: [
 											{
-												name: 'http.url',
+												name: 'http_url',
 												fieldDataType: 'string',
 												fieldContext: 'attribute',
 											},
@@ -123,7 +123,7 @@ describe('TopErrors', () => {
 										table: {
 											rows: [
 												{
-													'http.url': '/api/test',
+													http_url: '/api/test',
 													A: 100,
 												},
 											],
@@ -205,7 +205,7 @@ describe('TopErrors', () => {
 		expect(navigateMock).toHaveBeenCalledWith({
 			filters: expect.arrayContaining([
 				expect.objectContaining({
-					key: expect.objectContaining({ key: 'http.url' }),
+					key: expect.objectContaining({ key: 'http_url' }),
 					op: '=',
 					value: '/api/test',
 				}),
@@ -215,7 +215,7 @@ describe('TopErrors', () => {
 					value: 'true',
 				}),
 				expect.objectContaining({
-					key: expect.objectContaining({ key: 'net.peer.name' }),
+					key: expect.objectContaining({ key: 'http_host' }),
 					op: '=',
 					value: 'test-domain',
 				}),

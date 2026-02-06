@@ -878,7 +878,7 @@ describe('SpanDetailsDrawer', () => {
 
 			// Verify only matching attributes are shown (use getAllByText for all since they appear in multiple places)
 			expect(screen.getAllByText('http.method').length).toBeGreaterThan(0);
-			expect(screen.getAllByText('http.url').length).toBeGreaterThan(0);
+			expect(screen.getAllByText('http_url').length).toBeGreaterThan(0);
 			expect(screen.getAllByText('http.status_code').length).toBeGreaterThan(0);
 		});
 

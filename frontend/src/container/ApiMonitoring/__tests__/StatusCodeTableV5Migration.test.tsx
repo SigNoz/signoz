@@ -45,9 +45,9 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
@@ -149,7 +149,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 				statusCodeQuery.query.builder.queryData[0].filter?.expression;
 
 			// Base filters present
-			expect(expression).toContain('net.peer.name');
+			expect(expression).toContain('http_host');
 			expect(expression).toContain("kind_string = 'Client'");
 			expect(expression).toContain('response_status_code EXISTS');
 
@@ -173,7 +173,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 					{
 						id: 'http-url-filter',
 						key: {
-							key: 'http.url',
+							key: 'http_url',
 							dataType: 'string' as any,
 							type: 'tag',
 						},
@@ -213,7 +213,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			expect(expression).toContain('user-service');
 
 			// Base filters present
-			expect(expression).toContain('net.peer.name');
+			expect(expression).toContain('http_host');
 			expect(expression).toContain("kind_string = 'Client'");
 			expect(expression).toContain('response_status_code EXISTS');
 
