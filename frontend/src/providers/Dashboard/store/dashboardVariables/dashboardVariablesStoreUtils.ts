@@ -4,6 +4,7 @@ import {
 } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
+import { initializeVariableFetchStore } from '../variableFetchStore';
 import {
 	IDashboardVariables,
 	IDashboardVariablesStoreState,
@@ -63,8 +64,29 @@ export function buildDependencyData(
 }
 
 /**
+ * Initialize the variable fetch store with the computed dependency data
+ */
+function initializeFetchStore(
+	sortedVariablesArray: IDashboardVariable[],
+	dependencyData: IDependencyData | null,
+): void {
+	if (dependencyData) {
+		const allVariableNames = sortedVariablesArray
+			.map((v) => v.name)
+			.filter((name): name is string => !!name);
+
+		initializeVariableFetchStore(
+			allVariableNames,
+			dependencyData.graph,
+			dependencyData.parentDependencyGraph,
+		);
+	}
+}
+
+/**
  * Compute derived values from variables
  * This is a composition of buildSortedVariablesArray and buildDependencyData
+ * Also initializes the variable fetch store with the new dependency data
  */
 export function computeDerivedValues(
 	variables: IDashboardVariablesStoreState['variables'],
@@ -75,15 +97,22 @@ export function computeDerivedValues(
 	const sortedVariablesArray = buildSortedVariablesArray(variables);
 	const dependencyData = buildDependencyData(sortedVariablesArray);
 
+	// Initialize the variable fetch store when dependency data is computed
+	initializeFetchStore(sortedVariablesArray, dependencyData);
+
 	return { sortedVariablesArray, dependencyData };
 }
 
 /**
  * Update derived values in the store state (for use with immer)
+ * Also initializes the variable fetch store with the new dependency data
  */
 export function updateDerivedValues(
 	draft: IDashboardVariablesStoreState,
 ): void {
 	draft.sortedVariablesArray = buildSortedVariablesArray(draft.variables);
 	draft.dependencyData = buildDependencyData(draft.sortedVariablesArray);
+
+	// Initialize the variable fetch store when dependency data is updated
+	initializeFetchStore(draft.sortedVariablesArray, draft.dependencyData);
 }
