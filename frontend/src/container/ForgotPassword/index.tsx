@@ -19,7 +19,7 @@ import 'container/Login/Login.styles.scss';
 
 type FormValues = {
 	email: string;
-	orgId?: string;
+	orgId: string;
 };
 
 export type ForgotPasswordRouteState = {
@@ -72,8 +72,10 @@ function ForgotPassword({
 			return false;
 		}
 
-		return !(hasMultipleOrgs && !selectedOrgId);
-	}, [watchedEmail, hasMultipleOrgs, selectedOrgId, isLoading]);
+		// Ensure we have an orgId (either selected from dropdown or the initial one)
+		const currentOrgId = hasMultipleOrgs ? selectedOrgId : initialOrgId;
+		return Boolean(currentOrgId);
+	}, [watchedEmail, selectedOrgId, isLoading, initialOrgId, hasMultipleOrgs]);
 
 	const handleSubmit = useCallback((): void => {
 		const values = form.getFieldsValue();
@@ -86,8 +88,8 @@ function ForgotPassword({
 			{
 				data: {
 					email: values.email,
-					// Use initialOrgId as fallback when orgId field is hidden (single org)
-					orgId: values.orgId || initialOrgId,
+					// since the submit will already be disabled if org is not present, hence we can have empty fallback in case we get here
+					orgId: (hasMultipleOrgs ? values.orgId : initialOrgId) || '',
 					frontendBaseURL: window.location.origin,
 				},
 			},
@@ -104,7 +106,7 @@ function ForgotPassword({
 				},
 			},
 		);
-	}, [form, forgotPasswordMutate, initialOrgId]);
+	}, [form, forgotPasswordMutate, initialOrgId, hasMultipleOrgs]);
 
 	const handleBackToLogin = useCallback((): void => {
 		history.push(ROUTES.LOGIN);

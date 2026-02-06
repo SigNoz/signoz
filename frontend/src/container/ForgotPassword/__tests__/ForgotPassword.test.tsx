@@ -398,7 +398,7 @@ describe('ForgotPassword Component', () => {
 			expect(submitButton).toBeDisabled();
 		});
 
-		it('handles empty orgs array', () => {
+		it('handles empty orgs array by disabling submission', () => {
 			const propsWithNoOrgs: ForgotPasswordRouteState = {
 				email: TEST_EMAIL,
 				orgs: [],
@@ -408,9 +408,9 @@ describe('ForgotPassword Component', () => {
 
 			// Should not show org dropdown
 			expect(screen.queryByTestId('orgId')).not.toBeInTheDocument();
-			// Submit should still be enabled with valid email
+			// Submit should be disabled because no orgId can be determined
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toBeDisabled();
+			expect(submitButton).toBeDisabled();
 		});
 	});
 });

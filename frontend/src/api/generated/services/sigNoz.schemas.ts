@@ -1388,7 +1388,7 @@ export interface TypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
 	 */
-	email?: string;
+	email: string;
 	/**
 	 * @type string
 	 */
@@ -1396,7 +1396,7 @@ export interface TypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	orgId: string;
 }
 
 export interface TypesPostableInviteDTO {
