@@ -14,14 +14,19 @@ function TextboxVariableInput({
 }: TextboxVariableInputProps): JSX.Element {
 	const handleChange = useCallback(
 		(inputValue: string | string[]): void => {
-			// if (value === variableData.selectedValue) {
-			// 	return;
-			// }
+			if (inputValue === variableData.selectedValue) {
+				return;
+			}
 			if (variableData.name) {
 				onValueUpdate(variableData.name, variableData.id, inputValue, false);
 			}
 		},
-		[onValueUpdate, variableData.id, variableData.name],
+		[
+			onValueUpdate,
+			variableData.id,
+			variableData.name,
+			variableData.selectedValue,
+		],
 	);
 
 	const textboxInputRef = useRef<InputRef>(null);
@@ -63,6 +68,7 @@ function TextboxVariableInput({
 
 	return (
 		<Input
+			key={variableData.id}
 			ref={textboxInputRef}
 			placeholder="Enter value"
 			data-testid={`variable-textbox-${variableData.id}`}
