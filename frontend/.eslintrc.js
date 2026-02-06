@@ -61,6 +61,8 @@ module.exports = {
 		curly: 'error', // Requires curly braces for all control statements
 		eqeqeq: ['error', 'always', { null: 'ignore' }], // Enforces === and !== (allows == null for null/undefined check)
 		'no-console': ['error', { allow: ['warn', 'error'] }], // Warns on console.log, allows console.warn/error
+		// TODO: Change this to error in May 2026
+		'max-params': ['warn', 3], // a function can have max 3 params after which it should become an object
 
 		// TypeScript rules
 		'@typescript-eslint/explicit-function-return-type': 'error', // Requires explicit return types on functions
@@ -144,7 +146,6 @@ module.exports = {
 
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
-		'max-params': ['warn', 3], // a function can have max 3 params after which it should become an object
 	},
 	overrides: [
 		{
@@ -155,7 +156,6 @@ module.exports = {
 			],
 			rules: {
 				// Tests often have intentional duplication and complexity - disable SonarJS rules
-				'sonarjs/no-duplicate-string': 'off', // Tests often repeat strings
 				'sonarjs/cognitive-complexity': 'off', // Tests can be complex
 				'sonarjs/no-identical-functions': 'off', // Similar test patterns are OK
 				'sonarjs/no-small-switch': 'off', // Small switches are OK in tests
@@ -168,7 +168,6 @@ module.exports = {
 				'@typescript-eslint/explicit-module-boundary-types': 'off',
 				'no-nested-ternary': 'off',
 				'@typescript-eslint/no-unused-vars': 'warn',
-				'sonarjs/no-duplicate-string': 'off',
 			},
 		},
 	],
