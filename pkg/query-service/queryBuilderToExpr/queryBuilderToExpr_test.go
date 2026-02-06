@@ -201,7 +201,7 @@ func TestParseExpression(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, x, tt.Expr)
+				assert.Equal(t, tt.Expr, x)
 			}
 		})
 	}
