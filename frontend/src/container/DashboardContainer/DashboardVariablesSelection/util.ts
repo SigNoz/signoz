@@ -381,3 +381,16 @@ export const uniqueValues = (values: string[] | string): string[] | string => {
 
 	return values;
 };
+
+export const getSelectValue = (
+	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
+): string | string[] | undefined => {
+	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString();
+		}
+		return selectedValue.map((item) => item.toString());
+	}
+	return selectedValue?.toString();
+};

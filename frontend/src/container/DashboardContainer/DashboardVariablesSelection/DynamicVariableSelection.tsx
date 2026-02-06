@@ -23,9 +23,9 @@ import { SelectItemStyle } from './styles';
 import {
 	areArraysEqual,
 	getOptionsForDynamicVariable,
+	getSelectValue,
 	uniqueValues,
 } from './util';
-import { getSelectValue } from './VariableItem';
 
 import './DashboardVariableSelection.styles.scss';
 

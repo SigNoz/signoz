@@ -1,16 +1,29 @@
 import { memo, useCallback, useRef, useState } from 'react';
 import { Input, InputRef } from 'antd';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-interface TextboxVariableInputProps {
-	variableData: IDashboardVariable;
-	handleChange: (inputValue: string) => void;
-}
+import { VariableItemProps } from './VariableItem';
+
+type TextboxVariableInputProps = Pick<
+	VariableItemProps,
+	'variableData' | 'onValueUpdate'
+>;
 
 function TextboxVariableInput({
 	variableData,
-	handleChange,
+	onValueUpdate,
 }: TextboxVariableInputProps): JSX.Element {
+	const handleChange = useCallback(
+		(inputValue: string | string[]): void => {
+			// if (value === variableData.selectedValue) {
+			// 	return;
+			// }
+			if (variableData.name) {
+				onValueUpdate(variableData.name, variableData.id, inputValue, false);
+			}
+		},
+		[onValueUpdate, variableData.id, variableData.name],
+	);
+
 	const textboxInputRef = useRef<InputRef>(null);
 	const [textboxInputValue, setTextboxInputValue] = useState<string>(
 		(variableData.selectedValue?.toString() ||
