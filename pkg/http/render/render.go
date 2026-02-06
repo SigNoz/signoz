@@ -57,7 +57,7 @@ func Error(rw http.ResponseWriter, cause error) {
 	case errors.TypeUnauthenticated:
 		httpCode = http.StatusUnauthorized
 	case errors.TypeUnsupported:
-		httpCode = http.StatusNotImplemented
+		httpCode = http.StatusUnprocessableEntity
 	case errors.TypeForbidden:
 		httpCode = http.StatusForbidden
 	case errors.TypeCanceled:

@@ -157,6 +157,24 @@ func (store *store) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*auth
 		return nil, err
 	}
 
+	// ROOT USER TOKENS
+	rootUserTokens := make([]*authtypes.StorableToken, 0)
+
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&rootUserTokens).
+		Join("JOIN root_users").
+		JoinOn("root_users.id = auth_token.user_id").
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens = append(tokens, rootUserTokens...)
+
 	return tokens, nil
 }
 
@@ -177,6 +195,26 @@ func (store *store) ListByOrgIDs(ctx context.Context, orgIDs []valuer.UUID) ([]*
 	if err != nil {
 		return nil, err
 	}
+
+	// ROOT USER TOKENS
+	rootUserTokens := make([]*authtypes.StorableToken, 0)
+
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&rootUserTokens).
+		Join("JOIN root_users").
+		JoinOn("root_users.id = auth_token.user_id").
+		Join("JOIN organizations").
+		JoinOn("organizations.id = root_users.org_id").
+		Where("organizations.id IN (?)", bun.In(orgIDs)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens = append(tokens, rootUserTokens...)
 
 	return tokens, nil
 }

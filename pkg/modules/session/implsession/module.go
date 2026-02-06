@@ -267,11 +267,10 @@ func (module *module) getRootUserSessionContext(ctx context.Context, orgs []*typ
 		}
 
 		org := orgs[idx]
-		if rootUser != nil {
-			context.Exists = true
-			orgContext := authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword)
-			context = context.AddOrgContext(orgContext)
-		}
+
+		context.Exists = true
+		orgContext := authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword)
+		context = context.AddOrgContext(orgContext)
 	}
 
 	return context, nil
