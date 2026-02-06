@@ -65,16 +65,18 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 
 	// ROOT USER CHECK - START
 	// if the to-be-invited email is one of the root users, we forbid this operation
-	rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), req.Email)
-	if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
-		// something else went wrong, report back to UI
-		render.Error(rw, err)
-		return
-	}
+	if h.rootUserModule != nil {
+		rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), req.Email)
+		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+			// something else went wrong, report back to UI
+			render.Error(rw, err)
+			return
+		}
 
-	if rootUser != nil {
-		render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot invite this email id"))
-		return
+		if rootUser != nil {
+			render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot invite this email id"))
+			return
+		}
 	}
 	// ROOT USER CHECK - END
 
@@ -113,17 +115,19 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 
 	// ROOT USER CHECK - START
 	// if the to-be-invited email is one of the root users, we forbid this operation
-	for _, invite := range req.Invites {
-		rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), invite.Email)
-		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
-			// something else went wrong, report back to UI
-			render.Error(rw, err)
-			return
-		}
+	if h.rootUserModule != nil {
+		for _, invite := range req.Invites {
+			rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), invite.Email)
+			if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
+				// something else went wrong, report back to UI
+				render.Error(rw, err)
+				return
+			}
 
-		if rootUser != nil {
-			render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "reserved email(s) found, failed to invite users"))
-			return
+			if rootUser != nil {
+				render.Error(rw, errors.New(errors.TypeForbidden, errors.CodeForbidden, "reserved email(s) found, failed to invite users"))
+				return
+			}
 		}
 	}
 	// ROOT USER CHECK - END

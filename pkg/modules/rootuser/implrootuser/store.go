@@ -68,9 +68,7 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 func (store *store) GetByEmailAndOrgIDs(ctx context.Context, orgIDs []valuer.UUID, email valuer.Email) ([]*types.RootUser, error) {
 	rootUsers := []*types.RootUser{}
 
-	err := store.
-		sqlstore.
-		BunDB().
+	err := store.sqlstore.BunDBCtx(ctx).
 		NewSelect().
 		Model(&rootUsers).
 		Where("email = ?", email).
