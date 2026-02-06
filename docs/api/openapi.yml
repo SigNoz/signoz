@@ -2226,6 +2226,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unprocessable Entity
         "500":
           content:
             application/json:
@@ -2285,6 +2291,15 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: GetIngestionKeys
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2597,6 +2612,19 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: SearchIngestionKeys
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2643,6 +2671,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -2697,6 +2726,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -2752,6 +2782,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -2918,6 +2949,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -3785,6 +3817,9 @@ components:
           type: string
         alertName:
           type: string
+      required:
+      - alertName
+      - alertId
       type: object
     MetricsexplorertypesMetricAlertsResponse:
       properties:
@@ -3793,6 +3828,8 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
           nullable: true
           type: array
+      required:
+      - alerts
       type: object
     MetricsexplorertypesMetricAttribute:
       properties:
@@ -3806,6 +3843,10 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - key
+      - values
+      - valueCount
       type: object
     MetricsexplorertypesMetricAttributesRequest:
       properties:
@@ -3817,6 +3858,8 @@ components:
         start:
           nullable: true
           type: integer
+      required:
+      - metricName
       type: object
     MetricsexplorertypesMetricAttributesResponse:
       properties:
@@ -3828,6 +3871,9 @@ components:
         totalKeys:
           format: int64
           type: integer
+      required:
+      - attributes
+      - totalKeys
       type: object
     MetricsexplorertypesMetricDashboard:
       properties:
@@ -3839,6 +3885,11 @@ components:
           type: string
         widgetName:
           type: string
+      required:
+      - dashboardName
+      - dashboardId
+      - widgetId
+      - widgetName
       type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
@@ -3847,6 +3898,8 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
           nullable: true
           type: array
+      required:
+      - dashboards
       type: object
     MetricsexplorertypesMetricHighlightsResponse:
       properties:
@@ -3862,6 +3915,11 @@ components:
         totalTimeSeries:
           minimum: 0
           type: integer
+      required:
+      - dataPoints
+      - lastReceived
+      - totalTimeSeries
+      - activeTimeSeries
       type: object
     MetricsexplorertypesMetricMetadata:
       properties:
@@ -3870,11 +3928,27 @@ components:
         isMonotonic:
           type: boolean
         temporality:
+          enum:
+          - delta
+          - cumulative
+          - unspecified
           type: string
         type:
+          enum:
+          - gauge
+          - sum
+          - histogram
+          - summary
+          - exponentialhistogram
           type: string
         unit:
           type: string
+      required:
+      - description
+      - type
+      - unit
+      - temporality
+      - isMonotonic
       type: object
     MetricsexplorertypesStat:
       properties:
@@ -3889,9 +3963,22 @@ components:
           minimum: 0
           type: integer
         type:
+          enum:
+          - gauge
+          - sum
+          - histogram
+          - summary
+          - exponentialhistogram
           type: string
         unit:
           type: string
+      required:
+      - metricName
+      - description
+      - type
+      - unit
+      - timeseries
+      - samples
       type: object
     MetricsexplorertypesStatsRequest:
       properties:
@@ -3909,6 +3996,10 @@ components:
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
       type: object
     MetricsexplorertypesStatsResponse:
       properties:
@@ -3920,6 +4011,9 @@ components:
         total:
           minimum: 0
           type: integer
+      required:
+      - metrics
+      - total
       type: object
     MetricsexplorertypesTreemapEntry:
       properties:
@@ -3931,6 +4025,10 @@ components:
         totalValue:
           minimum: 0
           type: integer
+      required:
+      - metricName
+      - percentage
+      - totalValue
       type: object
     MetricsexplorertypesTreemapRequest:
       properties:
@@ -3942,10 +4040,18 @@ components:
         limit:
           type: integer
         mode:
+          enum:
+          - timeseries
+          - samples
           type: string
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
+      - mode
       type: object
     MetricsexplorertypesTreemapResponse:
       properties:
@@ -3959,6 +4065,9 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
           nullable: true
           type: array
+      required:
+      - timeseries
+      - samples
       type: object
     MetricsexplorertypesUpdateMetricMetadataRequest:
       properties:
@@ -3969,11 +4078,28 @@ components:
         metricName:
           type: string
         temporality:
+          enum:
+          - delta
+          - cumulative
+          - unspecified
           type: string
         type:
+          enum:
+          - gauge
+          - sum
+          - histogram
+          - summary
+          - exponentialhistogram
           type: string
         unit:
           type: string
+      required:
+      - metricName
+      - type
+      - description
+      - unit
+      - temporality
+      - isMonotonic
       type: object
     PreferencetypesPreference:
       properties:
@@ -4256,6 +4382,9 @@ components:
           type: string
         orgId:
           type: string
+      required:
+      - orgId
+      - email
       type: object
     TypesPostableInvite:
       properties:

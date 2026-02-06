@@ -33,8 +33,8 @@ type LimitConfig struct {
 }
 
 type LimitValue struct {
-	Size  int64 `json:"size,omitempty"`
-	Count int64 `json:"count,omitempty"`
+	Size  int64 `json:"size"`
+	Count int64 `json:"count"`
 }
 
 type LimitMetric struct {
@@ -52,6 +52,17 @@ type Pagination struct {
 	PerPage int `json:"per_page"`
 	Pages   int `json:"pages"`
 	Total   int `json:"total"`
+}
+
+type IngestionKeysParams struct {
+	Page    int `query:"page"`
+	PerPage int `query:"per_page"`
+}
+
+type SearchIngestionKeysParams struct {
+	Name    string `query:"name"`
+	Page    int    `query:"page"`
+	PerPage int    `query:"per_page"`
 }
 
 type GettableIngestionKeys struct {
