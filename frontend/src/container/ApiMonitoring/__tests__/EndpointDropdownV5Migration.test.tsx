@@ -157,9 +157,8 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			const expression =
 				dropdownQuery.query.builder.queryData[0].filter?.expression;
 
-			// CRITICAL: Exact filter expression with http.url converted to OR logic
 			expect(expression).toBe(
-				"http_host = 'api.example.com' AND kind_string = 'Client' AND http_url EXISTS service.name = 'user-service' AND http_url = '/api/users'",
+				"http_host = 'api.example.com' AND kind_string = 'Client' AND http_url EXISTS http_url = '/api/users' AND service.name = 'user-service'",
 			);
 		});
 	});

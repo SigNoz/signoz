@@ -205,7 +205,6 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			const expression =
 				statusCodeQuery.query.builder.queryData[0].filter?.expression;
 
-			// CRITICAL: http.url converted to OR logic
 			expect(expression).toContain("http_url = '/api/users'");
 
 			// Other filters still present

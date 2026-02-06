@@ -56,7 +56,7 @@ function TopErrors({
 				{
 					items: endPointName
 						? [
-								// Remove any existing http.url filters from initialFilters to avoid duplicates
+								// Remove any existing http_url filters from initialFilters to avoid duplicates
 								...(initialFilters?.items?.filter(
 									(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
 								) || []),

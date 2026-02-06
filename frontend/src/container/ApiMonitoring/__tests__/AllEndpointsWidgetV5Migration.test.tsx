@@ -124,9 +124,8 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			// All queries should have the same default groupBy
 			queryData.forEach((query) => {
-				expect(query.groupBy).toHaveLength(2);
+				expect(query.groupBy).toHaveLength(1);
 
-				// http.url
 				expect(query.groupBy).toContainEqual({
 					dataType: DataTypes.String,
 					isColumn: false,
@@ -161,18 +160,18 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			// All queries should have defaults + custom groupBy
 			queryData.forEach((query) => {
-				expect(query.groupBy).toHaveLength(4); // 2 defaults + 2 custom
+				expect(query.groupBy).toHaveLength(3); // 1 default + 2 custom
 
 				// First two should be defaults (http_url)
 				expect(query.groupBy[0].key).toBe('http_url');
 
 				// Last two should be custom (matching subset of properties)
-				expect(query.groupBy[2]).toMatchObject({
+				expect(query.groupBy[1]).toMatchObject({
 					dataType: DataTypes.String,
 					key: 'service.name',
 					type: 'resource',
 				});
-				expect(query.groupBy[3]).toMatchObject({
+				expect(query.groupBy[2]).toMatchObject({
 					dataType: DataTypes.String,
 					key: 'deployment.environment',
 					type: 'resource',

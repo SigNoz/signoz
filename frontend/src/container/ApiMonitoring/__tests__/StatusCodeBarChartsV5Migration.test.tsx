@@ -221,11 +221,9 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			const latencyExpression =
 				latencyChartQuery.query.builder.queryData[0].filter?.expression;
 
-			// CRITICAL: http.url converted to OR logic
 			expect(callsExpression).toContain("http_url = '/api/metrics'");
 			expect(latencyExpression).toContain("http_url = '/api/metrics'");
 
-			// Base filters still present
 			expect(callsExpression).toContain('http_host');
 			expect(callsExpression).toContain("kind_string = 'Client'");
 		});

@@ -62,7 +62,7 @@ export const getDomainNameFilterExpression = (domainName: string): string =>
 export const clientKindExpression = `kind_string = 'Client'`;
 
 /**
- * Converts filters to expression, handling http.url specially by creating (http_url) condition
+ * Converts filters to expression
  * @param filters Filters to convert
  * @param baseExpression Base expression to combine with filters
  * @returns Filter expression string
@@ -73,34 +73,6 @@ export const convertFiltersWithUrlHandling = (
 ): string => {
 	if (!filters) {
 		return baseExpression;
-	}
-
-	// Check if filters contain http.url (SPAN_ATTRIBUTES.URL_PATH)
-	const httpUrlFilter = filters.items?.find(
-		(item) => item.key?.key === SPAN_ATTRIBUTES.URL_PATH,
-	);
-
-	// If http.url filter exists, create modified filters with (http_url)
-	if (httpUrlFilter && httpUrlFilter.value) {
-		// Remove ALL http.url filters from items (guards against duplicates)
-		const otherFilters = filters.items?.filter(
-			(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
-		);
-
-		// Convert to expression first with other filters
-		const {
-			filter: intermediateFilter,
-		} = convertFiltersToExpressionWithExistingQuery(
-			{ ...filters, items: otherFilters || [] },
-			baseExpression,
-		);
-
-		// Add the OR condition for http_url
-		const urlValue = httpUrlFilter.value;
-		const urlCondition = `http_url = '${urlValue}'`;
-		return intermediateFilter.expression.trim()
-			? `${intermediateFilter.expression} AND ${urlCondition}`
-			: urlCondition;
 	}
 
 	const { filter } = convertFiltersToExpressionWithExistingQuery(
@@ -589,13 +561,6 @@ const defaultGroupBy = [
 		isColumn: false,
 		isJSON: false,
 		key: SPAN_ATTRIBUTES.URL_PATH,
-		type: 'attribute',
-	},
-	{
-		dataType: DataTypes.String,
-		isColumn: false,
-		isJSON: false,
-		key: 'http_url',
 		type: 'attribute',
 	},
 	// {
@@ -2785,20 +2750,6 @@ export const getStatusCodeBarChartWidgetData = (
 								op: '=',
 								value: domainName,
 							},
-							...(endPointName
-								? [
-										{
-											id: '8b1be6f0',
-											key: {
-												dataType: DataTypes.String,
-												key: SPAN_ATTRIBUTES.URL_PATH,
-												type: 'tag',
-											},
-											op: '=',
-											value: endPointName,
-										},
-								  ]
-								: []),
 							...(filters?.items || []),
 						],
 						op: 'AND',
