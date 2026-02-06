@@ -86,32 +86,34 @@ describe('MultiIngestionSettings Page', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		// Arrange API response with a metrics daily count limit so the alert button is visible
-		const response: TestAllIngestionKeyProps = {
+		const response = {
 			status: 'success',
-			data: [
-				{
-					name: 'Key One',
-					expires_at: TEST_EXPIRES_AT,
-					value: 'secret',
-					workspace_id: TEST_WORKSPACE_ID,
-					id: 'k1',
-					created_at: TEST_CREATED_UPDATED,
-					updated_at: TEST_CREATED_UPDATED,
-					tags: [],
-					limits: [
-						{
-							id: 'l1',
-							signal: 'metrics',
-							config: { day: { count: 1000 } },
-						},
-					],
-				},
-			],
-			_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			data: {
+				keys: [
+					{
+						name: 'Key One',
+						expires_at: TEST_EXPIRES_AT,
+						value: 'secret',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k1',
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
+						tags: [],
+						limits: [
+							{
+								id: 'l1',
+								signal: 'metrics',
+								config: { day: { count: 1000 } },
+							},
+						],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
 		};
 
 		server.use(
-			rest.get('*/workspaces/me/keys*', (_req, res, ctx) =>
+			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(response)),
 			),
 		);

@@ -297,7 +297,8 @@ function MultiIngestionSettings(): JSX.Element {
 		isError: isSearchError,
 	} = useSearchIngestionKeys(
 		{
-			...paginationParams,
+			page: 1,
+			per_page: 100,
 			name: searchText,
 		},
 		{
@@ -503,7 +504,7 @@ function MultiIngestionSettings(): JSX.Element {
 			.then((values) => {
 				if (user) {
 					const requestPayload = {
-						name: '',
+						name: values.name,
 						tags: updatedTags,
 						expires_at: new Date(dayjs(values.expires_at).endOf('day').toISOString()),
 					};
@@ -1593,7 +1594,7 @@ function MultiIngestionSettings(): JSX.Element {
 					showHeader={false}
 					onChange={handleTableChange}
 					pagination={{
-						pageSize: paginationParams?.per_page,
+						pageSize: isSearching ? 100 : paginationParams?.per_page,
 						hideOnSinglePage: true,
 						showTotal: (total: number, range: number[]): string =>
 							`${range[0]}-${range[1]} of ${total} Ingestion keys`,
