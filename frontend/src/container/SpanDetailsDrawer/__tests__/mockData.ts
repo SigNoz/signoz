@@ -22,7 +22,7 @@ export const mockSpan: Span = {
 	event: [],
 	tagMap: {
 		'http.method': 'GET',
-		'http.url': '/api/test',
+		http_url: '/api/test',
 		'http.status_code': '200',
 	},
 	hasError: false,

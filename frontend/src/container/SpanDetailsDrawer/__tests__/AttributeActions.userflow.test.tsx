@@ -108,7 +108,7 @@ const createMockSpan = (): Span => ({
 	statusMessage: '',
 	tagMap: {
 		'http.method': 'GET',
-		'http.url': '/api/users?page=1',
+		http_url: '/api/users?page=1',
 		'http.status_code': '200',
 		'service.name': 'frontend-service',
 		'span.kind': 'server',
