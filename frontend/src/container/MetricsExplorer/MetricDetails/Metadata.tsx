@@ -7,6 +7,10 @@ import {
 	invalidateGetMetricMetadata,
 	useUpdateMetricMetadata,
 } from 'api/generated/services/metrics';
+import {
+	MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality,
+	MetricsexplorertypesUpdateMetricMetadataRequestDTOType,
+} from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { ResizeTable } from 'components/ResizeTable';
@@ -27,7 +31,11 @@ import {
 import { MetricTypeRenderer } from '../Summary/utils';
 import { METRIC_METADATA_KEYS } from './constants';
 import { MetadataProps, MetricMetadataState, TableFields } from './types';
-import { transformUpdateMetricMetadataRequest } from './utils';
+import {
+	transformMetricType,
+	transformTemporality,
+	transformUpdateMetricMetadataRequest,
+} from './utils';
 
 function Metadata({
 	metricName,
@@ -38,10 +46,11 @@ function Metadata({
 	const [isEditing, setIsEditing] = useState(false);
 
 	const [metricMetadata, setMetricMetadata] = useState<MetricMetadataState>({
-		metricType: MetricType.SUM,
+		type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType.sum,
 		description: '',
-		temporality: undefined,
-		unit: undefined,
+		temporality:
+			MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.unspecified,
+		unit: '',
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -57,9 +66,9 @@ function Metadata({
 	useEffect(() => {
 		if (metadata) {
 			setMetricMetadata({
-				metricType: metadata.metricType,
+				type: transformMetricType(metadata.type),
 				description: metadata.description,
-				temporality: metadata.temporality,
+				temporality: transformTemporality(metadata.temporality),
 				unit: metadata.unit,
 			});
 		}
@@ -91,7 +100,7 @@ function Metadata({
 			if (isErrorMetricMetadata) {
 				return <FieldRenderer field="-" />;
 			}
-			if (key === TableFields.METRIC_TYPE) {
+			if (key === TableFields.TYPE) {
 				return <MetricTypeRenderer type={value as MetricType} />;
 			}
 			let fieldValue = value;
@@ -116,7 +125,7 @@ function Metadata({
 				return renderUneditableField(field.key, field.value);
 			}
 
-			if (field.key === TableFields.METRIC_TYPE) {
+			if (field.key === TableFields.TYPE) {
 				return (
 					<Select
 						data-testid="metric-type-select"
@@ -124,11 +133,11 @@ function Metadata({
 							value: key,
 							label: METRIC_TYPE_LABEL_MAP[key as MetricType],
 						}))}
-						value={metricMetadata.metricType}
+						value={metricMetadata.type}
 						onChange={(value): void => {
 							setMetricMetadata((prev) => ({
 								...prev,
-								metricType: value as MetricType,
+								metricType: value,
 							}));
 						}}
 					/>
@@ -158,7 +167,7 @@ function Metadata({
 						onChange={(value): void => {
 							setMetricMetadata((prev) => ({
 								...prev,
-								temporality: value as Temporality,
+								temporality: value,
 							}));
 						}}
 					/>
@@ -221,7 +230,7 @@ function Metadata({
 				pathParams: {
 					metricName: metricName ?? '',
 				},
-				data: transformUpdateMetricMetadataRequest(metricMetadata),
+				data: transformUpdateMetricMetadataRequest(metricName, metricMetadata),
 			},
 			{
 				onSuccess: (response): void => {
@@ -268,9 +277,8 @@ function Metadata({
 			e.stopPropagation();
 			if (metadata) {
 				setMetricMetadata({
-					metricType: metadata.metricType,
+					type: transformMetricType(metadata.type),
 					description: metadata.description,
-					temporality: metadata.temporality,
 					unit: metadata.unit,
 				});
 			}

@@ -16,7 +16,7 @@ import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Highlights from './Highlights';
 import Metadata from './Metadata';
 import { MetricDetailsProps } from './types';
-import { getMetricDetailsQuery, transformMetricMetadata } from './utils';
+import { getMetricDetailsQuery } from './utils';
 
 import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
@@ -45,19 +45,38 @@ function MetricDetails({
 		},
 	);
 
-	const metadata = transformMetricMetadata(metricMetadataResponse?.data);
+	const metadata = useMemo(() => {
+		if (
+			!metricMetadataResponse ||
+			!metricMetadataResponse.data ||
+			!metricMetadataResponse.data.data
+		) {
+			return null;
+		}
+		const {
+			type,
+			description,
+			unit,
+			temporality,
+			isMonotonic,
+		} = metricMetadataResponse.data.data;
 
-	const showInspectFeature = useMemo(
-		() => isInspectEnabled(metadata?.metricType),
-		[metadata],
-	);
+		return {
+			type,
+			description,
+			unit,
+			temporality,
+			isMonotonic,
+		};
+	}, [metricMetadataResponse]);
+
+	const showInspectFeature = useMemo(() => isInspectEnabled(metadata?.type), [
+		metadata,
+	]);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {
-			const compositeQuery = getMetricDetailsQuery(
-				metricName,
-				metadata?.metricType,
-			);
+			const compositeQuery = getMetricDetailsQuery(metricName, metadata?.type);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
@@ -73,7 +92,7 @@ function MetricDetails({
 				[MetricsExplorerEventKeys.Modal]: 'metric-details',
 			});
 		}
-	}, [metricName, handleExplorerTabChange, metadata?.metricType]);
+	}, [metricName, handleExplorerTabChange, metadata?.type]);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.ModalOpened, {
@@ -140,7 +159,7 @@ function MetricDetails({
 					isErrorMetricMetadata={isErrorMetricMetadata}
 					isLoadingMetricMetadata={isLoadingMetricMetadata}
 				/>
-				<AllAttributes metricName={metricName} metricType={metadata?.metricType} />
+				<AllAttributes metricName={metricName} metricType={metadata?.type} />
 			</div>
 		</Drawer>
 	);
