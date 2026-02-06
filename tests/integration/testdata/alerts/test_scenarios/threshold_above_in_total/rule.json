@@ -13,8 +13,7 @@
           "op": "1",
           "channels": [
             "test channel"
-          ],
-          "targetUnit": ""
+          ]
         }
       ]
     },
@@ -27,12 +26,6 @@
           "spec": {
             "name": "A",
             "signal": "metrics",
-            "source": "",
-            "stepInterval": null,
-            "disabled": false,
-            "filter": {
-              "expression": ""
-            },
             "groupBy": [
               {
                 "name": "service",
@@ -40,9 +33,6 @@
                 "fieldContext": ""
               }
             ],
-            "having": {
-              "expression": ""
-            },
             "aggregations": [
               {
                 "metricName": "request_total_threshold_above_in_total",
@@ -54,9 +44,7 @@
         }
       ]
     },
-    "selectedQueryName": "A",
-    "alertOnAbsent": false,
-    "requireMinPoints": false
+    "selectedQueryName": "A"
   },
   "evaluation": {
     "kind": "rolling",
@@ -82,6 +70,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }

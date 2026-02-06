@@ -13,8 +13,7 @@
           "op": "1",
           "channels": [
             "test channel"
-          ],
-          "targetUnit": ""
+          ]
         }
       ]
     },
@@ -26,16 +25,12 @@
           "type": "promql",
           "spec": {
             "name": "A",
-            "query": "{\"cpu_percent_threshold_above_all_the_time\"}",
-            "disabled": false,
-            "stats": false
+            "query": "{\"cpu_percent_threshold_above_all_the_time\"}"
           }
         }
       ]
     },
-    "selectedQueryName": "A",
-    "alertOnAbsent": false,
-    "requireMinPoints": false
+    "selectedQueryName": "A"
   },
   "evaluation": {
     "kind": "rolling",
@@ -59,6 +54,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }

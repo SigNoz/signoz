@@ -13,8 +13,7 @@
           "op": "2",
           "channels": [
             "test channel"
-          ],
-          "targetUnit": ""
+          ]
         }
       ]
     },
@@ -27,15 +26,6 @@
           "spec": {
             "name": "A",
             "signal": "metrics",
-            "source": "",
-            "stepInterval": null,
-            "disabled": false,
-            "filter": {
-              "expression": ""
-            },
-            "having": {
-              "expression": ""
-            },
             "aggregations": [
               {
                 "metricName": "bytes_per_second_threshold_below_in_total",
@@ -47,9 +37,7 @@
         }
       ]
     },
-    "selectedQueryName": "A",
-    "alertOnAbsent": false,
-    "requireMinPoints": false
+    "selectedQueryName": "A"
   },
   "evaluation": {
     "kind": "rolling",
@@ -73,6 +61,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }

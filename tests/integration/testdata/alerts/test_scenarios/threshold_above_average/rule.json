@@ -28,14 +28,8 @@
           "spec": {
             "name": "A",
             "signal": "traces",
-            "source": "",
-            "stepInterval": null,
-            "disabled": false,
             "filter": {
               "expression": "http.request.path = '/order'"
-            },
-            "having": {
-              "expression": ""
             },
             "aggregations": [
               {
@@ -46,9 +40,7 @@
         }
       ]
     },
-    "selectedQueryName": "A",
-    "alertOnAbsent": false,
-    "requireMinPoints": false
+    "selectedQueryName": "A"
   },
   "evaluation": {
     "kind": "rolling",
@@ -72,6 +64,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }

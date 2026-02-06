@@ -13,8 +13,7 @@
           "op": "2",
           "channels": [
             "test channel"
-          ],
-          "targetUnit": ""
+          ]
         }
       ]
     },
@@ -27,13 +26,8 @@
           "spec": {
             "name": "A",
             "signal": "logs",
-            "stepInterval": null,
-            "disabled": false,
             "filter": {
               "expression": "body CONTAINS 'payment success'"
-            },
-            "having": {
-              "expression": ""
             },
             "aggregations": [
               {
@@ -44,9 +38,7 @@
         }
       ]
     },
-    "selectedQueryName": "A",
-    "alertOnAbsent": false,
-    "requireMinPoints": false
+    "selectedQueryName": "A"
   },
   "evaluation": {
     "kind": "rolling",
@@ -70,6 +62,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }

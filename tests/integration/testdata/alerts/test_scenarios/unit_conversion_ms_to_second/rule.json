@@ -28,15 +28,6 @@
           "spec": {
             "name": "A",
             "signal": "metrics",
-            "source": "",
-            "stepInterval": null,
-            "disabled": false,
-            "filter": {
-              "expression": ""
-            },
-            "having": {
-              "expression": ""
-            },
             "aggregations": [
               {
                 "metricName": "duration_ms_unit_conversion_ms_to_second",
@@ -48,9 +39,7 @@
         }
       ]
     },
-    "selectedQueryName": "A",
-    "alertOnAbsent": false,
-    "requireMinPoints": false
+    "selectedQueryName": "A"
   },
   "evaluation": {
     "kind": "rolling",
@@ -74,6 +63,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }

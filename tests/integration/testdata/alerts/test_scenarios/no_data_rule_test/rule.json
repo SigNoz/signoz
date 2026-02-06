@@ -13,8 +13,7 @@
           "op": "1",
           "channels": [
             "test channel"
-          ],
-          "targetUnit": ""
+          ]
         }
       ]
     },
@@ -27,14 +26,8 @@
           "spec": {
             "name": "A",
             "signal": "metrics",
-            "source": "",
-            "stepInterval": null,
-            "disabled": false,
             "filter": {
               "expression": "service = 'server'"
-            },
-            "having": {
-              "expression": ""
             },
             "aggregations": [
               {
@@ -49,8 +42,7 @@
     },
     "selectedQueryName": "A",
     "alertOnAbsent": true,
-    "absentFor": 1,
-    "requireMinPoints": false
+    "absentFor": 1
   },
   "evaluation": {
     "kind": "rolling",
@@ -74,6 +66,5 @@
     }
   },
   "version": "v5",
-  "schemaVersion": "v2alpha1",
-  "source": ""
+  "schemaVersion": "v2alpha1"
 }
