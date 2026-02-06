@@ -130,7 +130,7 @@ var (
 	SumType          = Type{valuer.NewString("sum")}
 	HistogramType    = Type{valuer.NewString("histogram")}
 	SummaryType      = Type{valuer.NewString("summary")}
-	ExpHistogramType = Type{valuer.NewString("exponential_histogram")}
+	ExpHistogramType = Type{valuer.NewString("exponentialhistogram")}
 	UnspecifiedType  = Type{valuer.NewString("")}
 )
 

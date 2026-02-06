@@ -650,11 +650,11 @@ export interface MetricsexplorertypesMetricAlertDTO {
 	/**
 	 * @type string
 	 */
-	alertId?: string;
+	alertId: string;
 	/**
 	 * @type string
 	 */
-	alertName?: string;
+	alertName: string;
 }
 
 export interface MetricsexplorertypesMetricAlertsResponseDTO {
@@ -662,24 +662,24 @@ export interface MetricsexplorertypesMetricAlertsResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	alerts?: MetricsexplorertypesMetricAlertDTO[] | null;
+	alerts: MetricsexplorertypesMetricAlertDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricAttributeDTO {
 	/**
 	 * @type string
 	 */
-	key?: string;
+	key: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	valueCount?: number;
+	valueCount: number;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	values?: string[] | null;
+	values: string[] | null;
 }
 
 export interface MetricsexplorertypesMetricAttributesRequestDTO {
@@ -691,7 +691,7 @@ export interface MetricsexplorertypesMetricAttributesRequestDTO {
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
 	/**
 	 * @type integer
 	 * @nullable true
@@ -704,31 +704,31 @@ export interface MetricsexplorertypesMetricAttributesResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	attributes?: MetricsexplorertypesMetricAttributeDTO[] | null;
+	attributes: MetricsexplorertypesMetricAttributeDTO[] | null;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	totalKeys?: number;
+	totalKeys: number;
 }
 
 export interface MetricsexplorertypesMetricDashboardDTO {
 	/**
 	 * @type string
 	 */
-	dashboardId?: string;
+	dashboardId: string;
 	/**
 	 * @type string
 	 */
-	dashboardName?: string;
+	dashboardName: string;
 	/**
 	 * @type string
 	 */
-	widgetId?: string;
+	widgetId: string;
 	/**
 	 * @type string
 	 */
-	widgetName?: string;
+	widgetName: string;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
@@ -736,7 +736,7 @@ export interface MetricsexplorertypesMetricDashboardsResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	dashboards?: MetricsexplorertypesMetricDashboardDTO[] | null;
+	dashboards: MetricsexplorertypesMetricDashboardDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricHighlightsResponseDTO {
@@ -744,74 +744,96 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	activeTimeSeries?: number;
+	activeTimeSeries: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	dataPoints?: number;
+	dataPoints: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	lastReceived?: number;
+	lastReceived: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	totalTimeSeries?: number;
+	totalTimeSeries: number;
 }
 
+export enum MetricsexplorertypesMetricMetadataDTOTemporality {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetricsexplorertypesMetricMetadataDTOType {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface MetricsexplorertypesMetricMetadataDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type boolean
 	 */
-	isMonotonic?: boolean;
+	isMonotonic: boolean;
+	/**
+	 * @enum delta,cumulative,unspecified
+	 * @type string
+	 */
+	temporality: MetricsexplorertypesMetricMetadataDTOTemporality;
+	/**
+	 * @enum gauge,sum,histogram,summary,exponentialhistogram
+	 * @type string
+	 */
+	type: MetricsexplorertypesMetricMetadataDTOType;
 	/**
 	 * @type string
 	 */
-	temporality?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	unit: string;
 }
 
+export enum MetricsexplorertypesStatDTOType {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	samples?: number;
+	samples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	timeseries?: number;
+	timeseries: number;
+	/**
+	 * @enum gauge,sum,histogram,summary,exponentialhistogram
+	 * @type string
+	 */
+	type: MetricsexplorertypesStatDTOType;
 	/**
 	 * @type string
 	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	unit: string;
 }
 
 export interface MetricsexplorertypesStatsRequestDTO {
@@ -819,12 +841,12 @@ export interface MetricsexplorertypesStatsRequestDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	end?: number;
+	end: number;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type integer
 	 */
-	limit?: number;
+	limit: number;
 	/**
 	 * @type integer
 	 */
@@ -834,7 +856,7 @@ export interface MetricsexplorertypesStatsRequestDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	start?: number;
+	start: number;
 }
 
 export interface MetricsexplorertypesStatsResponseDTO {
@@ -842,51 +864,56 @@ export interface MetricsexplorertypesStatsResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	metrics?: MetricsexplorertypesStatDTO[] | null;
+	metrics: MetricsexplorertypesStatDTO[] | null;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	total?: number;
+	total: number;
 }
 
 export interface MetricsexplorertypesTreemapEntryDTO {
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	percentage?: number;
+	percentage: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	totalValue?: number;
+	totalValue: number;
 }
 
+export enum MetricsexplorertypesTreemapRequestDTOMode {
+	timeseries = 'timeseries',
+	samples = 'samples',
+}
 export interface MetricsexplorertypesTreemapRequestDTO {
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	end?: number;
+	end: number;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type integer
 	 */
-	limit?: number;
+	limit: number;
 	/**
+	 * @enum timeseries,samples
 	 * @type string
 	 */
-	mode?: string;
+	mode: MetricsexplorertypesTreemapRequestDTOMode;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	start?: number;
+	start: number;
 }
 
 export interface MetricsexplorertypesTreemapResponseDTO {
@@ -894,39 +921,53 @@ export interface MetricsexplorertypesTreemapResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	samples?: MetricsexplorertypesTreemapEntryDTO[] | null;
+	samples: MetricsexplorertypesTreemapEntryDTO[] | null;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	timeseries?: MetricsexplorertypesTreemapEntryDTO[] | null;
+	timeseries: MetricsexplorertypesTreemapEntryDTO[] | null;
 }
 
+export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOType {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type boolean
 	 */
-	isMonotonic?: boolean;
+	isMonotonic: boolean;
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
+	/**
+	 * @enum delta,cumulative,unspecified
+	 * @type string
+	 */
+	temporality: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality;
+	/**
+	 * @enum gauge,sum,histogram,summary,exponentialhistogram
+	 * @type string
+	 */
+	type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType;
 	/**
 	 * @type string
 	 */
-	temporality?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	unit: string;
 }
 
 export interface PreferencetypesPreferenceDTO {
@@ -1934,7 +1975,7 @@ export type GetMetricAlertsParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricAlerts200 = {
@@ -1950,7 +1991,7 @@ export type GetMetricDashboardsParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricDashboards200 = {
@@ -1966,7 +2007,7 @@ export type GetMetricHighlightsParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricHighlights200 = {
@@ -1993,7 +2034,7 @@ export type GetMetricMetadataParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricMetadata200 = {
