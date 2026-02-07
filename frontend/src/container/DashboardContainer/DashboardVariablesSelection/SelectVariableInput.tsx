@@ -122,7 +122,14 @@ function SelectVariableInput({
 
 			{errorMessage && (
 				<span style={errorIconStyle}>
-					<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
+					<Popover
+						placement="top"
+						content={
+							<Typography style={{ whiteSpace: 'pre-wrap' }}>
+								{errorMessage}
+							</Typography>
+						}
+					>
 						<WarningOutlined style={{ color: orange[5] }} />
 					</Popover>
 				</span>
