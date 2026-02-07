@@ -81,6 +81,13 @@ export default function Legend({
 		[focusedSeriesIndex, position],
 	);
 
+	const isEmptyState = useMemo(() => {
+		if (position !== LegendPosition.RIGHT || !legendSearchQuery.trim()) {
+			return false;
+		}
+		return visibleLegendItems.length === 0;
+	}, [position, legendSearchQuery, visibleLegendItems]);
+
 	return (
 		<div
 			ref={legendContainerRef}
@@ -103,15 +110,21 @@ export default function Legend({
 					/>
 				</div>
 			)}
-			<VirtuosoGrid
-				className={cx(
-					'legend-virtuoso-container',
-					`legend-virtuoso-container-${position.toLowerCase()}`,
-					{ 'legend-virtuoso-container-single-row': isSingleRow },
-				)}
-				data={visibleLegendItems}
-				itemContent={(_, item): JSX.Element => renderLegendItem(item)}
-			/>
+			{isEmptyState ? (
+				<div className="legend-empty-state">
+					No series found matching &quot;{legendSearchQuery}&quot;
+				</div>
+			) : (
+				<VirtuosoGrid
+					className={cx(
+						'legend-virtuoso-container',
+						`legend-virtuoso-container-${position.toLowerCase()}`,
+						{ 'legend-virtuoso-container-single-row': isSingleRow },
+					)}
+					data={visibleLegendItems}
+					itemContent={(_, item): JSX.Element => renderLegendItem(item)}
+				/>
+			)}
 		</div>
 	);
 }

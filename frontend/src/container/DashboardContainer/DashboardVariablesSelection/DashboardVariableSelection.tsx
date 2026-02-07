@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
@@ -7,7 +7,6 @@ import {
 	useDashboardVariablesSelector,
 } from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { AppState } from 'store/reducers';
@@ -22,7 +21,6 @@ import './DashboardVariableSelection.styles.scss';
 
 function DashboardVariableSelection(): JSX.Element | null {
 	const {
-		selectedDashboard,
 		setSelectedDashboard,
 		updateLocalStorageDashboardVariables,
 		variablesToGetUpdated,
@@ -52,34 +50,36 @@ function DashboardVariableSelection(): JSX.Element | null {
 		);
 	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
-	// this handles the case where the dependency order changes i.e. variable list updated via creation or deletion etc. and we need to refetch the variables
-	// also trigger when the global time changes
-	useEffect(
-		() => {
-			if (!isEmpty(dependencyData?.order)) {
-				setVariablesToGetUpdated(dependencyData?.order || []);
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[JSON.stringify(dependencyData?.order), minTime, maxTime],
+	// Memoize the order key to avoid unnecessary triggers
+	const dependencyOrderKey = useMemo(
+		() => dependencyData?.order?.join(',') ?? '',
+		[dependencyData?.order],
 	);
+
+	// Trigger refetch when dependency order changes or global time changes
+	useEffect(() => {
+		if (dependencyData?.order && dependencyData.order.length > 0) {
+			setVariablesToGetUpdated(dependencyData?.order || []);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dependencyOrderKey, minTime, maxTime]);
 
 	// Performance optimization: For dynamic variables with allSelected=true, we don't store
 	// individual values in localStorage since we can always derive them from available options.
 	// This makes localStorage much lighter and more efficient.
-	const onValueUpdate = (
-		name: string,
-		id: string,
-		value: IDashboardVariable['selectedValue'],
-		allSelected: boolean,
-		haveCustomValuesSelected?: boolean,
-		// eslint-disable-next-line sonarjs/cognitive-complexity
-	): void => {
-		if (id) {
+	const onValueUpdate = useCallback(
+		(
+			name: string,
+			id: string,
+			value: IDashboardVariable['selectedValue'],
+			allSelected: boolean,
+			haveCustomValuesSelected?: boolean,
+			// eslint-disable-next-line sonarjs/cognitive-complexity
+		): void => {
 			// For dynamic variables, only store in localStorage when NOT allSelected
 			// This makes localStorage much lighter by avoiding storing all individual values
-			const variable = dashboardVariables?.[id] || dashboardVariables?.[name];
-			const isDynamic = variable?.type === 'DYNAMIC';
+			const variable = dashboardVariables[id] || dashboardVariables[name];
+			const isDynamic = variable.type === 'DYNAMIC';
 			updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
 
 			if (allSelected) {
@@ -88,41 +88,39 @@ function DashboardVariableSelection(): JSX.Element | null {
 				updateUrlVariable(name || id, value);
 			}
 
-			if (selectedDashboard) {
-				setSelectedDashboard((prev) => {
-					if (prev) {
-						const oldVariables = prev?.data.variables;
-						// this is added to handle case where we have two different
-						// schemas for variable response
-						if (oldVariables?.[id]) {
-							oldVariables[id] = {
-								...oldVariables[id],
-								selectedValue: value,
-								allSelected,
-								haveCustomValuesSelected,
-							};
-						}
-						if (oldVariables?.[name]) {
-							oldVariables[name] = {
-								...oldVariables[name],
-								selectedValue: value,
-								allSelected,
-								haveCustomValuesSelected,
-							};
-						}
-						return {
-							...prev,
-							data: {
-								...prev?.data,
-								variables: {
-									...oldVariables,
-								},
-							},
+			setSelectedDashboard((prev) => {
+				if (prev) {
+					const oldVariables = { ...prev?.data.variables };
+					// this is added to handle case where we have two different
+					// schemas for variable response
+					if (oldVariables?.[id]) {
+						oldVariables[id] = {
+							...oldVariables[id],
+							selectedValue: value,
+							allSelected,
+							haveCustomValuesSelected,
 						};
 					}
-					return prev;
-				});
-			}
+					if (oldVariables?.[name]) {
+						oldVariables[name] = {
+							...oldVariables[name],
+							selectedValue: value,
+							allSelected,
+							haveCustomValuesSelected,
+						};
+					}
+					return {
+						...prev,
+						data: {
+							...prev?.data,
+							variables: {
+								...oldVariables,
+							},
+						},
+					};
+				}
+				return prev;
+			});
 
 			if (dependencyData) {
 				const updatedVariables: string[] = [];
@@ -138,11 +136,20 @@ function DashboardVariableSelection(): JSX.Element | null {
 			} else {
 				setVariablesToGetUpdated((prev) => prev.filter((v) => v !== name));
 			}
-		}
-	};
+		},
+		[
+			// This can be removed
+			dashboardVariables,
+			updateLocalStorageDashboardVariables,
+			dependencyData,
+			updateUrlVariable,
+			setSelectedDashboard,
+			setVariablesToGetUpdated,
+		],
+	);
 
 	return (
-		<Row style={{ display: 'flex', gap: '12px' }}>
+		<Row className="dashboard-variables-selection-container">
 			{sortedVariablesArray.map((variable) => {
 				const key = `${variable.name}${variable.id}${variable.order}`;
 
