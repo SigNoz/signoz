@@ -185,6 +185,10 @@ func (provider *provider) SetManagedRoleTransactions(context.Context, valuer.UUI
 	return nil
 }
 
+func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
+	return provider.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil))
+}
+
 func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *roletypes.Role) error {
 	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
 }

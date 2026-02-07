@@ -504,17 +504,7 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	}
 
 	managedRoles := roletypes.NewManagedRoles(organization.ID)
-	err = module.authz.Grant(ctx, organization.ID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil))
-	if err != nil {
-		return nil, err
-	}
-
-	err = module.authz.Grant(ctx, organization.ID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), organization.ID, nil))
-	if err != nil {
-		return nil, err
-	}
-
-	err = module.authz.SetManagedRoleTransactions(ctx, organization.ID)
+	err = module.authz.CreateManagedUserRoleTransactions(ctx, organization.ID, user.ID)
 	if err != nil {
 		return nil, err
 	}

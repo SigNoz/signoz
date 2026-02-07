@@ -77,8 +77,8 @@ type AuthZ interface {
 	// Bootstrap the managed roles.
 	CreateManagedRoles(context.Context, valuer.UUID, []*roletypes.Role) error
 
-	// // Bootstrap the transactions for managed roles
-	SetManagedRoleTransactions(context.Context, valuer.UUID) error
+	// Bootstrap managed roles transactions and user assignments
+	CreateManagedUserRoleTransactions(context.Context, valuer.UUID, valuer.UUID) error
 }
 
 type RegisterTypeable interface {

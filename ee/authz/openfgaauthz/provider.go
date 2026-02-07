@@ -118,36 +118,20 @@ func (provider *provider) CreateManagedRoles(ctx context.Context, orgID valuer.U
 	return provider.pkgAuthzService.CreateManagedRoles(ctx, orgID, managedRoles)
 }
 
-func (provider *provider) SetManagedRoleTransactions(ctx context.Context, orgID valuer.UUID) error {
-	transactionsByRole := make(map[string][]*authtypes.Transaction)
-	for _, register := range provider.registry {
-		for roleName, txns := range register.MustGetManagedRoleTransactions() {
-			transactionsByRole[roleName] = append(transactionsByRole[roleName], txns...)
-		}
-
-	}
-
+func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for roleName, transactions := range transactionsByRole {
-		for _, txn := range transactions {
-			typeable := authtypes.MustNewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
-			txnTuples, err := typeable.Tuples(
-				authtypes.MustNewSubject(
-					authtypes.TypeableRole,
-					roleName,
-					orgID,
-					&authtypes.RelationAssignee,
-				),
-				txn.Relation,
-				[]authtypes.Selector{txn.Object.Selector},
-				orgID,
-			)
-			if err != nil {
-				return err
-			}
-			tuples = append(tuples, txnTuples...)
-		}
+
+	grantTuples, err := provider.getManagedRoleGrantTuples(orgID, userID)
+	if err != nil {
+		return err
 	}
+	tuples = append(tuples, grantTuples...)
+
+	managedRoleTuples, err := provider.getManagedRoleTransactionTuples(orgID)
+	if err != nil {
+		return err
+	}
+	tuples = append(tuples, managedRoleTuples...)
 
 	return provider.Write(ctx, tuples, nil)
 }
@@ -284,4 +268,73 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 
 func (provider *provider) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{authtypes.TypeableRole, roletypes.TypeableResourcesRoles}
+}
+
+func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+	tuples := []*openfgav1.TupleKey{}
+
+	// Grant the admin role to the user
+	adminSubject := authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil)
+	adminTuple, err := authtypes.TypeableRole.Tuples(
+		adminSubject,
+		authtypes.RelationAssignee,
+		[]authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozAdminRoleName),
+		},
+		orgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	tuples = append(tuples, adminTuple...)
+
+	// Grant the admin role to the anonymous user
+	anonymousSubject := authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
+	anonymousTuple, err := authtypes.TypeableRole.Tuples(
+		anonymousSubject,
+		authtypes.RelationAssignee,
+		[]authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozAnonymousRoleName),
+		},
+		orgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	tuples = append(tuples, anonymousTuple...)
+
+	return tuples, nil
+}
+
+func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+	transactionsByRole := make(map[string][]*authtypes.Transaction)
+	for _, register := range provider.registry {
+		for roleName, txns := range register.MustGetManagedRoleTransactions() {
+			transactionsByRole[roleName] = append(transactionsByRole[roleName], txns...)
+		}
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0)
+	for roleName, transactions := range transactionsByRole {
+		for _, txn := range transactions {
+			typeable := authtypes.MustNewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
+			txnTuples, err := typeable.Tuples(
+				authtypes.MustNewSubject(
+					authtypes.TypeableRole,
+					roleName,
+					orgID,
+					&authtypes.RelationAssignee,
+				),
+				txn.Relation,
+				[]authtypes.Selector{txn.Object.Selector},
+				orgID,
+			)
+			if err != nil {
+				return nil, err
+			}
+			tuples = append(tuples, txnTuples...)
+		}
+	}
+
+	return tuples, nil
 }
