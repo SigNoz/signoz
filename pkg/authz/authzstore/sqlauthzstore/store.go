@@ -1,4 +1,4 @@
-package openfgaauthz
+package sqlauthzstore
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(sqlstore sqlstore.SQLStore) roletypes.Store {
+func NewSqlAuthzStore(sqlstore sqlstore.SQLStore) roletypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 

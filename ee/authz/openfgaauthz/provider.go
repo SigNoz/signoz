@@ -4,7 +4,9 @@ import (
 	"context"
 	"slices"
 
+	"github.com/SigNoz/signoz/ee/authz/openfgaserver"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/authz/authzstore/sqlauthzstore"
 	pkgopenfgaauthz "github.com/SigNoz/signoz/pkg/authz/openfgaauthz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -19,6 +21,7 @@ import (
 
 type provider struct {
 	pkgAuthzService authz.AuthZ
+	openfgaServer   *openfgaserver.Server
 	licensing       licensing.Licensing
 	store           roletypes.Store
 	registry        []authz.RegisterTypeable
@@ -37,73 +40,49 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		return nil, err
 	}
 
+	openfgaServer, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema)
+	if err != nil {
+		return nil, err
+	}
+
 	return &provider{
 		pkgAuthzService: pkgAuthzService,
+		openfgaServer:   openfgaServer,
 		licensing:       licensing,
-		store:           pkgopenfgaauthz.NewStore(sqlstore),
+		store:           sqlauthzstore.NewSqlAuthzStore(sqlstore),
 	}, nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	return provider.pkgAuthzService.Start(ctx)
+	return provider.openfgaServer.Start(ctx)
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
-	return provider.pkgAuthzService.Stop(ctx)
+	return provider.openfgaServer.Stop(ctx)
 }
 
 func (provider *provider) Check(ctx context.Context, tuple *openfgav1.TupleKey) error {
-	return provider.pkgAuthzService.Check(ctx, tuple)
+	return provider.openfgaServer.Check(ctx, tuple)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
-	if err != nil {
-		return err
-	}
-
-	tuples, err := typeable.Tuples(subject, relation, selectors, orgID)
-	if err != nil {
-		return err
-	}
-
-	err = provider.BatchCheck(ctx, tuples)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+	return provider.openfgaServer.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
-	if err != nil {
-		return err
-	}
-
-	tuples, err := typeable.Tuples(subject, relation, selectors, orgID)
-	if err != nil {
-		return err
-	}
-
-	err = provider.BatchCheck(ctx, tuples)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+	return provider.openfgaServer.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
 func (provider *provider) BatchCheck(ctx context.Context, tuples []*openfgav1.TupleKey) error {
-	return provider.pkgAuthzService.BatchCheck(ctx, tuples)
+	return provider.openfgaServer.BatchCheck(ctx, tuples)
 }
 
 func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
-	return provider.pkgAuthzService.ListObjects(ctx, subject, relation, typeable)
+	return provider.openfgaServer.ListObjects(ctx, subject, relation, typeable)
 }
 
 func (provider *provider) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
-	return provider.pkgAuthzService.Write(ctx, additions, deletions)
+	return provider.openfgaServer.Write(ctx, additions, deletions)
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*roletypes.Role, error) {
