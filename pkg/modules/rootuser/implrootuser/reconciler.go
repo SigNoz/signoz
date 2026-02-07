@@ -66,19 +66,32 @@ func (r *reconciler) Reconcile(ctx context.Context) error {
 }
 
 func (r *reconciler) reconcileRootUserForOrg(ctx context.Context, org *types.Organization) error {
+
+	// try creating the user optimisitically
+	err := r.createRootUserForOrg(ctx, org.ID)
+	if err == nil {
+		// success - yay
+		return nil
+	}
+
+	// if error is not "alredy exists", something really went wrong
+	if !errors.Asc(err, types.ErrCodeRootUserAlreadyExists) {
+		return err
+	}
+
+	// here means the root user already exists - just make sure it is configured correctly
+	// this could be the case where the root user was created by some other means
+	// either previously or by some other instance of signoz
+	r.settings.Logger().InfoContext(ctx, "reconciler: root user already exists for organization", "organization_id", org.ID, "organization_name", org.Name)
+
 	// check if the root user already exists for the org
 	existingRootUser, err := r.store.GetByOrgID(ctx, org.ID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
 
-	if existingRootUser != nil {
-		// make updates to the existing root user if needed
-		return r.updateRootUserForOrg(ctx, org.ID, existingRootUser)
-	}
-
-	// create a new root user
-	return r.createRootUserForOrg(ctx, org.ID)
+	// make updates to the existing root user if needed
+	return r.updateRootUserForOrg(ctx, org.ID, existingRootUser)
 }
 
 func (r *reconciler) createRootUserForOrg(ctx context.Context, orgID valuer.UUID) error {

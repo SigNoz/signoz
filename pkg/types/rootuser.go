@@ -53,21 +53,21 @@ type RootUserStore interface {
 	// Creates a new root user. Returns ErrCodeRootUserAlreadyExists if a root user already exists for the organization.
 	Create(ctx context.Context, rootUser *RootUser) error
 
-	// Gets the root user by organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	// Gets the root user by organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist.
 	GetByOrgID(ctx context.Context, orgID valuer.UUID) (*RootUser, error)
 
-	// Gets a root user by email and organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	// Gets a root user by email and organization ID. Returns ErrCodeRootUserNotFound if a root user does not exist.
 	GetByEmailAndOrgID(ctx context.Context, orgID valuer.UUID, email valuer.Email) (*RootUser, error)
 
-	// Gets a root user by organization ID and ID. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	// Gets a root user by organization ID and ID. Returns ErrCodeRootUserNotFound if a root user does not exist.
 	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*RootUser, error)
 
-	// Gets all root users by email and organization IDs. Returns ErrCodeRootUserNotFound if a root user does not exist for the organization.
+	// Gets all root users by email and organization IDs. Returns ErrCodeRootUserNotFound if a root user does not exist.
 	GetByEmailAndOrgIDs(ctx context.Context, orgIDs []valuer.UUID, email valuer.Email) ([]*RootUser, error)
 
 	// Updates the password of a root user. Returns ErrCodeRootUserNotFound if a root user does not exist.
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, rootUser *RootUser) error
 
-	// Checks if a root user exists for an organization. Returns true if a root user exists for the organization, false otherwise.
+	// Checks if a root user exists for an organization. Returns true if a root user exists, false otherwise.
 	ExistsByOrgID(ctx context.Context, orgID valuer.UUID) (bool, error)
 }

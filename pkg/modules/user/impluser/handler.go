@@ -232,7 +232,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 
 	// ROOT USER
 	if h.rootUserModule != nil {
-		rootUser, err := h.rootUserModule.GetByEmailAndOrgID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email))
+		rootUser, err := h.rootUserModule.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 		if err != nil && !errors.Asc(err, types.ErrCodeRootUserNotFound) {
 			// something else is wrong report back in UI
 			render.Error(w, err)
