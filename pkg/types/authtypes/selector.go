@@ -30,7 +30,7 @@ var (
 )
 
 var (
-	wildCardSelectorString = "*"
+	WildCardSelectorString = "*"
 )
 
 type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]Selector, error)

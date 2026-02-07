@@ -27,20 +27,20 @@ type provider struct {
 	registry        []authz.RegisterTypeable
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, licensing licensing.Licensing) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, licensing licensing.Licensing, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, licensing)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, licensing, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, licensing licensing.Licensing) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, licensing licensing.Licensing, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
 	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema)
 	pkgAuthzService, err := pkgOpenfgaAuthzProvider.New(ctx, settings, config)
 	if err != nil {
 		return nil, err
 	}
 
-	openfgaServer, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema)
+	openfgaServer, err := openfgaserver.NewOpenfgaServer(ctx, pkgAuthzService)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +50,7 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 		openfgaServer:   openfgaServer,
 		licensing:       licensing,
 		store:           sqlauthzstore.NewSqlAuthzStore(sqlstore),
+		registry:        registry,
 	}, nil
 }
 
@@ -115,6 +116,40 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, name st
 
 func (provider *provider) CreateManagedRoles(ctx context.Context, orgID valuer.UUID, managedRoles []*roletypes.Role) error {
 	return provider.pkgAuthzService.CreateManagedRoles(ctx, orgID, managedRoles)
+}
+
+func (provider *provider) SetManagedRoleTransactions(ctx context.Context, orgID valuer.UUID) error {
+	transactionsByRole := make(map[string][]*authtypes.Transaction)
+	for _, register := range provider.registry {
+		for roleName, txns := range register.MustGetManagedRoleTransactions() {
+			transactionsByRole[roleName] = append(transactionsByRole[roleName], txns...)
+		}
+
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0)
+	for roleName, transactions := range transactionsByRole {
+		for _, txn := range transactions {
+			typeable := authtypes.MustNewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
+			txnTuples, err := typeable.Tuples(
+				authtypes.MustNewSubject(
+					authtypes.TypeableRole,
+					roleName,
+					orgID,
+					&authtypes.RelationAssignee,
+				),
+				txn.Relation,
+				[]authtypes.Selector{txn.Object.Selector},
+				orgID,
+			)
+			if err != nil {
+				return err
+			}
+			tuples = append(tuples, txnTuples...)
+		}
+	}
+
+	return provider.Write(ctx, tuples, nil)
 }
 
 func (provider *provider) Create(ctx context.Context, orgID valuer.UUID, role *roletypes.Role) error {

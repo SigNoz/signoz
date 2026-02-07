@@ -509,6 +509,16 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 		return nil, err
 	}
 
+	err = module.authz.Grant(ctx, organization.ID, roletypes.SigNozAnonymousRoleName, authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), organization.ID, nil))
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.authz.SetManagedRoleTransactions(ctx, organization.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context, orgID valuer.UUID) error {
 			err = module.authz.CreateManagedRoles(ctx, orgID, managedRoles)

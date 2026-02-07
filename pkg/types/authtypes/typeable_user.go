@@ -12,7 +12,6 @@ type typeableUser struct{}
 func (typeableUser *typeableUser) Tuples(subject string, relation Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
-	selectors = append(selectors, MustNewSelector(TypeUser, wildCardSelectorString))
 	for _, selector := range selectors {
 		object := typeableUser.Prefix(orgID) + "/" + selector.String()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})

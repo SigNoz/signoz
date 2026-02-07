@@ -65,19 +65,19 @@ func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, co
 }
 
 func (server *Server) Start(ctx context.Context) error {
-	storeId, err := server.getOrCreateStore(ctx, openfgaDefaultStore.StringValue())
+	storeID, err := server.getOrCreateStore(ctx, openfgaDefaultStore.StringValue())
 	if err != nil {
 		return err
 	}
 
-	modelID, err := server.getOrCreateModel(ctx, storeId)
+	modelID, err := server.getOrCreateModel(ctx, storeID)
 	if err != nil {
 		return err
 	}
 
 	server.mtx.Lock()
 	server.modelID = modelID
-	server.storeID = storeId
+	server.storeID = storeID
 	server.mtx.Unlock()
 
 	<-server.stopChan

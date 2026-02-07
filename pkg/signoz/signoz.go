@@ -87,7 +87,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing) factory.ProviderFactory[authz.AuthZ, authz.Config],
+	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 ) (*SigNoz, error) {
@@ -291,8 +291,14 @@ func New(
 		return nil, err
 	}
 
+	// Initialize query parser (needed for dashboard module)
+	queryParser := queryparser.New(providerSettings)
+
+	// Initialize dashboard module (needed for authz registry)
+	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
+
 	// Initialize authz
-	authzProviderFactory := authzCallback(ctx, sqlstore, licensing)
+	authzProviderFactory := authzCallback(ctx, sqlstore, licensing, dashboard)
 	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
 		return nil, err
@@ -321,9 +327,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize query parser
-	queryParser := queryparser.New(providerSettings)
 
 	// Initialize ruler from the available ruler provider factories
 	ruler, err := factory.NewProviderFromNamedMap(
@@ -384,7 +387,6 @@ func New(
 	}
 
 	// Initialize all modules
-	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard)
 
 	// Initialize all handlers for the modules

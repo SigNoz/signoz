@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -99,6 +100,7 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 
 	return []authtypes.Selector{
 		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
+		authtypes.MustNewSelector(authtypes.TypeMetaResource, authtypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
 }
 
@@ -198,10 +200,6 @@ func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, m
 	return module.pkgDashboardModule.GetByMetricNames(ctx, orgID, metricNames)
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return module.pkgDashboardModule.MustGetTypeables()
-}
-
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.List(ctx, orgID)
 }
@@ -212,6 +210,27 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
+}
+
+func (module *module) MustGetTypeables() []authtypes.Typeable {
+	return module.pkgDashboardModule.MustGetTypeables()
+}
+
+func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
+	return map[string][]*authtypes.Transaction{
+		roletypes.SigNozAnonymousRoleName: {
+			{
+				Relation: authtypes.RelationRead,
+				Object: *authtypes.MustNewObject(
+					authtypes.Resource{
+						Type: authtypes.TypeMetaResource,
+						Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
+					},
+					authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
+				),
+			},
+		},
+	}
 }
 
 func (module *module) deletePublic(ctx context.Context, _ valuer.UUID, dashboardID valuer.UUID) error {

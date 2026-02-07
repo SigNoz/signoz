@@ -67,40 +67,6 @@ def test_create_and_get_public_dashboard(
     assert response.json()["status"] == "success"
     assert response.json()["data"]["timeRangeEnabled"] is True
     assert response.json()["data"]["defaultTimeRange"] == "10s"
-    public_path = response.json()["data"]["publicPath"]
-    assert public_path.startswith("/public/dashboard/")
-    public_dashboard_id = public_path.split("/public/dashboard/")[-1]
-
-    row = None
-    with signoz.sqlstore.conn.connect() as conn:
-        # verify the role creation
-        result = conn.execute(
-            sql.text("SELECT * FROM role WHERE name = :role"),
-            {"role": "signoz-anonymous"},
-        )
-        row = result.mappings().fetchone()
-        assert row is not None
-        assert row["name"] == "signoz-anonymous"
-
-        # verify the tuple creation for role
-        tuple_object_id = f"organization/{row["org_id"]}/role/signoz-anonymous"
-        tuple_result = conn.execute(
-            sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
-            {"object_id": tuple_object_id},
-        )
-        tuple_row = tuple_result.fetchone()
-        assert tuple_row is not None
-
-        # verify the tuple creation for public-dashboard
-        tuple_object_id = (
-            f"organization/{row["org_id"]}/public-dashboard/{public_dashboard_id}"
-        )
-        tuple_result = conn.execute(
-            sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
-            {"object_id": tuple_object_id},
-        )
-        tuple_row = tuple_result.fetchone()
-        assert tuple_row is not None
 
 
 def test_public_dashboard_widget_query_range(
