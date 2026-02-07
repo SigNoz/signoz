@@ -141,7 +141,7 @@ def test_anonymous_user_signoz_anonymous_assignment(
         
         if request.config.getoption("--sqlstore-provider") == 'sqlite':
             user_object_id = f"organization/{org_id}/anonymous/{ANONYMOUS_USER_ID}"
-            assert tuple_row["user_object_type"] == "user"
+            assert tuple_row["user_object_type"] == "anonymous"
             assert tuple_row["user_object_id"] == user_object_id
         else:
             _user = f"anonymous:organization/{org_id}/anonymous/{ANONYMOUS_USER_ID}"
