@@ -5,25 +5,32 @@ export interface ChartDimensions {
 	height: number;
 	legendWidth: number;
 	legendHeight: number;
-	legendsPerSet: number;
+	averageLegendWidth: number;
 }
 
 const AVG_CHAR_WIDTH = 8;
+const LEGEND_WIDTH_PERCENTILE = 0.85;
 const DEFAULT_AVG_LABEL_LENGTH = 15;
-const LEGEND_GAP = 16;
+const BASE_LEGEND_WIDTH = 16;
 const LEGEND_PADDING = 12;
-const LEGEND_LINE_HEIGHT = 36;
+const LEGEND_LINE_HEIGHT = 28;
 
 /**
- * Average text width from series labels (for legendsPerSet).
+ * Calculates the average width of the legend items based on the labels of the series.
+ * @param legends - The labels of the series.
+ * @returns The average width of the legend items.
  */
 export function calculateAverageLegendWidth(legends: string[]): number {
 	if (legends.length === 0) {
-		return DEFAULT_AVG_LABEL_LENGTH;
+		return DEFAULT_AVG_LABEL_LENGTH * AVG_CHAR_WIDTH;
 	}
-	const averageLabelLength =
-		legends.reduce((sum, l) => sum + l.length, 0) / legends.length;
-	return averageLabelLength * AVG_CHAR_WIDTH;
+
+	const lengths = legends.map((l) => l.length).sort((a, b) => a - b);
+
+	const index = Math.ceil(LEGEND_WIDTH_PERCENTILE * lengths.length) - 1;
+	const percentileLength = lengths[Math.max(0, index)];
+
+	return BASE_LEGEND_WIDTH + percentileLength * AVG_CHAR_WIDTH;
 }
 
 /**
@@ -64,7 +71,7 @@ export function calculateChartDimensions({
 			height: 0,
 			legendWidth: 0,
 			legendHeight: 0,
-			legendsPerSet: 0,
+			averageLegendWidth: 0,
 		};
 	}
 
@@ -85,13 +92,15 @@ export function calculateChartDimensions({
 			legendWidth: rightLegendWidth,
 			legendHeight: containerHeight,
 			// Single vertical list on the right.
-			legendsPerSet: 1,
+			averageLegendWidth: rightLegendWidth,
 		};
 	}
 
 	const legendRowHeight = LEGEND_LINE_HEIGHT + LEGEND_PADDING;
 
-	const legendItemWidth = Math.min(approxLegendItemWidth, 400);
+	const legendItemWidth = Math.ceil(
+		Math.min(approxLegendItemWidth, MAX_LEGEND_WIDTH),
+	);
 	const legendItemsPerRow = Math.max(
 		1,
 		Math.floor((containerWidth - LEGEND_PADDING * 2) / legendItemWidth),
@@ -114,17 +123,11 @@ export function calculateChartDimensions({
 		maxAllowedLegendHeight,
 	);
 
-	// How many legend items per row in the Legend component.
-	const legendsPerSet = Math.ceil(
-		(containerWidth + LEGEND_GAP) /
-			(Math.min(MAX_LEGEND_WIDTH, approxLegendItemWidth) + LEGEND_GAP),
-	);
-
 	return {
 		width: containerWidth,
 		height: Math.max(0, containerHeight - bottomLegendHeight),
 		legendWidth: containerWidth,
 		legendHeight: bottomLegendHeight,
-		legendsPerSet,
+		averageLegendWidth: legendItemWidth,
 	};
 }

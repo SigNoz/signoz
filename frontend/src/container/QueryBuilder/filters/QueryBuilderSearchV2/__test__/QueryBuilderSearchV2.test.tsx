@@ -12,7 +12,7 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
-import { IUseDashboardVariablesReturn } from 'hooks/dashboard/useDashboardVariables';
+import { IUseDashboardVariablesReturn } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
