@@ -62,7 +62,7 @@ func (c Config) Validate() error {
 }
 
 func (r RootUserConfig) Validate() error {
-	if (r.Email == "") || (r.Password == "") {
+	if (r.Email == "") != (r.Password == "") {
 		// all or nothing case
 		return errors.Newf(
 			errors.TypeInvalidInput,
