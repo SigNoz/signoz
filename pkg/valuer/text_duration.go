@@ -18,11 +18,6 @@ type TextDuration struct {
 	value time.Duration
 }
 
-// NewTextDuration returns a TextDuration from a parsed duration value.
-func NewTextDuration(d time.Duration) TextDuration {
-	return TextDuration{value: d}
-}
-
 // ParseTextDuration parses a human-readable duration string.
 // This preserves the raw text so that it can be serialized back to JSON.
 func ParseTextDuration(s string) (TextDuration, error) {

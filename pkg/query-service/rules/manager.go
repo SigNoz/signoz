@@ -97,7 +97,7 @@ type ManagerOptions struct {
 	SLogger     *slog.Logger
 	Cache       cache.Cache
 
-	EvalDelay time.Duration
+	EvalDelay valuer.TextDuration
 
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)

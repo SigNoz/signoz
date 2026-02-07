@@ -113,9 +113,9 @@ func WithSendUnmatched() RuleOption {
 	}
 }
 
-func WithEvalDelay(dur time.Duration) RuleOption {
+func WithEvalDelay(dur valuer.TextDuration) RuleOption {
 	return func(r *BaseRule) {
-		r.evalDelay = valuer.NewTextDuration(dur)
+		r.evalDelay = dur
 	}
 }
 
@@ -181,7 +181,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	if baseRule.evalWindow.IsZero() {
-		baseRule.evalWindow = valuer.NewTextDuration(5 * time.Minute)
+		baseRule.evalWindow = valuer.MustParseTextDuration("5m")
 	}
 
 	for _, opt := range opts {
@@ -244,12 +244,12 @@ func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 	return activeAlerts
 }
 
-func (r *BaseRule) EvalDelay() time.Duration {
-	return r.evalDelay.Duration()
+func (r *BaseRule) EvalDelay() valuer.TextDuration {
+	return r.evalDelay
 }
 
-func (r *BaseRule) EvalWindow() time.Duration {
-	return r.evalWindow.Duration()
+func (r *BaseRule) EvalWindow() valuer.TextDuration {
+	return r.evalWindow
 }
 
 func (r *BaseRule) HoldDuration() time.Duration {

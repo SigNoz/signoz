@@ -28,6 +28,8 @@ type PromRule struct {
 	prometheus prometheus.Prometheus
 }
 
+var _ Rule = (*PromRule)(nil)
+
 func NewPromRule(
 	id string,
 	orgID valuer.UUID,

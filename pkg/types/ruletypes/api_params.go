@@ -191,11 +191,11 @@ func (r *PostableRule) processRuleDefaults() {
 	}
 
 	if r.EvalWindow.IsZero() {
-		r.EvalWindow = valuer.NewTextDuration(5 * time.Minute)
+		r.EvalWindow = valuer.MustParseTextDuration("5m")
 	}
 
 	if r.Frequency.IsZero() {
-		r.Frequency = valuer.NewTextDuration(1 * time.Minute)
+		r.Frequency = valuer.MustParseTextDuration("1m")
 	}
 
 	if r.RuleCondition != nil {
@@ -246,7 +246,7 @@ func (r *PostableRule) processRuleDefaults() {
 			r.NotificationSettings = &NotificationSettings{
 				Renotify: Renotify{
 					Enabled:          true,
-					ReNotifyInterval: valuer.NewTextDuration(4 * time.Hour),
+					ReNotifyInterval: valuer.MustParseTextDuration("4h"),
 					AlertStates:      []model.AlertState{model.StateFiring},
 				},
 			}

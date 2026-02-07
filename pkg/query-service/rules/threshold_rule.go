@@ -61,6 +61,8 @@ type ThresholdRule struct {
 	spansKeys map[string]v3.AttributeKey
 }
 
+var _ Rule = (*ThresholdRule)(nil)
+
 func NewThresholdRule(
 	id string,
 	orgID valuer.UUID,

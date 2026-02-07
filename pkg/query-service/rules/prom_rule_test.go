@@ -41,8 +41,8 @@ func TestPromRuleEval(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -748,8 +748,8 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1007,8 +1007,8 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1118,8 +1118,8 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
@@ -1353,8 +1353,8 @@ func TestPromRule_NoData(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,
@@ -1466,7 +1466,7 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 	// 3. Alert fires only if t2 - t1 > AbsentFor
 
 	baseTime := time.Unix(1700000000, 0)
-	evalWindow := 5 * time.Minute
+	evalWindow := valuer.MustParseTextDuration("5m")
 
 	// Set target higher than test data (100.0) so regular threshold alerts don't fire
 	target := 500.0
@@ -1476,8 +1476,8 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(evalWindow),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: evalWindow,
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp:     ruletypes.ValueIsAbove,
@@ -1619,7 +1619,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 	baseTime := time.Unix(1700000000, 0)
 	evalTime := baseTime.Add(5 * time.Minute)
 
-	evalWindow := 5 * time.Minute
+	evalWindow := valuer.MustParseTextDuration("5m")
 	lookBackDelta := time.Minute
 
 	postableRule := ruletypes.PostableRule{
@@ -1627,8 +1627,8 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(evalWindow),
-			Frequency:  valuer.NewTextDuration(time.Minute),
+			EvalWindow: evalWindow,
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,

@@ -41,8 +41,8 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		Labels: map[string]string{
 			"service.name": "frontend",
@@ -100,8 +100,8 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeProm,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-			Frequency:  valuer.NewTextDuration(1 * time.Minute),
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		Labels: map[string]string{
 			"service.name": "frontend",

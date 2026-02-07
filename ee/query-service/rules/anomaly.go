@@ -63,6 +63,8 @@ type AnomalyRule struct {
 	seasonality anomaly.Seasonality
 }
 
+var _ baserules.Rule = (*AnomalyRule)(nil)
+
 func NewAnomalyRule(
 	id string,
 	orgID valuer.UUID,
@@ -553,7 +555,7 @@ func (r *AnomalyRule) String() string {
 	ar := ruletypes.PostableRule{
 		AlertName:         r.Name(),
 		RuleCondition:     r.Condition(),
-		EvalWindow:        valuer.NewTextDuration(r.EvalWindow()),
+		EvalWindow:        r.EvalWindow(),
 		Labels:            r.Labels().Map(),
 		Annotations:       r.Annotations().Map(),
 		PreferredChannels: r.PreferredChannels(),

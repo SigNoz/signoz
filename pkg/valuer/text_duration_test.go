@@ -11,51 +11,41 @@ import (
 
 func TestTextDuration(t *testing.T) {
 	cases := []struct {
-		name          string
-		inputText     string
-		inputDuration time.Duration
-		error         bool
-		duration      time.Duration
-		string        string
+		name     string
+		input    string
+		error    bool
+		duration time.Duration
+		string   string
 	}{
 		{
-			name:      "ParseTextDuration(10s)",
-			inputText: "10s",
-			duration:  10 * time.Second,
-			string:    "10s",
+			name:     "ParseTextDuration(10s)",
+			input:    "10s",
+			duration: 10 * time.Second,
+			string:   "10s",
 		},
 		{
-			name:      "ParseTextDuration(90m)",
-			inputText: "90m",
-			duration:  90 * time.Minute,
-			string:    "90m",
+			name:     "ParseTextDuration(90m)",
+			input:    "90m",
+			duration: 90 * time.Minute,
+			string:   "90m",
 		},
 		{
-			name:      "ParseTextDuration(1h30m)",
-			inputText: "1h30m",
-			duration:  90 * time.Minute,
-			string:    "1h30m",
+			name:     "ParseTextDuration(1h30m)",
+			input:    "1h30m",
+			duration: 90 * time.Minute,
+			string:   "1h30m",
 		},
 		{
-			name:          "NewTextDuration(90*time.Minute)",
-			inputDuration: 90 * time.Minute,
-			duration:      90 * time.Minute,
-			string:        "1h30m0s",
-		},
-		{
-			name:      "Invalid duration",
-			inputText: "invalid",
-			error:     true,
+			name:  "Invalid duration",
+			input: "invalid",
+			error: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
-			d := NewTextDuration(tc.inputDuration)
-			if tc.inputDuration == 0 {
-				d, err = ParseTextDuration(tc.inputText)
-			}
+			d, err := ParseTextDuration(tc.input)
 
 			if tc.error {
 				assert.Error(t, err)

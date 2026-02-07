@@ -124,8 +124,8 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 		Evaluation: &ruletypes.EvaluationEnvelope{
 			Kind: ruletypes.RollingEvaluation,
 			Spec: ruletypes.RollingWindow{
-				EvalWindow: valuer.NewTextDuration(5 * time.Minute),
-				Frequency:  valuer.NewTextDuration(1 * time.Minute),
+				EvalWindow: valuer.MustParseTextDuration("5m"),
+				Frequency:  valuer.MustParseTextDuration("1m"),
 			},
 		},
 		RuleCondition: &ruletypes.RuleCondition{
@@ -151,7 +151,7 @@ type filterNewSeriesTestCase struct {
 	compositeQuery    *v3.CompositeQuery
 	series            []*v3.Series
 	firstSeenMap      map[telemetrytypes.MetricMetadataLookupKey]int64
-	newGroupEvalDelay *time.Duration
+	newGroupEvalDelay valuer.TextDuration
 	evalTime          time.Time
 	expectedFiltered  []*v3.Series // series that should be in the final filtered result (old enough)
 	expectError       bool
@@ -159,7 +159,8 @@ type filterNewSeriesTestCase struct {
 
 func TestBaseRule_FilterNewSeries(t *testing.T) {
 	defaultEvalTime := time.Unix(1700000000, 0)
-	defaultDelay := 2 * time.Minute
+	defaultNewGroupEvalDelay := valuer.MustParseTextDuration("2m")
+	defaultDelay := defaultNewGroupEvalDelay.Duration()
 	defaultGroupByFields := []string{"service_name", "env"}
 
 	logger := instrumentationtest.New().Logger()
@@ -202,7 +203,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new", "prod"),
 				// svc-missing has no metadata, so it will be included
 			),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
@@ -234,7 +235,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new1", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, false, "svc-new2", "stage"),
 			),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered:  []*v3.Series{}, // all should be filtered out (new series)
 		},
@@ -261,7 +262,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old1", "prod"),
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old2", "stage"),
 			),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
@@ -295,7 +296,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
@@ -325,7 +326,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
@@ -361,7 +362,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createTestSeries(map[string]string{"status": "200"}, nil), // no service_name or env
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"status": "200"}, nil),
@@ -390,7 +391,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			},
 			firstSeenMap: createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc-old", "prod"),
 			// svc-no-metadata has no entry in firstSeenMap
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
@@ -420,7 +421,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				{MetricName: "request_total", AttributeName: "service_name", AttributeValue: "svc-partial"}: calculateFirstSeen(defaultEvalTime, defaultDelay, true),
 				// env metadata is missing
 			},
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
@@ -454,7 +455,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			},
 			series:            []*v3.Series{},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered:  []*v3.Series{},
 		},
@@ -488,7 +489,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
-			newGroupEvalDelay: func() *time.Duration { d := time.Duration(0); return &d }(), // zero delay
+			newGroupEvalDelay: valuer.TextDuration{}, // zero delay
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
@@ -532,7 +533,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 				createFirstSeenMap("error_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 			),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
@@ -572,7 +573,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createFirstSeenMap("request_total", []string{"service_name"}, defaultEvalTime, defaultDelay, true, "svc1"),
 				createFirstSeenMap("request_total", []string{"env"}, defaultEvalTime, defaultDelay, false, "prod"),
 			),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered:  []*v3.Series{}, // max first_seen is new, so should be filtered out
 		},
@@ -604,7 +605,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
@@ -639,7 +640,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-			newGroupEvalDelay: &defaultDelay,
+			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
 			expectedFiltered: []*v3.Series{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
@@ -703,11 +704,8 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				options,
 			)
 
-			// Set newGroupEvalDelay in NotificationSettings if provided
-			if tt.newGroupEvalDelay != nil {
-				postableRule.NotificationSettings = &ruletypes.NotificationSettings{
-					NewGroupEvalDelay: valuer.NewTextDuration(*tt.newGroupEvalDelay),
-				}
+			postableRule.NotificationSettings = &ruletypes.NotificationSettings{
+				NewGroupEvalDelay: tt.newGroupEvalDelay,
 			}
 
 			// Create BaseRule using NewBaseRule

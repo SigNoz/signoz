@@ -72,7 +72,7 @@ func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
 			},
 		}
 
-		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -189,7 +189,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 			},
 		},
 	}
-	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -250,7 +250,7 @@ func TestPrepareLinksToLogsV5(t *testing.T) {
 			},
 		},
 	}
-	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -311,7 +311,7 @@ func TestPrepareLinksToTracesV5(t *testing.T) {
 			},
 		},
 	}
-	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -365,7 +365,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 			},
 		},
 	}
-	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -451,7 +451,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			},
 		}
 
-		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -594,7 +594,7 @@ func TestThresholdRuleClickHouseTmpl(t *testing.T) {
 	logger := instrumentationtest.New().Logger()
 
 	for idx, c := range cases {
-		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -1559,7 +1559,7 @@ func TestThresholdRuleEval_SendUnmatchedBypassesRecovery(t *testing.T) {
 	}
 
 	logger := instrumentationtest.New().Logger()
-	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+	rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -1820,7 +1820,7 @@ func runEvalTests(t *testing.T, postableRule ruletypes.PostableRule, testCases [
 				Spec: thresholds,
 			}
 
-			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 			if err != nil {
 				assert.NoError(t, err)
 				return
@@ -1927,7 +1927,7 @@ func runMultiThresholdEvalTests(t *testing.T, postableRule ruletypes.PostableRul
 				Spec: thresholds,
 			}
 
-			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(2*time.Minute))
+			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, nil, nil, logger, WithEvalDelay(valuer.MustParseTextDuration("2m")))
 			if err != nil {
 				assert.NoError(t, err)
 				return
