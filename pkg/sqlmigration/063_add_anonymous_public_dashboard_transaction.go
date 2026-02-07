@@ -18,7 +18,7 @@ type addAnonymousPublicDashboardTransaction struct {
 }
 
 func NewAddAnonymousPublicDashboardTransactionFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_anonymous_public_dashboard_transaction"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+	return factory.NewProviderFactory(factory.MustNewName("add_public_dashboard_txn"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return newAddAnonymousPublicDashboardTransaction(ctx, ps, c, sqlstore)
 	})
 }
