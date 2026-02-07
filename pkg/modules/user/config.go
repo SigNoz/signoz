@@ -54,17 +54,35 @@ func (c Config) Validate() error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::password::reset::max_token_lifetime must be positive")
 	}
 
-	if c.RootUserConfig.Email != "" {
-		_, err := valuer.NewEmail(c.RootUserConfig.Email)
-		if err != nil {
-			return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to validate user::root::email %s", c.RootUserConfig.Email)
-		}
+	if err := c.RootUserConfig.Validate(); err != nil {
+		return err
 	}
 
-	if c.RootUserConfig.Password != "" {
-		if len(c.RootUserConfig.Password) < minRootUserPasswordLength {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::root::password must be at least %d characters long", minRootUserPasswordLength)
-		}
+	return nil
+}
+
+func (r RootUserConfig) Validate() error {
+	if (r.Email == "") || (r.Password == "") {
+		// all or nothing case
+		return errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"user::root requires both email and password to be set, or neither",
+		)
+	}
+
+	// nothing case
+	if !r.IsConfigured() {
+		return nil
+	}
+
+	_, err := valuer.NewEmail(r.Email)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid user::root::email %s", r.Email)
+	}
+
+	if len(r.Password) < minRootUserPasswordLength {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::root::password must be at least %d characters long", minRootUserPasswordLength)
 	}
 
 	return nil
