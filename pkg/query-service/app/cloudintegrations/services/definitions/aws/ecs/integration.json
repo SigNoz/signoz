@@ -7,6 +7,79 @@
     "metrics": true,
     "logs": true
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "overview",
+        "display_name": "Overview",
+        "checks": [
+          {
+            "name": "aws_ECS_CPUUtilization_max",
+            "attributes": []
+          },
+          {
+            "name": "aws_ECS_MemoryUtilization_max",
+            "attributes": []
+          }
+        ]
+      },
+      {
+        "category": "containerinsights",
+        "display_name": "Container Insights",
+        "checks": [
+          {
+            "name": "aws_ECS_ContainerInsights_NetworkRxBytes_max",
+            "attributes": []
+          },
+          {
+            "name": "aws_ECS_ContainerInsights_StorageReadBytes_max",
+            "attributes": []
+          }
+        ]
+      },
+      {
+        "category": "enhanced_containerinsights",
+        "display_name": "Enhanced Container Insights",
+        "checks": [
+          {
+            "name": "aws_ECS_ContainerInsights_ContainerCpuUtilization_max",
+            "attributes": [
+              {
+                "name": "TaskId",
+                "operator": "EXISTS",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "name": "aws_ECS_ContainerInsights_TaskMemoryUtilization_max",
+            "attributes": [
+              {
+                "name": "TaskId",
+                "operator": "EXISTS",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "logs": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "attribute": {
+              "name": "aws.cloudwatch.log_group_name",
+              "operator": "ILIKE",
+              "value": "%/ecs/%"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics": [
       {
