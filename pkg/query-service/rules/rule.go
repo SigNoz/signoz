@@ -22,7 +22,7 @@ type Rule interface {
 	Condition() *ruletypes.RuleCondition
 	EvalDelay() valuer.TextDuration
 	EvalWindow() valuer.TextDuration
-	HoldDuration() time.Duration
+	HoldDuration() valuer.TextDuration
 	State() model.AlertState
 	ActiveAlerts() []*ruletypes.Alert
 	// ActiveAlertsLabelFP returns a map of active alert labels fingerprint

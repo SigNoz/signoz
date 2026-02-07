@@ -252,8 +252,8 @@ func (r *BaseRule) EvalWindow() valuer.TextDuration {
 	return r.evalWindow
 }
 
-func (r *BaseRule) HoldDuration() time.Duration {
-	return r.holdDuration.Duration()
+func (r *BaseRule) HoldDuration() valuer.TextDuration {
+	return r.holdDuration
 }
 
 func (r *BaseRule) ID() string                          { return r.id }
