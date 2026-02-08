@@ -283,6 +283,7 @@ func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationsty
 		*req.CloudAccountID,
 		req.OrgID,
 		&details.AWSServiceDefinition,
+		config,
 	)
 	if err != nil {
 		return nil, err
@@ -298,6 +299,7 @@ func (a *awsProvider) getServiceConnectionStatus(
 	cloudAccountID string,
 	orgID string,
 	def *integrationstypes.AWSServiceDefinition,
+	serviceConfig *integrationstypes.AWSCloudServiceConfig,
 ) (*integrationstypes.ServiceConnectionStatus, error) {
 	if def.Strategy == nil {
 		return nil, nil
@@ -305,13 +307,13 @@ func (a *awsProvider) getServiceConnectionStatus(
 
 	resp := new(integrationstypes.ServiceConnectionStatus)
 
-	if def.Strategy.AWSMetrics != nil {
-		status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def.Strategy.AWSMetrics, def.DataCollected.Metrics)
+	if def.Strategy.AWSMetrics != nil && serviceConfig.Metrics.Enabled {
+		status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def)
 		resp.Metrics = status
 	}
 
-	if def.Strategy.AWSLogs != nil {
-		status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def.Strategy.AWSLogs, def.DataCollected.Logs)
+	if def.Strategy.AWSLogs != nil && serviceConfig.Logs.Enabled {
+		status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def)
 		resp.Logs = status
 	}
 
@@ -322,77 +324,84 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID string,
-	strategy *integrationstypes.AWSMetricsStrategy,
-	metricsCollected []integrationstypes.CollectedMetric,
+	def *integrationstypes.AWSServiceDefinition,
 ) (*integrationstypes.SignalConnectionStatus, error) {
-	if strategy == nil || len(strategy.StreamFilters) < 1 || len(metricsCollected) < 1 {
+	if def.Strategy == nil ||
+		len(def.Strategy.AWSMetrics.StreamFilters) < 1 ||
+		len(def.DataCollected.Metrics) < 1 {
 		return nil, nil
 	}
 
-	metricsAggregations := make([]qbtypes.MetricAggregation, 0, 1)
-
-	// TODO: find a way to use IN query for metrics
-	metricsAggregations = append(metricsAggregations, qbtypes.MetricAggregation{
-		MetricName:       metricsCollected[0].Name,
-		TimeAggregation:  metrictypes.TimeAggregationAvg,
-		SpaceAggregation: metrictypes.SpaceAggregationAvg,
-	})
-
-	// TODO: find a better way to write the query if there's any
 	filterExpression := fmt.Sprintf(`cloud.provider="aws" AND cloud.account.id="%s"`, cloudAccountID)
-	resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
-		SchemaVersion: "v5",
-		Start:         uint64(time.Now().Add(-time.Hour).UnixMilli()),
-		End:           uint64(time.Now().UnixMilli()),
-		RequestType:   qbtypes.RequestTypeScalar,
-		CompositeQuery: qbtypes.CompositeQuery{
-			Queries: []qbtypes.QueryEnvelope{{
+
+	for _, category := range def.IngestionStatusCheck.Metrics {
+		queries := make([]qbtypes.QueryEnvelope, 0)
+		for _, check := range category.Checks {
+			queries = append(queries, qbtypes.QueryEnvelope{
 				Type: qbtypes.QueryTypeBuilder,
 				Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-					Name:         "A",
-					Signal:       telemetrytypes.SignalMetrics,
-					Aggregations: metricsAggregations,
+					Name:   valuer.GenerateUUID().String(),
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       check.Key,
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+					},
+					},
 					Filter: &qbtypes.Filter{
 						Expression: filterExpression,
 					},
 				},
-			}},
-		},
-	})
-	if err != nil {
-		return nil, err
+			})
+
+			resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
+				SchemaVersion: "v5",
+				Start:         uint64(time.Now().Add(-time.Hour).UnixMilli()),
+				End:           uint64(time.Now().UnixMilli()),
+				RequestType:   qbtypes.RequestTypeScalar,
+				CompositeQuery: qbtypes.CompositeQuery{
+					Queries: queries,
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if resp != nil && len(resp.Data.Results) < 1 {
+				return nil, nil
+			}
+
+			queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+			if !ok {
+				return nil, nil
+			}
+
+			if queryResponse == nil ||
+				len(queryResponse.Aggregations) < 1 ||
+				len(queryResponse.Aggregations[0].Series) < 1 ||
+				len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
+				return nil, nil
+			}
+
+			return &integrationstypes.SignalConnectionStatus{
+				LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
+				LastReceivedFrom:     "signoz-aws-integration",
+			}, nil
+		}
 	}
 
-	if resp != nil && len(resp.Data.Results) < 1 {
-		return nil, nil
-	}
-
-	queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
-	if !ok {
-		return nil, nil
-	}
-
-	if queryResponse == nil ||
-		len(queryResponse.Aggregations) < 1 ||
-		len(queryResponse.Aggregations[0].Series) < 1 ||
-		len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
-		return nil, nil
-	}
-
-	return &integrationstypes.SignalConnectionStatus{
-		LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
-		LastReceivedFrom:     "signoz-aws-integration",
-	}, nil
+	return nil, nil
 }
 
 func (a *awsProvider) getServiceLogsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID string,
-	strategy *integrationstypes.AWSLogsStrategy,
-	logsCollected []integrationstypes.CollectedLogAttribute,
+	def *integrationstypes.AWSServiceDefinition,
 ) (*integrationstypes.SignalConnectionStatus, error) {
-	if strategy == nil || len(strategy.Subscriptions) < 1 || len(logsCollected) < 1 {
+	if def.Strategy == nil ||
+		len(def.Strategy.AWSLogs.Subscriptions) < 1 ||
+		len(def.DataCollected.Logs) < 1 {
 		return nil, nil
 	}
 

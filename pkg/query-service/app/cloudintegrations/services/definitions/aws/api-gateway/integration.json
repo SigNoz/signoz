@@ -14,7 +14,7 @@
         "display_name": "REST API Metrics",
         "checks": [
           {
-            "name": "aws_ApiGateway_Count_count",
+            "key": "aws_ApiGateway_Count_count",
             "attributes": [
               {
                 "name": "ApiName",
@@ -30,7 +30,7 @@
         "display_name": "HTTP API Metrics",
         "checks": [
           {
-            "name": "aws_ApiGateway_Count_count",
+            "key": "aws_ApiGateway_Count_count",
             "attributes": [
               {
                 "name": "ApiId",
@@ -46,7 +46,7 @@
         "display_name": "Websocket API Metrics",
         "checks": [
           {
-            "name": "aws_ApiGateway_Count_count",
+            "key": "aws_ApiGateway_Count_count",
             "attributes": [
               {
                 "name": "ApiId",
@@ -64,11 +64,13 @@
         "display_name": "Default",
         "checks": [
           {
-            "attribute": {
-              "name": "aws.cloudwatch.log_group_name",
-              "operator": "ILIKE",
-              "value": "API-Gateway%"
-            }
+            "attributes": [
+              {
+                "name": "aws.cloudwatch.log_group_name",
+                "operator": "ILIKE",
+                "value": "API-Gateway%"
+              }
+            ]
           }
         ]
       }

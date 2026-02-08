@@ -14,7 +14,7 @@
         "display_name": "Api Server",
         "checks": [
           {
-            "name": "aws_EKS_apiserver_request_total_max",
+            "key": "aws_EKS_apiserver_request_total_max",
             "attributes": []
           }
         ]
@@ -24,7 +24,7 @@
         "display_name": "Container Insights",
         "checks": [
           {
-            "name": "aws_ContainerInsights_pod_memory_utilization_max",
+            "key": "aws_ContainerInsights_pod_memory_utilization_max",
             "attributes": [
               {
                 "name": "PodName",

@@ -14,11 +14,11 @@
         "display_name": "Default",
         "checks": [
           {
-            "name": "aws_DynamoDB_AccountMaxReads_max",
+            "key": "aws_DynamoDB_AccountMaxReads_max",
             "attributes": []
           },
           {
-            "name": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_max",
+            "key": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_max",
             "attributes": []
           }
         ]

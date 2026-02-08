@@ -177,7 +177,7 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (inte
 		return nil, errors.NewInternalf(errors.CodeInternal, "unsupported cloud provider: %s", cloudProvider)
 	}
 
-	err = ParseStructWithJsonTagsFromMap(hydratedSpec, serviceDef)
+	err = parseStructWithJsonTagsFromMap(hydratedSpec, serviceDef)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (inte
 	return serviceDef, nil
 }
 
-func ParseStructWithJsonTagsFromMap(data map[string]any, target interface{}) error {
+func parseStructWithJsonTagsFromMap(data map[string]any, target interface{}) error {
 	mapJson, err := json.Marshal(data)
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't marshal service definition json data")

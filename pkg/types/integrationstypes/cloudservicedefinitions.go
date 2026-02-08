@@ -31,11 +31,34 @@ var _ Definition = &AzureServiceDefinition{}
 
 type AWSServiceDefinition struct {
 	DefinitionMetadata
-	Overview         string                 `json:"overview"` // markdown
-	Assets           Assets                 `json:"assets"`
-	SupportedSignals SupportedSignals       `json:"supported_signals"`
-	DataCollected    DataCollected          `json:"data_collected"`
-	Strategy         *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
+	Overview             string                 `json:"overview"` // markdown
+	Assets               Assets                 `json:"assets"`
+	SupportedSignals     SupportedSignals       `json:"supported_signals"`
+	DataCollected        DataCollected          `json:"data_collected"`
+	Strategy             *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
+	IngestionStatusCheck *IngestionStatusCheck  `json:"ingestion_status_check"`
+}
+
+type IngestionStatusCheck struct {
+	Metrics []*IngestionStatusCheckCategory `json:"metrics"`
+	Logs    []*IngestionStatusCheckCategory `json:"logs"`
+}
+
+type IngestionStatusCheckCategory struct {
+	Category    string                           `json:"category"`
+	DisplayName string                           `json:"display_name"`
+	Checks      []*IngestionStatusCheckAttribute `json:"checks"`
+}
+
+type IngestionStatusCheckAttribute struct {
+	Key        string                                 `json:"key"` // search key (metric name or log message)
+	Attributes []*IngestionStatusCheckAttributeFilter `json:"attributes"`
+}
+
+type IngestionStatusCheckAttributeFilter struct {
+	Name     string `json:"name"`
+	Operator string `json:"operator"`
+	Value    string `json:"value"`
 }
 
 func (def *AWSServiceDefinition) GetId() string {

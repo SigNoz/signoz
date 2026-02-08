@@ -14,11 +14,11 @@
         "display_name": "Default",
         "checks": [
           {
-            "name": "aws_ApplicationELB_ConsumedLCUs_count",
+            "key": "aws_ApplicationELB_ConsumedLCUs_count",
             "attributes": []
           },
           {
-            "name": "aws_ApplicationELB_ProcessedBytes_sum",
+            "key": "aws_ApplicationELB_ProcessedBytes_sum",
             "attributes": []
           }
         ]

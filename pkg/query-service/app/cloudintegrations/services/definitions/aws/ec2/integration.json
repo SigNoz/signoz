@@ -14,11 +14,11 @@
         "display_name": "Default",
         "checks": [
           {
-            "name": "aws_EC2_CPUUtilization_max",
+            "key": "aws_EC2_CPUUtilization_max",
             "attributes": []
           },
           {
-            "name": "aws_EC2_NetworkIn_max",
+            "key": "aws_EC2_NetworkIn_max",
             "attributes": []
           }
         ]

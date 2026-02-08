@@ -14,11 +14,11 @@
         "display_name": "Overview",
         "checks": [
           {
-            "name": "aws_ECS_CPUUtilization_max",
+            "key": "aws_ECS_CPUUtilization_max",
             "attributes": []
           },
           {
-            "name": "aws_ECS_MemoryUtilization_max",
+            "key": "aws_ECS_MemoryUtilization_max",
             "attributes": []
           }
         ]
@@ -28,11 +28,11 @@
         "display_name": "Container Insights",
         "checks": [
           {
-            "name": "aws_ECS_ContainerInsights_NetworkRxBytes_max",
+            "key": "aws_ECS_ContainerInsights_NetworkRxBytes_max",
             "attributes": []
           },
           {
-            "name": "aws_ECS_ContainerInsights_StorageReadBytes_max",
+            "key": "aws_ECS_ContainerInsights_StorageReadBytes_max",
             "attributes": []
           }
         ]
@@ -42,7 +42,7 @@
         "display_name": "Enhanced Container Insights",
         "checks": [
           {
-            "name": "aws_ECS_ContainerInsights_ContainerCpuUtilization_max",
+            "key": "aws_ECS_ContainerInsights_ContainerCpuUtilization_max",
             "attributes": [
               {
                 "name": "TaskId",
@@ -52,7 +52,7 @@
             ]
           },
           {
-            "name": "aws_ECS_ContainerInsights_TaskMemoryUtilization_max",
+            "key": "aws_ECS_ContainerInsights_TaskMemoryUtilization_max",
             "attributes": [
               {
                 "name": "TaskId",
@@ -70,11 +70,13 @@
         "display_name": "Default",
         "checks": [
           {
-            "attribute": {
-              "name": "aws.cloudwatch.log_group_name",
-              "operator": "ILIKE",
-              "value": "%/ecs/%"
-            }
+            "attributes": [
+              {
+                "name": "aws.cloudwatch.log_group_name",
+                "operator": "ILIKE",
+                "value": "%/ecs/%"
+              }
+            ]
           }
         ]
       }
