@@ -3573,6 +3573,9 @@ func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context,
 			activeHosts[hostName] = true
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating active host rows: %w", err)
+	}
 
 	return activeHosts, nil
 }
