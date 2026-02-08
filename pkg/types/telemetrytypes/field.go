@@ -281,7 +281,6 @@ type PostableFieldKeysParams struct {
 	FieldContext   FieldContext  `query:"fieldContext"`
 	FieldDataType  FieldDataType `query:"fieldDataType"`
 	MetricName     string        `query:"metricName"`
-	Name           string        `query:"name"`
 	SearchText     string        `query:"searchText"`
 }
 
@@ -292,6 +291,7 @@ type GettableFieldValues struct {
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
+	Name          string `query:"name"`
 	ExistingQuery string `query:"existingQuery"`
 }
 

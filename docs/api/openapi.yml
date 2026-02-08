@@ -648,10 +648,6 @@ paths:
         schema:
           type: string
       - in: query
-        name: name
-        schema:
-          type: string
-      - in: query
         name: searchText
         schema:
           type: string
@@ -734,11 +730,11 @@ paths:
         schema:
           type: string
       - in: query
-        name: name
+        name: searchText
         schema:
           type: string
       - in: query
-        name: searchText
+        name: name
         schema:
           type: string
       - in: query
