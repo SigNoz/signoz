@@ -325,7 +325,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnprocessableEntity},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
