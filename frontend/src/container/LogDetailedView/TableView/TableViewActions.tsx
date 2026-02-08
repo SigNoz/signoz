@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable sonarjs/cognitive-complexity */
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
@@ -16,7 +17,12 @@ import { MetricsType } from 'container/MetricsApplication/constant';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
-import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
+import {
+	ArrowDownToDot,
+	ArrowUpFromDot,
+	Ellipsis,
+	RefreshCw,
+} from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -205,6 +211,70 @@ export default function TableViewActions(
 		viewName,
 	]);
 
+	const handleReplaceFilter = useCallback((): void => {
+		if (!stagedQuery) {
+			return;
+		}
+		const normalizedDataType: DataTypes | undefined =
+			dataType && Object.values(DataTypes).includes(dataType as DataTypes)
+				? (dataType as DataTypes)
+				: undefined;
+
+		const updatedQuery = updateQueriesData(
+			stagedQuery,
+			'queryData',
+			(item, index) => {
+				// Only replace filters for index 0
+				if (index === 0) {
+					const newFilterItem: BaseAutocompleteData = {
+						key: fieldFilterKey,
+						type: fieldType || '',
+						dataType: normalizedDataType,
+					};
+
+					// Create new filter items array with single IN filter
+					const newFilters = {
+						items: [
+							{
+								id: '',
+								key: newFilterItem,
+								op: OPERATORS.IN,
+								value: [fieldData.value],
+							},
+						],
+						op: 'AND',
+					};
+
+					// Clear the expression and update filters
+					return {
+						...item,
+						filters: newFilters,
+						filter: { expression: '' },
+					};
+				}
+
+				return item;
+			},
+		);
+
+		const queryData: ICurrentQueryData = {
+			name: viewName,
+			id: updatedQuery.id,
+			query: updatedQuery,
+		};
+
+		handleChangeSelectedView?.(ExplorerViews.LIST, queryData);
+	}, [
+		stagedQuery,
+		updateQueriesData,
+		fieldFilterKey,
+		fieldType,
+		dataType,
+		fieldData,
+		handleChangeSelectedView,
+		viewName,
+	]);
+
 	// Memoize textToCopy computation
 	const textToCopy = useMemo(() => {
 		let text = fieldData.value;
@@ -327,13 +397,33 @@ export default function TableViewActions(
 								content={
 									<div>
 										<Button
-											className="group-by-clause"
+											className="ellipses-attribute"
 											type="text"
 											icon={<GroupByIcon />}
 											onClick={handleGroupByAttribute}
 										>
 											Group By Attribute
 										</Button>
+										<Tooltip
+											title={`Replace filters with ${fieldFilterKey}:${fieldData.value}`}
+											mouseEnterDelay={0}
+											mouseLeaveDelay={0}
+										>
+											<Button
+												className="ellipses-attribute"
+												type="text"
+												icon={<RefreshCw size={14} />}
+												onClick={handleReplaceFilter}
+											>
+												Replace filters with {fieldFilterKey}:
+												{fieldData.value.length > 12
+													? `${fieldData.value.substring(
+															0,
+															5,
+													  )}...${fieldData.value.substring(fieldData.value.length - 4)}`
+													: fieldData.value}
+											</Button>
+										</Tooltip>
 									</div>
 								}
 								rootClassName="table-view-actions-content"
@@ -405,13 +495,32 @@ export default function TableViewActions(
 							content={
 								<div>
 									<Button
-										className="group-by-clause"
+										className="ellipses-attribute"
 										type="text"
 										icon={<GroupByIcon />}
 										onClick={handleGroupByAttribute}
 									>
 										Group By Attribute
 									</Button>
+									<Tooltip
+										title={`Replace filters with ${fieldFilterKey}:${fieldData.value}`}
+										mouseEnterDelay={0}
+										mouseLeaveDelay={0}
+									>
+										<Button
+											className="ellipses-attribute"
+											type="text"
+											icon={<RefreshCw size={14} />}
+											onClick={handleReplaceFilter}
+										>
+											Replace filters with {fieldFilterKey}:
+											{fieldData.value.length > 12
+												? `${fieldData.value.substring(0, 5)}...${fieldData.value.substring(
+														fieldData.value.length - 4,
+												  )}`
+												: fieldData.value}
+										</Button>
+									</Tooltip>
 								</div>
 							}
 							rootClassName="table-view-actions-content"
