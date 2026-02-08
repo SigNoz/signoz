@@ -173,22 +173,45 @@ function ExplorerOptions({
 
 	const handleConditionalQueryModification = useCallback(
 		(defaultQuery: Query | null): string => {
-			const queryToUse = defaultQuery || query;
-			if (
-				queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
-				StringOperators.NOOP
-			) {
-				return JSON.stringify(queryToUse);
+			try {
+				const queryToUse = defaultQuery || query;
+				const modifiedQuery = cloneDeep(queryToUse);
+
+				// Return early only for non-LOGS queries with aggregation
+				if (
+					queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
+						StringOperators.NOOP &&
+					sourcepage !== DataSource.LOGS
+				) {
+					return JSON.stringify(queryToUse);
+				}
+
+				// Convert NOOP to COUNT for alerts and strip orderBy for logs
+				if (modifiedQuery && modifiedQuery.builder?.queryData) {
+					modifiedQuery.builder.queryData = modifiedQuery.builder.queryData.map(
+						(item) => {
+							const updatedItem = { ...item };
+
+							if (updatedItem.aggregateOperator === StringOperators.NOOP) {
+								updatedItem.aggregateOperator = StringOperators.COUNT;
+							}
+
+							// Alerts do not support order by on logs explorer queries
+							if (sourcepage === DataSource.LOGS) {
+								updatedItem.orderBy = [];
+							}
+
+							return updatedItem;
+						},
+					);
+				}
+
+				return JSON.stringify(modifiedQuery);
+			} catch (error) {
+				return JSON.stringify(defaultQuery || query);
 			}
-
-			// Modify aggregateOperator to count, as noop is not supported in alerts
-			const modifiedQuery = cloneDeep(queryToUse);
-
-			modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
-
-			return JSON.stringify(modifiedQuery);
 		},
-		[query],
+		[query, sourcepage],
 	);
 
 	const onCreateAlertsHandler = useCallback(
