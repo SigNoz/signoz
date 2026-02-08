@@ -68,20 +68,30 @@ type Server struct {
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
+
+	// maintenanceExprMuter is an optional muter for expression-based maintenance scoping
+	maintenanceExprMuter types.Muter
+	// muteStageMetrics are created once and reused across SetConfig calls
+	muteStageMetrics *notify.Metrics
+
+	// signozRegisterer is used for metrics in the pipeline
+	signozRegisterer prometheus.Registerer
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager, maintenanceExprMuter types.Muter) (*Server, error) {
 	server := &Server{
-		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
-		registry:            registry,
-		srvConfig:           srvConfig,
-		orgID:               orgID,
-		stateStore:          stateStore,
-		stopc:               make(chan struct{}),
-		notificationManager: nfManager,
+		logger:               logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		registry:             registry,
+		srvConfig:            srvConfig,
+		orgID:                orgID,
+		stateStore:           stateStore,
+		stopc:                make(chan struct{}),
+		notificationManager:  nfManager,
+		maintenanceExprMuter: maintenanceExprMuter,
 	}
-	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
-	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
+	server.signozRegisterer = prometheus.WrapRegistererWithPrefix("signoz_", registry)
+	server.signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, server.signozRegisterer)
+	signozRegisterer := server.signozRegisterer
 	// initialize marker
 	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
 
@@ -198,6 +208,11 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
+	if server.maintenanceExprMuter != nil {
+		muteRegisterer := prometheus.WrapRegistererWithPrefix("maintenance_mute_", signozRegisterer)
+		server.muteStageMetrics = notify.NewMetrics(muteRegisterer, featurecontrol.NoopFlags{})
+	}
+
 	return server, nil
 }
 
@@ -205,6 +220,9 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 	return alertmanagertypes.NewGettableAlertsFromAlertProvider(server.alerts, server.alertmanagerConfig, server.marker.Status, func(labels model.LabelSet) {
 		server.inhibitor.Mutes(labels)
 		server.silencer.Mutes(labels)
+		if server.maintenanceExprMuter != nil {
+			server.maintenanceExprMuter.Mutes(labels)
+		}
 	}, params)
 }
 
@@ -292,6 +310,14 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.nflog,
 		pipelinePeer,
 	)
+
+	// Inject expression-based maintenance muter into the pipeline
+	if server.maintenanceExprMuter != nil {
+		ms := notify.NewMuteStage(server.maintenanceExprMuter, server.muteStageMetrics)
+		for name, stage := range pipeline {
+			pipeline[name] = notify.MultiStage{ms, stage}
+		}
+	}
 
 	timeoutFunc := func(d time.Duration) time.Duration {
 		if d < notify.MinTimeout {

@@ -10,12 +10,14 @@ import (
 	amConfig "github.com/prometheus/alertmanager/config"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/clickhousealertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -23,25 +25,34 @@ import (
 )
 
 type provider struct {
-	service             *alertmanager.Service
-	config              alertmanager.Config
-	settings            factory.ScopedProviderSettings
-	configStore         alertmanagertypes.ConfigStore
-	stateStore          alertmanagertypes.StateStore
-	notificationManager nfmanager.NotificationManager
-	stopC               chan struct{}
+	service              *alertmanager.Service
+	config               alertmanager.Config
+	settings             factory.ScopedProviderSettings
+	configStore          alertmanagertypes.ConfigStore
+	stateStore           alertmanagertypes.StateStore
+	notificationManager  nfmanager.NotificationManager
+	maintenanceStore     alertmanagertypes.MaintenanceStore
+	maintenanceExprMuter *MaintenanceExprMuter
+	orgGetter            organization.Getter
+	stopC                chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, telemetryStore telemetrystore.TelemetryStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager)
+		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager, telemetryStore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, telemetryStore telemetrystore.TelemetryStore) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
+	maintenanceExprMuter := NewMaintenanceExprMuter(settings.Logger())
+
+	var stateHistoryStore alertmanagertypes.StateHistoryStore
+	if telemetryStore != nil {
+		stateHistoryStore = clickhousealertmanagerstore.NewStateHistoryStore(telemetryStore.ClickhouseDB())
+	}
 
 	p := &provider{
 		service: alertmanager.New(
@@ -52,13 +63,18 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			configStore,
 			orgGetter,
 			notificationManager,
+			maintenanceExprMuter,
+			stateHistoryStore,
 		),
-		settings:            settings,
-		config:              config,
-		configStore:         configStore,
-		stateStore:          stateStore,
-		notificationManager: notificationManager,
-		stopC:               make(chan struct{}),
+		settings:             settings,
+		config:               config,
+		configStore:          configStore,
+		stateStore:           stateStore,
+		notificationManager:  notificationManager,
+		maintenanceStore:     sqlalertmanagerstore.NewMaintenanceStore(sqlstore),
+		maintenanceExprMuter: maintenanceExprMuter,
+		orgGetter:            orgGetter,
+		stopC:                make(chan struct{}),
 	}
 
 	return p, nil
@@ -70,16 +86,28 @@ func (provider *provider) Start(ctx context.Context) error {
 		return err
 	}
 
-	ticker := time.NewTicker(provider.config.Signoz.PollInterval)
-	defer ticker.Stop()
+	// Initial maintenance sync before entering the ticker loop.
+	provider.syncMaintenance(ctx, provider.maintenanceExprMuter)
+
+	// Start background sweep for stale alerts in state history tracking.
+	provider.service.StartStateHistorySweep(ctx)
+
+	serverTicker := time.NewTicker(provider.config.Signoz.PollInterval)
+	defer serverTicker.Stop()
+
+	maintenanceTicker := time.NewTicker(maintenanceSyncInterval)
+	defer maintenanceTicker.Stop()
+
 	for {
 		select {
 		case <-provider.stopC:
 			return nil
-		case <-ticker.C:
+		case <-serverTicker.C:
 			if err := provider.service.SyncServers(ctx); err != nil {
 				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
 			}
+		case <-maintenanceTicker.C:
+			provider.syncMaintenance(ctx, provider.maintenanceExprMuter)
 		}
 	}
 }
@@ -560,4 +588,90 @@ func (provider *provider) DeleteAllInhibitRulesByRuleId(ctx context.Context, org
 	}
 
 	return provider.configStore.Set(ctx, config)
+}
+
+func (provider *provider) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*alertmanagertypes.GettablePlannedMaintenance, error) {
+	return provider.maintenanceStore.GetAllPlannedMaintenance(ctx, orgID)
+}
+
+func (provider *provider) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*alertmanagertypes.GettablePlannedMaintenance, error) {
+	return provider.maintenanceStore.GetPlannedMaintenanceByID(ctx, id)
+}
+
+func (provider *provider) CreatePlannedMaintenance(ctx context.Context, maintenance alertmanagertypes.GettablePlannedMaintenance) (valuer.UUID, error) {
+	return provider.maintenanceStore.CreatePlannedMaintenance(ctx, maintenance)
+}
+
+func (provider *provider) EditPlannedMaintenance(ctx context.Context, maintenance alertmanagertypes.GettablePlannedMaintenance, id valuer.UUID) error {
+	return provider.maintenanceStore.EditPlannedMaintenance(ctx, maintenance, id)
+}
+
+func (provider *provider) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
+	return provider.maintenanceStore.DeletePlannedMaintenance(ctx, id)
+}
+
+func (provider *provider) RecordRuleStateHistory(ctx context.Context, orgID string, entries []alertmanagertypes.RuleStateHistory) error {
+	return provider.service.RecordRuleStateHistory(ctx, orgID, entries)
+}
+
+func (provider *provider) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]alertmanagertypes.RuleStateHistory, error) {
+	return provider.service.GetLastSavedRuleStateHistory(ctx, ruleID)
+}
+
+func (provider *provider) GetRuleStateHistoryTimeline(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStateTimeline, error) {
+	return provider.service.GetRuleStateHistoryTimeline(ctx, orgID, ruleID, params)
+}
+
+func (provider *provider) GetRuleStateHistoryTopContributors(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateHistoryContributor, error) {
+	return provider.service.GetRuleStateHistoryTopContributors(ctx, orgID, ruleID, params)
+}
+
+func (provider *provider) GetOverallStateTransitions(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateTransition, error) {
+	return provider.service.GetOverallStateTransitions(ctx, orgID, ruleID, params)
+}
+
+func (provider *provider) GetRuleStats(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStats, error) {
+	return provider.service.GetRuleStats(ctx, orgID, ruleID, params)
+}
+
+const (
+	maintenanceSyncInterval = 30 * time.Second
+)
+
+// syncMaintenance checks planned maintenance windows and updates the given
+// MaintenanceExprMuter with active maintenance entries. The muter is injected
+// into the notification pipeline as a MuteStage, suppressing notifications
+// while allowing rules to continue evaluating (preserving state history).
+func (provider *provider) syncMaintenance(ctx context.Context, muter *MaintenanceExprMuter) {
+	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
+	if err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to list orgs for maintenance sync", "error", err)
+		return
+	}
+
+	now := time.Now()
+	var activeExprs []activeMaintenanceExpr
+
+	for _, org := range orgs {
+		orgID := org.ID.StringValue()
+		maintenanceList, err := provider.maintenanceStore.GetAllPlannedMaintenance(ctx, orgID)
+		if err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to get planned maintenance for sync", "orgID", orgID, "error", err)
+			continue
+		}
+
+		for _, maint := range maintenanceList {
+			_, active := maint.CurrentWindowEndTime(now)
+			if !active {
+				continue
+			}
+
+			activeExprs = append(activeExprs, activeMaintenanceExpr{
+				ruleIDs:    maint.RuleIDs,
+				expression: maint.Expression,
+			})
+		}
+	}
+
+	muter.SetActiveExpressions(activeExprs)
 }

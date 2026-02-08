@@ -34,7 +34,7 @@ func TestNewModules(t *testing.T) {
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 	notificationManager := nfmanagertest.NewMock()
 	require.NoError(t, err)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
+	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager, nil)
 	require.NoError(t, err)
 	tokenizer := tokenizertest.NewMockTokenizer(t)
 	emailing := emailingtest.New()

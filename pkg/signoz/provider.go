@@ -166,6 +166,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAuthzIndexFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateRbacToAuthzFactory(sqlstore),
 		sqlmigration.NewMigratePublicDashboardsFactory(sqlstore),
+		sqlmigration.NewCreatePlannedMaintenanceV2Factory(sqlstore),
+		sqlmigration.NewCreateRuleStateHistoryV2Factory(telemetryStore),
 	)
 }
 
@@ -191,9 +193,9 @@ func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteS
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, nfManager nfmanager.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, nfManager nfmanager.NotificationManager, telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager, telemetryStore),
 	)
 }
 

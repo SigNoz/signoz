@@ -26,6 +26,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(

@@ -26,6 +26,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
+	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -492,18 +494,109 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.AlertmanagerAPI.ListChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetChannelByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateChannelByID)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteChannelByID)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
+	router.Handle("/api/v1/channels", handler.New(am.ViewAccess(aH.AlertmanagerAPI.ListChannels), handler.OpenAPIDef{
+		ID:                  "ListChannels",
+		Tags:                []string{"channels"},
+		Summary:             "List notification channels",
+		Description:         "Returns all notification channels for the organization.",
+		Response:            make([]*alertmanagertypes.Channel, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+	})).Methods(http.MethodGet)
+	router.Handle("/api/v1/channels/{id}", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetChannelByID), handler.OpenAPIDef{
+		ID:                  "GetChannelByID",
+		Tags:                []string{"channels"},
+		Summary:             "Get a notification channel",
+		Description:         "Returns a single notification channel by ID.",
+		Response:            new(alertmanagertypes.Channel),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodGet)
+	router.Handle("/api/v1/channels/{id}", handler.New(am.AdminAccess(aH.AlertmanagerAPI.UpdateChannelByID), handler.OpenAPIDef{
+		ID:               "UpdateChannelByID",
+		Tags:             []string{"channels"},
+		Summary:          "Update a notification channel",
+		Description:      "Updates a notification channel by ID.",
+		SuccessStatusCode: http.StatusNoContent,
+		ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodPut)
+	router.Handle("/api/v1/channels/{id}", handler.New(am.AdminAccess(aH.AlertmanagerAPI.DeleteChannelByID), handler.OpenAPIDef{
+		ID:               "DeleteChannelByID",
+		Tags:             []string{"channels"},
+		Summary:          "Delete a notification channel",
+		Description:      "Deletes a notification channel by ID.",
+		SuccessStatusCode: http.StatusNoContent,
+		ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodDelete)
+	router.Handle("/api/v1/channels", handler.New(am.EditAccess(aH.AlertmanagerAPI.CreateChannel), handler.OpenAPIDef{
+		ID:                  "CreateChannel",
+		Tags:                []string{"channels"},
+		Summary:             "Create a notification channel",
+		Description:         "Creates a new notification channel.",
+		Response:            new(alertmanagertypes.Channel),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
+	router.Handle("/api/v1/testChannel", handler.New(am.EditAccess(aH.AlertmanagerAPI.TestReceiver), handler.OpenAPIDef{
+		ID:               "TestReceiver",
+		Tags:             []string{"channels"},
+		Summary:          "Test a notification channel",
+		Description:      "Sends a test alert to a receiver configuration.",
+		SuccessStatusCode: http.StatusNoContent,
+		ErrorStatusCodes: []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/route_policies", am.ViewAccess(aH.AlertmanagerAPI.GetAllRoutePolicies)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetRoutePolicyByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/route_policies", am.AdminAccess(aH.AlertmanagerAPI.CreateRoutePolicy)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteRoutePolicyByID)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateRoutePolicy)).Methods(http.MethodPut)
+	router.Handle("/api/v1/route_policies", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetAllRoutePolicies), handler.OpenAPIDef{
+		ID:                  "GetAllRoutePolicies",
+		Tags:                []string{"route_policies"},
+		Summary:             "List route policies",
+		Description:         "Returns all notification route policies.",
+		Response:            make([]*alertmanagertypes.GettableRoutePolicy, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+	})).Methods(http.MethodGet)
+	router.Handle("/api/v1/route_policies/{id}", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetRoutePolicyByID), handler.OpenAPIDef{
+		ID:                  "GetRoutePolicyByID",
+		Tags:                []string{"route_policies"},
+		Summary:             "Get a route policy",
+		Description:         "Returns a single notification route policy by ID.",
+		Response:            new(alertmanagertypes.GettableRoutePolicy),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodGet)
+	router.Handle("/api/v1/route_policies", handler.New(am.AdminAccess(aH.AlertmanagerAPI.CreateRoutePolicy), handler.OpenAPIDef{
+		ID:                  "CreateRoutePolicy",
+		Tags:                []string{"route_policies"},
+		Summary:             "Create a route policy",
+		Description:         "Creates a new notification route policy.",
+		Request:             new(alertmanagertypes.PostableRoutePolicy),
+		Response:            new(alertmanagertypes.GettableRoutePolicy),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
+	router.Handle("/api/v1/route_policies/{id}", handler.New(am.AdminAccess(aH.AlertmanagerAPI.DeleteRoutePolicyByID), handler.OpenAPIDef{
+		ID:               "DeleteRoutePolicyByID",
+		Tags:             []string{"route_policies"},
+		Summary:          "Delete a route policy",
+		Description:      "Deletes a notification route policy by ID.",
+		SuccessStatusCode: http.StatusNoContent,
+		ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodDelete)
+	router.Handle("/api/v1/route_policies/{id}", handler.New(am.AdminAccess(aH.AlertmanagerAPI.UpdateRoutePolicy), handler.OpenAPIDef{
+		ID:                  "UpdateRoutePolicy",
+		Tags:                []string{"route_policies"},
+		Summary:             "Update a route policy",
+		Description:         "Updates a notification route policy by ID.",
+		Request:             new(alertmanagertypes.PostableRoutePolicy),
+		Response:            new(alertmanagertypes.GettableRoutePolicy),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 
@@ -524,6 +617,103 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules", am.EditAccess(aH.createDowntimeSchedule)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
+
+	// V2 downtime schedules (alertmanager-based)
+	router.Handle("/api/v2/downtime_schedules", handler.New(am.ViewAccess(aH.AlertmanagerAPI.ListDowntimeSchedules), handler.OpenAPIDef{
+		ID:                  "ListDowntimeSchedules",
+		Tags:                []string{"downtime_schedules"},
+		Summary:             "List downtime schedules",
+		Description:         "Returns all planned maintenance schedules for the organization. Supports filtering by active and recurring query parameters.",
+		Response:            make([]*alertmanagertypes.GettablePlannedMaintenance, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+	})).Methods(http.MethodGet)
+	router.Handle("/api/v2/downtime_schedules/{id}", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetDowntimeSchedule), handler.OpenAPIDef{
+		ID:                  "GetDowntimeSchedule",
+		Tags:                []string{"downtime_schedules"},
+		Summary:             "Get a downtime schedule",
+		Description:         "Returns a single planned maintenance schedule by ID.",
+		Response:            new(alertmanagertypes.GettablePlannedMaintenance),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodGet)
+	router.Handle("/api/v2/downtime_schedules", handler.New(am.EditAccess(aH.AlertmanagerAPI.CreateDowntimeSchedule), handler.OpenAPIDef{
+		ID:                  "CreateDowntimeSchedule",
+		Tags:                []string{"downtime_schedules"},
+		Summary:             "Create a downtime schedule",
+		Description:         "Creates a new planned maintenance schedule.",
+		Request:             new(alertmanagertypes.GettablePlannedMaintenance),
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
+	router.Handle("/api/v2/downtime_schedules/{id}", handler.New(am.EditAccess(aH.AlertmanagerAPI.EditDowntimeSchedule), handler.OpenAPIDef{
+		ID:                  "EditDowntimeSchedule",
+		Tags:                []string{"downtime_schedules"},
+		Summary:             "Update a downtime schedule",
+		Description:         "Updates an existing planned maintenance schedule by ID.",
+		Request:             new(alertmanagertypes.GettablePlannedMaintenance),
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodPut)
+	router.Handle("/api/v2/downtime_schedules/{id}", handler.New(am.EditAccess(aH.AlertmanagerAPI.DeleteDowntimeSchedule), handler.OpenAPIDef{
+		ID:                  "DeleteDowntimeSchedule",
+		Tags:                []string{"downtime_schedules"},
+		Summary:             "Delete a downtime schedule",
+		Description:         "Deletes a planned maintenance schedule by ID.",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+	})).Methods(http.MethodDelete)
+
+	// V2 rule state history (alertmanager-based)
+	router.Handle("/api/v2/rules/{id}/history/timeline", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetRuleStateHistoryTimeline), handler.OpenAPIDef{
+		ID:                  "GetRuleStateHistoryTimeline",
+		Tags:                []string{"rule_state_history"},
+		Summary:             "Get rule state history timeline",
+		Description:         "Returns paginated state history entries for a rule within a time range, with optional state filter and distinct label keys for filter UI.",
+		Request:             new(alertmanagertypes.QueryRuleStateHistory),
+		Response:            new(alertmanagertypes.RuleStateTimeline),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
+	router.Handle("/api/v2/rules/{id}/history/stats", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetRuleStats), handler.OpenAPIDef{
+		ID:                  "GetRuleStats",
+		Tags:                []string{"rule_state_history"},
+		Summary:             "Get rule trigger and resolution statistics",
+		Description:         "Returns trigger counts and average resolution times for a rule, comparing the current time period against a previous period of equal length.",
+		Request:             new(alertmanagertypes.QueryRuleStateHistory),
+		Response:            new(alertmanagertypes.RuleStats),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
+	router.Handle("/api/v2/rules/{id}/history/top_contributors", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetRuleStateHistoryTopContributors), handler.OpenAPIDef{
+		ID:                  "GetRuleStateHistoryTopContributors",
+		Tags:                []string{"rule_state_history"},
+		Summary:             "Get top contributing alert series",
+		Description:         "Returns alert series (by fingerprint) that transitioned to firing most frequently for a rule within a time range, ranked by count.",
+		Request:             new(alertmanagertypes.QueryRuleStateHistory),
+		Response:            make([]alertmanagertypes.RuleStateHistoryContributor, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
+	router.Handle("/api/v2/rules/{id}/history/overall_status", handler.New(am.ViewAccess(aH.AlertmanagerAPI.GetOverallStateTransitions), handler.OpenAPIDef{
+		ID:                  "GetOverallStateTransitions",
+		Tags:                []string{"rule_state_history"},
+		Summary:             "Get overall state transition timeline",
+		Description:         "Returns a timeline of contiguous firing and inactive periods for a rule within a time range, with gap-filling between transitions.",
+		Request:             new(alertmanagertypes.QueryRuleStateHistory),
+		Response:            make([]alertmanagertypes.RuleStateTransition, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+	})).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)

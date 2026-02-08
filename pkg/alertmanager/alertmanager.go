@@ -74,6 +74,21 @@ type Alertmanager interface {
 	CreateInhibitRules(ctx context.Context, orgID valuer.UUID, rules []amConfig.InhibitRule) error
 	DeleteAllInhibitRulesByRuleId(ctx context.Context, orgID valuer.UUID, ruleId string) error
 
+	// Planned Maintenance CRUD
+	GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*alertmanagertypes.GettablePlannedMaintenance, error)
+	GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*alertmanagertypes.GettablePlannedMaintenance, error)
+	CreatePlannedMaintenance(ctx context.Context, maintenance alertmanagertypes.GettablePlannedMaintenance) (valuer.UUID, error)
+	EditPlannedMaintenance(ctx context.Context, maintenance alertmanagertypes.GettablePlannedMaintenance, id valuer.UUID) error
+	DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error
+
+	// Rule State History
+	RecordRuleStateHistory(ctx context.Context, orgID string, entries []alertmanagertypes.RuleStateHistory) error
+	GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]alertmanagertypes.RuleStateHistory, error)
+	GetRuleStateHistoryTimeline(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStateTimeline, error)
+	GetRuleStateHistoryTopContributors(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateHistoryContributor, error)
+	GetOverallStateTransitions(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateTransition, error)
+	GetRuleStats(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStats, error)
+
 	// Collects stats for the organization.
 	statsreporter.StatsCollector
 }

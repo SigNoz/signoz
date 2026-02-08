@@ -1845,3 +1845,216 @@ func (_c *MockAlertmanager_UpdateRoutePolicyByID_Call) RunAndReturn(run func(ctx
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetAllPlannedMaintenance provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*alertmanagertypes.GettablePlannedMaintenance, error) {
+	ret := _mock.Called(ctx, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllPlannedMaintenance")
+	}
+
+	var r0 []*alertmanagertypes.GettablePlannedMaintenance
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]*alertmanagertypes.GettablePlannedMaintenance, error)); ok {
+		return returnFunc(ctx, orgID)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]*alertmanagertypes.GettablePlannedMaintenance)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// GetPlannedMaintenanceByID provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*alertmanagertypes.GettablePlannedMaintenance, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPlannedMaintenanceByID")
+	}
+
+	var r0 *alertmanagertypes.GettablePlannedMaintenance
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID) (*alertmanagertypes.GettablePlannedMaintenance, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*alertmanagertypes.GettablePlannedMaintenance)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// CreatePlannedMaintenance provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) CreatePlannedMaintenance(ctx context.Context, maintenance alertmanagertypes.GettablePlannedMaintenance) (valuer.UUID, error) {
+	ret := _mock.Called(ctx, maintenance)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePlannedMaintenance")
+	}
+
+	var r0 valuer.UUID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, alertmanagertypes.GettablePlannedMaintenance) (valuer.UUID, error)); ok {
+		return returnFunc(ctx, maintenance)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, alertmanagertypes.GettablePlannedMaintenance) valuer.UUID); ok {
+		r0 = returnFunc(ctx, maintenance)
+	} else {
+		r0 = ret.Get(0).(valuer.UUID)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// EditPlannedMaintenance provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) EditPlannedMaintenance(ctx context.Context, maintenance alertmanagertypes.GettablePlannedMaintenance, id valuer.UUID) error {
+	ret := _mock.Called(ctx, maintenance, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EditPlannedMaintenance")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, alertmanagertypes.GettablePlannedMaintenance, valuer.UUID) error); ok {
+		r0 = returnFunc(ctx, maintenance, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// DeletePlannedMaintenance provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeletePlannedMaintenance")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, valuer.UUID) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// RecordRuleStateHistory provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) RecordRuleStateHistory(ctx context.Context, orgID string, entries []alertmanagertypes.RuleStateHistory) error {
+	ret := _mock.Called(ctx, orgID, entries)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordRuleStateHistory")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []alertmanagertypes.RuleStateHistory) error); ok {
+		r0 = returnFunc(ctx, orgID, entries)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// GetLastSavedRuleStateHistory provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]alertmanagertypes.RuleStateHistory, error) {
+	ret := _mock.Called(ctx, ruleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLastSavedRuleStateHistory")
+	}
+
+	var r0 []alertmanagertypes.RuleStateHistory
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]alertmanagertypes.RuleStateHistory, error)); ok {
+		return returnFunc(ctx, ruleID)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]alertmanagertypes.RuleStateHistory)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// GetRuleStateHistoryTimeline provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetRuleStateHistoryTimeline(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStateTimeline, error) {
+	ret := _mock.Called(ctx, orgID, ruleID, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRuleStateHistoryTimeline")
+	}
+
+	var r0 *alertmanagertypes.RuleStateTimeline
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStateTimeline, error)); ok {
+		return returnFunc(ctx, orgID, ruleID, params)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*alertmanagertypes.RuleStateTimeline)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// GetRuleStateHistoryTopContributors provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetRuleStateHistoryTopContributors(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateHistoryContributor, error) {
+	ret := _mock.Called(ctx, orgID, ruleID, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRuleStateHistoryTopContributors")
+	}
+
+	var r0 []alertmanagertypes.RuleStateHistoryContributor
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateHistoryContributor, error)); ok {
+		return returnFunc(ctx, orgID, ruleID, params)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]alertmanagertypes.RuleStateHistoryContributor)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// GetOverallStateTransitions provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetOverallStateTransitions(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateTransition, error) {
+	ret := _mock.Called(ctx, orgID, ruleID, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOverallStateTransitions")
+	}
+
+	var r0 []alertmanagertypes.RuleStateTransition
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *alertmanagertypes.QueryRuleStateHistory) ([]alertmanagertypes.RuleStateTransition, error)); ok {
+		return returnFunc(ctx, orgID, ruleID, params)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]alertmanagertypes.RuleStateTransition)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}
+
+// GetRuleStats provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetRuleStats(ctx context.Context, orgID string, ruleID string, params *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStats, error) {
+	ret := _mock.Called(ctx, orgID, ruleID, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRuleStats")
+	}
+
+	var r0 *alertmanagertypes.RuleStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *alertmanagertypes.QueryRuleStateHistory) (*alertmanagertypes.RuleStats, error)); ok {
+		return returnFunc(ctx, orgID, ruleID, params)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*alertmanagertypes.RuleStats)
+	}
+	r1 = ret.Error(1)
+	return r0, r1
+}

@@ -311,7 +311,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, nfManager),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, nfManager, telemetrystore),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {

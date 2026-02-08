@@ -478,15 +478,14 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 		}
 	}
 
-	if len(revisedItemsToAdd) > 0 && r.reader != nil {
+	if len(revisedItemsToAdd) > 0 {
 		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
 
 		entries := make([]model.RuleStateHistory, 0, len(revisedItemsToAdd))
 		for _, item := range revisedItemsToAdd {
 			entries = append(entries, item)
 		}
-		err := r.reader.AddRuleStateHistory(ctx, entries)
-		if err != nil {
+		if err := r.reader.AddRuleStateHistory(ctx, entries); err != nil {
 			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
 		}
 	}
