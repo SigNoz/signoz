@@ -20,13 +20,19 @@ describe('useResourceAttribute config', () => {
 
 	describe('mappingWithRoutesAndKeys', () => {
 		const dotNotationFilters = [
-			{ label: 'deployment.environment', value: 'resource_deployment.environment' },
+			{
+				label: 'deployment.environment',
+				value: 'resource_deployment.environment',
+			},
 			{ label: 'k8s.cluster.name', value: 'resource_k8s.cluster.name' },
 			{ label: 'k8s.cluster.namespace', value: 'resource_k8s.cluster.namespace' },
 		];
 
 		const underscoreNotationFilters = [
-			{ label: 'deployment.environment', value: 'resource_deployment_environment' },
+			{
+				label: 'deployment.environment',
+				value: 'resource_deployment_environment',
+			},
 			{ label: 'k8s.cluster.name', value: 'resource_k8s_cluster_name' },
 			{ label: 'k8s.cluster.namespace', value: 'resource_k8s_cluster_namespace' },
 		];
@@ -55,20 +61,14 @@ describe('useResourceAttribute config', () => {
 		});
 
 		it('should filter out non-whitelisted keys on the Service Map route', () => {
-			const allFilters = [
-				...dotNotationFilters,
-				...nonWhitelistedFilters,
-			];
+			const allFilters = [...dotNotationFilters, ...nonWhitelistedFilters];
 			const result = mappingWithRoutesAndKeys(ROUTES.SERVICE_MAP, allFilters);
 			expect(result).toHaveLength(3);
 			expect(result).toEqual(dotNotationFilters);
 		});
 
 		it('should return all filters on non-Service Map routes', () => {
-			const allFilters = [
-				...dotNotationFilters,
-				...nonWhitelistedFilters,
-			];
+			const allFilters = [...dotNotationFilters, ...nonWhitelistedFilters];
 			const result = mappingWithRoutesAndKeys('/services', allFilters);
 			expect(result).toHaveLength(5);
 			expect(result).toEqual(allFilters);
