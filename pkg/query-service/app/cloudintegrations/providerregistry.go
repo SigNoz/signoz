@@ -1,6 +1,8 @@
 package cloudintegrations
 
 import (
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/implawsprovider"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/implazureprovider"
@@ -9,15 +11,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 )
 
-func NewCloudProviderRegistry(store sqlstore.SQLStore, querier querier.Querier) map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider {
+func NewCloudProviderRegistry(logger *slog.Logger, store sqlstore.SQLStore, querier querier.Querier) map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider {
 	registry := make(map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider)
 
 	accountsRepo := integrationstore.NewCloudProviderAccountsRepository(store)
 	serviceConfigRepo := integrationstore.NewServiceConfigRepository(store)
 
-	awsProviderImpl := implawsprovider.NewAWSCloudProvider(accountsRepo, serviceConfigRepo, querier)
+	awsProviderImpl := implawsprovider.NewAWSCloudProvider(logger, accountsRepo, serviceConfigRepo, querier)
 	registry[integrationstypes.CloudProviderAWS] = awsProviderImpl
-	azureProviderImpl := implazureprovider.NewAzureCloudProvider(accountsRepo, serviceConfigRepo, querier)
+	azureProviderImpl := implazureprovider.NewAzureCloudProvider(logger, accountsRepo, serviceConfigRepo, querier)
 	registry[integrationstypes.CloudProviderAzure] = azureProviderImpl
 
 	return registry

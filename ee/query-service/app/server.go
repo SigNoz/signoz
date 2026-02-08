@@ -127,7 +127,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		)
 	}
 
-	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(signoz.SQLStore, signoz.Querier)
+	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(signoz.Instrumentation.Logger(), signoz.SQLStore, signoz.Querier)
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(

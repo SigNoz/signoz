@@ -3,6 +3,7 @@ package implazureprovider
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"sort"
 	"strings"
@@ -25,6 +26,7 @@ var (
 )
 
 type azureProvider struct {
+	logger                  *slog.Logger
 	accountsRepo            store.CloudProviderAccountsRepository
 	serviceConfigRepo       store.ServiceConfigDatabase
 	azureServiceDefinitions *services.AzureServicesProvider
@@ -32,6 +34,7 @@ type azureProvider struct {
 }
 
 func NewAzureCloudProvider(
+	logger *slog.Logger,
 	accountsRepo store.CloudProviderAccountsRepository,
 	serviceConfigRepo store.ServiceConfigDatabase,
 	querier querier.Querier,
@@ -42,6 +45,7 @@ func NewAzureCloudProvider(
 	}
 
 	return &azureProvider{
+		logger:                  logger,
 		accountsRepo:            accountsRepo,
 		serviceConfigRepo:       serviceConfigRepo,
 		azureServiceDefinitions: azureServiceDefinitions,

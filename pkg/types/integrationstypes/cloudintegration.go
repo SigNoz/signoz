@@ -634,11 +634,13 @@ type GettableAzureServiceDetails struct {
 }
 
 type ServiceConnectionStatus struct {
-	Logs    *SignalConnectionStatus `json:"logs"`
-	Metrics *SignalConnectionStatus `json:"metrics"`
+	Logs    []*SignalConnectionStatus `json:"logs"`
+	Metrics []*SignalConnectionStatus `json:"metrics"`
 }
 
 type SignalConnectionStatus struct {
+	CategoryID           string `json:"category"`
+	CategoryDisplayName  string `json:"category_display_name"`
 	LastReceivedTsMillis int64  `json:"last_received_ts_ms"` // epoch milliseconds
 	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
 }

@@ -72,7 +72,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
-	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(signoz.SQLStore, signoz.Querier)
+	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(signoz.Instrumentation.Logger(), signoz.SQLStore, signoz.Querier)
 
 	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
 		Provider: "memory",
