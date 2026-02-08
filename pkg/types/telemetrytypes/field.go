@@ -300,7 +300,7 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 
 	if params.StartUnixMilli != 0 {
 		req.StartUnixMilli = params.StartUnixMilli
-		// Round down to the nearest 6 hours (21600000 milliseconds), why? guess karo?
+		// Round down to the nearest 6 hours (21600000 milliseconds)
 		req.StartUnixMilli -= req.StartUnixMilli % 21600000
 	}
 
@@ -326,6 +326,7 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 		}
 	}
 
+	req.Name = params.SearchText
 	if params.SearchText != "" && params.FieldContext == FieldContextUnspecified {
 		parsedFieldKey := GetFieldKeyFromKeyText(params.SearchText)
 		if parsedFieldKey.FieldContext != FieldContextUnspecified {
