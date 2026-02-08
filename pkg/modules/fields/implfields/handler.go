@@ -7,18 +7,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type handler struct {
-	telemetryStore         telemetrystore.TelemetryStore
 	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
-func NewHandler(settings factory.ProviderSettings, telemetryMetadataStore telemetrytypes.MetadataStore, telemetryStore telemetrystore.TelemetryStore) fields.Handler {
+func NewHandler(settings factory.ProviderSettings, telemetryMetadataStore telemetrytypes.MetadataStore) fields.Handler {
 	return &handler{
-		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,
 	}
 }

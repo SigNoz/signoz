@@ -30,7 +30,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -60,7 +59,6 @@ func NewHandlers(
 	flaggerService flagger.Flagger,
 	gatewayService gateway.Gateway,
 	telemetryMetadataStore telemetrytypes.MetadataStore,
-	telemetryStore telemetrystore.TelemetryStore,
 ) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
@@ -76,6 +74,6 @@ func NewHandlers(
 		FlaggerHandler:  flagger.NewHandler(flaggerService),
 		GatewayHandler:  gateway.NewHandler(gatewayService),
 		Role:            implrole.NewHandler(modules.RoleSetter, modules.RoleGetter),
-		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore, telemetryStore),
+		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore),
 	}
 }
