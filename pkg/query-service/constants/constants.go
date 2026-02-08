@@ -125,6 +125,7 @@ const (
 	SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME        = "distributed_time_series_v4_6hrs"
 	SIGNOZ_ATTRIBUTES_METADATA_TABLENAME       = "distributed_attributes_metadata"
 	SIGNOZ_ATTRIBUTES_METADATA_LOCAL_TABLENAME = "attributes_metadata"
+	SIGNOZ_METRICS_METADATA                    = "distributed_metadata"
 )
 
 // alert related constants
