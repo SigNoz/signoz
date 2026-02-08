@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -296,19 +295,12 @@ type PostableFieldValueParams struct {
 	ExistingQuery string `query:"existingQuery"`
 }
 
-func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) (*FieldKeySelector, error) {
+func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {
 	var req FieldKeySelector
-	var signal Signal
-
-	if params.Limit != 0 {
-		req.Limit = params.Limit
-	} else {
-		req.Limit = 1000
-	}
 
 	if params.StartUnixMilli != 0 {
 		req.StartUnixMilli = params.StartUnixMilli
-		// Round down to the nearest 6 hours (21600000 milliseconds)
+		// Round down to the nearest 6 hours (21600000 milliseconds), why? guess karo?
 		req.StartUnixMilli -= req.StartUnixMilli % 21600000
 	}
 
@@ -316,15 +308,16 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 		req.EndUnixMilli = params.EndUnixMilli
 	}
 
-	if params.SearchText != "" && params.FieldContext == FieldContextUnspecified {
-		parsedFieldKey := GetFieldKeyFromKeyText(params.SearchText)
-		if parsedFieldKey.FieldContext != FieldContextUnspecified {
-			// Only apply inferred context if it is valid for the current signal
-			if isContextValidForSignal(parsedFieldKey.FieldContext, signal) {
-				req.Name = parsedFieldKey.Name
-				req.FieldContext = parsedFieldKey.FieldContext
-			}
-		}
+	req.Signal = params.Signal
+	req.Source = params.Source
+	req.FieldContext = params.FieldContext
+	req.FieldDataType = params.FieldDataType
+	req.SelectorMatchType = FieldSelectorMatchTypeFuzzy
+
+	if params.Limit != 0 {
+		req.Limit = params.Limit
+	} else {
+		req.Limit = 1000
 	}
 
 	if params.MetricName != "" {
@@ -333,29 +326,41 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 		}
 	}
 
-	return &req, nil
-}
-
-func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) (*FieldValueSelector, error) {
-	var fieldValueSelector FieldValueSelector
-
-	keySelector, err := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse field key request").WithAdditional(err.Error())
-	}
-
-	if params.Name != "" && keySelector.FieldContext == FieldContextUnspecified {
-		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
+	if params.SearchText != "" && params.FieldContext == FieldContextUnspecified {
+		parsedFieldKey := GetFieldKeyFromKeyText(params.SearchText)
 		if parsedFieldKey.FieldContext != FieldContextUnspecified {
 			// Only apply inferred context if it is valid for the current signal
-			if isContextValidForSignal(parsedFieldKey.FieldContext, keySelector.Signal) {
-				fieldValueSelector.Name = parsedFieldKey.Name
-				keySelector.FieldContext = parsedFieldKey.FieldContext
+			if isContextValidForSignal(parsedFieldKey.FieldContext, req.Signal) {
+				req.Name = parsedFieldKey.Name
+				req.FieldContext = parsedFieldKey.FieldContext
 			}
 		}
 	}
 
-	keySelector.Name = fieldValueSelector.Name
+	return &req
+}
+
+func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *FieldValueSelector {
+
+	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
+
+	fieldValueSelector := &FieldValueSelector{
+		FieldKeySelector: keySelector,
+	}
+
+	fieldValueSelector.Name = params.Name
+
+	if params.Name != "" && fieldValueSelector.FieldContext == FieldContextUnspecified {
+		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
+		if parsedFieldKey.FieldContext != FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, fieldValueSelector.Signal) {
+				fieldValueSelector.Name = parsedFieldKey.Name
+				fieldValueSelector.FieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
+
 	fieldValueSelector.ExistingQuery = params.ExistingQuery
 	fieldValueSelector.Value = params.SearchText
 
@@ -365,5 +370,5 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 		fieldValueSelector.Limit = 50
 	}
 
-	return &fieldValueSelector, nil
+	return fieldValueSelector
 }

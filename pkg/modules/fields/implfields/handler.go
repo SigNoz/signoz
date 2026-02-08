@@ -32,11 +32,7 @@ func (handler *handler) GetFieldsKeys(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	fieldKeySelector, err := telemetrytypes.NewFieldKeySelectorFromPostableFieldKeysParams(params)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	fieldKeySelector := telemetrytypes.NewFieldKeySelectorFromPostableFieldKeysParams(params)
 
 	keys, complete, err := handler.telemetryMetadataStore.GetKeys(ctx, fieldKeySelector)
 	if err != nil {
@@ -59,11 +55,7 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	fieldValueSelector, err := telemetrytypes.NewFieldValueSelectorFromPostableFieldValueParams(params)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	fieldValueSelector := telemetrytypes.NewFieldValueSelectorFromPostableFieldValueParams(params)
 
 	allValues, allComplete, err := handler.telemetryMetadataStore.GetAllValues(ctx, fieldValueSelector)
 	if err != nil {
