@@ -186,8 +186,9 @@ describe('UPlotConfigBuilder', () => {
 
 		// Only one scale entry for 'y' (merge path used, no duplicate added)
 		expect(config.scales).toBeDefined();
-		expect(Object.keys(config.scales ?? {})).toEqual(['y']);
-		expect(config.scales?.y?.range).toBeDefined();
+		const scales = config.scales ?? {};
+		expect(Object.keys(scales)).toEqual(['y']);
+		expect(scales.y?.range).toBeDefined();
 	});
 
 	it('restores visibility state from localStorage when selectionPreferencesSource is LOCAL_STORAGE', () => {
@@ -283,21 +284,13 @@ describe('UPlotConfigBuilder', () => {
 		expect(config.plugins).toContain(plugin);
 	});
 
-	it('sets bands and includes them in config', () => {
-		const builder = new UPlotConfigBuilder();
-		const bands: uPlot.Band[] = [{ series: [1, 2], fill: (): string => '#000' }];
-
-		builder.setBands(bands);
-
-		const config = builder.getConfig();
-
-		expect(config.bands).toEqual(bands);
-	});
-
-	it('sets padding, legend, focus, select, tzDate and includes them in config', () => {
+	it('sets padding, legend, focus, select, tzDate, bands and includes them in config', () => {
 		const tzDate = (ts: number): Date => new Date(ts);
 		const builder = new UPlotConfigBuilder();
 
+		const bands: uPlot.Band[] = [{ series: [1, 2], fill: (): string => '#000' }];
+
+		builder.setBands(bands);
 		builder.setPadding([10, 20, 30, 40]);
 		builder.setLegend({ show: true, live: true });
 		builder.setFocus({ alpha: 0.5 });
@@ -306,6 +299,7 @@ describe('UPlotConfigBuilder', () => {
 
 		const config = builder.getConfig();
 
+		expect(config.bands).toEqual(bands);
 		expect(config.padding).toEqual([10, 20, 30, 40]);
 		expect(config.legend).toEqual({ show: true, live: true });
 		expect(config.focus).toEqual({ alpha: 0.5 });

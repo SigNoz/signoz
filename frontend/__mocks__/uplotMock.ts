@@ -26,8 +26,9 @@ const createMockUPlotInstance = (): MockUPlotInstance => ({
 });
 
 // Path builder: (self, seriesIdx, idx0, idx1) => paths or null
-const createMockPathBuilder = (): jest.Mock =>
+const createMockPathBuilder = (name: string): jest.Mock =>
 	jest.fn(() => ({
+		name, // To test if the correct pathBuilder is used
 		stroke: jest.fn(),
 		fill: jest.fn(),
 		clip: jest.fn(),
@@ -35,10 +36,12 @@ const createMockPathBuilder = (): jest.Mock =>
 
 // Create mock paths - linear, spline, stepped needed by UPlotSeriesBuilder.getPathBuilder
 const mockPaths = {
-	spline: jest.fn(() => createMockPathBuilder()),
-	bars: jest.fn(() => createMockPathBuilder()),
-	linear: jest.fn(() => createMockPathBuilder()),
-	stepped: jest.fn((opts?: { align?: number }) => createMockPathBuilder()),
+	spline: jest.fn(() => createMockPathBuilder('spline')),
+	bars: jest.fn(() => createMockPathBuilder('bars')),
+	linear: jest.fn(() => createMockPathBuilder('linear')),
+	stepped: jest.fn((opts?: { align?: number }) =>
+		createMockPathBuilder(`stepped-(${opts?.align ?? 0})`),
+	),
 };
 
 // Mock static methods

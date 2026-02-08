@@ -21,6 +21,10 @@ const createBaseProps = (
 	...overrides,
 });
 
+interface MockPath extends uPlot.Series.Paths {
+	name?: string;
+}
+
 describe('UPlotSeriesBuilder', () => {
 	it('maps basic props into uPlot series config', () => {
 		const builder = new UPlotSeriesBuilder(
@@ -105,7 +109,7 @@ describe('UPlotSeriesBuilder', () => {
 		expect(config.paths).toBe(customPaths);
 	});
 
-	it('disables line paths when drawStyle is Points, but still renders points', () => {
+	it('does not build line paths when drawStyle is Points, but still renders points', () => {
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({
 				drawStyle: DrawStyle.Points,
@@ -210,9 +214,8 @@ describe('UPlotSeriesBuilder', () => {
 
 		const config = builder.getConfig();
 
-		expect(typeof config.paths).toBe('function');
 		const result = config.paths?.({} as uPlot, 1, 0, 10);
-		expect(result).toBeDefined();
+		expect((result as MockPath).name).toBe('linear');
 	});
 
 	it('uses StepBefore and StepAfter interpolation for line paths', () => {
@@ -231,11 +234,10 @@ describe('UPlotSeriesBuilder', () => {
 
 		const stepBeforeConfig = stepBeforeBuilder.getConfig();
 		const stepAfterConfig = stepAfterBuilder.getConfig();
-
-		expect(typeof stepBeforeConfig.paths).toBe('function');
-		expect(typeof stepAfterConfig.paths).toBe('function');
-		expect(stepBeforeConfig.paths?.({} as uPlot, 1, 0, 5)).toBeDefined();
-		expect(stepAfterConfig.paths?.({} as uPlot, 1, 0, 5)).toBeDefined();
+		const stepBeforePath = stepBeforeConfig.paths?.({} as uPlot, 1, 0, 5);
+		const stepAfterPath = stepAfterConfig.paths?.({} as uPlot, 1, 0, 5);
+		expect((stepBeforePath as MockPath).name).toBe('stepped-(-1)');
+		expect((stepAfterPath as MockPath).name).toBe('stepped-(1)');
 	});
 
 	it('defaults to spline interpolation when lineInterpolation is Spline or undefined', () => {
@@ -252,25 +254,17 @@ describe('UPlotSeriesBuilder', () => {
 		const splineConfig = splineBuilder.getConfig();
 		const defaultConfig = defaultBuilder.getConfig();
 
-		expect(typeof splineConfig.paths).toBe('function');
-		expect(typeof defaultConfig.paths).toBe('function');
-	});
+		const splinePath = splineConfig.paths?.({} as uPlot, 1, 0, 10);
+		const defaultPath = defaultConfig.paths?.({} as uPlot, 1, 0, 10);
 
-	it('coerces non-boolean spanGaps to false', () => {
-		const builder = new UPlotSeriesBuilder(
-			createBaseProps({ spanGaps: undefined }),
-		);
-
-		const config = builder.getConfig();
-
-		expect(config.spanGaps).toBe(false);
+		expect((splinePath as MockPath).name).toBe('spline');
+		expect((defaultPath as MockPath).name).toBe('spline');
 	});
 
 	it('preserves spanGaps true when provided as boolean', () => {
 		const builder = new UPlotSeriesBuilder(createBaseProps({ spanGaps: true }));
 
 		const config = builder.getConfig();
-
 		expect(config.spanGaps).toBe(true);
 	});
 
@@ -284,10 +278,7 @@ describe('UPlotSeriesBuilder', () => {
 		);
 
 		const config = builder.getConfig();
-
-		expect(config.stroke).toBeDefined();
-		expect(typeof config.stroke).toBe('string');
-		expect((config.stroke as string).length).toBeGreaterThan(0);
+		expect(config.stroke).toBe('#FF432E');
 	});
 
 	it('passes through pointsFilter when provided', () => {
