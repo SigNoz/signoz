@@ -2,6 +2,7 @@ package inframetrics
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -53,10 +54,11 @@ var (
 	}
 
 	queryNamesForTopHosts = map[string][]string{
-		"cpu":    {"A", "B", "F1"},
-		"memory": {"C", "D", "F2"},
-		"wait":   {"E", "F", "F3"},
-		"load15": {"G"},
+		"cpu":        {"A", "B", "F1"},
+		"memory":     {"C", "D", "F2"},
+		"wait":       {"E", "F", "F3"},
+		"load15":     {"G"},
+		"filesystem": {"H", "I", "F4"},
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
@@ -67,10 +69,11 @@ var (
 		GetDotMetrics("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"cpu":    GetDotMetrics("system_cpu_time"),
-		"memory": GetDotMetrics("system_memory_usage"),
-		"load15": GetDotMetrics("system_cpu_load_average_15m"),
-		"wait":   GetDotMetrics("system_cpu_time"),
+		"cpu":        GetDotMetrics("system_cpu_time"),
+		"memory":     GetDotMetrics("system_memory_usage"),
+		"load15":     GetDotMetrics("system_cpu_load_average_15m"),
+		"wait":       GetDotMetrics("system_cpu_time"),
+		"filesystem": GetDotMetrics("system_filesystem_usage"),
 	}
 )
 
@@ -386,6 +389,11 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 	return maps.Keys(clusterNames), maps.Keys(nodeNames), nil
 }
 
+func marshalInterface(inter any) string {
+	b, _ := json.Marshal(inter)
+	return string(b)
+}
+
 func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (model.HostListResponse, error) {
 	resp := model.HostListResponse{}
 
@@ -479,10 +487,14 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		}
 	}
 
+	fmt.Println("======> printing query: ", marshalInterface(query.CompositeQuery.BuilderQueries))
+
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
+
+	// fmt.Println("====> queryResponse:", marshalInterface(queryResponse))
 
 	formattedResponse, err := postprocess.PostProcessResult(queryResponse, query)
 	if err != nil {
@@ -494,10 +506,11 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 	for _, result := range formattedResponse {
 		for _, row := range result.Table.Rows {
 			record := model.HostListRecord{
-				CPU:    -1,
-				Memory: -1,
-				Wait:   -1,
-				Load15: -1,
+				CPU:        -1,
+				Memory:     -1,
+				Wait:       -1,
+				Load15:     -1,
+				Filesystem: -1,
 			}
 
 			if hostName, ok := row.Data[hostNameAttrKey].(string); ok {
@@ -515,6 +528,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 			}
 			if load15, ok := row.Data["G"].(float64); ok {
 				record.Load15 = load15
+			}
+			if filesystem, ok := row.Data["F4"].(float64); ok {
+				record.Filesystem = filesystem
 			}
 			record.Meta = map[string]string{}
 			if _, ok := hostAttrs[record.HostName]; ok {

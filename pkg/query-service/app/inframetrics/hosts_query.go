@@ -269,42 +269,130 @@ var HostsTableListQuery = v3.QueryRangeParamsV3{
 					Items:    []v3.FilterItem{},
 				},
 			},
-			"G": {
-				QueryName:  "G",
-				DataSource: v3.DataSourceMetrics,
-				AggregateAttribute: v3.AttributeKey{
-					Key:      metricNamesForHosts["load15"],
-					DataType: v3.AttributeKeyDataTypeFloat64,
-				},
-				Temporality: v3.Unspecified,
-				Filters: &v3.FilterSet{
-					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      hostNameAttrKey,
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeResource,
-							},
-							Operator: v3.FilterOperatorNotContains,
-							Value:    agentNameToIgnore,
-						},
-					},
-				},
-				GroupBy: []v3.AttributeKey{
-					{
-						Key:      hostNameAttrKey,
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-				},
-				Expression:       "G",
-				ReduceTo:         v3.ReduceToOperatorAvg,
-				TimeAggregation:  v3.TimeAggregationAvg,
-				SpaceAggregation: v3.SpaceAggregationSum,
-				Disabled:         false,
-				Legend:           "CPU Load Average (15m)",
+		"G": {
+			QueryName:  "G",
+			DataSource: v3.DataSourceMetrics,
+			AggregateAttribute: v3.AttributeKey{
+				Key:      metricNamesForHosts["load15"],
+				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
+			Temporality: v3.Unspecified,
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      hostNameAttrKey,
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeResource,
+						},
+						Operator: v3.FilterOperatorNotContains,
+						Value:    agentNameToIgnore,
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{
+					Key:      hostNameAttrKey,
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+			},
+			Expression:       "G",
+			ReduceTo:         v3.ReduceToOperatorAvg,
+			TimeAggregation:  v3.TimeAggregationAvg,
+			SpaceAggregation: v3.SpaceAggregationSum,
+			Disabled:         false,
+			Legend:           "CPU Load Average (15m)",
+		},
+		"H": {
+			QueryName:  "H",
+			DataSource: v3.DataSourceMetrics,
+			AggregateAttribute: v3.AttributeKey{
+				Key:      metricNamesForHosts["filesystem"],
+				DataType: v3.AttributeKeyDataTypeFloat64,
+			},
+			Temporality: v3.Cumulative,
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "state",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: v3.FilterOperatorEqual,
+						Value:    "used",
+					},
+					{
+						Key: v3.AttributeKey{
+							Key:      hostNameAttrKey,
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeResource,
+						},
+						Operator: v3.FilterOperatorNotContains,
+						Value:    agentNameToIgnore,
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{
+					Key:      hostNameAttrKey,
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+			},
+			Expression:       "H",
+			ReduceTo:         v3.ReduceToOperatorAvg,
+			TimeAggregation:  v3.TimeAggregationAvg,
+			SpaceAggregation: v3.SpaceAggregationSum,
+			Disabled:         true,
+		},
+		"I": {
+			QueryName:  "I",
+			DataSource: v3.DataSourceMetrics,
+			AggregateAttribute: v3.AttributeKey{
+				Key:      metricNamesForHosts["filesystem"],
+				DataType: v3.AttributeKeyDataTypeFloat64,
+			},
+			Temporality: v3.Cumulative,
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      hostNameAttrKey,
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeResource,
+						},
+						Operator: v3.FilterOperatorNotContains,
+						Value:    agentNameToIgnore,
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{
+					Key:      hostNameAttrKey,
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+			},
+			Expression:       "I",
+			ReduceTo:         v3.ReduceToOperatorAvg,
+			TimeAggregation:  v3.TimeAggregationAvg,
+			SpaceAggregation: v3.SpaceAggregationSum,
+			Disabled:         true,
+		},
+		"F4": {
+			QueryName:  "F4",
+			Expression: "H/I",
+			Legend:     "Disk Usage (%)",
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items:    []v3.FilterItem{},
+			},
+		},
 		},
 		PanelType: v3.PanelTypeTable,
 		QueryType: v3.QueryTypeBuilder,

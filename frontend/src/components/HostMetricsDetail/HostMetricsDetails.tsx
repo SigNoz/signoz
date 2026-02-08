@@ -426,6 +426,12 @@ function HostMetricsDetails({
 								>
 									MEMORY USAGE
 								</Typography.Text>
+								<Typography.Text
+									type="secondary"
+									className="host-details-metadata-label"
+								>
+									DISK USAGE
+								</Typography.Text>
 							</div>
 
 							<div className="values-row">
@@ -471,6 +477,23 @@ function HostMetricsDetails({
 												return Color.BG_CHERRY_500;
 											}
 											if (memoryPercent >= 60) {
+												return Color.BG_AMBER_500;
+											}
+											return Color.BG_FOREST_500;
+										})()}
+										className="progress-bar"
+									/>
+								</div>
+								<div className="progress-container">
+									<Progress
+										percent={Number((host.filesystem * 100).toFixed(1))}
+										size="small"
+										strokeColor={((): string => {
+											const filesystemPercent = Number((host.filesystem * 100).toFixed(1));
+											if (filesystemPercent >= 90) {
+												return Color.BG_CHERRY_500;
+											}
+											if (filesystemPercent >= 60) {
 												return Color.BG_AMBER_500;
 											}
 											return Color.BG_FOREST_500;
