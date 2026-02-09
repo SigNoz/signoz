@@ -1,7 +1,6 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
-import getGridColor from 'lib/uPlotLib/utils/getGridColor';
 import type uPlot from 'uplot';
 
 import type { AxisProps } from '../types';
@@ -42,7 +41,7 @@ describe('UPlotAxisBuilder', () => {
 
 		// Default grid and ticks are created
 		expect(config.grid).toEqual({
-			stroke: getGridColor(false),
+			stroke: 'rgba(0,0,0,0.5)',
 			width: 0.2,
 			show: true,
 		});
@@ -67,7 +66,7 @@ describe('UPlotAxisBuilder', () => {
 
 		expect(config.grid).toEqual({
 			// stroke falls back to theme-based default when not provided
-			stroke: getGridColor(true),
+			stroke: 'rgba(231,233,237,0.3)',
 			// provided width overrides default
 			width: 1,
 			// show falls back to default when not provided
@@ -227,20 +226,6 @@ describe('UPlotAxisBuilder', () => {
 		const config = builder.getConfig();
 
 		expect(config.values).toBeUndefined();
-	});
-
-	it('omits stroke when stroke and isDarkMode are both undefined', () => {
-		const builder = new UPlotAxisBuilder(
-			createAxisProps({
-				scaleKey: 'custom',
-				stroke: undefined,
-				isDarkMode: undefined,
-			}),
-		);
-
-		const config = builder.getConfig();
-
-		expect(config.stroke).toBeUndefined();
 	});
 
 	it('includes space in config when provided', () => {

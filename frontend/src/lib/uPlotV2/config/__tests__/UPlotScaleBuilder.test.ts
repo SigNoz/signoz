@@ -224,12 +224,13 @@ describe('UPlotScaleBuilder', () => {
 			softMax: undefined,
 		});
 
-		const config = builder.getConfig();
-		const yScale = config.y;
-
-		// We can't read private fields directly, but we can assert that rangeConfig
-		// has been recomputed using the merged values by checking that createRangeFunction
-		// is still called without throwing and returns a working range function.
-		expect(typeof yScale.range).toBe('function');
+		expect(builder.props.min).toBe(2);
+		expect(builder.props.softMax).toBe(undefined);
+		expect(builder.props.max).toBe(10);
+		expect(builder.props.softMin).toBe(1);
+		expect(builder.props.time).toBe(false);
+		expect(builder.props.scaleKey).toBe('y');
+		expect(builder.props.distribution).toBe(DistributionType.Linear);
+		expect(builder.props.thresholds).toBe(undefined);
 	});
 });

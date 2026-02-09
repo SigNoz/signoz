@@ -117,13 +117,19 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 	/**
 	 * Calculate axis size from existing size property
 	 */
-	private getExistingAxisSize(
-		self: uPlot,
-		axis: Axis,
-		values: string[] | undefined,
-		axisIdx: number,
-		cycleNum: number,
-	): number {
+	private getExistingAxisSize({
+		uplotInstance,
+		axis,
+		values,
+		axisIdx,
+		cycleNum,
+	}: {
+		uplotInstance: uPlot;
+		axis: Axis;
+		values: string[] | undefined;
+		axisIdx: number;
+		cycleNum: number;
+	}): number {
 		const internalSize = (axis as { _size?: number })._size;
 		if (internalSize !== undefined) {
 			return internalSize;
@@ -131,7 +137,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 
 		const existingSize = axis.size;
 		if (typeof existingSize === 'function') {
-			return existingSize(self, values ?? [], axisIdx, cycleNum);
+			return existingSize(uplotInstance, values ?? [], axisIdx, cycleNum);
 		}
 
 		return existingSize ?? 0;
@@ -178,7 +184,13 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 
 			// Bail out, force convergence
 			if (cycleNum > 1) {
-				return this.getExistingAxisSize(self, axis, values, axisIdx, cycleNum);
+				return this.getExistingAxisSize({
+					uplotInstance: self,
+					axis,
+					values,
+					axisIdx,
+					cycleNum,
+				});
 			}
 
 			const gap = this.props.gap ?? 5;
