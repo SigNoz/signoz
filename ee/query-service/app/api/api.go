@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -22,6 +23,8 @@ import (
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -108,7 +111,22 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	// v5
-	router.HandleFunc("/api/v5/query_range", am.ViewAccess(ah.queryRangeV5)).Methods(http.MethodPost)
+	router.Handle("/api/v5/query_range", handler.New(am.ViewAccess(ah.queryRangeV5), handler.OpenAPIDef{
+		ID:                 "QueryRangeV5",
+		Tags:               []string{"query"},
+		Summary:            "Query range",
+		Description:        "Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL.",
+		Request:            new(qbtypes.QueryRangeRequest),
+		RequestContentType: "application/json",
+		Response:           new(qbtypes.QueryRangeResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:  http.StatusOK,
+		ErrorStatusCodes:   []int{http.StatusBadRequest},
+		SecuritySchemes: []handler.OpenAPISecurityScheme{
+			{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{"VIEWER"}},
+			{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{"VIEWER"}},
+		},
+	})).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v5/substitute_vars", am.ViewAccess(ah.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 

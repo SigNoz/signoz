@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"reflect"
 
@@ -23,6 +24,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/gorilla/mux"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
@@ -56,6 +59,10 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 	if err != nil {
 		return nil, err
 	}
+
+	// Register routes that live outside the APIServer modules
+	// so they are discovered by the OpenAPI walker.
+	registerQueryRoutes(apiserver.Router())
 
 	reflector := openapi3.NewReflector()
 	reflector.JSONSchemaReflector().DefaultOptions = append(reflector.JSONSchemaReflector().DefaultOptions, jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
@@ -96,4 +103,26 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	}
 
 	return os.WriteFile(path, spec, 0o600)
+}
+
+func registerQueryRoutes(router *mux.Router) {
+	router.Handle("/api/v5/query_range", handler.New(
+		func(http.ResponseWriter, *http.Request) {},
+		handler.OpenAPIDef{
+			ID:                  "QueryRangeV5",
+			Tags:                []string{"query"},
+			Summary:             "Query range",
+			Description:         "Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL.",
+			Request:             new(qbtypes.QueryRangeRequest),
+			RequestContentType:  "application/json",
+			Response:            new(qbtypes.QueryRangeResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes: []handler.OpenAPISecurityScheme{
+				{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{"VIEWER"}},
+				{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{"VIEWER"}},
+			},
+		},
+	)).Methods(http.MethodPost)
 }

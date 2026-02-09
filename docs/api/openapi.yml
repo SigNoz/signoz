@@ -3354,6 +3354,62 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v5/query_range:
+    post:
+      deprecated: false
+      description: Execute a composite query over a time range. Supports builder queries
+        (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse
+        SQL.
+      operationId: QueryRangeV5
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Query range
+      tags:
+      - query
 components:
   schemas:
     AuthtypesAttributeMapping:
@@ -4150,7 +4206,101 @@ components:
         type:
           type: string
       type: object
+    Querybuildertypesv5AggregationBucket:
+      properties:
+        alias:
+          type: string
+        anomalyScores:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+        index:
+          type: integer
+        lowerBoundSeries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+        meta:
+          properties:
+            unit:
+              type: string
+          type: object
+        predictedSeries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+        series:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          nullable: true
+          type: array
+        upperBoundSeries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+      type: object
+    Querybuildertypesv5Bucket:
+      properties:
+        step:
+          format: double
+          type: number
+      type: object
+    Querybuildertypesv5ClickHouseQuery:
+      properties:
+        disabled:
+          type: boolean
+        legend:
+          type: string
+        name:
+          type: string
+        query:
+          type: string
+      type: object
+    Querybuildertypesv5ColumnDescriptor:
+      properties:
+        aggregationIndex:
+          format: int64
+          type: integer
+        columnType:
+          $ref: '#/components/schemas/Querybuildertypesv5ColumnType'
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        meta:
+          properties:
+            unit:
+              type: string
+          type: object
+        name:
+          type: string
+        queryName:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
+          type: string
+      type: object
+    Querybuildertypesv5ColumnType:
+      enum:
+      - group
+      - aggregation
+      type: string
+    Querybuildertypesv5CompositeQuery:
+      description: Composite query containing one or more query envelopes. Each query
+        envelope specifies its type and corresponding spec.
+      properties:
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          nullable: true
+          type: array
+      type: object
     Querybuildertypesv5ExecStats:
+      description: Execution statistics for the query, including rows scanned, bytes
+        scanned, and duration.
       properties:
         bytesScanned:
           minimum: 0
@@ -4172,10 +4322,109 @@ components:
         expression:
           type: string
       type: object
+    Querybuildertypesv5FormatOptions:
+      properties:
+        fillGaps:
+          type: boolean
+        formatTableResultForUI:
+          type: boolean
+      type: object
+    Querybuildertypesv5Function:
+      properties:
+        args:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5FunctionArg'
+          type: array
+        name:
+          $ref: '#/components/schemas/Querybuildertypesv5FunctionName'
+      type: object
+    Querybuildertypesv5FunctionArg:
+      properties:
+        name:
+          type: string
+        value: {}
+      type: object
+    Querybuildertypesv5FunctionName:
+      enum:
+      - cutoffmin
+      - cutoffmax
+      - clampmin
+      - clampmax
+      - absolute
+      - runningdiff
+      - log2
+      - log10
+      - cumulativesum
+      - ewma3
+      - ewma5
+      - ewma7
+      - median3
+      - median5
+      - median7
+      - timeshift
+      - anomaly
+      - fillzero
+      type: string
+    Querybuildertypesv5GroupByKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
+          type: string
+      type: object
+    Querybuildertypesv5Having:
+      properties:
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5Label:
+      properties:
+        key:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value: {}
+      type: object
+    Querybuildertypesv5LimitBy:
+      properties:
+        keys:
+          items:
+            type: string
+          nullable: true
+          type: array
+        value:
+          type: string
+      type: object
+    Querybuildertypesv5LogAggregation:
+      properties:
+        alias:
+          type: string
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5MetricAggregation:
+      properties:
+        metricName:
+          type: string
+        reduceTo:
+          $ref: '#/components/schemas/Querybuildertypesv5ReduceTo'
+        spaceAggregation:
+          type: string
+        temporality:
+          type: string
+        timeAggregation:
+          type: string
+      type: object
     Querybuildertypesv5OrderBy:
       properties:
         direction:
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5OrderDirection'
         key:
           $ref: '#/components/schemas/Querybuildertypesv5OrderByKey'
       type: object
@@ -4184,34 +4433,404 @@ components:
         description:
           type: string
         fieldContext:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
         fieldDataType:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
         name:
           type: string
         signal:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesSignal'
         unit:
           type: string
       type: object
+    Querybuildertypesv5OrderDirection:
+      enum:
+      - asc
+      - desc
+      type: string
+    Querybuildertypesv5PromQuery:
+      properties:
+        disabled:
+          type: boolean
+        legend:
+          type: string
+        name:
+          type: string
+        query:
+          type: string
+        stats:
+          type: boolean
+        step:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderFormula:
+      properties:
+        disabled:
+          type: boolean
+        expression:
+          type: string
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        name:
+          type: string
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+      type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderTraceOperator:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        expression:
+          type: string
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        returnSpansFrom:
+          type: string
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
     Querybuildertypesv5QueryData:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesData'
+      - $ref: '#/components/schemas/Querybuildertypesv5ScalarData'
+      - $ref: '#/components/schemas/Querybuildertypesv5RawData'
       properties:
         results:
           items: {}
           nullable: true
           type: array
       type: object
+    Querybuildertypesv5QueryEnvelope:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderTrace'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderLog'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderMetric'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
+      properties:
+        spec: {}
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderLog:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderMetric:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderTrace:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeClickHouseSQL:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeFormula:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopePromQL:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeTraceOperator:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryRangeRequest:
+      description: Request body for the v5 query range endpoint. Supports builder
+        queries (traces, logs, metrics), formulas, joins, trace operators, PromQL,
+        and ClickHouse SQL queries.
+      example:
+        compositeQuery:
+          queries:
+          - spec:
+              aggregations:
+              - alias: span_count
+                expression: count()
+              filter:
+                expression: service.name = 'frontend'
+              groupBy:
+              - fieldContext: resource
+                name: service.name
+              limit: 10
+              name: A
+              order:
+              - direction: desc
+                key:
+                  name: span_count
+              signal: traces
+              stepInterval: 60s
+            type: builder_query
+        end: 1.6409988e+12
+        requestType: time_series
+        schemaVersion: v1
+        start: 1.6409952e+12
+      properties:
+        compositeQuery:
+          $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+        end:
+          minimum: 0
+          type: integer
+        formatOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5FormatOptions'
+        noCache:
+          type: boolean
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+        schemaVersion:
+          type: string
+        start:
+          minimum: 0
+          type: integer
+        variables:
+          additionalProperties:
+            $ref: '#/components/schemas/Querybuildertypesv5VariableItem'
+          type: object
+      type: object
     Querybuildertypesv5QueryRangeResponse:
+      description: 'Response from the v5 query range endpoint. The data.results array
+        contains typed results depending on the requestType: TimeSeriesData for time_series,
+        ScalarData for scalar, or RawData for raw requests.'
       properties:
         data:
           $ref: '#/components/schemas/Querybuildertypesv5QueryData'
         meta:
           $ref: '#/components/schemas/Querybuildertypesv5ExecStats'
         type:
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
       type: object
+    Querybuildertypesv5QueryType:
+      enum:
+      - builder_query
+      - builder_formula
+      - builder_trace_operator
+      - clickhouse_sql
+      - promql
+      type: string
     Querybuildertypesv5QueryWarnData:
       properties:
         message:
@@ -4228,6 +4847,153 @@ components:
         message:
           type: string
       type: object
+    Querybuildertypesv5RawData:
+      properties:
+        nextCursor:
+          type: string
+        queryName:
+          type: string
+        rows:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5RawRow'
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5RawRow:
+      properties:
+        data:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+      type: object
+    Querybuildertypesv5ReduceTo:
+      enum:
+      - sum
+      - count
+      - avg
+      - min
+      - max
+      - last
+      - median
+      type: string
+    Querybuildertypesv5RequestType:
+      enum:
+      - scalar
+      - time_series
+      - raw
+      - raw_stream
+      - trace
+      type: string
+    Querybuildertypesv5ScalarData:
+      properties:
+        columns:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5ColumnDescriptor'
+          nullable: true
+          type: array
+        data:
+          items:
+            items: {}
+            type: array
+          nullable: true
+          type: array
+        queryName:
+          type: string
+      type: object
+    Querybuildertypesv5SecondaryAggregation:
+      properties:
+        alias:
+          type: string
+        expression:
+          type: string
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5Step:
+      description: Step interval. Accepts a Go duration string (e.g., "60s", "1m",
+        "1h") or a number representing seconds (e.g., 60).
+      oneOf:
+      - description: Duration string (e.g., "60s", "5m", "1h").
+        example: 60s
+        type: string
+      - description: Duration in seconds.
+        example: 60
+        type: number
+    Querybuildertypesv5TimeSeries:
+      properties:
+        labels:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          type: array
+        values:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesValue'
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5TimeSeriesData:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5AggregationBucket'
+          nullable: true
+          type: array
+        queryName:
+          type: string
+      type: object
+    Querybuildertypesv5TimeSeriesValue:
+      properties:
+        bucket:
+          $ref: '#/components/schemas/Querybuildertypesv5Bucket'
+        partial:
+          type: boolean
+        timestamp:
+          format: int64
+          type: integer
+        value:
+          format: double
+          type: number
+        values:
+          items:
+            format: double
+            type: number
+          type: array
+      type: object
+    Querybuildertypesv5TraceAggregation:
+      properties:
+        alias:
+          type: string
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5VariableItem:
+      properties:
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5VariableType'
+        value: {}
+      type: object
+    Querybuildertypesv5VariableType:
+      enum:
+      - query
+      - dynamic
+      - custom
+      - text
+      type: string
     RenderErrorResponse:
       properties:
         error:
@@ -4252,6 +5018,48 @@ components:
           type: string
         updatedAt:
           format: date-time
+          type: string
+      type: object
+    TelemetrytypesFieldContext:
+      enum:
+      - metric
+      - log
+      - span
+      - resource
+      - attribute
+      - body
+      type: string
+    TelemetrytypesFieldDataType:
+      enum:
+      - string
+      - bool
+      - float64
+      - int64
+      - number
+      type: string
+    TelemetrytypesSignal:
+      enum:
+      - traces
+      - logs
+      - metrics
+      type: string
+    TelemetrytypesSource:
+      enum:
+      - meter
+      type: string
+    TelemetrytypesTelemetryFieldKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
           type: string
       type: object
     TypesChangePasswordRequest:
