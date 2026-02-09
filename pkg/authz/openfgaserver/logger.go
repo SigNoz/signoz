@@ -1,4 +1,4 @@
-package openfgaauthz
+package openfgaserver
 
 import (
 	"context"

@@ -1,7 +1,7 @@
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import { commaValuesParser } from '../../lib/dashbaordVariables/customCommaValuesParser';
+import { commaValuesParser } from '../../lib/dashboardVariables/customCommaValuesParser';
 
 interface UrlVariables {
 	[key: string]: any;
