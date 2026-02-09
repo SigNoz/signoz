@@ -193,7 +193,9 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
 														{},
 													);
-													handleCopyKey(firstIngestionKey?.value || '');
+													if (firstIngestionKey?.value) {
+														handleCopyKey(firstIngestionKey.value);
+													}
 												}}
 											/>
 										</Typography.Text>
