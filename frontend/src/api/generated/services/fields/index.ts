@@ -129,7 +129,7 @@ export const invalidateGetFieldsKeys = async (
  * @summary Get field values
  */
 export const getFieldsValues = (
-	params: GetFieldsValuesParams,
+	params?: GetFieldsValuesParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetFieldsValues200>({
@@ -148,7 +148,7 @@ export const getGetFieldsValuesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
 	TError = RenderErrorResponseDTO
 >(
-	params: GetFieldsValuesParams,
+	params?: GetFieldsValuesParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getFieldsValues>>,
@@ -185,7 +185,7 @@ export function useGetFieldsValues<
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
 	TError = RenderErrorResponseDTO
 >(
-	params: GetFieldsValuesParams,
+	params?: GetFieldsValuesParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getFieldsValues>>,
@@ -210,7 +210,7 @@ export function useGetFieldsValues<
  */
 export const invalidateGetFieldsValues = async (
 	queryClient: QueryClient,
-	params: GetFieldsValuesParams,
+	params?: GetFieldsValuesParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(

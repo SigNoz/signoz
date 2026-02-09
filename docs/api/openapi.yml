@@ -735,7 +735,6 @@ paths:
           type: string
       - in: query
         name: name
-        required: true
         schema:
           type: string
       - in: query

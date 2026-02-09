@@ -1771,7 +1771,7 @@ export type GetFieldsValuesParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	name: string;
+	name?: string;
 	/**
 	 * @type string
 	 * @description undefined

@@ -291,7 +291,7 @@ type GettableFieldValues struct {
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name" required:"true"`
+	Name          string `query:"name"`
 	ExistingQuery string `query:"existingQuery"`
 }
 
