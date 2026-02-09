@@ -30,7 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -66,7 +66,7 @@ type PrepareTestRuleOptions struct {
 	OrgID            valuer.UUID
 }
 
-const taskNamesuffix = "webAppEditor"
+const taskNameSuffix = "webAppEditor"
 
 func RuleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
@@ -97,7 +97,7 @@ type ManagerOptions struct {
 	SLogger     *slog.Logger
 	Cache       cache.Cache
 
-	EvalDelay time.Duration
+	EvalDelay valuer.TextDuration
 
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
@@ -182,8 +182,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 
 		rules = append(rules, tr)
 
-		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		// create ch rule task for evaluation
+		task = newTask(TaskTypeCh, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -206,8 +206,8 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 
 		rules = append(rules, pr)
 
-		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		// create promql rule task for evaluation
+		task = newTask(TaskTypeProm, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -323,7 +323,7 @@ func (m *Manager) run(_ context.Context) {
 }
 
 // Stop the rule manager's rule evaluation cycles.
-func (m *Manager) Stop(ctx context.Context) {
+func (m *Manager) Stop(_ context.Context) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -336,7 +336,7 @@ func (m *Manager) Stop(ctx context.Context) {
 	zap.L().Info("Rule manager stopped")
 }
 
-// EditRuleDefinition writes the rule definition to the
+// EditRule writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -643,7 +643,7 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 		m.rules[r.ID()] = r
 	}
 
-	// If there is an another task with the same identifier, raise an error
+	// If there is another task with the same identifier, raise an error
 	_, ok := m.tasks[taskName]
 	if ok {
 		return fmt.Errorf("a rule with the same name already exists")
@@ -678,7 +678,8 @@ func (m *Manager) RuleTasks() []Task {
 	return rgs
 }
 
-// RuleTasks returns the list of manager's rule tasks.
+// RuleTasksWithoutLock returns the list of manager's rule tasks without
+// acquiring a lock on the manager.
 func (m *Manager) RuleTasksWithoutLock() []Task {
 
 	rgs := make([]Task, 0, len(m.tasks))
@@ -889,7 +890,7 @@ func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID valuer.UUID, 
 	} else {
 		// check if rule has a task running
 		if _, ok := m.tasks[taskName]; !ok {
-			// rule has not task, start one
+			// rule has no task, start one
 			if err := m.addTask(ctx, orgID, rule, taskName); err != nil {
 				return err
 			}

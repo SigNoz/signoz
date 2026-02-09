@@ -140,3 +140,13 @@ func (enum *UUID) UnmarshalText(text []byte) error {
 func (enum UUID) MarshalText() (text []byte, err error) {
 	return []byte(enum.StringValue()), nil
 }
+
+func (enum *UUID) UnmarshalParam(param string) error {
+	uuid, err := NewUUID(param)
+	if err != nil {
+		return err
+	}
+
+	*enum = uuid
+	return nil
+}

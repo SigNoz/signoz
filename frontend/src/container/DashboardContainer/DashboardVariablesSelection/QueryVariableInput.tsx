@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import sortValues from 'lib/dashboardVariables/sortVariableValues';
 import { isArray, isString } from 'lodash-es';
 import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { AppState } from 'store/reducers';
