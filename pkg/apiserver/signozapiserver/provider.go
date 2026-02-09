@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -43,9 +42,8 @@ type provider struct {
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
 	gatewayHandler         gateway.Handler
-	roleGetter             role.Getter
-	roleHandler            role.Handler
 	fieldsHandler          fields.Handler
+	authzHandler           authz.Handler
 }
 
 func NewFactory(
@@ -63,9 +61,8 @@ func NewFactory(
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	gatewayHandler gateway.Handler,
-	roleGetter role.Getter,
-	roleHandler role.Handler,
 	fieldsHandler fields.Handler,
+	authzHandler authz.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -86,9 +83,8 @@ func NewFactory(
 			dashboardHandler,
 			metricsExplorerHandler,
 			gatewayHandler,
-			roleGetter,
-			roleHandler,
 			fieldsHandler,
+			authzHandler,
 		)
 	})
 }
@@ -111,9 +107,8 @@ func newProvider(
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	gatewayHandler gateway.Handler,
-	roleGetter role.Getter,
-	roleHandler role.Handler,
 	fieldsHandler fields.Handler,
+	authzHandler authz.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -134,12 +129,11 @@ func newProvider(
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
 		gatewayHandler:         gatewayHandler,
-		roleGetter:             roleGetter,
-		roleHandler:            roleHandler,
 		fieldsHandler:          fieldsHandler,
+		authzHandler:           authzHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleGetter)
+	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
