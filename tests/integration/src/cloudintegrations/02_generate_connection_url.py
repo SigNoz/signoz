@@ -24,8 +24,8 @@ def cleanup_cloud_accounts(postgres: types.TestContainerSQL) -> None:
             conn.execute(text("TRUNCATE TABLE cloud_integration CASCADE"))
             conn.commit()
             logger.info("Cleaned up cloud_integration table")
-    except Exception as e:
-        logger.info(f"Cleanup skipped: {str(e)[:100]}")
+    except Exception:  # pylint: disable=broad-except
+        logger.info("Cleanup skipped or table does not exist")
 
 
 def test_generate_connection_url(
@@ -153,10 +153,6 @@ def test_generate_connection_url(
             param in connection_url
         ), f"connection_url should contain parameter: {param}"
 
-    logger.info("Connection URL generated successfully")
-    logger.info(f"Account ID: {data['account_id']}")
-    logger.info(f"Connection URL length: {len(connection_url)} characters")
-
 def test_generate_connection_url_unsupported_provider(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -202,5 +198,3 @@ def test_generate_connection_url_unsupported_provider(
     assert (
         "unsupported cloud provider" in response_data["error"].lower()
     ), "Error message should indicate unsupported provider"
-
-    logger.info("Unsupported provider correctly rejected with 400 Bad Request")

@@ -27,9 +27,9 @@ def cleanup_cloud_accounts(postgres: types.TestContainerSQL) -> None:
             conn.execute(text("DELETE FROM cloud_integration"))
             conn.commit()
             logger.info("Cleaned up cloud_integration table")
-    except Exception as e:
+    except Exception:  # pylint: disable=broad-except
         # Table might not exist, which is fine
-        logger.info(f"Cleanup skipped or partial: {str(e)[:100]}")
+        logger.info("Cleanup skipped or partial")
 
 
 def generate_unique_cloud_account_id() -> str:
@@ -67,14 +67,12 @@ def simulate_agent_checkin(
 
     if response.status_code != HTTPStatus.OK:
         logger.error(
-            f"Agent check-in failed: {response.status_code}, response: {response.text}"
+            "Agent check-in failed: %s, response: %s", response.status_code, response.text
         )
 
     assert (
         response.status_code == HTTPStatus.OK
     ), f"Agent check-in failed: {response.status_code}"
-
-    logger.info(f"Agent check-in completed for account: {account_id}")
 
     response_data = response.json()
     return response_data.get("data", response_data)
@@ -233,10 +231,6 @@ def test_list_services_with_account(
     assert "title" in service, "Service should have 'title' field"
     assert "icon" in service, "Service should have 'icon' field"
 
-    logger.info(
-        f"Listed {len(data['services'])} services for account {cloud_account_id}"
-    )
-
 
 def test_get_service_details_without_account(
     signoz: types.SigNoz,
@@ -287,8 +281,6 @@ def test_get_service_details_without_account(
     # assert assets to had list of dashboards
     assert "assets" in data, "Service details should have 'assets' field"
     assert isinstance(data["assets"], dict), "Assets should be a dictionary"
-
-    logger.info(f"Retrieved details for service: {service_id}")
 
 
 def test_get_service_details_with_account(
@@ -379,10 +371,6 @@ def test_get_service_details_with_account(
     assert "config" in data, "Service details should have 'config' field"
     assert "status" in data, "Config should have 'status' field"
 
-    logger.info(
-        f"Retrieved details for service {service_id} with account {cloud_account_id}"
-    )
-
 
 def test_get_service_details_invalid_service(
     signoz: types.SigNoz,
@@ -411,8 +399,6 @@ def test_get_service_details_invalid_service(
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected 404, got {response.status_code}"
 
-    logger.info("Non-existent service correctly returned 404")
-
 
 def test_list_services_unsupported_provider(
     signoz: types.SigNoz,
@@ -439,10 +425,6 @@ def test_list_services_unsupported_provider(
     assert (
         response.status_code == HTTPStatus.BAD_REQUEST
     ), f"Expected 400, got {response.status_code}"
-
-    logger.info(
-        "Unsupported provider correctly rejected with 400 Bad Request for services"
-    )
 
 
 def test_update_service_config(
@@ -541,8 +523,6 @@ def test_update_service_config(
     assert "metrics" in data["config"], "Config should contain 'metrics' field"
     assert "logs" in data["config"], "Config should contain 'logs' field"
 
-    logger.info(f"Updated service config for {service_id} on account {cloud_account_id}")
-
 
 def test_update_service_config_without_account(
     signoz: types.SigNoz,
@@ -588,13 +568,9 @@ def test_update_service_config_without_account(
         timeout=10,
     )
 
-
-    # todo: improve the handler logic to return 500
     assert (
         response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     ), f"Expected 500 for non-existent account, got {response.status_code}"
-
-    logger.info("Update service config correctly rejected for non-existent account")
 
 
 def test_update_service_config_invalid_service(
@@ -670,8 +646,6 @@ def test_update_service_config_invalid_service(
     assert (
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected 404 for invalid service, got {response.status_code}"
-
-    logger.info("Update service config correctly rejected for invalid service")
 
 
 def test_update_service_config_disable_service(
@@ -782,6 +756,4 @@ def test_update_service_config_disable_service(
     # Verify service is disabled
     assert data["config"]["metrics"]["enabled"] == False, "Metrics should be disabled"
     assert data["config"]["logs"]["enabled"] == False, "Logs should be disabled"
-
-    logger.info(f"Successfully disabled service {service_id}")
 

@@ -27,9 +27,9 @@ def cleanup_cloud_accounts(postgres: types.TestContainerSQL) -> None:
             conn.execute(text("DELETE FROM cloud_integration"))
             conn.commit()
             logger.info("Cleaned up cloud_integration table")
-    except Exception as e:
+    except Exception:  # pylint: disable=broad-except
         # Table might not exist, which is fine
-        logger.info(f"Cleanup skipped or partial: {str(e)[:100]}")
+        logger.info("Cleanup skipped or partial")
 
 
 def generate_unique_cloud_account_id() -> str:
@@ -68,13 +68,11 @@ def simulate_agent_checkin(
     )
 
     if response.status_code != HTTPStatus.OK:
-        logger.error(f"Agent check-in failed: {response.status_code}, response: {response.text}")
+        logger.error("Agent check-in failed: %s, response: %s", response.status_code, response.text)
 
     assert (
         response.status_code == HTTPStatus.OK
     ), f"Agent check-in failed: {response.status_code}"
-
-    logger.info(f"Agent check-in completed for account: {account_id}")
 
     response_data = response.json()
     return response_data.get("data", response_data)
@@ -162,7 +160,6 @@ def test_list_connected_accounts_empty(
     # Note: If table doesn't exist yet, cleanup won't work and there might be leftover data
     # This is acceptable for integration tests with --reuse flag
     initial_count = len(data["accounts"])
-    logger.info(f"Accounts list returned successfully with {initial_count} existing account(s)")
 
 
 def test_list_connected_accounts_with_account(
@@ -240,8 +237,6 @@ def test_list_connected_accounts_with_account(
     assert "config" in account, "Account should have config field"
     assert "status" in account, "Account should have status field"
 
-    logger.info(f"Found account in list: {account_id}")
-
 
 def test_get_account_status(
     signoz: types.SigNoz,
@@ -311,8 +306,6 @@ def test_get_account_status(
     assert "status" in data, "Response should contain 'status' field"
     assert "integration" in data["status"], "Status should contain 'integration' field"
 
-    logger.info(f"Retrieved status for account: {account_id}")
-
 
 def test_get_account_status_not_found(
     signoz: types.SigNoz,
@@ -342,8 +335,6 @@ def test_get_account_status_not_found(
     assert (
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected 404, got {response.status_code}"
-
-    logger.info("Non-existent account correctly returned 404")
 
 
 def test_update_account_config(
@@ -444,8 +435,6 @@ def test_update_account_config(
         "eu-west-1",
     }, "Regions should match updated config"
 
-    logger.info(f"Updated account configuration: {account_id}")
-
 
 def test_disconnect_account(
     signoz: types.SigNoz,
@@ -525,8 +514,6 @@ def test_disconnect_account(
     list_data = list_response_data.get("data", list_response_data)
     assert len(list_data["accounts"]) == 0, "Should have no connected accounts"
 
-    logger.info(f"Disconnected account: {account_id}")
-
 
 def test_disconnect_account_not_found(
     signoz: types.SigNoz,
@@ -558,8 +545,6 @@ def test_disconnect_account_not_found(
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected 404, got {response.status_code}"
 
-    logger.info("Disconnect non-existent account correctly returned 404")
-
 
 def test_list_accounts_unsupported_provider(
     signoz: types.SigNoz,
@@ -586,5 +571,3 @@ def test_list_accounts_unsupported_provider(
     assert (
         response.status_code == HTTPStatus.BAD_REQUEST
     ), f"Expected 400, got {response.status_code}"
-
-    logger.info("Unsupported provider correctly rejected with 400 Bad Request")
