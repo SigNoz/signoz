@@ -22,6 +22,7 @@ from fixtures.utils import get_testdata_file_path
 
 MULTI_TEMPORALITY_FILE = get_testdata_file_path("multi_temporality_counters_1h.jsonl")
 MULTI_TEMPORALITY_FILE_10h = get_testdata_file_path("multi_temporality_counters_10h.jsonl")
+MULTI_TEMPORALITY_FILE_24h = get_testdata_file_path("multi_temporality_counters_24h.jsonl")
 
 @pytest.mark.parametrize(
     "time_aggregation, expected_value_at_31st_minute, expected_value_at_32nd_minute, steady_value",
@@ -372,7 +373,7 @@ def test_for_month_long_time_range(
     metric_name = f"test_{time_aggregation}_" + hex(random.getrandbits(32))[2:]
 
     metrics = Metrics.load_from_file(
-        MULTI_TEMPORALITY_FILE_10h,
+        MULTI_TEMPORALITY_FILE_24h,
         base_time=now - timedelta(minutes=600),
         metric_name_override=metric_name,
     )
