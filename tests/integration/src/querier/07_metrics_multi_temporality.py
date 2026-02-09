@@ -309,23 +309,22 @@ def test_for_service_with_switch(
         assert v["value"] >= 0, f"{time_aggregation} should not be negative: {v['value']}"
 
 @pytest.mark.parametrize(
-    "time_aggregation, duration_days, expected_value",
+    "time_aggregation, expected_value",
     [
-        ("rate", 7, 0.0122),
-        ("increase", 7, 22),
+        ("rate", 0.0122),
+        ("increase", 22),
     ],
 )
-def test_for_long_time_range(
+def test_for_week_long_time_range(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
-    duration_days: int,
     expected_value: float,
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    start_ms = int((now - timedelta(days=duration_days)).timestamp() * 1000)
+    start_ms = int((now - timedelta(days=7)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_{time_aggregation}_" + hex(random.getrandbits(32))[2:]
 
@@ -348,5 +347,49 @@ def test_for_long_time_range(
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
+    # the zeroth value may not cover the whole time range
     for value in result_values[1:]:
+        assert value["value"] == expected_value
+
+@pytest.mark.parametrize(
+    "time_aggregation, expected_value",
+    [
+        ("rate", 0.0122),
+        ("increase", 110),
+    ],
+)
+def test_for_month_long_time_range(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+    time_aggregation: str,
+    expected_value: float,
+) -> None:
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(days=31)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = f"test_{time_aggregation}_" + hex(random.getrandbits(32))[2:]
+
+    metrics = Metrics.load_from_file(
+        MULTI_TEMPORALITY_FILE_10h,
+        base_time=now - timedelta(minutes=600),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query = build_builder_query(
+        "A",
+        metric_name,
+        time_aggregation,
+        "sum",
+    )
+
+    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
+    ## the zeroth and last values may not cover the whole 9000 seconds
+    for value in result_values[1:-1]:
         assert value["value"] == expected_value
