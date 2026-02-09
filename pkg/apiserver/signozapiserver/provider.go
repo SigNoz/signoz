@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -41,6 +42,7 @@ type provider struct {
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
 	gatewayHandler         gateway.Handler
+	fieldsHandler          fields.Handler
 	authzHandler           authz.Handler
 }
 
@@ -59,10 +61,31 @@ func NewFactory(
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	gatewayHandler gateway.Handler,
+	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, gatewayHandler, authzHandler)
+		return newProvider(
+			ctx,
+			providerSettings,
+			config,
+			orgGetter,
+			authz,
+			orgHandler,
+			userHandler,
+			sessionHandler,
+			authDomainHandler,
+			preferenceHandler,
+			globalHandler,
+			promoteHandler,
+			flaggerHandler,
+			dashboardModule,
+			dashboardHandler,
+			metricsExplorerHandler,
+			gatewayHandler,
+			fieldsHandler,
+			authzHandler,
+		)
 	})
 }
 
@@ -84,6 +107,7 @@ func newProvider(
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	gatewayHandler gateway.Handler,
+	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -105,6 +129,7 @@ func newProvider(
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
 		gatewayHandler:         gatewayHandler,
+		fieldsHandler:          fieldsHandler,
 		authzHandler:           authzHandler,
 	}
 
@@ -167,6 +192,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRoleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFieldsRoutes(router); err != nil {
 		return err
 	}
 

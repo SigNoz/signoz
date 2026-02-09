@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -28,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type Handlers struct {
@@ -43,10 +46,21 @@ type Handlers struct {
 	Global          global.Handler
 	FlaggerHandler  flagger.Handler
 	GatewayHandler  gateway.Handler
+	Fields          fields.Handler
 	AuthzHandler    authz.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger, gatewayService gateway.Gateway, authz authz.AuthZ) Handlers {
+func NewHandlers(
+	modules Modules,
+	providerSettings factory.ProviderSettings,
+	querier querier.Querier,
+	licensing licensing.Licensing,
+	global global.Global,
+	flaggerService flagger.Flagger,
+	gatewayService gateway.Gateway,
+	telemetryMetadataStore telemetrytypes.MetadataStore,
+	authz authz.AuthZ,
+) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
@@ -60,6 +74,7 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		Global:          signozglobal.NewHandler(global),
 		FlaggerHandler:  flagger.NewHandler(flaggerService),
 		GatewayHandler:  gateway.NewHandler(gatewayService),
+		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore),
 		AuthzHandler:    signozauthzapi.NewHandler(authz),
 	}
 }
