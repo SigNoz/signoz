@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -41,13 +42,16 @@ func getName(key *telemetrytypes.TelemetryFieldKey) string {
 	if key == nil {
 		return ""
 	}
-	if key.FieldContext == telemetrytypes.FieldContextAttribute {
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextAttribute:
 		return fmt.Sprintf(`attributes["%s"]`, key.Name)
-	}
-	if key.FieldContext == telemetrytypes.FieldContextResource {
+	case telemetrytypes.FieldContextResource:
 		return fmt.Sprintf(`resource["%s"]`, key.Name)
+	case telemetrytypes.FieldContextBody:
+		return fmt.Sprintf("%s.%s", key.FieldContext.StringValue(), key.Name)
+	default:
+		return key.Name
 	}
-	return key.Name
 }
 
 func parseCondition(c qbtypes.FilterCondition) (string, error) {
@@ -73,19 +77,21 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 		switch key.FieldContext {
 		case telemetrytypes.FieldContextBody:
 			// if body is a string and is a valid JSON, then check if the key exists in the JSON
-			filter = fmt.Sprintf(`((type(body) == "string" && isJSON(body)) && %s %s %s)`, key.Name, logOperatorsToExpr[c.Op], "fromJSON(body)")
+			quoted := exprFormattedValue(key.Name)
+			jsonMembership := fmt.Sprintf(
+				`((type(body) == "string" && isJSON(body)) && %s %s %s)`,
+				quoted, logOperatorsToExpr[c.Op], "fromJSON(body)",
+			)
 
 			// if body is a map, then check if the key exists in the map
 			operator := qbtypes.FilterOperatorNotEqual
 			if c.Op == qbtypes.FilterOperatorNotExists {
 				operator = qbtypes.FilterOperatorEqual
 			}
-			nilCheckFilter := fmt.Sprintf("%s %s nil", key.Name, logOperatorsToExpr[operator])
+			nilCheckFilter := fmt.Sprintf("%s.%s %s nil", key.FieldContext.StringValue(), key.Name, logOperatorsToExpr[operator])
 
 			// join the two filters with OR
-			filter = fmt.Sprintf(`(%s or (type(body) == "map" && (%s)))`, filter, nilCheckFilter)
-			// Example: "log.message" in fromJSON(body)
-			filter = fmt.Sprintf("%q %s %s", key.Name, logOperatorsToExpr[c.Op], "fromJSON(body)")
+			filter = fmt.Sprintf(`(%s or (type(body) == "map" && (%s)))`, jsonMembership, nilCheckFilter)
 		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 			// Example: "http.method" in attributes
 			target := "resource"
@@ -103,7 +109,7 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 			filter = fmt.Sprintf("%s %s nil", key.Name, logOperatorsToExpr[operator])
 		}
 	default:
-		filter = fmt.Sprintf("%s %s %s", key.Name, logOperatorsToExpr[c.Op], value)
+		filter = fmt.Sprintf("%s %s %s", getName(key), logOperatorsToExpr[c.Op], value)
 		if c.Op == qbtypes.FilterOperatorContains || c.Op == qbtypes.FilterOperatorNotContains {
 			// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
 			filter = fmt.Sprintf(
@@ -137,7 +143,7 @@ func Parse(filter *qbtypes.Filter) (string, error) {
 		return "", err
 	}
 	if node == nil {
-		return "", nil
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter expression; node found nil")
 	}
 
 	for _, condition := range node.Flatten() {
@@ -145,6 +151,16 @@ func Parse(filter *qbtypes.Filter) (string, error) {
 			_, found := telemetrylogs.IntrinsicFields[key.Name]
 			if key.FieldContext == telemetrytypes.FieldContextUnspecified && !found {
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field %q in filter expression must include a context prefix (attribute., resource., body.) OR can be one of the following fields: %v", key.Name, maps.Keys(telemetrylogs.IntrinsicFields))
+			}
+		}
+		if condition.Op == qbtypes.FilterOperatorRegexp || condition.Op == qbtypes.FilterOperatorNotRegexp {
+			switch condition.Value.(type) {
+			case string:
+				if _, err := regexp.Compile(condition.Value.(string)); err != nil {
+					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value for regex operator must be a valid regex")
+				}
+			default:
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value for regex operator must be a string or a slice of strings")
 			}
 		}
 	}
@@ -170,7 +186,9 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 		if len(parts) == 0 {
 			return "", nil
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " and ")), nil
+		// For a simple leaf, just join conditions with AND without wrapping
+		// the whole clause in parentheses
+		return strings.Join(parts, " and "), nil
 	case qbtypes.LogicalOpAnd:
 		var parts []string
 		for _, child := range node.Children {
@@ -181,12 +199,17 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 			if err != nil {
 				return "", err
 			}
+			// When mixing AND/OR, we need parentheses around any OR child to
+			// preserve the intended precedence: (a and (b or c)).
+			if child.Op == qbtypes.LogicalOpOr {
+				s = fmt.Sprintf("(%s)", s)
+			}
 			parts = append(parts, s)
 		}
 		if len(parts) == 0 {
 			return "", nil
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " and ")), nil
+		return strings.Join(parts, " and "), nil
 	case qbtypes.LogicalOpOr:
 		var parts []string
 		for _, child := range node.Children {
@@ -197,12 +220,17 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 			if err != nil {
 				return "", err
 			}
+			// When mixing AND/OR, we need parentheses around any AND child to
+			// preserve the intended precedence: ((a and b) or c).
+			if child.Op == qbtypes.LogicalOpAnd {
+				s = fmt.Sprintf("(%s)", s)
+			}
 			parts = append(parts, s)
 		}
 		if len(parts) == 0 {
 			return "", nil
 		}
-		return fmt.Sprintf("(%s)", strings.Join(parts, " or ")), nil
+		return strings.Join(parts, " or "), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported logical op: %s", node.Op)
 	}
@@ -213,7 +241,7 @@ func exprFormattedValue(v interface{}) string {
 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 		return fmt.Sprintf("%d", x)
 	case float32, float64:
-		return fmt.Sprintf("%f", x)
+		return fmt.Sprintf("%v", x)
 	case string:
 		return fmt.Sprintf("\"%s\"", quoteEscapedString(x))
 	case bool:
