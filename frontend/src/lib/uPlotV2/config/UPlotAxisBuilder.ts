@@ -4,6 +4,7 @@ import uPlot, { Axis } from 'uplot';
 
 import { uPlotXAxisValuesFormat } from '../../uPlotLib/utils/constants';
 import getGridColor from '../../uPlotLib/utils/getGridColor';
+import { buildYAxisSizeCalculator } from '../utils/axis';
 import { AxisProps, ConfigBuilder } from './types';
 
 const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
@@ -115,93 +116,6 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 	}
 
 	/**
-	 * Calculate axis size from existing size property
-	 */
-	private getExistingAxisSize({
-		uplotInstance,
-		axis,
-		values,
-		axisIdx,
-		cycleNum,
-	}: {
-		uplotInstance: uPlot;
-		axis: Axis;
-		values: string[] | undefined;
-		axisIdx: number;
-		cycleNum: number;
-	}): number {
-		const internalSize = (axis as { _size?: number })._size;
-		if (internalSize !== undefined) {
-			return internalSize;
-		}
-
-		const existingSize = axis.size;
-		if (typeof existingSize === 'function') {
-			return existingSize(uplotInstance, values ?? [], axisIdx, cycleNum);
-		}
-
-		return existingSize ?? 0;
-	}
-
-	/**
-	 * Calculate text width for longest value
-	 */
-	private calculateTextWidth(
-		self: uPlot,
-		axis: Axis,
-		values: string[] | undefined,
-	): number {
-		if (!values || values.length === 0) {
-			return 0;
-		}
-
-		// Find longest value
-		const longestVal = values.reduce(
-			(acc, val) => (val.length > acc.length ? val : acc),
-			'',
-		);
-
-		if (longestVal === '' || !axis.font?.[0]) {
-			return 0;
-		}
-
-		// eslint-disable-next-line prefer-destructuring, no-param-reassign
-		self.ctx.font = axis.font[0];
-		return self.ctx.measureText(longestVal).width / devicePixelRatio;
-	}
-
-	/**
-	 * Build Y-axis dynamic size calculator
-	 */
-	private buildYAxisSizeCalculator(): uPlot.Axis.Size {
-		return (
-			self: uPlot,
-			values: string[] | undefined,
-			axisIdx: number,
-			cycleNum: number,
-		): number => {
-			const axis = self.axes[axisIdx];
-
-			// Bail out, force convergence
-			if (cycleNum > 1) {
-				return this.getExistingAxisSize({
-					uplotInstance: self,
-					axis,
-					values,
-					axisIdx,
-					cycleNum,
-				});
-			}
-
-			const gap = this.props.gap ?? 5;
-			let axisSize = (axis.ticks?.size ?? 0) + gap;
-			axisSize += this.calculateTextWidth(self, axis, values);
-
-			return Math.ceil(axisSize);
-		};
-	}
-
-	/**
 	 * Build dynamic size calculator for Y-axis
 	 */
 	private buildSizeCalculator(): uPlot.Axis.Size | undefined {
@@ -214,7 +128,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 
 		// Y-axis needs dynamic sizing based on text width
 		if (scaleKey === 'y') {
-			return this.buildYAxisSizeCalculator();
+			return buildYAxisSizeCalculator(this.props.gap ?? 5);
 		}
 
 		return undefined;

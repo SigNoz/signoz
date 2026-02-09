@@ -320,7 +320,12 @@ describe('UPlotAxisBuilder', () => {
 			v: string[],
 			a: number,
 			c: number,
-		) => number)(mockSelf, ['10', '2000ms'], 0, 0);
+		) => number)(
+			mockSelf,
+			['10', '2000ms'],
+			0,
+			0, // cycleNum <= 1
+		);
 
 		expect(measureText).toHaveBeenCalledWith('2000ms');
 		expect(result).toBeGreaterThanOrEqual(12 + 8);

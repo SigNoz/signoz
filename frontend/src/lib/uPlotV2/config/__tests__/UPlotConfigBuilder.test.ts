@@ -71,11 +71,7 @@ describe('UPlotConfigBuilder', () => {
 
 		// Simulate uPlot calling the hook
 		const setSelectHook = setSelectHooks[0];
-		expect(setSelectHook).toBeDefined();
-		if (!setSelectHook) {
-			throw new Error('Expected setSelect hook to be registered');
-		}
-		setSelectHook(uplotInstance);
+		setSelectHook!(uplotInstance);
 
 		expect(onDragSelect).not.toHaveBeenCalled();
 	});
@@ -101,11 +97,7 @@ describe('UPlotConfigBuilder', () => {
 		} as unknown) as uPlot;
 
 		const setSelectHook = setSelectHooks[0];
-		expect(setSelectHook).toBeDefined();
-		if (!setSelectHook) {
-			throw new Error('Expected setSelect hook to be registered');
-		}
-		setSelectHook(uplotInstance);
+		setSelectHook!(uplotInstance);
 
 		expect(onDragSelect).toHaveBeenCalledTimes(1);
 		// 100 and 110 seconds converted to milliseconds
