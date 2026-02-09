@@ -33,7 +33,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
-		it('uses new domain filter format: (http_url)', () => {
+		it('uses new domain filter format: (http_host)', () => {
 			const widget = getRateOverTimeWidgetData(
 				mockDomainName,
 				mockEndpointName,
