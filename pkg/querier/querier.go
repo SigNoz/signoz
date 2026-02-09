@@ -216,7 +216,8 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						newStep := qbtypes.Step{
 							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMeter(req.Start, req.End)),
 						}
-						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+						// TODO[@vikrantgupta25]: add this warning after the issue for intelligent bar chart aggregations is fixed.
+						// intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
 						spec.StepInterval = newStep
 					}
 				} else {
