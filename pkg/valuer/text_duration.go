@@ -77,9 +77,9 @@ func (d TextDuration) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements the [encoding/json.Unmarshaler] interface.
 // It parses string or numeric durations, and stores the string representation.
 func (d *TextDuration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
-		return err
+		return errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid duration")
 	}
 	switch value := v.(type) {
 	case float64:
@@ -90,7 +90,7 @@ func (d *TextDuration) UnmarshalJSON(b []byte) error {
 	case string:
 		tmp, err := time.ParseDuration(value)
 		if err != nil {
-			return err
+			return errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid duration")
 		}
 		d.value = tmp
 		d.text = value
