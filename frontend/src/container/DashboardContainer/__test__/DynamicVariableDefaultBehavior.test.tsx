@@ -15,7 +15,7 @@ import {
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import DynamicVariableSelection from '../DashboardVariablesSelection/DynamicVariableSelection';
+import DynamicVariableInput from '../DashboardVariablesSelection/DynamicVariableInput';
 
 // Mock the getFieldValues API
 jest.mock('api/dynamicVariables/getFieldValues', () => ({
@@ -84,7 +84,7 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
@@ -120,7 +120,7 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
@@ -164,16 +164,13 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
 					/>,
 				);
 			});
-
-			// Component should render without errors
-			expect(screen.getByText('$service')).toBeInTheDocument();
 
 			// Check if the dropdown is present
 			const selectElement = screen.getByRole('combobox');
@@ -232,7 +229,7 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
@@ -267,7 +264,7 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
@@ -293,7 +290,7 @@ describe('Dynamic Variable Default Behavior', () => {
 			expect(screen.queryByText('backend')).not.toBeInTheDocument();
 		});
 
-		it('should default to ALL when no default and no previous selection', async () => {
+		it('sahould default to ALL when no default and no previous selection', async () => {
 			const variableData: IDashboardVariable = {
 				id: 'var21',
 				name: 'services',
@@ -311,7 +308,7 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
@@ -345,7 +342,7 @@ describe('Dynamic Variable Default Behavior', () => {
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
 				'services',
 				'var21',
-				[], // Empty array when allSelected is true
+				[],
 				true, // allSelected = true
 				false,
 			);
@@ -371,7 +368,7 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
@@ -408,16 +405,13 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			await act(async () => {
 				renderWithQueryClient(
-					<DynamicVariableSelection
+					<DynamicVariableInput
 						variableData={variableData}
 						existingVariables={{ var1: variableData }}
 						onValueUpdate={mockOnValueUpdate}
 					/>,
 				);
 			});
-
-			// Component should render without errors
-			expect(screen.getByText('$services')).toBeInTheDocument();
 
 			// Check if ALL is displayed in the UI (in the main selection area)
 			const allTextElement = screen.getByText('ALL');

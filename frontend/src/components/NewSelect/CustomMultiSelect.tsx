@@ -140,10 +140,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	}, [selectedValues, allAvailableValues, enableAllSelection]);
 
 	// Define allOptionShown earlier in the code
-	const allOptionShown = useMemo(
-		() => value === ALL_SELECTED_VALUE || value === 'ALL',
-		[value],
-	);
+	const allOptionShown = useMemo(() => value === ALL_SELECTED_VALUE, [value]);
 
 	// Value passed to the underlying Ant Select component
 	const displayValue = useMemo(
