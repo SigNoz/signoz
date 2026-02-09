@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
@@ -24,15 +23,14 @@ type AuthZ struct {
 	logger       *slog.Logger
 	orgGetter    organization.Getter
 	authzService authz.AuthZ
-	roleGetter   role.Getter
 }
 
-func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ, roleGetter role.Getter) *AuthZ {
+func NewAuthZ(logger *slog.Logger, orgGetter organization.Getter, authzService authz.AuthZ) *AuthZ {
 	if logger == nil {
 		panic("cannot build authz middleware, logger is empty")
 	}
 
-	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService, roleGetter: roleGetter}
+	return &AuthZ{logger: logger, orgGetter: orgGetter, authzService: authzService}
 }
 
 func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
