@@ -28,8 +28,10 @@ import type {
 	GatewaytypesPostableIngestionKeyLimitDTO,
 	GatewaytypesUpdatableIngestionKeyLimitDTO,
 	GetIngestionKeys200,
+	GetIngestionKeysParams,
 	RenderErrorResponseDTO,
 	SearchIngestionKeys200,
+	SearchIngestionKeysParams,
 	UpdateIngestionKeyLimitPathParameters,
 	UpdateIngestionKeyPathParameters,
 } from '../sigNoz.schemas';
@@ -42,35 +44,44 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * This endpoint returns the ingestion keys for a workspace
  * @summary Get ingestion keys for workspace
  */
-export const getIngestionKeys = (signal?: AbortSignal) => {
+export const getIngestionKeys = (
+	params?: GetIngestionKeysParams,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<GetIngestionKeys200>({
 		url: `/api/v2/gateway/ingestion_keys`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getGetIngestionKeysQueryKey = () => {
-	return ['getIngestionKeys'] as const;
+export const getGetIngestionKeysQueryKey = (
+	params?: GetIngestionKeysParams,
+) => {
+	return ['getIngestionKeys', ...(params ? [params] : [])] as const;
 };
 
 export const getGetIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getIngestionKeys>>,
 	TError = RenderErrorResponseDTO
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getIngestionKeys>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	params?: GetIngestionKeysParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKeys>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetIngestionKeysQueryKey();
+	const queryKey = queryOptions?.queryKey ?? getGetIngestionKeysQueryKey(params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getIngestionKeys>>> = ({
 		signal,
-	}) => getIngestionKeys(signal);
+	}) => getIngestionKeys(params, signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getIngestionKeys>>,
@@ -91,14 +102,17 @@ export type GetIngestionKeysQueryError = RenderErrorResponseDTO;
 export function useGetIngestionKeys<
 	TData = Awaited<ReturnType<typeof getIngestionKeys>>,
 	TError = RenderErrorResponseDTO
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getIngestionKeys>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetIngestionKeysQueryOptions(options);
+>(
+	params?: GetIngestionKeysParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKeys>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetIngestionKeysQueryOptions(params, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -114,10 +128,11 @@ export function useGetIngestionKeys<
  */
 export const invalidateGetIngestionKeys = async (
 	queryClient: QueryClient,
+	params?: GetIngestionKeysParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetIngestionKeysQueryKey() },
+		{ queryKey: getGetIngestionKeysQueryKey(params) },
 		options,
 	);
 
@@ -662,35 +677,45 @@ export const useUpdateIngestionKeyLimit = <
  * This endpoint returns the ingestion keys for a workspace
  * @summary Search ingestion keys for workspace
  */
-export const searchIngestionKeys = (signal?: AbortSignal) => {
+export const searchIngestionKeys = (
+	params?: SearchIngestionKeysParams,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<SearchIngestionKeys200>({
 		url: `/api/v2/gateway/ingestion_keys/search`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getSearchIngestionKeysQueryKey = () => {
-	return ['searchIngestionKeys'] as const;
+export const getSearchIngestionKeysQueryKey = (
+	params?: SearchIngestionKeysParams,
+) => {
+	return ['searchIngestionKeys', ...(params ? [params] : [])] as const;
 };
 
 export const getSearchIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,
 	TError = RenderErrorResponseDTO
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof searchIngestionKeys>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	params?: SearchIngestionKeysParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof searchIngestionKeys>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getSearchIngestionKeysQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getSearchIngestionKeysQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof searchIngestionKeys>>
-	> = ({ signal }) => searchIngestionKeys(signal);
+	> = ({ signal }) => searchIngestionKeys(params, signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof searchIngestionKeys>>,
@@ -711,14 +736,17 @@ export type SearchIngestionKeysQueryError = RenderErrorResponseDTO;
 export function useSearchIngestionKeys<
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,
 	TError = RenderErrorResponseDTO
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof searchIngestionKeys>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getSearchIngestionKeysQueryOptions(options);
+>(
+	params?: SearchIngestionKeysParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof searchIngestionKeys>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getSearchIngestionKeysQueryOptions(params, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -734,10 +762,11 @@ export function useSearchIngestionKeys<
  */
 export const invalidateSearchIngestionKeys = async (
 	queryClient: QueryClient,
+	params?: SearchIngestionKeysParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getSearchIngestionKeysQueryKey() },
+		{ queryKey: getSearchIngestionKeysQueryKey(params) },
 		options,
 	);
 

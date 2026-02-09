@@ -31,12 +31,19 @@ var (
 	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
 )
 
+func (TreemapMode) Enum() []any {
+	return []any{
+		TreemapModeTimeSeries,
+		TreemapModeSamples,
+	}
+}
+
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
 	Filter  *qbtypes.Filter  `json:"filter,omitempty"`
-	Start   int64            `json:"start"`
-	End     int64            `json:"end"`
-	Limit   int              `json:"limit"`
+	Start   int64            `json:"start" required:"true"`
+	End     int64            `json:"end" required:"true"`
+	Limit   int              `json:"limit" required:"true"`
 	Offset  int              `json:"offset"`
 	OrderBy *qbtypes.OrderBy `json:"orderBy,omitempty"`
 }
@@ -96,26 +103,26 @@ func (req *StatsRequest) UnmarshalJSON(data []byte) error {
 
 // Stat represents the summary information returned per metric.
 type Stat struct {
-	MetricName  string           `json:"metricName"`
-	Description string           `json:"description"`
-	MetricType  metrictypes.Type `json:"type"`
-	MetricUnit  string           `json:"unit"`
-	TimeSeries  uint64           `json:"timeseries"`
-	Samples     uint64           `json:"samples"`
+	MetricName  string           `json:"metricName" required:"true"`
+	Description string           `json:"description" required:"true"`
+	MetricType  metrictypes.Type `json:"type" required:"true"`
+	MetricUnit  string           `json:"unit" required:"true"`
+	TimeSeries  uint64           `json:"timeseries" required:"true"`
+	Samples     uint64           `json:"samples" required:"true"`
 }
 
 // StatsResponse represents the aggregated metrics statistics.
 type StatsResponse struct {
-	Metrics []Stat `json:"metrics"`
-	Total   uint64 `json:"total"`
+	Metrics []Stat `json:"metrics" required:"true" nullable:"true"`
+	Total   uint64 `json:"total" required:"true"`
 }
 
 type MetricMetadata struct {
-	Description string                  `json:"description"`
-	MetricType  metrictypes.Type        `json:"type"`
-	MetricUnit  string                  `json:"unit"`
-	Temporality metrictypes.Temporality `json:"temporality"`
-	IsMonotonic bool                    `json:"isMonotonic"`
+	Description string                  `json:"description" required:"true"`
+	MetricType  metrictypes.Type        `json:"type" required:"true"`
+	MetricUnit  string                  `json:"unit" required:"true"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
+	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
 // MarshalBinary implements cachetypes.Cacheable interface
@@ -130,21 +137,21 @@ func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 
 // UpdateMetricMetadataRequest represents the payload for updating metric metadata.
 type UpdateMetricMetadataRequest struct {
-	MetricName  string                  `json:"metricName"`
-	Type        metrictypes.Type        `json:"type"`
-	Description string                  `json:"description"`
-	Unit        string                  `json:"unit"`
-	Temporality metrictypes.Temporality `json:"temporality"`
-	IsMonotonic bool                    `json:"isMonotonic"`
+	MetricName  string                  `json:"metricName" required:"true"`
+	Type        metrictypes.Type        `json:"type" required:"true"`
+	Description string                  `json:"description" required:"true"`
+	Unit        string                  `json:"unit" required:"true"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
+	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
 // TreemapRequest represents the payload for the metrics treemap endpoint.
 type TreemapRequest struct {
 	Filter *qbtypes.Filter `json:"filter,omitempty"`
-	Start  int64           `json:"start"`
-	End    int64           `json:"end"`
-	Limit  int             `json:"limit"`
-	Mode   TreemapMode     `json:"mode"`
+	Start  int64           `json:"start" required:"true"`
+	End    int64           `json:"end" required:"true"`
+	Limit  int             `json:"limit" required:"true"`
+	Mode   TreemapMode     `json:"mode" required:"true"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -210,52 +217,52 @@ func (req *TreemapRequest) UnmarshalJSON(data []byte) error {
 
 // TreemapEntry represents each node in the treemap response.
 type TreemapEntry struct {
-	MetricName string  `json:"metricName"`
-	Percentage float64 `json:"percentage"`
-	TotalValue uint64  `json:"totalValue"`
+	MetricName string  `json:"metricName" required:"true"`
+	Percentage float64 `json:"percentage" required:"true"`
+	TotalValue uint64  `json:"totalValue" required:"true"`
 }
 
 // TreemapResponse is the output structure for the treemap endpoint.
 type TreemapResponse struct {
-	TimeSeries []TreemapEntry `json:"timeseries"`
-	Samples    []TreemapEntry `json:"samples"`
+	TimeSeries []TreemapEntry `json:"timeseries" required:"true" nullable:"true"`
+	Samples    []TreemapEntry `json:"samples" required:"true" nullable:"true"`
 }
 
 // MetricAlert represents an alert associated with a metric.
 type MetricAlert struct {
-	AlertName string `json:"alertName"`
-	AlertID   string `json:"alertId"`
+	AlertName string `json:"alertName" required:"true"`
+	AlertID   string `json:"alertId" required:"true"`
 }
 
 // MetricAlertsResponse represents the response for metric alerts endpoint.
 type MetricAlertsResponse struct {
-	Alerts []MetricAlert `json:"alerts"`
+	Alerts []MetricAlert `json:"alerts" required:"true" nullable:"true"`
 }
 
 // MetricDashboard represents a dashboard/widget referencing a metric.
 type MetricDashboard struct {
-	DashboardName string `json:"dashboardName"`
-	DashboardID   string `json:"dashboardId"`
-	WidgetID      string `json:"widgetId"`
-	WidgetName    string `json:"widgetName"`
+	DashboardName string `json:"dashboardName" required:"true"`
+	DashboardID   string `json:"dashboardId" required:"true"`
+	WidgetID      string `json:"widgetId" required:"true"`
+	WidgetName    string `json:"widgetName" required:"true"`
 }
 
 // MetricDashboardsResponse represents the response for metric dashboards endpoint.
 type MetricDashboardsResponse struct {
-	Dashboards []MetricDashboard `json:"dashboards"`
+	Dashboards []MetricDashboard `json:"dashboards" required:"true" nullable:"true"`
 }
 
 // MetricHighlightsResponse is the output structure for the metric highlights endpoint.
 type MetricHighlightsResponse struct {
-	DataPoints       uint64 `json:"dataPoints"`
-	LastReceived     uint64 `json:"lastReceived"`
-	TotalTimeSeries  uint64 `json:"totalTimeSeries"`
-	ActiveTimeSeries uint64 `json:"activeTimeSeries"`
+	DataPoints       uint64 `json:"dataPoints" required:"true"`
+	LastReceived     uint64 `json:"lastReceived" required:"true"`
+	TotalTimeSeries  uint64 `json:"totalTimeSeries" required:"true"`
+	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true"`
 }
 
 // MetricAttributesRequest represents the payload for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `json:"metricName"`
+	MetricName string `json:"metricName" required:"true"`
 	Start      *int64 `json:"start,omitempty"`
 	End        *int64 `json:"end,omitempty"`
 }
@@ -292,17 +299,17 @@ func (req *MetricAttributesRequest) UnmarshalJSON(data []byte) error {
 
 // MetricAttribute represents a single attribute with its values and count.
 type MetricAttribute struct {
-	Key        string   `json:"key"`
-	Values     []string `json:"values"`
-	ValueCount uint64   `json:"valueCount"`
+	Key        string   `json:"key" required:"true"`
+	Values     []string `json:"values" required:"true" nullable:"true"`
+	ValueCount uint64   `json:"valueCount" required:"true"`
 }
 
 // MetricAttributesResponse is the output structure for the metric attributes endpoint.
 type MetricAttributesResponse struct {
-	Attributes []MetricAttribute `json:"attributes"`
-	TotalKeys  int64             `json:"totalKeys"`
+	Attributes []MetricAttribute `json:"attributes" required:"true" nullable:"true"`
+	TotalKeys  int64             `json:"totalKeys" required:"true"`
 }
 
 type MetricNameParams struct {
-	MetricName string `query:"metricName"`
+	MetricName string `query:"metricName" required:"true"`
 }

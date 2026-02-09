@@ -24,6 +24,14 @@
 		opacity: 1;
 	}
 
+	.legend-empty-state {
+		font-size: 12px;
+		color: var(--bg-vanilla-400);
+		text-align: center;
+		padding: 12px;
+		padding: 2rem 0;
+	}
+
 	.legend-virtuoso-container {
 		height: 100%;
 		width: 100%;
