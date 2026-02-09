@@ -239,7 +239,7 @@ export default function TableViewActions(
 								id: '',
 								key: newFilterItem,
 								op: OPERATORS.IN,
-								value: [fieldData.value],
+								value: [parseFieldValue(fieldData.value)],
 							},
 						],
 						op: 'AND',
