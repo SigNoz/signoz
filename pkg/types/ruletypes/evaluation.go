@@ -19,36 +19,36 @@ var (
 
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time)
-	GetFrequency() Duration
+	GetFrequency() valuer.TextDuration
 }
 
 type RollingWindow struct {
-	EvalWindow Duration `json:"evalWindow"`
-	Frequency  Duration `json:"frequency"`
+	EvalWindow valuer.TextDuration `json:"evalWindow"`
+	Frequency  valuer.TextDuration `json:"frequency"`
 }
 
 func (rollingWindow RollingWindow) Validate() error {
-	if rollingWindow.EvalWindow <= 0 {
+	if !rollingWindow.EvalWindow.IsPositive() {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "evalWindow must be greater than zero")
 	}
-	if rollingWindow.Frequency <= 0 {
+	if !rollingWindow.Frequency.IsPositive() {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
 	}
 	return nil
 }
 
 func (rollingWindow RollingWindow) NextWindowFor(curr time.Time) (time.Time, time.Time) {
-	return curr.Add(time.Duration(-rollingWindow.EvalWindow)), curr
+	return curr.Add(-rollingWindow.EvalWindow.Duration()), curr
 }
 
-func (rollingWindow RollingWindow) GetFrequency() Duration {
+func (rollingWindow RollingWindow) GetFrequency() valuer.TextDuration {
 	return rollingWindow.Frequency
 }
 
 type CumulativeWindow struct {
-	Schedule  CumulativeSchedule `json:"schedule"`
-	Frequency Duration           `json:"frequency"`
-	Timezone  string             `json:"timezone"`
+	Schedule  CumulativeSchedule  `json:"schedule"`
+	Frequency valuer.TextDuration `json:"frequency"`
+	Timezone  string              `json:"timezone"`
 }
 
 type CumulativeSchedule struct {
@@ -79,7 +79,7 @@ func (cumulativeWindow CumulativeWindow) Validate() error {
 	if _, err := time.LoadLocation(cumulativeWindow.Timezone); err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "timezone is invalid")
 	}
-	if cumulativeWindow.Frequency <= 0 {
+	if !cumulativeWindow.Frequency.IsPositive() {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "frequency must be greater than zero")
 	}
 	return nil
@@ -150,8 +150,8 @@ func (cumulativeWindow CumulativeWindow) NextWindowFor(curr time.Time) (time.Tim
 	return windowStart.In(time.UTC), currInTZ.In(time.UTC)
 }
 
-func (cw CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Location) time.Time {
-	schedule := cw.Schedule
+func (cumulativeWindow CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Location) time.Time {
+	schedule := cumulativeWindow.Schedule
 
 	switch schedule.Type {
 	case ScheduleTypeHourly:
@@ -220,7 +220,7 @@ func (cw CumulativeWindow) getLastScheduleTime(curr time.Time, loc *time.Locatio
 	}
 }
 
-func (cumulativeWindow CumulativeWindow) GetFrequency() Duration {
+func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 	return cumulativeWindow.Frequency
 }
 
