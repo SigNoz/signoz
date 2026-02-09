@@ -1,6 +1,11 @@
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { rest, server } from 'mocks-server/server';
+import {
+	createErrorResponse,
+	handleInternalServerError,
+	rest,
+	server,
+} from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
@@ -234,16 +239,9 @@ describe('ForgotPassword Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(
-						ctx.status(400),
-						ctx.json({
-							error: {
-								code: 'USER_NOT_FOUND',
-								message: 'User not found',
-							},
-						}),
-					),
+				rest.post(
+					FORGOT_PASSWORD_ENDPOINT,
+					createErrorResponse(400, 'USER_NOT_FOUND', 'User not found'),
 				),
 			);
 
@@ -258,19 +256,7 @@ describe('ForgotPassword Component', () => {
 		it('displays error message when API returns server error', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(
-						ctx.status(500),
-						ctx.json({
-							error: {
-								code: 'INTERNAL_SERVER_ERROR',
-								message: 'Internal server error occurred',
-							},
-						}),
-					),
-				),
-			);
+			server.use(rest.post(FORGOT_PASSWORD_ENDPOINT, handleInternalServerError));
 
 			render(<ForgotPassword {...defaultProps} />);
 

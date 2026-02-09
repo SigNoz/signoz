@@ -52,6 +52,7 @@
 		"@signozhq/combobox": "0.0.2",
 		"@signozhq/command": "0.0.0",
 		"@signozhq/design-tokens": "2.1.1",
+		"@signozhq/icons": "0.1.0",
 		"@signozhq/input": "0.0.2",
 		"@signozhq/popover": "0.0.0",
 		"@signozhq/resizable": "0.0.0",

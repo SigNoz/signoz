@@ -223,7 +223,7 @@ function Login(): JSX.Element {
 	const handleForgotPasswordClick = useCallback((): void => {
 		const email = form.getFieldValue('email');
 
-		if (!email || !sessionsContext || !sessionsContext.orgs.length) {
+		if (!email || !sessionsContext || !sessionsContext?.orgs?.length) {
 			return;
 		}
 

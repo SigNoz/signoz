@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@signozhq/button';
+import { ArrowLeft, ArrowRight } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Form, Select, Typography } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
@@ -7,12 +8,12 @@ import { useForgotPassword } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
-import { FormContainer, Label, ParentContainer } from 'container/Login/styles';
 import history from 'lib/history';
-import { ArrowLeft, ArrowRight, Mail } from 'lucide-react';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
+
+import SuccessScreen from './SuccessScreen';
 
 import './ForgotPassword.styles.scss';
 import 'container/Login/Login.styles.scss';
@@ -34,10 +35,24 @@ function ForgotPassword({
 	orgs,
 }: ForgotPasswordRouteState): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
-	const [errorMessage, setErrorMessage] = useState<APIError>();
-	const [isSuccess, setIsSuccess] = useState(false);
+	const {
+		mutate: forgotPasswordMutate,
+		isLoading,
+		isSuccess,
+		error: mutationError,
+	} = useForgotPassword();
 
-	const { mutate: forgotPasswordMutate, isLoading } = useForgotPassword();
+	const errorMessage = useMemo(() => {
+		if (!mutationError) {
+			return undefined;
+		}
+
+		try {
+			ErrorResponseHandlerV2(mutationError as AxiosError<ErrorV2Resp>);
+		} catch (apiError) {
+			return apiError as APIError;
+		}
+	}, [mutationError]);
 
 	const initialOrgId = useMemo((): string | undefined => {
 		if (orgId) {
@@ -80,32 +95,15 @@ function ForgotPassword({
 	const handleSubmit = useCallback((): void => {
 		const values = form.getFieldsValue();
 
-		// Clear any previous errors
-		setErrorMessage(undefined);
-
 		// Call the forgot password API
-		forgotPasswordMutate(
-			{
-				data: {
-					email: values.email,
-					// since the submit will already be disabled if org is not present, hence we can have empty fallback in case we get here
-					orgId: (hasMultipleOrgs ? values.orgId : initialOrgId) || '',
-					frontendBaseURL: window.location.origin,
-				},
+		forgotPasswordMutate({
+			data: {
+				email: values.email,
+				// since the submit will already be disabled if org is not present, hence we can have empty fallback in case we get here
+				orgId: (hasMultipleOrgs ? values.orgId : initialOrgId) || '',
+				frontendBaseURL: window.location.origin,
 			},
-			{
-				onSuccess: () => {
-					setIsSuccess(true);
-				},
-				onError: (error) => {
-					try {
-						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-					} catch (apiError) {
-						setErrorMessage(apiError as APIError);
-					}
-				},
-			},
-		);
+		});
 	}, [form, forgotPasswordMutate, initialOrgId, hasMultipleOrgs]);
 
 	const handleBackToLogin = useCallback((): void => {
@@ -114,44 +112,13 @@ function ForgotPassword({
 
 	// Success screen
 	if (isSuccess) {
-		return (
-			<div className="login-form-container">
-				<div className="forgot-password-form">
-					<div className="login-form-header">
-						<div className="login-form-emoji">
-							<Mail size={32} />
-						</div>
-						<Typography.Title level={4} className="login-form-title">
-							Check your email
-						</Typography.Title>
-						<Typography.Paragraph className="login-form-description">
-							We&apos;ve sent a password reset link to your email. Please check your
-							inbox and follow the instructions to reset your password.
-						</Typography.Paragraph>
-					</div>
-
-					<div className="login-form-actions forgot-password-actions">
-						<Button
-							variant="solid"
-							color="primary"
-							type="button"
-							data-testid="back-to-login"
-							className="login-submit-btn"
-							onClick={handleBackToLogin}
-							prefixIcon={<ArrowLeft size={12} />}
-						>
-							Back to login
-						</Button>
-					</div>
-				</div>
-			</div>
-		);
+		return <SuccessScreen onBackToLogin={handleBackToLogin} />;
 	}
 
 	// Form screen
 	return (
 		<div className="login-form-container">
-			<FormContainer
+			<Form
 				form={form}
 				onFinish={handleSubmit}
 				className="forgot-password-form"
@@ -173,9 +140,11 @@ function ForgotPassword({
 				</div>
 
 				<div className="login-form-card">
-					<ParentContainer>
-						<Label htmlFor="forgotPasswordEmail">Email address</Label>
-						<FormContainer.Item name="email">
+					<div className="forgot-password-field">
+						<label className="forgot-password-label" htmlFor="forgotPasswordEmail">
+							Email address
+						</label>
+						<Form.Item name="email">
 							<Input
 								type="email"
 								id="forgotPasswordEmail"
@@ -184,13 +153,15 @@ function ForgotPassword({
 								disabled
 								className="login-form-input"
 							/>
-						</FormContainer.Item>
-					</ParentContainer>
+						</Form.Item>
+					</div>
 
 					{hasMultipleOrgs && (
-						<ParentContainer>
-							<Label htmlFor="orgId">Organization Name</Label>
-							<FormContainer.Item name="orgId">
+						<div className="forgot-password-field">
+							<label className="forgot-password-label" htmlFor="orgId">
+								Organization Name
+							</label>
+							<Form.Item name="orgId">
 								<Select
 									id="orgId"
 									data-testid="orgId"
@@ -201,8 +172,8 @@ function ForgotPassword({
 										label: org.name || 'default',
 									}))}
 								/>
-							</FormContainer.Item>
-						</ParentContainer>
+							</Form.Item>
+						</div>
 					)}
 				</div>
 
@@ -233,7 +204,7 @@ function ForgotPassword({
 						{isLoading ? 'Sending...' : 'Send reset link'}
 					</Button>
 				</div>
-			</FormContainer>
+			</Form>
 		</div>
 	);
 }

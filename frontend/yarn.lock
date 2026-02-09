@@ -5038,7 +5038,7 @@
   resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.1.tgz#9c36d433fd264410713cc0c5ebdd75ce0ebecba3"
   integrity sha512-SdziCHg5Lwj+6oY6IRUPplaKZ+kTHjbrlhNj//UoAJ8aQLnRdR2F/miPzfSi4vrYw88LtXxNA9J9iJyacCp37A==
 
-"@signozhq/icons@^0.1.0":
+"@signozhq/icons@0.1.0", "@signozhq/icons@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@signozhq/icons/-/icons-0.1.0.tgz#00dfb430dbac423bfff715876f91a7b8a72509e4"
   integrity sha512-kGWDhCpQkFWaNwyWfy88AIbg902wBbgTFTBAtmo6DkHyLGoqWAf0Jcq8BX+7brFqJF9PnLoSJDj1lvCpUsI/Ig==
