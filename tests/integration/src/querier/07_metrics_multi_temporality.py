@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Any, Callable, List
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -20,7 +21,14 @@ from fixtures.utils import get_testdata_file_path
 
 MULTI_TEMPORALITY_FILE = get_testdata_file_path("multi_temporality_counters_1h.jsonl")
 
-def util_test_with_steady_values_and_reset(
+@pytest.mark.parametrize(
+    "time_aggregation, expectedValueAt31stMinute, expectedValueAt32ndMinute, steadyValue",
+    [
+        ("rate", 0.0167, 0.133, 0.0833),
+        ("increase", 2, 8, 5),
+    ],
+)
+def test_with_steady_values_and_reset(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -75,23 +83,14 @@ def util_test_with_steady_values_and_reset(
     for v in result_values:
         assert v["value"] >= 0, f"{time_aggregation} should not be negative: {v['value']}"
 
-def test_rate_with_steady_values_and_reset(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
-) -> None:
-    util_test_with_steady_values_and_reset(signoz, create_user_admin, get_token, insert_metrics, "rate", 0.0167, 0.133, 0.0833)
-
-def test_increase_with_steady_values_and_reset(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
-) -> None:
-    util_test_with_steady_values_and_reset(signoz, create_user_admin, get_token, insert_metrics, "increase", 2, 8, 5)
-
-def util_test_group_by_endpoint(
+@pytest.mark.parametrize(
+    "time_aggregation, stable_health_value, stable_products_value, stable_checkout_value, spike_checkout_value, stable_orders_value, spike_users_value",
+    [
+        ("rate", 0.167, 0.333, 0.0167, 0.833, 0.0833, 0.0167),
+        ("increase", 10, 20, 1, 50, 5, 1),
+    ],
+)
+def test_group_by_endpoint(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -250,23 +249,14 @@ def util_test_group_by_endpoint(
         count_increment_rate >= 8
     ), f"Expected >= 8 increment {time_aggregation} values ({spike_users_value}) for /users, got {count_increment_rate}"
 
-def test_rate_group_by_endpoint(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
-):
-    util_test_group_by_endpoint(signoz, create_user_admin, get_token, insert_metrics, "rate", 0.167, 0.333, 0.0167, 0.833, 0.0833, 0.0167)
-
-def test_increase_group_by_endpoint(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
-) -> None:
-    util_test_group_by_endpoint(signoz, create_user_admin, get_token, insert_metrics, "increase", 10, 20, 1, 50, 5, 1)
-
-def util_test_for_service_with_switch(
+@pytest.mark.parametrize(
+    "time_aggregation, expectedValueAt30thMinute, expectedValueAt31stMinute, steadyValue",
+    [
+        ("rate", 0.183, 0.183, 0.25),
+        ("increase", 11, 12, 15),
+    ],
+)
+def test_for_service_with_switch(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -315,19 +305,3 @@ def util_test_for_service_with_switch(
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
         assert v["value"] >= 0, f"{time_aggregation} should not be negative: {v['value']}"
-
-def test_rate_for_service_with_switch(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
-) -> None:
-    util_test_for_service_with_switch(signoz, create_user_admin, get_token, insert_metrics, "rate", 0.183, 0.183, 0.25)
-
-def test_increase_for_service_with_switch(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
-) -> None:
-    util_test_for_service_with_switch(signoz, create_user_admin, get_token, insert_metrics, "increase", 11, 12, 15)
