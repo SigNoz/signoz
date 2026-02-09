@@ -61,6 +61,8 @@ type ThresholdRule struct {
 	spansKeys map[string]v3.AttributeKey
 }
 
+var _ Rule = (*ThresholdRule)(nil)
+
 func NewThresholdRule(
 	id string,
 	orgID valuer.UUID,
@@ -746,7 +748,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			continue
 		}
 
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
 			r.logger.DebugContext(ctx, "converting pending alert to firing", "name", r.Name())
 			a.State = model.StateFiring
 			a.FiredAt = ts
@@ -812,7 +814,7 @@ func (r *ThresholdRule) String() string {
 	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        ruletypes.Duration(r.evalWindow),
+		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,
