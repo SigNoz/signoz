@@ -1,4 +1,4 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/badge';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import { ONE_CLICK_INTEGRATIONS } from '../constants';
@@ -38,12 +38,13 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 									{integration.title}
 								</div>
 							</div>
-
-							<div className="one-click-integrations-list-item-new-tag">
-								<Tag bordered={false} color="geekblue">
-									NEW
-								</Tag>
-							</div>
+							{integration.is_new && (
+								<div className="one-click-integrations-list-item-new-tag">
+									<Badge color="robin" variant="default">
+										NEW
+									</Badge>
+								</div>
+							)}
 						</div>
 
 						<div className="one-click-integrations-list-item-description">

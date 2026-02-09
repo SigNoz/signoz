@@ -6,7 +6,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	ServiceConfig,
 	SupportedSignals,
-} from 'container/Integrations/CloudIntegration/ServicesSection/types';
+} from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
 import { isEqual } from 'lodash-es';
 

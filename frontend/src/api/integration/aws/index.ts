@@ -5,7 +5,7 @@ import {
 	ServiceData,
 	UpdateServiceConfigPayload,
 	UpdateServiceConfigResponse,
-} from 'container/Integrations/CloudIntegration/ServicesSection/types';
+} from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import {
 	AccountConfigPayload,
 	AccountConfigResponse,

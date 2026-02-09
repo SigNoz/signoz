@@ -28,18 +28,6 @@ function IntegrationsHeader(): JSX.Element {
 				<Typography.Text className="subtitle">
 					Manage integrations for this workspace.
 				</Typography.Text>
-
-				{isGetStartedWithCloudAllowed && (
-					<Button
-						variant="solid"
-						color="primary"
-						className="view-data-sources-btn"
-						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
-					>
-						<span>View 150+ Data Sources</span>
-						<ArrowRight size={14} />
-					</Button>
-				)}
 			</Flex>
 
 			<div className="integrations-search-request-container">
@@ -53,6 +41,18 @@ function IntegrationsHeader(): JSX.Element {
 				>
 					Request Integration
 				</Button>
+
+				{isGetStartedWithCloudAllowed && (
+					<Button
+						variant="solid"
+						color="secondary"
+						className="view-data-sources-btn"
+						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
+					>
+						<span>View 150+ Data Sources</span>
+						<ArrowRight size={14} />
+					</Button>
+				)}
 			</div>
 		</div>
 	);

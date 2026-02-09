@@ -27,9 +27,10 @@ export const AWS_INTEGRATION = {
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
-	icon: `Logos/aws-dark.svg`,
+	icon: `/Logos/aws-dark.svg`,
+	icon_alt: 'aws-logo',
 	is_installed: false,
-	is_new: true,
+	is_new: false,
 };
 
 export const AZURE_INTEGRATION = {
@@ -41,9 +42,10 @@ export const AZURE_INTEGRATION = {
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
-	icon: `Logos/azure-openai.svg`,
+	icon: `/Logos/azure-openai.svg`,
+	icon_alt: 'azure-logo',
 	is_installed: false,
 	is_new: true,
 };
 
-export const ONE_CLICK_INTEGRATIONS = [AWS_INTEGRATION, AZURE_INTEGRATION];
+export const ONE_CLICK_INTEGRATIONS = [AZURE_INTEGRATION, AWS_INTEGRATION];

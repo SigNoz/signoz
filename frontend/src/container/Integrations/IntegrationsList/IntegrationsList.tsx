@@ -80,6 +80,8 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 	return (
 		<div className="integrations-list-container">
+			<div className="integrations-list-title">All Integrations</div>
+
 			{!loading && isError && renderError()}
 
 			{loading && (

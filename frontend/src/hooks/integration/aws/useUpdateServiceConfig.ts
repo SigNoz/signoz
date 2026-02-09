@@ -1,6 +1,6 @@
 import { useMutation, UseMutationResult } from 'react-query';
 import { updateServiceConfig } from 'api/integration/aws';
-import { S3BucketsByRegion } from 'container/Integrations/CloudIntegration/ServicesSection/types';
+import { S3BucketsByRegion } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 
 interface UpdateServiceConfigPayload {
 	cloud_account_id: string;

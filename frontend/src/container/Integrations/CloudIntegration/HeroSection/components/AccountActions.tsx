@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Skeleton } from 'antd';
+import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
 
-import { CloudAccount } from '../../ServicesSection/types';
+import { CloudAccount } from '../../AmazonWebServices/types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
 
@@ -74,24 +75,7 @@ function AccountActionsRenderer({
 	if (isLoading) {
 		return (
 			<div className="hero-section__actions-with-account">
-				<Skeleton.Input
-					active
-					size="large"
-					block
-					className="hero-section__input-skeleton"
-				/>
-				<div className="hero-section__action-buttons">
-					<Skeleton.Button
-						active
-						size="large"
-						className="hero-section__new-account-button-skeleton"
-					/>
-					<Skeleton.Button
-						active
-						size="large"
-						className="hero-section__account-settings-button-skeleton"
-					/>
-				</div>
+				<Skeleton.Input active block className="hero-section__input-skeleton" />
 			</div>
 		);
 	}
@@ -110,16 +94,12 @@ function AccountActionsRenderer({
 					onChange={onAccountChange}
 				/>
 				<div className="hero-section__action-buttons">
-					<Button
-						type="primary"
-						className="hero-section__action-button primary"
-						onClick={onIntegrationModalOpen}
-					>
+					<Button variant="solid" color="primary" onClick={onIntegrationModalOpen}>
 						Add New AWS Account
 					</Button>
 					<Button
-						type="default"
-						className="hero-section__action-button secondary"
+						variant="solid"
+						color="primary"
 						onClick={onAccountSettingsModalOpen}
 					>
 						Account Settings
@@ -129,10 +109,7 @@ function AccountActionsRenderer({
 		);
 	}
 	return (
-		<Button
-			className="hero-section__action-button primary"
-			onClick={onIntegrationModalOpen}
-		>
+		<Button variant="solid" color="primary" onClick={onIntegrationModalOpen}>
 			Integrate Now
 		</Button>
 	);

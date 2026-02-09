@@ -1,4 +1,17 @@
 .integrations-list-container {
+	.integrations-list-title {
+		color: var(--Vanilla-400, #c0c1c3);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 20px; /* 166.667% */
+		letter-spacing: 0.48px;
+		text-transform: uppercase;
+
+		margin-bottom: 16px;
+	}
+
 	.error-container {
 		display: flex;
 		border-radius: 6px;
@@ -49,6 +62,8 @@
 	.integrations-list {
 		display: flex;
 		flex-direction: column;
+		margin-left: -16px;
+		margin-right: -16px;
 
 		.integrations-list-header {
 			display: flex;
@@ -69,6 +84,18 @@
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.44px;
 				text-transform: uppercase;
+
+				&.title-column {
+					flex: 2;
+				}
+
+				&.published-by-column {
+					flex: 1;
+				}
+
+				&.installation-status-column {
+					flex: 1;
+				}
 			}
 		}
 
@@ -99,6 +126,10 @@
 			&:hover {
 				background: var(--bg-ink-400);
 			}
+
+			&:nth-child(even) {
+				background: rgba(171, 189, 255, 0.02);
+			}
 		}
 
 		.integrations-list-item-column {
@@ -114,6 +145,7 @@
 				flex-direction: row;
 				gap: 10px;
 				align-items: center;
+				flex: 2;
 			}
 
 			&.installation-status-column {

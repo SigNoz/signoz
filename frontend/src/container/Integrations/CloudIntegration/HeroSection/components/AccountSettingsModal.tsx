@@ -11,7 +11,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 
 import logEvent from '../../../../../api/common/logEvent';
-import { CloudAccount } from '../../ServicesSection/types';
+import { CloudAccount } from '../../AmazonWebServices/types';
 import { RegionSelector } from './RegionSelector';
 import RemoveIntegrationAccount from './RemoveIntegrationAccount';
 
