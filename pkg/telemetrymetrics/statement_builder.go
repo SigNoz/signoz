@@ -558,7 +558,6 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 		aggForDeltaTemporality = fmt.Sprintf("%s/%d", aggForDeltaTemporality, stepSec)
 	}
 
-	// todo: the interpolation scenario
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
 		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, start, aggForCumulativeTemporality, aggForCumulativeTemporality, start)
