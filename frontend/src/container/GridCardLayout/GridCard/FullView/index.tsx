@@ -17,6 +17,7 @@ import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import useDrilldown from 'container/GridCardLayout/GridCard/FullView/useDrilldown';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import {
@@ -366,6 +367,7 @@ function FullView({
 								/>
 							)}
 							<PanelWrapper
+								panelMode={PanelMode.STANDALONE_VIEW}
 								queryResponse={response}
 								widget={widget}
 								setRequestData={setRequestData}

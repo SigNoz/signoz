@@ -50,7 +50,7 @@ export interface TooltipPluginProps {
 export interface TooltipControllerState {
 	plot: uPlot | null;
 	hoverActive: boolean;
-	anySeriesActive: boolean;
+	isAnySeriesActive: boolean;
 	pinned: boolean;
 	style: TooltipViewState['style'];
 	horizontalOffset: number;
@@ -61,7 +61,6 @@ export interface TooltipControllerState {
 	plotWithinViewport: boolean;
 	windowWidth: number;
 	windowHeight: number;
-	renderScheduled: boolean;
 	pendingPinnedUpdate: boolean;
 }
 

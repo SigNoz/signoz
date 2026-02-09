@@ -21,6 +21,7 @@ function PanelWrapper({
 	onOpenTraceBtnClick,
 	customSeries,
 	customOnRowClick,
+	panelMode,
 	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
@@ -33,6 +34,7 @@ function PanelWrapper({
 	}
 	return (
 		<Component
+			panelMode={panelMode}
 			widget={widget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}

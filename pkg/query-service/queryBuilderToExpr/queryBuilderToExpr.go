@@ -59,7 +59,6 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "operator not supported: %d", c.Op)
 	}
 
-	name := getName(key)
 	value := exprFormattedValue(c.Value)
 	var filter string
 
@@ -71,22 +70,29 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 		//     ("attributes" or "resource") using the logical field name.
 		//   - For intrinsic / top‑level fields (no explicit context), we fall back to
 		//     equality against nil (see default case below).
-		//
-		// FilterCondition.Value is generally nil for EXISTS/NOT EXISTS, so we can't rely
-		// on it to build a meaningful left‑hand side for membership checks.
-		// Instead, we derive the key name from the TelemetryFieldKey.
-		name := key.Name
 		switch key.FieldContext {
 		case telemetrytypes.FieldContextBody:
+			// if body is a string and is a valid JSON, then check if the key exists in the JSON
+			filter = fmt.Sprintf(`((type(body) == "string" && isJSON(body)) && %s %s %s)`, key.Name, logOperatorsToExpr[c.Op], "fromJSON(body)")
+
+			// if body is a map, then check if the key exists in the map
+			operator := qbtypes.FilterOperatorNotEqual
+			if c.Op == qbtypes.FilterOperatorNotExists {
+				operator = qbtypes.FilterOperatorEqual
+			}
+			nilCheckFilter := fmt.Sprintf("%s %s nil", key.Name, logOperatorsToExpr[operator])
+
+			// join the two filters with OR
+			filter = fmt.Sprintf(`(%s or (type(body) == "map" && (%s)))`, filter, nilCheckFilter)
 			// Example: "log.message" in fromJSON(body)
-			filter = fmt.Sprintf("%q %s %s", name, logOperatorsToExpr[c.Op], "fromJSON(body)")
+			filter = fmt.Sprintf("%q %s %s", key.Name, logOperatorsToExpr[c.Op], "fromJSON(body)")
 		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 			// Example: "http.method" in attributes
 			target := "resource"
 			if key.FieldContext == telemetrytypes.FieldContextAttribute {
 				target = "attributes"
 			}
-			filter = fmt.Sprintf("%q %s %s", name, logOperatorsToExpr[c.Op], target)
+			filter = fmt.Sprintf("%q %s %s", key.Name, logOperatorsToExpr[c.Op], target)
 		default:
 			// if type of key is not available; is considered as TOP LEVEL key in OTEL Log Data model hence
 			// switch Exist and Not Exists operators with NOT EQUAL and EQUAL respectively
@@ -97,18 +103,18 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 			filter = fmt.Sprintf("%s %s nil", key.Name, logOperatorsToExpr[operator])
 		}
 	default:
-		filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[c.Op], value)
+		filter = fmt.Sprintf("%s %s %s", key.Name, logOperatorsToExpr[c.Op], value)
 		if c.Op == qbtypes.FilterOperatorContains || c.Op == qbtypes.FilterOperatorNotContains {
 			// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
 			filter = fmt.Sprintf(
 				"lower(%s) %s lower(%s)",
-				name, logOperatorsToExpr[c.Op], value,
+				getName(key), logOperatorsToExpr[c.Op], value,
 			)
 		}
 
 		// Avoid running operators on nil values
 		if c.Op != qbtypes.FilterOperatorEqual && c.Op != qbtypes.FilterOperatorNotEqual {
-			filter = fmt.Sprintf("%s != nil && %s", name, filter)
+			filter = fmt.Sprintf("%s != nil && %s", getName(key), filter)
 		}
 	}
 
