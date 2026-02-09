@@ -63,7 +63,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('option1')).toBeInTheDocument();
+			expect(await screen.findByText('option1')).toBeInTheDocument();
 		});
 
 		test('should show placeholder when no previous and no default', async () => {
@@ -85,7 +85,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('Select value')).toBeInTheDocument();
+			expect(await screen.findByText('Select value')).toBeInTheDocument();
 		});
 	});
 
@@ -110,7 +110,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('ALL')).toBeInTheDocument();
+			expect(await screen.findByText('ALL')).toBeInTheDocument();
 		});
 	});
 
@@ -134,7 +134,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('Select value')).toBeInTheDocument();
+			expect(await screen.findByText('Select value')).toBeInTheDocument();
 		});
 	});
 });
