@@ -2,7 +2,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import * as ReactRedux from 'react-redux';
 import {
 	act,
@@ -21,6 +21,15 @@ import DynamicVariableInput from '../DashboardVariablesSelection/DynamicVariable
 jest.mock('api/dynamicVariables/getFieldValues', () => ({
 	getFieldValues: jest.fn(),
 }));
+
+// Mock useQuery from react-query
+jest.mock('react-query', () => {
+	const originalModule = jest.requireActual('react-query');
+	return {
+		...originalModule,
+		useQuery: jest.fn(),
+	};
+});
 
 describe('Dynamic Variable Default Behavior', () => {
 	const mockOnValueUpdate = jest.fn();
@@ -58,6 +67,46 @@ describe('Dynamic Variable Default Behavior', () => {
 
 		// Mock getFieldValues API to return our test data
 		(getFieldValues as jest.Mock).mockResolvedValue(mockApiResponse);
+
+		// Mock useQuery implementation to avoid infinite re-renders
+		// and ensure onSuccess is called once
+		(useQuery as jest.Mock).mockImplementation((key, options) => {
+			const { onSuccess, enabled, queryFn } = options || {};
+			const variableName = key[1];
+			const dynamicVarsKey = key[2];
+
+			React.useEffect(() => {
+				if (enabled !== false) {
+					if (onSuccess) {
+						// For 'services' tests:
+						// 1. "Default to ALL" expectations imply empty options -> [] behavior. This happens when selectedValue is undefined (dynamicVarsKey has 'null').
+						// 2. "ALL Option Special Value" needs full options to render the "ALL" item in dropdown. This happens when selectedValue is defined.
+						if (
+							variableName === 'services' &&
+							typeof dynamicVarsKey === 'string' &&
+							dynamicVarsKey.includes('null')
+						) {
+							onSuccess({
+								...mockApiResponse,
+								data: { ...mockApiResponse.data, normalizedValues: [] },
+							});
+						} else {
+							onSuccess(mockApiResponse);
+						}
+					}
+					if (queryFn) {
+						queryFn();
+					}
+				}
+			}, [enabled, variableName, dynamicVarsKey]); // Only depend on enabled/keys
+
+			return {
+				isLoading: false,
+				isError: false,
+				data: mockApiResponse,
+				refetch: jest.fn(),
+			};
+		});
 
 		jest.spyOn(ReactRedux, 'useSelector').mockReturnValue({
 			minTime: '2023-01-01T00:00:00Z',
