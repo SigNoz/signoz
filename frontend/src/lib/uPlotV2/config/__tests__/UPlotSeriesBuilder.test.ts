@@ -278,7 +278,7 @@ describe('UPlotSeriesBuilder', () => {
 		);
 
 		const config = builder.getConfig();
-		expect(config.stroke).toBe('#FF432E');
+		expect(config.stroke).toBe('#E64A3C');
 	});
 
 	it('passes through pointsFilter when provided', () => {
