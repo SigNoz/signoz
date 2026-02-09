@@ -1669,8 +1669,16 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),
-		sb.GTE("last_reported_unix_milli", queryTimeRangeStartTs),
-		sb.LT("last_reported_unix_milli", queryTimeRangeEndTs),
+		sb.Or(
+			sb.And(
+				sb.GTE("last_reported_unix_milli", queryTimeRangeStartTs),
+				sb.LT("last_reported_unix_milli", queryTimeRangeEndTs),
+			),
+			sb.And(
+				sb.GTE("first_reported_unix_milli", queryTimeRangeStartTs),
+				sb.LT("first_reported_unix_milli", queryTimeRangeEndTs),
+			),
+		),
 	)
 
 	sb.GroupBy("metric_name", "temporality")
