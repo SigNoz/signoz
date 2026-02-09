@@ -157,10 +157,6 @@ def test_list_connected_accounts_empty(
     assert "accounts" in data, "Response should contain 'accounts' field"
     assert isinstance(data["accounts"], list), "Accounts should be a list"
 
-    # Note: If table doesn't exist yet, cleanup won't work and there might be leftover data
-    # This is acceptable for integration tests with --reuse flag
-    initial_count = len(data["accounts"])
-
 
 def test_list_connected_accounts_with_account(
     signoz: types.SigNoz,
