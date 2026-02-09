@@ -146,6 +146,10 @@ func (d *TextDuration) Scan(value any) error {
 	}
 }
 
+func (d *TextDuration) UnmarshalParam(param string) error {
+	return d.UnmarshalText([]byte(param))
+}
+
 // Equal reports the two TextDuration represent the same underlying duration values.
 //
 // Note that the String representations for them can be different.

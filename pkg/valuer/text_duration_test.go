@@ -133,3 +133,12 @@ func TestTextDurationValueAndScan(t *testing.T) {
 	err = scanned.Scan(true)
 	assert.Error(t, err)
 }
+
+func TestTextDurationUnmarshalParam(t *testing.T) {
+	var decoded TextDuration
+	require.NoError(t, decoded.UnmarshalParam("2m"))
+	assert.Equal(t, 2*time.Minute, decoded.Duration())
+	assert.Equal(t, "2m", decoded.String())
+
+	assert.Error(t, decoded.UnmarshalParam("invalid"))
+}
