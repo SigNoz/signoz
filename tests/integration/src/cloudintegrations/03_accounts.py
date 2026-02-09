@@ -548,7 +548,7 @@ def test_disconnect_account_not_found(
         f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{fake_account_id}/disconnect"
     )
 
-    response = requests.delete(
+    response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
