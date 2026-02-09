@@ -762,18 +762,6 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	totalTimeSeries: number;
 }
 
-export enum MetricsexplorertypesMetricMetadataDTOTemporality {
-	delta = 'delta',
-	cumulative = 'cumulative',
-	unspecified = 'unspecified',
-}
-export enum MetricsexplorertypesMetricMetadataDTOType {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
 export interface MetricsexplorertypesMetricMetadataDTO {
 	/**
 	 * @type string
@@ -783,29 +771,14 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 	 * @type boolean
 	 */
 	isMonotonic: boolean;
-	/**
-	 * @enum delta,cumulative,unspecified
-	 * @type string
-	 */
-	temporality: MetricsexplorertypesMetricMetadataDTOTemporality;
-	/**
-	 * @enum gauge,sum,histogram,summary,exponentialhistogram
-	 * @type string
-	 */
-	type: MetricsexplorertypesMetricMetadataDTOType;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
 	unit: string;
 }
 
-export enum MetricsexplorertypesStatDTOType {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
 export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type string
@@ -825,11 +798,7 @@ export interface MetricsexplorertypesStatDTO {
 	 * @minimum 0
 	 */
 	timeseries: number;
-	/**
-	 * @enum gauge,sum,histogram,summary,exponentialhistogram
-	 * @type string
-	 */
-	type: MetricsexplorertypesStatDTOType;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -889,7 +858,7 @@ export interface MetricsexplorertypesTreemapEntryDTO {
 	totalValue: number;
 }
 
-export enum MetricsexplorertypesTreemapRequestDTOMode {
+export enum MetricsexplorertypesTreemapModeDTO {
 	timeseries = 'timeseries',
 	samples = 'samples',
 }
@@ -904,11 +873,7 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 	 * @type integer
 	 */
 	limit: number;
-	/**
-	 * @enum timeseries,samples
-	 * @type string
-	 */
-	mode: MetricsexplorertypesTreemapRequestDTOMode;
+	mode: MetricsexplorertypesTreemapModeDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -929,18 +894,6 @@ export interface MetricsexplorertypesTreemapResponseDTO {
 	timeseries: MetricsexplorertypesTreemapEntryDTO[] | null;
 }
 
-export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality {
-	delta = 'delta',
-	cumulative = 'cumulative',
-	unspecified = 'unspecified',
-}
-export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOType {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
 export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	/**
 	 * @type string
@@ -954,22 +907,26 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	 * @type string
 	 */
 	metricName: string;
-	/**
-	 * @enum delta,cumulative,unspecified
-	 * @type string
-	 */
-	temporality: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality;
-	/**
-	 * @enum gauge,sum,histogram,summary,exponentialhistogram
-	 * @type string
-	 */
-	type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
 	unit: string;
 }
 
+export enum MetrictypesTemporalityDTO {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetrictypesTypeDTO {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface PreferencetypesPreferenceDTO {
 	/**
 	 * @type array
