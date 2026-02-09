@@ -299,7 +299,6 @@ function EndPointDetails({
 					endPointStatusCodeLatencyBarChartsDataQuery
 				}
 				domainName={domainName}
-				endPointName={endPointName}
 				filters={filters}
 				timeRange={timeRange}
 				onDragSelect={onDragSelect}

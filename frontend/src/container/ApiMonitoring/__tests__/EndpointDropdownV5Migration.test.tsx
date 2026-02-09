@@ -13,6 +13,7 @@
  * - GroupBy: http_url with type 'attribute'
  */
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
@@ -70,7 +71,7 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			expect(queryA.groupBy).toHaveLength(1);
 			expect(queryA.groupBy).toContainEqual({
 				key: SPAN_ATTRIBUTES.HTTP_URL,
-				dataType: 'string',
+				dataType: DataTypes.String,
 				type: 'attribute',
 			});
 		});

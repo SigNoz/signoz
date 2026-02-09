@@ -710,13 +710,11 @@ describe('API Monitoring Utils', () => {
 		it('should generate widget configuration for status code bar chart', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const endPointName = '/api/test';
 			const filters = { items: [], op: 'AND' };
 
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				endPointName,
 				filters as IBuilderQuery['filters'],
 			);
 
@@ -744,7 +742,6 @@ describe('API Monitoring Utils', () => {
 		it('should include custom filters in the widget configuration', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const endPointName = '/api/test';
 			const customFilter = {
 				id: 'custom-filter',
 				key: {
@@ -760,7 +757,6 @@ describe('API Monitoring Utils', () => {
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				endPointName,
 				filters as IBuilderQuery['filters'],
 			);
 

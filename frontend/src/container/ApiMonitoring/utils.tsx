@@ -1738,7 +1738,7 @@ export const getEndPointDetailsQueryPayload = (
 								filters || { items: [], op: 'AND' },
 								`${getDomainNameFilterExpression(
 									domainName,
-								)} AND ${clientKindExpression} AND http_url EXISTS`,
+								)} AND ${clientKindExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 							),
 						},
 						expression: 'A',
@@ -2720,7 +2720,6 @@ export const groupStatusCodes = (
 
 export const getStatusCodeBarChartWidgetData = (
 	domainName: string,
-	endPointName: string,
 	filters: IBuilderQuery['filters'],
 ): Widgets => ({
 	query: {

@@ -9,6 +9,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { SPAN_ATTRIBUTES } from '../constants';
 import DomainMetrics from './DomainMetrics';
 
 // Mock the API call
@@ -127,7 +128,9 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			);
 			// Verify exact domain filter expression structure
 			expect(queryA.filter.expression).toContain("http_host = '0.0.0.0'");
-			expect(queryA.filter.expression).toContain('http_url EXISTS');
+			expect(queryA.filter.expression).toContain(
+				`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
+			);
 
 			// Verify Query B - p99 latency
 			const queryB = queryData.find((q: any) => q.queryName === 'B');
