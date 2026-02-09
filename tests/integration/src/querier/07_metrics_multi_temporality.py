@@ -220,9 +220,9 @@ def test_group_by_endpoint(
     count_steady_orders = sum(1 for v in orders_values if v["value"] == stable_orders_value)
     assert (
         count_steady_orders >= 55
-    ), f"Expected >= 55 steady {time_aggregation} values (0.0833) for /orders, got {count_steady_orders}"
+    ), f"Expected >= 55 steady {time_aggregation} values ({stable_orders_value}) for /orders, got {count_steady_orders}"
     # check for counter reset effects - there should be some non-standard values
-    non_standard_orders = [v["value"] for v in orders_values if v["value"] != 0.0833]
+    non_standard_orders = [v["value"] for v in orders_values if v["value"] != stable_orders_value]
     assert (
         len(non_standard_orders) >= 2
     ), f"Expected >= 2 non-standard values due to counter reset, got {non_standard_orders}"
