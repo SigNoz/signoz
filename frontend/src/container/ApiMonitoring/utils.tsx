@@ -15,7 +15,6 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
@@ -2998,24 +2997,12 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		[SPAN_ATTRIBUTES.HTTP_URL]: (
-			url: string | number,
-			record?: RowData,
-		): ReactNode => {
-			// First try to use the url from the column value
-			let urlValue = url;
-
-			// If url is empty/null and we have the record, fallback to http_url
-			if (isEmptyFilterValue(url) && record) {
-				const { http_url } = record;
-				urlValue = http_url;
-			}
-
-			if (!urlValue || urlValue === 'n/a') {
+		[SPAN_ATTRIBUTES.HTTP_URL]: (url: string | number): ReactNode => {
+			if (isEmptyFilterValue(url) || !url || url === 'n/a') {
 				return <span>-</span>;
 			}
 
-			const { endpoint } = extractPortAndEndpoint(String(urlValue));
+			const { endpoint } = extractPortAndEndpoint(String(url));
 			return <span>{getDisplayValue(endpoint)}</span>;
 		},
 		A: (numOfCalls: any): ReactNode => (
