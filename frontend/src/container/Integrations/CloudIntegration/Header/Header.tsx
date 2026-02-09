@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Button } from '@signozhq/button';
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
 import { IntegrationType } from 'container/Integrations/types';
@@ -30,15 +31,20 @@ function Header({ title }: { title: IntegrationType }): JSX.Element {
 				/>
 			</div>
 			<div className="cloud-header__actions">
-				<a
-					href="https://signoz.io/blog/native-aws-integrations-with-autodiscovery/"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="cloud-header__help"
+				<Button
+					variant="solid"
+					size="sm"
+					color="secondary"
+					onClick={(): void => {
+						window.open(
+							'https://signoz.io/blog/native-aws-integrations-with-autodiscovery/',
+							'_blank',
+						);
+					}}
+					prefixIcon={<LifeBuoy size={12} />}
 				>
-					<LifeBuoy size={12} />
 					Get Help
-				</a>
+				</Button>
 			</div>
 		</div>
 	);
