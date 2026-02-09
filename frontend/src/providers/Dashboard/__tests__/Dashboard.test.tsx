@@ -412,14 +412,16 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			});
 
 			// Verify dashboard state contains the variables with default values
-			const dashboardVariables = await screen.findByTestId('dashboard-variables');
-			const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
-			expect(parsedVariables).toHaveProperty('environment');
-			expect(parsedVariables).toHaveProperty('services');
-			// Default allSelected values should be preserved
-			expect(parsedVariables.environment.allSelected).toBe(false);
-			expect(parsedVariables.services.allSelected).toBe(false);
+				expect(parsedVariables).toHaveProperty('environment');
+				expect(parsedVariables).toHaveProperty('services');
+				// Default allSelected values should be preserved
+				expect(parsedVariables.environment.allSelected).toBe(false);
+				expect(parsedVariables.services.allSelected).toBe(false);
+			});
 		});
 
 		it('should merge URL variables with dashboard data and normalize values correctly', async () => {
@@ -466,16 +468,26 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			});
 
 			// Verify the dashboard state reflects the normalized URL values
-			const dashboardVariables = await screen.findByTestId('dashboard-variables');
-			const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
+				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
-			// The selectedValue should be updated with normalized URL values
-			expect(parsedVariables.environment.selectedValue).toBe('development');
-			expect(parsedVariables.services.selectedValue).toEqual(['db', 'cache']);
+				// First ensure the variables exist
+				expect(parsedVariables).toHaveProperty('environment');
+				expect(parsedVariables).toHaveProperty('services');
 
-			// allSelected should be set to false when URL values override
-			expect(parsedVariables.environment.allSelected).toBe(false);
-			expect(parsedVariables.services.allSelected).toBe(false);
+				// Then check their properties
+				expect(parsedVariables.environment).toHaveProperty('selectedValue');
+				expect(parsedVariables.services).toHaveProperty('selectedValue');
+
+				// The selectedValue should be updated with normalized URL values
+				expect(parsedVariables.environment.selectedValue).toBe('development');
+				expect(parsedVariables.services.selectedValue).toEqual(['db', 'cache']);
+
+				// allSelected should be set to false when URL values override
+				expect(parsedVariables.environment.allSelected).toBe(false);
+				expect(parsedVariables.services.allSelected).toBe(false);
+			});
 		});
 
 		it('should handle ALL_SELECTED_VALUE from URL and set allSelected correctly', async () => {
@@ -500,8 +512,8 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			);
 
 			// Verify that allSelected is set to true for the services variable
-			await waitFor(async () => {
-				const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.services.allSelected).toBe(true);
@@ -603,8 +615,8 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			});
 
 			// Verify that defaultValue is set from textboxValue
-			await waitFor(async () => {
-				const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
@@ -648,8 +660,8 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			});
 
 			// Verify that existing defaultValue is preserved
-			await waitFor(async () => {
-				const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
@@ -694,8 +706,8 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			});
 
 			// Verify that defaultValue is set to empty string
-			await waitFor(async () => {
-				const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myTextbox.type).toBe('TEXTBOX');
@@ -739,8 +751,8 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			});
 
 			// Verify that defaultValue is NOT set from textboxValue for QUERY type
-			await waitFor(async () => {
-				const dashboardVariables = await screen.findByTestId('dashboard-variables');
+			await waitFor(() => {
+				const dashboardVariables = screen.getByTestId('dashboard-variables');
 				const parsedVariables = JSON.parse(dashboardVariables.textContent || '{}');
 
 				expect(parsedVariables.myQuery.type).toBe('QUERY');
