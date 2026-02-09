@@ -363,25 +363,6 @@ export const uniqueOptions = (options: OptionData[]): OptionData[] => {
 	return uniqueOptions;
 };
 
-export const uniqueValues = (values: string[] | string): string[] | string => {
-	if (Array.isArray(values)) {
-		const uniqueValues: string[] = [];
-		const seenValues = new Set<string>();
-
-		values.forEach((value) => {
-			if (seenValues.has(value)) {
-				return;
-			}
-			seenValues.add(value);
-			uniqueValues.push(value);
-		});
-
-		return uniqueValues;
-	}
-
-	return values;
-};
-
 export const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
 	variableData: IDashboardVariable,
