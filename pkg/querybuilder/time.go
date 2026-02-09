@@ -105,7 +105,11 @@ func MinAllowedStepIntervalForMeter(start, end uint64) uint64 {
 
 	// if the time range is greater than 1 month set the step interval to be multiple of 1 day
 	if end-start >= uint64(30*24*time.Hour.Nanoseconds()) {
-		minAllowed = uint64(math.Round(float64(minAllowed)/86400)) * 86400
+		if minAllowed < 86400 {
+			minAllowed = 86400
+		} else {
+			minAllowed = uint64(math.Round(float64(minAllowed)/86400)) * 86400
+		}
 	}
 	return minAllowed
 }
