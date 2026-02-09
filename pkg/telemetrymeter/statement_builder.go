@@ -42,7 +42,6 @@ func NewMeterQueryStatementBuilder(
 	}
 }
 
-// todo NAMAN: add handling for the scenario where there are multiple temporalities
 func (b *meterQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
