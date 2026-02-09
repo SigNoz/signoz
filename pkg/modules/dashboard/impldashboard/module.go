@@ -206,6 +206,10 @@ func (module *module) MustGetTypeables() []authtypes.Typeable {
 	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
 }
 
+func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
+	return nil
+}
+
 // not supported
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
