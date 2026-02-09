@@ -225,6 +225,12 @@ func (c *conditionBuilder) conditionFor(
 			default:
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
+		case schema.ColumnTypeEnumArray:
+			if operator == qbtypes.FilterOperatorExists {
+				return fmt.Sprintf("notEmpty(%s)", sqlbuilder.Escape(tblFieldName)), nil
+			} else {
+				return fmt.Sprintf("empty(%s)", sqlbuilder.Escape(tblFieldName)), nil
+			}
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
