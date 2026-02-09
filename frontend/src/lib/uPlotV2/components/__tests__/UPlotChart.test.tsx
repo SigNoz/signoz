@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
+import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { AlignedData } from 'uplot';
 
 import { PlotContextProvider } from '../../context/PlotContext';
@@ -36,7 +37,7 @@ interface MockUPlotInstance {
 }
 
 let instances: MockUPlotInstance[] = [];
-const uPlotCtor = jest.fn();
+const uPlotConstructor = jest.fn();
 
 jest.mock('uplot', () => {
 	function MockUPlot(
@@ -44,7 +45,7 @@ jest.mock('uplot', () => {
 		data: unknown,
 		target: HTMLElement,
 	): MockUPlotInstance {
-		uPlotCtor(opts, data, target);
+		uPlotConstructor(opts, data, target);
 
 		const rootEl = document.createElement('div');
 		target.appendChild(rootEl);
@@ -74,17 +75,19 @@ jest.mock('uplot', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const createMockConfig = (): Record<string, jest.Mock> => ({
-	getConfig: jest.fn().mockReturnValue({
-		series: [{ value: (): string => '' }],
-		axes: [],
-		scales: {},
-		hooks: {},
-		cursor: {},
-	}),
-	getWidgetId: jest.fn().mockReturnValue(undefined),
-	getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
-});
+const createMockConfig = (): UPlotConfigBuilder => {
+	return ({
+		getConfig: jest.fn().mockReturnValue({
+			series: [{ value: (): string => '' }],
+			axes: [],
+			scales: {},
+			hooks: {},
+			cursor: {},
+		}),
+		getWidgetId: jest.fn().mockReturnValue(undefined),
+		getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
+	} as unknown) as UPlotConfigBuilder;
+};
 
 const validData: AlignedData = [
 	[1, 2, 3],
@@ -103,14 +106,14 @@ const Wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
 describe('UPlotChart', () => {
 	beforeEach(() => {
 		instances = [];
-		uPlotCtor.mockClear();
+		uPlotConstructor.mockClear();
 	});
 
 	describe('when data is empty', () => {
 		it('displays "No Data" message instead of the chart container', () => {
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={emptyData}
 					width={600}
 					height={400}
@@ -125,7 +128,7 @@ describe('UPlotChart', () => {
 		it('sizes the empty-state container to the given width and height', () => {
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={emptyData}
 					width={750}
 					height={350}
@@ -142,7 +145,7 @@ describe('UPlotChart', () => {
 		it('does not create a uPlot instance', () => {
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={emptyData}
 					width={600}
 					height={400}
@@ -150,7 +153,7 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			expect(uPlotCtor).not.toHaveBeenCalled();
+			expect(uPlotConstructor).not.toHaveBeenCalled();
 		});
 	});
 
@@ -158,7 +161,7 @@ describe('UPlotChart', () => {
 		it('renders children inside the chart wrapper', () => {
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={validData}
 					width={600}
 					height={400}
@@ -176,7 +179,7 @@ describe('UPlotChart', () => {
 		it('instantiates uPlot with floored dimensions and the container element', () => {
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={validData}
 					width={600.9}
 					height={400.2}
@@ -184,9 +187,9 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			expect(uPlotCtor).toHaveBeenCalledTimes(1);
+			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
 
-			const [opts, data, target] = uPlotCtor.mock.calls[0];
+			const [opts, data, target] = uPlotConstructor.mock.calls[0];
 			expect(opts.width).toBe(600);
 			expect(opts.height).toBe(400);
 			expect(data).toBe(validData);
@@ -195,7 +198,7 @@ describe('UPlotChart', () => {
 
 		it('merges config builder output into the uPlot options', () => {
 			const config = createMockConfig();
-			config.getConfig.mockReturnValue({
+			config.getConfig = jest.fn().mockReturnValue({
 				series: [{ value: (): string => '' }],
 				axes: [{ scale: 'y' }],
 				scales: { y: {} },
@@ -205,7 +208,7 @@ describe('UPlotChart', () => {
 
 			render(
 				<UPlotChart
-					config={config as any}
+					config={(config as unknown) as UPlotConfigBuilder}
 					data={validData}
 					width={500}
 					height={300}
@@ -213,7 +216,7 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			const [opts] = uPlotCtor.mock.calls[0];
+			const [opts] = uPlotConstructor.mock.calls[0];
 			expect(opts.width).toBe(500);
 			expect(opts.height).toBe(300);
 			expect(opts.axes).toEqual([{ scale: 'y' }]);
@@ -223,7 +226,7 @@ describe('UPlotChart', () => {
 		it('skips creation when width or height is 0', () => {
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={validData}
 					width={0}
 					height={0}
@@ -231,7 +234,7 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			expect(uPlotCtor).not.toHaveBeenCalled();
+			expect(uPlotConstructor).not.toHaveBeenCalled();
 		});
 	});
 
@@ -241,7 +244,7 @@ describe('UPlotChart', () => {
 
 			render(
 				<UPlotChart
-					config={createMockConfig() as any}
+					config={createMockConfig()}
 					data={validData}
 					width={600}
 					height={400}
@@ -261,7 +264,7 @@ describe('UPlotChart', () => {
 
 			const { rerender } = render(
 				<UPlotChart
-					config={config as any}
+					config={config}
 					data={validData}
 					width={600}
 					height={400}
@@ -276,7 +279,7 @@ describe('UPlotChart', () => {
 
 			rerender(
 				<UPlotChart
-					config={config as any}
+					config={config}
 					data={emptyData}
 					width={600}
 					height={400}
@@ -298,7 +301,7 @@ describe('UPlotChart', () => {
 
 			const { rerender } = render(
 				<UPlotChart
-					config={config1 as any}
+					config={config1}
 					data={validData}
 					width={600}
 					height={400}
@@ -311,7 +314,7 @@ describe('UPlotChart', () => {
 
 			rerender(
 				<UPlotChart
-					config={config2 as any}
+					config={config2}
 					data={validData}
 					width={600}
 					height={400}
@@ -334,56 +337,41 @@ describe('UPlotChart', () => {
 			];
 
 			const { rerender } = render(
-				<UPlotChart
-					config={config as any}
-					data={validData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config} data={validData} width={600} height={400} />,
 				{ wrapper: Wrapper },
 			);
 
 			const inst = instances[0];
 
 			rerender(
-				<UPlotChart
-					config={config as any}
-					data={newData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config} data={newData} width={600} height={400} />,
 			);
 
 			expect(inst.setData).toHaveBeenCalledWith(newData);
-			expect(uPlotCtor).toHaveBeenCalledTimes(1);
+			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
 		});
 
 		it('calls setSize with floored values when only dimensions change', () => {
 			const config = createMockConfig();
 
 			const { rerender } = render(
-				<UPlotChart
-					config={config as any}
-					data={validData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config} data={validData} width={600} height={400} />,
 				{ wrapper: Wrapper },
 			);
 
-			const inst = instances[0];
+			const instance = instances[0];
 
 			rerender(
 				<UPlotChart
-					config={config as any}
+					config={config}
 					data={validData}
 					width={800.7}
 					height={500.3}
 				/>,
 			);
 
-			expect(inst.setSize).toHaveBeenCalledWith({ width: 800, height: 500 });
-			expect(uPlotCtor).toHaveBeenCalledTimes(1);
+			expect(instance.setSize).toHaveBeenCalledWith({ width: 800, height: 500 });
+			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
 		});
 
 		it('recreates the plot when config changes', () => {
@@ -391,54 +379,34 @@ describe('UPlotChart', () => {
 			const config2 = createMockConfig();
 
 			const { rerender } = render(
-				<UPlotChart
-					config={config1 as any}
-					data={validData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config1} data={validData} width={600} height={400} />,
 				{ wrapper: Wrapper },
 			);
 
 			rerender(
-				<UPlotChart
-					config={config2 as any}
-					data={validData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config2} data={validData} width={600} height={400} />,
 			);
 
-			expect(uPlotCtor).toHaveBeenCalledTimes(2);
+			expect(uPlotConstructor).toHaveBeenCalledTimes(2);
 		});
 
 		it('does nothing when all props remain the same', () => {
 			const config = createMockConfig();
 
 			const { rerender } = render(
-				<UPlotChart
-					config={config as any}
-					data={validData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config} data={validData} width={600} height={400} />,
 				{ wrapper: Wrapper },
 			);
 
-			const inst = instances[0];
+			const instance = instances[0];
 
 			rerender(
-				<UPlotChart
-					config={config as any}
-					data={validData}
-					width={600}
-					height={400}
-				/>,
+				<UPlotChart config={config} data={validData} width={600} height={400} />,
 			);
 
-			expect(uPlotCtor).toHaveBeenCalledTimes(1);
-			expect(inst.setData).not.toHaveBeenCalled();
-			expect(inst.setSize).not.toHaveBeenCalled();
+			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
+			expect(instance.setData).not.toHaveBeenCalled();
+			expect(instance.setSize).not.toHaveBeenCalled();
 		});
 	});
 });
