@@ -37,7 +37,7 @@ interface MockUPlotInstance {
 }
 
 let instances: MockUPlotInstance[] = [];
-const uPlotConstructor = jest.fn();
+const mockUPlotConstructor = jest.fn();
 
 jest.mock('uplot', () => {
 	function MockUPlot(
@@ -45,7 +45,7 @@ jest.mock('uplot', () => {
 		data: unknown,
 		target: HTMLElement,
 	): MockUPlotInstance {
-		uPlotConstructor(opts, data, target);
+		mockUPlotConstructor(opts, data, target);
 
 		const rootEl = document.createElement('div');
 		target.appendChild(rootEl);
@@ -106,7 +106,7 @@ const Wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
 describe('UPlotChart', () => {
 	beforeEach(() => {
 		instances = [];
-		uPlotConstructor.mockClear();
+		mockUPlotConstructor.mockClear();
 	});
 
 	describe('when data is empty', () => {
@@ -153,7 +153,7 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			expect(uPlotConstructor).not.toHaveBeenCalled();
+			expect(mockUPlotConstructor).not.toHaveBeenCalled();
 		});
 	});
 
@@ -187,9 +187,9 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
+			expect(mockUPlotConstructor).toHaveBeenCalledTimes(1);
 
-			const [opts, data, target] = uPlotConstructor.mock.calls[0];
+			const [opts, data, target] = mockUPlotConstructor.mock.calls[0];
 			expect(opts.width).toBe(600);
 			expect(opts.height).toBe(400);
 			expect(data).toBe(validData);
@@ -216,7 +216,7 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			const [opts] = uPlotConstructor.mock.calls[0];
+			const [opts] = mockUPlotConstructor.mock.calls[0];
 			expect(opts.width).toBe(500);
 			expect(opts.height).toBe(300);
 			expect(opts.axes).toEqual([{ scale: 'y' }]);
@@ -234,7 +234,7 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			expect(uPlotConstructor).not.toHaveBeenCalled();
+			expect(mockUPlotConstructor).not.toHaveBeenCalled();
 		});
 	});
 
@@ -348,7 +348,7 @@ describe('UPlotChart', () => {
 			);
 
 			expect(inst.setData).toHaveBeenCalledWith(newData);
-			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
+			expect(mockUPlotConstructor).toHaveBeenCalledTimes(1);
 		});
 
 		it('calls setSize with floored values when only dimensions change', () => {
@@ -371,7 +371,7 @@ describe('UPlotChart', () => {
 			);
 
 			expect(instance.setSize).toHaveBeenCalledWith({ width: 800, height: 500 });
-			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
+			expect(mockUPlotConstructor).toHaveBeenCalledTimes(1);
 		});
 
 		it('recreates the plot when config changes', () => {
@@ -387,7 +387,7 @@ describe('UPlotChart', () => {
 				<UPlotChart config={config2} data={validData} width={600} height={400} />,
 			);
 
-			expect(uPlotConstructor).toHaveBeenCalledTimes(2);
+			expect(mockUPlotConstructor).toHaveBeenCalledTimes(2);
 		});
 
 		it('does nothing when all props remain the same', () => {
@@ -404,7 +404,7 @@ describe('UPlotChart', () => {
 				<UPlotChart config={config} data={validData} width={600} height={400} />,
 			);
 
-			expect(uPlotConstructor).toHaveBeenCalledTimes(1);
+			expect(mockUPlotConstructor).toHaveBeenCalledTimes(1);
 			expect(instance.setData).not.toHaveBeenCalled();
 			expect(instance.setSize).not.toHaveBeenCalled();
 		});
