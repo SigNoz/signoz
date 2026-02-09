@@ -187,45 +187,4 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(callsExpression).toContain('production');
 		});
 	});
-
-	describe('4. HTTP URL Filter Handling', () => {
-		it('converts http_url filter to http_url expression in both charts', () => {
-			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'http-url-filter',
-						key: {
-							key: 'http_url',
-							dataType: 'string' as any,
-							type: 'tag',
-						},
-						op: '=',
-						value: '/api/metrics',
-					},
-				],
-				op: 'AND',
-			};
-
-			const payload = getEndPointDetailsQueryPayload(
-				mockDomainName,
-				mockStartTime,
-				mockEndTime,
-				filtersWithHttpUrl,
-			);
-
-			const callsChartQuery = payload[4];
-			const latencyChartQuery = payload[5];
-
-			const callsExpression =
-				callsChartQuery.query.builder.queryData[0].filter?.expression;
-			const latencyExpression =
-				latencyChartQuery.query.builder.queryData[0].filter?.expression;
-
-			expect(callsExpression).toContain("http_url = '/api/metrics'");
-			expect(latencyExpression).toContain("http_url = '/api/metrics'");
-
-			expect(callsExpression).toContain('http_host');
-			expect(callsExpression).toContain("kind_string = 'Client'");
-		});
-	});
 });

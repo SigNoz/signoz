@@ -343,7 +343,7 @@ export const formatDataForTable = (
 	});
 };
 
-const urlExpression = `http_url EXISTS`;
+const urlExpression = `${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`;
 
 export const getDomainMetricsQueryPayload = (
 	domainName: string,
@@ -560,7 +560,7 @@ const defaultGroupBy = [
 		dataType: DataTypes.String,
 		isColumn: false,
 		isJSON: false,
-		key: SPAN_ATTRIBUTES.URL_PATH,
+		key: SPAN_ATTRIBUTES.HTTP_URL,
 		type: 'attribute',
 	},
 	// {
@@ -832,8 +832,8 @@ function buildFilterExpression(
 ): string {
 	const baseFilterParts = [
 		`kind_string = 'Client'`,
-		`http_url EXISTS`,
-		`http_host = '${domainName}'`,
+		`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
+		`${SPAN_ATTRIBUTES.SERVER_NAME} = '${domainName}'`,
 		`has_error = true`,
 	];
 	if (showStatusCodeErrors) {
@@ -875,7 +875,7 @@ export const getTopErrorsQueryPayload = (
 						filter: { expression: filterExpression },
 						groupBy: [
 							{
-								name: 'http_url',
+								name: SPAN_ATTRIBUTES.HTTP_URL,
 								fieldDataType: 'string',
 								fieldContext: 'attribute',
 							},
@@ -1094,11 +1094,11 @@ export const formatEndPointsDataForTable = (
 	if (!isGroupedByAttribute) {
 		formattedData = data?.map((endpoint) => {
 			const { port } = extractPortAndEndpoint(
-				(endpoint.data[SPAN_ATTRIBUTES.URL_PATH] as string) || '',
+				(endpoint.data[SPAN_ATTRIBUTES.HTTP_URL] as string) || '',
 			);
 			return {
 				key: v4(),
-				endpointName: (endpoint.data[SPAN_ATTRIBUTES.URL_PATH] as string) || '-',
+				endpointName: (endpoint.data[SPAN_ATTRIBUTES.HTTP_URL] as string) || '-',
 				port,
 				callCount:
 					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
@@ -1222,7 +1222,7 @@ export const formatTopErrorsDataForTable = (
 
 		return {
 			key: v4(),
-			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.URL_PATH]),
+			endpointName: getDisplayValue(rowObj[SPAN_ATTRIBUTES.HTTP_URL]),
 			statusCode: getDisplayValue(rowObj[SPAN_ATTRIBUTES.RESPONSE_STATUS_CODE]),
 			statusMessage: getDisplayValue(rowObj.status_message),
 			count: getDisplayValue(rowObj.__result_0),
@@ -1239,10 +1239,10 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'ea16470b',
 			key: {
-				key: 'http_url',
+				key: SPAN_ATTRIBUTES.HTTP_URL,
 				dataType: DataTypes.String,
 				type: 'tag',
-				id: 'http_url--string--tag--false',
+				id: `${SPAN_ATTRIBUTES.HTTP_URL}--string--tag--false`,
 			},
 			op: '=',
 			value: endPointName,
@@ -1260,7 +1260,7 @@ export const getTopErrorsCoRelationQueryFilters = (
 		{
 			id: 'e8a043b7',
 			key: {
-				key: 'http_host',
+				key: SPAN_ATTRIBUTES.SERVER_NAME,
 				dataType: DataTypes.String,
 				type: '',
 			},
@@ -1751,7 +1751,7 @@ export const getEndPointDetailsQueryPayload = (
 						orderBy: [],
 						groupBy: [
 							{
-								key: SPAN_ATTRIBUTES.URL_PATH,
+								key: SPAN_ATTRIBUTES.HTTP_URL,
 								dataType: DataTypes.String,
 								type: 'attribute',
 							},
@@ -2178,7 +2178,7 @@ export const getEndPointZeroStateQueryPayload = (
 						orderBy: [],
 						groupBy: [
 							{
-								key: SPAN_ATTRIBUTES.URL_PATH,
+								key: SPAN_ATTRIBUTES.HTTP_URL,
 								dataType: DataTypes.String,
 								type: 'tag',
 							},
@@ -2372,7 +2372,7 @@ export const statusCodeWidgetInfo = [
 
 interface EndPointDropDownResponseRow {
 	data: {
-		[SPAN_ATTRIBUTES.URL_PATH]: string;
+		[SPAN_ATTRIBUTES.HTTP_URL]: string;
 		A: number;
 	};
 }
@@ -2391,8 +2391,8 @@ export const getFormattedEndPointDropDownData = (
 	}
 	return data.map((row) => ({
 		key: v4(),
-		label: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
-		value: row.data[SPAN_ATTRIBUTES.URL_PATH] || '-',
+		label: row.data[SPAN_ATTRIBUTES.HTTP_URL] || '-',
+		value: row.data[SPAN_ATTRIBUTES.HTTP_URL] || '-',
 	}));
 };
 
@@ -2998,7 +2998,7 @@ export const getAllEndpointsWidgetData = (
 	);
 
 	widget.renderColumnCell = {
-		[SPAN_ATTRIBUTES.URL_PATH]: (
+		[SPAN_ATTRIBUTES.HTTP_URL]: (
 			url: string | number,
 			record?: RowData,
 		): ReactNode => {
@@ -3070,8 +3070,8 @@ export const getAllEndpointsWidgetData = (
 	};
 
 	widget.customColTitles = {
-		[SPAN_ATTRIBUTES.URL_PATH]: 'Endpoint',
-		http_port: 'Port',
+		[SPAN_ATTRIBUTES.HTTP_URL]: 'Endpoint',
+		[SPAN_ATTRIBUTES.SERVER_PORT]: 'Port',
 	};
 
 	widget.title = (
@@ -3099,7 +3099,7 @@ export const getAllEndpointsWidgetData = (
 	return widget;
 };
 
-const keysToRemove = ['http_url', 'A', 'B', 'C', 'F1'];
+const keysToRemove = [SPAN_ATTRIBUTES.HTTP_URL, 'A', 'B', 'C', 'F1'];
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,

@@ -18,6 +18,8 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
+
 describe('AllEndpointsWidget - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
 	const emptyFilters: IBuilderQuery['filters'] = {
@@ -96,24 +98,24 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			// Queries A, B, C have identical base filter
 			expect(queryA.filter?.expression).toBe(
-				`${baseExpression} AND http_url EXISTS`,
+				`${baseExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 			expect(queryB.filter?.expression).toBe(
-				`${baseExpression} AND http_url EXISTS`,
+				`${baseExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 			expect(queryC.filter?.expression).toBe(
-				`${baseExpression} AND http_url EXISTS`,
+				`${baseExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 
 			// Query D has additional has_error filter
 			expect(queryD.filter?.expression).toBe(
-				`${baseExpression} AND has_error = true AND http_url EXISTS`,
+				`${baseExpression} AND has_error = true AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 		});
 	});
 
 	describe('2. GroupBy Structure', () => {
-		it('default groupBy includes both http_url and http_host with type attribute', () => {
+		it(`default groupBy includes ${SPAN_ATTRIBUTES.HTTP_URL} with type attribute`, () => {
 			const widget = getAllEndpointsWidgetData(
 				emptyGroupBy,
 				mockDomainName,
@@ -130,7 +132,7 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 					dataType: DataTypes.String,
 					isColumn: false,
 					isJSON: false,
-					key: 'http_url',
+					key: SPAN_ATTRIBUTES.HTTP_URL,
 					type: 'attribute',
 				});
 			});
@@ -163,7 +165,7 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 				expect(query.groupBy).toHaveLength(3); // 1 default + 2 custom
 
 				// First two should be defaults (http_url)
-				expect(query.groupBy[0].key).toBe('http_url');
+				expect(query.groupBy[0].key).toBe(SPAN_ATTRIBUTES.HTTP_URL);
 
 				// Last two should be custom (matching subset of properties)
 				expect(query.groupBy[1]).toMatchObject({
