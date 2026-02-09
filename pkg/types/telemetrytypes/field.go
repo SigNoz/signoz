@@ -266,3 +266,110 @@ type FieldValueSelector struct {
 	Value         string `json:"value"`
 	Limit         int    `json:"limit"`
 }
+
+type GettableFieldKeys struct {
+	Keys     map[string][]*TelemetryFieldKey `json:"keys"`
+	Complete bool                            `json:"complete"`
+}
+
+type PostableFieldKeysParams struct {
+	Signal         Signal        `query:"signal"`
+	Source         Source        `query:"source"`
+	Limit          int           `query:"limit"`
+	StartUnixMilli int64         `query:"startUnixMilli"`
+	EndUnixMilli   int64         `query:"endUnixMilli"`
+	FieldContext   FieldContext  `query:"fieldContext"`
+	FieldDataType  FieldDataType `query:"fieldDataType"`
+	MetricName     string        `query:"metricName"`
+	SearchText     string        `query:"searchText"`
+}
+
+type GettableFieldValues struct {
+	Values   *TelemetryFieldValues `json:"values"`
+	Complete bool                  `json:"complete"`
+}
+
+type PostableFieldValueParams struct {
+	PostableFieldKeysParams
+	Name          string `query:"name"`
+	ExistingQuery string `query:"existingQuery"`
+}
+
+func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {
+	var req FieldKeySelector
+
+	if params.StartUnixMilli != 0 {
+		req.StartUnixMilli = params.StartUnixMilli
+		// Round down to the nearest 6 hours (21600000 milliseconds)
+		req.StartUnixMilli -= req.StartUnixMilli % 21600000
+	}
+
+	if params.EndUnixMilli != 0 {
+		req.EndUnixMilli = params.EndUnixMilli
+	}
+
+	req.Signal = params.Signal
+	req.Source = params.Source
+	req.FieldContext = params.FieldContext
+	req.FieldDataType = params.FieldDataType
+	req.SelectorMatchType = FieldSelectorMatchTypeFuzzy
+
+	if params.Limit != 0 {
+		req.Limit = params.Limit
+	} else {
+		req.Limit = 1000
+	}
+
+	if params.MetricName != "" {
+		req.MetricContext = &MetricContext{
+			MetricName: params.MetricName,
+		}
+	}
+
+	req.Name = params.SearchText
+	if params.SearchText != "" && params.FieldContext == FieldContextUnspecified {
+		parsedFieldKey := GetFieldKeyFromKeyText(params.SearchText)
+		if parsedFieldKey.FieldContext != FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, req.Signal) {
+				req.Name = parsedFieldKey.Name
+				req.FieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
+
+	return &req
+}
+
+func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *FieldValueSelector {
+
+	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
+
+	fieldValueSelector := &FieldValueSelector{
+		FieldKeySelector: keySelector,
+	}
+
+	fieldValueSelector.Name = params.Name
+
+	if params.Name != "" && fieldValueSelector.FieldContext == FieldContextUnspecified {
+		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
+		if parsedFieldKey.FieldContext != FieldContextUnspecified {
+			// Only apply inferred context if it is valid for the current signal
+			if isContextValidForSignal(parsedFieldKey.FieldContext, fieldValueSelector.Signal) {
+				fieldValueSelector.Name = parsedFieldKey.Name
+				fieldValueSelector.FieldContext = parsedFieldKey.FieldContext
+			}
+		}
+	}
+
+	fieldValueSelector.ExistingQuery = params.ExistingQuery
+	fieldValueSelector.Value = params.SearchText
+
+	if params.Limit != 0 {
+		fieldValueSelector.Limit = params.Limit
+	} else {
+		fieldValueSelector.Limit = 50
+	}
+
+	return fieldValueSelector
+}
