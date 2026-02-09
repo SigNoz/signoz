@@ -33,7 +33,7 @@ import { SPAN_ATTRIBUTES } from './constants';
 
 const httpUrlKey = {
 	dataType: DataTypes.String,
-	key: SPAN_ATTRIBUTES.URL_PATH,
+	key: SPAN_ATTRIBUTES.HTTP_URL,
 	type: 'tag',
 };
 

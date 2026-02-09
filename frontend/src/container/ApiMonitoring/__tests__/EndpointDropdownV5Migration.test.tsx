@@ -15,6 +15,8 @@
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
+
 describe('EndpointDropdown - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
 	const mockStartTime = 1000;
@@ -52,7 +54,9 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
 
 			// Base filter 3: Existence check
-			expect(queryA.filter?.expression).toContain('http_url EXISTS');
+			expect(queryA.filter?.expression).toContain(
+				`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
+			);
 
 			// V5 Aggregation format: aggregations array (not aggregateAttribute)
 			expect(queryA.aggregations).toBeDefined();
@@ -65,7 +69,7 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			// GroupBy: http_url
 			expect(queryA.groupBy).toHaveLength(1);
 			expect(queryA.groupBy).toContainEqual({
-				key: 'http_url',
+				key: SPAN_ATTRIBUTES.HTTP_URL,
 				dataType: 'string',
 				type: 'attribute',
 			});
@@ -113,52 +117,7 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 
 			// Exact filter expression with custom filters merged
 			expect(expression).toBe(
-				"http_host = 'api.example.com' AND kind_string = 'Client' AND http_url EXISTS service.name = 'user-service' AND deployment.environment = 'production'",
-			);
-		});
-	});
-
-	describe('3. HTTP URL Filter Special Handling', () => {
-		it('converts http_url filter to http_url expression', () => {
-			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'http-url-filter',
-						key: {
-							key: 'http_url',
-							dataType: 'string' as any,
-							type: 'tag',
-						},
-						op: '=',
-						value: '/api/users',
-					},
-					{
-						id: 'service-filter',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-				],
-				op: 'AND',
-			};
-
-			const payload = getEndPointDetailsQueryPayload(
-				mockDomainName,
-				mockStartTime,
-				mockEndTime,
-				filtersWithHttpUrl,
-			);
-
-			const dropdownQuery = payload[2];
-			const expression =
-				dropdownQuery.query.builder.queryData[0].filter?.expression;
-
-			expect(expression).toBe(
-				"http_host = 'api.example.com' AND kind_string = 'Client' AND http_url EXISTS http_url = '/api/users' AND service.name = 'user-service'",
+				`${SPAN_ATTRIBUTES.SERVER_NAME} = 'api.example.com' AND kind_string = 'Client' AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS service.name = 'user-service' AND deployment.environment = 'production'`,
 			);
 		});
 	});

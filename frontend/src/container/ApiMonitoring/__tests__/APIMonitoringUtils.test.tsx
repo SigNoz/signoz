@@ -280,7 +280,7 @@ describe('API Monitoring Utils', () => {
 			const endpointFilter = result?.items?.find(
 				(item) =>
 					item.key &&
-					item.key.key === SPAN_ATTRIBUTES.URL_PATH &&
+					item.key.key === SPAN_ATTRIBUTES.HTTP_URL &&
 					item.value === endPointName,
 			);
 			expect(endpointFilter).toBeDefined();
@@ -344,7 +344,7 @@ describe('API Monitoring Utils', () => {
 	describe('getFormattedEndPointDropDownData', () => {
 		it('should format endpoint dropdown data correctly', () => {
 			// Arrange
-			const URL_PATH_KEY = SPAN_ATTRIBUTES.URL_PATH;
+			const URL_PATH_KEY = SPAN_ATTRIBUTES.HTTP_URL;
 			const mockData = [
 				{
 					data: {
@@ -406,7 +406,7 @@ describe('API Monitoring Utils', () => {
 
 		it('should handle items without URL path', () => {
 			// Arrange
-			const URL_PATH_KEY = SPAN_ATTRIBUTES.URL_PATH;
+			const URL_PATH_KEY = SPAN_ATTRIBUTES.HTTP_URL;
 			type MockDataType = {
 				data: {
 					[key: string]: string | number;
