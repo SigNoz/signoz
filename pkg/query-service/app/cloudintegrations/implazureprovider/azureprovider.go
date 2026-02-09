@@ -296,6 +296,8 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 
 	details.Config = config
 
+	// TODO: write logic for getting connection status
+
 	return details, nil
 }
 
@@ -365,15 +367,15 @@ func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *int
 		return nil, err
 	}
 
-	//agentVersion := "v0.0.1"
-	//
-	//if req.AgentConfig.Version != "" {
-	//	agentVersion = req.AgentConfig.Version
-	//}
+	agentVersion := "v0.0.1"
 
-	// TODO: improve cli command generation
+	if connection.AgentConfig.Version != "" {
+		agentVersion = connection.AgentConfig.Version
+	}
+
+	// TODO: improve the command and set url
 	cliCommand := []string{"az", "stack", "sub", "create", "--name", "SigNozIntegration", "--location",
-		connection.AccountConfig.DeploymentRegion, "--template-uri", "https://raw.githubusercontent.com/swagftw/signoz-pocs/refs/heads/main/template.json",
+		connection.AccountConfig.DeploymentRegion, "--template-uri", fmt.Sprintf("<url>%s", agentVersion),
 		"--action-on-unmanage", "deleteAll", "--deny-settings-mode", "denyDelete", "--parameters", fmt.Sprintf("rgName=%s", "signoz-integration-rg"),
 		fmt.Sprintf("rgLocation=%s", connection.AccountConfig.DeploymentRegion)}
 
