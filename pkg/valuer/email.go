@@ -107,3 +107,13 @@ func (enum *Email) UnmarshalText(text []byte) error {
 func (enum Email) MarshalText() (text []byte, err error) {
 	return []byte(enum.StringValue()), nil
 }
+
+func (enum *Email) UnmarshalParam(param string) error {
+	email, err := NewEmail(param)
+	if err != nil {
+		return err
+	}
+
+	*enum = email
+	return nil
+}

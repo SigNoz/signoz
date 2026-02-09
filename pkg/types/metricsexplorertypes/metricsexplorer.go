@@ -31,6 +31,13 @@ var (
 	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
 )
 
+func (TreemapMode) Enum() []any {
+	return []any{
+		TreemapModeTimeSeries,
+		TreemapModeSamples,
+	}
+}
+
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
 	Filter  *qbtypes.Filter  `json:"filter,omitempty"`
@@ -98,7 +105,7 @@ func (req *StatsRequest) UnmarshalJSON(data []byte) error {
 type Stat struct {
 	MetricName  string           `json:"metricName" required:"true"`
 	Description string           `json:"description" required:"true"`
-	MetricType  metrictypes.Type `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
+	MetricType  metrictypes.Type `json:"type" required:"true"`
 	MetricUnit  string           `json:"unit" required:"true"`
 	TimeSeries  uint64           `json:"timeseries" required:"true"`
 	Samples     uint64           `json:"samples" required:"true"`
@@ -112,9 +119,9 @@ type StatsResponse struct {
 
 type MetricMetadata struct {
 	Description string                  `json:"description" required:"true"`
-	MetricType  metrictypes.Type        `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
+	MetricType  metrictypes.Type        `json:"type" required:"true"`
 	MetricUnit  string                  `json:"unit" required:"true"`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"delta,cumulative,unspecified"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
@@ -131,10 +138,10 @@ func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 // UpdateMetricMetadataRequest represents the payload for updating metric metadata.
 type UpdateMetricMetadataRequest struct {
 	MetricName  string                  `json:"metricName" required:"true"`
-	Type        metrictypes.Type        `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
+	Type        metrictypes.Type        `json:"type" required:"true"`
 	Description string                  `json:"description" required:"true"`
 	Unit        string                  `json:"unit" required:"true"`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"delta,cumulative,unspecified"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
@@ -144,7 +151,7 @@ type TreemapRequest struct {
 	Start  int64           `json:"start" required:"true"`
 	End    int64           `json:"end" required:"true"`
 	Limit  int             `json:"limit" required:"true"`
-	Mode   TreemapMode     `json:"mode" required:"true" enum:"timeseries,samples"`
+	Mode   TreemapMode     `json:"mode" required:"true"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
