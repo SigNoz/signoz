@@ -13,7 +13,7 @@ import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useNotifications } from 'hooks/useNotifications';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
