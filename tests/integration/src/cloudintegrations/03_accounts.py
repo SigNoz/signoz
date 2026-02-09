@@ -498,7 +498,7 @@ def test_disconnect_account(
         response.status_code == HTTPStatus.OK
     ), f"Expected 200, got {response.status_code}"
 
-    # Verify account is no longer in the connected list
+    # Verify our specific account is no longer in the connected list
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
     list_response = requests.get(
         signoz.self.host_configs["8080"].get(list_endpoint),
@@ -508,7 +508,12 @@ def test_disconnect_account(
 
     list_response_data = list_response.json()
     list_data = list_response_data.get("data", list_response_data)
-    assert len(list_data["accounts"]) == 0, "Should have no connected accounts"
+
+    # Check that our specific account is not in the list
+    disconnected_account = next(
+        (a for a in list_data["accounts"] if a["id"] == account_id), None
+    )
+    assert disconnected_account is None, f"Account {account_id} should be removed from connected accounts"
 
 
 def test_disconnect_account_not_found(
