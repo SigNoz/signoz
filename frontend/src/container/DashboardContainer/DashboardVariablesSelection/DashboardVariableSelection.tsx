@@ -13,7 +13,6 @@ import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import DynamicVariableSelection from './DynamicVariableSelection';
 import { onUpdateVariableNode } from './util';
 import VariableItem from './VariableItem';
 
@@ -153,14 +152,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 			{sortedVariablesArray.map((variable) => {
 				const key = `${variable.name}${variable.id}${variable.order}`;
 
-				return variable.type === 'DYNAMIC' ? (
-					<DynamicVariableSelection
-						key={key}
-						existingVariables={dashboardVariables}
-						variableData={variable}
-						onValueUpdate={onValueUpdate}
-					/>
-				) : (
+				return (
 					<VariableItem
 						key={key}
 						existingVariables={dashboardVariables}
