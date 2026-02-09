@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -44,6 +45,7 @@ type provider struct {
 	gatewayHandler         gateway.Handler
 	roleGetter             role.Getter
 	roleHandler            role.Handler
+	fieldsHandler          fields.Handler
 }
 
 func NewFactory(
@@ -63,9 +65,31 @@ func NewFactory(
 	gatewayHandler gateway.Handler,
 	roleGetter role.Getter,
 	roleHandler role.Handler,
+	fieldsHandler fields.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler, gatewayHandler, roleGetter, roleHandler)
+		return newProvider(
+			ctx,
+			providerSettings,
+			config,
+			orgGetter,
+			authz,
+			orgHandler,
+			userHandler,
+			sessionHandler,
+			authDomainHandler,
+			preferenceHandler,
+			globalHandler,
+			promoteHandler,
+			flaggerHandler,
+			dashboardModule,
+			dashboardHandler,
+			metricsExplorerHandler,
+			gatewayHandler,
+			roleGetter,
+			roleHandler,
+			fieldsHandler,
+		)
 	})
 }
 
@@ -89,6 +113,7 @@ func newProvider(
 	gatewayHandler gateway.Handler,
 	roleGetter role.Getter,
 	roleHandler role.Handler,
+	fieldsHandler fields.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -111,6 +136,7 @@ func newProvider(
 		gatewayHandler:         gatewayHandler,
 		roleGetter:             roleGetter,
 		roleHandler:            roleHandler,
+		fieldsHandler:          fieldsHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz, roleGetter)
@@ -172,6 +198,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRoleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFieldsRoutes(router); err != nil {
 		return err
 	}
 
