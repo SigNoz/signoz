@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@signozhq/button';
 import { ArrowLeft, ArrowRight } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { Form, Select, Typography } from 'antd';
+import { Form, Select } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useForgotPassword } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
@@ -131,12 +131,10 @@ function ForgotPassword({
 					<div className="login-form-emoji">
 						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
 					</div>
-					<Typography.Title level={4} className="login-form-title">
-						Forgot your password?
-					</Typography.Title>
-					<Typography.Paragraph className="login-form-description">
+					<h4 className="forgot-password-title">Forgot your password?</h4>
+					<p className="forgot-password-description">
 						Send a reset link to your inbox and get back to monitoring.
-					</Typography.Paragraph>
+					</p>
 				</div>
 
 				<div className="login-form-card">

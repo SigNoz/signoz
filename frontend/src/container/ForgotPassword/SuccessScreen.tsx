@@ -1,6 +1,5 @@
 import { Button } from '@signozhq/button';
 import { ArrowLeft, Mail } from '@signozhq/icons';
-import { Typography } from 'antd';
 
 interface SuccessScreenProps {
 	onBackToLogin: () => void;
@@ -14,13 +13,11 @@ function SuccessScreen({ onBackToLogin }: SuccessScreenProps): JSX.Element {
 					<div className="login-form-emoji">
 						<Mail size={32} />
 					</div>
-					<Typography.Title level={4} className="login-form-title">
-						Check your email
-					</Typography.Title>
-					<Typography.Paragraph className="login-form-description">
+					<h4 className="forgot-password-title">Check your email</h4>
+					<p className="forgot-password-description">
 						We&apos;ve sent a password reset link to your email. Please check your
 						inbox and follow the instructions to reset your password.
-					</Typography.Paragraph>
+					</p>
 				</div>
 
 				<div className="login-form-actions forgot-password-actions">
