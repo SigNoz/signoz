@@ -309,7 +309,7 @@ func (m *defaultFieldMapper) FieldFor(
 		return fmt.Sprintf("arrayStringConcat(%s, ' ')", column.Name), nil
 	}
 	// should not reach here
-	return column.Name, qbtypes.ErrColumnNotFound
+	return column.Name, errors.NewInvalidInputf(errors.CodeInternal, "unable to identify field for %s", key)
 }
 
 // ColumnExpressionFor returns the column expression for the given field

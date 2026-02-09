@@ -111,6 +111,13 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
 		},
+		"events": {
+			{
+				Name:          "events",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeArrayString,
+			},
+		},
 	}
 	for _, keys := range keysMap {
 		for _, key := range keys {

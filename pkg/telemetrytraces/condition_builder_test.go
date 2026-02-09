@@ -245,6 +245,19 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "Contains operator - array field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "events",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeArrayString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         "admin",
+			expectedSQL:   "WHERE (LOWER(arrayStringConcat(events, ' ')) LIKE LOWER(?) AND notEmpty(events))",
+			expectedArgs:  []any{"%admin%", true},
+			expectedError: nil,
+		},
+		{
 			name: "In operator - map field",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "user.id",

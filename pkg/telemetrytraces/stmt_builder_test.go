@@ -622,6 +622,45 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name:        "List query with span events",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter: &qbtypes.Filter{
+					Expression: "events contains 'redis-manual'",
+				},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{
+						Name:          "name",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "serviceName",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:          "durationNano",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeNumber,
+					},
+					{
+						Name:          "httpMethod",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT name AS `name`, resource_string_service$$name AS `serviceName`, duration_nano AS `durationNano`, http_method AS `httpMethod`, timestamp AS `timestamp`, span_id AS `span_id`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (LOWER(arrayStringConcat(events, ' ')) LIKE LOWER(?) AND notEmpty(events)) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "%redis-manual%", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "List query with legacy fields with field that doesn't exist",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
