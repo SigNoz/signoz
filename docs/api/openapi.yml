@@ -3928,19 +3928,9 @@ components:
         isMonotonic:
           type: boolean
         temporality:
-          enum:
-          - delta
-          - cumulative
-          - unspecified
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         type:
-          enum:
-          - gauge
-          - sum
-          - histogram
-          - summary
-          - exponentialhistogram
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
       required:
@@ -3963,13 +3953,7 @@ components:
           minimum: 0
           type: integer
         type:
-          enum:
-          - gauge
-          - sum
-          - histogram
-          - summary
-          - exponentialhistogram
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
       required:
@@ -4030,6 +4014,11 @@ components:
       - percentage
       - totalValue
       type: object
+    MetricsexplorertypesTreemapMode:
+      enum:
+      - timeseries
+      - samples
+      type: string
     MetricsexplorertypesTreemapRequest:
       properties:
         end:
@@ -4040,10 +4029,7 @@ components:
         limit:
           type: integer
         mode:
-          enum:
-          - timeseries
-          - samples
-          type: string
+          $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
         start:
           format: int64
           type: integer
@@ -4078,19 +4064,9 @@ components:
         metricName:
           type: string
         temporality:
-          enum:
-          - delta
-          - cumulative
-          - unspecified
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         type:
-          enum:
-          - gauge
-          - sum
-          - histogram
-          - summary
-          - exponentialhistogram
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
       required:
@@ -4101,6 +4077,20 @@ components:
       - temporality
       - isMonotonic
       type: object
+    MetrictypesTemporality:
+      enum:
+      - delta
+      - cumulative
+      - unspecified
+      type: string
+    MetrictypesType:
+      enum:
+      - gauge
+      - sum
+      - histogram
+      - summary
+      - exponentialhistogram
+      type: string
     PreferencetypesPreference:
       properties:
         allowedScopes:

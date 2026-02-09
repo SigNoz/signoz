@@ -36,7 +36,7 @@ func (t Temporality) Value() (driver.Value, error) {
 	}
 }
 
-func (t *Temporality) Scan(src interface{}) error {
+func (t *Temporality) Scan(src any) error {
 	if src == nil {
 		*t = Unknown
 		return nil
@@ -64,6 +64,14 @@ func (t *Temporality) Scan(src interface{}) error {
 	}
 
 	return nil
+}
+
+func (Temporality) Enum() []any {
+	return []any{
+		Delta,
+		Cumulative,
+		Unspecified,
+	}
 }
 
 // Type is the type of the metric in OTLP data model
@@ -134,6 +142,16 @@ var (
 	UnspecifiedType  = Type{valuer.NewString("")}
 )
 
+func (Type) Enum() []any {
+	return []any{
+		GaugeType,
+		SumType,
+		HistogramType,
+		SummaryType,
+		ExpHistogramType,
+	}
+}
+
 type TimeAggregation struct {
 	valuer.String
 }
@@ -150,6 +168,21 @@ var (
 	TimeAggregationRate          = TimeAggregation{valuer.NewString("rate")}
 	TimeAggregationIncrease      = TimeAggregation{valuer.NewString("increase")}
 )
+
+func (TimeAggregation) Enum() []any {
+	return []any{
+		TimeAggregationUnspecified,
+		TimeAggregationLatest,
+		TimeAggregationSum,
+		TimeAggregationAvg,
+		TimeAggregationMin,
+		TimeAggregationMax,
+		TimeAggregationCount,
+		TimeAggregationCountDistinct,
+		TimeAggregationRate,
+		TimeAggregationIncrease,
+	}
+}
 
 type SpaceAggregation struct {
 	valuer.String
@@ -168,6 +201,22 @@ var (
 	SpaceAggregationPercentile95 = SpaceAggregation{valuer.NewString("p95")}
 	SpaceAggregationPercentile99 = SpaceAggregation{valuer.NewString("p99")}
 )
+
+func (SpaceAggregation) Enum() []any {
+	return []any{
+		SpaceAggregationUnspecified,
+		SpaceAggregationSum,
+		SpaceAggregationAvg,
+		SpaceAggregationMin,
+		SpaceAggregationMax,
+		SpaceAggregationCount,
+		SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99,
+	}
+}
 
 func (s SpaceAggregation) IsPercentile() bool {
 	return s == SpaceAggregationPercentile50 ||
