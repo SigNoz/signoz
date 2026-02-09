@@ -1,4 +1,4 @@
-package openfgaauthz
+package openfgaserver
 
 import (
 	"context"
@@ -20,7 +20,7 @@ func TestProviderStartStop(t *testing.T) {
 
 	expectedModel := `module base 
 	type user`
-	provider, err := newOpenfgaProvider(context.Background(), providerSettings, authz.Config{}, sqlstore, []transformer.ModuleFile{{Name: "test.fga", Contents: expectedModel}})
+	provider, err := NewOpenfgaServer(context.Background(), providerSettings, authz.Config{}, sqlstore, []transformer.ModuleFile{{Name: "test.fga", Contents: expectedModel}})
 	require.NoError(t, err)
 
 	storeRows := sqlstore.Mock().NewRows([]string{"id", "name", "created_at", "updated_at"}).AddRow("01K3V0NTN47MPTMEV1PD5ST6ZC", "signoz", time.Now(), time.Now())
