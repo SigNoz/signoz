@@ -16,6 +16,9 @@ export interface RawLogViewProps {
 	selectedFields?: IField[];
 	onLogClick?: (log: ILog, event: MouseEvent) => void;
 	handleChangeSelectedView?: ChangeViewFunctionType;
+	onSetActiveLog?: (log: ILog) => void;
+	onClearActiveLog?: () => void;
+	managedExternally?: boolean;
 }
 
 export interface RawLogContentProps {

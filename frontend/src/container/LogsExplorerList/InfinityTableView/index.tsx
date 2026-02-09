@@ -58,7 +58,16 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{ isLoading, tableViewProps, infitiyTableProps, handleChangeSelectedView },
+		{
+			isLoading,
+			tableViewProps,
+			infitiyTableProps,
+			handleChangeSelectedView,
+			logs,
+			onSetActiveLog: onSetActiveLogProp,
+			onClearActiveLog: onClearActiveLogProp,
+			activeLog: activeLogProp,
+		},
 		ref,
 	): JSX.Element | null {
 		const {
@@ -69,10 +78,29 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		} = useActiveLog();
 		const {
 			activeLog,
-			onSetActiveLog,
-			onClearActiveLog,
+			onSetActiveLog: onSetActiveLogHook,
+			onClearActiveLog: onClearActiveLogHook,
 			onAddToQuery,
 		} = useActiveLog();
+
+		const hasExternalActiveLog =
+			onSetActiveLogProp !== undefined ||
+			onClearActiveLogProp !== undefined ||
+			activeLogProp !== undefined;
+		const activeOverviewLog = activeLogProp ?? activeLog;
+
+		const onSetActiveLog = useCallback(
+			(log: ILog) => {
+				onSetActiveLogProp?.(log);
+				onSetActiveLogHook(log);
+			},
+			[onSetActiveLogProp, onSetActiveLogHook],
+		);
+
+		const onClearActiveLog = useCallback(() => {
+			onClearActiveLogProp?.();
+			onClearActiveLogHook();
+		}, [onClearActiveLogProp, onClearActiveLogHook]);
 
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
@@ -108,6 +136,8 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					hasActions
 					fontSize={tableViewProps.fontSize}
 					onShowLogDetails={onSetActiveLog}
+					isActiveLog={activeOverviewLog?.id === log.id}
+					onClearActiveLog={onClearActiveLog}
 				/>
 			),
 			[
@@ -116,9 +146,10 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				tableViewProps.fontSize,
 				tableViewProps.logs,
 				onSetActiveLog,
+				activeOverviewLog?.id,
+				onClearActiveLog,
 			],
 		);
-
 		const tableHeader = useCallback(
 			() => (
 				<tr>
@@ -167,7 +198,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 								...props,
 								context: {
 									activeContextLogId: activeContextLog?.id,
-									activeLogId: activeLog?.id,
+									activeLogId: activeOverviewLog?.id,
 								},
 							} as any),
 					}}
@@ -189,14 +220,18 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
-				<LogDetail
-					selectedTab={VIEW_TYPES.OVERVIEW}
-					log={activeLog}
-					onClose={onClearActiveLog}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
+				{!hasExternalActiveLog && (
+					<LogDetail
+						selectedTab={VIEW_TYPES.OVERVIEW}
+						log={activeLog}
+						onClose={onClearActiveLog}
+						onAddToQuery={onAddToQuery}
+						onClickActionItem={onAddToQuery}
+						handleChangeSelectedView={handleChangeSelectedView}
+						logs={logs}
+						onNavigateLog={onSetActiveLog}
+					/>
+				)}
 			</>
 		);
 	},

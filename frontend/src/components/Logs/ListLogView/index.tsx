@@ -110,6 +110,9 @@ type ListLogViewProps = {
 	linesPerRow: number;
 	fontSize: FontSize;
 	handleChangeSelectedView?: ChangeViewFunctionType;
+	isActiveLog?: boolean;
+	onClearActiveLog?: () => void;
+	logs?: ILog[];
 };
 
 function ListLogView({
@@ -121,6 +124,9 @@ function ListLogView({
 	linesPerRow,
 	fontSize,
 	handleChangeSelectedView,
+	isActiveLog: isActiveLogProp,
+	onClearActiveLog: onClearActiveLogProp,
+	logs,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -134,6 +140,7 @@ function ListLogView({
 		onAddToQuery: handleAddToQuery,
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
+		onClearActiveLog: onClearActiveLogHook,
 	} = useActiveLog();
 
 	const isDarkMode = useIsDarkMode();
@@ -148,8 +155,20 @@ function ListLogView({
 	);
 
 	const handleDetailedView = useCallback(() => {
+		if (isActiveLogProp) {
+			const clearActiveFn = onClearActiveLogProp || onClearActiveLogHook;
+			clearActiveFn();
+			return;
+		}
+
 		onSetActiveLog(logData);
-	}, [logData, onSetActiveLog]);
+	}, [
+		logData,
+		onSetActiveLog,
+		isActiveLogProp,
+		onClearActiveLogProp,
+		onClearActiveLogHook,
+	]);
 
 	const handleShowContext = useCallback(
 		(event: React.MouseEvent) => {
@@ -258,6 +277,8 @@ function ListLogView({
 					selectedTab={VIEW_TYPES.CONTEXT}
 					onClose={handlerClearActiveContextLog}
 					handleChangeSelectedView={handleChangeSelectedView}
+					logs={logs}
+					onNavigateLog={onSetActiveLog}
 				/>
 			)}
 		</>

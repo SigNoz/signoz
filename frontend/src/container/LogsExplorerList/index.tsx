@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -60,6 +60,10 @@ function LogsExplorerList({
 		onSetActiveLog,
 	} = useActiveLog();
 
+	const [selectedTab, setSelectedTab] = useState<
+		typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined
+	>();
+
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
@@ -82,6 +86,20 @@ function LogsExplorerList({
 		() => convertKeysToColumnFields(options.selectColumns),
 		[options],
 	);
+
+	const handleSetActiveLogWithTab = useCallback(
+		(log: ILog) => {
+			onSetActiveLog(log);
+			setSelectedTab(VIEW_TYPES.OVERVIEW);
+		},
+		[onSetActiveLog],
+	);
+
+	const handleCloseLogDetail = useCallback(() => {
+		onClearActiveLog();
+		setSelectedTab(undefined);
+	}, [onClearActiveLog]);
+
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && logs.length !== 0) {
 			logEvent('Logs Explorer: Data present', {
@@ -97,10 +115,14 @@ function LogsExplorerList({
 					<RawLogView
 						key={log.id}
 						data={log}
+						isActiveLog={activeLog?.id === log.id}
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
 						handleChangeSelectedView={handleChangeSelectedView}
+						onSetActiveLog={handleSetActiveLogWithTab}
+						onClearActiveLog={handleCloseLogDetail}
+						managedExternally
 					/>
 				);
 			}
@@ -109,21 +131,26 @@ function LogsExplorerList({
 				<ListLogView
 					key={log.id}
 					logData={log}
+					isActiveLog={activeLog?.id === log.id}
 					selectedFields={selectedFields}
 					onAddToQuery={onAddToQuery}
-					onSetActiveLog={onSetActiveLog}
+					onSetActiveLog={handleSetActiveLogWithTab}
 					activeLog={activeLog}
 					fontSize={options.fontSize}
 					linesPerRow={options.maxLines}
 					handleChangeSelectedView={handleChangeSelectedView}
+					onClearActiveLog={handleCloseLogDetail}
+					logs={logs}
 				/>
 			);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			activeLog,
 			handleChangeSelectedView,
 			onAddToQuery,
 			onSetActiveLog,
+			handleSetActiveLogWithTab,
 			options.fontSize,
 			options.format,
 			options.maxLines,
@@ -153,6 +180,10 @@ function LogsExplorerList({
 					}}
 					infitiyTableProps={{ onEndReached }}
 					handleChangeSelectedView={handleChangeSelectedView}
+					logs={logs}
+					onSetActiveLog={handleSetActiveLogWithTab}
+					onClearActiveLog={handleCloseLogDetail}
+					activeLog={activeLog}
 				/>
 			);
 		}
@@ -199,6 +230,9 @@ function LogsExplorerList({
 		getItemContent,
 		selectedFields,
 		handleChangeSelectedView,
+		handleSetActiveLogWithTab,
+		handleCloseLogDetail,
+		activeLog,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {
@@ -278,14 +312,18 @@ function LogsExplorerList({
 						{renderContent}
 					</InfinityWrapperStyled>
 
-					<LogDetail
-						selectedTab={VIEW_TYPES.OVERVIEW}
-						log={activeLog}
-						onClose={onClearActiveLog}
-						onAddToQuery={onAddToQuery}
-						onClickActionItem={onAddToQuery}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
+					{selectedTab && activeLog && (
+						<LogDetail
+							selectedTab={selectedTab}
+							log={activeLog}
+							onClose={handleCloseLogDetail}
+							onAddToQuery={onAddToQuery}
+							onClickActionItem={onAddToQuery}
+							handleChangeSelectedView={handleChangeSelectedView}
+							logs={logs}
+							onNavigateLog={handleSetActiveLogWithTab}
+						/>
+					)}
 				</>
 			)}
 		</div>

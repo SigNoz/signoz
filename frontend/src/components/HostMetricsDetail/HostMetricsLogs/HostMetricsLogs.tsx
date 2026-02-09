@@ -1,8 +1,10 @@
 /* eslint-disable no-nested-ternary */
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso } from 'react-virtuoso';
 import { Card } from 'antd';
+import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -10,6 +12,7 @@ import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { ILog } from 'types/api/logs/log';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -28,6 +31,16 @@ interface Props {
 }
 
 function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
+	const [selectedTab, setSelectedTab] = useState<
+		typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined
+	>();
+
 	const basePayload = getHostLogsQueryPayload(
 		timeRange.startTime,
 		timeRange.endTime,
@@ -72,6 +85,25 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		setIsPaginating(false);
 	}, [data, setIsPaginating]);
 
+	const handleSetActiveLogWithTab = useCallback(
+		(log: ILog): void => {
+			// If clicking the same log that's already active, close it
+			if (activeLog?.id === log.id) {
+				onClearActiveLog();
+				setSelectedTab(undefined);
+				return;
+			}
+			onSetActiveLog(log);
+			setSelectedTab(VIEW_TYPES.OVERVIEW);
+		},
+		[onSetActiveLog, activeLog, onClearActiveLog],
+	);
+
+	const handleCloseLogDetail = useCallback((): void => {
+		onClearActiveLog();
+		setSelectedTab(undefined);
+	}, [onClearActiveLog]);
+
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => (
 			<RawLogView
@@ -92,9 +124,13 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 						name: 'timestamp',
 					},
 				]}
+				onSetActiveLog={handleSetActiveLogWithTab}
+				onClearActiveLog={handleCloseLogDetail}
+				isActiveLog={activeLog?.id === logToRender.id}
+				managedExternally
 			/>
 		),
-		[],
+		[activeLog, handleSetActiveLogWithTab, handleCloseLogDetail],
 	);
 
 	const renderFooter = useCallback(
@@ -140,6 +176,17 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
 				<div className="host-metrics-logs-list-container">{renderContent}</div>
+			)}
+			{selectedTab && activeLog && (
+				<LogDetail
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					logs={logs}
+					onNavigateLog={handleSetActiveLogWithTab}
+					selectedTab={selectedTab}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
 			)}
 		</div>
 	);

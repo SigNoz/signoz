@@ -27,6 +27,8 @@ interface TableRowProps {
 	logs: ILog[];
 	hasActions: boolean;
 	fontSize: FontSize;
+	isActiveLog?: boolean;
+	onClearActiveLog?: () => void;
 }
 
 export default function TableRow({
@@ -38,6 +40,8 @@ export default function TableRow({
 	logs,
 	hasActions,
 	fontSize,
+	isActiveLog,
+	onClearActiveLog,
 }: TableRowProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -62,11 +66,21 @@ export default function TableRow({
 	);
 
 	const handleShowLogDetails = useCallback(() => {
-		if (!onShowLogDetails || !currentLog) {
+		if (!currentLog) {
 			return;
 		}
-		onShowLogDetails(currentLog);
-	}, [currentLog, onShowLogDetails]);
+
+		// If this log is already active, close the detail drawer
+		if (isActiveLog && onClearActiveLog) {
+			onClearActiveLog();
+			return;
+		}
+
+		// Otherwise, open the detail drawer for this log
+		if (onShowLogDetails) {
+			onShowLogDetails(currentLog);
+		}
+	}, [currentLog, onShowLogDetails, isActiveLog, onClearActiveLog]);
 
 	const hasSingleColumn =
 		tableColumns.filter((column) => column.key !== 'state-indicator').length ===

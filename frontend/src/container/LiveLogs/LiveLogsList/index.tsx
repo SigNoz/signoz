@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
@@ -43,6 +43,10 @@ function LiveLogsList({
 		onSetActiveLog,
 	} = useActiveLog();
 
+	const [selectedTab, setSelectedTab] = useState<
+		typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined
+	>();
+
 	// get only data from the logs object
 	const formattedLogs: ILog[] = useMemo(
 		() => logs.map((log) => log?.data).flat(),
@@ -65,6 +69,19 @@ function LiveLogsList({
 		...options.selectColumns,
 	]);
 
+	const handleSetActiveLogWithTab = useCallback(
+		(log: ILog) => {
+			onSetActiveLog(log);
+			setSelectedTab(VIEW_TYPES.OVERVIEW);
+		},
+		[onSetActiveLog],
+	);
+
+	const handleCloseLogDetail = useCallback(() => {
+		onClearActiveLog();
+		setSelectedTab(undefined);
+	}, [onClearActiveLog]);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
@@ -72,10 +89,14 @@ function LiveLogsList({
 					<RawLogView
 						key={log.id}
 						data={log}
+						isActiveLog={activeLog?.id === log.id}
 						linesPerRow={options.maxLines}
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
 						handleChangeSelectedView={handleChangeSelectedView}
+						onSetActiveLog={handleSetActiveLogWithTab}
+						onClearActiveLog={handleCloseLogDetail}
+						managedExternally
 					/>
 				);
 			}
@@ -84,23 +105,29 @@ function LiveLogsList({
 				<ListLogView
 					key={log.id}
 					logData={log}
+					isActiveLog={activeLog?.id === log.id}
 					selectedFields={selectedFields}
 					linesPerRow={options.maxLines}
 					onAddToQuery={onAddToQuery}
-					onSetActiveLog={onSetActiveLog}
+					onSetActiveLog={handleSetActiveLogWithTab}
+					onClearActiveLog={handleCloseLogDetail}
 					fontSize={options.fontSize}
 					handleChangeSelectedView={handleChangeSelectedView}
+					logs={formattedLogs}
 				/>
 			);
 		},
 		[
-			handleChangeSelectedView,
-			onAddToQuery,
-			onSetActiveLog,
-			options.fontSize,
 			options.format,
 			options.maxLines,
+			options.fontSize,
+			activeLog?.id,
 			selectedFields,
+			onAddToQuery,
+			handleSetActiveLogWithTab,
+			handleCloseLogDetail,
+			handleChangeSelectedView,
+			formattedLogs,
 		],
 	);
 
@@ -156,6 +183,10 @@ function LiveLogsList({
 								activeLogIndex,
 							}}
 							handleChangeSelectedView={handleChangeSelectedView}
+							logs={formattedLogs}
+							onSetActiveLog={handleSetActiveLogWithTab}
+							onClearActiveLog={handleCloseLogDetail}
+							activeLog={activeLog}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
@@ -173,14 +204,16 @@ function LiveLogsList({
 				</InfinityWrapperStyled>
 			)}
 
-			{activeLog && (
+			{activeLog && selectedTab && (
 				<LogDetail
 					selectedTab={VIEW_TYPES.OVERVIEW}
 					log={activeLog}
-					onClose={onClearActiveLog}
+					onClose={handleCloseLogDetail}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
 					handleChangeSelectedView={handleChangeSelectedView}
+					logs={formattedLogs}
+					onNavigateLog={handleSetActiveLogWithTab}
 				/>
 			)}
 		</div>

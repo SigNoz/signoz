@@ -40,6 +40,9 @@ function RawLogView({
 	fontSize,
 	onLogClick,
 	handleChangeSelectedView,
+	onSetActiveLog: onSetActiveLogProp,
+	onClearActiveLog: onClearActiveLogProp,
+	managedExternally = false,
 }: RawLogViewProps): JSX.Element {
 	const {
 		isHighlighted: isUrlHighlighted,
@@ -50,8 +53,8 @@ function RawLogView({
 
 	const {
 		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
+		onSetActiveLog: onSetActiveLogHook,
+		onClearActiveLog: onClearActiveLogHook,
 		onAddToQuery,
 	} = useActiveLog();
 
@@ -134,12 +137,35 @@ function RawLogView({
 			// Use custom click handler if provided, otherwise use default behavior
 			if (onLogClick) {
 				onLogClick(data, event);
-			} else {
-				onSetActiveLog(data);
-				setSelectedTab(VIEW_TYPES.OVERVIEW);
+				return;
 			}
+
+			if (managedExternally) {
+				// If the log is already active, clear it. Otherwise, set it as active.
+				if (isActiveLog) {
+					const clearActiveFn = onClearActiveLogProp || onClearActiveLogHook;
+					clearActiveFn();
+					return;
+				}
+				const setActiveFn = onSetActiveLogProp || onSetActiveLogHook;
+				setActiveFn(data);
+				return;
+			}
+
+			onSetActiveLogHook(data);
+			setSelectedTab(VIEW_TYPES.OVERVIEW);
 		},
-		[isReadOnly, data, onSetActiveLog, onLogClick],
+		[
+			isReadOnly,
+			data,
+			onSetActiveLogProp,
+			onSetActiveLogHook,
+			onClearActiveLogProp,
+			onClearActiveLogHook,
+			onLogClick,
+			isActiveLog,
+			managedExternally,
+		],
 	);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
@@ -149,21 +175,22 @@ function RawLogView({
 			event.preventDefault();
 			event.stopPropagation();
 
-			onClearActiveLog();
+			onClearActiveLogHook();
 			setSelectedTab(undefined);
 		},
-		[onClearActiveLog],
+		[onClearActiveLogHook],
 	);
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			// handleSetActiveContextLog(data);
+
+			const setActiveFn = onSetActiveLogProp || onSetActiveLogHook;
 			setSelectedTab(VIEW_TYPES.CONTEXT);
-			onSetActiveLog(data);
+			setActiveFn(data);
 		},
-		[data, onSetActiveLog],
+		[data, onSetActiveLogProp, onSetActiveLogHook],
 	);
 
 	const html = useMemo(
@@ -172,6 +199,9 @@ function RawLogView({
 		}),
 		[text],
 	);
+
+	// Only render LogDetail when not managed externally and this log is active
+	const showLogDetail = !managedExternally && isActiveLog && selectedTab;
 
 	return (
 		<RawLogViewContainer
@@ -219,7 +249,7 @@ function RawLogView({
 				/>
 			)}
 
-			{selectedTab && (
+			{showLogDetail && (
 				<LogDetail
 					selectedTab={selectedTab}
 					log={activeLog}
