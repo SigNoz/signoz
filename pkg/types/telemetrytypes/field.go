@@ -28,12 +28,12 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name"`
+	Name          string        `json:"name" required:"true"`
 	Description   string        `json:"description,omitempty"`
 	Unit          string        `json:"unit,omitempty"`
-	Signal        Signal        `json:"signal,omitempty"`
-	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
-	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
+	Signal        Signal        `json:"signal,omitzero"`
+	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
+	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
 
 	JSONDataType *JSONDataType       `json:"-"`
 	JSONPlan     JSONAccessPlan      `json:"-"`
@@ -268,8 +268,8 @@ type FieldValueSelector struct {
 }
 
 type GettableFieldKeys struct {
-	Keys     map[string][]*TelemetryFieldKey `json:"keys"`
-	Complete bool                            `json:"complete"`
+	Keys     map[string][]*TelemetryFieldKey `json:"keys" required:"true"`
+	Complete bool                            `json:"complete" required:"true"`
 }
 
 type PostableFieldKeysParams struct {
@@ -285,13 +285,13 @@ type PostableFieldKeysParams struct {
 }
 
 type GettableFieldValues struct {
-	Values   *TelemetryFieldValues `json:"values"`
-	Complete bool                  `json:"complete"`
+	Values   *TelemetryFieldValues `json:"values" required:"true"`
+	Complete bool                  `json:"complete" required:"true"`
 }
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name"`
+	Name          string `query:"name" required:"true"`
 	ExistingQuery string `query:"existingQuery"`
 }
 

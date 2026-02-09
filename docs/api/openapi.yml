@@ -735,6 +735,7 @@ paths:
           type: string
       - in: query
         name: name
+        required: true
         schema:
           type: string
       - in: query
@@ -4355,6 +4356,8 @@ components:
           type: string
         unit:
           type: string
+      required:
+      - name
       type: object
     Querybuildertypesv5QueryData:
       properties:
@@ -4427,6 +4430,9 @@ components:
             type: array
           nullable: true
           type: object
+      required:
+      - keys
+      - complete
       type: object
     TelemetrytypesGettableFieldValues:
       properties:
@@ -4434,6 +4440,9 @@ components:
           type: boolean
         values:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+      required:
+      - values
+      - complete
       type: object
     TelemetrytypesTelemetryFieldKey:
       properties:
@@ -4449,6 +4458,8 @@ components:
           type: string
         unit:
           type: string
+      required:
+      - name
       type: object
     TelemetrytypesTelemetryFieldValues:
       properties:

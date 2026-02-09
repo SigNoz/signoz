@@ -1049,7 +1049,7 @@ export interface Querybuildertypesv5OrderByKeyDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
@@ -1139,6 +1139,79 @@ export interface RoletypesRoleDTO {
 	 * @format date-time
 	 */
 	updatedAt?: Date;
+}
+
+/**
+ * @nullable
+ */
+export type TelemetrytypesGettableFieldKeysDTOKeys = {
+	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
+} | null;
+
+export interface TelemetrytypesGettableFieldKeysDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	keys: TelemetrytypesGettableFieldKeysDTOKeys;
+}
+
+export interface TelemetrytypesGettableFieldValuesDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	values: TelemetrytypesTelemetryFieldValuesDTO;
+}
+
+export interface TelemetrytypesTelemetryFieldKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface TelemetrytypesTelemetryFieldValuesDTO {
+	/**
+	 * @type array
+	 */
+	boolValues?: boolean[];
+	/**
+	 * @type array
+	 */
+	numberValues?: number[];
+	/**
+	 * @type array
+	 */
+	relatedValues?: string[];
+	/**
+	 * @type array
+	 */
+	stringValues?: string[];
 }
 
 export interface TypesChangePasswordRequestDTO {
@@ -1588,6 +1661,132 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type GetFieldsKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+};
+
+export type GetFieldsKeys200 = {
+	data?: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetFieldsValuesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
+};
+
+export type GetFieldsValues200 = {
+	data?: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
 export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };
