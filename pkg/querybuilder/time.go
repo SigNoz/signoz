@@ -89,6 +89,27 @@ func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
 	return recommended
 }
 
+func MinAllowedStepIntervalForMeter(start, end uint64) uint64 {
+	start = ToNanoSecs(start)
+	end = ToNanoSecs(end)
+
+	step := (end - start) / RecommendedNumberOfPoints / 1e9
+
+	// for meter queries the minimum step interval allowed is 1 hour as this is our granularity
+	if step < 3600 {
+		return 3600
+	}
+
+	// return the nearest lower multiple of 3600 ( 1 hour )
+	minAllowed := step - step%3600
+
+	// if the time range is greater than 1 month set the step interval to be multiple of 1 day
+	if end-start >= uint64(30*24*time.Hour.Nanoseconds()) {
+		minAllowed = uint64(math.Round(float64(minAllowed)/86400)) * 86400
+	}
+	return minAllowed
+}
+
 func RecommendedStepIntervalForMetric(start, end uint64) uint64 {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)
