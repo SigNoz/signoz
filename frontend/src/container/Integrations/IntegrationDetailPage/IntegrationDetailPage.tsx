@@ -139,11 +139,12 @@ function IntegrationDetailPage(): JSX.Element {
 						})}
 						onUnInstallSuccess={refetch}
 						setActiveDetailTab={setActiveDetailTab}
+						isLoading={loading}
 					/>
 
 					{loading && (
 						<div className="loading-container">
-							<Skeleton.Input active size="large" className="skeleton-item" />
+							<Skeleton active className="skeleton-item" />
 						</div>
 					)}
 

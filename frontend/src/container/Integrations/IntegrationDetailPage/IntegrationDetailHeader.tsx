@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Modal, Tooltip, Typography } from 'antd';
+import { Button, Modal, Skeleton, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
@@ -27,6 +27,7 @@ interface IntegrationDetailHeaderProps {
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
 	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
+	isLoading: boolean;
 }
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailHeader(
@@ -39,6 +40,7 @@ function IntegrationDetailHeader(
 		description,
 		connectionState,
 		connectionData,
+		isLoading,
 		onUnInstallSuccess,
 		setActiveDetailTab,
 	} = props;
@@ -115,10 +117,11 @@ function IntegrationDetailHeader(
 
 	const isConnectionStateNotInstalled =
 		connectionState === ConnectionStates.NotInstalled;
+
 	return (
 		<div className="integration-connection-header">
 			<div className="integration-detail-header" key={id}>
-				<div style={{ display: 'flex', gap: '10px' }}>
+				<div className="integration-detail-header-icon-title-container">
 					<div className="image-container">
 						{icon ? (
 							<img src={icon} alt={title} className="image" />
@@ -129,8 +132,14 @@ function IntegrationDetailHeader(
 						)}
 					</div>
 					<div className="details">
-						<Typography.Text className="heading">{title}</Typography.Text>
-						<Typography.Text className="description">{description}</Typography.Text>
+						{isLoading ? (
+							<Skeleton.Input active className="skeleton-item" />
+						) : (
+							<>
+								<Typography.Text className="heading">{title}</Typography.Text>
+								<Typography.Text className="description">{description}</Typography.Text>
+							</>
+						)}
 					</div>
 				</div>
 				<Button
@@ -139,7 +148,7 @@ function IntegrationDetailHeader(
 						!isConnectionStateNotInstalled && 'test-connection',
 					)}
 					icon={<ArrowLeftRight size={14} />}
-					disabled={isInstallLoading}
+					disabled={isInstallLoading || isLoading}
 					onClick={(): void => {
 						if (connectionState === ConnectionStates.NotInstalled) {
 							logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_CONNECT, {

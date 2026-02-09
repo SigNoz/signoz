@@ -84,6 +84,14 @@
 				display: flex;
 				gap: 10px;
 				justify-content: space-between;
+				align-items: center;
+
+				.integration-detail-header-icon-title-container {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					gap: 10px;
+				}
 
 				.image-container {
 					height: 40px;
@@ -312,13 +320,10 @@
 			flex-direction: column;
 			gap: 8px;
 
-			.skeleton-item {
-				height: 160px;
-				width: 100%;
+			height: 160px;
 
-				border-radius: 6px;
-				border: 1px solid var(--bg-slate-500);
-				background: var(--bg-ink-400);
+			.skeleton-item {
+				padding: 16px;
 			}
 		}
 	}
@@ -637,13 +642,6 @@
 				&.ant-btn-default {
 					color: var(--bg-vanilla-300) !important;
 				}
-			}
-		}
-
-		.loading-container {
-			.skeleton-item {
-				border: 1px solid rgba(53, 59, 76, 0.2);
-				background: var(--bg-vanilla-100);
 			}
 		}
 	}
