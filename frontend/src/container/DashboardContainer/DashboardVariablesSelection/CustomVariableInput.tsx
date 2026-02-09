@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
-import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
-import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import sortValues from 'lib/dashboardVariables/sortVariableValues';
 
 import SelectVariableInput from './SelectVariableInput';
 import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHelper';
