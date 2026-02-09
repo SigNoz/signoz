@@ -754,6 +754,6 @@ def test_update_service_config_disable_service(
     data = response_data.get("data", response_data)
 
     # Verify service is disabled
-    assert data["config"]["metrics"]["enabled"] == False, "Metrics should be disabled"
-    assert data["config"]["logs"]["enabled"] == False, "Logs should be disabled"
+    assert data["config"]["metrics"]["enabled"] is False, "Metrics should be disabled"
+    assert data["config"]["logs"]["enabled"] is False, "Logs should be disabled"
 
