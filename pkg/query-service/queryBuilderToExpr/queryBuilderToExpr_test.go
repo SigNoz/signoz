@@ -25,6 +25,13 @@ func TestParseExpression(t *testing.T) {
 			Expr: `attributes["key"] == "checkbody"`,
 		},
 		{
+			Name: "NOT equal (unary NOT)",
+			Query: &qbtypes.Filter{
+				Expression: "NOT (attribute.key = 'checkbody')",
+			},
+			Expr: `not (attributes["key"] == "checkbody")`,
+		},
+		{
 			Name: "not equal",
 			Query: &qbtypes.Filter{
 				Expression: "attribute.key != 'checkbody'",
@@ -270,6 +277,13 @@ func TestExpressionVSEntry(t *testing.T) {
 				Expression: "resource.env = 'prod'",
 			},
 			ExpectedMatches: []int{0, 1, 4, 5, 9, 11, 13, 14, 17, 18},
+		},
+		{
+			Name: "NOT resource equal (unary NOT)",
+			Query: &qbtypes.Filter{
+				Expression: "NOT (resource.env = 'prod')",
+			},
+			ExpectedMatches: []int{2, 3, 6, 7, 8, 10, 12, 15, 16, 19, 20},
 		},
 		{
 			Name: "resource not equal (env)",

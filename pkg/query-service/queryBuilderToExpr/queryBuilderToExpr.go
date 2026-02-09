@@ -173,6 +173,8 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 		return "", nil
 	}
 
+	var result string
+
 	switch node.Op {
 	case qbtypes.LogicalOpLeaf:
 		var parts []string
@@ -188,7 +190,7 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 		}
 		// For a simple leaf, just join conditions with AND without wrapping
 		// the whole clause in parentheses
-		return strings.Join(parts, " and "), nil
+		result = strings.Join(parts, " and ")
 	case qbtypes.LogicalOpAnd:
 		var parts []string
 		for _, child := range node.Children {
@@ -209,7 +211,7 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 		if len(parts) == 0 {
 			return "", nil
 		}
-		return strings.Join(parts, " and "), nil
+		result = strings.Join(parts, " and ")
 	case qbtypes.LogicalOpOr:
 		var parts []string
 		for _, child := range node.Children {
@@ -230,10 +232,18 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 		if len(parts) == 0 {
 			return "", nil
 		}
-		return strings.Join(parts, " or "), nil
+		result = strings.Join(parts, " or ")
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported logical op: %s", node.Op)
 	}
+
+	if node.Negated {
+		// Apply a leading NOT to this subtree. Always wrap the underlying
+		// expression in parentheses to preserve the intended precedence.
+		return fmt.Sprintf("not (%s)", result), nil
+	}
+
+	return result, nil
 }
 
 func exprFormattedValue(v interface{}) string {
