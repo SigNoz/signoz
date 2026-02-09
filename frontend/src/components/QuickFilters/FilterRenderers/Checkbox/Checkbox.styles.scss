@@ -65,6 +65,9 @@
 
 				.value-string {
 					width: 100%;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 				}
 
 				&.filter-disabled {

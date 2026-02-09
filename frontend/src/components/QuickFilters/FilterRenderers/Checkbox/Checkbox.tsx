@@ -3,7 +3,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
+import { Button, Checkbox, Input, Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
@@ -646,12 +646,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											{filter.customRendererForValue ? (
 												filter.customRendererForValue(value)
 											) : (
-												<Typography.Text
-													className="value-string"
-													ellipsis={{ tooltip: { placement: 'top' } }}
-												>
-													{String(value)}
-												</Typography.Text>
+												<Tooltip title={String(value)} mouseLeaveDelay={0}>
+													<Typography.Text className="value-string">
+														{String(value)}
+													</Typography.Text>
+												</Tooltip>
 											)}
 											<Button type="text" className="only-btn">
 												{isSomeFilterPresentForCurrentAttribute
