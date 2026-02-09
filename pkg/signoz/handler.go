@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -28,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type Handlers struct {
@@ -44,9 +47,19 @@ type Handlers struct {
 	FlaggerHandler  flagger.Handler
 	GatewayHandler  gateway.Handler
 	Role            role.Handler
+	Fields          fields.Handler
 }
 
-func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, querier querier.Querier, licensing licensing.Licensing, global global.Global, flaggerService flagger.Flagger, gatewayService gateway.Gateway) Handlers {
+func NewHandlers(
+	modules Modules,
+	providerSettings factory.ProviderSettings,
+	querier querier.Querier,
+	licensing licensing.Licensing,
+	global global.Global,
+	flaggerService flagger.Flagger,
+	gatewayService gateway.Gateway,
+	telemetryMetadataStore telemetrytypes.MetadataStore,
+) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
 		Apdex:           implapdex.NewHandler(modules.Apdex),
@@ -61,5 +74,6 @@ func NewHandlers(modules Modules, providerSettings factory.ProviderSettings, que
 		FlaggerHandler:  flagger.NewHandler(flaggerService),
 		GatewayHandler:  gateway.NewHandler(gatewayService),
 		Role:            implrole.NewHandler(modules.RoleSetter, modules.RoleGetter),
+		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore),
 	}
 }

@@ -607,6 +607,178 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/fields/keys:
+    get:
+      deprecated: false
+      description: This endpoint returns field keys
+      operationId: GetFieldsKeys
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get field keys
+      tags:
+      - fields
+  /api/v1/fields/values:
+    get:
+      deprecated: false
+      description: This endpoint returns field values
+      operationId: GetFieldsValues
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get field values
+      tags:
+      - fields
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false
@@ -4133,11 +4305,38 @@ components:
       - temporality
       - isMonotonic
       type: object
+    MetrictypesSpaceAggregation:
+      enum:
+      - ""
+      - sum
+      - avg
+      - min
+      - max
+      - count
+      - p50
+      - p75
+      - p90
+      - p95
+      - p99
+      type: string
     MetrictypesTemporality:
       enum:
       - delta
       - cumulative
       - unspecified
+      type: string
+    MetrictypesTimeAggregation:
+      enum:
+      - ""
+      - latest
+      - sum
+      - avg
+      - min
+      - max
+      - count
+      - count_distinct
+      - rate
+      - increase
       type: string
     MetrictypesType:
       enum:
@@ -4405,11 +4604,11 @@ components:
         reduceTo:
           $ref: '#/components/schemas/Querybuildertypesv5ReduceTo'
         spaceAggregation:
-          type: string
+          $ref: '#/components/schemas/MetrictypesSpaceAggregation'
         temporality:
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         timeAggregation:
-          type: string
+          $ref: '#/components/schemas/MetrictypesTimeAggregation'
       type: object
     Querybuildertypesv5OrderBy:
       properties:
@@ -5027,6 +5226,25 @@ components:
       - int64
       - number
       type: string
+    TelemetrytypesGettableFieldKeys:
+      properties:
+        complete:
+          type: boolean
+        keys:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+            type: array
+          nullable: true
+          type: object
+      type: object
+    TelemetrytypesGettableFieldValues:
+      properties:
+        complete:
+          type: boolean
+        values:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+      type: object
     TelemetrytypesSignal:
       enum:
       - traces
@@ -5051,6 +5269,26 @@ components:
           $ref: '#/components/schemas/TelemetrytypesSignal'
         unit:
           type: string
+      type: object
+    TelemetrytypesTelemetryFieldValues:
+      properties:
+        boolValues:
+          items:
+            type: boolean
+          type: array
+        numberValues:
+          items:
+            format: double
+            type: number
+          type: array
+        relatedValues:
+          items:
+            type: string
+          type: array
+        stringValues:
+          items:
+            type: string
+          type: array
       type: object
     TypesChangePasswordRequest:
       properties:
