@@ -8,8 +8,8 @@ import { populateMultipleResults } from 'container/NewWidget/LeftContainer/Widge
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
