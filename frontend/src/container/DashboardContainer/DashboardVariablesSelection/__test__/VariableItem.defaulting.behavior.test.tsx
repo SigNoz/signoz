@@ -66,7 +66,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 			expect(await screen.findByText('option1')).toBeInTheDocument();
 		});
 
-		test('should show placeholder when no previous and no default', async () => {
+		test('should auto-select first option when no previous and no default', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -85,7 +85,8 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(await screen.findByText('Select value')).toBeInTheDocument();
+			// With the new variable select strategy, the first option is auto-selected
+			expect(await screen.findByText('option1')).toBeInTheDocument();
 		});
 	});
 
