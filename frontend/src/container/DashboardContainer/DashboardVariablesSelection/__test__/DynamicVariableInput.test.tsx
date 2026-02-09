@@ -5,7 +5,7 @@ import * as ReactRedux from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import DynamicVariableSelection from '../DynamicVariableSelection';
+import DynamicVariableInput from '../DynamicVariableInput';
 
 // Don't mock the components - use real ones
 
@@ -54,7 +54,7 @@ const mockApiResponse = {
 // Mock scrollIntoView since it's not available in JSDOM
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
-describe('DynamicVariableSelection Component', () => {
+describe('DynamicVariableInput Component', () => {
 	const mockOnValueUpdate = jest.fn();
 
 	const mockDynamicVariableData: IDashboardVariable = {
@@ -108,17 +108,12 @@ describe('DynamicVariableSelection Component', () => {
 
 	it('renders with single select variable correctly', () => {
 		render(
-			<DynamicVariableSelection
+			<DynamicVariableInput
 				variableData={mockDynamicVariableData}
 				existingVariables={mockExistingVariables}
 				onValueUpdate={mockOnValueUpdate}
 			/>,
 		);
-
-		// Verify component renders correctly
-		expect(
-			screen.getByText(`$${mockDynamicVariableData.name}`),
-		).toBeInTheDocument();
 
 		// Verify the selected value is displayed
 		const selectedItem = screen.getByRole('combobox');
@@ -136,17 +131,12 @@ describe('DynamicVariableSelection Component', () => {
 		};
 
 		render(
-			<DynamicVariableSelection
+			<DynamicVariableInput
 				variableData={multiSelectWithAllSelected}
 				existingVariables={mockExistingVariables}
 				onValueUpdate={mockOnValueUpdate}
 			/>,
 		);
-
-		// Verify variable name is rendered
-		expect(
-			screen.getByText(`$${multiSelectWithAllSelected.name}`),
-		).toBeInTheDocument();
 
 		// In ALL selected mode, there should be an "ALL" text element
 		expect(screen.getByText('ALL')).toBeInTheDocument();
@@ -164,17 +154,12 @@ describe('DynamicVariableSelection Component', () => {
 		});
 
 		render(
-			<DynamicVariableSelection
+			<DynamicVariableInput
 				variableData={mockDynamicVariableData}
 				existingVariables={mockExistingVariables}
 				onValueUpdate={mockOnValueUpdate}
 			/>,
 		);
-
-		// Verify component renders in loading state
-		expect(
-			screen.getByText(`$${mockDynamicVariableData.name}`),
-		).toBeInTheDocument();
 
 		// Open dropdown to see loading text
 		const selectElement = screen.getByRole('combobox');
@@ -199,17 +184,12 @@ describe('DynamicVariableSelection Component', () => {
 		});
 
 		render(
-			<DynamicVariableSelection
+			<DynamicVariableInput
 				variableData={mockDynamicVariableData}
 				existingVariables={mockExistingVariables}
 				onValueUpdate={mockOnValueUpdate}
 			/>,
 		);
-
-		// Verify the component renders
-		expect(
-			screen.getByText(`$${mockDynamicVariableData.name}`),
-		).toBeInTheDocument();
 
 		// For error states, we should check that error handling is in place
 		// Without opening the dropdown as the error message might be handled differently
@@ -219,7 +199,7 @@ describe('DynamicVariableSelection Component', () => {
 
 	it('makes API call to fetch variable values', () => {
 		render(
-			<DynamicVariableSelection
+			<DynamicVariableInput
 				variableData={mockDynamicVariableData}
 				existingVariables={mockExistingVariables}
 				onValueUpdate={mockOnValueUpdate}
@@ -235,6 +215,8 @@ describe('DynamicVariableSelection Component', () => {
 				'2023-01-01T00:00:00Z', // minTime from useSelector mock
 				'2023-01-02T00:00:00Z', // maxTime from useSelector mock
 				'',
+				'Traces',
+				'service.name',
 			],
 			expect.objectContaining({
 				enabled: true, // Type is 'DYNAMIC'
@@ -255,15 +237,12 @@ describe('DynamicVariableSelection Component', () => {
 		};
 
 		render(
-			<DynamicVariableSelection
+			<DynamicVariableInput
 				variableData={customVariable}
 				existingVariables={{ ...mockExistingVariables, custom1: customVariable }}
 				onValueUpdate={mockOnValueUpdate}
 			/>,
 		);
-
-		// Verify the component correctly displays the selected value
-		expect(screen.getByText(`$${customVariable.name}`)).toBeInTheDocument();
 
 		// Find the selection item in the component using data-testid
 		const selectElement = screen.getByTestId('variable-select');

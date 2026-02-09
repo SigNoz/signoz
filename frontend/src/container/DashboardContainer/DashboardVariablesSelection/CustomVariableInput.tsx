@@ -1,10 +1,11 @@
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
 
 import SelectVariableInput from './SelectVariableInput';
 import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHelper';
 import { VariableItemProps } from './VariableItem';
+import { customVariableSelectStrategy } from './variableSelectStrategy/customVariableSelectStrategy';
 
 type CustomVariableInputProps = Pick<
 	VariableItemProps,
@@ -29,16 +30,31 @@ function CustomVariableInput({
 		onChange,
 		onDropdownVisibleChange,
 		handleClear,
+		applyDefaultIfNeeded,
 	} = useDashboardVariableSelectHelper({
 		variableData,
 		optionsData,
 		onValueUpdate,
+		strategy: customVariableSelectStrategy,
 	});
+
+	// Apply default on mount — options are available synchronously for custom variables
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect(applyDefaultIfNeeded, []);
+
+	const selectOptions = useMemo(
+		() =>
+			optionsData.map((option) => ({
+				label: option.toString(),
+				value: option.toString(),
+			})),
+		[optionsData],
+	);
 
 	return (
 		<SelectVariableInput
 			variableId={variableData.id}
-			options={optionsData}
+			options={selectOptions}
 			value={value}
 			onChange={onChange}
 			onDropdownVisibleChange={onDropdownVisibleChange}
