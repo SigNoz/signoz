@@ -21,8 +21,8 @@ const (
 	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 	IncreaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
 
-	RateWithoutNegativeMultiTemporality     = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF((max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) < 0, max(value) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))) AS per_series_value`
-	IncreaseWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF((max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) < 0, max(value), ((max(value) - lagInFrame(max(value), 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))) AS per_series_value`
+	RateWithoutNegativeMultiTemporality     = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF((%s - lagInFrame(%s, 1, 0) OVER rate_window) < 0, %s / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (%s - lagInFrame(%s, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))) AS per_series_value`
+	IncreaseWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF((%s - lagInFrame(%s, 1, 0) OVER rate_window) < 0, %s, ((%s - lagInFrame(%s, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))) AS per_series_value`
 	OthersMultiTemporality                  = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
 
 	RateWithInterpolation = `
@@ -553,6 +553,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 	}
 
 	aggForDeltaTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Delta, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggForCumulativeTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Cumulative, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggForDeltaTemporality = fmt.Sprintf("%s/%d", aggForDeltaTemporality, stepSec)
 	}
@@ -560,13 +561,12 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 	// todo: the interpolation scenario
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality, aggForDeltaTemporality, start, start)
+		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, start, aggForCumulativeTemporality, aggForCumulativeTemporality, start)
 		sb.SelectMore(rateExpr)
 	case metrictypes.TimeAggregationIncrease:
-		increaseExpr := fmt.Sprintf(IncreaseWithoutNegativeMultiTemporality, aggForDeltaTemporality, start, start)
+		increaseExpr := fmt.Sprintf(IncreaseWithoutNegativeMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, start, start)
 		sb.SelectMore(increaseExpr)
 	default:
-		aggForCumulativeTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Cumulative, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 		expr := fmt.Sprintf(OthersMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality)
 		sb.SelectMore(expr)
 	}

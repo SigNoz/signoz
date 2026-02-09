@@ -1655,6 +1655,8 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
 	result := make(map[string][]metrictypes.Temporality)
 
+	_, _, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
+
 	// Build query to fetch temporality for all metrics
 	// We use attr_string_value where attr_name = '__temporality__'
 	// Note: The columns are mixed in the current data - temporality column contains metric_name
@@ -1663,22 +1665,13 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 		"metric_name",
 		"temporality",
 	).
-		Distinct().
-		From(t.metricsDBName + "." + t.metricsFieldsTblName)
+		From(t.metricsDBName + "." + tsTableName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),
-		sb.Or(
-			sb.And(
-				sb.GTE("last_reported_unix_milli", queryTimeRangeStartTs),
-				sb.LT("last_reported_unix_milli", queryTimeRangeEndTs),
-			),
-			sb.And(
-				sb.GTE("first_reported_unix_milli", queryTimeRangeStartTs),
-				sb.LT("first_reported_unix_milli", queryTimeRangeEndTs),
-			),
-		),
+		sb.GTE("unix_milli", queryTimeRangeStartTs),
+		sb.LT("unix_milli", queryTimeRangeEndTs),
 	)
 
 	sb.GroupBy("metric_name", "temporality")
