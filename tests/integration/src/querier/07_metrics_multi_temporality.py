@@ -22,7 +22,7 @@ from fixtures.utils import get_testdata_file_path
 MULTI_TEMPORALITY_FILE = get_testdata_file_path("multi_temporality_counters_1h.jsonl")
 
 @pytest.mark.parametrize(
-    "time_aggregation, expectedValueAt31stMinute, expectedValueAt32ndMinute, steadyValue",
+    "time_aggregation, expected_value_at_31st_minute, expected_value_at_32nd_minute, steady_value",
     [
         ("rate", 0.0167, 0.133, 0.0833),
         ("increase", 2, 8, 5),
@@ -34,9 +34,9 @@ def test_with_steady_values_and_reset(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
-    expectedValueAt31stMinute: float,
-    expectedValueAt32ndMinute: float,
-    steadyValue: float
+    expected_value_at_31st_minute: float,
+    expected_value_at_32nd_minute: float,
+    steady_value: float
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -67,15 +67,15 @@ def test_with_steady_values_and_reset(
     assert len(result_values) >= 59
     # the counter reset happened at 31st minute
     assert (
-        result_values[30]["value"] == expectedValueAt31stMinute
+        result_values[30]["value"] == expected_value_at_31st_minute
     )
     assert (
-        result_values[31]["value"] == expectedValueAt32ndMinute
+        result_values[31]["value"] == expected_value_at_32nd_minute
     )
     assert (
-        result_values[39]["value"] == steadyValue
+        result_values[39]["value"] == steady_value
     ) # 39th minute is when cumulative shifts to delta
-    count_of_steady_rate = sum(1 for v in result_values if v["value"] == steadyValue)
+    count_of_steady_rate = sum(1 for v in result_values if v["value"] == steady_value)
     assert (
         count_of_steady_rate >= 56
     )  # 59 - (1 reset + 1 high rate + 1 at the beginning)
@@ -250,7 +250,7 @@ def test_group_by_endpoint(
     ), f"Expected >= 8 increment {time_aggregation} values ({spike_users_value}) for /users, got {count_increment_rate}"
 
 @pytest.mark.parametrize(
-    "time_aggregation, expectedValueAt30thMinute, expectedValueAt31stMinute, steadyValue",
+    "time_aggregation, expected_value_at_30th_minute, expected_value_at_31st_minute, steady_value",
     [
         ("rate", 0.183, 0.183, 0.25),
         ("increase", 11, 12, 15),
@@ -262,9 +262,9 @@ def test_for_service_with_switch(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
-    expectedValueAt30thMinute: float,
-    expectedValueAt31stMinute: float,
-    steadyValue: float
+    expected_value_at_30th_minute: float,
+    expected_value_at_31st_minute: float,
+    steady_value: float
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -294,13 +294,13 @@ def test_for_service_with_switch(
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
     assert len(result_values) >= 60
     assert (
-        result_values[30]["value"] == expectedValueAt30thMinute #0.183
+        result_values[30]["value"] == expected_value_at_30th_minute #0.183
     ) 
     assert (
-        result_values[31]["value"] == expectedValueAt31stMinute # 0.183
+        result_values[31]["value"] == expected_value_at_31st_minute # 0.183
     )
     assert (
-        result_values[39]["value"] == steadyValue # 0.25
+        result_values[39]["value"] == steady_value # 0.25
     ) # 39th minute is when cumulative shifts to delta
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
