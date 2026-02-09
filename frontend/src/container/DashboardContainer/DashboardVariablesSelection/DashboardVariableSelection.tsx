@@ -138,6 +138,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 			}
 		},
 		[
+			// This can be removed
 			dashboardVariables,
 			updateLocalStorageDashboardVariables,
 			dependencyData,
