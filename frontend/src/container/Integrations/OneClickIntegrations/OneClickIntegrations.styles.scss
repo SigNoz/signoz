@@ -67,7 +67,28 @@
 	.one-click-integrations {
 		.one-click-integrations-header {
 			.one-click-integrations-header-title {
-				color: var(--bg-vanilla-100);
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.one-click-integrations-list-item {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.one-click-integrations-list-item-title {
+				.one-click-integrations-list-item-title-image-container {
+					.one-click-integrations-list-item-title-text {
+						color: var(--bg-ink-500);
+					}
+				}
+			}
+
+			.one-click-integrations-list-item-description {
+				color: var(--bg-slate-200);
+			}
+
+			&:hover {
+				background: var(--bg-vanilla-300);
 			}
 		}
 	}

@@ -205,3 +205,49 @@
 		}
 	}
 }
+
+.lightMode {
+	.integrations-list-container {
+		.integrations-list-title {
+			color: var(--bg-ink-400);
+		}
+
+		.error-container {
+			border: 1px solid var(--bg-slate-500);
+			background: var(--bg-ink-400);
+		}
+
+		.integrations-list-item {
+			.list-item-image-container {
+				border: 1.111px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+			}
+
+			.list-item-details {
+				.heading {
+					color: var(--bg-ink-500);
+				}
+
+				.description {
+					color: var(--bg-slate-200);
+				}
+			}
+
+			&:hover {
+				background: var(--bg-vanilla-100);
+			}
+
+			.configure-btn {
+				border: 1px solid rgba(53, 59, 76, 0.2);
+				background: var(--bg-vanilla-200);
+				color: var(--bg-ink-500);
+			}
+		}
+
+		.loading-container {
+			.skeleton-item {
+				background: var(--bg-vanilla-300);
+			}
+		}
+	}
+}

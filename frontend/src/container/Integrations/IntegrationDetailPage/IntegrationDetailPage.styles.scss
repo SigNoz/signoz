@@ -544,103 +544,105 @@
 }
 
 .lightMode {
-	.integration-detail-content {
-		.error-container {
-			border: 1px solid var(--bg-slate-500);
-			background: var(--bg-ink-400);
+	.integration-details-container {
+		.integration-details-content-container {
+			.error-container {
+				border: 1px solid var(--bg-slate-500);
+				background: var(--bg-ink-400);
 
-			.error-content {
-				.error-btns {
-					.contact-support {
-						.text {
-							color: var(--text-robin-400);
-							font-weight: 500;
+				.error-content {
+					.error-btns {
+						.contact-support {
+							.text {
+								color: var(--text-robin-400);
+								font-weight: 500;
+							}
 						}
 					}
 				}
 			}
-		}
 
-		.integration-connection-header {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
+			.integration-connection-header {
+				border: 1px solid rgba(53, 59, 76, 0.2);
+				background: var(--bg-vanilla-100);
 
-			.integration-detail-header {
-				.image-container {
-					border: 1.111px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
+				.integration-detail-header {
+					.image-container {
+						border: 1.111px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+					}
+					.details {
+						.heading {
+							color: var(--bg-ink-500);
+						}
+
+						.description {
+							color: var(--bg-slate-200);
+						}
+					}
+					.configure-btn {
+						&.test-connection {
+							border: 1px solid rgba(53, 59, 76, 0.2);
+							background: var(--bg-vanilla-200);
+							color: var(--bg-slate-200);
+						}
+					}
 				}
-				.details {
+
+				.testingConnection {
+					border: 1px solid rgba(255, 205, 86, 0.4);
+					background: rgba(255, 205, 86, 0.2);
+					color: var(--bg-amber-600);
+				}
+
+				.connected {
+					border: 1px solid rgba(37, 225, 146, 0.1);
+					background: rgba(37, 225, 146, 0.1);
+					color: var(--bg-forest-600);
+				}
+
+				.noDataSinceLong {
+					border: 1px solid rgba(78, 116, 248, 0.1);
+					background: rgba(78, 116, 248, 0.1);
+					color: var(--bg-robin-400);
+				}
+			}
+
+			.integration-detail-container {
+				border: 1px solid rgba(53, 59, 76, 0.2);
+				background: var(--bg-vanilla-100);
+
+				.integration-tab-btns {
+					.typography {
+						color: var(--bg-ink-500);
+					}
+				}
+			}
+
+			.uninstall-integration-bar {
+				border: 1px solid rgba(53, 59, 76, 0.2);
+				background: var(--bg-vanilla-100);
+
+				.unintall-integration-bar-text {
 					.heading {
 						color: var(--bg-ink-500);
 					}
 
-					.description {
-						color: var(--bg-slate-200);
+					.subtitle {
+						color: var(--bg-slate-100);
 					}
 				}
-				.configure-btn {
-					&.test-connection {
-						border: 1px solid rgba(53, 59, 76, 0.2);
-						background: var(--bg-vanilla-200);
-						color: var(--bg-slate-200);
+
+				.uninstall-integration-btn {
+					background: var(--bg-cherry-500, #e5484d);
+					border-color: none !important;
+					color: var(--bg-vanilla-100);
+				}
+
+				.uninstall-integration-btn:hover {
+					&.ant-btn-default {
+						color: var(--bg-vanilla-300) !important;
 					}
-				}
-			}
-
-			.testingConnection {
-				border: 1px solid rgba(255, 205, 86, 0.4);
-				background: rgba(255, 205, 86, 0.2);
-				color: var(--bg-amber-600);
-			}
-
-			.connected {
-				border: 1px solid rgba(37, 225, 146, 0.1);
-				background: rgba(37, 225, 146, 0.1);
-				color: var(--bg-forest-600);
-			}
-
-			.noDataSinceLong {
-				border: 1px solid rgba(78, 116, 248, 0.1);
-				background: rgba(78, 116, 248, 0.1);
-				color: var(--bg-robin-400);
-			}
-		}
-
-		.integration-detail-container {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
-
-			.integration-tab-btns {
-				.typography {
-					color: var(--bg-ink-500);
-				}
-			}
-		}
-
-		.uninstall-integration-bar {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
-
-			.unintall-integration-bar-text {
-				.heading {
-					color: var(--bg-ink-500);
-				}
-
-				.subtitle {
-					color: var(--bg-slate-100);
-				}
-			}
-
-			.uninstall-integration-btn {
-				background: var(--bg-cherry-500, #e5484d);
-				border-color: none !important;
-				color: var(--bg-vanilla-100);
-			}
-
-			.uninstall-integration-btn:hover {
-				&.ant-btn-default {
-					color: var(--bg-vanilla-300) !important;
 				}
 			}
 		}
