@@ -133,5 +133,8 @@
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
 
-## UplotV2 
+## Dashboard Libs + Components
 /frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
+/frontend/src/components/NewSelect/ @SigNoz/pulse-frontend

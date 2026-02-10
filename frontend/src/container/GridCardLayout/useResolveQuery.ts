@@ -6,7 +6,7 @@ import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AppState } from 'store/reducers';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
