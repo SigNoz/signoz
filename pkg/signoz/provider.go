@@ -150,6 +150,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateOrgDomainFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddFactorIndexesFactory(sqlstore, sqlschema),
 		sqlmigration.NewQueryBuilderV5MigrationFactory(sqlstore, telemetryStore),
+		sqlmigration.NewMigratePipelineFiltersV5Factory(sqlstore),
 		sqlmigration.NewAddMeterQuickFiltersFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateTTLSettingForCustomRetentionFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoutePolicyFactory(sqlstore, sqlschema),

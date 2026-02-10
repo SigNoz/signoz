@@ -193,6 +193,13 @@ func TestParseExpression(t *testing.T) {
 			},
 			ExpectError: true,
 		},
+		{
+			Name: "attributes. is unsupported",
+			Query: &qbtypes.Filter{
+				Expression: "attributes.key = 'checkbody'",
+			},
+			ExpectError: true,
+		},
 	}
 
 	for _, tt := range testCases {
