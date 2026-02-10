@@ -650,7 +650,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 													className="value-string"
 													ellipsis={{
 														tooltip: {
-															title: String(value),
+															placement: 'top',
 															mouseEnterDelay: 0.2,
 															mouseLeaveDelay: 0,
 														},
