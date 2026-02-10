@@ -5,6 +5,7 @@ import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/da
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import CustomVariableInput from './CustomVariableInput';
+import DynamicVariableInput from './DynamicVariableInput';
 import QueryVariableInput from './QueryVariableInput';
 import TextboxVariableInput from './TextboxVariableInput';
 
@@ -16,8 +17,9 @@ export interface VariableItemProps {
 	onValueUpdate: (
 		name: string,
 		id: string,
-		arg1: IDashboardVariable['selectedValue'],
+		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		haveCustomValuesSelected?: boolean,
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
@@ -66,6 +68,13 @@ function VariableItem({
 						variablesToGetUpdated={variablesToGetUpdated}
 						setVariablesToGetUpdated={setVariablesToGetUpdated}
 						dependencyData={dependencyData}
+					/>
+				)}
+				{variableType === 'DYNAMIC' && (
+					<DynamicVariableInput
+						variableData={variableData}
+						onValueUpdate={onValueUpdate}
+						existingVariables={existingVariables}
 					/>
 				)}
 			</div>
