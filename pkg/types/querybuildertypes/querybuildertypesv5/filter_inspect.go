@@ -54,7 +54,7 @@ func (f *FilterExprNode) Flatten() []FilterCondition {
 //   - Op:     filter operator (e.g. =, !=, in, exists, between).
 //   - Value:  right-hand side literal (any type: single value, slice for IN/NOT IN, nil for EXISTS, etc.).
 type FilterCondition struct {
-	Keys   []*telemetrytypes.TelemetryFieldKey
-	Op     FilterOperator
-	Value  any
+	Key   *telemetrytypes.TelemetryFieldKey
+	Op    FilterOperator
+	Value any
 }

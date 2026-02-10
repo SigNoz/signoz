@@ -55,10 +55,10 @@ func getName(key *telemetrytypes.TelemetryFieldKey) string {
 }
 
 func parseCondition(c qbtypes.FilterCondition) (string, error) {
-	if len(c.Keys) == 0 {
+	if c.Key == nil {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "condition has no keys")
 	}
-	key := c.Keys[0]
+
 	if _, ok := logOperatorsToExpr[c.Op]; !ok {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "operator not supported: %d", c.Op)
 	}
@@ -74,10 +74,10 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 		//     ("attributes" or "resource") using the logical field name.
 		//   - For intrinsic / top‑level fields (no explicit context), we fall back to
 		//     equality against nil (see default case below).
-		switch key.FieldContext {
+		switch c.Key.FieldContext {
 		case telemetrytypes.FieldContextBody:
 			// if body is a string and is a valid JSON, then check if the key exists in the JSON
-			quoted := exprFormattedValue(key.Name)
+			quoted := exprFormattedValue(c.Key.Name)
 			jsonMembership := fmt.Sprintf(
 				`((type(body) == "string" && isJSON(body)) && %s %s %s)`,
 				quoted, logOperatorsToExpr[c.Op], "fromJSON(body)",
@@ -88,17 +88,17 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 			if c.Op == qbtypes.FilterOperatorNotExists {
 				operator = qbtypes.FilterOperatorEqual
 			}
-			nilCheckFilter := fmt.Sprintf("%s.%s %s nil", key.FieldContext.StringValue(), key.Name, logOperatorsToExpr[operator])
+			nilCheckFilter := fmt.Sprintf("%s.%s %s nil", c.Key.FieldContext.StringValue(), c.Key.Name, logOperatorsToExpr[operator])
 
 			// join the two filters with OR
 			filter = fmt.Sprintf(`(%s or (type(body) == "map" && (%s)))`, jsonMembership, nilCheckFilter)
 		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 			// Example: "http.method" in attributes
 			target := "resource"
-			if key.FieldContext == telemetrytypes.FieldContextAttribute {
+			if c.Key.FieldContext == telemetrytypes.FieldContextAttribute {
 				target = "attributes"
 			}
-			filter = fmt.Sprintf("%q %s %s", key.Name, logOperatorsToExpr[c.Op], target)
+			filter = fmt.Sprintf("%q %s %s", c.Key.Name, logOperatorsToExpr[c.Op], target)
 		default:
 			// if type of key is not available; is considered as TOP LEVEL key in OTEL Log Data model hence
 			// switch Exist and Not Exists operators with NOT EQUAL and EQUAL respectively
@@ -106,21 +106,21 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 			if c.Op == qbtypes.FilterOperatorNotExists {
 				operator = qbtypes.FilterOperatorEqual
 			}
-			filter = fmt.Sprintf("%s %s nil", key.Name, logOperatorsToExpr[operator])
+			filter = fmt.Sprintf("%s %s nil", c.Key.Name, logOperatorsToExpr[operator])
 		}
 	default:
-		filter = fmt.Sprintf("%s %s %s", getName(key), logOperatorsToExpr[c.Op], value)
+		filter = fmt.Sprintf("%s %s %s", getName(c.Key), logOperatorsToExpr[c.Op], value)
 		if c.Op == qbtypes.FilterOperatorContains || c.Op == qbtypes.FilterOperatorNotContains {
 			// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
 			filter = fmt.Sprintf(
 				"lower(%s) %s lower(%s)",
-				getName(key), logOperatorsToExpr[c.Op], value,
+				getName(c.Key), logOperatorsToExpr[c.Op], value,
 			)
 		}
 
 		// Avoid running operators on nil values
 		if c.Op != qbtypes.FilterOperatorEqual && c.Op != qbtypes.FilterOperatorNotEqual {
-			filter = fmt.Sprintf("%s != nil && %s", getName(key), filter)
+			filter = fmt.Sprintf("%s != nil && %s", getName(c.Key), filter)
 		}
 	}
 
@@ -143,16 +143,19 @@ func Parse(filter *qbtypes.Filter) (string, error) {
 		return "", err
 	}
 	if node == nil {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter expression; node found nil")
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter expression; failed to extract filter expression tree")
 	}
 
 	for _, condition := range node.Flatten() {
-		for _, key := range condition.Keys {
-			_, found := telemetrylogs.IntrinsicFields[key.Name]
-			if key.FieldContext == telemetrytypes.FieldContextUnspecified && !found {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field %q in filter expression must include a context prefix (attribute., resource., body.) OR can be one of the following fields: %v", key.Name, maps.Keys(telemetrylogs.IntrinsicFields))
-			}
+		if condition.Key == nil {
+			return "", errors.NewInvalidInputf(errors.CodeInternal, "condition has no key")
 		}
+
+		_, found := telemetrylogs.IntrinsicFields[condition.Key.Name]
+		if condition.Key.FieldContext == telemetrytypes.FieldContextUnspecified && !found {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field %q in filter expression must include a context prefix (attribute., resource., body.) OR can be one of the following fields: %v", condition.Key.Name, maps.Keys(telemetrylogs.IntrinsicFields))
+		}
+
 		if condition.Op == qbtypes.FilterOperatorRegexp || condition.Op == qbtypes.FilterOperatorNotRegexp {
 			switch condition.Value.(type) {
 			case string:
@@ -160,7 +163,7 @@ func Parse(filter *qbtypes.Filter) (string, error) {
 					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value for regex operator must be a valid regex")
 				}
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value for regex operator must be a string or a slice of strings")
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value for regex operator must be a string")
 			}
 		}
 	}

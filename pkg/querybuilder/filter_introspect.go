@@ -202,9 +202,9 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 		return &qbtypes.FilterExprNode{
 			Op: qbtypes.LogicalOpLeaf,
 			Conditions: []qbtypes.FilterCondition{{
-				Keys:   keys,
-				Op:     op,
-				Value:  nil,
+				Key:   keys[0],
+				Op:    op,
+				Value: nil,
 			}},
 		}
 	}
@@ -221,9 +221,9 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 		return &qbtypes.FilterExprNode{
 			Op: qbtypes.LogicalOpLeaf,
 			Conditions: []qbtypes.FilterCondition{{
-				Keys:   keys,
-				Op:     op,
-				Value:  values,
+				Key:   keys[0],
+				Op:    op,
+				Value: values,
 			}},
 		}
 	}
@@ -247,9 +247,9 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 		return &qbtypes.FilterExprNode{
 			Op: qbtypes.LogicalOpLeaf,
 			Conditions: []qbtypes.FilterCondition{{
-				Keys:   keys,
-				Op:     op,
-				Value:  []any{value1, value2},
+				Key:   keys[0],
+				Op:    op,
+				Value: []any{value1, value2},
 			}},
 		}
 	}
@@ -305,9 +305,9 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 	return &qbtypes.FilterExprNode{
 		Op: qbtypes.LogicalOpLeaf,
 		Conditions: []qbtypes.FilterCondition{{
-			Keys:   keys,
-			Op:     op,
-			Value:  value,
+			Key:   keys[0],
+			Op:    op,
+			Value: value,
 		}},
 	}
 }
@@ -389,4 +389,3 @@ func (v *filterTreeVisitor) buildValue(ctx grammar.IValueContext) any {
 		return nil
 	}
 }
-

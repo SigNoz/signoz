@@ -38,7 +38,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpLeaf,
 				Conditions: []qbtypes.FilterCondition{
 					{
-						Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.host.name")},
+						Key:   fk(t, "attributes.host.name"),
 						Op:    qbtypes.FilterOperatorEqual,
 						Value: "frontend",
 					},
@@ -55,8 +55,8 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys: []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.status_code")},
-								Op:   qbtypes.FilterOperatorBetween,
+								Key: fk(t, "attributes.status_code"),
+								Op:  qbtypes.FilterOperatorBetween,
 								Value: []any{
 									float64(500),
 									float64(599),
@@ -69,7 +69,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op:      qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.is_error")},
+								Key:   fk(t, "attributes.is_error"),
 								Op:    qbtypes.FilterOperatorEqual,
 								Value: true,
 							},
@@ -88,8 +88,8 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys: []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.service.name")},
-								Op:   qbtypes.FilterOperatorIn,
+								Key: fk(t, "attributes.service.name"),
+								Op:  qbtypes.FilterOperatorIn,
 								Value: []any{
 									"api",
 									"worker",
@@ -101,8 +101,8 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys: []*telemetrytypes.TelemetryFieldKey{fk(t, "resource.region")},
-								Op:   qbtypes.FilterOperatorNotIn,
+								Key: fk(t, "resource.region"),
+								Op:  qbtypes.FilterOperatorNotIn,
 								Value: []any{
 									"us-east-1",
 									"us-west-2",
@@ -123,7 +123,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.message")},
+								Key:   fk(t, "attributes.message"),
 								Op:    qbtypes.FilterOperatorLike,
 								Value: "error%",
 							},
@@ -133,7 +133,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.message")},
+								Key:   fk(t, "attributes.message"),
 								Op:    qbtypes.FilterOperatorNotILike,
 								Value: "%debug%",
 							},
@@ -143,7 +143,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.message")},
+								Key:   fk(t, "attributes.message"),
 								Op:    qbtypes.FilterOperatorRegexp,
 								Value: "err[0-9]+",
 							},
@@ -153,7 +153,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.message")},
+								Key:   fk(t, "attributes.message"),
 								Op:    qbtypes.FilterOperatorNotContains,
 								Value: "trace",
 							},
@@ -172,7 +172,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.host")},
+								Key:   fk(t, "attributes.host"),
 								Op:    qbtypes.FilterOperatorExists,
 								Value: nil,
 							},
@@ -182,7 +182,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.cluster")},
+								Key:   fk(t, "attributes.cluster"),
 								Op:    qbtypes.FilterOperatorNotExists,
 								Value: nil,
 							},
@@ -198,7 +198,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpLeaf,
 				Conditions: []qbtypes.FilterCondition{
 					{
-						Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.left")},
+						Key:   fk(t, "attributes.left"),
 						Op:    qbtypes.FilterOperatorEqual,
 						Value: "other_key",
 					},
@@ -216,7 +216,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
-								Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.env")},
+								Key:   fk(t, "attributes.env"),
 								Op:    qbtypes.FilterOperatorEqual,
 								Value: "prod",
 							},
@@ -230,7 +230,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
-										Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.team")},
+										Key:   fk(t, "attributes.team"),
 										Op:    qbtypes.FilterOperatorEqual,
 										Value: "core",
 									},
@@ -240,7 +240,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
-										Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.team")},
+										Key:   fk(t, "attributes.team"),
 										Op:    qbtypes.FilterOperatorEqual,
 										Value: "platform",
 									},
@@ -264,7 +264,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
-										Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.status")},
+										Key:   fk(t, "attributes.status"),
 										Op:    qbtypes.FilterOperatorEqual,
 										Value: "critical",
 									},
@@ -274,7 +274,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
-										Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.status")},
+										Key:   fk(t, "attributes.status"),
 										Op:    qbtypes.FilterOperatorEqual,
 										Value: "warning",
 									},
@@ -289,7 +289,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
-										Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "resource.region")},
+										Key:   fk(t, "resource.region"),
 										Op:    qbtypes.FilterOperatorEqual,
 										Value: "us-east-1",
 									},
@@ -302,7 +302,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 										Op: qbtypes.LogicalOpLeaf,
 										Conditions: []qbtypes.FilterCondition{
 											{
-												Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "resource.region")},
+												Key:   fk(t, "resource.region"),
 												Op:    qbtypes.FilterOperatorEqual,
 												Value: "us-west-2",
 											},
@@ -312,7 +312,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 										Op: qbtypes.LogicalOpLeaf,
 										Conditions: []qbtypes.FilterCondition{
 											{
-												Keys:  []*telemetrytypes.TelemetryFieldKey{fk(t, "attributes.tier")},
+												Key:   fk(t, "attributes.tier"),
 												Op:    qbtypes.FilterOperatorEqual,
 												Value: "backend",
 											},
@@ -325,13 +325,16 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "random test",
+			expr: "attributes.status, attributes.status_code = 200",
+		},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ExtractFilterExprTree(tt.expr)
-
 			if tt.wantErr {
 				if err == nil {
 					t.Fatalf("expected error, got nil")

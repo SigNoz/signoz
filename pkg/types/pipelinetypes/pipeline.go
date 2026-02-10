@@ -224,7 +224,7 @@ func (p *PostablePipeline) IsValid() error {
 
 	// Validate that every field in the expression has an explicit context
 	// (attribute., resource., body., etc) so later pipeline processing does not
-	// need to guess. We intentionally do not validate that the field actually
+	// need to guess. We do not validate that the field actually
 	// exists – only that the context is specified.
 	_, err := queryBuilderToExpr.Parse(p.Filter)
 	if err != nil {
