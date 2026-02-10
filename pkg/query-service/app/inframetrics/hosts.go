@@ -2,7 +2,6 @@ package inframetrics
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -389,11 +388,6 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 	return maps.Keys(clusterNames), maps.Keys(nodeNames), nil
 }
 
-func marshalInterface(inter any) string {
-	b, _ := json.Marshal(inter)
-	return string(b)
-}
-
 func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (model.HostListResponse, error) {
 	resp := model.HostListResponse{}
 
@@ -487,14 +481,10 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		}
 	}
 
-	fmt.Println("======> printing query: ", marshalInterface(query.CompositeQuery.BuilderQueries))
-
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
-
-	// fmt.Println("====> queryResponse:", marshalInterface(queryResponse))
 
 	formattedResponse, err := postprocess.PostProcessResult(queryResponse, query)
 	if err != nil {
