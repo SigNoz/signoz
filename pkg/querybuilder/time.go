@@ -77,6 +77,15 @@ func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
 	// return the nearest lower multiple of 3600 ( 1 hour )
 	recommended := step - step%3600
 
+	// if the time range is greater than 1 month set the step interval to be multiple of 1 day
+	if end-start >= uint64(30*24*time.Hour.Nanoseconds()) {
+		if recommended < 86400 {
+			recommended = 86400
+		} else {
+			recommended = uint64(math.Round(float64(recommended)/86400)) * 86400
+		}
+	}
+
 	return recommended
 }
 
