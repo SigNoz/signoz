@@ -2,7 +2,6 @@ from http import HTTPStatus
 from typing import Callable
 
 import requests
-from sqlalchemy import text
 from wiremock.client import (
     HttpMethods,
     Mapping,
@@ -14,18 +13,9 @@ from wiremock.client import (
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
+from fixtures.cloudintegrations import cleanup_cloud_accounts
 
 logger = setup_logger(__name__)
-
-
-def cleanup_cloud_accounts(postgres: types.TestContainerSQL) -> None:
-    try:
-        with postgres.conn.connect() as conn:
-            conn.execute(text("TRUNCATE TABLE cloud_integration CASCADE"))
-            conn.commit()
-            logger.info("Cleaned up cloud_integration table")
-    except Exception:  # pylint: disable=broad-except
-        logger.info("Cleanup skipped or table does not exist")
 
 
 def test_generate_connection_url(
@@ -33,11 +23,9 @@ def test_generate_connection_url(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test to generate connection URL for AWS CloudFormation stack deployment."""
-    # Clean up any corrupted data from previous test runs
-    cleanup_cloud_accounts(postgres)
 
     # Get authentication token for admin user
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)

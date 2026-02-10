@@ -3,7 +3,6 @@ from typing import Callable
 import uuid
 
 import requests
-from sqlalchemy import text
 from wiremock.client import (
     HttpMethods,
     Mapping,
@@ -15,104 +14,13 @@ from wiremock.client import (
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
+from fixtures.cloudintegrations import (
+    cleanup_cloud_accounts,
+    create_test_account,
+    simulate_agent_checkin,
+)
 
 logger = setup_logger(__name__)
-
-
-def cleanup_cloud_accounts(postgres: types.TestContainerSQL) -> None:
-    """Clean up cloud_integration table to avoid corrupted data issues."""
-    try:
-        with postgres.conn.connect() as conn:
-            # Try to delete all records instead of truncate in case table exists
-            conn.execute(text("DELETE FROM cloud_integration"))
-            conn.commit()
-            logger.info("Cleaned up cloud_integration table")
-    except Exception:  # pylint: disable=broad-except
-        # Table might not exist, which is fine
-        logger.info("Cleanup skipped or partial")
-
-
-def generate_unique_cloud_account_id() -> str:
-    """Generate a unique cloud account ID for testing."""
-    # Use last 12 digits of UUID to simulate AWS account ID format
-    return str(uuid.uuid4().int)[:12]
-
-
-def simulate_agent_checkin(
-    signoz: types.SigNoz,
-    admin_token: str,
-    cloud_provider: str,
-    account_id: str,
-    cloud_account_id: str,
-) -> dict:
-    """Simulate an agent check-in to mark the account as connected.
-
-    Returns:
-        dict with the response from check-in
-    """
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/agent-check-in"
-
-    checkin_payload = {
-        "account_id": account_id,
-        "cloud_account_id": cloud_account_id,
-        "data": {},
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=checkin_payload,
-        timeout=10,
-    )
-
-    if response.status_code != HTTPStatus.OK:
-        logger.error(
-            "Agent check-in failed: %s, response: %s", response.status_code, response.text
-        )
-
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Agent check-in failed: {response.status_code}"
-
-    response_data = response.json()
-    return response_data.get("data", response_data)
-
-
-def create_test_account(
-    signoz: types.SigNoz,
-    admin_token: str,
-    cloud_provider: str = "aws",
-) -> dict:
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
-
-    request_payload = {
-        "account_config": {"regions": ["us-east-1"]},
-        "agent_config": {
-            "region": "us-east-1",
-            "ingestion_url": "https://ingest.test.signoz.cloud",
-            "ingestion_key": "test-ingestion-key-123456",
-            "signoz_api_url": "https://test-deployment.test.signoz.cloud",
-            "signoz_api_key": "test-api-key-789",
-            "version": "v0.0.8",
-        },
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=request_payload,
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Failed to create test account: {response.status_code}"
-
-    response_data = response.json()
-    # API returns data wrapped in {'status': 'success', 'data': {...}}
-    data = response_data.get("data", response_data)
-
-    return data
 
 
 def test_list_services_without_account(
@@ -120,11 +28,9 @@ def test_list_services_without_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing available services without specifying an account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -159,11 +65,11 @@ def test_list_services_with_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test listing services for a specific connected account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -198,13 +104,11 @@ def test_list_services_with_account(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # List services for the account
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services?cloud_account_id={cloud_account_id}"
@@ -237,11 +141,9 @@ def test_get_service_details_without_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test getting service details without specifying an account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -288,11 +190,11 @@ def test_get_service_details_with_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test getting service details for a specific connected account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -327,13 +229,11 @@ def test_get_service_details_with_account(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Get list of services first
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -377,11 +277,9 @@ def test_get_service_details_invalid_service(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test getting details for a non-existent service."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -405,11 +303,9 @@ def test_list_services_unsupported_provider(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing services for an unsupported cloud provider."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -432,11 +328,11 @@ def test_update_service_config(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test updating service configuration for a connected account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -471,13 +367,11 @@ def test_update_service_config(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Get list of services to pick a valid service ID
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -529,11 +423,9 @@ def test_update_service_config_without_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test updating service config without a connected account should fail."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -553,7 +445,7 @@ def test_update_service_config_without_account(
     # Try to update config with non-existent account
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
 
-    fake_cloud_account_id = generate_unique_cloud_account_id()
+    fake_cloud_account_id = str(uuid.uuid4())
     config_payload = {
         "cloud_account_id": fake_cloud_account_id,
         "config": {
@@ -578,11 +470,11 @@ def test_update_service_config_invalid_service(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test updating config for a non-existent service should fail."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -617,13 +509,11 @@ def test_update_service_config_invalid_service(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Try to update config for invalid service
     fake_service_id = "non-existent-service"
@@ -653,11 +543,11 @@ def test_update_service_config_disable_service(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test disabling a service by updating config with enabled=false."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -692,13 +582,11 @@ def test_update_service_config_disable_service(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Get a valid service
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -756,4 +644,3 @@ def test_update_service_config_disable_service(
     # Verify service is disabled
     assert data["config"]["metrics"]["enabled"] is False, "Metrics should be disabled"
     assert data["config"]["logs"]["enabled"] is False, "Logs should be disabled"
-

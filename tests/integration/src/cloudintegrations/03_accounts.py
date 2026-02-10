@@ -4,7 +4,6 @@ import uuid
 
 import pytest
 import requests
-from sqlalchemy import text
 from wiremock.client import (
     HttpMethods,
     Mapping,
@@ -16,113 +15,13 @@ from wiremock.client import (
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
+from fixtures.cloudintegrations import (
+    cleanup_cloud_accounts,
+    create_test_account,
+    simulate_agent_checkin,
+)
 
 logger = setup_logger(__name__)
-
-
-def cleanup_cloud_accounts(postgres: types.TestContainerSQL) -> None:
-    try:
-        with postgres.conn.connect() as conn:
-            # Try to delete all records instead of truncate in case table exists
-            conn.execute(text("DELETE FROM cloud_integration"))
-            conn.commit()
-            logger.info("Cleaned up cloud_integration table")
-    except Exception:  # pylint: disable=broad-except
-        # Table might not exist, which is fine
-        logger.info("Cleanup skipped or partial")
-
-
-def generate_unique_cloud_account_id() -> str:
-    """Generate a unique cloud account ID for testing."""
-    # Use last 12 digits of UUID to simulate AWS account ID format
-    return str(uuid.uuid4().int)[:12]
-
-
-def simulate_agent_checkin(
-    signoz: types.SigNoz,
-    admin_token: str,
-    cloud_provider: str,
-    account_id: str,
-    cloud_account_id: str,
-) -> dict:
-    """Simulate an agent check-in to mark the account as connected.
-
-    Returns:
-        dict with the response from check-in
-    """
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/agent-check-in"
-    )
-
-    checkin_payload = {
-        "account_id": account_id,
-        "cloud_account_id": cloud_account_id,
-        "data": {},
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=checkin_payload,
-        timeout=10,
-    )
-
-    if response.status_code != HTTPStatus.OK:
-        logger.error("Agent check-in failed: %s, response: %s", response.status_code, response.text)
-
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Agent check-in failed: {response.status_code}"
-
-    response_data = response.json()
-    return response_data.get("data", response_data)
-
-
-def create_test_account(
-    signoz: types.SigNoz,
-    admin_token: str,
-    cloud_provider: str = "aws",
-) -> dict:
-    """Create a test account via generate-connection-url.
-
-    Returns the data as-is from the API response. Caller is responsible for
-    doing agent check-in if needed to mark the account as connected.
-
-    Returns:
-        dict with account_id and connection_url from the API
-    """
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
-    )
-
-    request_payload = {
-        "account_config": {"regions": ["us-east-1"]},
-        "agent_config": {
-            "region": "us-east-1",
-            "ingestion_url": "https://ingest.test.signoz.cloud",
-            "ingestion_key": "test-ingestion-key-123456",
-            "signoz_api_url": "https://test-deployment.test.signoz.cloud",
-            "signoz_api_key": "test-api-key-789",
-            "version": "v0.0.8",
-        },
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=request_payload,
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Failed to create test account: {response.status_code}"
-
-    response_data = response.json()
-    # API returns data wrapped in {'status': 'success', 'data': {...}}
-    data = response_data.get("data", response_data)
-
-    return data
 
 
 def test_list_connected_accounts_empty(
@@ -130,11 +29,9 @@ def test_list_connected_accounts_empty(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing connected accounts when there are none."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -163,11 +60,11 @@ def test_list_connected_accounts_with_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test listing connected accounts after creating one."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -202,12 +99,12 @@ def test_list_connected_accounts_with_account(
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # List accounts
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
@@ -239,11 +136,10 @@ def test_get_account_status(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
 ) -> None:
     """Test getting the status of a specific account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -278,7 +174,7 @@ def test_get_account_status(
 
     # Create a test account (no check-in needed for status check)
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Get account status
@@ -308,11 +204,9 @@ def test_get_account_status_not_found(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test getting status for a non-existent account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -338,11 +232,11 @@ def test_update_account_config(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test updating account configuration."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -377,12 +271,12 @@ def test_update_account_config(
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Update account configuration
     endpoint = (
@@ -437,11 +331,11 @@ def test_disconnect_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
+    create_test_account: Callable,
+    simulate_agent_checkin: Callable,
 ) -> None:
     """Test disconnecting an account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -476,12 +370,12 @@ def test_disconnect_account(
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = create_test_account(signoz, admin_token, cloud_provider)
+    account_data = create_test_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
-    cloud_account_id = generate_unique_cloud_account_id()
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    cloud_account_id = str(uuid.uuid4())
+    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Disconnect the account
     endpoint = (
@@ -521,11 +415,9 @@ def test_disconnect_account_not_found(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test disconnecting a non-existent account."""
-    cleanup_cloud_accounts(postgres)
-
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
 
@@ -552,10 +444,9 @@ def test_list_accounts_unsupported_provider(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    postgres: types.TestContainerSQL,
+    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing accounts for an unsupported cloud provider."""
-    cleanup_cloud_accounts(postgres)
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     add_license(signoz, make_http_mocks, get_token)
