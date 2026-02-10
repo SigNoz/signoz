@@ -18,7 +18,6 @@ from fixtures.logger import setup_logger
 from fixtures.cloudintegrations import (
     create_test_account,
     simulate_agent_checkin,
-    cleanup_cloud_accounts,  # ensure fixture is registered
 )
 
 logger = setup_logger(__name__)
