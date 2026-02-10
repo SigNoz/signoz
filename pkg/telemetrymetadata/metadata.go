@@ -1707,8 +1707,9 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 			// Unknown or empty temporality
 			temporality = metrictypes.Unknown
 		}
-
-		result[metricName] = append(result[metricName], temporality)
+		if temporality != metrictypes.Unknown {
+			result[metricName] = append(result[metricName], temporality)
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
@@ -1766,8 +1767,9 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 			// Unknown or empty temporality
 			temporality = metrictypes.Unknown
 		}
-
-		result[metricName] = append(result[metricName], temporality)
+		if temporality != metrictypes.Unknown {
+			result[metricName] = append(result[metricName], temporality)
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over meter temporality rows")
