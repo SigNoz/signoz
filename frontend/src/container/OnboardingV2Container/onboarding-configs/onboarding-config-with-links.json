@@ -619,7 +619,6 @@
 		],
 		"module": "apm",
 		"relatedSearchKeywords": [
-			"angular",
 			"apm",
 			"apm/traces",
 			"application performance monitoring",
