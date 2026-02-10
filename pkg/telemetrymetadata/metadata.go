@@ -1727,7 +1727,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 	).
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
-	adjustedStartTs := telemetrymeter.AdjustStartTsForTSTable(queryTimeRangeStartTs, t.meterFieldsTblName)
+	adjustedStartTs := telemetrymeter.AdjustStartTsForSamplesTable(queryTimeRangeStartTs, t.meterFieldsTblName)
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),

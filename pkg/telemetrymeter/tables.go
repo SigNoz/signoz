@@ -59,7 +59,7 @@ func WhichSamplesTableToUse(
 
 }
 
-func AdjustStartTsForTSTable(start uint64, table string) uint64 {
+func AdjustStartTsForSamplesTable(start uint64, table string) uint64 {
 	if table == SamplesTableName || table == SamplesLocalTableName {
 		return start - (start % oneHourInMilliseconds)
 	}
