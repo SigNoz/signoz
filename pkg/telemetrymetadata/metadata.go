@@ -1709,6 +1709,9 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 
 		result[metricName] = append(result[metricName], temporality)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
+	}
 
 	return result, nil
 }
@@ -1764,6 +1767,9 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 		}
 
 		result[metricName] = append(result[metricName], temporality)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over meter temporality rows")
 	}
 
 	return result, nil
