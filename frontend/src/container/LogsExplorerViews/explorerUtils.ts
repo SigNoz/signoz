@@ -216,3 +216,34 @@ export const getExportQueryData = (
 	}
 	return query;
 };
+
+export const getExportLogQuery = (
+	query: Query | null,
+	panelType: PANEL_TYPES,
+): Query | null => {
+	if (!query) {
+		return null;
+	}
+
+	if (panelType === PANEL_TYPES.LIST) {
+		const listQuery = getListQuery(query);
+		if (!listQuery) {
+			return null;
+		}
+
+		return {
+			...query,
+			builder: {
+				...query.builder,
+				queryData: [
+					{
+						...listQuery,
+						orderBy: [],
+						limit: null,
+					},
+				],
+			},
+		};
+	}
+	return query;
+};

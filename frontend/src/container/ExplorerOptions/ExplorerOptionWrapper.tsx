@@ -18,6 +18,7 @@ function ExplorerOptionWrapper({
 	splitedQueries,
 	signalSource,
 	handleChangeSelectedView,
+	logsAlertQuery,
 }: ExplorerOptionsWrapperProps): JSX.Element {
 	const [isExplorerOptionHidden, setIsExplorerOptionHidden] = useState(false);
 
@@ -40,6 +41,7 @@ function ExplorerOptionWrapper({
 			isOneChartPerQuery={isOneChartPerQuery}
 			splitedQueries={splitedQueries}
 			handleChangeSelectedView={handleChangeSelectedView}
+			logsAlertQuery={logsAlertQuery}
 		/>
 	);
 }
