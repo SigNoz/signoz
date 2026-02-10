@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
@@ -1723,13 +1724,13 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 		"metric_name",
 		"temporality",
 	).
-		Distinct().
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
+	adjustedStartTs := telemetrymeter.AdjustStartTsForTSTable(queryTimeRangeStartTs, t.meterFieldsTblName)
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),
-		sb.GTE("unix_milli", queryTimeRangeStartTs),
+		sb.GTE("unix_milli", adjustedStartTs),
 		sb.LT("unix_milli", queryTimeRangeEndTs),
 	)
 
