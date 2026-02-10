@@ -1655,7 +1655,7 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
 	result := make(map[string][]metrictypes.Temporality)
 
-	_, _, _, tsTableName := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
+	adjustedStartTs, adjustedEndTs, _, tsTableName := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
 
 	// Build query to fetch temporality for all metrics
 	// We use attr_string_value where attr_name = '__temporality__'
@@ -1670,8 +1670,8 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),
-		sb.GTE("unix_milli", queryTimeRangeStartTs),
-		sb.LT("unix_milli", queryTimeRangeEndTs),
+		sb.GTE("unix_milli", adjustedStartTs),
+		sb.LT("unix_milli", adjustedEndTs),
 	)
 
 	sb.GroupBy("metric_name", "temporality")
