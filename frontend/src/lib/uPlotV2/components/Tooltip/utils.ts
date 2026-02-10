@@ -30,16 +30,11 @@ export function getTooltipBaseValue({
 	index: number;
 	dataIndex: number;
 	isStackedBarChart?: boolean;
-}): number | undefined | null {
-	let baseValue = data[index][dataIndex];
-	if (
-		isStackedBarChart &&
-		index + 1 < data.length &&
-		typeof baseValue === 'number' &&
-		Number.isFinite(baseValue)
-	) {
-		const nextValue = data[index + 1][dataIndex];
-		if (typeof nextValue === 'number' && Number.isFinite(nextValue)) {
+}): number | null {
+	let baseValue = data[index][dataIndex] ?? null;
+	if (isStackedBarChart && index + 1 < data.length && baseValue !== null) {
+		const nextValue = data[index + 1][dataIndex] ?? null;
+		if (nextValue !== null) {
 			baseValue = baseValue - nextValue;
 		}
 	}
@@ -89,7 +84,7 @@ export function buildTooltipContent({
 
 		const isActive = index === activeSeriesIndex;
 
-		if (typeof baseValue === 'number' && Number.isFinite(baseValue)) {
+		if (Number.isFinite(baseValue) && baseValue !== null) {
 			const item: TooltipContentItem = {
 				label: String(s.label ?? ''),
 				value: baseValue,
