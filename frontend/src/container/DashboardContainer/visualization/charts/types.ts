@@ -6,14 +6,14 @@ import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 interface BaseChartProps {
 	width: number;
 	height: number;
-	disableTooltip?: boolean;
+	showTooltip?: boolean;
 	timezone: string;
 	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	'data-testid'?: string;
 }
-interface UPlotChartBaseProps {
+interface UPlotBasedChartProps {
 	config: UPlotConfigBuilder;
 	data: uPlot.AlignedData;
 	syncMode?: DashboardCursorSync;
@@ -26,11 +26,11 @@ interface UPlotChartBaseProps {
 
 export interface TimeSeriesChartProps
 	extends BaseChartProps,
-		UPlotChartBaseProps {
+		UPlotBasedChartProps {
 	legendConfig: LegendConfig;
 }
 
-export interface BarChartProps extends BaseChartProps, UPlotChartBaseProps {
+export interface BarChartProps extends BaseChartProps, UPlotBasedChartProps {
 	legendConfig: LegendConfig;
 	isStackedBarChart?: boolean;
 }

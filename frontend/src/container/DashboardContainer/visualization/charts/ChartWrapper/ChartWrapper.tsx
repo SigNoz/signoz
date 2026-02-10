@@ -5,7 +5,7 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import UPlotChart from 'lib/uPlotV2/components/UPlotChart';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
-import _noop from 'lodash-es/noop';
+import noop from 'lodash-es/noop';
 import uPlot from 'uplot';
 
 import { ChartProps } from '../types';
@@ -19,11 +19,11 @@ export default function ChartWrapper({
 	data,
 	width: containerWidth,
 	height: containerHeight,
-	disableTooltip = false,
+	showTooltip = true,
 	canPinTooltip = false,
 	syncMode,
 	syncKey,
-	onDestroy = _noop,
+	onDestroy = noop,
 	children,
 	layoutChildren,
 	renderTooltip,
@@ -70,7 +70,7 @@ export default function ChartWrapper({
 						data-testid={testId}
 					>
 						{children}
-						{!disableTooltip && (
+						{showTooltip && (
 							<TooltipPlugin
 								config={config}
 								canPinTooltip={canPinTooltip}
