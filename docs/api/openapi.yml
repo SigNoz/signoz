@@ -607,6 +607,178 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/fields/keys:
+    get:
+      deprecated: false
+      description: This endpoint returns field keys
+      operationId: GetFieldsKeys
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          type: string
+      - in: query
+        name: fieldDataType
+        schema:
+          type: string
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get field keys
+      tags:
+      - fields
+  /api/v1/fields/values:
+    get:
+      deprecated: false
+      description: This endpoint returns field values
+      operationId: GetFieldsValues
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          type: string
+      - in: query
+        name: fieldDataType
+        schema:
+          type: string
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get field values
+      tags:
+      - fields
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false
@@ -2226,6 +2398,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unprocessable Entity
         "500":
           content:
             application/json:
@@ -2285,6 +2463,15 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: GetIngestionKeys
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2597,6 +2784,19 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: SearchIngestionKeys
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2643,6 +2843,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -2697,6 +2898,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -2752,6 +2954,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -2918,6 +3121,7 @@ paths:
       parameters:
       - in: query
         name: metricName
+        required: true
         schema:
           type: string
       responses:
@@ -3785,6 +3989,9 @@ components:
           type: string
         alertName:
           type: string
+      required:
+      - alertName
+      - alertId
       type: object
     MetricsexplorertypesMetricAlertsResponse:
       properties:
@@ -3793,6 +4000,8 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
           nullable: true
           type: array
+      required:
+      - alerts
       type: object
     MetricsexplorertypesMetricAttribute:
       properties:
@@ -3806,6 +4015,10 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - key
+      - values
+      - valueCount
       type: object
     MetricsexplorertypesMetricAttributesRequest:
       properties:
@@ -3817,6 +4030,8 @@ components:
         start:
           nullable: true
           type: integer
+      required:
+      - metricName
       type: object
     MetricsexplorertypesMetricAttributesResponse:
       properties:
@@ -3828,6 +4043,9 @@ components:
         totalKeys:
           format: int64
           type: integer
+      required:
+      - attributes
+      - totalKeys
       type: object
     MetricsexplorertypesMetricDashboard:
       properties:
@@ -3839,6 +4057,11 @@ components:
           type: string
         widgetName:
           type: string
+      required:
+      - dashboardName
+      - dashboardId
+      - widgetId
+      - widgetName
       type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
@@ -3847,6 +4070,8 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
           nullable: true
           type: array
+      required:
+      - dashboards
       type: object
     MetricsexplorertypesMetricHighlightsResponse:
       properties:
@@ -3862,6 +4087,11 @@ components:
         totalTimeSeries:
           minimum: 0
           type: integer
+      required:
+      - dataPoints
+      - lastReceived
+      - totalTimeSeries
+      - activeTimeSeries
       type: object
     MetricsexplorertypesMetricMetadata:
       properties:
@@ -3870,11 +4100,17 @@ components:
         isMonotonic:
           type: boolean
         temporality:
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         type:
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
+      required:
+      - description
+      - type
+      - unit
+      - temporality
+      - isMonotonic
       type: object
     MetricsexplorertypesStat:
       properties:
@@ -3889,9 +4125,16 @@ components:
           minimum: 0
           type: integer
         type:
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
+      required:
+      - metricName
+      - description
+      - type
+      - unit
+      - timeseries
+      - samples
       type: object
     MetricsexplorertypesStatsRequest:
       properties:
@@ -3909,6 +4152,10 @@ components:
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
       type: object
     MetricsexplorertypesStatsResponse:
       properties:
@@ -3920,6 +4167,9 @@ components:
         total:
           minimum: 0
           type: integer
+      required:
+      - metrics
+      - total
       type: object
     MetricsexplorertypesTreemapEntry:
       properties:
@@ -3931,7 +4181,16 @@ components:
         totalValue:
           minimum: 0
           type: integer
+      required:
+      - metricName
+      - percentage
+      - totalValue
       type: object
+    MetricsexplorertypesTreemapMode:
+      enum:
+      - timeseries
+      - samples
+      type: string
     MetricsexplorertypesTreemapRequest:
       properties:
         end:
@@ -3942,10 +4201,15 @@ components:
         limit:
           type: integer
         mode:
-          type: string
+          $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
+      - mode
       type: object
     MetricsexplorertypesTreemapResponse:
       properties:
@@ -3959,6 +4223,9 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
           nullable: true
           type: array
+      required:
+      - timeseries
+      - samples
       type: object
     MetricsexplorertypesUpdateMetricMetadataRequest:
       properties:
@@ -3969,12 +4236,33 @@ components:
         metricName:
           type: string
         temporality:
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         type:
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
+      required:
+      - metricName
+      - type
+      - description
+      - unit
+      - temporality
+      - isMonotonic
       type: object
+    MetrictypesTemporality:
+      enum:
+      - delta
+      - cumulative
+      - unspecified
+      type: string
+    MetrictypesType:
+      enum:
+      - gauge
+      - sum
+      - histogram
+      - summary
+      - exponentialhistogram
+      type: string
     PreferencetypesPreference:
       properties:
         allowedScopes:
@@ -4128,6 +4416,60 @@ components:
           format: date-time
           type: string
       type: object
+    TelemetrytypesGettableFieldKeys:
+      properties:
+        complete:
+          type: boolean
+        keys:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+            type: array
+          nullable: true
+          type: object
+      type: object
+    TelemetrytypesGettableFieldValues:
+      properties:
+        complete:
+          type: boolean
+        values:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+      type: object
+    TelemetrytypesTelemetryFieldKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          type: string
+        fieldDataType:
+          type: string
+        name:
+          type: string
+        signal:
+          type: string
+        unit:
+          type: string
+      type: object
+    TelemetrytypesTelemetryFieldValues:
+      properties:
+        boolValues:
+          items:
+            type: boolean
+          type: array
+        numberValues:
+          items:
+            format: double
+            type: number
+          type: array
+        relatedValues:
+          items:
+            type: string
+          type: array
+        stringValues:
+          items:
+            type: string
+          type: array
+      type: object
     TypesChangePasswordRequest:
       properties:
         newPassword:
@@ -4256,6 +4598,9 @@ components:
           type: string
         orgId:
           type: string
+      required:
+      - orgId
+      - email
       type: object
     TypesPostableInvite:
       properties:

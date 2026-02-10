@@ -5,8 +5,8 @@ import uPlot, { Series } from 'uplot';
 import {
 	ConfigBuilder,
 	DrawStyle,
-	FillStyle,
 	LineInterpolation,
+	LineStyle,
 	SeriesProps,
 	VisibilityMode,
 } from './types';
@@ -16,23 +16,29 @@ import {
  * Handles creation of series settings
  */
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
-	private buildLineConfig(
-		lineColor: string,
-		lineWidth?: number,
-		lineStyle?: { fill?: FillStyle; dash?: number[] },
-	): Partial<Series> {
+	private buildLineConfig({
+		lineColor,
+		lineWidth,
+		lineStyle,
+		lineCap,
+	}: {
+		lineColor: string;
+		lineWidth?: number;
+		lineStyle?: LineStyle;
+		lineCap?: Series.Cap;
+	}): Partial<Series> {
 		const lineConfig: Partial<Series> = {
 			stroke: lineColor,
 			width: lineWidth ?? 2,
 		};
 
-		if (lineStyle && lineStyle.fill !== FillStyle.Solid) {
-			if (lineStyle.fill === FillStyle.Dot) {
-				lineConfig.cap = 'round';
-			}
-			lineConfig.dash = lineStyle.dash ?? [10, 10];
+		if (lineStyle === LineStyle.Dashed) {
+			lineConfig.dash = [10, 10];
 		}
 
+		if (lineCap) {
+			lineConfig.cap = lineCap;
+		}
 		return lineConfig;
 	}
 
@@ -138,6 +144,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineInterpolation,
 			lineWidth,
 			lineStyle,
+			lineCap,
 			showPoints,
 			pointSize,
 			scaleKey,
@@ -148,7 +155,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 
 		const lineColor = this.getLineColor();
 
-		const lineConfig = this.buildLineConfig(lineColor, lineWidth, lineStyle);
+		const lineConfig = this.buildLineConfig({
+			lineColor,
+			lineWidth,
+			lineStyle,
+			lineCap,
+		});
 		const pathConfig = this.buildPathConfig({
 			pathBuilder,
 			drawStyle,

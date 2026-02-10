@@ -74,6 +74,41 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	/*
+		Adding a tech debt note here:
+		This piece of code is a hot fix and should be removed once we close issue: engineering-pod/issues/3622
+	*/
+	/*
+		-------------------------------- Start of tech debt ----------------------------
+	*/
+	if requestType == qbtypes.RequestTypeRaw {
+
+		selectedFields := query.SelectFields
+
+		if len(selectedFields) == 0 {
+			sortedKeys := maps.Keys(DefaultFields)
+			slices.Sort(sortedKeys)
+			for _, key := range sortedKeys {
+				selectedFields = append(selectedFields, DefaultFields[key])
+			}
+			query.SelectFields = selectedFields
+		}
+
+		selectFieldKeys := []string{}
+		for _, field := range selectedFields {
+			selectFieldKeys = append(selectFieldKeys, field.Name)
+		}
+
+		for _, x := range []string{"timestamp", "span_id", "trace_id"} {
+			if !slices.Contains(selectFieldKeys, x) {
+				query.SelectFields = append(query.SelectFields, DefaultFields[x])
+			}
+		}
+	}
+	/*
+		-------------------------------- End of tech debt ----------------------------
+	*/
+
 	query = b.adjustKeys(ctx, keys, query, requestType)
 
 	// Check if filter contains trace_id(s) and optimize time range if needed
@@ -169,19 +204,13 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 	// 1. to not fail filter expression that use deprecated cols
 	// 2. this could have been moved to metadata fetching itself, however, that
 	// would mean, they also show up in suggestions we we don't want to do
+	// 3. reason for not doing a simple append is to keep intrinsic/calculated field first so that it gets
+	// priority in multi_if sql expression
 	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
-		if _, ok := keys[fieldKeyName]; !ok {
-			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
-		} else {
-			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
-		}
+		keys[fieldKeyName] = append([]*telemetrytypes.TelemetryFieldKey{&fieldKey}, keys[fieldKeyName]...)
 	}
 	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
-		if _, ok := keys[fieldKeyName]; !ok {
-			keys[fieldKeyName] = []*telemetrytypes.TelemetryFieldKey{&fieldKey}
-		} else {
-			keys[fieldKeyName] = append(keys[fieldKeyName], &fieldKey)
-		}
+		keys[fieldKeyName] = append([]*telemetrytypes.TelemetryFieldKey{&fieldKey}, keys[fieldKeyName]...)
 	}
 
 	// Adjust keys for alias expressions in aggregations
@@ -284,29 +313,8 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	selectedFields := query.SelectFields
-
-	if len(selectedFields) == 0 {
-		sortedKeys := maps.Keys(DefaultFields)
-		slices.Sort(sortedKeys)
-		for _, key := range sortedKeys {
-			selectedFields = append(selectedFields, DefaultFields[key])
-		}
-	}
-
-	selectFieldKeys := []string{}
-	for _, field := range selectedFields {
-		selectFieldKeys = append(selectFieldKeys, field.Name)
-	}
-
-	for _, x := range []string{"timestamp", "span_id", "trace_id"} {
-		if !slices.Contains(selectFieldKeys, x) {
-			selectedFields = append(selectedFields, DefaultFields[x])
-		}
-	}
-
 	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
-	for _, field := range selectedFields {
+	for _, field := range query.SelectFields {
 		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			return nil, err

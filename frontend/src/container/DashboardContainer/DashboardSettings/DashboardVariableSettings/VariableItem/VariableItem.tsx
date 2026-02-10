@@ -18,8 +18,8 @@ import { useWidgetsByDynamicVariableId } from 'hooks/dashboard/useWidgetsByDynam
 import { getWidgetsHavingDynamicVariableAttribute } from 'hooks/dashboard/utils';
 import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
-import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
+import sortValues from 'lib/dashboardVariables/sortVariableValues';
 import { isEmpty, map } from 'lodash-es';
 import {
 	ArrowLeft,

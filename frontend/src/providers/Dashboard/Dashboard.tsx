@@ -45,8 +45,11 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
-import { useDashboardVariables } from '../../hooks/dashboard/useDashboardVariables';
-import { updateDashboardVariablesStore } from './store/dashboardVariablesStore';
+import { useDashboardVariablesSelector } from '../../hooks/dashboard/useDashboardVariables';
+import {
+	setDashboardVariablesStore,
+	updateDashboardVariablesStore,
+} from './store/dashboardVariables/dashboardVariablesStore';
 import {
 	DashboardSortOrder,
 	IDashboardContext,
@@ -198,14 +201,23 @@ export function DashboardProvider({
 			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
-	const dashboardVariables = useDashboardVariables();
+	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
+	const savedDashboardId = useDashboardVariablesSelector((s) => s.dashboardId);
 
 	useEffect(() => {
 		const existingVariables = dashboardVariables;
 		const updatedVariables = selectedDashboard?.data.variables || {};
 
-		if (!isEqual(existingVariables, updatedVariables)) {
-			updateDashboardVariablesStore(updatedVariables);
+		if (savedDashboardId !== dashboardId) {
+			setDashboardVariablesStore({
+				dashboardId,
+				variables: updatedVariables,
+			});
+		} else if (!isEqual(existingVariables, updatedVariables)) {
+			updateDashboardVariablesStore({
+				dashboardId,
+				variables: updatedVariables,
+			});
 		}
 	}, [selectedDashboard]);
 

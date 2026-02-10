@@ -16,8 +16,8 @@
 	justify-content: center;
 	gap: 16px;
 	padding: 12px;
-	background: var(--bg-ink-400, #121317);
-	border: 1px solid var(--bg-ink-200, #23262e);
+	background: var(--bg-ink-400);
+	border: 1px solid var(--bg-ink-200);
 	border-radius: 4px;
 }
 
@@ -49,7 +49,7 @@
 	font-size: 11px;
 	font-weight: 400;
 	line-height: 1;
-	color: var(--text-neutral-dark-100, #adb4c2);
+	color: var(--text-neutral-dark-100);
 	text-align: center;
 }
 
@@ -67,7 +67,7 @@
 
 .auth-footer-link-icon {
 	flex-shrink: 0;
-	color: var(--text-neutral-dark-50, #eceef2);
+	color: var(--text-neutral-dark-50);
 }
 
 .auth-footer-link-status {
@@ -84,14 +84,14 @@
 	width: 4px;
 	height: 4px;
 	border-radius: 50%;
-	background: var(--bg-ink-200, #23262e);
+	background: var(--bg-ink-200);
 	flex-shrink: 0;
 }
 
 .lightMode {
 	.auth-footer-content {
-		background: var(--bg-base-white, #ffffff);
-		border-color: var(--bg-vanilla-300, #e9e9e9);
+		background: var(--bg-base-white);
+		border-color: var(--bg-vanilla-300);
 		box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
 	}
 
@@ -102,14 +102,14 @@
 	}
 
 	.auth-footer-text {
-		color: var(--text-neutral-light-200, #80828d);
+		color: var(--text-neutral-light-200);
 	}
 
 	.auth-footer-link-icon {
-		color: var(--text-neutral-light-100, #62636c);
+		color: var(--text-neutral-light-100);
 	}
 
 	.auth-footer-separator {
-		background: var(--bg-vanilla-300, #e9e9e9);
+		background: var(--bg-vanilla-300);
 	}
 }
