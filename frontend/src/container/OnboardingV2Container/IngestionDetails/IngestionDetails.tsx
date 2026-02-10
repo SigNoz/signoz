@@ -87,7 +87,9 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 					<Typography.Text className="ingestion-endpoint-section-error-text error">
 						<TriangleAlert size={14} />{' '}
 						{(error as AxiosError<RenderErrorResponseDTO>)?.response?.data?.error
-							?.message || 'Something went wrong'}
+							?.message ||
+							(error as AxiosError)?.message ||
+							'Something went wrong'}
 					</Typography.Text>
 
 					<div className="ingestion-setup-details-links">
