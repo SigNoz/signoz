@@ -94,13 +94,17 @@ function ForgotPassword({
 
 	const handleSubmit = useCallback((): void => {
 		const values = form.getFieldsValue();
+		const currentOrgId = hasMultipleOrgs ? values.orgId : initialOrgId;
+
+		if (!currentOrgId) {
+			return;
+		}
 
 		// Call the forgot password API
 		forgotPasswordMutate({
 			data: {
 				email: values.email,
-				// since the submit will already be disabled if org is not present, hence we can have empty fallback in case we get here
-				orgId: (hasMultipleOrgs ? values.orgId : initialOrgId) || '',
+				orgId: currentOrgId,
 				frontendBaseURL: window.location.origin,
 			},
 		});
@@ -159,7 +163,10 @@ function ForgotPassword({
 							<label className="forgot-password-label" htmlFor="orgId">
 								Organization Name
 							</label>
-							<Form.Item name="orgId">
+							<Form.Item
+								name="orgId"
+								rules={[{ required: true, message: 'Please select your organization' }]}
+							>
 								<Select
 									id="orgId"
 									data-testid="orgId"

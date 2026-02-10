@@ -361,7 +361,11 @@ function Login(): JSX.Element {
 								<Label htmlFor="Password">Password</Label>
 								<Typography.Link
 									className="forgot-password-link"
-									onClick={handleForgotPasswordClick}
+									href="#"
+									onClick={(event): void => {
+										event.preventDefault();
+										handleForgotPasswordClick();
+									}}
 								>
 									Forgot password?
 								</Typography.Link>

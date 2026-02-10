@@ -1,14 +1,14 @@
-import { MockedRequest, response, ResponseResolver, restContext } from 'msw';
+import { ResponseResolver, restContext, RestRequest } from 'msw';
 
 export const createErrorResponse = (
 	status: number,
 	code: string,
 	message: string,
-): ResponseResolver<MockedRequest, typeof restContext> => (
+): ResponseResolver<RestRequest, typeof restContext> => (
 	_req,
 	res,
 	ctx,
-): ReturnType<typeof response> =>
+): ReturnType<ResponseResolver<RestRequest, typeof restContext>> =>
 	res(
 		ctx.status(status),
 		ctx.json({
