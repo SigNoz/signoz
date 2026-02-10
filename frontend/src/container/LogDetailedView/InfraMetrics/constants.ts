@@ -2495,81 +2495,6 @@ export const getHostQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'system_disk_pending_operations--float64--Gauge--true',
-
-								key: diskPendingKey,
-								type: 'Gauge',
-							},
-							aggregateOperator: 'max',
-							dataSource: DataSource.METRICS,
-							disabled: false,
-							expression: 'A',
-							filters: {
-								items: [
-									{
-										id: 'diskpend_f1',
-										key: {
-											dataType: DataTypes.String,
-											id: 'host_name--string--tag--false',
-
-											key: hostNameKey,
-											type: 'tag',
-										},
-										op: '=',
-										value: hostName,
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: [
-								{
-									dataType: DataTypes.String,
-									id: 'device--string--tag--false',
-
-									key: 'device',
-									type: 'tag',
-								},
-							],
-							having: [
-								{
-									columnName: `SUM(${diskPendingKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
-							legend: '{{device}}',
-							limit: null,
-							orderBy: [],
-							queryName: 'A',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'max',
-						},
-					],
-					queryFormulas: [],
-					queryTraceOperator: [],
-				},
-				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
-				id: 'f4cfc2a5-78fc-42cc-8f4a-194c8c916132',
-				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
-				queryType: EQueryType.QUERY_BUILDER,
-			},
-			variables: {},
-			formatForWeb: false,
-			start,
-			end,
-		},
-		{
-			selectedTime: 'GLOBAL_TIME',
-			graphType: PANEL_TYPES.TIME_SERIES,
-			query: {
-				builder: {
-					queryData: [
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.Float64,
 								id: 'system_filesystem_usage--float64--Gauge--true',
 
 								key: fsUsageKey,
@@ -2698,6 +2623,81 @@ export const getHostQueryPayload = (
 			start,
 			end,
 		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_disk_pending_operations--float64--Gauge--true',
+
+								key: diskPendingKey,
+								type: 'Gauge',
+							},
+							aggregateOperator: 'max',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'diskpend_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'device--string--tag--false',
+
+									key: 'device',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${diskPendingKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{device}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'max',
+						},
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: 'f4cfc2a5-78fc-42cc-8f4a-194c8c916132',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
 	];
 };
 
@@ -2771,6 +2771,6 @@ export const hostWidgetInfo = [
 	{ title: 'Network connections', yAxisUnit: 'short' },
 	{ title: 'System disk io (bytes transferred)', yAxisUnit: 'bytes' },
 	{ title: 'System disk operations/s', yAxisUnit: 'short' },
+	{ title: 'Disk Usage (%) by mountpoint', yAxisUnit: 'percentunit' },
 	{ title: 'Queue size', yAxisUnit: 'short' },
-	{ title: 'Disk Usage', yAxisUnit: 'percentunit' },
 ];
