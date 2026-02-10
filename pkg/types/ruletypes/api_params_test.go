@@ -171,10 +171,10 @@ func TestParseIntoRule(t *testing.T) {
 			kind:        RuleDataKindJson,
 			expectError: false,
 			validate: func(t *testing.T, rule *PostableRule) {
-				if rule.EvalWindow != Duration(5*time.Minute) {
+				if rule.EvalWindow.Duration() != 5*time.Minute {
 					t.Errorf("Expected default eval window '5m', got '%v'", rule.EvalWindow)
 				}
-				if rule.Frequency != Duration(1*time.Minute) {
+				if rule.Frequency.Duration() != time.Minute {
 					t.Errorf("Expected default frequency '1m', got '%v'", rule.Frequency)
 				}
 				if rule.RuleCondition.CompositeQuery.BuilderQueries["A"].Expression != "A" {
@@ -327,10 +327,10 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 
 				// Verify evaluation window matches rule settings
 				if window, ok := rule.Evaluation.Spec.(RollingWindow); ok {
-					if window.EvalWindow != rule.EvalWindow {
+					if !window.EvalWindow.Equal(rule.EvalWindow) {
 						t.Errorf("Expected Evaluation EvalWindow %v, got %v", rule.EvalWindow, window.EvalWindow)
 					}
-					if window.Frequency != rule.Frequency {
+					if !window.Frequency.Equal(rule.Frequency) {
 						t.Errorf("Expected Evaluation Frequency %v, got %v", rule.Frequency, window.Frequency)
 					}
 				} else {
@@ -457,10 +457,10 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 					t.Fatal("Expected Evaluation to be populated")
 				}
 				if window, ok := rule.Evaluation.Spec.(RollingWindow); ok {
-					if window.EvalWindow != rule.EvalWindow {
+					if !window.EvalWindow.Equal(rule.EvalWindow) {
 						t.Errorf("Expected Evaluation EvalWindow to be overwritten to %v, got %v", rule.EvalWindow, window.EvalWindow)
 					}
-					if window.Frequency != rule.Frequency {
+					if !window.Frequency.Equal(rule.Frequency) {
 						t.Errorf("Expected Evaluation Frequency to be overwritten to %v, got %v", rule.Frequency, window.Frequency)
 					}
 				} else {
@@ -504,7 +504,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 					t.Error("Expected Evaluation to be nil for v2")
 				}
 
-				if rule.EvalWindow != Duration(5*time.Minute) {
+				if rule.EvalWindow.Duration() != 5*time.Minute {
 					t.Error("Expected default EvalWindow to be applied")
 				}
 				if rule.RuleType != RuleTypeThreshold {

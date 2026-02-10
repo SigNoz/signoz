@@ -1,12 +1,12 @@
-package implrole
+package signozauthzapi
 
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -14,12 +14,11 @@ import (
 )
 
 type handler struct {
-	setter role.Setter
-	getter role.Getter
+	authz authz.AuthZ
 }
 
-func NewHandler(setter role.Setter, getter role.Getter) role.Handler {
-	return &handler{setter: setter, getter: getter}
+func NewHandler(authz authz.AuthZ) authz.Handler {
+	return &handler{authz: authz}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -36,7 +35,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.setter.Create(ctx, valuer.MustNewUUID(claims.OrgID), roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID)))
+	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID)))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -64,7 +63,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.getter.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
+	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -103,7 +102,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	objects, err := handler.setter.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
+	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -114,7 +113,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 
 func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	resources := handler.setter.GetResources(ctx)
+	resources := handler.authz.GetResources(ctx)
 
 	var resourceRelations = struct {
 		Resources []*authtypes.Resource                   `json:"resources"`
@@ -134,7 +133,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roles, err := handler.getter.List(ctx, valuer.MustNewUUID(claims.OrgID))
+	roles, err := handler.authz.List(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -163,7 +162,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.getter.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -175,7 +174,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.setter.Patch(ctx, valuer.MustNewUUID(claims.OrgID), role)
+	err = handler.authz.Patch(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -210,7 +209,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := handler.getter.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -222,7 +221,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.setter.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, patchableObjects.Additions, patchableObjects.Deletions)
+	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, patchableObjects.Additions, patchableObjects.Deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -245,7 +244,7 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.setter.Delete(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	err = handler.authz.Delete(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
