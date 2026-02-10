@@ -44,10 +44,10 @@ def test_list_connected_accounts_empty(
     ), f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
-    # API returns data wrapped in {'status': 'success', 'data': {...}}
     data = response_data.get("data", response_data)
     assert "accounts" in data, "Response should contain 'accounts' field"
     assert isinstance(data["accounts"], list), "Accounts should be a list"
+    assert len(data["accounts"]) == 0, "Accounts list should be empty when no accounts are connected"
 
 
 
@@ -67,7 +67,7 @@ def test_list_connected_accounts_with_account(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
 
     # List accounts
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
@@ -170,7 +170,7 @@ def test_update_account_config(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Update account configuration
     endpoint = (
@@ -237,7 +237,7 @@ def test_disconnect_account(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Disconnect the account
     endpoint = (
