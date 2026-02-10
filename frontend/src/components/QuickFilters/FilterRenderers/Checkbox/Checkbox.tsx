@@ -646,7 +646,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											{filter.customRendererForValue ? (
 												filter.customRendererForValue(value)
 											) : (
-												<Tooltip title={String(value)} mouseLeaveDelay={0}>
+												<Tooltip
+													title={String(value)}
+													mouseEnterDelay={0.2}
+													mouseLeaveDelay={0}
+												>
 													<Typography.Text className="value-string">
 														{String(value)}
 													</Typography.Text>
