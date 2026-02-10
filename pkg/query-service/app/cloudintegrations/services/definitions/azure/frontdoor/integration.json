@@ -1,6 +1,6 @@
 {
-  "id": "blobstorage",
-  "title": "Blob Storage",
+  "id": "frontdoor",
+  "title": "Front Door",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supported_signals": {
@@ -205,11 +205,6 @@
         "name": "placeholder_log_1",
         "path": "placeholder.path.value",
         "type": "string"
-      },
-      {
-        "name": "placeholder_log_1",
-        "path": "placeholder.path.value",
-        "type": "string"
       }
     ]
   },
@@ -243,7 +238,7 @@
     "dashboards": [
       {
         "id": "overview",
-        "title": "Blob Storage Overview",
+        "title": "Front Door Overview",
         "description": "Overview of Blob Storage",
         "definition": "file://assets/dashboards/overview.json"
       }
