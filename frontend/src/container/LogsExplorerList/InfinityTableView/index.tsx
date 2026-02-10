@@ -4,7 +4,6 @@ import {
 	TableVirtuoso,
 	TableVirtuosoHandle,
 } from 'react-virtuoso';
-import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
@@ -62,50 +61,36 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			isLoading,
 			tableViewProps,
 			infitiyTableProps,
-			handleChangeSelectedView,
-			logs,
-			onSetActiveLog: onSetActiveLogProp,
-			onClearActiveLog: onClearActiveLogProp,
-			activeLog: activeLogProp,
+			onSetActiveLog,
+			onClearActiveLog,
+			activeLog,
 		},
 		ref,
 	): JSX.Element | null {
-		const {
-			activeLog: activeContextLog,
-			onSetActiveLog: handleSetActiveContextLog,
-			onClearActiveLog: handleClearActiveContextLog,
-			onAddToQuery: handleAddToQuery,
-		} = useActiveLog();
-		const {
-			activeLog,
-			onSetActiveLog: onSetActiveLogHook,
-			onClearActiveLog: onClearActiveLogHook,
-			onAddToQuery,
-		} = useActiveLog();
+		const { activeLog: activeContextLog } = useActiveLog();
 
-		const hasExternalActiveLog =
-			onSetActiveLogProp !== undefined ||
-			onClearActiveLogProp !== undefined ||
-			activeLogProp !== undefined;
-		const activeOverviewLog = activeLogProp ?? activeLog;
-
-		const onSetActiveLog = useCallback(
+		const onSetActiveLogExpand = useCallback(
 			(log: ILog) => {
-				onSetActiveLogProp?.(log);
-				onSetActiveLogHook(log);
+				onSetActiveLog?.(log);
 			},
-			[onSetActiveLogProp, onSetActiveLogHook],
+			[onSetActiveLog],
 		);
 
-		const onClearActiveLog = useCallback(() => {
-			onClearActiveLogProp?.();
-			onClearActiveLogHook();
-		}, [onClearActiveLogProp, onClearActiveLogHook]);
+		const onSetActiveLogContext = useCallback(
+			(log: ILog) => {
+				onSetActiveLog?.(log, VIEW_TYPES.CONTEXT);
+			},
+			[onSetActiveLog],
+		);
+
+		const onCloseActiveLog = useCallback(() => {
+			onClearActiveLog?.();
+		}, [onClearActiveLog]);
 
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
-			onClickExpand: onSetActiveLog,
-			onOpenLogsContext: handleSetActiveContextLog,
+			onClickExpand: onSetActiveLogExpand,
+			onOpenLogsContext: onSetActiveLogContext,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
@@ -131,23 +116,21 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					tableColumns={tableColumns}
 					index={index}
 					log={log}
-					handleSetActiveContextLog={handleSetActiveContextLog}
 					logs={tableViewProps.logs}
 					hasActions
 					fontSize={tableViewProps.fontSize}
 					onShowLogDetails={onSetActiveLog}
-					isActiveLog={activeOverviewLog?.id === log.id}
-					onClearActiveLog={onClearActiveLog}
+					isActiveLog={activeLog?.id === log.id}
+					onClearActiveLog={onCloseActiveLog}
 				/>
 			),
 			[
-				handleSetActiveContextLog,
 				tableColumns,
-				tableViewProps.fontSize,
-				tableViewProps.logs,
 				onSetActiveLog,
-				activeOverviewLog?.id,
-				onClearActiveLog,
+				tableViewProps.logs,
+				tableViewProps.fontSize,
+				activeLog?.id,
+				onCloseActiveLog,
 			],
 		);
 		const tableHeader = useCallback(
@@ -198,7 +181,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 								...props,
 								context: {
 									activeContextLogId: activeContextLog?.id,
-									activeLogId: activeOverviewLog?.id,
+									activeLogId: activeLog?.id,
 								},
 							} as any),
 					}}
@@ -210,28 +193,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
 				/>
-
-				{activeContextLog && (
-					<LogDetail
-						log={activeContextLog}
-						onClose={handleClearActiveContextLog}
-						onAddToQuery={handleAddToQuery}
-						selectedTab={VIEW_TYPES.CONTEXT}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
-				)}
-				{!hasExternalActiveLog && (
-					<LogDetail
-						selectedTab={VIEW_TYPES.OVERVIEW}
-						log={activeLog}
-						onClose={onClearActiveLog}
-						onAddToQuery={onAddToQuery}
-						onClickActionItem={onAddToQuery}
-						handleChangeSelectedView={handleChangeSelectedView}
-						logs={logs}
-						onNavigateLog={onSetActiveLog}
-					/>
-				)}
 			</>
 		);
 	},

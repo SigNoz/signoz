@@ -115,7 +115,6 @@ function LiveLogsList({
 					onClearActiveLog={handleCloseLogDetail}
 					fontSize={options.fontSize}
 					handleChangeSelectedView={handleChangeSelectedView}
-					logs={formattedLogs}
 				/>
 			);
 		},
@@ -129,7 +128,6 @@ function LiveLogsList({
 			handleSetActiveLog,
 			handleCloseLogDetail,
 			handleChangeSelectedView,
-			formattedLogs,
 		],
 	);
 

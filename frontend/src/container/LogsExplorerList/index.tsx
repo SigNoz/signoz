@@ -142,7 +142,6 @@ function LogsExplorerList({
 					linesPerRow={options.maxLines}
 					handleChangeSelectedView={handleChangeSelectedView}
 					onClearActiveLog={handleCloseLogDetail}
-					logs={logs}
 				/>
 			);
 		},
