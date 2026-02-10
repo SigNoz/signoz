@@ -4,16 +4,9 @@ import uuid
 
 import pytest
 import requests
-from wiremock.client import (
-    HttpMethods,
-    Mapping,
-    MappingRequest,
-    MappingResponse,
-    WireMockMatchers,
-)
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.cloudintegrations import (
     create_test_account,

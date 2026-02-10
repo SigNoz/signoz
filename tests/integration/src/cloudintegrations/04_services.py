@@ -4,16 +4,9 @@ import uuid
 
 import pytest
 import requests
-from wiremock.client import (
-    HttpMethods,
-    Mapping,
-    MappingRequest,
-    MappingResponse,
-    WireMockMatchers,
-)
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.cloudintegrations import (
     create_test_account,
@@ -141,7 +134,7 @@ def test_get_service_details_without_account(
     # Verify service details structure
     assert "id" in data, "Service details should have 'id' field"
     assert data["id"] == service_id, "Service ID should match requested ID"
-    assert "title" in data, "Service details should have 'name' field"
+    assert "title" in data, "Service details should have 'title' field"
     assert "overview" in data, "Service details should have 'overview' field"
     # assert assets to had list of dashboards
     assert "assets" in data, "Service details should have 'assets' field"

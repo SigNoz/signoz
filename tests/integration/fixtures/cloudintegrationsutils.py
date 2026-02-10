@@ -1,10 +1,7 @@
 """Fixtures for cloud integration tests."""
-from typing import Callable
 from http import HTTPStatus
 
-import pytest
 import requests
-from sqlalchemy import text
 
 from fixtures import types
 from fixtures.logger import setup_logger
