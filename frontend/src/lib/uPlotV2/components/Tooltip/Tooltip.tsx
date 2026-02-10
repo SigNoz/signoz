@@ -6,8 +6,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { TooltipContentItem, TooltipProps } from '../types';
-import { buildTooltipContent } from './utils';
+import { TooltipProps } from '../types';
 
 import './Tooltip.styles.scss';
 
@@ -17,15 +16,12 @@ const TOOLTIP_ITEM_HEIGHT = 38;
 dayjs.extend(customParseFormat);
 
 export default function Tooltip({
-	seriesIndex,
-	dataIndexes,
 	uPlotInstance,
 	timezone,
-	yAxisUnit = '',
-	decimalPrecision,
-	isStackedBarChart,
+	content,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+
 	const headerTitle = useMemo(() => {
 		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
@@ -36,28 +32,6 @@ export default function Tooltip({
 			.tz(timezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 	}, [timezone, uPlotInstance.data, uPlotInstance.cursor.idx]);
-
-	const content = useMemo(
-		(): TooltipContentItem[] =>
-			buildTooltipContent({
-				data: uPlotInstance.data,
-				series: uPlotInstance.series,
-				dataIndexes,
-				activeSeriesIndex: seriesIndex,
-				uPlotInstance,
-				yAxisUnit,
-				decimalPrecision,
-				isStackedBarChart,
-			}),
-		[
-			uPlotInstance,
-			seriesIndex,
-			dataIndexes,
-			yAxisUnit,
-			decimalPrecision,
-			isStackedBarChart,
-		],
-	);
 
 	return (
 		<div
