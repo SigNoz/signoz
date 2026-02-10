@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import uPlot, { Series } from 'uplot';
@@ -39,6 +40,11 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		if (lineCap) {
 			lineConfig.cap = lineCap;
 		}
+
+		if (this.props.panelType === PANEL_TYPES.BAR) {
+			lineConfig.fill = lineColor;
+		}
+
 		return lineConfig;
 	}
 
@@ -213,8 +219,9 @@ function getPathBuilder(
 		const linearBuilder = pathBuilders.linear;
 		const splineBuilder = pathBuilders.spline;
 		const steppedBuilder = pathBuilders.stepped;
+		const barBuilder = pathBuilders.bars;
 
-		if (!linearBuilder || !splineBuilder || !steppedBuilder) {
+		if (!linearBuilder || !splineBuilder || !steppedBuilder || !barBuilder) {
 			throw new Error('Required uPlot path builders are not available');
 		}
 
@@ -223,7 +230,12 @@ function getPathBuilder(
 			spline: splineBuilder(),
 			stepBefore: steppedBuilder({ align: -1 }),
 			stepAfter: steppedBuilder({ align: 1 }),
+			bar: barBuilder(),
 		};
+	}
+
+	if (style === DrawStyle.Bar) {
+		return builders.bar;
 	}
 
 	if (style === DrawStyle.Line) {
