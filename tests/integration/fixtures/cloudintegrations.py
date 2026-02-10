@@ -14,17 +14,26 @@ logger = setup_logger(__name__)
 
 @pytest.fixture
 def cleanup_cloud_accounts(signoz: types.SigNoz) -> None:
-    """Cleanup cloud accounts after test."""
+    # Optional: pre-test cleanup to start from a clean slate
     try:
         with signoz.sqlstore.conn.connect() as conn:
-            # Try to delete all records instead of truncate in case table exists
             conn.execute(text("DELETE FROM cloud_integration"))
             conn.commit()
-            logger.info("Cleaned up cloud_integration table")
+            logger.info("Pre-test cleanup: cloud_integration table cleared")
     except Exception:  # pylint: disable=broad-except
-        # Table might not exist, which is fine
-        logger.info("Cleanup skipped or partial")
+        logger.info("Pre-test cleanup skipped or partial")
 
+    # Yield to run the test
+    yield
+
+    # Post-test cleanup to ensure isolation
+    try:
+        with signoz.sqlstore.conn.connect() as conn:
+            conn.execute(text("DELETE FROM cloud_integration"))
+            conn.commit()
+            logger.info("Post-test cleanup: cloud_integration table cleared")
+    except Exception:  # pylint: disable=broad-except
+        logger.info("Post-test cleanup skipped or partial")
 
 
 @pytest.fixture
