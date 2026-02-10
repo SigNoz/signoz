@@ -397,33 +397,21 @@ export default function TableViewActions(
 								content={
 									<div>
 										<Button
-											className="ellipses-attribute"
+											className="more-filter-actions"
 											type="text"
 											icon={<GroupByIcon />}
 											onClick={handleGroupByAttribute}
 										>
 											Group By Attribute
 										</Button>
-										<Tooltip
-											title={`Replace filters with ${fieldFilterKey}:${fieldData.value}`}
-											mouseEnterDelay={0}
-											mouseLeaveDelay={0}
+										<Button
+											className="more-filter-actions"
+											type="text"
+											icon={<RefreshCw size={14} />}
+											onClick={handleReplaceFilter}
 										>
-											<Button
-												className="ellipses-attribute"
-												type="text"
-												icon={<RefreshCw size={14} />}
-												onClick={handleReplaceFilter}
-											>
-												Replace filters with {fieldFilterKey}:
-												{fieldData.value.length > 12
-													? `${fieldData.value.substring(
-															0,
-															5,
-													  )}...${fieldData.value.substring(fieldData.value.length - 4)}`
-													: fieldData.value}
-											</Button>
-										</Tooltip>
+											Replace filters with this value
+										</Button>
 									</div>
 								}
 								rootClassName="table-view-actions-content"
@@ -495,32 +483,21 @@ export default function TableViewActions(
 							content={
 								<div>
 									<Button
-										className="ellipses-attribute"
+										className="more-filter-actions"
 										type="text"
 										icon={<GroupByIcon />}
 										onClick={handleGroupByAttribute}
 									>
 										Group By Attribute
 									</Button>
-									<Tooltip
-										title={`Replace filters with ${fieldFilterKey}:${fieldData.value}`}
-										mouseEnterDelay={0}
-										mouseLeaveDelay={0}
+									<Button
+										className="more-filter-actions"
+										type="text"
+										icon={<RefreshCw size={14} />}
+										onClick={handleReplaceFilter}
 									>
-										<Button
-											className="ellipses-attribute"
-											type="text"
-											icon={<RefreshCw size={14} />}
-											onClick={handleReplaceFilter}
-										>
-											Replace filters with {fieldFilterKey}:
-											{fieldData.value.length > 12
-												? `${fieldData.value.substring(0, 5)}...${fieldData.value.substring(
-														fieldData.value.length - 4,
-												  )}`
-												: fieldData.value}
-										</Button>
-									</Tooltip>
+										Replace filters with this value
+									</Button>
 								</div>
 							}
 							rootClassName="table-view-actions-content"
