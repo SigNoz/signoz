@@ -102,6 +102,7 @@ function ExplorerOptions({
 	handleChangeSelectedView,
 	logsAlertQuery,
 }: ExplorerOptionsProps): JSX.Element {
+	const alertQuery = logsAlertQuery || query;
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 	const [newViewName, setNewViewName] = useState<string>('');
@@ -750,7 +751,7 @@ function ExplorerOptions({
 			<Button
 				disabled={disabled}
 				shape="round"
-				onClick={(): void => onCreateAlertsHandler(logsAlertQuery)}
+				onClick={(): void => onCreateAlertsHandler(alertQuery)}
 				icon={<ConciergeBell size={16} />}
 			>
 				Create an Alert
@@ -758,7 +759,7 @@ function ExplorerOptions({
 		);
 	}, [
 		disabled,
-		logsAlertQuery,
+		alertQuery,
 		isOneChartPerQuery,
 		onCreateAlertsHandler,
 		splitedQueries,
@@ -1045,7 +1046,7 @@ export interface ExplorerOptionsProps {
 	isOneChartPerQuery?: boolean;
 	splitedQueries?: Query[];
 	handleChangeSelectedView?: ChangeViewFunctionType;
-	logsAlertQuery: Query | null;
+	logsAlertQuery?: Query | null;
 }
 
 ExplorerOptions.defaultProps = {
