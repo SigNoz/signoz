@@ -1,3 +1,4 @@
+import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -16,6 +17,12 @@ interface TestIngestionKeyProps extends Omit<IngestionKeyProps, 'limits'> {
 
 interface TestAllIngestionKeyProps extends Omit<AllIngestionKeyProps, 'data'> {
 	data: TestIngestionKeyProps[];
+}
+
+// Gateway API response type (uses actual schema types for contract safety)
+interface TestGatewayIngestionKeysResponse {
+	status: string;
+	data: GatewaytypesGettableIngestionKeysDTO;
 }
 
 // Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
@@ -86,18 +93,18 @@ describe('MultiIngestionSettings Page', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		// Arrange API response with a metrics daily count limit so the alert button is visible
-		const response = {
+		const response: TestGatewayIngestionKeysResponse = {
 			status: 'success',
 			data: {
 				keys: [
 					{
 						name: 'Key One',
-						expires_at: TEST_EXPIRES_AT,
+						expires_at: new Date(TEST_EXPIRES_AT),
 						value: 'secret',
 						workspace_id: TEST_WORKSPACE_ID,
 						id: 'k1',
-						created_at: TEST_CREATED_UPDATED,
-						updated_at: TEST_CREATED_UPDATED,
+						created_at: new Date(TEST_CREATED_UPDATED),
+						updated_at: new Date(TEST_CREATED_UPDATED),
 						tags: [],
 						limits: [
 							{

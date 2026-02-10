@@ -174,7 +174,7 @@ function MultiIngestionSettings(): JSX.Element {
 	const [
 		activeAPIKey,
 		setActiveAPIKey,
-	] = useState<GatewaytypesIngestionKeyDTO | null>();
+	] = useState<GatewaytypesIngestionKeyDTO | null>(null);
 	const [activeSignal, setActiveSignal] = useState<LimitProps | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -325,7 +325,7 @@ function MultiIngestionSettings(): JSX.Element {
 	);
 
 	// Use the appropriate data based on which API is active
-	const IngestionKeys = isSearching
+	const ingestionKeys = isSearching
 		? searchIngestionKeysData
 		: ingestionKeysData;
 	const isLoading = isSearching ? isLoadingSearch : isLoadingGet;
@@ -335,10 +335,10 @@ function MultiIngestionSettings(): JSX.Element {
 	const isError = isSearching ? isSearchError : isGetError;
 
 	useEffect(() => {
-		setDataSource(IngestionKeys?.data.data?.keys || []);
-		setTotalIngestionKeys(IngestionKeys?.data?.data?._pagination?.total || 0);
+		setDataSource(ingestionKeys?.data.data?.keys || []);
+		setTotalIngestionKeys(ingestionKeys?.data?.data?._pagination?.total || 0);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [IngestionKeys?.data?.data]);
+	}, [ingestionKeys?.data?.data]);
 
 	useEffect(() => {
 		if (isError) {
@@ -542,6 +542,14 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: GatewaytypesIngestionKeyDTO,
 		signalName: string,
 	): void => {
+		if (!APIKey.id) {
+			notifications.error({
+				message: 'Invalid ingestion key',
+				description: 'Cannot create limit for ingestion key without a valid ID',
+			});
+			return;
+		}
+
 		const {
 			dailyLimit,
 			secondsLimit,
@@ -552,7 +560,7 @@ function MultiIngestionSettings(): JSX.Element {
 		} = addEditLimitForm.getFieldsValue();
 
 		const payload: AddLimitProps = {
-			keyID: APIKey.id || '',
+			keyID: APIKey.id,
 			signal: signalName,
 			config: {},
 		};
@@ -661,6 +669,14 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: GatewaytypesIngestionKeyDTO,
 		signal: LimitProps,
 	): void => {
+		if (!signal.id) {
+			notifications.error({
+				message: 'Invalid limit',
+				description: 'Cannot update limit without a valid ID',
+			});
+			return;
+		}
+
 		const {
 			dailyLimit,
 			secondsLimit,
@@ -972,7 +988,7 @@ function MultiIngestionSettings(): JSX.Element {
 											{APIKey?.value?.substring(0, 2)}********
 											{APIKey?.value
 												?.substring(APIKey?.value?.length ? APIKey.value.length - 2 : 0)
-												.trim()}
+												?.trim()}
 										</Typography.Text>
 
 										<Copy className="copy-key-btn" size={12} onClick={onCopyKey} />
