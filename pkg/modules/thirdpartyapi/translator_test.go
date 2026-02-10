@@ -117,6 +117,59 @@ func TestFilterResponse(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should filter out IP addresses from scalar data",
+			input: []*qbtypes.QueryRangeResponse{
+				{
+					Data: qbtypes.QueryData{
+						Results: []any{
+							&qbtypes.ScalarData{
+								QueryName: "endpoints",
+								Columns: []*qbtypes.ColumnDescriptor{
+									{
+										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+										Type:              qbtypes.ColumnTypeGroup,
+									},
+									{
+										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "endpoints"},
+										Type:              qbtypes.ColumnTypeAggregation,
+									},
+								},
+								Data: [][]any{
+									{"192.168.1.1", 10},
+									{"example.com", 20},
+									{"10.0.0.1", 5},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: []*qbtypes.QueryRangeResponse{
+				{
+					Data: qbtypes.QueryData{
+						Results: []any{
+							&qbtypes.ScalarData{
+								QueryName: "endpoints",
+								Columns: []*qbtypes.ColumnDescriptor{
+									{
+										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+										Type:              qbtypes.ColumnTypeGroup,
+									},
+									{
+										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "endpoints"},
+										Type:              qbtypes.ColumnTypeAggregation,
+									},
+								},
+								Data: [][]any{
+									{"example.com", 20},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
