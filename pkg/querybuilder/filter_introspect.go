@@ -187,8 +187,8 @@ func (v *filterTreeVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 
 // VisitComparison builds a leaf node with a single ParsedFilterCondition.
 func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	keys := v.buildKeys(ctx.Key())
-	if len(keys) == 0 {
+	key := v.buildKey(ctx.Key())
+	if key == nil {
 		return nil
 	}
 
@@ -202,7 +202,7 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 		return &qbtypes.FilterExprNode{
 			Op: qbtypes.LogicalOpLeaf,
 			Conditions: []qbtypes.FilterCondition{{
-				Key:   keys[0],
+				Key:   key,
 				Op:    op,
 				Value: nil,
 			}},
@@ -221,7 +221,7 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 		return &qbtypes.FilterExprNode{
 			Op: qbtypes.LogicalOpLeaf,
 			Conditions: []qbtypes.FilterCondition{{
-				Key:   keys[0],
+				Key:   key,
 				Op:    op,
 				Value: values,
 			}},
@@ -247,7 +247,7 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 		return &qbtypes.FilterExprNode{
 			Op: qbtypes.LogicalOpLeaf,
 			Conditions: []qbtypes.FilterCondition{{
-				Key:   keys[0],
+				Key:   key,
 				Op:    op,
 				Value: []any{value1, value2},
 			}},
@@ -305,21 +305,20 @@ func (v *filterTreeVisitor) VisitComparison(ctx *grammar.ComparisonContext) any 
 	return &qbtypes.FilterExprNode{
 		Op: qbtypes.LogicalOpLeaf,
 		Conditions: []qbtypes.FilterCondition{{
-			Key:   keys[0],
+			Key:   key,
 			Op:    op,
 			Value: value,
 		}},
 	}
 }
 
-// buildKeys turns a key context into a slice of TelemetryFieldKey.
-func (v *filterTreeVisitor) buildKeys(ctx grammar.IKeyContext) []*telemetrytypes.TelemetryFieldKey {
+// buildKey turns a key context into a TelemetryFieldKey.
+func (v *filterTreeVisitor) buildKey(ctx grammar.IKeyContext) *telemetrytypes.TelemetryFieldKey {
 	if ctx == nil {
 		return nil
 	}
-	text := ctx.GetText()
-	key := telemetrytypes.GetFieldKeyFromKeyText(text)
-	return []*telemetrytypes.TelemetryFieldKey{&key}
+	key := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
+	return &key
 }
 
 // buildValuesFromInClause handles the IN/NOT IN value side.
