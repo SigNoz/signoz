@@ -17,22 +17,19 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
 from fixtures.cloudintegrations import (
     create_test_account,
-    simulate_agent_checkin,
 )
+from fixtures.cloudintegrationsutils import simulate_agent_checkin
 
 logger = setup_logger(__name__)
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_services_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test listing available services without specifying an account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
 
     cloud_provider = "aws"
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -60,47 +57,15 @@ def test_list_services_without_account(
     assert "icon" in service, "Service should have 'icon' field"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_list_services_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
     create_test_account: Callable,
-    simulate_agent_checkin: Callable,
 ) -> None:
     """Test listing services for a specific connected account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
-
-    # Mock the deployment info query
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "name": "test-deployment",
-                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -108,7 +73,7 @@ def test_list_services_with_account(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # List services for the account
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services?cloud_account_id={cloud_account_id}"
@@ -136,16 +101,14 @@ def test_list_services_with_account(
     assert "icon" in service, "Service should have 'icon' field"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_get_service_details_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test getting service details without specifying an account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
 
     cloud_provider = "aws"
     # First get the list of services to get a valid service ID
@@ -185,47 +148,15 @@ def test_get_service_details_without_account(
     assert isinstance(data["assets"], dict), "Assets should be a dictionary"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_get_service_details_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
     create_test_account: Callable,
-    simulate_agent_checkin: Callable,
 ) -> None:
     """Test getting service details for a specific connected account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
-
-    # Mock the deployment info query
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "name": "test-deployment",
-                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -233,7 +164,7 @@ def test_get_service_details_with_account(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Get list of services first
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -272,16 +203,14 @@ def test_get_service_details_with_account(
     assert "status" in data, "Config should have 'status' field"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_get_service_details_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test getting details for a non-existent service."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
 
     cloud_provider = "aws"
     fake_service_id = "non-existent-service"
@@ -298,16 +227,14 @@ def test_get_service_details_invalid_service(
     ), f"Expected 404, got {response.status_code}"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_list_services_unsupported_provider(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test listing services for an unsupported cloud provider."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
 
     cloud_provider = "gcp"  # Unsupported provider
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -323,47 +250,15 @@ def test_list_services_unsupported_provider(
     ), f"Expected 400, got {response.status_code}"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_update_service_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
     create_test_account: Callable,
-    simulate_agent_checkin: Callable,
 ) -> None:
     """Test updating service configuration for a connected account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
-
-    # Mock the deployment info query
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "name": "test-deployment",
-                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -371,7 +266,7 @@ def test_update_service_config(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Get list of services to pick a valid service ID
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -418,16 +313,14 @@ def test_update_service_config(
     assert "logs" in data["config"], "Config should contain 'logs' field"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_update_service_config_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test updating service config without a connected account should fail."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
 
     cloud_provider = "aws"
 
@@ -465,47 +358,15 @@ def test_update_service_config_without_account(
     ), f"Expected 500 for non-existent account, got {response.status_code}"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_update_service_config_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
     create_test_account: Callable,
-    simulate_agent_checkin: Callable,
 ) -> None:
     """Test updating config for a non-existent service should fail."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
-
-    # Mock the deployment info query
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "name": "test-deployment",
-                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -513,7 +374,7 @@ def test_update_service_config_invalid_service(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Try to update config for invalid service
     fake_service_id = "non-existent-service"
@@ -538,47 +399,15 @@ def test_update_service_config_invalid_service(
     ), f"Expected 404 for invalid service, got {response.status_code}"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
+
 def test_update_service_config_disable_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
     create_test_account: Callable,
-    simulate_agent_checkin: Callable,
 ) -> None:
     """Test disabling a service by updating config with enabled=false."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    add_license(signoz, make_http_mocks, get_token)
-
-    # Mock the deployment info query
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "name": "test-deployment",
-                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -586,7 +415,7 @@ def test_update_service_config_disable_service(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(signoz)(admin_token, cloud_provider, account_id, cloud_account_id)
 
     # Get a valid service
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"

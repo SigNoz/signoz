@@ -1,108 +1,33 @@
 """Fixtures for cloud integration tests."""
-from typing import Callable
+from typing import Callable, Optional
 from http import HTTPStatus
 
 import pytest
 import requests
-from sqlalchemy import text
 
 from fixtures import types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-
-@pytest.fixture
-def cleanup_cloud_accounts(signoz: types.SigNoz) -> None:
-    # Optional: pre-test cleanup to start from a clean slate
-    try:
-        with signoz.sqlstore.conn.connect() as conn:
-            conn.execute(text("DELETE FROM cloud_integration"))
-            conn.commit()
-            logger.info("Pre-test cleanup: cloud_integration table cleared")
-    except Exception:  # pylint: disable=broad-except
-        logger.info("Pre-test cleanup skipped or partial")
-
-    # Yield to run the test
-    yield
-
-    # Post-test cleanup to ensure isolation
-    try:
-        with signoz.sqlstore.conn.connect() as conn:
-            conn.execute(text("DELETE FROM cloud_integration"))
-            conn.commit()
-            logger.info("Post-test cleanup: cloud_integration table cleared")
-    except Exception:  # pylint: disable=broad-except
-        logger.info("Post-test cleanup skipped or partial")
-
-
-@pytest.fixture
-def simulate_agent_checkin(
-    signoz: types.SigNoz,
-) -> Callable[[str, str, str, str], dict]:
-    """Simulate an agent check-in to mark the account as connected."""
-
-    def _simulate(
-        admin_token: str,
-        cloud_provider: str,
-        account_id: str,
-        cloud_account_id: str,
-    ) -> dict:
-        """Simulate an agent check-in to mark the account as connected.
-
-        Returns:
-            dict with the response from check-in
-        """
-        endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/agent-check-in"
-
-        checkin_payload = {
-            "account_id": account_id,
-            "cloud_account_id": cloud_account_id,
-            "data": {},
-        }
-
-        response = requests.post(
-            signoz.self.host_configs["8080"].get(endpoint),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            json=checkin_payload,
-            timeout=10,
-        )
-
-        if response.status_code != HTTPStatus.OK:
-            logger.error(
-                "Agent check-in failed: %s, response: %s",
-                response.status_code,
-                response.text,
-            )
-
-        assert (
-            response.status_code == HTTPStatus.OK
-        ), f"Agent check-in failed: {response.status_code}"
-
-        response_data = response.json()
-        return response_data.get("data", response_data)
-
-    return _simulate
-
-
-@pytest.fixture
+@pytest.fixture(name="create_test_account", scope="function")
 def create_test_account(
     signoz: types.SigNoz,
 ) -> Callable[[str, str], dict]:
-    """Create a test account via generate-connection-url."""
+    """Factory to create a test cloud account via generate-connection-url.
+
+    Yields the factory to the test. After the test completes, if the factory was
+    used, the created account is disconnected using the same admin_token and
+    cloud_provider that were used to create it.
+    """
+    created_account_id: Optional[str] = None
+    admin_token_shared: Optional[str] = None
+    cloud_provider_shared: Optional[str] = None
 
     def _create(
         admin_token: str,
         cloud_provider: str = "aws",
     ) -> dict:
-        """Create a test account via generate-connection-url.
-
-        Returns the data as-is from the API response. Caller is responsible for
-        doing agent check-in if needed to mark the account as connected.
-
-        Returns:
-            dict with account_id and connection_url from the API
-        """
         endpoint = (
             f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
         )
@@ -131,9 +56,35 @@ def create_test_account(
         ), f"Failed to create test account: {response.status_code}"
 
         response_data = response.json()
-        # API returns data wrapped in {'status': 'success', 'data': {...}}
         data = response_data.get("data", response_data)
+
+        # Save only account_id; share admin_token/cloud_provider via closure
+        nonlocal created_account_id, admin_token_shared, cloud_provider_shared
+        created_account_id = data.get("account_id")
+        admin_token_shared = admin_token
+        cloud_provider_shared = cloud_provider
 
         return data
 
-    return _create
+    def _disconnect(admin_token: str, cloud_provider: str = "aws") -> requests.Response:
+        """Disconnect the created account using provided admin_token/cloud_provider."""
+        assert created_account_id
+        endpoint = (
+            f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{created_account_id}/disconnect"
+        )
+        return requests.post(
+            signoz.self.host_configs["8080"].get(endpoint),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=10,
+        )
+
+    # Yield factory to the test
+    yield _create
+
+    # Post-test cleanup: disconnect the created account if any
+    if created_account_id:
+        r = _disconnect(admin_token_shared, cloud_provider_shared)
+        if r.status_code != HTTPStatus.OK:
+            logger.info(
+                "Disconnect cleanup returned %s for account %s", r.status_code, created_account_id
+            )

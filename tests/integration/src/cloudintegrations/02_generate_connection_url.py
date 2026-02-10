@@ -14,56 +14,20 @@ from wiremock.client import (
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
-from fixtures.cloudintegrations import cleanup_cloud_accounts
 
 logger = setup_logger(__name__)
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_generate_connection_url(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test to generate connection URL for AWS CloudFormation stack deployment."""
 
     # Get authentication token for admin user
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    add_license(signoz, make_http_mocks, get_token)
-
     cloud_provider = "aws"
-
-    # Mock the deployment info query (for license validation)
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "name": "test-deployment",
-                            "cluster": {"region": {"dns": "test.signoz.cloud"}},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
-
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
 
     # Prepare request payload
@@ -143,19 +107,14 @@ def test_generate_connection_url(
         ), f"connection_url should contain parameter: {param}"
 
 
-@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_generate_connection_url_unsupported_provider(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test that unsupported cloud providers return an error."""
     # Get authentication token for admin user
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    add_license(signoz, make_http_mocks, get_token)
-
     # Try with GCP (unsupported)
     cloud_provider = "gcp"
 
