@@ -80,31 +80,17 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 			continue
 		}
 
-		// Historically pipelines filter used to have the "attributes." prefix.
-		// For v5 we expect "attribute.", so normalize the payload before we
-		// attempt any migration logic.
-		normalized := strings.ReplaceAll(raw, "attributes.", "attribute.")
-
 		// Skip migration if this already looks like a v5 filter
 		// ({ "expression": "..." }), but still persist the normalized form
 		// if we changed it.
 		var vf qbtypes.Filter
-		if err := json.Unmarshal([]byte(normalized), &vf); err == nil && strings.TrimSpace(vf.Expression) != "" {
-			if normalized != raw {
-				if _, err := tx.NewUpdate().
-					Table("pipelines").
-					Set("filter = ?", normalized).
-					Where("id = ?", p.ID).
-					Exec(ctx); err != nil {
-					return err
-				}
-			}
+		if err := json.Unmarshal([]byte(raw), &vf); err == nil && strings.TrimSpace(vf.Expression) != "" {
 			continue
 		}
 
 		// Attempt to treat the existing JSON as a v3 FilterSet and build a v5
 		// expression from it, using the normalized payload.
-		expr, migrated, err := transition.BuildFilterExpressionFromFilterSet(ctx, migration.logger, "logs", normalized)
+		expr, migrated, err := transition.BuildFilterExpressionFromFilterSet(ctx, migration.logger, "logs", raw)
 		if err != nil || !migrated || strings.TrimSpace(expr) == "" {
 			return err
 		}
