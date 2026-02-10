@@ -20,6 +20,32 @@ export function resolveSeriesColor(
 	return FALLBACK_SERIES_COLOR;
 }
 
+export function getTooltipBaseValue({
+	data,
+	index,
+	dataIndex,
+	isStackedBarChart,
+}: {
+	data: AlignedData;
+	index: number;
+	dataIndex: number;
+	isStackedBarChart?: boolean;
+}): number | undefined | null {
+	let baseValue = data[index][dataIndex];
+	if (
+		isStackedBarChart &&
+		index + 1 < data.length &&
+		typeof baseValue === 'number' &&
+		Number.isFinite(baseValue)
+	) {
+		const nextValue = data[index + 1][dataIndex];
+		if (typeof nextValue === 'number' && Number.isFinite(nextValue)) {
+			baseValue = baseValue - nextValue;
+		}
+	}
+	return baseValue;
+}
+
 export function buildTooltipContent({
 	data,
 	series,
@@ -28,6 +54,7 @@ export function buildTooltipContent({
 	uPlotInstance,
 	yAxisUnit,
 	decimalPrecision,
+	isStackedBarChart,
 }: {
 	data: AlignedData;
 	series: Series[];
@@ -36,6 +63,7 @@ export function buildTooltipContent({
 	uPlotInstance: uPlot;
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
+	isStackedBarChart?: boolean;
 }): TooltipContentItem[] {
 	const active: TooltipContentItem[] = [];
 	const rest: TooltipContentItem[] = [];
@@ -52,23 +80,29 @@ export function buildTooltipContent({
 			continue;
 		}
 
-		const raw = data[index]?.[dataIndex];
-		const value = Number(raw);
-		const displayValue = Number.isNaN(value) ? 0 : value;
+		const baseValue = getTooltipBaseValue({
+			data,
+			index,
+			dataIndex,
+			isStackedBarChart,
+		});
+
 		const isActive = index === activeSeriesIndex;
 
-		const item: TooltipContentItem = {
-			label: String(s.label ?? ''),
-			value: displayValue,
-			tooltipValue: getToolTipValue(displayValue, yAxisUnit, decimalPrecision),
-			color: resolveSeriesColor(s.stroke, uPlotInstance, index),
-			isActive,
-		};
+		if (typeof baseValue === 'number' && Number.isFinite(baseValue)) {
+			const item: TooltipContentItem = {
+				label: String(s.label ?? ''),
+				value: baseValue,
+				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
+				color: resolveSeriesColor(s.stroke, uPlotInstance, index),
+				isActive,
+			};
 
-		if (isActive) {
-			active.push(item);
-		} else {
-			rest.push(item);
+			if (isActive) {
+				active.push(item);
+			} else {
+				rest.push(item);
+			}
 		}
 	}
 

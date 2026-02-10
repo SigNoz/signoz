@@ -63,6 +63,7 @@ export type TooltipProps = TooltipRenderArgs & {
 	timezone: string;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
+	isStackedBarChart?: boolean;
 };
 
 export enum LegendPosition {

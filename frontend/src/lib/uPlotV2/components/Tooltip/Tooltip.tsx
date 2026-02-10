@@ -23,6 +23,7 @@ export default function Tooltip({
 	timezone,
 	yAxisUnit = '',
 	decimalPrecision,
+	isStackedBarChart,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const headerTitle = useMemo(() => {
@@ -46,8 +47,16 @@ export default function Tooltip({
 				uPlotInstance,
 				yAxisUnit,
 				decimalPrecision,
+				isStackedBarChart,
 			}),
-		[uPlotInstance, seriesIndex, dataIndexes, yAxisUnit, decimalPrecision],
+		[
+			uPlotInstance,
+			seriesIndex,
+			dataIndexes,
+			yAxisUnit,
+			decimalPrecision,
+			isStackedBarChart,
+		],
 	);
 
 	return (
