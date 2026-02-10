@@ -75,18 +75,20 @@ function EntityLogs({
 		basePayload,
 	});
 
-	const handleSetActiveLogWithTab = useCallback(
-		(log: ILog): void => {
-			// If clicking the same log that's already active, close it
+	const handleSetActiveLog = useCallback(
+		(
+			log: ILog,
+			selectedTab: typeof VIEW_TYPES[keyof typeof VIEW_TYPES] = VIEW_TYPES.OVERVIEW,
+		) => {
 			if (activeLog?.id === log.id) {
 				onClearActiveLog();
 				setSelectedTab(undefined);
 				return;
 			}
 			onSetActiveLog(log);
-			setSelectedTab(VIEW_TYPES.OVERVIEW);
+			setSelectedTab(selectedTab);
 		},
-		[onSetActiveLog, activeLog, onClearActiveLog],
+		[activeLog?.id, onClearActiveLog, onSetActiveLog],
 	);
 
 	const handleCloseLogDetail = useCallback((): void => {
@@ -114,13 +116,12 @@ function EntityLogs({
 						name: 'timestamp',
 					},
 				]}
-				onSetActiveLog={handleSetActiveLogWithTab}
+				onSetActiveLog={handleSetActiveLog}
 				onClearActiveLog={handleCloseLogDetail}
 				isActiveLog={activeLog?.id === logToRender.id}
-				managedExternally
 			/>
 		),
-		[activeLog, handleSetActiveLogWithTab, handleCloseLogDetail],
+		[activeLog, handleSetActiveLog, handleCloseLogDetail],
 	);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
@@ -197,7 +198,7 @@ function EntityLogs({
 					log={activeLog}
 					onClose={handleCloseLogDetail}
 					logs={logs}
-					onNavigateLog={handleSetActiveLogWithTab}
+					onNavigateLog={handleSetActiveLog}
 					selectedTab={selectedTab}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}

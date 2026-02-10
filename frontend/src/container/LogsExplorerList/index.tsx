@@ -87,10 +87,13 @@ function LogsExplorerList({
 		[options],
 	);
 
-	const handleSetActiveLogWithTab = useCallback(
-		(log: ILog) => {
+	const handleSetActiveLog = useCallback(
+		(
+			log: ILog,
+			selectedTab: typeof VIEW_TYPES[keyof typeof VIEW_TYPES] = VIEW_TYPES.OVERVIEW,
+		) => {
 			onSetActiveLog(log);
-			setSelectedTab(VIEW_TYPES.OVERVIEW);
+			setSelectedTab(selectedTab);
 		},
 		[onSetActiveLog],
 	);
@@ -120,9 +123,8 @@ function LogsExplorerList({
 						selectedFields={selectedFields}
 						fontSize={options.fontSize}
 						handleChangeSelectedView={handleChangeSelectedView}
-						onSetActiveLog={handleSetActiveLogWithTab}
+						onSetActiveLog={handleSetActiveLog}
 						onClearActiveLog={handleCloseLogDetail}
-						managedExternally
 					/>
 				);
 			}
@@ -134,7 +136,7 @@ function LogsExplorerList({
 					isActiveLog={activeLog?.id === log.id}
 					selectedFields={selectedFields}
 					onAddToQuery={onAddToQuery}
-					onSetActiveLog={handleSetActiveLogWithTab}
+					onSetActiveLog={handleSetActiveLog}
 					activeLog={activeLog}
 					fontSize={options.fontSize}
 					linesPerRow={options.maxLines}
@@ -150,7 +152,7 @@ function LogsExplorerList({
 			handleChangeSelectedView,
 			onAddToQuery,
 			onSetActiveLog,
-			handleSetActiveLogWithTab,
+			handleSetActiveLog,
 			options.fontSize,
 			options.format,
 			options.maxLines,
@@ -181,7 +183,7 @@ function LogsExplorerList({
 					infitiyTableProps={{ onEndReached }}
 					handleChangeSelectedView={handleChangeSelectedView}
 					logs={logs}
-					onSetActiveLog={handleSetActiveLogWithTab}
+					onSetActiveLog={handleSetActiveLog}
 					onClearActiveLog={handleCloseLogDetail}
 					activeLog={activeLog}
 				/>
@@ -230,7 +232,7 @@ function LogsExplorerList({
 		getItemContent,
 		selectedFields,
 		handleChangeSelectedView,
-		handleSetActiveLogWithTab,
+		handleSetActiveLog,
 		handleCloseLogDetail,
 		activeLog,
 	]);
@@ -321,7 +323,7 @@ function LogsExplorerList({
 							onClickActionItem={onAddToQuery}
 							handleChangeSelectedView={handleChangeSelectedView}
 							logs={logs}
-							onNavigateLog={handleSetActiveLogWithTab}
+							onNavigateLog={handleSetActiveLog}
 						/>
 					)}
 				</>

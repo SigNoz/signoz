@@ -85,18 +85,20 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		setIsPaginating(false);
 	}, [data, setIsPaginating]);
 
-	const handleSetActiveLogWithTab = useCallback(
-		(log: ILog): void => {
-			// If clicking the same log that's already active, close it
+	const handleSetActiveLog = useCallback(
+		(
+			log: ILog,
+			selectedTab: typeof VIEW_TYPES[keyof typeof VIEW_TYPES] = VIEW_TYPES.OVERVIEW,
+		) => {
 			if (activeLog?.id === log.id) {
 				onClearActiveLog();
 				setSelectedTab(undefined);
 				return;
 			}
 			onSetActiveLog(log);
-			setSelectedTab(VIEW_TYPES.OVERVIEW);
+			setSelectedTab(selectedTab);
 		},
-		[onSetActiveLog, activeLog, onClearActiveLog],
+		[activeLog?.id, onClearActiveLog, onSetActiveLog],
 	);
 
 	const handleCloseLogDetail = useCallback((): void => {
@@ -124,13 +126,12 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 						name: 'timestamp',
 					},
 				]}
-				onSetActiveLog={handleSetActiveLogWithTab}
+				onSetActiveLog={handleSetActiveLog}
 				onClearActiveLog={handleCloseLogDetail}
 				isActiveLog={activeLog?.id === logToRender.id}
-				managedExternally
 			/>
 		),
-		[activeLog, handleSetActiveLogWithTab, handleCloseLogDetail],
+		[activeLog, handleSetActiveLog, handleCloseLogDetail],
 	);
 
 	const renderFooter = useCallback(
@@ -175,14 +176,19 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="host-metrics-logs-list-container">{renderContent}</div>
+				<div
+					className="host-metrics-logs-list-container"
+					data-log-detail-ignore="true"
+				>
+					{renderContent}
+				</div>
 			)}
 			{selectedTab && activeLog && (
 				<LogDetail
 					log={activeLog}
 					onClose={handleCloseLogDetail}
 					logs={logs}
-					onNavigateLog={handleSetActiveLogWithTab}
+					onNavigateLog={handleSetActiveLog}
 					selectedTab={selectedTab}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}

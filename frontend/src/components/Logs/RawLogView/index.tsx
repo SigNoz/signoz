@@ -1,19 +1,15 @@
 import {
-	KeyboardEvent,
 	memo,
 	MouseEvent,
 	MouseEventHandler,
 	useCallback,
 	useMemo,
-	useState,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { DrawerProps, Tooltip } from 'antd';
-import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
+import { Tooltip } from 'antd';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -39,10 +35,8 @@ function RawLogView({
 	selectedFields = [],
 	fontSize,
 	onLogClick,
-	handleChangeSelectedView,
-	onSetActiveLog: onSetActiveLogProp,
-	onClearActiveLog: onClearActiveLogProp,
-	managedExternally = false,
+	onSetActiveLog,
+	onClearActiveLog,
 }: RawLogViewProps): JSX.Element {
 	const {
 		isHighlighted: isUrlHighlighted,
@@ -50,15 +44,6 @@ function RawLogView({
 		onLogCopy,
 	} = useCopyLogLink(data.id);
 	const flattenLogData = useMemo(() => FlatLogData(data), [data]);
-
-	const {
-		activeLog,
-		onSetActiveLog: onSetActiveLogHook,
-		onClearActiveLog: onClearActiveLogHook,
-		onAddToQuery,
-	} = useActiveLog();
-
-	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
 
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
@@ -139,46 +124,14 @@ function RawLogView({
 				onLogClick(data, event);
 				return;
 			}
-
-			if (managedExternally) {
-				// If the log is already active, clear it. Otherwise, set it as active.
-				if (isActiveLog) {
-					const clearActiveFn = onClearActiveLogProp || onClearActiveLogHook;
-					clearActiveFn();
-					return;
-				}
-				const setActiveFn = onSetActiveLogProp || onSetActiveLogHook;
-				setActiveFn(data);
+			if (isActiveLog) {
+				onClearActiveLog?.();
 				return;
 			}
 
-			onSetActiveLogHook(data);
-			setSelectedTab(VIEW_TYPES.OVERVIEW);
+			onSetActiveLog?.(data);
 		},
-		[
-			isReadOnly,
-			data,
-			onSetActiveLogProp,
-			onSetActiveLogHook,
-			onClearActiveLogProp,
-			onClearActiveLogHook,
-			onLogClick,
-			isActiveLog,
-			managedExternally,
-		],
-	);
-
-	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
-		(
-			event: MouseEvent<Element, globalThis.MouseEvent> | KeyboardEvent<Element>,
-		) => {
-			event.preventDefault();
-			event.stopPropagation();
-
-			onClearActiveLogHook();
-			setSelectedTab(undefined);
-		},
-		[onClearActiveLogHook],
+		[isReadOnly, onLogClick, isActiveLog, onSetActiveLog, data, onClearActiveLog],
 	);
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
@@ -186,11 +139,9 @@ function RawLogView({
 			event.preventDefault();
 			event.stopPropagation();
 
-			const setActiveFn = onSetActiveLogProp || onSetActiveLogHook;
-			setSelectedTab(VIEW_TYPES.CONTEXT);
-			setActiveFn(data);
+			onSetActiveLog?.(data, VIEW_TYPES.CONTEXT);
 		},
-		[data, onSetActiveLogProp, onSetActiveLogHook],
+		[data, onSetActiveLog],
 	);
 
 	const html = useMemo(
@@ -200,9 +151,6 @@ function RawLogView({
 		[text],
 	);
 
-	// Only render LogDetail when not managed externally and this log is active
-	const showLogDetail = !managedExternally && isActiveLog && selectedTab;
-
 	return (
 		<RawLogViewContainer
 			onClick={handleClickExpand}
@@ -211,7 +159,7 @@ function RawLogView({
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isHightlightedLog={isUrlHighlighted}
-			$isActiveLog={activeLog?.id === data.id || isActiveLog}
+			$isActiveLog={isActiveLog}
 			$isCustomHighlighted={isHighlighted}
 			$logType={logType}
 			fontSize={fontSize}
@@ -246,17 +194,6 @@ function RawLogView({
 				<LogLinesActionButtons
 					handleShowContext={handleShowContext}
 					onLogCopy={onLogCopy}
-				/>
-			)}
-
-			{showLogDetail && (
-				<LogDetail
-					selectedTab={selectedTab}
-					log={activeLog}
-					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			)}
 		</RawLogViewContainer>

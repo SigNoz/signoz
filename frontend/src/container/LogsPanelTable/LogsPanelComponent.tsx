@@ -24,6 +24,7 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
@@ -91,6 +92,13 @@ function LogsPanelComponent({
 		onAddToQuery,
 	} = useActiveLog();
 
+	const handleSetActiveLog = useCallback(
+		(log: ILog) => {
+			onSetActiveLog(log);
+		},
+		[onSetActiveLog],
+	);
+
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (): void => {
@@ -132,7 +140,7 @@ function LogsPanelComponent({
 
 	return (
 		<>
-			<div className="logs-table">
+			<div className="logs-table" data-log-detail-ignore="true">
 				<div className="resize-table">
 					<OverlayScrollbar>
 						<ResizeTable
@@ -174,6 +182,8 @@ function LogsPanelComponent({
 				onClickActionItem={onAddToQuery}
 				isListViewPanel
 				listViewPanelSelectedFields={widget?.selectedLogFields}
+				logs={logs}
+				onNavigateLog={handleSetActiveLog}
 			/>
 		</>
 	);
