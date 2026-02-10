@@ -290,11 +290,33 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 		return nil, err
 	}
 
-	if config == nil {
-		return details, nil
-	}
-
 	details.Config = config
+
+	// fill default values for config
+	if details.Config == nil {
+		cfg := new(integrationstypes.AzureCloudServiceConfig)
+
+		logs := make([]*integrationstypes.AzureCloudServiceLogsConfig, 0)
+		for _, log := range azureDefinition.Strategy.AzureLogs {
+			logs = append(logs, &integrationstypes.AzureCloudServiceLogsConfig{
+				Enabled: false,
+				Name:    log.Name,
+			})
+		}
+
+		metrics := make([]*integrationstypes.AzureCloudServiceMetricsConfig, 0)
+		for _, metric := range azureDefinition.Strategy.AzureMetrics {
+			metrics = append(metrics, &integrationstypes.AzureCloudServiceMetricsConfig{
+				Enabled: false,
+				Name:    metric.Name,
+			})
+		}
+
+		cfg.Logs = logs
+		cfg.Metrics = metrics
+
+		details.Config = cfg
+	}
 
 	// TODO: write logic for getting connection status
 
