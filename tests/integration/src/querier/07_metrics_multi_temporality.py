@@ -205,7 +205,7 @@ def test_group_by_endpoint(
 
     # spike values should be consecutive
     spike_indices = [
-        i for i, v in enumerate[Any](checkout_values) if v["value"] == spike_checkout_value
+        i for i, v in enumerate(checkout_values) if v["value"] == spike_checkout_value
     ]
     assert len(spike_indices) >= 4, f"Expected >= 4 spike indices, got {spike_indices}"
     # consecutiveness
