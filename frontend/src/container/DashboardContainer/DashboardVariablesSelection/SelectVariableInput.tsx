@@ -3,6 +3,7 @@ import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
 import { Popover, Tooltip, Typography } from 'antd';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
+import { OptionData } from 'components/NewSelect/types';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ALL_SELECT_VALUE } from '../utils';
@@ -12,7 +13,7 @@ const errorIconStyle = { margin: '0 0.5rem' };
 
 interface SelectVariableInputProps {
 	variableId: string;
-	options: (string | number | boolean)[];
+	options: OptionData[];
 	value: string | string[] | undefined;
 	enableSelectAll: boolean;
 	isMultiSelect: boolean;
@@ -23,13 +24,17 @@ interface SelectVariableInputProps {
 	loading?: boolean;
 	errorMessage?: string | null;
 	onRetry?: () => void;
+	isDynamicVariable?: boolean;
+	showRetryButton?: boolean;
+	showIncompleteDataMessage?: boolean;
+	onSearch?: (searchTerm: string) => void;
 }
 
 const MAX_TAG_DISPLAY_VALUES = 10;
 
-function maxTagPlaceholder(
+export const renderMaxTagPlaceholder = (
 	omittedValues: { label?: React.ReactNode; value?: string | number }[],
-): JSX.Element {
+): JSX.Element => {
 	const valuesToShow = omittedValues.slice(0, MAX_TAG_DISPLAY_VALUES);
 	const hasMore = omittedValues.length > MAX_TAG_DISPLAY_VALUES;
 	const tooltipText =
@@ -41,7 +46,7 @@ function maxTagPlaceholder(
 			<span>+ {omittedValues.length} </span>
 		</Tooltip>
 	);
-}
+};
 
 function SelectVariableInput({
 	variableId,
@@ -56,16 +61,11 @@ function SelectVariableInput({
 	enableSelectAll,
 	isMultiSelect,
 	defaultValue,
+	isDynamicVariable,
+	showRetryButton,
+	showIncompleteDataMessage,
+	onSearch,
 }: SelectVariableInputProps): JSX.Element {
-	const selectOptions = useMemo(
-		() =>
-			options.map((option) => ({
-				label: option.toString(),
-				value: option.toString(),
-			})),
-		[options],
-	);
-
 	const commonProps = useMemo(
 		() => ({
 			// main props
@@ -82,23 +82,33 @@ function SelectVariableInput({
 			showSearch: true,
 			bordered: false,
 
-			// dynamic props
+			// changing props
 			'data-testid': 'variable-select',
 			onChange,
 			loading,
-			options: selectOptions,
+			options,
 			errorMessage,
 			onRetry,
+
+			// dynamic variable only props
+			isDynamicVariable,
+			showRetryButton,
+			showIncompleteDataMessage,
+			onSearch,
 		}),
 		[
 			variableId,
 			defaultValue,
 			onChange,
 			loading,
-			selectOptions,
+			options,
 			value,
 			errorMessage,
 			onRetry,
+			isDynamicVariable,
+			showRetryButton,
+			showIncompleteDataMessage,
+			onSearch,
 		],
 	);
 
@@ -110,11 +120,11 @@ function SelectVariableInput({
 					placement="bottomLeft"
 					maxTagCount={2}
 					onDropdownVisibleChange={onDropdownVisibleChange}
-					maxTagPlaceholder={maxTagPlaceholder}
+					maxTagPlaceholder={renderMaxTagPlaceholder}
 					onClear={onClear}
 					enableAllSelection={enableSelectAll}
 					maxTagTextLength={30}
-					allowClear={value !== ALL_SELECT_VALUE && value !== 'ALL'}
+					allowClear={value !== ALL_SELECT_VALUE}
 				/>
 			) : (
 				<CustomSelect {...commonProps} />
