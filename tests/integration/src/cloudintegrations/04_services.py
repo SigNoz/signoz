@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Callable
 import uuid
 
+import pytest
 import requests
 from wiremock.client import (
     HttpMethods,
@@ -15,7 +16,6 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
 from fixtures.cloudintegrations import (
-    cleanup_cloud_accounts,
     create_test_account,
     simulate_agent_checkin,
 )
@@ -23,12 +23,12 @@ from fixtures.cloudintegrations import (
 logger = setup_logger(__name__)
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_services_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing available services without specifying an account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -60,12 +60,12 @@ def test_list_services_without_account(
     assert "icon" in service, "Service should have 'icon' field"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_services_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -136,12 +136,12 @@ def test_list_services_with_account(
     assert "icon" in service, "Service should have 'icon' field"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_get_service_details_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test getting service details without specifying an account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -185,12 +185,12 @@ def test_get_service_details_without_account(
     assert isinstance(data["assets"], dict), "Assets should be a dictionary"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_get_service_details_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -272,12 +272,12 @@ def test_get_service_details_with_account(
     assert "status" in data, "Config should have 'status' field"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_get_service_details_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test getting details for a non-existent service."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -298,12 +298,12 @@ def test_get_service_details_invalid_service(
     ), f"Expected 404, got {response.status_code}"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_services_unsupported_provider(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing services for an unsupported cloud provider."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -323,12 +323,12 @@ def test_list_services_unsupported_provider(
     ), f"Expected 400, got {response.status_code}"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_update_service_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -418,12 +418,12 @@ def test_update_service_config(
     assert "logs" in data["config"], "Config should contain 'logs' field"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_update_service_config_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test updating service config without a connected account should fail."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -465,12 +465,12 @@ def test_update_service_config_without_account(
     ), f"Expected 500 for non-existent account, got {response.status_code}"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_update_service_config_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -538,12 +538,12 @@ def test_update_service_config_invalid_service(
     ), f"Expected 404 for invalid service, got {response.status_code}"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_update_service_config_disable_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:

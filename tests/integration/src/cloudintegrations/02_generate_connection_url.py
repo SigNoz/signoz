@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from typing import Callable
 
+import pytest
 import requests
 from wiremock.client import (
     HttpMethods,
@@ -18,12 +19,12 @@ from fixtures.cloudintegrations import cleanup_cloud_accounts
 logger = setup_logger(__name__)
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_generate_connection_url(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test to generate connection URL for AWS CloudFormation stack deployment."""
 
@@ -141,6 +142,8 @@ def test_generate_connection_url(
             param in connection_url
         ), f"connection_url should contain parameter: {param}"
 
+
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_generate_connection_url_unsupported_provider(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument

@@ -16,20 +16,20 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
 from fixtures.cloudintegrations import (
-    cleanup_cloud_accounts,
     create_test_account,
     simulate_agent_checkin,
+    cleanup_cloud_accounts,  # ensure fixture is registered
 )
 
 logger = setup_logger(__name__)
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_connected_accounts_empty(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing connected accounts when there are none."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -55,12 +55,12 @@ def test_list_connected_accounts_empty(
     assert isinstance(data["accounts"], list), "Accounts should be a list"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_connected_accounts_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -131,12 +131,12 @@ def test_list_connected_accounts_with_account(
     assert "status" in account, "Account should have status field"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_get_account_status(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
 ) -> None:
     """Test getting the status of a specific account."""
@@ -199,12 +199,12 @@ def test_get_account_status(
     assert "integration" in data["status"], "Status should contain 'integration' field"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_get_account_status_not_found(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test getting status for a non-existent account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -227,12 +227,12 @@ def test_get_account_status_not_found(
     ), f"Expected 404, got {response.status_code}"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_update_account_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -326,12 +326,12 @@ def test_update_account_config(
     }, "Regions should match updated config"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_disconnect_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
     create_test_account: Callable,
     simulate_agent_checkin: Callable,
 ) -> None:
@@ -410,12 +410,12 @@ def test_disconnect_account(
     assert disconnected_account is None, f"Account {account_id} should be removed from connected accounts"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_disconnect_account_not_found(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test disconnecting a non-existent account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -439,12 +439,12 @@ def test_disconnect_account_not_found(
     ), f"Expected 404, got {response.status_code}"
 
 
+@pytest.mark.usefixtures("cleanup_cloud_accounts")
 def test_list_accounts_unsupported_provider(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
-    cleanup_cloud_accounts: None,
 ) -> None:
     """Test listing accounts for an unsupported cloud provider."""
 
