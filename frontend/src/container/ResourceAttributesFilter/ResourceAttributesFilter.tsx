@@ -95,7 +95,6 @@ function ResourceAttributesFilter({
 					data-testid="resource-environment-filter"
 					style={{ minWidth: 200, height: 34 }}
 					onChange={handleEnvironmentChange}
-					onBlur={handleBlur}
 				>
 					{environments.map((opt) => (
 						<Select.Option key={opt.value} value={opt.value}>
