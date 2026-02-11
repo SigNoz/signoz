@@ -208,7 +208,16 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.GroupByApplied = len(spec.GroupBy) > 0
 
 				if spec.Source == telemetrytypes.SourceMeter {
-					spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
+					if spec.StepInterval.Seconds() == 0 {
+						spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
+					}
+
+					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMeter(req.Start, req.End)) {
+						newStep := qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMeter(req.Start, req.End)),
+						}
+						spec.StepInterval = newStep
+					}
 				} else {
 					if spec.StepInterval.Seconds() == 0 {
 						spec.StepInterval = qbtypes.Step{
