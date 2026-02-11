@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot from 'uplot';
 
 import type { SeriesProps } from '../types';
@@ -30,6 +31,7 @@ describe('UPlotConfigBuilder', () => {
 		label: 'Requests',
 		colorMapping: {},
 		drawStyle: DrawStyle.Line,
+		panelType: PANEL_TYPES.TIME_SERIES,
 		...overrides,
 	});
 
@@ -246,6 +248,27 @@ describe('UPlotConfigBuilder', () => {
 
 		// Only a single draw hook should be registered for the same scaleKey
 		expect(drawHooks.length).toBe(1);
+	});
+
+	it('adds multiple thresholds when scale key is different', () => {
+		const builder = new UPlotConfigBuilder();
+
+		const thresholdsOptions = {
+			scaleKey: 'y',
+			thresholds: [{ thresholdValue: 100 }],
+		};
+		builder.addThresholds(thresholdsOptions);
+		const thresholdsOptions2 = {
+			scaleKey: 'y2',
+			thresholds: [{ thresholdValue: 200 }],
+		};
+		builder.addThresholds(thresholdsOptions2);
+
+		const config = builder.getConfig();
+		const drawHooks = config.hooks?.draw ?? [];
+
+		// Two draw hooks should be registered for different scaleKeys
+		expect(drawHooks.length).toBe(2);
 	});
 
 	it('merges cursor configuration with defaults instead of replacing them', () => {
