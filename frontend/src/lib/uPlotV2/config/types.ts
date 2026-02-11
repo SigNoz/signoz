@@ -110,6 +110,7 @@ export enum LineStyle {
 export enum DrawStyle {
 	Line = 'line',
 	Points = 'points',
+	Bar = 'bar',
 }
 
 export enum LineInterpolation {
@@ -128,7 +129,7 @@ export enum VisibilityMode {
 export interface SeriesProps {
 	scaleKey: string;
 	label?: string;
-
+	panelType: PANEL_TYPES;
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
 	pathBuilder?: Series.PathBuilder;
