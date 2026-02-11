@@ -323,7 +323,6 @@
 			"java instrumentation",
 			"java k8s",
 			"java logs",
-			"java metrics",
 			"java microservices",
 			"java monitoring",
 			"java observability",
@@ -332,10 +331,12 @@
 			"java vm",
 			"java windows",
 			"jboss",
+			"wildfly",
 			"jdk 11",
 			"jdk 17",
 			"jdk 21",
 			"jdk 8",
+			"jdbc",
 			"opentelemetry java",
 			"quarkus",
 			"spring boot",
@@ -373,6 +374,12 @@
 								"link": "/docs/instrumentation/opentelemetry-springboot/"
 							},
 							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-springboot/"
+							},
+							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
@@ -404,6 +411,12 @@
 								"link": "/docs/instrumentation/opentelemetry-tomcat/"
 							},
 							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-tomcat/"
+							},
+							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
@@ -414,7 +427,7 @@
 				},
 				{
 					"key": "jboss",
-					"label": "JBoss",
+					"label": "JBoss/WildFly",
 					"imgUrl": "/Logos/jboss.svg",
 					"link": "/docs/instrumentation/opentelemetry-jboss/",
 					"question": {
@@ -432,6 +445,12 @@
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-jboss/"
+							},
+							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
 								"link": "/docs/instrumentation/opentelemetry-jboss/"
 							},
 							{
@@ -466,6 +485,12 @@
 								"link": "/docs/instrumentation/opentelemetry-quarkus/"
 							},
 							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-quarkus/"
+							},
+							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
@@ -494,6 +519,18 @@
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "/docs/instrumentation/opentelemetry-java/"
+							},
+							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-java/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
 								"link": "/docs/instrumentation/opentelemetry-java/"
 							}
 						]
@@ -530,7 +567,6 @@
 			"python in containers",
 			"python instrumentation",
 			"python k8s",
-			"python metrics",
 			"python microservices",
 			"python observability",
 			"python on kubernetes",
@@ -583,7 +619,6 @@
 		],
 		"module": "apm",
 		"relatedSearchKeywords": [
-			"angular",
 			"apm",
 			"apm/traces",
 			"application performance monitoring",
@@ -595,7 +630,6 @@
 			"next.js",
 			"nodejs",
 			"nuxtjs",
-			"reactjs",
 			"traces",
 			"tracing",
 			"ts",
@@ -610,8 +644,8 @@
 			"entityID": "framework",
 			"options": [
 				{
-					"key": "nodejs",
-					"label": "NodeJs",
+					"key": "nodejs-nestjs",
+					"label": "NodeJs/NestJS",
 					"imgUrl": "/Logos/nodejs.svg",
 					"link": "/docs/instrumentation/opentelemetry-javascript/",
 					"question": {
@@ -632,103 +666,16 @@
 								"link": "/docs/instrumentation/opentelemetry-javascript/"
 							},
 							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-javascript/"
+							},
+							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
 								"link": "/docs/instrumentation/opentelemetry-javascript/"
-							}
-						]
-					}
-				},
-				{
-					"key": "express",
-					"label": "Express",
-					"imgUrl": "/Logos/express.svg",
-					"link": "/docs/instrumentation/opentelemetry-express/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-express/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-express/"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-express/"
-							}
-						]
-					}
-				},
-				{
-					"key": "nestjs",
-					"label": "NestJS",
-					"imgUrl": "/Logos/nestjs.svg",
-					"link": "/docs/instrumentation/opentelemetry-nestjs/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-nestjs/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-nestjs/"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-nestjs/"
-							}
-						]
-					}
-				},
-				{
-					"key": "angular",
-					"label": "Angular",
-					"imgUrl": "/Logos/angular.svg",
-					"link": "/docs/instrumentation/opentelemetry-angular/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-angular/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-angular/"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-angular/"
 							}
 						]
 					}
@@ -756,41 +703,16 @@
 								"link": "/docs/instrumentation/opentelemetry-nextjs/"
 							},
 							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-nextjs/"
+							},
+							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
 								"link": "/docs/instrumentation/opentelemetry-nextjs/"
-							}
-						]
-					}
-				},
-				{
-					"key": "reactjs",
-					"label": "ReactJS",
-					"imgUrl": "/Logos/reactjs.svg",
-					"link": "/docs/instrumentation/opentelemetry-reactjs/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-reactjs/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-reactjs/"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-reactjs/"
 							}
 						]
 					}
@@ -818,6 +740,12 @@
 								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
 							},
 							{
+								"key": "docker",
+								"label": "Docker",
+								"imgUrl": "/Logos/docker.svg",
+								"link": "/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
@@ -830,32 +758,7 @@
 					"key": "react-native",
 					"label": "React Native",
 					"imgUrl": "/Logos/reactjs.svg",
-					"link": "/docs/instrumentation/opentelemetry-react-native/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-react-native/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-react-native/"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-react-native/"
-							}
-						]
-					}
+					"link": "/docs/instrumentation/opentelemetry-react-native/"
 				}
 			]
 		}
@@ -889,7 +792,6 @@
 			"golang",
 			"golang apm",
 			"golang instrumentation",
-			"golang metrics",
 			"golang observability",
 			"golang performance monitoring",
 			"golang tracing",
@@ -980,69 +882,39 @@
 			"php-fpm monitoring",
 			"slim php",
 			"traces",
-			"tracing"
+			"tracing",
+			"wordpress"
 		],
 		"id": "php",
+		"link": "/docs/instrumentation/opentelemetry-php/",
 		"question": {
-			"desc": "Which PHP framework do you use?",
+			"desc": "What is your Environment?",
 			"type": "select",
-			"entityID": "framework",
+			"entityID": "environment",
 			"options": [
 				{
-					"key": "laravel",
-					"label": "Laravel",
-					"imgUrl": "/Logos/laravel.svg",
-					"link": "/docs/instrumentation/laravel/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/laravel/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/laravel/"
-							}
-						]
-					}
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/instrumentation/opentelemetry-php/"
 				},
 				{
-					"key": "Others",
-					"label": "Others",
-					"imgUrl": "/Logos/php-others.svg",
-					"link": "/docs/instrumentation/opentelemetry-php/",
-					"question": {
-						"desc": "What is your Environment?",
-						"type": "select",
-						"entityID": "environment",
-						"options": [
-							{
-								"key": "vm",
-								"label": "VM",
-								"imgUrl": "/Logos/vm.svg",
-								"link": "/docs/instrumentation/opentelemetry-php/"
-							},
-							{
-								"key": "k8s",
-								"label": "Kubernetes",
-								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "/docs/instrumentation/opentelemetry-php/"
-							},
-							{
-								"key": "windows",
-								"label": "Windows",
-								"imgUrl": "/Logos/windows.svg",
-								"link": "/docs/instrumentation/opentelemetry-php/"
-							}
-						]
-					}
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-php/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/instrumentation/opentelemetry-php/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/instrumentation/opentelemetry-php/"
 				}
 			]
 		}
@@ -1118,6 +990,12 @@
 					"link": "/docs/instrumentation/opentelemetry-dotnet/"
 				},
 				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/instrumentation/opentelemetry-dotnet/"
+				},
+				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
@@ -1128,7 +1006,7 @@
 	},
 	{
 		"dataSource": "ruby-on-rails",
-		"label": "Ruby on Rails",
+		"label": "Ruby",
 		"imgUrl": "/Logos/ruby-on-rails.svg",
 		"tags": [
 			"apm/traces"
@@ -1168,9 +1046,12 @@
 			"ruby tracing",
 			"ruby-on-rails",
 			"traces",
-			"tracing"
+			"tracing",
+			"sinatra",
+			"sidekiq",
+			"resque"
 		],
-		"id": "ruby-on-rails",
+		"id": "ruby",
 		"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/",
 		"question": {
 			"desc": "What is your Environment?",
@@ -1187,6 +1068,12 @@
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
 					"link": "/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				},
 				{
@@ -1469,41 +1356,6 @@
 		"link": "/docs/instrumentation/opentelemetry-nginx/"
 	},
 	{
-		"dataSource": "opentelemetry-wordpress",
-		"label": "WordPress",
-		"imgUrl": "/Logos/wordpress.svg",
-		"tags": [
-			"apm/traces"
-		],
-		"module": "apm",
-		"relatedSearchKeywords": [
-			"apm",
-			"apm/traces",
-			"application performance monitoring",
-			"monitor wordpress site",
-			"opentelemetry",
-			"opentelemetry wordpress",
-			"opentelemetry-wordpress",
-			"otel",
-			"otel wordpress",
-			"traces",
-			"tracing",
-			"wordpress",
-			"wordpress apm",
-			"wordpress instrumentation",
-			"wordpress metrics",
-			"wordpress monitoring",
-			"wordpress observability",
-			"wordpress performance",
-			"wordpress php monitoring",
-			"wordpress plugin monitoring",
-			"wordpress to signoz",
-			"wordpress tracing"
-		],
-		"id": "opentelemetry-wordpress",
-		"link": "/docs/instrumentation/opentelemetry-wordpress/"
-	},
-	{
 		"dataSource": "opentelemetry-cloudflare",
 		"label": "Cloudflare Tracing",
 		"imgUrl": "/Logos/cloudflare.svg",
@@ -1566,6 +1418,25 @@
 		],
 		"id": "opentelemetry-cloudflare-logs",
 		"link": "/docs/logs-management/send-logs/cloudflare-logs/"
+	},
+	{
+		"dataSource": "convex-logs",
+		"label": "Convex Logs",
+		"imgUrl": "/Logos/convex-logo.svg",
+		"tags": [
+			"logs"
+		],
+		"module": "logs",
+		"relatedSearchKeywords": [
+			"convex",
+			"convex log streaming",
+			"convex logs",
+			"convex webhook",
+			"logging",
+			"logs"
+		],
+		"id": "convex-logs",
+		"link": "/docs/logs-management/send-logs/convex-log-streams-signoz/"
 	},
 	{
 		"dataSource": "kubernetes-pod-logs",
@@ -4568,6 +4439,7 @@
 		],
 		"module": "metrics",
 		"relatedSearchKeywords": [
+			"browser metrics",
 			"core web vitals metrics",
 			"frontend metrics",
 			"frontend monitoring",
@@ -4587,7 +4459,7 @@
 			"svelte",
 			"sveltekit",
 			"nextjs",
-"next.js"
+			"next.js"
 		],
 		"link": "/docs/frontend-monitoring/web-vitals-with-metrics/"
 	},
@@ -4622,7 +4494,7 @@
 			"svelte",
 			"sveltekit",
 			"nextjs",
-"next.js"
+			"next.js"
 		],
 		"link": "/docs/frontend-monitoring/web-vitals-with-traces/"
 	},
@@ -4664,7 +4536,7 @@
 			"svelte",
 			"sveltekit",
 			"nextjs",
-"next.js"
+			"next.js"
 		],
 		"link": "/docs/frontend-monitoring/document-load/"
 	},
@@ -5317,23 +5189,6 @@
 		"link": "/docs/metrics-management/mysql-metrics/"
 	},
 	{
-		"dataSource": "jvm",
-		"label": "JVM",
-		"imgUrl": "/Logos/java.svg",
-		"tags": [
-			"metrics"
-		],
-		"module": "metrics",
-		"relatedSearchKeywords": [
-			"java virtual machine",
-			"jvm",
-			"jvm metrics",
-			"jvm monitoring",
-			"runtime"
-		],
-		"link": "/docs/tutorial/jvm-metrics/"
-	},
-	{
 		"dataSource": "jmx",
 		"label": "JMX",
 		"imgUrl": "/Logos/java.svg",
@@ -5348,7 +5203,7 @@
 			"jmx monitoring",
 			"runtime"
 		],
-		"link": "/docs/tutorial/jmx-metrics/"
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-java/jmx-metrics/"
 	},
 	{
 		"dataSource": "prometheus-metrics",
@@ -5574,16 +5429,17 @@
 			"svelte",
 			"sveltekit",
 			"nextjs",
-"next.js"
+			"next.js"
 		],
 		"link": "/docs/frontend-monitoring/sending-logs-with-opentelemetry/"
 	},
 	{
 		"dataSource": "frontend-traces",
-		"label": "Frontend Traces",
+		"label": "Frontend Tracing",
 		"imgUrl": "/Logos/traces.svg",
 		"tags": [
-			"Frontend Monitoring"
+			"Frontend Monitoring",
+			"apm/traces"
 		],
 		"module": "apm",
 		"relatedSearchKeywords": [
@@ -5605,7 +5461,7 @@
 			"svelte",
 			"sveltekit",
 			"nextjs",
-"next.js"
+			"next.js"
 		],
 		"link": "/docs/frontend-monitoring/sending-traces-with-opentelemetry/"
 	},
@@ -5636,7 +5492,7 @@
 			"svelte",
 			"sveltekit",
 			"nextjs",
-"next.js"
+			"next.js"
 		],
 		"link": "/docs/frontend-monitoring/sending-metrics-with-opentelemetry/"
 	},
@@ -5683,7 +5539,6 @@
 		"label": "Golang Metrics",
 		"imgUrl": "/Logos/go.svg",
 		"tags": [
-			"apm/traces",
 			"metrics"
 		],
 		"module": "metrics",
@@ -5738,11 +5593,63 @@
 		}
 	},
 	{
+		"dataSource": "java-metrics",
+		"label": "Java Metrics",
+		"imgUrl": "/Logos/java.svg",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"java",
+			"java metrics",
+			"java monitoring",
+			"java observability",
+			"jvm metrics",
+			"metrics",
+			"opentelemetry java",
+			"otel java",
+			"runtime metrics"
+		],
+		"id": "java-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-java/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-java/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-java/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-java/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-java/"
+				}
+			]
+		}
+	},
+	{
 		"dataSource": "python-metrics",
 		"label": "Python Metrics",
 		"imgUrl": "/Logos/python.svg",
 		"tags": [
-			"apm/traces",
 			"metrics"
 		],
 		"module": "metrics",
@@ -5796,7 +5703,6 @@
 		"label": ".NET Metrics",
 		"imgUrl": "/Logos/dotnet.svg",
 		"tags": [
-			"apm/traces",
 			"metrics"
 		],
 		"module": "metrics",
@@ -5853,7 +5759,6 @@
 		"label": "Node.js Metrics",
 		"imgUrl": "/Logos/nodejs.svg",
 		"tags": [
-			"apm/traces",
 			"metrics"
 		],
 		"module": "metrics",
