@@ -65,6 +65,24 @@ func (r *reconciler) Reconcile(ctx context.Context) error {
 	return nil
 }
 
+func (r *reconciler) ReconcileForOrg(ctx context.Context, org *types.Organization) error {
+	if !r.config.IsConfigured() {
+		r.settings.Logger().InfoContext(ctx, "reconciler: root user is not configured, skipping reconciliation")
+		return nil
+	}
+
+	r.settings.Logger().InfoContext(ctx, "reconciler: reconciling root user for organization", "organization_id", org.ID, "organization_name", org.Name)
+
+	err := r.reconcileRootUserForOrg(ctx, org)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "reconciler: failed to reconcile root user for organization %s (%s)", org.Name, org.ID)
+	}
+
+	r.settings.Logger().InfoContext(ctx, "reconciler: root user reconciled for organization", "organization_id", org.ID, "organization_name", org.Name)
+
+	return nil
+}
+
 func (r *reconciler) reconcileRootUserForOrg(ctx context.Context, org *types.Organization) error {
 
 	// try creating the user optimisitically

@@ -28,4 +28,7 @@ type Module interface {
 type Reconciler interface {
 	// Reconcile the root users.
 	Reconcile(ctx context.Context) error
+
+	// Reconcile the root user for the given org.
+	ReconcileForOrg(ctx context.Context, org *types.Organization) error
 }

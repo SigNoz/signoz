@@ -267,6 +267,10 @@ func New(
 	// Initialize organization getter
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 
+	// Initialize and run the root user reconciler
+	rootUserStore := implrootuser.NewStore(sqlstore, providerSettings)
+	rootUserReconciler := implrootuser.NewReconciler(rootUserStore, providerSettings, orgGetter, config.User.RootUserConfig)
+
 	// Initialize tokenizer from the available tokenizer provider factories
 	tokenizer, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -388,7 +392,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, rootUserReconciler)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, gateway, telemetryMetadataStore, authz)
@@ -444,9 +448,6 @@ func New(
 		return nil, err
 	}
 
-	// Initialize and run the root user reconciler
-	rootUserStore := implrootuser.NewStore(sqlstore, providerSettings)
-	rootUserReconciler := implrootuser.NewReconciler(rootUserStore, providerSettings, orgGetter, config.User.RootUserConfig)
 	err = rootUserReconciler.Reconcile(ctx)
 	if err != nil {
 		// Question: Should we fail the startup if the root user reconciliation fails?
