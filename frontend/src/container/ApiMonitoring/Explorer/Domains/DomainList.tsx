@@ -126,62 +126,61 @@ function DomainList(): JSX.Element {
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
 			</div>
-			<Table
-				className={cx('api-monitoring-domain-list-table')}
-				dataSource={isFetching || isLoading ? [] : formattedDataForTable}
-				columns={columnsConfig}
-				loading={{
-					spinning: isFetching || isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-domains-message-container">
-								<div className="no-filtered-domains-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+			{isFetching || isLoading || formattedDataForTable.length > 0 ? null : (
+				<div className="no-filtered-domains-message-container">
+					<div className="no-filtered-domains-message-content">
+						<img
+							src="/Icons/emptyState.svg"
+							alt="thinking-emoji"
+							className="empty-state-svg"
+						/>
 
-									<Typography.Text className="no-filtered-domains-message">
-										No External API calls detected with applied filters.
-										<br />
-										Ensure all HTTP client spans are being sent with kind as Client and
-										url set in url.full or http.url attribute.
-										<br />
-										<a
-											href={DOCLINKS.EXTERNAL_API_MONITORING}
-											target="_blank"
-											rel="noreferrer"
-										>
-											Learn how External API monitoring works in SigNoz.
-										</a>
-									</Typography.Text>
-								</div>
-							</div>
-						),
-				}}
-				scroll={{ x: true }}
-				tableLayout="fixed"
-				onRow={(record, index): { onClick: () => void; className: string } => ({
-					onClick: (): void => {
-						if (index !== undefined) {
-							const dataIndex = formattedDataForTable.findIndex(
-								(item) => item.key === record.key,
-							);
-							setSelectedDomainIndex(dataIndex);
-							setParams({ selectedDomain: record.domainName });
-							logEvent('API Monitoring: Domain name row clicked', {});
-						}
-					},
-					className: 'expanded-clickable-row',
-				})}
-				rowClassName={(_, index): string =>
-					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
-				}
-			/>
+						<Typography.Text className="no-filtered-domains-message">
+							No External API calls detected with applied filters.
+							<br />
+							Ensure all HTTP client spans are being sent with kind as Client and url
+							set in url.full or http.url attribute.
+							<br />
+							<a
+								href={DOCLINKS.EXTERNAL_API_MONITORING}
+								target="_blank"
+								rel="noreferrer"
+							>
+								Learn how External API monitoring works in SigNoz.
+							</a>
+						</Typography.Text>
+					</div>
+				</div>
+			)}
+			{formattedDataForTable.length > 0 && (
+				<Table
+					className={cx('api-monitoring-domain-list-table')}
+					dataSource={isFetching || isLoading ? [] : formattedDataForTable}
+					columns={columnsConfig}
+					loading={{
+						spinning: isFetching || isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					scroll={{ x: true }}
+					tableLayout="fixed"
+					onRow={(record, index): { onClick: () => void; className: string } => ({
+						onClick: (): void => {
+							if (index !== undefined) {
+								const dataIndex = formattedDataForTable.findIndex(
+									(item) => item.key === record.key,
+								);
+								setSelectedDomainIndex(dataIndex);
+								setParams({ selectedDomain: record.domainName });
+								logEvent('API Monitoring: Domain name row clicked', {});
+							}
+						},
+						className: 'expanded-clickable-row',
+					})}
+					rowClassName={(_, index): string =>
+						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
+					}
+				/>
+			)}
 			{selectedDomainIndex !== -1 && (
 				<DomainDetails
 					domainData={formattedDataForTable[selectedDomainIndex]}
