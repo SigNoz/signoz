@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button, Form, Modal } from 'antd';
 import put from 'api/v1/domains/id/put';
 import post from 'api/v1/domains/post';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useMemo, useState } from 'react';
 import APIError from 'types/api/error';
 import {
 	GettableAuthDomain,
@@ -18,6 +17,7 @@ import AuthnProviderSelector from './AuthnProviderSelector';
 import ConfigureGoogleAuthAuthnProvider from './Providers/AuthnGoogleAuth';
 import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
 import ConfigureSAMLAuthnProvider from './Providers/AuthnSAML';
+
 import './CreateEdit.styles.scss';
 
 interface GroupMappingItem {
@@ -34,7 +34,9 @@ interface DomainAdminEmailItem {
 function groupMappingsToList(
 	groupMappings?: Record<string, string>,
 ): GroupMappingItem[] {
-	if (!groupMappings) return [];
+	if (!groupMappings) {
+		return [];
+	}
 	return Object.entries(groupMappings).map(([group, role]) => ({
 		group,
 		role,
@@ -45,7 +47,9 @@ function groupMappingsToList(
 function listToGroupMappings(
 	list?: GroupMappingItem[],
 ): Record<string, string> {
-	if (!list || list.length === 0) return {};
+	if (!list || list.length === 0) {
+		return {};
+	}
 	return list.reduce<Record<string, string>>((acc, { group, role }) => {
 		if (group && role) {
 			acc[group] = role;
@@ -58,7 +62,9 @@ function listToGroupMappings(
 function domainToAdminEmailToList(
 	domainToAdminEmail?: Record<string, string>,
 ): DomainAdminEmailItem[] {
-	if (!domainToAdminEmail) return [];
+	if (!domainToAdminEmail) {
+		return [];
+	}
 	return Object.entries(domainToAdminEmail).map(([domain, adminEmail]) => ({
 		domain,
 		adminEmail,
@@ -69,7 +75,9 @@ function domainToAdminEmailToList(
 function listToDomainToAdminEmail(
 	list?: DomainAdminEmailItem[],
 ): Record<string, string> {
-	if (!list || list.length === 0) return {};
+	if (!list || list.length === 0) {
+		return {};
+	}
 	return list.reduce<Record<string, string>>((acc, { domain, adminEmail }) => {
 		if (domain && adminEmail) {
 			acc[domain] = adminEmail;
@@ -84,7 +92,9 @@ function buildRoleMapping(formRoleMapping?: {
 	useRoleAttribute?: boolean;
 	groupMappingsList?: GroupMappingItem[];
 }): RoleMapping | undefined {
-	if (!formRoleMapping) return undefined;
+	if (!formRoleMapping) {
+		return undefined;
+	}
 
 	const { defaultRole, useRoleAttribute, groupMappingsList } = formRoleMapping;
 	const groupMappings = listToGroupMappings(groupMappingsList);
@@ -117,7 +127,9 @@ function buildGoogleAuthConfig(formGoogleAuthConfig?: {
 	allowedGroupsList?: string[];
 	insecureSkipEmailVerified?: boolean;
 }): GoogleAuthConfig | undefined {
-	if (!formGoogleAuthConfig) return undefined;
+	if (!formGoogleAuthConfig) {
+		return undefined;
+	}
 
 	const {
 		clientId,
@@ -132,7 +144,9 @@ function buildGoogleAuthConfig(formGoogleAuthConfig?: {
 	} = formGoogleAuthConfig;
 
 	// Return undefined if required fields are missing
-	if (!clientId || !clientSecret) return undefined;
+	if (!clientId || !clientSecret) {
+		return undefined;
+	}
 
 	return {
 		clientId,
