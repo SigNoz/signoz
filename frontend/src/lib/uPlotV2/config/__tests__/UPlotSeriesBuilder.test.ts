@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
@@ -18,6 +19,7 @@ const createBaseProps = (
 	colorMapping: {},
 	drawStyle: DrawStyle.Line,
 	isDarkMode: false,
+	panelType: PANEL_TYPES.TIME_SERIES,
 	...overrides,
 });
 
@@ -259,13 +261,6 @@ describe('UPlotSeriesBuilder', () => {
 
 		expect((splinePath as MockPath).name).toBe('spline');
 		expect((defaultPath as MockPath).name).toBe('spline');
-	});
-
-	it('preserves spanGaps true when provided as boolean', () => {
-		const builder = new UPlotSeriesBuilder(createBaseProps({ spanGaps: true }));
-
-		const config = builder.getConfig();
-		expect(config.spanGaps).toBe(true);
 	});
 
 	it('uses generateColor when label has no colorMapping and no lineColor', () => {

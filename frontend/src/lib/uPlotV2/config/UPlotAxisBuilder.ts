@@ -10,7 +10,6 @@ import { AxisProps, ConfigBuilder } from './types';
 const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
 	PANEL_TYPES.TIME_SERIES,
 	PANEL_TYPES.BAR,
-	PANEL_TYPES.PIE,
 ];
 
 /**

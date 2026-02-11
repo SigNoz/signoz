@@ -285,25 +285,25 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.space).toBe(50);
 	});
 
-	it('includes PANEL_TYPES.BAR and PANEL_TYPES.PIE in X-axis datetime formatter', () => {
+	it('includes PANEL_TYPES.BAR and PANEL_TYPES.TIME_SERIES in X-axis datetime formatter', () => {
 		const barBuilder = new UPlotAxisBuilder(
 			createAxisProps({
 				scaleKey: 'x',
 				panelType: PANEL_TYPES.BAR,
 			}),
 		);
-		const pieBuilder = new UPlotAxisBuilder(
+		expect(barBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
+
+		const timeSeriesBuilder = new UPlotAxisBuilder(
 			createAxisProps({
 				scaleKey: 'x',
-				panelType: PANEL_TYPES.PIE,
+				panelType: PANEL_TYPES.TIME_SERIES,
 			}),
 		);
-
-		expect(barBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
-		expect(pieBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
+		expect(timeSeriesBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
 	});
 
-	it('invokes Y-axis size calculator and delegates to getExistingAxisSize when cycleNum > 1', () => {
+	it('should return the existing size when cycleNum > 1', () => {
 		const builder = new UPlotAxisBuilder(createAxisProps({ scaleKey: 'y' }));
 
 		const config = builder.getConfig();
@@ -335,7 +335,7 @@ describe('UPlotAxisBuilder', () => {
 		expect(result).toBe(80);
 	});
 
-	it('invokes Y-axis size calculator and computes from text width when cycleNum <= 1', () => {
+	it('should invoke the size calculator and compute from text width when cycleNum <= 1', () => {
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({ scaleKey: 'y', gap: 8 }),
 		);
