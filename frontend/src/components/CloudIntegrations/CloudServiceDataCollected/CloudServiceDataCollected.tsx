@@ -1,6 +1,8 @@
 import { Table } from 'antd';
+import { ServiceData } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import { BarChart2, ScrollText } from 'lucide-react';
 
-import { ServiceData } from './types';
+import './CloudServiceDataCollected.styles.scss';
 
 function CloudServiceDataCollected({
 	logsData,
@@ -61,26 +63,32 @@ function CloudServiceDataCollected({
 	return (
 		<div className="cloud-service-data-collected">
 			{logsData && logsData.length > 0 && (
-				<div className="cloud-service-data-collected__table">
-					<div className="cloud-service-data-collected__table-heading">Logs</div>
+				<div className="cloud-service-data-collected-table">
+					<div className="cloud-service-data-collected-table-heading">
+						<ScrollText size={14} />
+						Logs
+					</div>
 					<Table
 						columns={logsColumns}
 						dataSource={logsData}
 						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...tableProps}
-						className="cloud-service-data-collected__table-logs"
+						className="cloud-service-data-collected-table-logs"
 					/>
 				</div>
 			)}
 			{metricsData && metricsData.length > 0 && (
-				<div className="cloud-service-data-collected__table">
-					<div className="cloud-service-data-collected__table-heading">Metrics</div>
+				<div className="cloud-service-data-collected-table">
+					<div className="cloud-service-data-collected-table-heading">
+						<BarChart2 size={14} />
+						Metrics
+					</div>
 					<Table
 						columns={metricsColumns}
 						dataSource={metricsData}
 						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...tableProps}
-						className="cloud-service-data-collected__table-metrics"
+						className="cloud-service-data-collected-table-metrics"
 					/>
 				</div>
 			)}

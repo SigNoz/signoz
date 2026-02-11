@@ -1,20 +1,20 @@
-import { RequestIntegrationBtn } from 'container/Integrations/RequestIntegrationBtn';
+// import { RequestIntegrationBtn } from 'container/Integrations/RequestIntegrationBtn';
 import { IntegrationType } from 'container/Integrations/types';
 
 import AWSTabs from './AmazonWebServices/ServicesTabs';
 import AzureServices from './AzureServices';
 import Header from './Header/Header';
-import HeroSection from './HeroSection/HeroSection';
+
+import './CloudIntegration.styles.scss';
 
 const CloudIntegration = ({ type }: { type: IntegrationType }): JSX.Element => {
 	return (
-		<div className="cloud-integration">
+		<div className="cloud-integration-container">
 			<Header title={type} />
-			<HeroSection integration={type} />
-			<RequestIntegrationBtn
+			{/* <RequestIntegrationBtn
 				type={type}
 				message="Can't find the service you're looking for? Request more integrations"
-			/>
+			/> */}
 			{type === IntegrationType.AWS_SERVICES && <AWSTabs />}
 			{type === IntegrationType.AZURE_SERVICES && <AzureServices />}
 		</div>

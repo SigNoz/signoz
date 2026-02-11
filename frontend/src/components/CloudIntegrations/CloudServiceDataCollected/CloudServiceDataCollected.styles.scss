@@ -1,0 +1,35 @@
+.cloud-service-data-collected {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.cloud-service-data-collected-table {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		.cloud-service-data-collected-table-heading {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: 8px;
+
+			color: var(--Vanilla-400, #c0c1c3);
+
+			/* Bifrost (Ancient)/Content/sm */
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+
+		.cloud-service-data-collected-table-logs {
+			border-radius: 6px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			background: var(--Ink-400, #121317);
+			box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+		}
+	}
+}

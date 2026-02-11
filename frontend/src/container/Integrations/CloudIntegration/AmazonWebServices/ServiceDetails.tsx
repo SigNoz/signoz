@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Tabs, TabsProps } from 'antd';
+import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
 import CloudServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/CloudServiceDashboards';
-import CloudServiceDataCollected from 'container/Integrations/CloudIntegration/AmazonWebServices/CloudServiceDataCollected';
-import { IServiceStatus } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import { IServiceStatus } from 'container/Integrations/types';
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';

@@ -5,7 +5,7 @@ import { useAccountStatus } from 'hooks/integration/aws/useAccountStatus';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
-import logEvent from '../../../../../api/common/logEvent';
+import logEvent from '../../../../../../api/common/logEvent';
 import { ModalStateEnum, RegionFormProps } from '../types';
 import AlertMessage from './AlertMessage';
 import {

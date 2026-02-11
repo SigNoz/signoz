@@ -1,0 +1,68 @@
+.cloud-integration-accounts {
+	padding: 0px 16px 16px 16px;
+
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.selected-cloud-integration-account-section {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.selected-cloud-integration-account-section-header {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+
+			border-radius: 4px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			background: var(--Ink-400, #121317);
+
+			.selected-cloud-integration-account-section-header-title {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				gap: 8px;
+
+				.selected-cloud-integration-account-status {
+					display: flex;
+					border-right: 1px solid var(--Slate-400, #1d212d);
+					width: 32px;
+					height: 32px;
+
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					border-radius: 4px;
+					line-height: 32px;
+				}
+
+				.selected-cloud-integration-account-section-header-title-text {
+					display: flex;
+					flex-direction: row;
+					gap: 16px;
+					line-height: 32px;
+
+					color: var(--Vanilla-400, #c0c1c3);
+					font-family: 'Space Mono';
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 22px; /* 157.143% */
+					letter-spacing: -0.07px;
+				}
+			}
+
+			.selected-cloud-integration-account-settings {
+				display: flex;
+				flex-direction: row;
+				gap: 16px;
+				line-height: 32px;
+				margin-right: 8px;
+				cursor: pointer;
+			}
+		}
+	}
+}

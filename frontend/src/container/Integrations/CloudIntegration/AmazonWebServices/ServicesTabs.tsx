@@ -8,6 +8,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown } from 'lucide-react';
 
+import HeroSection from './HeroSection/HeroSection';
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
 
@@ -108,6 +109,7 @@ function ServicesSection(): JSX.Element {
 function ServicesTabs(): JSX.Element {
 	return (
 		<div className="services-tabs">
+			<HeroSection />
 			<ServicesSection />
 		</div>
 	);

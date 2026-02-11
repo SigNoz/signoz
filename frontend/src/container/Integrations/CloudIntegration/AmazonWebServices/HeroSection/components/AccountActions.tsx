@@ -5,11 +5,12 @@ import { Color } from '@signozhq/design-tokens';
 import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
 
-import { CloudAccount } from '../../AmazonWebServices/types';
+import { CloudAccount } from '../../types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
 
@@ -48,12 +49,6 @@ function renderOption(
 		/>
 	);
 }
-
-const getAccountById = (
-	accounts: CloudAccount[],
-	accountId: string,
-): CloudAccount | null =>
-	accounts.find((account) => account.cloud_account_id === accountId) || null;
 
 function AccountActionsRenderer({
 	accounts,

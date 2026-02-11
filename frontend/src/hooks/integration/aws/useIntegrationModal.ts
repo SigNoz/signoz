@@ -11,7 +11,7 @@ import { FormInstance } from 'antd/lib';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
-} from 'container/Integrations/CloudIntegration/HeroSection/types';
+} from 'container/Integrations/CloudIntegration/AmazonWebServices/HeroSection/types';
 import useAxiosError from 'hooks/useAxiosError';
 import {
 	ConnectionParams,

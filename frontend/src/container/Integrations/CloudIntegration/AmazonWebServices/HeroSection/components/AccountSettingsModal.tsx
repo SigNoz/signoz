@@ -10,8 +10,8 @@ import {
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 
-import logEvent from '../../../../../api/common/logEvent';
-import { CloudAccount } from '../../AmazonWebServices/types';
+import logEvent from '../../../../../../api/common/logEvent';
+import { CloudAccount } from '../../types';
 import { RegionSelector } from './RegionSelector';
 import RemoveIntegrationAccount from './RemoveIntegrationAccount';
 

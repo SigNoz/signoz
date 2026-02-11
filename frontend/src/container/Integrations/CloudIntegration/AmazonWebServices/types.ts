@@ -1,78 +1,28 @@
+import { ServiceData } from 'container/Integrations/types';
+
 interface Service {
 	id: string;
 	title: string;
 	icon: string;
-	config: ServiceConfig;
-}
-
-interface Dashboard {
-	id: string;
-	url: string;
-	title: string;
-	description: string;
-	image: string;
-}
-
-interface LogField {
-	name: string;
-	path: string;
-	type: string;
-}
-
-interface Metric {
-	name: string;
-	type: string;
-	unit: string;
-}
-
-interface ConfigStatus {
-	enabled: boolean;
-}
-
-interface DataStatus {
-	last_received_ts_ms: number;
-	last_received_from: string;
+	config: AWSServiceConfig;
 }
 
 interface S3BucketsByRegion {
 	[region: string]: string[];
 }
 
+interface ConfigStatus {
+	enabled: boolean;
+}
+
 interface LogsConfig extends ConfigStatus {
 	s3_buckets?: S3BucketsByRegion;
 }
 
-interface ServiceConfig {
+interface AWSServiceConfig {
 	logs: LogsConfig;
 	metrics: ConfigStatus;
 	s3_sync?: LogsConfig;
-}
-
-interface IServiceStatus {
-	logs: DataStatus | null;
-	metrics: DataStatus | null;
-}
-
-interface SupportedSignals {
-	metrics: boolean;
-	logs: boolean;
-}
-
-interface ServiceData {
-	id: string;
-	title: string;
-	icon: string;
-	overview: string;
-	supported_signals: SupportedSignals;
-	assets: {
-		dashboards: Dashboard[];
-	};
-	data_collected: {
-		logs?: LogField[];
-		metrics: Metric[];
-	};
-	config?: ServiceConfig;
-	status?: IServiceStatus;
 }
 
 interface ServiceDetailsResponse {
@@ -80,11 +30,11 @@ interface ServiceDetailsResponse {
 	data: ServiceData;
 }
 
-interface CloudAccountConfig {
+export interface AWSCloudAccountConfig {
 	regions: string[];
 }
 
-interface IntegrationStatus {
+export interface IntegrationStatus {
 	last_heartbeat_ts_ms: number;
 }
 
@@ -95,7 +45,7 @@ interface AccountStatus {
 interface CloudAccount {
 	id: string;
 	cloud_account_id: string;
-	config: CloudAccountConfig;
+	config: AWSCloudAccountConfig;
 	status: AccountStatus;
 }
 
@@ -133,15 +83,13 @@ interface UpdateServiceConfigResponse {
 }
 
 export type {
+	AWSServiceConfig,
 	CloudAccount,
 	CloudAccountsData,
-	IServiceStatus,
 	S3BucketsByRegion,
 	Service,
-	ServiceConfig,
 	ServiceData,
 	ServiceDetailsResponse,
-	SupportedSignals,
 	UpdateServiceConfigPayload,
 	UpdateServiceConfigResponse,
 };

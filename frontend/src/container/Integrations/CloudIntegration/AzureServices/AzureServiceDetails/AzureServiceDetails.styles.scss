@@ -1,0 +1,102 @@
+.azure-service-details-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+
+	.azure-service-details-tabs {
+		margin-top: 8px;
+
+		// remove the padding left from the first div of the tabs component
+		// this needs to be handled in the tabs component
+		> div:first-child {
+			padding-left: 0;
+		}
+
+		.azure-service-details-data-collected-content-logs,
+		.azure-service-details-data-collected-content-metrics {
+			display: flex;
+			flex-direction: row;
+			gap: 8px;
+
+			.azure-service-details-data-collected-content-title {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				gap: 8px;
+
+				color: var(--Vanilla-400, #c0c1c3);
+
+				/* Bifrost (Ancient)/Content/sm */
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+
+		.azure-service-details-overview {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+
+			.azure-service-dashboards {
+				border-radius: 6px;
+				border: 1px solid var(--Slate-400, #1d212d);
+				background: var(--Ink-400, #121317);
+				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+
+				.azure-service-dashboards-title {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					gap: 8px;
+
+					color: var(--Vanilla-400, #c0c1c3);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: -0.07px;
+
+					padding: 8px 16px;
+					border-bottom: 1px solid var(--Slate-400, #1d212d);
+				}
+
+				.azure-service-dashboards-items {
+					display: flex;
+					flex-direction: column;
+					gap: 16px;
+
+					.azure-service-dashboard-item {
+						display: flex;
+						flex-direction: column;
+						gap: 8px;
+						padding: 12px 16px 12px 16px;
+
+						.azure-service-dashboard-item-title {
+							color: var(--Vanilla-100, #f0f1f2);
+							font-family: Inter;
+							font-size: 14px;
+							font-style: normal;
+							font-weight: 500;
+							line-height: 20px; /* 142.857% */
+							letter-spacing: -0.07px;
+						}
+
+						.azure-service-dashboard-item-description {
+							color: var(--Vanilla-400, #c0c1c3);
+							font-family: Inter;
+							font-size: 12px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 18px; /* 150% */
+						}
+					}
+				}
+			}
+		}
+	}
+}
