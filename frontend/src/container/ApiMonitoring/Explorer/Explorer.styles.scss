@@ -159,6 +159,10 @@
 			width: calc(100% - 260px);
 		}
 	}
+
+	.expanded-clickable-row {
+		cursor: pointer;
+	}
 }
 
 .no-filtered-domains-message-container {
