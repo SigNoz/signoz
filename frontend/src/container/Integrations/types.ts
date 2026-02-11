@@ -1,4 +1,7 @@
-import { AWSServiceConfig } from './CloudIntegration/AmazonWebServices/types';
+import {
+	AWSCloudAccountConfig,
+	AWSServiceConfig,
+} from './CloudIntegration/AmazonWebServices/types';
 
 export enum IntegrationType {
 	AWS_SERVICES = 'aws-services',
@@ -32,7 +35,7 @@ export interface IServiceStatus {
 	metrics: DataStatus | null;
 }
 
-export interface AzureServiceLogsConfig {
+export interface AzureServicesConfig {
 	logs: AzureConfig[];
 	metrics: AzureConfig[];
 }
@@ -54,7 +57,7 @@ export interface AzureService {
 	id: string;
 	title: string;
 	icon: string;
-	config: AzureServiceLogsConfig;
+	config: AzureServicesConfig;
 }
 
 export interface ServiceData {
@@ -70,14 +73,14 @@ export interface ServiceData {
 		logs?: LogField[];
 		metrics: Metric[];
 	};
-	config?: AWSServiceConfig | AzureServiceLogsConfig;
+	config?: AWSServiceConfig | AzureServicesConfig;
 	status?: IServiceStatus;
 }
 
 export interface CloudAccount {
 	id: string;
 	cloud_account_id: string;
-	config: AzureCloudAccountConfig | AWSServiceConfig;
+	config: AzureCloudAccountConfig | AWSCloudAccountConfig;
 	status: AccountStatus | IServiceStatus;
 }
 

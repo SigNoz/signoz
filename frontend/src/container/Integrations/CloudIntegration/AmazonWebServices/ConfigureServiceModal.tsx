@@ -3,10 +3,8 @@ import { useQueryClient } from 'react-query';
 import { Form, Switch } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	ServiceConfig,
-	SupportedSignals,
-} from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import { AWSServiceConfig } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import { SupportedSignals } from 'container/Integrations/types';
 import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
 import { isEqual } from 'lodash-es';
 
@@ -22,7 +20,7 @@ export interface IConfigureServiceModalProps {
 	serviceId: string;
 	cloudAccountId: string;
 	supportedSignals: SupportedSignals;
-	initialConfig?: ServiceConfig;
+	initialConfig?: AWSServiceConfig;
 }
 
 function ConfigureServiceModal({

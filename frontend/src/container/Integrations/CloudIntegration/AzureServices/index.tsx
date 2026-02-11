@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 import { Skeleton } from 'antd';
 import CloudIntegrationsHeader from 'components/CloudIntegrations/CloudIntegrationsHeader';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -21,7 +20,6 @@ import './AzureServices.styles.scss';
 
 function AzureServices(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const [selectedAccount, setSelectedAccount] = useState<CloudAccount | null>(
 		null,
@@ -45,26 +43,37 @@ function AzureServices(): JSX.Element {
 		[accounts, urlQuery],
 	);
 
-	console.log('initialAccount', initialAccount, isLoadingAccounts);
+	// Sync selectedAccount with initialAccount when accounts load (enables Subscription ID display)
+	// Cast: hook returns AWS-typed CloudAccount[] but AZURE fetch returns Azure-shaped accounts
+	useEffect(() => {
+		setSelectedAccount(initialAccount as CloudAccount | null);
+	}, [initialAccount]);
 
 	const {
 		data: azureServices = [],
 		isLoading: isLoadingAzureServices,
 	} = useGetAccountServices(INTEGRATION_TYPES.AZURE);
 
-	const enabledServices = azureServices?.filter(
-		(service: AzureService) =>
-			service.config?.logs?.some((log: AzureConfig) => log.enabled) ||
-			service.config?.metrics?.some((metric: AzureConfig) => metric.enabled),
+	const enabledServices = useMemo(
+		() =>
+			azureServices?.filter(
+				(service: AzureService) =>
+					service.config?.logs?.some((log: AzureConfig) => log.enabled) ||
+					service.config?.metrics?.some((metric: AzureConfig) => metric.enabled),
+			) ?? [],
+		[azureServices],
 	);
 
-	const notEnabledServices = azureServices?.filter(
-		(service: AzureService) =>
-			!service.config?.logs?.some((log: AzureConfig) => log.enabled) ||
-			!service.config?.metrics?.some((metric: AzureConfig) => metric.enabled),
+	const notEnabledServices = useMemo(
+		() =>
+			azureServices?.filter(
+				(service: AzureService) =>
+					!service.config?.logs?.some((log: AzureConfig) => log.enabled) ||
+					!service.config?.metrics?.some((metric: AzureConfig) => metric.enabled),
+			) ?? [],
+		[azureServices],
 	);
 
-	// only on mount and first load of azure services, set the first enabled service as selected, if no enabled services, set the first not enabled service as selected
 	useEffect(() => {
 		if (enabledServices.length > 0) {
 			setSelectedService(enabledServices[0]);
@@ -72,8 +81,6 @@ function AzureServices(): JSX.Element {
 			setSelectedService(notEnabledServices[0]);
 		}
 	}, [enabledServices, notEnabledServices]);
-
-	console.log('selectedService', selectedService);
 
 	return (
 		<div className="azure-services-container">
@@ -96,8 +103,8 @@ function AzureServices(): JSX.Element {
 						<div className="azure-services-list-section-content">
 							<AzureServicesListView
 								selectedService={selectedService}
-								enabledServices={enabledServices || []}
-								notEnabledServices={notEnabledServices || []}
+								enabledServices={enabledServices}
+								notEnabledServices={notEnabledServices}
 								onSelectService={setSelectedService}
 							/>
 

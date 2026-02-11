@@ -1,4 +1,4 @@
-import { CloudAccount } from './AmazonWebServices/types';
+import { CloudAccount } from '../types';
 
 export const getAccountById = (
 	accounts: CloudAccount[],

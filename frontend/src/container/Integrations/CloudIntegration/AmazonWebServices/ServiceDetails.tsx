@@ -4,6 +4,7 @@ import CloudServiceDataCollected from 'components/CloudIntegrations/CloudService
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
 import CloudServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/CloudServiceDashboards';
+import { AWSServiceConfig } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import { IServiceStatus } from 'container/Integrations/types';
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
@@ -110,9 +111,10 @@ function ServiceDetails(): JSX.Element | null {
 		[config],
 	);
 
+	const awsConfig = config as AWSServiceConfig | undefined;
 	const isAnySignalConfigured = useMemo(
-		() => !!config?.logs?.enabled || !!config?.metrics?.enabled,
-		[config],
+		() => !!awsConfig?.logs?.enabled || !!awsConfig?.metrics?.enabled,
+		[awsConfig],
 	);
 
 	// log telemetry event on visiting details of a service.
@@ -179,7 +181,7 @@ function ServiceDetails(): JSX.Element | null {
 					serviceName={serviceDetailsData.title}
 					serviceId={serviceId || ''}
 					cloudAccountId={cloudAccountId || ''}
-					initialConfig={serviceDetailsData.config}
+					initialConfig={awsConfig}
 					supportedSignals={serviceDetailsData.supported_signals || {}}
 				/>
 			)}
