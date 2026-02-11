@@ -3,9 +3,9 @@ package implrootuser
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/rootuser"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -18,16 +18,16 @@ type module struct {
 	store    types.RootUserStore
 	settings factory.ScopedProviderSettings
 	config   user.RootUserConfig
-	granter  role.Granter
+	authz    authz.AuthZ
 }
 
-func NewModule(store types.RootUserStore, providerSettings factory.ProviderSettings, config user.RootUserConfig, granter role.Granter) rootuser.Module {
+func NewModule(store types.RootUserStore, providerSettings factory.ProviderSettings, config user.RootUserConfig, authz authz.AuthZ) rootuser.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/rootuser/implrootuser")
 	return &module{
 		store:    store,
 		settings: settings,
 		config:   config,
-		granter:  granter,
+		authz:    authz,
 	}
 }
 
@@ -47,7 +47,7 @@ func (m *module) Authenticate(ctx context.Context, orgID valuer.UUID, email valu
 	identity := authtypes.NewRootIdentity(rootUser.ID, orgID, rootUser.Email)
 
 	// make sure the returning identity has admin role
-	err = m.granter.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, rootUser.ID.StringValue(), rootUser.OrgID, nil))
+	err = m.authz.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, rootUser.ID.StringValue(), rootUser.OrgID, nil))
 	if err != nil {
 		return nil, err
 	}

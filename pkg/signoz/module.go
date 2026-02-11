@@ -96,7 +96,7 @@ func NewModules(
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
-	rootUser := implrootuser.NewModule(implrootuser.NewStore(sqlstore, providerSettings), providerSettings, config.User.RootUserConfig, granter)
+	rootUser := implrootuser.NewModule(implrootuser.NewStore(sqlstore, providerSettings), providerSettings, config.User.RootUserConfig, authz)
 
 	return Modules{
 		OrgGetter:       orgGetter,
