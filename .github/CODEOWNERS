@@ -103,9 +103,18 @@
 
 /tests/integration/ @vikrantgupta25
 
+# OpenAPI types generator
+
+/frontend/src/api @SigNoz/frontend-maintainers
+
 # Dashboard Owners
 
 /frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/providers/Dashboard/ @SigNoz/pulse-frontend
+
+## Dashboard Types
+
+/frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
 
 ## Dashboard List
 
@@ -123,3 +132,9 @@
 
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
+
+## Dashboard Libs + Components
+/frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
+/frontend/src/components/NewSelect/ @SigNoz/pulse-frontend

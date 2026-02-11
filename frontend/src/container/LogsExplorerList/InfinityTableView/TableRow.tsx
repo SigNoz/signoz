@@ -1,11 +1,3 @@
-import './TableRow.styles.scss';
-
-import { ColumnsType } from 'antd/es/table';
-import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
-import { ColumnTypeRender } from 'components/Logs/TableView/types';
-import { FontSize } from 'container/OptionsMenu/types';
-import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	cloneElement,
 	MouseEventHandler,
@@ -14,9 +6,17 @@ import {
 	useCallback,
 	useMemo,
 } from 'react';
+import { ColumnsType } from 'antd/es/table';
+import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
+import { ColumnTypeRender } from 'components/Logs/TableView/types';
+import { FontSize } from 'container/OptionsMenu/types';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ILog } from 'types/api/logs/log';
 
 import { TableCellStyled } from './styles';
+
+import './TableRow.styles.scss';
 
 interface TableRowProps {
 	tableColumns: ColumnsType<Record<string, unknown>>;
@@ -52,7 +52,9 @@ export default function TableRow({
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			if (!handleSetActiveContextLog || !currentLog) return;
+			if (!handleSetActiveContextLog || !currentLog) {
+				return;
+			}
 
 			handleSetActiveContextLog(currentLog);
 		},
@@ -60,7 +62,9 @@ export default function TableRow({
 	);
 
 	const handleShowLogDetails = useCallback(() => {
-		if (!onShowLogDetails || !currentLog) return;
+		if (!onShowLogDetails || !currentLog) {
+			return;
+		}
 		onShowLogDetails(currentLog);
 	}, [currentLog, onShowLogDetails]);
 
@@ -71,9 +75,13 @@ export default function TableRow({
 	return (
 		<>
 			{tableColumns.map((column) => {
-				if (!column.render) return <td>Empty</td>;
+				if (!column.key) {
+					return null;
+				}
 
-				if (!column.key) return null;
+				if (!column.render) {
+					return <td key={column.key}>Empty</td>;
+				}
 
 				const element: ColumnTypeRender<Record<string, unknown>> = column.render(
 					log[column.key as keyof Record<string, unknown>],

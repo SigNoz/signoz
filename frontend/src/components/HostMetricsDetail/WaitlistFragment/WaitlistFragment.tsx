@@ -1,13 +1,13 @@
-import './WaitListFragment.styles.scss';
-
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
 import { CheckCircle2, HandPlatter } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import './WaitListFragment.styles.scss';
 
 export default function WaitlistFragment({
 	entityType,
@@ -22,7 +22,9 @@ export default function WaitlistFragment({
 	const [isSuccess, setIsSuccess] = useState(false);
 
 	const handleJoinWaitlist = (): void => {
-		if (!user || !user.email) return;
+		if (!user || !user.email) {
+			return;
+		}
 
 		setIsSubmitting(true);
 

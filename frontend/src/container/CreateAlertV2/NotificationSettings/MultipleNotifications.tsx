@@ -1,7 +1,7 @@
+import { useCallback, useMemo } from 'react';
 import { Select, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
 
 import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';

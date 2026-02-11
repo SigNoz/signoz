@@ -17,7 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 )
@@ -28,6 +28,8 @@ type PromRule struct {
 	prometheus prometheus.Prometheus
 }
 
+var _ Rule = (*PromRule)(nil)
+
 func NewPromRule(
 	id string,
 	orgID valuer.UUID,
@@ -37,7 +39,6 @@ func NewPromRule(
 	prometheus prometheus.Prometheus,
 	opts ...RuleOption,
 ) (*PromRule, error) {
-
 	opts = append(opts, WithLogger(logger))
 
 	baseRule, err := NewBaseRule(id, orgID, postableRule, reader, opts...)
@@ -53,7 +54,6 @@ func NewPromRule(
 	p.logger = logger
 
 	query, err := p.getPqlQuery()
-
 	if err != nil {
 		// can not generate a valid prom QL query
 		return nil, err
@@ -83,7 +83,6 @@ func (r *PromRule) GetSelectedQuery() string {
 }
 
 func (r *PromRule) getPqlQuery() (string, error) {
-
 	if r.version == "v5" {
 		if len(r.ruleCondition.CompositeQuery.Queries) > 0 {
 			selectedQuery := r.GetSelectedQuery()
@@ -145,6 +144,12 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	}
 
 	matrixToProcess := r.matrixToV3Series(res)
+
+	hasData := len(matrixToProcess) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
+
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
@@ -157,10 +162,18 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	}
 
 	var resultVector ruletypes.Vector
+
 	for _, series := range matrixToProcess {
+		if !r.Condition().ShouldEval(series) {
+			r.logger.InfoContext(
+				ctx, "not enough data points to evaluate series, skipping",
+				"rule_id", r.ID(), "num_points", len(series.Points), "required_points", r.Condition().RequiredNumPoints,
+			)
+			continue
+		}
 		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
-      SendUnmatched: r.ShouldSendUnmatched(),
+			SendUnmatched: r.ShouldSendUnmatched(),
 		})
 		if err != nil {
 			return nil, err
@@ -170,14 +183,14 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	return resultVector, nil
 }
 
-func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
 	valueFormatter := formatter.FromUnit(r.Unit())
 
 	// prepare query, run query get data and filter the data based on the threshold
 	results, err := r.buildAndRunQuery(ctx, ts)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	r.mtx.Lock()
@@ -185,7 +198,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	resultFPs := map[uint64]struct{}{}
 
-	var alerts = make(map[uint64]*ruletypes.Alert, len(results))
+	alerts := make(map[uint64]*ruletypes.Alert, len(results))
 
 	ruleReceivers := r.Threshold.GetRuleReceivers()
 	ruleReceiverMap := make(map[string][]string)
@@ -208,7 +221,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
 		expand := func(text string) string {
-
 			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
@@ -240,6 +252,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		for name, value := range r.annotations.Map() {
 			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
 		}
+		if result.IsMissing {
+			lb.Set(qslabels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(qslabels.NoDataLabel, "true")
+		}
 
 		lbs := lb.Labels()
 		h := lbs.Hash()
@@ -251,7 +267,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			// SetLastError will deadlock.
 			r.health = ruletypes.HealthBad
 			r.lastError = err
-			return nil, err
+			return 0, err
 		}
 		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
@@ -262,6 +278,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			Value:             result.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
+			Missing:           result.IsMissing,
 			IsRecovering:      result.IsRecovering,
 		}
 	}
@@ -317,7 +334,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			continue
 		}
 
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
 			a.State = model.StateFiring
 			a.FiredAt = ts
 			state := model.StateFiring
@@ -378,11 +395,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 }
 
 func (r *PromRule) String() string {
-
 	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        ruletypes.Duration(r.evalWindow),
+		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,

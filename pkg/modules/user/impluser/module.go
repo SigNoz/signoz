@@ -8,15 +8,20 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/dustin/go-humanize"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -27,11 +32,13 @@ type Module struct {
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
+	authz     authz.AuthZ
 	analytics analytics.Analytics
+	config    user.Config
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, analytics analytics.Analytics) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -40,6 +47,8 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
+		authz:     authz,
+		config:    config,
 	}
 }
 
@@ -162,6 +171,12 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
+	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
+	err := module.authz.Grant(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := module.store.CreateUser(ctx, input); err != nil {
 			return err
@@ -222,8 +237,19 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	user.UpdatedAt = time.Now()
+	if user.Role != existingUser.Role {
+		err = m.authz.ModifyGrant(ctx,
+			orgID,
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role),
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
 
+	user.UpdatedAt = time.Now()
 	updatedUser, err := m.store.UpdateUser(ctx, orgID, id, user)
 	if err != nil {
 		return nil, err
@@ -254,8 +280,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return updatedUser, nil
 }
 
-func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
+func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -265,7 +291,7 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	adminUsers, err := module.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 	if err != nil {
 		return err
 	}
@@ -274,11 +300,17 @@ func (m *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, d
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
-	if err := m.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
+	err = module.authz.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	if err != nil {
 		return err
 	}
 
-	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
+	if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+		return err
+	}
+
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
 
@@ -302,31 +334,89 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		}
 	}
 
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID)
+	// check if a token already exists for this password id
+	existingResetPasswordToken, err := module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err // return the error if it is not a not found error
+	}
+
+	// return the existing token if it is not expired
+	if existingResetPasswordToken != nil && !existingResetPasswordToken.IsExpired() {
+		return existingResetPasswordToken, nil // return the existing token if it is not expired
+	}
+
+	// delete the existing token entry
+	if existingResetPasswordToken != nil {
+		if err := module.store.DeleteResetPasswordTokenByPasswordID(ctx, password.ID); err != nil {
+			return nil, err
+		}
+	}
+
+	// create a new token
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
 	if err != nil {
 		return nil, err
 	}
 
+	// create a new token
 	err = module.store.CreateResetPasswordToken(ctx, resetPasswordToken)
 	if err != nil {
-		if !errors.Ast(err, errors.TypeAlreadyExists) {
-			return nil, err
-		}
-
-		// if the token already exists, we return the existing token
-		resetPasswordToken, err = module.store.GetResetPasswordTokenByPasswordID(ctx, password.ID)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return resetPasswordToken, nil
+}
+
+func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
+	if !module.config.Password.Reset.AllowSelf {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "Users are not allowed to reset their password themselves, please contact an admin to reset your password.")
+	}
+
+	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return nil // for security reasons
+		}
+		return err
+	}
+
+	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	if err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
+		return err
+	}
+
+	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
+
+	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
+	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
+
+	if err := module.emailing.SendHTML(
+		ctx,
+		user.Email.String(),
+		"Reset your SigNoz password",
+		emailtypes.TemplateNameResetPassword,
+		map[string]any{
+			"Name":   user.DisplayName,
+			"Link":   resetLink,
+			"Expiry": humanizedTokenLifetime,
+		},
+	); err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
+		return nil
+	}
+
+	return nil
 }
 
 func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
 	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err
+	}
+
+	if resetPasswordToken.IsExpired() {
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
@@ -413,13 +503,26 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 		return nil, err
 	}
 
+	managedRoles := roletypes.NewManagedRoles(organization.ID)
+	err = module.authz.CreateManagedUserRoleTransactions(ctx, organization.ID, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.orgSetter.Create(ctx, organization)
+		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context, orgID valuer.UUID) error {
+			err = module.authz.CreateManagedRoles(ctx, orgID, managedRoles)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		err = module.CreateUser(ctx, user, root.WithFactorPassword(password))
+		err = module.createUserWithoutGrant(ctx, user, root.WithFactorPassword(password))
 		if err != nil {
 			return err
 		}
@@ -445,4 +548,29 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 
 	return stats, nil
+}
+
+func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+	createUserOpts := root.NewCreateUserOptions(opts...)
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.CreateUser(ctx, input); err != nil {
+			return err
+		}
+
+		if createUserOpts.FactorPassword != nil {
+			if err := module.store.CreatePassword(ctx, createUserOpts.FactorPassword); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	traitsOrProperties := types.NewTraitsFromUser(input)
+	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
+	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
+
+	return nil
 }

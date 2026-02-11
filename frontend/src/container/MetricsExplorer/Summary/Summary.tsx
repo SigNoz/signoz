@@ -1,6 +1,7 @@
 /* eslint-disable no-nested-ternary */
-import './Summary.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -9,9 +10,6 @@ import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -36,6 +34,8 @@ import {
 	formatDataForMetricsTable,
 	getMetricsListQuery,
 } from './utils';
+
+import './Summary.styles.scss';
 
 const DEFAULT_ORDER_BY: OrderByPayload = {
 	columnName: 'samples',
@@ -91,7 +91,7 @@ function Summary(): JSX.Element {
 	const queryFiltersWithoutId = useMemo(() => {
 		const filtersWithoutId = {
 			...queryFilters,
-			items: queryFilters.items.map(({ id, ...rest }) => rest),
+			items: queryFilters.items.map(({ id: _id, ...rest }) => rest),
 		};
 		return JSON.stringify(filtersWithoutId);
 	}, [queryFilters]);

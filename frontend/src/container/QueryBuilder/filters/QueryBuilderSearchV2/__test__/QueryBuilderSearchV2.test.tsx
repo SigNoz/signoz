@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable react/jsx-props-no-spreading */
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	act,
 	fireEvent,
@@ -11,8 +12,9 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
+import { IUseDashboardVariablesReturn } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -145,27 +147,23 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-// Mock dashboard provider with dynamic variables
-const mockDashboard = {
-	data: {
-		variables: {
-			service: {
-				id: 'service',
-				name: 'service',
-				type: 'DYNAMIC',
-				dynamicVariablesAttribute: 'service.name',
-				description: '',
-				sort: 'DISABLED',
-				multiSelect: false,
-				showALLOption: false,
-			},
-		},
+// Mock dashboard variables
+const dashboardVariables = {
+	service: {
+		id: 'service',
+		name: 'service',
+		type: 'DYNAMIC' as IDashboardVariable['type'],
+		dynamicVariablesAttribute: 'service.name',
+		description: '',
+		sort: 'DISABLED' as IDashboardVariable['sort'],
+		multiSelect: false,
+		showALLOption: false,
 	},
 };
 
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
-		selectedDashboard: mockDashboard,
+jest.mock('hooks/dashboard/useDashboardVariables', () => ({
+	useDashboardVariables: (): IUseDashboardVariablesReturn => ({
+		dashboardVariables: dashboardVariables,
 	}),
 }));
 

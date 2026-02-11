@@ -209,7 +209,7 @@ paths:
   /api/v1/dashboards/{id}/public:
     delete:
       deprecated: false
-      description: This endpoints deletes the public sharing config and disables the
+      description: This endpoint deletes the public sharing config and disables the
         public sharing of a dashboard
       operationId: DeletePublicDashboard
       parameters:
@@ -253,7 +253,7 @@ paths:
       - dashboard
     get:
       deprecated: false
-      description: This endpoints returns public sharing config for a dashboard
+      description: This endpoint returns public sharing config for a dashboard
       operationId: GetPublicDashboard
       parameters:
       - in: path
@@ -301,7 +301,7 @@ paths:
       - dashboard
     post:
       deprecated: false
-      description: This endpoints creates public sharing config and enables public
+      description: This endpoint creates public sharing config and enables public
         sharing of the dashboard
       operationId: CreatePublicDashboard
       parameters:
@@ -355,7 +355,7 @@ paths:
       - dashboard
     put:
       deprecated: false
-      description: This endpoints updates the public sharing config for a dashboard
+      description: This endpoint updates the public sharing config for a dashboard
       operationId: UpdatePublicDashboard
       parameters:
       - in: path
@@ -607,6 +607,178 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/fields/keys:
+    get:
+      deprecated: false
+      description: This endpoint returns field keys
+      operationId: GetFieldsKeys
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          type: string
+      - in: query
+        name: fieldDataType
+        schema:
+          type: string
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get field keys
+      tags:
+      - fields
+  /api/v1/fields/values:
+    get:
+      deprecated: false
+      description: This endpoint returns field values
+      operationId: GetFieldsValues
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          type: string
+      - in: query
+        name: fieldDataType
+        schema:
+          type: string
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get field values
+      tags:
+      - fields
   /api/v1/getResetPasswordToken/{id}:
     get:
       deprecated: false
@@ -671,7 +843,7 @@ paths:
   /api/v1/global/config:
     get:
       deprecated: false
-      description: This endpoints returns global config
+      description: This endpoint returns global config
       operationId: GetGlobalConfig
       responses:
         "200":
@@ -1007,43 +1179,6 @@ paths:
       summary: Create bulk invite
       tags:
       - users
-  /api/v1/login:
-    post:
-      deprecated: true
-      description: This endpoint is deprecated and will be removed in the future
-      operationId: DeprecatedCreateSessionByEmailPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesDeprecatedPostableLogin'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesDeprecatedGettableLogin'
-                  status:
-                    type: string
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Deprecated create session by email password
-      tags:
-      - sessions
   /api/v1/logs/promote_paths:
     get:
       deprecated: false
@@ -1484,8 +1619,7 @@ paths:
   /api/v1/public/dashboards/{id}:
     get:
       deprecated: false
-      description: This endpoints returns the sanitized dashboard data for public
-        access
+      description: This endpoint returns the sanitized dashboard data for public access
       operationId: GetPublicDashboardData
       parameters:
       - in: path
@@ -1616,6 +1750,228 @@ paths:
       summary: Reset password
       tags:
       - users
+  /api/v1/roles:
+    get:
+      deprecated: false
+      description: This endpoint lists all roles
+      operationId: ListRoles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RoletypesRole'
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List roles
+      tags:
+      - role
+    post:
+      deprecated: false
+      description: This endpoint creates a role
+      operationId: CreateRole
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                type: object
+          description: Created
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create role
+      tags:
+      - role
+  /api/v1/roles/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a role
+      operationId: DeleteRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete role
+      tags:
+      - role
+    get:
+      deprecated: false
+      description: This endpoint gets a role
+      operationId: GetRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoletypesRole'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get role
+      tags:
+      - role
+    patch:
+      deprecated: false
+      description: This endpoint patches a role
+      operationId: PatchRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Patch role
+      tags:
+      - role
   /api/v1/user:
     get:
       deprecated: false
@@ -2022,6 +2378,41 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/factor_password/forgot:
+    post:
+      deprecated: false
+      description: This endpoint initiates the forgot password flow by sending a reset
+        password email
+      operationId: ForgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableForgotPassword'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Forgot password
+      tags:
+      - users
   /api/v2/features:
     get:
       deprecated: false
@@ -2072,6 +2463,15 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: GetIngestionKeys
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2384,6 +2784,19 @@ paths:
       deprecated: false
       description: This endpoint returns the ingestion keys for a workspace
       operationId: SearchIngestionKeys
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: per_page
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2427,6 +2840,12 @@ paths:
       deprecated: false
       description: This endpoint returns associated alerts for a specified metric
       operationId: GetMetricAlerts
+      parameters:
+      - in: query
+        name: metricName
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2476,6 +2895,12 @@ paths:
       deprecated: false
       description: This endpoint returns associated dashboards for a specified metric
       operationId: GetMetricDashboards
+      parameters:
+      - in: query
+        name: metricName
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2526,6 +2951,12 @@ paths:
       description: This endpoint returns highlights like number of datapoints, totaltimeseries,
         active time series, last received time for a specified metric
       operationId: GetMetricHighlights
+      parameters:
+      - in: query
+        name: metricName
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2687,6 +3118,12 @@ paths:
       description: This endpoint returns metadata information like metric description,
         unit, type, temporality, monotonicity for a specified metric
       operationId: GetMetricMetadata
+      parameters:
+      - in: query
+        name: metricName
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -3143,20 +3580,6 @@ components:
         url:
           type: string
       type: object
-    AuthtypesDeprecatedGettableLogin:
-      properties:
-        accessJwt:
-          type: string
-        userId:
-          type: string
-      type: object
-    AuthtypesDeprecatedPostableLogin:
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-      type: object
     AuthtypesGettableAuthDomain:
       properties:
         authNProviderInfo:
@@ -3566,6 +3989,9 @@ components:
           type: string
         alertName:
           type: string
+      required:
+      - alertName
+      - alertId
       type: object
     MetricsexplorertypesMetricAlertsResponse:
       properties:
@@ -3574,6 +4000,8 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
           nullable: true
           type: array
+      required:
+      - alerts
       type: object
     MetricsexplorertypesMetricAttribute:
       properties:
@@ -3587,6 +4015,10 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - key
+      - values
+      - valueCount
       type: object
     MetricsexplorertypesMetricAttributesRequest:
       properties:
@@ -3598,6 +4030,8 @@ components:
         start:
           nullable: true
           type: integer
+      required:
+      - metricName
       type: object
     MetricsexplorertypesMetricAttributesResponse:
       properties:
@@ -3609,6 +4043,9 @@ components:
         totalKeys:
           format: int64
           type: integer
+      required:
+      - attributes
+      - totalKeys
       type: object
     MetricsexplorertypesMetricDashboard:
       properties:
@@ -3620,6 +4057,11 @@ components:
           type: string
         widgetName:
           type: string
+      required:
+      - dashboardName
+      - dashboardId
+      - widgetId
+      - widgetName
       type: object
     MetricsexplorertypesMetricDashboardsResponse:
       properties:
@@ -3628,6 +4070,8 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
           nullable: true
           type: array
+      required:
+      - dashboards
       type: object
     MetricsexplorertypesMetricHighlightsResponse:
       properties:
@@ -3643,6 +4087,11 @@ components:
         totalTimeSeries:
           minimum: 0
           type: integer
+      required:
+      - dataPoints
+      - lastReceived
+      - totalTimeSeries
+      - activeTimeSeries
       type: object
     MetricsexplorertypesMetricMetadata:
       properties:
@@ -3651,11 +4100,17 @@ components:
         isMonotonic:
           type: boolean
         temporality:
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         type:
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
+      required:
+      - description
+      - type
+      - unit
+      - temporality
+      - isMonotonic
       type: object
     MetricsexplorertypesStat:
       properties:
@@ -3670,9 +4125,16 @@ components:
           minimum: 0
           type: integer
         type:
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
+      required:
+      - metricName
+      - description
+      - type
+      - unit
+      - timeseries
+      - samples
       type: object
     MetricsexplorertypesStatsRequest:
       properties:
@@ -3690,6 +4152,10 @@ components:
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
       type: object
     MetricsexplorertypesStatsResponse:
       properties:
@@ -3701,6 +4167,9 @@ components:
         total:
           minimum: 0
           type: integer
+      required:
+      - metrics
+      - total
       type: object
     MetricsexplorertypesTreemapEntry:
       properties:
@@ -3712,7 +4181,16 @@ components:
         totalValue:
           minimum: 0
           type: integer
+      required:
+      - metricName
+      - percentage
+      - totalValue
       type: object
+    MetricsexplorertypesTreemapMode:
+      enum:
+      - timeseries
+      - samples
+      type: string
     MetricsexplorertypesTreemapRequest:
       properties:
         end:
@@ -3723,10 +4201,15 @@ components:
         limit:
           type: integer
         mode:
-          type: string
+          $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
+      - mode
       type: object
     MetricsexplorertypesTreemapResponse:
       properties:
@@ -3740,6 +4223,9 @@ components:
             $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
           nullable: true
           type: array
+      required:
+      - timeseries
+      - samples
       type: object
     MetricsexplorertypesUpdateMetricMetadataRequest:
       properties:
@@ -3750,12 +4236,33 @@ components:
         metricName:
           type: string
         temporality:
-          type: string
+          $ref: '#/components/schemas/MetrictypesTemporality'
         type:
-          type: string
+          $ref: '#/components/schemas/MetrictypesType'
         unit:
           type: string
+      required:
+      - metricName
+      - type
+      - description
+      - unit
+      - temporality
+      - isMonotonic
       type: object
+    MetrictypesTemporality:
+      enum:
+      - delta
+      - cumulative
+      - unspecified
+      type: string
+    MetrictypesType:
+      enum:
+      - gauge
+      - sum
+      - histogram
+      - summary
+      - exponentialhistogram
+      type: string
     PreferencetypesPreference:
       properties:
         allowedScopes:
@@ -3848,6 +4355,8 @@ components:
           type: string
         unit:
           type: string
+      required:
+      - name
       type: object
     Querybuildertypesv5QueryData:
       properties:
@@ -3889,6 +4398,87 @@ components:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
           type: string
+      type: object
+    RoletypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    TelemetrytypesGettableFieldKeys:
+      properties:
+        complete:
+          type: boolean
+        keys:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+            type: array
+          nullable: true
+          type: object
+      required:
+      - keys
+      - complete
+      type: object
+    TelemetrytypesGettableFieldValues:
+      properties:
+        complete:
+          type: boolean
+        values:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+      required:
+      - values
+      - complete
+      type: object
+    TelemetrytypesTelemetryFieldKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          type: string
+        fieldDataType:
+          type: string
+        name:
+          type: string
+        signal:
+          type: string
+        unit:
+          type: string
+      required:
+      - name
+      type: object
+    TelemetrytypesTelemetryFieldValues:
+      properties:
+        boolValues:
+          items:
+            type: boolean
+          type: array
+        numberValues:
+          items:
+            format: double
+            type: number
+          type: array
+        relatedValues:
+          items:
+            type: string
+          type: array
+        stringValues:
+          items:
+            type: string
+          type: array
       type: object
     TypesChangePasswordRequest:
       properties:
@@ -4010,6 +4600,18 @@ components:
         token:
           type: string
       type: object
+    TypesPostableForgotPassword:
+      properties:
+        email:
+          type: string
+        frontendBaseURL:
+          type: string
+        orgId:
+          type: string
+      required:
+      - orgId
+      - email
+      type: object
     TypesPostableInvite:
       properties:
         email:
@@ -4030,6 +4632,9 @@ components:
       type: object
     TypesResetPasswordToken:
       properties:
+        expiresAt:
+          format: date-time
+          type: string
         id:
           type: string
         passwordId:

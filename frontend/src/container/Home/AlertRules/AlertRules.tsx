@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
 import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
@@ -8,9 +11,6 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
-import { Link, useLocation } from 'react-router-dom';
 import { GettableAlert } from 'types/api/alerts/get';
 import { USER_ROLES } from 'types/roles';
 
@@ -41,8 +41,12 @@ export default function AlertRules({
 
 		const sortedRules = rules.sort((a, b) => {
 			// First, prioritize firing alerts
-			if (a.state === 'firing' && b.state !== 'firing') return -1;
-			if (a.state !== 'firing' && b.state === 'firing') return 1;
+			if (a.state === 'firing' && b.state !== 'firing') {
+				return -1;
+			}
+			if (a.state !== 'firing' && b.state === 'firing') {
+				return 1;
+			}
 
 			// Then sort by updateAt timestamp
 			const aUpdateAt = new Date(a.updateAt).getTime();

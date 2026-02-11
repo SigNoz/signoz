@@ -1,5 +1,4 @@
-import './CreateEdit.styles.scss';
-
+import { useState } from 'react';
 import { Button, Form, Modal } from 'antd';
 import put from 'api/v1/domains/id/put';
 import post from 'api/v1/domains/post';
@@ -19,6 +18,7 @@ import AuthnProviderSelector from './AuthnProviderSelector';
 import ConfigureGoogleAuthAuthnProvider from './Providers/AuthnGoogleAuth';
 import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
 import ConfigureSAMLAuthnProvider from './Providers/AuthnSAML';
+import './CreateEdit.styles.scss';
 
 interface GroupMappingItem {
 	group: string;
@@ -146,7 +146,6 @@ function buildGoogleAuthConfig(formGoogleAuthConfig?: {
 		insecureSkipEmailVerified: insecureSkipEmailVerified || false,
 	};
 }
-
 interface CreateOrEditProps {
 	isCreate: boolean;
 	onClose: () => void;

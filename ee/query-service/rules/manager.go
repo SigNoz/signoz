@@ -10,7 +10,7 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -47,8 +47,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		rules = append(rules, tr)
 
-		// create ch rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		// create ch rule task for evaluation
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -71,8 +71,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		rules = append(rules, pr)
 
-		// create promql rule task for evalution
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		// create promql rule task for evaluation
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
@@ -95,8 +95,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 
 		rules = append(rules, ar)
 
-		// create anomaly rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(evaluation.GetFrequency()), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		// create anomaly rule task for evaluation
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -203,22 +203,17 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	// set timestamp to current utc time
 	ts := time.Now().UTC()
 
-	count, err := rule.Eval(ctx, ts)
+	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
 		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
 		return 0, basemodel.InternalError(fmt.Errorf("rule evaluation failed"))
 	}
-	alertsFound, ok := count.(int)
-	if !ok {
-		return 0, basemodel.InternalError(fmt.Errorf("something went wrong"))
-	}
-	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), opts.NotifyFunc)
+	rule.SendAlerts(ctx, ts, 0, time.Minute, opts.NotifyFunc)
 
 	return alertsFound, nil
 }
 
-// newTask returns an appropriate group for
-// rule type
+// newTask returns an appropriate group for the rule type
 func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
 		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)

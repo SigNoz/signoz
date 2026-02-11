@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
@@ -6,8 +8,6 @@ import {
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
 import {
@@ -51,14 +51,20 @@ export const useLogsData = ({
 	);
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery?.builder?.queryData?.length < 1) return null;
+		if (!stagedQuery || stagedQuery?.builder?.queryData?.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder?.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
 	const isLimit: boolean = useMemo(() => {
-		if (!listQuery) return false;
-		if (!listQuery.limit) return false;
+		if (!listQuery) {
+			return false;
+		}
+		if (!listQuery.limit) {
+			return false;
+		}
 
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
@@ -72,7 +78,9 @@ export const useLogsData = ({
 	}, [listQuery]);
 
 	useEffect(() => {
-		if (panelType !== PANEL_TYPES.LIST) return;
+		if (panelType !== PANEL_TYPES.LIST) {
+			return;
+		}
 		const currentData = result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
@@ -97,7 +105,9 @@ export const useLogsData = ({
 			filters: TagFilter;
 		},
 	): Query | null => {
-		if (!query) return null;
+		if (!query) {
+			return null;
+		}
 
 		const paginateData = getPaginationQueryDataV2({
 			page: params.page,
@@ -161,10 +171,16 @@ export const useLogsData = ({
 	}, [data]);
 
 	const handleEndReached = (index: number): void => {
-		if (!listQuery) return;
+		if (!listQuery) {
+			return;
+		}
 
-		if (isLimit) return;
-		if (logs.length < pageSize) return;
+		if (isLimit) {
+			return;
+		}
+		if (logs.length < pageSize) {
+			return;
+		}
 
 		const { limit, filters } = listQuery;
 
@@ -175,7 +191,9 @@ export const useLogsData = ({
 		const nextPageSize =
 			limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
 
-		if (!stagedQuery) return;
+		if (!stagedQuery) {
+			return;
+		}
 
 		const newRequestData = getRequestData(stagedQuery, {
 			filters: filters || { items: [], op: 'AND' },

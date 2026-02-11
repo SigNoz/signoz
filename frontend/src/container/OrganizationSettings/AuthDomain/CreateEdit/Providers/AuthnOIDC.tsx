@@ -1,9 +1,9 @@
-import './Providers.styles.scss';
-
 import { Callout } from '@signozhq/callout';
 import { Checkbox, Collapse, Form, Input, Typography } from 'antd';
 
 import RoleMappingSection from './RoleMappingSection';
+
+import './Providers.styles.scss';
 
 function ConfigureOIDCAuthnProvider({
 	isCreate,

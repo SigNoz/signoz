@@ -1,8 +1,8 @@
+import { useCallback, useMemo } from 'react';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { ArrowLeft, Plus, Settings, X } from 'lucide-react';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useMemo } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 // import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -17,7 +17,6 @@ interface UseBaseAggregateOptionsProps {
 	query?: Query;
 	// panelType?: PANEL_TYPES;
 	aggregateData?: AggregateData | null;
-	widgetId?: string;
 	onClose: () => void;
 }
 
@@ -27,7 +26,6 @@ const useDashboardVarConfig = ({
 	query,
 	// panelType,
 	aggregateData,
-	widgetId,
 	onClose,
 }: UseBaseAggregateOptionsProps): {
 	dashbaordVariablesConfig: {
@@ -35,16 +33,8 @@ const useDashboardVarConfig = ({
 	};
 	// contextItems: React.ReactNode;
 } => {
-	const { selectedDashboard } = useDashboard();
+	const dashboardDynamicVariables = useDashboardVariablesByType('DYNAMIC');
 	const { onValueUpdate, createVariable } = useDashboardVariableUpdate();
-
-	const dynamicDashboardVariables = useMemo(
-		(): [string, IDashboardVariable][] =>
-			Object.entries(selectedDashboard?.data?.variables || {}).filter(
-				([, value]) => value.name && value.type === 'DYNAMIC',
-			),
-		[selectedDashboard],
-	);
 
 	// Function to determine the source from query data
 	const getSourceFromQuery = useCallback(():
@@ -52,16 +42,24 @@ const useDashboardVarConfig = ({
 		| 'traces'
 		| 'metrics'
 		| 'all sources' => {
-		if (!query || !aggregateData?.queryName) return 'all sources';
+		if (!query || !aggregateData?.queryName) {
+			return 'all sources';
+		}
 
 		try {
 			const { dataSource } = getAggregateColumnHeader(
 				query,
 				aggregateData.queryName,
 			);
-			if (dataSource === 'logs') return 'logs';
-			if (dataSource === 'traces') return 'traces';
-			if (dataSource === 'metrics') return 'metrics';
+			if (dataSource === 'logs') {
+				return 'logs';
+			}
+			if (dataSource === 'traces') {
+				return 'traces';
+			}
+			if (dataSource === 'metrics') {
+				return 'metrics';
+			}
 		} catch (error) {
 			console.warn('Error determining data source:', error);
 		}
@@ -75,11 +73,6 @@ const useDashboardVarConfig = ({
 			dashboardVar: [string, IDashboardVariable],
 			fieldValue: any,
 		) => {
-			console.log('Setting variable:', {
-				fieldName,
-				dashboardVarId: dashboardVar[0],
-				fieldValue,
-			});
 			onValueUpdate(fieldName, dashboardVar[1]?.id, fieldValue, false);
 			onClose();
 		},
@@ -88,10 +81,6 @@ const useDashboardVarConfig = ({
 
 	const handleUnsetVariable = useCallback(
 		(fieldName: string, dashboardVar: [string, IDashboardVariable]) => {
-			console.log('Unsetting variable:', {
-				fieldName,
-				dashboardVarId: dashboardVar[0],
-			});
 			onValueUpdate(fieldName, dashboardVar[0], null, false);
 			onClose();
 		},
@@ -101,12 +90,6 @@ const useDashboardVarConfig = ({
 	const handleCreateVariable = useCallback(
 		(fieldName: string, fieldValue: string | number | boolean) => {
 			const source = getSourceFromQuery();
-			console.log('Creating variable from drilldown:', {
-				fieldName,
-				fieldValue,
-				source,
-				widgetId,
-			});
 			createVariable(
 				fieldName,
 				fieldValue,
@@ -117,7 +100,7 @@ const useDashboardVarConfig = ({
 			);
 			onClose();
 		},
-		[createVariable, getSourceFromQuery, widgetId, onClose],
+		[createVariable, getSourceFromQuery, onClose],
 	);
 
 	const contextItems = useMemo(
@@ -125,7 +108,7 @@ const useDashboardVarConfig = ({
 			<>
 				{' '}
 				{Object.entries(fieldVariables).map(([fieldName, value]) => {
-					const dashboardVar = dynamicDashboardVariables.find(
+					const dashboardVar = dashboardDynamicVariables.find(
 						([, dynamicValue]) =>
 							dynamicValue.dynamicVariablesAttribute === fieldName,
 					);
@@ -187,7 +170,7 @@ const useDashboardVarConfig = ({
 		),
 		[
 			fieldVariables,
-			dynamicDashboardVariables,
+			dashboardDynamicVariables,
 			handleSetVariable,
 			handleUnsetVariable,
 			handleCreateVariable,

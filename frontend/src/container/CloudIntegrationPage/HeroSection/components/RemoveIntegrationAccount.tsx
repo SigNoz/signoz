@@ -1,5 +1,5 @@
-import './RemoveIntegrationAccount.scss';
-
+import { useState } from 'react';
+import { useMutation } from 'react-query';
 import { Button, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import removeAwsIntegrationAccount from 'api/Integrations/removeAwsIntegrationAccount';
@@ -7,8 +7,8 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
 import { X } from 'lucide-react';
 import { INTEGRATION_TELEMETRY_EVENTS } from 'pages/Integrations/utils';
-import { useState } from 'react';
-import { useMutation } from 'react-query';
+
+import './RemoveIntegrationAccount.scss';
 
 function RemoveIntegrationAccount({
 	accountId,

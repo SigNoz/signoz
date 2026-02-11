@@ -1,15 +1,15 @@
-import './FunnelsList.styles.scss';
-
+import { useState } from 'react';
+import { generatePath, Link } from 'react-router-dom';
 import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { CalendarClock, DecimalsArrowRight } from 'lucide-react';
-import { useState } from 'react';
-import { generatePath, Link } from 'react-router-dom';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelItemPopover from './FunnelItemPopover';
+
+import './FunnelsList.styles.scss';
 
 interface FunnelListItemProps {
 	funnel: FunnelData;

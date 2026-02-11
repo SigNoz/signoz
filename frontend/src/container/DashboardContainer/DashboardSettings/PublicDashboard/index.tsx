@@ -1,6 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import './PublicDashboard.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { Checkbox } from '@signozhq/checkbox';
 import { toast } from '@signozhq/sonner';
 import { Button, Select, Typography } from 'antd';
@@ -12,12 +13,11 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useCopyToClipboard } from 'react-use';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
+
+import './PublicDashboard.styles.scss';
 
 export const TIME_RANGE_PRESETS_OPTIONS = [
 	{
@@ -155,7 +155,9 @@ function PublicDashboardSetting(): JSX.Element {
 	});
 
 	const handleCreatePublicDashboard = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		createPublicDashboard({
 			dashboardId: selectedDashboard.id,
@@ -165,7 +167,9 @@ function PublicDashboardSetting(): JSX.Element {
 	};
 
 	const handleUpdatePublicDashboard = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		updatePublicDashboard({
 			dashboardId: selectedDashboard.id,
@@ -175,7 +179,9 @@ function PublicDashboardSetting(): JSX.Element {
 	};
 
 	const handleRevokePublicDashboardAccess = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		revokePublicDashboardAccess({
 			id: selectedDashboard.id,
@@ -201,7 +207,9 @@ function PublicDashboardSetting(): JSX.Element {
 	]);
 
 	const handleCopyPublicDashboardURL = (): void => {
-		if (!publicDashboardResponse?.data?.publicPath) return;
+		if (!publicDashboardResponse?.data?.publicPath) {
+			return;
+		}
 
 		try {
 			setCopyPublicDashboardURL(

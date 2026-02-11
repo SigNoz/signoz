@@ -1,5 +1,5 @@
-import './IngestionDetails.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { AxiosError } from 'axios';
@@ -8,9 +8,9 @@ import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
 import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
+
+import './IngestionDetails.styles.scss';
 
 function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 	if (!key) {

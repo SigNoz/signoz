@@ -1,9 +1,9 @@
+import { createPortal } from 'react-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
-import { createPortal } from 'react-dom';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
@@ -21,16 +21,18 @@ import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	AlertThresholdState,
+	CreateAlertState,
 	EvaluationWindowState,
 	NotificationSettingsState,
 } from './context/types';
 import { EVALUATION_WINDOW_TIMEFRAME } from './EvaluationSettings/constants';
-import { GetCreateAlertLocalStateFromAlertDefReturn } from './types';
 
 export function Spinner(): JSX.Element | null {
 	const { isCreatingAlertRule, isUpdatingAlertRule } = useCreateAlertState();
 
-	if (!isCreatingAlertRule && !isUpdatingAlertRule) return null;
+	if (!isCreatingAlertRule && !isUpdatingAlertRule) {
+		return null;
+	}
 
 	return createPortal(
 		<div className="sticky-page-spinner">
@@ -263,14 +265,14 @@ export function getThresholdStateFromAlertDef(
 
 export function getCreateAlertLocalStateFromAlertDef(
 	alertDef: PostableAlertRuleV2 | undefined,
-): GetCreateAlertLocalStateFromAlertDefReturn {
+): CreateAlertState {
 	if (!alertDef) {
 		return {
-			basicAlertState: INITIAL_ALERT_STATE,
-			thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
-			advancedOptionsState: INITIAL_ADVANCED_OPTIONS_STATE,
-			evaluationWindowState: INITIAL_EVALUATION_WINDOW_STATE,
-			notificationSettingsState: INITIAL_NOTIFICATION_SETTINGS_STATE,
+			basic: INITIAL_ALERT_STATE,
+			threshold: INITIAL_ALERT_THRESHOLD_STATE,
+			advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE,
+			evaluationWindow: INITIAL_EVALUATION_WINDOW_STATE,
+			notificationSettings: INITIAL_NOTIFICATION_SETTINGS_STATE,
 		};
 	}
 	// Basic alert state
@@ -292,10 +294,10 @@ export function getCreateAlertLocalStateFromAlertDef(
 	);
 
 	return {
-		basicAlertState,
-		thresholdState,
-		advancedOptionsState,
-		evaluationWindowState,
-		notificationSettingsState,
+		basic: basicAlertState,
+		threshold: thresholdState,
+		advancedOptions: advancedOptionsState,
+		evaluationWindow: evaluationWindowState,
+		notificationSettings: notificationSettingsState,
 	};
 }

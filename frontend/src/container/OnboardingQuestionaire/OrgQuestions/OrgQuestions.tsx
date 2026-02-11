@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import '../OnboardingQuestionaire.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
 import { Input } from '@signozhq/input';
@@ -11,8 +11,8 @@ import editOrg from 'api/organization/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import '../OnboardingQuestionaire.styles.scss';
 
 export interface OrgData {
 	id: string;
@@ -282,8 +282,12 @@ function OrgQuestions({
 						<div className="opentelemetry-radio-container">
 							<Radio.Group
 								value={((): string | undefined => {
-									if (usesOtel === true) return 'yes';
-									if (usesOtel === false) return 'no';
+									if (usesOtel === true) {
+										return 'yes';
+									}
+									if (usesOtel === false) {
+										return 'no';
+									}
 									return undefined;
 								})()}
 								onChange={(e: RadioChangeEvent): void =>

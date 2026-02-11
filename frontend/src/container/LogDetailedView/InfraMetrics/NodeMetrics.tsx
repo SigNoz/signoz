@@ -1,3 +1,5 @@
+import { useMemo, useRef } from 'react';
+import { useQueries, UseQueryResult } from 'react-query';
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
@@ -10,8 +12,6 @@ import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useTimezone } from 'providers/Timezone';
-import { useMemo, useRef } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';

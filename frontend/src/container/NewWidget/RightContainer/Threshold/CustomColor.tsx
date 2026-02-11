@@ -1,9 +1,9 @@
-import './CustomColor.styles.scss';
-
 import { Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { CustomColorProps } from './types';
+
+import './CustomColor.styles.scss';
 
 function CustomColor({ color }: CustomColorProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();

@@ -1,3 +1,6 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -20,9 +23,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

@@ -1,11 +1,11 @@
-import './LicenseSection.styles.scss';
-
+import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Typography } from 'antd';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCopyToClipboard } from 'react-use';
+
+import './LicenseSection.styles.scss';
 
 function LicenseSection(): JSX.Element | null {
 	const { activeLicense } = useAppContext();
@@ -13,7 +13,9 @@ function LicenseSection(): JSX.Element | null {
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
 	const getMaskedKey = (key: string): string => {
-		if (!key || key.length < 4) return key || 'N/A';
+		if (!key || key.length < 4) {
+			return key || 'N/A';
+		}
 		return `${key.substring(0, 2)}********${key
 			.substring(key.length - 2)
 			.trim()}`;

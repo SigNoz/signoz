@@ -1,8 +1,8 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { green, orange, volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card, Col } from 'antd';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';
@@ -15,9 +15,15 @@ function StatusMessage({
 	const { t } = useTranslation(['generalSettings']);
 
 	const messageColor = useMemo((): string => {
-		if (status === 'success') return green[6];
-		if (status === 'pending') return orange[6];
-		if (status === 'failed') return volcano[6];
+		if (status === 'success') {
+			return green[6];
+		}
+		if (status === 'pending') {
+			return orange[6];
+		}
+		if (status === 'failed') {
+			return volcano[6];
+		}
 		return 'inherit';
 	}, [status]);
 	if (!status) {

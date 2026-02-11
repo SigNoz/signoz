@@ -15,6 +15,8 @@ import {
 
 import RoleMappingSection from './RoleMappingSection';
 
+import './Providers.styles.scss';
+
 function ConfigureGoogleAuthAuthnProvider({
 	isCreate,
 }: {

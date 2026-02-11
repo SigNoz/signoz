@@ -1,6 +1,10 @@
 import { OptionData } from 'components/NewSelect/types';
 import { isEmpty, isNull } from 'lodash-es';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import {
+	IDashboardVariables,
+	IDependencyData,
+} from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
 	a: (string | number | boolean)[],
@@ -21,7 +25,7 @@ export function areArraysEqual(
 
 export const convertVariablesToDbFormat = (
 	variblesArr: IDashboardVariable[],
-): Dashboard['data']['variables'] =>
+): IDashboardVariables =>
 	variblesArr.reduce((result, obj: IDashboardVariable) => {
 		const { id } = obj;
 
@@ -96,14 +100,6 @@ export const buildDependencies = (
 	return graph;
 };
 
-export interface IDependencyData {
-	order: string[];
-	graph: VariableGraph;
-	parentDependencyGraph: VariableGraph;
-	hasCycle: boolean;
-	cycleNodes?: string[];
-}
-
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
 ): VariableGraph => {
@@ -141,7 +137,9 @@ const collectCyclePath = (
 
 	while (current !== end) {
 		const parent = findParent(current);
-		if (!parent) break;
+		if (!parent) {
+			break;
+		}
 		path.push(parent);
 		current = parent;
 	}
@@ -194,10 +192,16 @@ export const buildDependencyGraph = (
 
 	// Initialize in-degree and adjacency list
 	Object.keys(dependencies).forEach((node) => {
-		if (!inDegree[node]) inDegree[node] = 0;
-		if (!adjList[node]) adjList[node] = [];
+		if (!inDegree[node]) {
+			inDegree[node] = 0;
+		}
+		if (!adjList[node]) {
+			adjList[node] = [];
+		}
 		dependencies[node]?.forEach((child) => {
-			if (!inDegree[child]) inDegree[child] = 0;
+			if (!inDegree[child]) {
+				inDegree[child] = 0;
+			}
 			inDegree[child]++;
 			adjList[node].push(child);
 		});
@@ -234,7 +238,9 @@ export const buildDependencyGraph = (
 
 		adjList[current]?.forEach((neighbor) => {
 			inDegree[neighbor]--;
-			if (inDegree[neighbor] === 0) queue.push(neighbor);
+			if (inDegree[neighbor] === 0) {
+				queue.push(neighbor);
+			}
 		});
 	}
 
@@ -357,21 +363,15 @@ export const uniqueOptions = (options: OptionData[]): OptionData[] => {
 	return uniqueOptions;
 };
 
-export const uniqueValues = (values: string[] | string): string[] | string => {
-	if (Array.isArray(values)) {
-		const uniqueValues: string[] = [];
-		const seenValues = new Set<string>();
-
-		values.forEach((value) => {
-			if (seenValues.has(value)) {
-				return;
-			}
-			seenValues.add(value);
-			uniqueValues.push(value);
-		});
-
-		return uniqueValues;
+export const getSelectValue = (
+	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
+): string | string[] | undefined => {
+	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString();
+		}
+		return selectedValue.map((item) => item.toString());
 	}
-
-	return values;
+	return selectedValue?.toString();
 };

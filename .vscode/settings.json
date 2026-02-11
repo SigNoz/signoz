@@ -1,9 +1,18 @@
 {
-	"eslint.workingDirectories": ["./frontend"],
+	"eslint.workingDirectories": [
+		"./frontend"
+	],
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": "explicit"
 	},
-	"prettier.requireConfig": true
+	"prettier.requireConfig": true,
+	"[go]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "golang.go"
+	},
+	"[sql]": {
+		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+	}
 }

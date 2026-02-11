@@ -16,16 +16,17 @@ export const getLogs = (
 
 	const response = await GetLogs(props);
 
-	if (response.payload)
+	if (response.payload) {
 		dispatch({
 			type: SET_LOGS,
 			payload: response.payload,
 		});
-	else
+	} else {
 		dispatch({
 			type: SET_LOGS,
 			payload: [],
 		});
+	}
 
 	dispatch({
 		type: SET_LOADING,

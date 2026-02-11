@@ -65,6 +65,10 @@ jobs:
           set -ex
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
       - name: docker-community
         shell: bash
         run: |
@@ -89,3 +93,13 @@ jobs:
         run: |
           go run cmd/enterprise/*.go generate openapi
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run cmd/enterprise/*.go generate openapi locally and commit."; exit 1)
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-frontend
+        run: cd frontend && yarn install
+      - name: generate-api-clients
+        run: |
+          cd frontend && yarn generate:api
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)

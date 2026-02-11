@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
 
+import pytest
 import requests
 
 from fixtures import types
@@ -11,7 +12,9 @@ from fixtures.querier import (
     assert_minutely_bucket_values,
     find_named_result,
     index_series_by_label,
+    make_query_request,
 )
+from src.querier.util import assert_identical_query_response
 
 
 def test_logs_list(
@@ -394,6 +397,290 @@ def test_logs_list(
 
     values = response.json()["data"]["values"]["stringValues"]
     assert "d-001" in values
+
+
+def test_logs_list_with_corrupt_data(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Setup:
+    Insert 2 logs with different attributes
+
+    Tests:
+    1. Query logs for the last 10 seconds and check if the logs are returned in the correct order
+    2. Query values of severity_text attribute from the autocomplete API
+    3. Query values of severity_text attribute from the fields API
+    4. Query values of code.file attribute from the autocomplete API
+    5. Query values of code.file attribute from the fields API
+    6. Query values of code.line attribute from the autocomplete API
+    7. Query values of code.line attribute from the fields API
+    """
+    insert_logs(
+        [
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=1),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "java",
+                    "os.type": "linux",
+                    "host.name": "linux-001",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "001",
+                    "timestamp": "2024-01-01T00:00:00Z",
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/Integration.java",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": 120,
+                    "telemetry.sdk.language": "java",
+                    "id": "1",
+                },
+                body="This is a log message, coming from a java application",
+                severity_text="DEBUG",
+            ),
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc),
+                resources={
+                    "deployment.environment": "production",
+                    "service.name": "go",
+                    "os.type": "linux",
+                    "host.name": "linux-001",
+                    "cloud.provider": "integration",
+                    "cloud.account.id": "001",
+                    "id": 2,
+                },
+                attributes={
+                    "log.iostream": "stdout",
+                    "logtag": "F",
+                    "code.file": "/opt/integration.go",
+                    "code.function": "com.example.Integration.process",
+                    "code.line": 120,
+                    "metric.domain_id": "d-001",
+                    "telemetry.sdk.language": "go",
+                    "timestamp": "invalid-timestamp",
+                },
+                body="This is a log message, coming from a go application",
+                severity_text="INFO",
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=2,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+        json={
+            "schemaVersion": "v1",
+            "start": int(
+                (datetime.now(tz=timezone.utc) - timedelta(seconds=10)).timestamp()
+                * 1000
+            ),
+            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "logs",
+                            "disabled": False,
+                            "limit": 100,
+                            "offset": 0,
+                            "order": [
+                                {"key": {"name": "timestamp"}, "direction": "desc"},
+                                {"key": {"name": "id"}, "direction": "desc"},
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    rows = results[0]["rows"]
+    assert len(rows) == 2
+
+    assert (
+        rows[0]["data"]["body"] == "This is a log message, coming from a go application"
+    )
+    assert rows[0]["data"]["resources_string"] == {
+        "cloud.account.id": "001",
+        "cloud.provider": "integration",
+        "deployment.environment": "production",
+        "host.name": "linux-001",
+        "os.type": "linux",
+        "service.name": "go",
+        "id": "2",
+    }
+    assert rows[0]["data"]["attributes_string"] == {
+        "code.file": "/opt/integration.go",
+        "code.function": "com.example.Integration.process",
+        "log.iostream": "stdout",
+        "logtag": "F",
+        "metric.domain_id": "d-001",
+        "telemetry.sdk.language": "go",
+        "timestamp": "invalid-timestamp",
+    }
+    assert rows[0]["data"]["attributes_number"] == {"code.line": 120}
+
+    assert (
+        rows[1]["data"]["body"]
+        == "This is a log message, coming from a java application"
+    )
+    assert rows[1]["data"]["resources_string"] == {
+        "cloud.account.id": "001",
+        "cloud.provider": "integration",
+        "deployment.environment": "production",
+        "host.name": "linux-001",
+        "os.type": "linux",
+        "service.name": "java",
+        "timestamp": "2024-01-01T00:00:00Z",
+    }
+    assert rows[1]["data"]["attributes_string"] == {
+        "code.file": "/opt/Integration.java",
+        "code.function": "com.example.Integration.process",
+        "id": "1",
+        "log.iostream": "stdout",
+        "logtag": "F",
+        "telemetry.sdk.language": "java",
+    }
+    assert rows[1]["data"]["attributes_number"] == {"code.line": 120}
+
+
+@pytest.mark.parametrize(
+    "order_by_context,expected_order",
+    ####
+    #    Tests:
+    #    1. Query logs ordered by attribute.service.name descending
+    #    2. Query logs ordered by resource.service.name descending
+    #    3. Query logs ordered by service.name descending
+    ###
+    [
+        pytest.param("attribute", ["log-002", "log-001", "log-004", "log-003"]),
+        pytest.param("resource", ["log-003", "log-004", "log-001", "log-002"]),
+        pytest.param("", ["log-002", "log-001", "log-003", "log-004"]),
+    ],
+)
+def test_logs_list_with_order_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+    order_by_context: str,
+    expected_order: List[str],
+) -> None:
+    """
+    Setup:
+    Insert 3 logs with service.name in attributes and resources
+    """
+
+    attribute_resource_pair = [
+        [{"id": "log-001", "service.name": "c"}, {}],
+        [{"id": "log-002", "service.name": "d"}, {}],
+        [{"id": "log-003"}, {"service.name": "b"}],
+        [{"id": "log-004"}, {"service.name": "a"}],
+    ]
+    insert_logs(
+        [
+            Logs(
+                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=3),
+                attributes=attribute_resource_pair[i][0],
+                resources=attribute_resource_pair[i][1],
+                body="Log with DEBUG severity",
+                severity_text="DEBUG",
+            )
+            for i in range(4)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "logs",
+            "order": [
+                {
+                    "key": {
+                        "name": "service.name",
+                        "fieldContext": order_by_context,
+                    },
+                    "direction": "desc",
+                }
+            ],
+        },
+    }
+
+    query_with_inline_context = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "logs",
+            "order": [
+                {
+                    "key": {
+                        "name": f"{order_by_context + '.' if order_by_context else ''}service.name",
+                    },
+                    "direction": "desc",
+                }
+            ],
+        },
+    }
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="raw",
+        queries=[query],
+    )
+
+    # Verify that both queries return the same results with specifying context with key name
+    response_with_inline_context = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="raw",
+        queries=[query_with_inline_context],
+    )
+
+    assert_identical_query_response(response, response_with_inline_context)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    rows = results[0]["rows"]
+    ids = [row["data"]["attributes_string"].get("id", "") for row in rows]
+
+    assert ids == expected_order
 
 
 def test_logs_time_series_count(
@@ -825,6 +1112,44 @@ def test_logs_time_series_count(
         },
     )
 
+    response_with_inline_context = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (
+                datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+                - timedelta(minutes=5)
+            ).timestamp()
+            * 1000
+        ),
+        end_ms=int(
+            datetime.now(tz=timezone.utc).replace(second=0, microsecond=0).timestamp()
+            * 1000
+        ),
+        request_type="time_series",
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "logs",
+                    "stepInterval": 60,
+                    "disabled": False,
+                    "groupBy": [
+                        {
+                            "name": "resource.host.name:string",
+                        }
+                    ],
+                    "order": [{"key": {"name": "host.name"}, "direction": "desc"}],
+                    "having": {"expression": ""},
+                    "aggregations": [{"expression": "count()"}],
+                },
+            }
+        ],
+    )
+
+    assert_identical_query_response(response, response_with_inline_context)
+
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
@@ -842,9 +1167,6 @@ def test_logs_time_series_count(
         {
             "key": {
                 "name": "host.name",
-                "signal": "",
-                "fieldContext": "",
-                "fieldDataType": "",
             },
             "value": "linux-001",
         }
@@ -875,9 +1197,6 @@ def test_logs_time_series_count(
         {
             "key": {
                 "name": "host.name",
-                "signal": "",
-                "fieldContext": "",
-                "fieldDataType": "",
             },
             "value": "linux-000",
         }
