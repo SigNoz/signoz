@@ -75,7 +75,6 @@ export function prepareBarPanelConfig({
 	if (widget.stackedBarChart) {
 		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
-		builder.addScale({ scaleKey: 'y', softMin: 0 });
 	}
 
 	const seriesList: QueryData[] = apiResponse?.data?.result || [];
