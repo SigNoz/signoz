@@ -1,7 +1,10 @@
 import { useCallback, useRef } from 'react';
 import ChartLayout from 'container/DashboardContainer/visualization/layout/ChartLayout/ChartLayout';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
+import {
+	LegendPosition,
+	TooltipRenderArgs,
+} from 'lib/uPlotV2/components/types';
 import UPlotChart from 'lib/uPlotV2/components/UPlotChart';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
@@ -44,6 +47,16 @@ export default function ChartWrapper({
 		[config, legendConfig.position],
 	);
 
+	const renderTooltipCallback = useCallback(
+		(args: TooltipRenderArgs): React.ReactNode => {
+			if (renderTooltip) {
+				return renderTooltip(args);
+			}
+			return null;
+		},
+		[renderTooltip],
+	);
+
 	return (
 		<PlotContextProvider>
 			<ChartLayout
@@ -80,7 +93,7 @@ export default function ChartWrapper({
 									averageLegendWidth + TOOLTIP_WIDTH_PADDING,
 								)}
 								syncKey={syncKey}
-								render={renderTooltip}
+								render={renderTooltipCallback}
 							/>
 						)}
 					</UPlotChart>
