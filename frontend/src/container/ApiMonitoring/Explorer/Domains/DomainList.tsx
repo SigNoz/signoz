@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, Table, Typography } from 'antd';
+import { Spin, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -14,6 +14,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
+import { MoveUpRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
@@ -126,7 +127,7 @@ function DomainList(): JSX.Element {
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
 			</div>
-			{isFetching || isLoading || formattedDataForTable.length > 0 ? null : (
+			{!isFetching && !isLoading && formattedDataForTable.length === 0 && (
 				<div className="no-filtered-domains-message-container">
 					<div className="no-filtered-domains-message-content">
 						<img
@@ -135,26 +136,32 @@ function DomainList(): JSX.Element {
 							className="empty-state-svg"
 						/>
 
-						<Typography.Text className="no-filtered-domains-message">
-							No External API calls detected with applied filters.
-							<br />
-							Ensure all HTTP client spans are being sent with kind as Client and url
-							set in url.full or http.url attribute.
-							<br />
+						<div className="no-filtered-domains-message">
+							<div className="no-domain-title">
+								No External API calls detected with applied filters.
+							</div>
+							<div className="no-domain-subtitle">
+								Ensure all HTTP client spans are being sent with kind as{' '}
+								<span className="attribute">Client</span> and url set in{' '}
+								<span className="attribute">url.full</span> or{' '}
+								<span className="attribute">http.url</span> attribute.
+							</div>
 							<a
 								href={DOCLINKS.EXTERNAL_API_MONITORING}
 								target="_blank"
 								rel="noreferrer"
+								className="external-api-doc-link"
 							>
-								Learn how External API monitoring works in SigNoz.
+								Learn how External API monitoring works in SigNoz{' '}
+								<MoveUpRight size={14} />
 							</a>
-						</Typography.Text>
+						</div>
 					</div>
 				</div>
 			)}
-			{formattedDataForTable.length > 0 && (
+			{(isFetching || isLoading || formattedDataForTable.length > 0) && (
 				<Table
-					className={cx('api-monitoring-domain-list-table')}
+					className="api-monitoring-domain-list-table"
 					dataSource={isFetching || isLoading ? [] : formattedDataForTable}
 					columns={columnsConfig}
 					loading={{
