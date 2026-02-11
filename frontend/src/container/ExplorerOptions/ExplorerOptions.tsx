@@ -197,7 +197,7 @@ function ExplorerOptions({
 							}
 
 							// Alerts do not support order by on logs explorer queries
-							if (sourcepage === DataSource.LOGS) {
+							if (sourcepage === DataSource.LOGS && panelType === PANEL_TYPES.LIST) {
 								updatedItem.orderBy = [];
 							}
 
@@ -211,7 +211,7 @@ function ExplorerOptions({
 				return JSON.stringify(defaultQuery || query);
 			}
 		},
-		[query, sourcepage],
+		[panelType, query, sourcepage],
 	);
 
 	const onCreateAlertsHandler = useCallback(
