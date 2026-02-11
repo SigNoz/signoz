@@ -51,6 +51,53 @@ describe('UPlotAxisBuilder', () => {
 		});
 	});
 
+	it('sets config values when provided', () => {
+		const builder = new UPlotAxisBuilder(
+			createAxisProps({
+				scaleKey: 'x',
+				label: 'Time',
+				show: false,
+				side: 0,
+				gap: 10,
+				grid: {
+					stroke: '#ff0000',
+					width: 1,
+					show: false,
+				},
+				ticks: {
+					stroke: '#00ff00',
+					width: 1,
+					show: false,
+					size: 10,
+				},
+				values: ['1', '2', '3'],
+				space: 20,
+				size: 100,
+				stroke: '#0000ff',
+			}),
+		);
+		const config = builder.getConfig();
+		expect(config.scale).toBe('x');
+		expect(config.label).toBe('Time');
+		expect(config.show).toBe(false);
+		expect(config.gap).toBe(10);
+		expect(config.grid).toEqual({
+			stroke: '#ff0000',
+			width: 1,
+			show: false,
+		});
+		expect(config.ticks).toEqual({
+			stroke: '#00ff00',
+			width: 1,
+			show: false,
+			size: 10,
+		});
+		expect(config.values).toEqual(['1', '2', '3']);
+		expect(config.space).toBe(20);
+		expect(config.size).toBe(100);
+		expect(config.stroke).toBe('#0000ff');
+	});
+
 	it('merges custom grid config over defaults and respects isDarkMode and isLogScale', () => {
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
