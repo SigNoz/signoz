@@ -329,7 +329,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if claims.UserID == id {
-		render.Error(w, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "huh! seriously? why are you trying to delete yourself?"))
+		render.Error(w, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "users cannot delete themselves"))
 		return
 	}
 
