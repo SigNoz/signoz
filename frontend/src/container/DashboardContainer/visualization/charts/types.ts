@@ -11,6 +11,7 @@ interface BaseChartProps {
 	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
+	renderTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
 }
 interface UPlotBasedChartProps {
@@ -35,6 +36,4 @@ export interface BarChartProps extends BaseChartProps, UPlotBasedChartProps {
 	isStackedBarChart?: boolean;
 }
 
-export type ChartProps = (TimeSeriesChartProps | BarChartProps) & {
-	renderTooltip: (props: TooltipRenderArgs) => React.ReactNode;
-};
+export type ChartProps = TimeSeriesChartProps | BarChartProps;

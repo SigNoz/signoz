@@ -19,6 +19,8 @@ export default function Tooltip({
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
+	const tooltipContent = content ?? [];
+
 	const headerTitle = useMemo(() => {
 		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
@@ -43,16 +45,16 @@ export default function Tooltip({
 			<div
 				style={{
 					height: Math.min(
-						content.length * TOOLTIP_ITEM_HEIGHT,
+						tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
 						TOOLTIP_LIST_MAX_HEIGHT,
 					),
 					minHeight: 0,
 				}}
 			>
-				{content.length > 0 ? (
+				{tooltipContent.length > 0 ? (
 					<Virtuoso
 						className="uplot-tooltip-list"
-						data={content}
+						data={tooltipContent}
 						defaultItemHeight={TOOLTIP_ITEM_HEIGHT}
 						itemContent={(_, item): JSX.Element => (
 							<div className="uplot-tooltip-item">
