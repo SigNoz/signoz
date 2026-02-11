@@ -17,6 +17,8 @@ const config: Config.InitialOptions = {
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
+		'^@signozhq/icons$':
+			'<rootDir>/node_modules/@signozhq/icons/dist/index.esm.js',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],
