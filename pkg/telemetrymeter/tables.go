@@ -15,8 +15,6 @@ const (
 )
 
 var (
-	oneHourInMilliseconds  = uint64(time.Hour.Milliseconds() * 1)
-	oneDayInMilliseconds   = uint64(time.Hour.Milliseconds() * 24)
 	oneMonthInMilliseconds = uint64(time.Hour.Milliseconds() * 24 * 30)
 
 	// when the query requests for almost 1 day, but not exactly 1 day, we need to add an offset to the end time
@@ -57,13 +55,6 @@ func WhichSamplesTableToUse(
 	}
 	return SamplesAgg1dTableName
 
-}
-
-func AdjustStartTsForSamplesTable(start uint64, table string) uint64 {
-	if table == SamplesTableName || table == SamplesLocalTableName {
-		return start - (start % oneHourInMilliseconds)
-	}
-	return start - (start % oneDayInMilliseconds)
 }
 
 func AggregationColumnForSamplesTable(

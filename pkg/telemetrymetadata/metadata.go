@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
@@ -1627,7 +1626,7 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 		return nil, err
 	}
 	// TODO: return error after table migration are run
-	meterMetricsTemporality, _ := t.fetchMeterSourceMetricsTemporality(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
+	meterMetricsTemporality, _ := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
@@ -1639,12 +1638,8 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 			}
 			continue
 		}
-		if temporality, exists := meterMetricsTemporality[metricName]; exists && len(temporality) > 0 {
-			if len(temporality) > 1 {
-				result[metricName] = metrictypes.Multiple
-			} else {
-				result[metricName] = temporality[0]
-			}
+		if temporality, exists := meterMetricsTemporality[metricName]; exists {
+			result[metricName] = temporality
 			continue
 		}
 		result[metricName] = metrictypes.Unknown
@@ -1718,24 +1713,19 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 	return result, nil
 }
 
-func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
-	result := make(map[string][]metrictypes.Temporality)
+func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	result := make(map[string]metrictypes.Temporality)
 
 	sb := sqlbuilder.Select(
 		"metric_name",
-		"temporality",
-	).
-		From(t.meterDBName + "." + t.meterFieldsTblName)
+		"argMax(temporality, unix_milli) as temporality",
+	).From(t.meterDBName + "." + t.meterFieldsTblName)
 
-	adjustedStartTs := telemetrymeter.AdjustStartTsForSamplesTable(queryTimeRangeStartTs, t.meterFieldsTblName)
 	// Filter by metric names (in the temporality column due to data mix-up)
-	sb.Where(
-		sb.In("metric_name", metricNames),
-		sb.GTE("unix_milli", adjustedStartTs),
-		sb.LT("unix_milli", queryTimeRangeEndTs),
-	)
+	sb.Where(sb.In("metric_name", metricNames))
 
-	sb.GroupBy("metric_name", "temporality")
+	// Group by metric name to get one temporality per metric
+	sb.GroupBy("metric_name")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -1767,12 +1757,8 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 			// Unknown or empty temporality
 			temporality = metrictypes.Unknown
 		}
-		if temporality != metrictypes.Unknown {
-			result[metricName] = append(result[metricName], temporality)
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over meter temporality rows")
+
+		result[metricName] = temporality
 	}
 
 	return result, nil
