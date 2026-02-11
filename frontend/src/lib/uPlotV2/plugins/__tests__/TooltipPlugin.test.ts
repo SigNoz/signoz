@@ -1,7 +1,11 @@
 import React from 'react';
 import { act, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'tests/test-utils';
+import type uPlot from 'uplot';
 
+import { TooltipRenderArgs } from '../../components/types';
+import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
 import { DashboardCursorSync } from '../TooltipPlugin/types';
 
@@ -9,50 +13,47 @@ import { DashboardCursorSync } from '../TooltipPlugin/types';
 // Mock helpers
 // ---------------------------------------------------------------------------
 
-type HookHandler = (...args: any[]) => void;
+type HookHandler = (...args: unknown[]) => void;
 
-interface ConfigMock {
-	scales: Array<{ props: { time?: boolean } }>;
-	setCursor: jest.Mock;
-	addHook: jest.Mock<() => void, [string, HookHandler]> & {
-		removeCallbacks: jest.Mock[];
-	};
+class TestConfigBuilder extends UPlotConfigBuilder {
+	public registeredHooks: { type: string; handler: HookHandler }[] = [];
+
+	public removeCallbacks: jest.Mock[] = [];
+
+	// Override addHook so we can:
+	// - capture handlers by hook name for tests
+	// - return removable jest mocks to assert cleanup
+	public addHook<T extends keyof uPlot.Hooks.Defs>(
+		type: T,
+		hook: uPlot.Hooks.Defs[T],
+	): () => void {
+		this.registeredHooks.push({
+			type: String(type),
+			handler: hook as HookHandler,
+		});
+		const remove = jest.fn();
+		this.removeCallbacks.push(remove);
+		return remove;
+	}
 }
 
-function createConfigMock(
-	overrides: Partial<ConfigMock> = {},
-): ConfigMock & { removeCallbacks: jest.Mock[] } {
-	const removeCallbacks: jest.Mock[] = [];
+type ConfigMock = TestConfigBuilder;
 
-	const addHook = Object.assign(
-		jest.fn((_: string, _handler: HookHandler) => {
-			const remove = jest.fn();
-			removeCallbacks.push(remove);
-			return remove;
-		}),
-		{ removeCallbacks },
-	) as ConfigMock['addHook'];
-
-	return {
-		scales: [{ props: { time: false } }],
-		setCursor: jest.fn(),
-		addHook,
-		...overrides,
-		removeCallbacks,
-	};
+function createConfigMock(): ConfigMock {
+	return new TestConfigBuilder();
 }
 
 function getHandler(config: ConfigMock, hookName: string): HookHandler {
-	const call = config.addHook.mock.calls.find(([name]) => name === hookName);
-	if (!call) {
+	const entry = config.registeredHooks.find((h) => h.type === hookName);
+	if (!entry) {
 		throw new Error(`Hook "${hookName}" was not registered on config`);
 	}
-	return call[1];
+	return entry.handler;
 }
 
 function createFakePlot(): {
 	over: HTMLDivElement;
-	setCursor: jest.Mock;
+	setCursor: jest.Mock<void, [uPlot.Cursor]>;
 	cursor: { event: Record<string, unknown> };
 } {
 	return {
@@ -89,13 +90,15 @@ describe('TooltipPlugin', () => {
 	 */
 	function renderAndActivateHover(
 		config: ConfigMock,
-		renderFn: (...args: any[]) => React.ReactNode = (): React.ReactNode =>
+		renderFn: (
+			args: TooltipRenderArgs,
+		) => React.ReactNode = (): React.ReactNode =>
 			React.createElement('div', null, 'tooltip-body'),
-		extraProps: Record<string, unknown> = {},
+		extraProps: Partial<React.ComponentProps<typeof TooltipPlugin>> = {},
 	): ReturnType<typeof createFakePlot> {
 		render(
 			React.createElement(TooltipPlugin, {
-				config: config as any,
+				config,
 				render: renderFn,
 				syncMode: DashboardCursorSync.None,
 				...extraProps,
@@ -122,7 +125,7 @@ describe('TooltipPlugin', () => {
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => React.createElement('div', null, 'tooltip-body'),
 					syncMode: DashboardCursorSync.None,
 				}),
@@ -136,13 +139,13 @@ describe('TooltipPlugin', () => {
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => null,
 					syncMode: DashboardCursorSync.None,
 				}),
 			);
 
-			const registered = config.addHook.mock.calls.map(([name]) => name);
+			const registered = config.registeredHooks.map((h) => h.type);
 			expect(registered).toContain('ready');
 			expect(registered).toContain('init');
 			expect(registered).toContain('setData');
@@ -203,13 +206,12 @@ describe('TooltipPlugin', () => {
 		});
 
 		it('dismisses a pinned tooltip via the dismiss callback', async () => {
-			jest.useFakeTimers();
 			const config = createConfigMock();
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
-					render: (args: any) =>
+					config,
+					render: (args: TooltipRenderArgs) =>
 						React.createElement(
 							'button',
 							{ type: 'button', onClick: args.dismiss },
@@ -225,25 +227,30 @@ describe('TooltipPlugin', () => {
 			act(() => {
 				getHandler(config, 'init')(fakePlot);
 				getHandler(config, 'setSeries')(fakePlot, 1, { focus: true });
-				jest.runAllTimers();
 			});
 
 			// Pin the tooltip.
 			act(() => {
 				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-				jest.runAllTimers();
+			});
+
+			// Wait until the tooltip is actually pinned (pointer events enabled)
+			await waitFor(() => {
+				const container = document.querySelector(
+					'.tooltip-plugin-container',
+				) as HTMLElement | null;
+				expect(container).not.toBeNull();
+				expect(container?.classList.contains('pinned')).toBe(true);
 			});
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
 
-			act(() => {
-				button.click();
-				jest.runAllTimers();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			await user.click(button);
+
+			await waitFor(() => {
+				expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
 			});
-
-			expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
-
-			jest.useRealTimers();
 		});
 
 		it('drops a pinned tooltip when the underlying data changes', () => {
@@ -252,7 +259,7 @@ describe('TooltipPlugin', () => {
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config: config,
 					render: () => React.createElement('div', null, 'tooltip-body'),
 					syncMode: DashboardCursorSync.None,
 					canPinTooltip: true,
@@ -296,7 +303,7 @@ describe('TooltipPlugin', () => {
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => React.createElement('div', null, 'pinned content'),
 					syncMode: DashboardCursorSync.None,
 					canPinTooltip: true,
@@ -339,7 +346,7 @@ describe('TooltipPlugin', () => {
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => React.createElement('div', null, 'pinned content'),
 					syncMode: DashboardCursorSync.None,
 					canPinTooltip: true,
@@ -383,54 +390,54 @@ describe('TooltipPlugin', () => {
 
 	describe('cursor sync', () => {
 		it('enables uPlot cursor sync for time-based scales when mode is Tooltip', () => {
-			const config = createConfigMock({
-				scales: [{ props: { time: true } }],
-			} as any);
+			const config = createConfigMock();
+			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			config.addScale({ scaleKey: 'x', time: true });
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => null,
 					syncMode: DashboardCursorSync.Tooltip,
 					syncKey: 'dashboard-sync',
 				}),
 			);
 
-			expect(config.setCursor).toHaveBeenCalledWith({
+			expect(setCursorSpy).toHaveBeenCalledWith({
 				sync: { key: 'dashboard-sync', scales: ['x', null] },
 			});
 		});
 
 		it('does not enable cursor sync when mode is None', () => {
-			const config = createConfigMock({
-				scales: [{ props: { time: true } }],
-			} as any);
+			const config = createConfigMock();
+			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			config.addScale({ scaleKey: 'x', time: true });
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => null,
 					syncMode: DashboardCursorSync.None,
 				}),
 			);
 
-			expect(config.setCursor).not.toHaveBeenCalled();
+			expect(setCursorSpy).not.toHaveBeenCalled();
 		});
 
 		it('does not enable cursor sync when scale is not time-based', () => {
-			const config = createConfigMock({
-				scales: [{ props: { time: false } }],
-			} as any);
+			const config = createConfigMock();
+			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			config.addScale({ scaleKey: 'x', time: false });
 
 			render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => null,
 					syncMode: DashboardCursorSync.Tooltip,
 				}),
 			);
 
-			expect(config.setCursor).not.toHaveBeenCalled();
+			expect(setCursorSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -444,7 +451,7 @@ describe('TooltipPlugin', () => {
 
 			const { unmount } = render(
 				React.createElement(TooltipPlugin, {
-					config: config as any,
+					config,
 					render: () => null,
 					syncMode: DashboardCursorSync.None,
 				}),
