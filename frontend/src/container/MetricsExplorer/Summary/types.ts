@@ -1,5 +1,9 @@
 import React from 'react';
-import { MetricsTreeMapResponse } from 'api/metricsExplorer/getMetricsTreeMap';
+import {
+	MetricsexplorertypesTreemapModeDTO,
+	MetricsexplorertypesTreemapResponseDTO,
+	Querybuildertypesv5OrderByDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -12,7 +16,7 @@ export interface MetricsTableProps {
 	pageSize: number;
 	currentPage: number;
 	onPaginationChange: (page: number, pageSize: number) => void;
-	setOrderBy: (orderBy: OrderByPayload) => void;
+	setOrderBy: (orderBy: Querybuildertypesv5OrderByDTO) => void;
 	totalCount: number;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 	queryFilters: TagFilter;
@@ -24,12 +28,12 @@ export interface MetricsSearchProps {
 }
 
 export interface MetricsTreemapProps {
-	data: MetricsTreeMapResponse | null | undefined;
+	data: MetricsexplorertypesTreemapResponseDTO | null | undefined;
 	isLoading: boolean;
 	isError: boolean;
-	viewType: TreemapViewType;
+	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
-	setHeatmapView: (value: TreemapViewType) => void;
+	setHeatmapView: (value: MetricsexplorertypesTreemapModeDTO) => void;
 }
 
 export interface OrderByPayload {
