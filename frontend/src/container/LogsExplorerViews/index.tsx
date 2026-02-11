@@ -27,7 +27,6 @@ import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import {
-	getExportLogQuery,
 	getExportQueryData,
 	getFrequencyChartData,
 	getListQuery,
@@ -136,11 +135,6 @@ function LogsExplorerViewsContainer({
 
 	const exportDefaultQuery = useMemo(
 		() => getExportQueryData(requestData, selectedPanelType),
-		[selectedPanelType, requestData],
-	);
-
-	const logsAlertQuery = useMemo(
-		() => getExportLogQuery(requestData, selectedPanelType),
 		[selectedPanelType, requestData],
 	);
 
@@ -533,7 +527,6 @@ function LogsExplorerViewsContainer({
 				onExport={handleExport}
 				sourcepage={DataSource.LOGS}
 				handleChangeSelectedView={handleChangeSelectedView}
-				logsAlertQuery={logsAlertQuery}
 			/>
 		</div>
 	);
