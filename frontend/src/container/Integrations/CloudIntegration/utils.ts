@@ -1,7 +1,5 @@
-import { CloudAccount } from '../types';
-
-export const getAccountById = (
-	accounts: CloudAccount[],
+export const getAccountById = <T extends { cloud_account_id: string }>(
+	accounts: T[],
 	accountId: string,
-): CloudAccount | null =>
+): T | null =>
 	accounts.find((account) => account.cloud_account_id === accountId) || null;
