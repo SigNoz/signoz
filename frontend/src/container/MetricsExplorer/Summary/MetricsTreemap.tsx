@@ -3,6 +3,7 @@ import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip, Typography } from 'antd';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import { stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from 'lucide-react';
 
@@ -12,7 +13,7 @@ import {
 	TREEMAP_SQUARE_PADDING,
 	TREEMAP_VIEW_OPTIONS,
 } from './constants';
-import { MetricsTreemapProps, TreemapTile, TreemapViewType } from './types';
+import { MetricsTreemapProps, TreemapTile } from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
@@ -40,9 +41,9 @@ function MetricsTreemap({
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
-			(viewType === TreemapViewType.TIMESERIES
-				? data?.data?.[TreemapViewType.TIMESERIES]
-				: data?.data?.[TreemapViewType.SAMPLES]) || [];
+			(viewType === MetricsexplorertypesTreemapModeDTO.timeseries
+				? data?.timeseries
+				: data?.samples) || [];
 		return transformTreemapData(extracedTreemapData, viewType);
 	}, [data, viewType]);
 
@@ -65,11 +66,7 @@ function MetricsTreemap({
 		);
 	}
 
-	if (
-		!data ||
-		!data.data ||
-		(data?.status === 'success' && !data?.data?.[viewType])
-	) {
+	if (!data || !data?.[viewType]?.length) {
 		return (
 			<Empty
 				description="No metrics found"
@@ -79,7 +76,7 @@ function MetricsTreemap({
 		);
 	}
 
-	if (data?.status === 'error' || isError) {
+	if (isError) {
 		return (
 			<Empty
 				description="Error fetching metrics. If the problem persists, please contact support."

@@ -36,13 +36,17 @@ function MetricsTable({
 		): void => {
 			if ('field' in sorter && sorter.order) {
 				setOrderBy({
-					columnName: sorter.field as string,
-					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+					key: {
+						name: sorter.field as string,
+					},
+					direction: sorter.order === 'ascend' ? 'asc' : 'desc',
 				});
 			} else {
 				setOrderBy({
-					columnName: 'samples',
-					order: 'desc',
+					key: {
+						name: 'samples',
+					},
+					direction: 'desc',
 				});
 			}
 		},

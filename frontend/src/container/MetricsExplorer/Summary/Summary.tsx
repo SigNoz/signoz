@@ -4,11 +4,19 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import {
+	useGetMetricsStats,
+	useGetMetricsTreemap,
+} from 'api/generated/services/metrics';
+import {
+	MetricsexplorertypesStatsRequestDTO,
+	MetricsexplorertypesTreemapModeDTO,
+	MetricsexplorertypesTreemapRequestDTO,
+	Querybuildertypesv5OrderByDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
-import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
-import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -28,26 +36,28 @@ import {
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
-import { OrderByPayload, TreemapViewType } from './types';
-import {
-	convertNanoToMilliseconds,
-	formatDataForMetricsTable,
-	getMetricsListQuery,
-} from './utils';
+import { convertNanoToMilliseconds, formatDataForMetricsTable } from './utils';
 
 import './Summary.styles.scss';
 
-const DEFAULT_ORDER_BY: OrderByPayload = {
-	columnName: 'samples',
-	order: 'desc',
+const DEFAULT_ORDER_BY: Querybuildertypesv5OrderByDTO = {
+	key: {
+		name: 'samples',
+	},
+	direction: 'desc',
 };
 
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [orderBy, setOrderBy] = useState<OrderByPayload>(DEFAULT_ORDER_BY);
-	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
-		TreemapViewType.TIMESERIES,
+	const [orderBy, setOrderBy] = useState<Querybuildertypesv5OrderByDTO>(
+		DEFAULT_ORDER_BY,
+	);
+	const [
+		heatmapView,
+		setHeatmapView,
+	] = useState<MetricsexplorertypesTreemapModeDTO>(
+		MetricsexplorertypesTreemapModeDTO.timeseries,
 	);
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -87,81 +97,62 @@ function Summary(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// This is used to avoid the filters from being serialized with the id
-	const queryFiltersWithoutId = useMemo(() => {
-		const filtersWithoutId = {
-			...queryFilters,
-			items: queryFilters.items.map(({ id: _id, ...rest }) => rest),
-		};
-		return JSON.stringify(filtersWithoutId);
-	}, [queryFilters]);
-
-	const metricsListQuery = useMemo(() => {
-		const baseQuery = getMetricsListQuery();
-		return {
-			...baseQuery,
-			limit: pageSize,
-			offset: (currentPage - 1) * pageSize,
-			filters: queryFilters,
+	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(
+		() => ({
 			start: convertNanoToMilliseconds(minTime),
 			end: convertNanoToMilliseconds(maxTime),
+			limit: pageSize,
+			offset: (currentPage - 1) * pageSize,
 			orderBy,
-		};
-	}, [queryFilters, minTime, maxTime, orderBy, pageSize, currentPage]);
+		}),
+		[minTime, maxTime, orderBy, pageSize, currentPage],
+	);
 
-	const metricsTreemapQuery = useMemo(
+	const metricsTreemapQuery: MetricsexplorertypesTreemapRequestDTO = useMemo(
 		() => ({
 			limit: 100,
-			filters: queryFilters,
 			treemap: heatmapView,
 			start: convertNanoToMilliseconds(minTime),
 			end: convertNanoToMilliseconds(maxTime),
+			mode: heatmapView,
 		}),
-		[queryFilters, heatmapView, minTime, maxTime],
+		[heatmapView, minTime, maxTime],
 	);
 
 	const {
 		data: metricsData,
-		isLoading: isMetricsLoading,
-		isFetching: isMetricsFetching,
-		isError: isMetricsError,
-	} = useGetMetricsList(metricsListQuery, {
-		enabled: !!metricsListQuery && !isInspectModalOpen,
-		queryKey: [
-			'metricsList',
-			queryFiltersWithoutId,
-			orderBy,
-			pageSize,
-			currentPage,
-			minTime,
-			maxTime,
-		],
-	});
+		mutate: getMetricsStats,
+		isLoading: isGetMetricsStatsLoading,
+		isError: isGetMetricsStatsError,
+	} = useGetMetricsStats();
+
+	useEffect(() => {
+		getMetricsStats({
+			data: metricsListQuery,
+		});
+	}, [metricsListQuery, getMetricsStats]);
 
 	const isListViewError = useMemo(
-		() => isMetricsError || !!(metricsData && metricsData.statusCode !== 200),
-		[isMetricsError, metricsData],
+		() => isGetMetricsStatsError || metricsData?.status !== 200,
+		[isGetMetricsStatsError, metricsData],
 	);
 
 	const {
 		data: treeMapData,
-		isLoading: isTreeMapLoading,
-		isFetching: isTreeMapFetching,
-		isError: isTreeMapError,
-	} = useGetMetricsTreeMap(metricsTreemapQuery, {
-		enabled: !!metricsTreemapQuery && !isInspectModalOpen,
-		queryKey: [
-			'metricsTreemap',
-			queryFiltersWithoutId,
-			heatmapView,
-			minTime,
-			maxTime,
-		],
-	});
+		mutate: getMetricsTreemap,
+		isLoading: isGetMetricsTreemapLoading,
+		isError: isGetMetricsTreemapError,
+	} = useGetMetricsTreemap();
+
+	useEffect(() => {
+		getMetricsTreemap({
+			data: metricsTreemapQuery,
+		});
+	}, [metricsTreemapQuery, getMetricsTreemap]);
 
 	const isProportionViewError = useMemo(
-		() => isTreeMapError || treeMapData?.statusCode !== 200,
-		[isTreeMapError, treeMapData],
+		() => isGetMetricsTreemapError || treeMapData?.status !== 200,
+		[isGetMetricsTreemapError, treeMapData],
 	);
 
 	const handleFilterChange = useCallback(
@@ -202,7 +193,7 @@ function Summary(): JSX.Element {
 	};
 
 	const formattedMetricsData = useMemo(
-		() => formatDataForMetricsTable(metricsData?.payload?.data?.metrics || []),
+		() => formatDataForMetricsTable(metricsData?.data?.data?.metrics || []),
 		[metricsData],
 	);
 
@@ -254,7 +245,9 @@ function Summary(): JSX.Element {
 		});
 	};
 
-	const handleSetHeatmapView = (view: TreemapViewType): void => {
+	const handleSetHeatmapView = (
+		view: MetricsexplorertypesTreemapModeDTO,
+	): void => {
 		setHeatmapView(view);
 		logEvent(MetricsExplorerEvents.TreemapViewChanged, {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
@@ -262,61 +255,54 @@ function Summary(): JSX.Element {
 		});
 	};
 
-	const handleSetOrderBy = (orderBy: OrderByPayload): void => {
+	const handleSetOrderBy = (orderBy: Querybuildertypesv5OrderByDTO): void => {
 		setOrderBy(orderBy);
 		logEvent(MetricsExplorerEvents.OrderByApplied, {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
-			[MetricsExplorerEventKeys.ColumnName]: orderBy.columnName,
-			[MetricsExplorerEventKeys.Order]: orderBy.order,
+			[MetricsExplorerEventKeys.ColumnName]: orderBy.key?.name,
+			[MetricsExplorerEventKeys.Order]: orderBy.direction,
 		});
 	};
 
 	const isMetricsListDataEmpty = useMemo(
-		() =>
-			formattedMetricsData.length === 0 && !isMetricsLoading && !isMetricsFetching,
-		[formattedMetricsData, isMetricsLoading, isMetricsFetching],
+		() => formattedMetricsData.length === 0 && !isGetMetricsStatsLoading,
+		[formattedMetricsData, isGetMetricsStatsLoading],
 	);
 
 	const isMetricsTreeMapDataEmpty = useMemo(
 		() =>
-			!treeMapData?.payload?.data[heatmapView]?.length &&
-			!isTreeMapLoading &&
-			!isTreeMapFetching,
-		[
-			treeMapData?.payload?.data,
-			heatmapView,
-			isTreeMapLoading,
-			isTreeMapFetching,
-		],
+			!treeMapData?.data?.data?.[heatmapView]?.length &&
+			!isGetMetricsTreemapLoading,
+		[treeMapData?.data?.data, heatmapView, isGetMetricsTreemapLoading],
 	);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
 				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
-				{isMetricsLoading || isTreeMapLoading ? (
+				{isGetMetricsStatsLoading || isGetMetricsTreemapLoading ? (
 					<MetricsLoading />
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
 					<NoLogs dataSource={DataSource.METRICS} />
 				) : (
 					<>
 						<MetricsTreemap
-							data={treeMapData?.payload}
-							isLoading={isTreeMapLoading || isTreeMapFetching}
+							data={treeMapData?.data?.data}
+							isLoading={isGetMetricsTreemapLoading}
 							isError={isProportionViewError}
 							viewType={heatmapView}
 							openMetricDetails={openMetricDetails}
 							setHeatmapView={handleSetHeatmapView}
 						/>
 						<MetricsTable
-							isLoading={isMetricsLoading || isMetricsFetching}
+							isLoading={isGetMetricsStatsLoading}
 							isError={isListViewError}
 							data={formattedMetricsData}
 							pageSize={pageSize}
 							currentPage={currentPage}
 							onPaginationChange={onPaginationChange}
 							setOrderBy={handleSetOrderBy}
-							totalCount={metricsData?.payload?.data?.total || 0}
+							totalCount={metricsData?.data?.data?.total || 0}
 							openMetricDetails={openMetricDetails}
 							queryFilters={queryFilters}
 						/>

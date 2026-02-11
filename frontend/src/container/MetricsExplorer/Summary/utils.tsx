@@ -3,14 +3,15 @@ import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
-	MetricsListItemData,
+	MetricsexplorertypesStatDTO,
+	MetricsexplorertypesTreemapEntryDTO,
+	MetricsexplorertypesTreemapModeDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	MetricsListPayload,
 	MetricType,
 } from 'api/metricsExplorer/getMetricsList';
-import {
-	SamplesData,
-	TimeseriesData,
-} from 'api/metricsExplorer/getMetricsTreeMap';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import {
 	BarChart,
@@ -21,10 +22,10 @@ import {
 } from 'lucide-react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { METRIC_TYPE_LABEL_MAP } from './constants';
+import { METRIC_TYPE_LABEL_MAP, METRIC_TYPE_LABEL_MAP_V2 } from './constants';
 import MetricNameSearch from './MetricNameSearch';
 import MetricTypeSearch from './MetricTypeSearch';
-import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
+import { MetricsListItemRowData, TreemapTile } from './types';
 
 export const getMetricsTableColumns = (
 	queryFilters: TagFilter,
@@ -69,13 +70,13 @@ export const getMetricsTableColumns = (
 	},
 	{
 		title: 'SAMPLES',
-		dataIndex: TreemapViewType.SAMPLES,
+		dataIndex: MetricsexplorertypesTreemapModeDTO.samples,
 		width: 150,
 		sorter: true,
 	},
 	{
 		title: 'TIME SERIES',
-		dataIndex: TreemapViewType.TIMESERIES,
+		dataIndex: MetricsexplorertypesTreemapModeDTO.timeseries,
 		width: 150,
 		sorter: true,
 	},
@@ -143,6 +144,60 @@ export function MetricTypeRenderer({
 	);
 }
 
+export function MetricTypeRendererV2({
+	type,
+}: {
+	type: MetrictypesTypeDTO;
+}): JSX.Element {
+	const [icon, color] = useMemo(() => {
+		switch (type) {
+			case MetrictypesTypeDTO.sum:
+				return [
+					<Diff key={type} size={12} color={Color.BG_ROBIN_500} />,
+					Color.BG_ROBIN_500,
+				];
+			case MetrictypesTypeDTO.gauge:
+				return [
+					<Gauge key={type} size={12} color={Color.BG_SAKURA_500} />,
+					Color.BG_SAKURA_500,
+				];
+			case MetrictypesTypeDTO.histogram:
+				return [
+					<BarChart2 key={type} size={12} color={Color.BG_SIENNA_500} />,
+					Color.BG_SIENNA_500,
+				];
+			case MetrictypesTypeDTO.summary:
+				return [
+					<BarChartHorizontal key={type} size={12} color={Color.BG_FOREST_500} />,
+					Color.BG_FOREST_500,
+				];
+			case MetrictypesTypeDTO.exponentialhistogram:
+				return [
+					<BarChart key={type} size={12} color={Color.BG_AQUA_500} />,
+					Color.BG_AQUA_500,
+				];
+			default:
+				return [null, ''];
+		}
+	}, [type]);
+
+	return (
+		<div
+			className="metric-type-renderer"
+			style={{
+				backgroundColor: `${color}33`,
+				border: `1px solid ${color}`,
+				color,
+			}}
+		>
+			{icon}
+			<Typography.Text style={{ color, fontSize: 12 }}>
+				{METRIC_TYPE_LABEL_MAP_V2[type]}
+			</Typography.Text>
+		</div>
+	);
+}
+
 function ValidateRowValueWrapper({
 	value,
 	children,
@@ -182,13 +237,13 @@ export const formatNumberIntoHumanReadableFormat = (
 };
 
 export const formatDataForMetricsTable = (
-	data: MetricsListItemData[],
+	data: MetricsexplorertypesStatDTO[],
 ): MetricsListItemRowData[] =>
 	data.map((metric) => ({
-		key: metric.metric_name,
+		key: metric.metricName,
 		metric_name: (
-			<ValidateRowValueWrapper value={metric.metric_name}>
-				<Tooltip title={metric.metric_name}>{metric.metric_name}</Tooltip>
+			<ValidateRowValueWrapper value={metric.metricName}>
+				<Tooltip title={metric.metricName}>{metric.metricName}</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 		description: (
@@ -198,39 +253,54 @@ export const formatDataForMetricsTable = (
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		metric_type: <MetricTypeRenderer type={metric.type} />,
+		metric_type: <MetricTypeRendererV2 type={metric.type} />,
 		unit: (
 			<ValidateRowValueWrapper value={getUniversalNameFromMetricUnit(metric.unit)}>
 				{getUniversalNameFromMetricUnit(metric.unit)}
 			</ValidateRowValueWrapper>
 		),
-		[TreemapViewType.SAMPLES]: (
-			<ValidateRowValueWrapper value={metric[TreemapViewType.SAMPLES]}>
-				<Tooltip title={metric[TreemapViewType.SAMPLES].toLocaleString()}>
-					{formatNumberIntoHumanReadableFormat(metric[TreemapViewType.SAMPLES])}
+		[MetricsexplorertypesTreemapModeDTO.samples]: (
+			<ValidateRowValueWrapper
+				value={metric[MetricsexplorertypesTreemapModeDTO.samples]}
+			>
+				<Tooltip
+					title={metric[MetricsexplorertypesTreemapModeDTO.samples].toLocaleString()}
+				>
+					{formatNumberIntoHumanReadableFormat(
+						metric[MetricsexplorertypesTreemapModeDTO.samples],
+					)}
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		[TreemapViewType.TIMESERIES]: (
-			<ValidateRowValueWrapper value={metric[TreemapViewType.TIMESERIES]}>
-				<Tooltip title={metric[TreemapViewType.TIMESERIES].toLocaleString()}>
-					{formatNumberIntoHumanReadableFormat(metric[TreemapViewType.TIMESERIES])}
+		[MetricsexplorertypesTreemapModeDTO.timeseries]: (
+			<ValidateRowValueWrapper
+				value={metric[MetricsexplorertypesTreemapModeDTO.timeseries]}
+			>
+				<Tooltip
+					title={metric[
+						MetricsexplorertypesTreemapModeDTO.timeseries
+					].toLocaleString()}
+				>
+					{formatNumberIntoHumanReadableFormat(
+						metric[MetricsexplorertypesTreemapModeDTO.timeseries],
+					)}
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 	}));
 
 export const transformTreemapData = (
-	data: TimeseriesData[] | SamplesData[],
-	viewType: TreemapViewType,
+	data: MetricsexplorertypesTreemapEntryDTO[],
+	viewType: MetricsexplorertypesTreemapModeDTO,
 ): TreemapTile[] => {
-	const totalSize = (data as (TimeseriesData | SamplesData)[]).reduce(
-		(acc: number, item: TimeseriesData | SamplesData) => acc + item.percentage,
+	const totalSize = data.reduce(
+		(acc: number, item: MetricsexplorertypesTreemapEntryDTO) =>
+			acc + item.percentage,
 		0,
 	);
 
 	const children = data.map((item) => ({
-		id: item.metric_name,
+		id: item.metricName,
 		size: totalSize > 0 ? Number((item.percentage / totalSize).toFixed(2)) : 0,
 		displayValue: Number(item.percentage).toFixed(2),
 		parent: viewType,
