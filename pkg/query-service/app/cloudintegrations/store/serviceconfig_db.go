@@ -74,7 +74,7 @@ func (r *serviceConfigSQLRepository) Get(
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud service config")
 	}
 
-	return result.Config, nil
+	return []byte(result.Config), nil
 }
 
 func (r *serviceConfigSQLRepository) Upsert(
@@ -114,7 +114,7 @@ func (r *serviceConfigSQLRepository) Upsert(
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Config:             config,
+		Config:             string(config),
 		Type:               serviceId,
 		CloudIntegrationID: cloudIntegrationId,
 	}
@@ -149,7 +149,7 @@ func (r *serviceConfigSQLRepository) GetAllForAccount(
 	result := make(map[string][]byte)
 
 	for _, r := range serviceConfigs {
-		result[r.Type] = r.Config
+		result[r.Type] = []byte(r.Config)
 	}
 
 	return result, nil

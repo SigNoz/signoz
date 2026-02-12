@@ -96,19 +96,16 @@ func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.P
 	}
 
 	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
-		return nil, model.BadRequest(fmt.Errorf(
-			"can't check in with new %s account id %s for account %s with existing %s id %s",
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "can't check in with new %s account id %s for account %s with existing %s id %s",
 			a.GetName().String(), req.AccountID, existingAccount.ID.StringValue(), a.GetName().String(),
-			*existingAccount.AccountID,
-		))
+			*existingAccount.AccountID)
 	}
 
 	existingAccount, err = a.accountsRepo.GetConnectedCloudAccount(ctx, req.OrgID, a.GetName().String(), req.AccountID)
 	if existingAccount != nil && existingAccount.ID.StringValue() != req.ID {
-		return nil, model.BadRequest(fmt.Errorf(
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"can't check in to %s account %s with id %s. already connected with id %s",
-			a.GetName().String(), req.AccountID, req.ID, existingAccount.ID.StringValue(),
-		))
+			a.GetName().String(), req.AccountID, req.ID, existingAccount.ID.StringValue())
 	}
 
 	agentReport := integrationstypes.AgentReport{
@@ -149,7 +146,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 	}
 
 	accountConfig := new(integrationstypes.AWSAccountConfig)
-	err := accountConfig.Unmarshal(account.Config)
+	err := accountConfig.Unmarshal([]byte(account.Config))
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +234,7 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 
 	definitions, err := a.awsServiceDefinitions.ListServiceDefinitions(ctx)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("couldn't list aws service definitions: %w", err))
+		return nil, err
 	}
 
 	for _, def := range definitions {
@@ -265,7 +262,7 @@ func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationsty
 
 	awsDefinition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
+		return nil, err
 	}
 
 	details.AWSServiceDefinition = *awsDefinition
@@ -307,13 +304,14 @@ func (a *awsProvider) calculateCloudIntegrationServiceConnectionStatus(
 	svcDetails *integrationstypes.AWSServiceDefinition,
 ) (*integrationstypes.ServiceConnectionStatus, error) {
 	telemetryCollectionStrategy := svcDetails.Strategy
+	result := &integrationstypes.ServiceConnectionStatus{}
+
 	if telemetryCollectionStrategy == nil {
-		return nil, model.InternalError(fmt.Errorf(
+		return result, model.InternalError(fmt.Errorf(
 			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
 		))
 	}
 
-	result := &integrationstypes.ServiceConnectionStatus{}
 	errors := make([]error, 0)
 	var resultLock sync.Mutex
 
@@ -364,7 +362,7 @@ func (a *awsProvider) calculateCloudIntegrationServiceConnectionStatus(
 	wg.Wait()
 
 	if len(errors) > 0 {
-		return nil, errors[0]
+		return result, errors[0]
 	}
 
 	return result, nil
@@ -498,243 +496,6 @@ func (a *awsProvider) calculateAWSIntegrationSvcLogsConnectionStatus(
 
 	return nil, nil
 }
-
-//func (a *awsProvider) getServiceConnectionStatus(
-//	ctx context.Context,
-//	cloudAccountID string,
-//	orgID string,
-//	def *integrationstypes.AWSServiceDefinition,
-//	serviceConfig *integrationstypes.AWSCloudServiceConfig,
-//) (*integrationstypes.ServiceConnectionStatus, error) {
-//	if def.Strategy == nil {
-//		return nil, nil
-//	}
-//
-//	resp := new(integrationstypes.ServiceConnectionStatus)
-//
-//	wg := sync.WaitGroup{}
-//	wg.Add(2)
-//
-//	if def.Strategy.AWSMetrics != nil && serviceConfig.Metrics.Enabled {
-//		go func() {
-//			defer func() {
-//				if r := recover(); r != nil {
-//					a.logger.ErrorContext(
-//						ctx, "panic while getting service metrics connection status",
-//						"error", r,
-//						"service", def.DefinitionMetadata.Id,
-//					)
-//				}
-//			}()
-//			defer wg.Done()
-//			status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def)
-//			resp.Metrics = status
-//		}()
-//	}
-//
-//	if def.Strategy.AWSLogs != nil && serviceConfig.Logs.Enabled {
-//		go func() {
-//			defer func() {
-//				if r := recover(); r != nil {
-//					a.logger.ErrorContext(
-//						ctx, "panic while getting service logs connection status",
-//						"error", r,
-//						"service", def.DefinitionMetadata.Id,
-//					)
-//				}
-//			}()
-//			defer wg.Done()
-//			status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def)
-//			resp.Logs = status
-//		}()
-//	}
-//
-//	wg.Wait()
-//
-//	return resp, nil
-//}
-
-//func (a *awsProvider) getServiceMetricsConnectionStatus(
-//	ctx context.Context,
-//	cloudAccountID string,
-//	orgID string,
-//	def *integrationstypes.AWSServiceDefinition,
-//) ([]*integrationstypes.SignalConnectionStatus, error) {
-//	if def.Strategy == nil ||
-//		len(def.Strategy.AWSMetrics.StreamFilters) < 1 ||
-//		len(def.DataCollected.Metrics) < 1 {
-//		return nil, nil
-//	}
-//
-//	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
-//
-//	for _, category := range def.IngestionStatusCheck.Metrics {
-//		queries := make([]qbtypes.QueryEnvelope, 0)
-//
-//		for _, check := range category.Checks {
-//			filterExpression := fmt.Sprintf(`cloud.provider="aws" AND cloud.account.id="%s"`, cloudAccountID)
-//			f := ""
-//			for _, attribute := range check.Attributes {
-//				f = fmt.Sprintf("%s %s", attribute.Name, attribute.Operator)
-//				if attribute.Value != "" {
-//					f = fmt.Sprintf("%s '%s'", f, attribute.Value)
-//				}
-//
-//				filterExpression = fmt.Sprintf("%s AND %s", filterExpression, f)
-//			}
-//
-//			queries = append(queries, qbtypes.QueryEnvelope{
-//				Type: qbtypes.QueryTypeBuilder,
-//				Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-//					Name:   valuer.GenerateUUID().String(),
-//					Signal: telemetrytypes.SignalMetrics,
-//					Aggregations: []qbtypes.MetricAggregation{{
-//						MetricName:       check.Key,
-//						TimeAggregation:  metrictypes.TimeAggregationAvg,
-//						SpaceAggregation: metrictypes.SpaceAggregationAvg,
-//					}},
-//					Filter: &qbtypes.Filter{
-//						Expression: filterExpression,
-//					},
-//				},
-//			})
-//		}
-//
-//		resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
-//			SchemaVersion: "v5",
-//			Start:         uint64(time.Now().Add(-time.Hour).UnixMilli()),
-//			End:           uint64(time.Now().UnixMilli()),
-//			RequestType:   qbtypes.RequestTypeScalar,
-//			CompositeQuery: qbtypes.CompositeQuery{
-//				Queries: queries,
-//			},
-//		})
-//		if err != nil {
-//			a.logger.DebugContext(ctx,
-//				"error querying for service metrics connection status",
-//				"error", err,
-//				"service", def.DefinitionMetadata.Id,
-//			)
-//			continue
-//		}
-//
-//		if resp != nil && len(resp.Data.Results) < 1 {
-//			continue
-//		}
-//
-//		queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
-//		if !ok {
-//			continue
-//		}
-//
-//		if queryResponse == nil ||
-//			len(queryResponse.Aggregations) < 1 ||
-//			len(queryResponse.Aggregations[0].Series) < 1 ||
-//			len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
-//			continue
-//		}
-//
-//		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
-//			CategoryID:           category.Category,
-//			CategoryDisplayName:  category.DisplayName,
-//			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
-//			LastReceivedFrom:     "signoz-aws-integration",
-//		})
-//	}
-//
-//	return statusResp, nil
-//}
-//
-//func (a *awsProvider) getServiceLogsConnectionStatus(
-//	ctx context.Context,
-//	cloudAccountID string,
-//	orgID string,
-//	def *integrationstypes.AWSServiceDefinition,
-//) ([]*integrationstypes.SignalConnectionStatus, error) {
-//	if def.Strategy == nil ||
-//		len(def.Strategy.AWSLogs.Subscriptions) < 1 ||
-//		len(def.DataCollected.Logs) < 1 {
-//		return nil, nil
-//	}
-//
-//	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
-//
-//	for _, category := range def.IngestionStatusCheck.Logs {
-//		queries := make([]qbtypes.QueryEnvelope, 0)
-//
-//		for _, check := range category.Checks {
-//			filterExpression := fmt.Sprintf(`cloud.account.id="%s"`, cloudAccountID)
-//			f := ""
-//			for _, attribute := range check.Attributes {
-//				f = fmt.Sprintf("%s %s", attribute.Name, attribute.Operator)
-//				if attribute.Value != "" {
-//					f = fmt.Sprintf("%s '%s'", f, attribute.Value)
-//				}
-//
-//				filterExpression = fmt.Sprintf("%s AND %s", filterExpression, f)
-//			}
-//
-//			queries = append(queries, qbtypes.QueryEnvelope{
-//				Type: qbtypes.QueryTypeBuilder,
-//				Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-//					Name:   valuer.GenerateUUID().String(),
-//					Signal: telemetrytypes.SignalLogs,
-//					Aggregations: []qbtypes.LogAggregation{{
-//						Expression: "count()",
-//					}},
-//					Filter: &qbtypes.Filter{
-//						Expression: filterExpression,
-//					},
-//					Limit:  10,
-//					Offset: 0,
-//				},
-//			})
-//		}
-//
-//		resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
-//			SchemaVersion: "v1",
-//			Start:         uint64(time.Now().Add(-time.Hour * 1).UnixMilli()),
-//			End:           uint64(time.Now().UnixMilli()),
-//			RequestType:   qbtypes.RequestTypeTimeSeries,
-//			CompositeQuery: qbtypes.CompositeQuery{
-//				Queries: queries,
-//			},
-//		})
-//		if err != nil {
-//			a.logger.DebugContext(ctx,
-//				"error querying for service logs connection status",
-//				"error", err,
-//				"service", def.DefinitionMetadata.Id,
-//			)
-//			continue
-//		}
-//
-//		if resp != nil && len(resp.Data.Results) < 1 {
-//			continue
-//		}
-//
-//		queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
-//		if !ok {
-//			continue
-//		}
-//
-//		if queryResponse == nil ||
-//			len(queryResponse.Aggregations) < 1 ||
-//			len(queryResponse.Aggregations[0].Series) < 1 ||
-//			len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
-//			continue
-//		}
-//
-//		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
-//			CategoryID:           category.Category,
-//			CategoryDisplayName:  category.DisplayName,
-//			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
-//			LastReceivedFrom:     "signoz-aws-integration",
-//		})
-//	}
-//
-//	return statusResp, nil
-//}
 
 func (a *awsProvider) getServiceConfig(ctx context.Context,
 	def *integrationstypes.AWSServiceDefinition, orgID valuer.UUID, cloudProvider, serviceId, cloudAccountId string,
@@ -894,7 +655,7 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrationstypes.PatchableServiceConfig) (any, error) {
 	definition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
+		return nil, err
 	}
 
 	serviceConfig := new(integrationstypes.PatchableAWSCloudServiceConfig)
@@ -927,13 +688,13 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 		return nil, err
 	}
 
-	if err = serviceConfig.Unmarshal(updatedConfig); err != nil {
+	if err = serviceConfig.Config.Unmarshal(updatedConfig); err != nil {
 		return nil, err
 	}
 
 	return &integrationstypes.PatchServiceConfigResponse{
 		ServiceId: req.ServiceId,
-		Config:    serviceConfig,
+		Config:    serviceConfig.Config,
 	}, nil
 }
 

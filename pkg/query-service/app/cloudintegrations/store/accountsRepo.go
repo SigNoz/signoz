@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -63,6 +64,7 @@ func (r *cloudProviderAccountsSQLRepository) ListConnected(
 		Scan(ctx)
 
 	if err != nil {
+		slog.ErrorContext(ctx, "error querying connected cloud accounts", "error", err)
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "could not query connected cloud accounts")
 	}
 
@@ -186,7 +188,7 @@ func (r *cloudProviderAccountsSQLRepository) Upsert(
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Config:          config,
+		Config:          string(config),
 		AccountID:       accountId,
 		LastAgentReport: agentReport,
 		RemovedAt:       removedAt,
@@ -203,6 +205,7 @@ func (r *cloudProviderAccountsSQLRepository) Upsert(
 
 	upsertedAccount, err := r.Get(ctx, orgId, provider, *id)
 	if err != nil {
+		slog.ErrorContext(ctx, "error upserting cloud integration account", "error", err)
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't get upserted cloud integration account")
 	}
 

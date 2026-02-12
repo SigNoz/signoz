@@ -30,12 +30,11 @@ var _ Definition = &AWSServiceDefinition{}
 
 type AWSServiceDefinition struct {
 	DefinitionMetadata
-	Overview             string                 `json:"overview"` // markdown
-	Assets               Assets                 `json:"assets"`
-	SupportedSignals     SupportedSignals       `json:"supported_signals"`
-	DataCollected        DataCollected          `json:"data_collected"`
-	Strategy             *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
-	IngestionStatusCheck *IngestionStatusCheck  `json:"ingestion_status_check"`
+	Overview         string                 `json:"overview"` // markdown
+	Assets           Assets                 `json:"assets"`
+	SupportedSignals SupportedSignals       `json:"supported_signals"`
+	DataCollected    DataCollected          `json:"data_collected"`
+	Strategy         *AWSCollectionStrategy `json:"telemetry_collection_strategy"`
 }
 
 type IngestionStatusCheck struct {

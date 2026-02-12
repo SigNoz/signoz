@@ -327,7 +327,7 @@ type CloudIntegration struct {
 	types.Identifiable
 	types.TimeAuditable
 	Provider        string       `json:"provider" bun:"provider,type:text,unique:provider_id"`
-	Config          []byte       `json:"config" bun:"config,type:text"` // json serialized config
+	Config          string       `json:"config" bun:"config,type:text"` // json serialized config
 	AccountID       *string      `json:"account_id" bun:"account_id,type:text"`
 	LastAgentReport *AgentReport `json:"last_agent_report" bun:"last_agent_report,type:text"`
 	RemovedAt       *time.Time   `json:"removed_at" bun:"removed_at,type:timestamp,nullzero"`
@@ -359,7 +359,7 @@ func (a *CloudIntegration) Account(cloudProvider CloudProviderType) *Account {
 	switch cloudProvider {
 	case CloudProviderAWS:
 		config := new(AWSAccountConfig)
-		_ = config.Unmarshal(a.Config)
+		_ = config.Unmarshal([]byte(a.Config))
 		ca.Config = config
 	default:
 	}
@@ -441,7 +441,7 @@ func (r *AgentReport) Value() (driver.Value, error) {
 			err, errors.CodeInternal, "couldn't serialize agent report to JSON",
 		)
 	}
-	return serialized, nil
+	return string(serialized), nil
 }
 
 type CloudIntegrationService struct {
@@ -450,7 +450,7 @@ type CloudIntegrationService struct {
 	types.Identifiable
 	types.TimeAuditable
 	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
-	Config             []byte `bun:"config,type:text"` // json serialized config
+	Config             string `bun:"config,type:text"` // json serialized config
 	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
 }
 
