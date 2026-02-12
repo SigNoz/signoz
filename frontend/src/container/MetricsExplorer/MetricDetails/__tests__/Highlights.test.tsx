@@ -2,8 +2,8 @@ import { render } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 
 import Highlights from '../Highlights';
-import { getMockMetricHighlightsData } from './testUtlls';
 import { formatTimestampToReadableDate } from '../utils';
+import { getMockMetricHighlightsData } from './testUtlls';
 
 const MOCK_METRIC_NAME = 'test-metric';
 const METRIC_DETAILS_GRID_VALUE_SELECTOR = '.metric-details-grid-value';

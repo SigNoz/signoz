@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import ROUTES from 'constants/routes';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import ROUTES from 'constants/routes';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 import { userEvent } from 'tests/test-utils';
 
