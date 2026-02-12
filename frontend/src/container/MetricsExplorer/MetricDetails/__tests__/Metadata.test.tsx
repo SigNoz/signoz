@@ -1,9 +1,12 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import {
+	GetMetricMetadata200,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { AxiosResponse } from 'axios';
 import {
 	UniversalYAxisUnit,
@@ -120,13 +123,13 @@ describe('Metadata', () => {
 		);
 
 		expect(screen.getByText('Metric Type')).toBeInTheDocument();
-		expect(screen.getByText(mockMetricMetadata.type)).toBeInTheDocument();
+		expect(screen.getByText('Gauge')).toBeInTheDocument();
 		expect(screen.getByText('Description')).toBeInTheDocument();
 		expect(screen.getByText(mockMetricMetadata.description)).toBeInTheDocument();
 		expect(screen.getByText('Unit')).toBeInTheDocument();
 		expect(screen.getByText(mockMetricMetadata.unit)).toBeInTheDocument();
 		expect(screen.getByText('Temporality')).toBeInTheDocument();
-		expect(screen.getByText(mockMetricMetadata.temporality)).toBeInTheDocument();
+		expect(screen.getByText('Delta')).toBeInTheDocument();
 	});
 
 	it('editing the metadata should show the form inputs', async () => {
@@ -172,7 +175,7 @@ describe('Metadata', () => {
 
 		const metricTypeSelect = screen.getByTestId('metric-type-select');
 		expect(metricTypeSelect).toBeInTheDocument();
-		await userEvent.selectOptions(metricTypeSelect, MetricType.SUM);
+		await userEvent.selectOptions(metricTypeSelect, MetrictypesTypeDTO.sum);
 
 		const temporalitySelect = screen.getByTestId('temporality-select');
 		expect(temporalitySelect).toBeInTheDocument();
@@ -189,8 +192,8 @@ describe('Metadata', () => {
 		expect(mockUseUpdateMetricMetadata).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					type: MetricType.SUM,
-					temporality: Temporality.CUMULATIVE,
+					type: MetrictypesTypeDTO.sum,
+					temporality: MetrictypesTemporalityDTO.cumulative,
 					unit: 'By',
 					isMonotonic: true,
 				}),
