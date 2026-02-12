@@ -177,6 +177,8 @@ type APIHandlerOpts struct {
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
+
+	Logger *slog.Logger
 }
 
 // NewAPIHandler returns an APIHandler
@@ -212,7 +214,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
-	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(opts.Signoz.Instrumentation.Logger(),
+	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(
+		opts.Logger,
 		opts.Signoz.SQLStore,
 		opts.Reader,
 		querier,
