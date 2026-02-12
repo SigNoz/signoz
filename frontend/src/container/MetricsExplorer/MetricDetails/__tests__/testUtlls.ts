@@ -1,3 +1,4 @@
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import {
 	GetMetricAlerts200,
 	GetMetricAttributes200,
@@ -5,8 +6,6 @@ import {
 	GetMetricHighlights200,
 	GetMetricMetadata200,
 } from 'api/generated/services/sigNoz.schemas';
-
-import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { Temporality } from 'types/common/queryBuilder';
 
 export function getMockMetricHighlightsData(

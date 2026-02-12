@@ -4,9 +4,8 @@ import {
 	MetricsexplorertypesMetricDashboardDTO,
 	MetricsexplorertypesMetricHighlightsResponseDTO,
 	MetricsexplorertypesMetricMetadataDTO,
-	MetricsexplorertypesMetricMetadataDTOType,
-	MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality,
-	MetricsexplorertypesUpdateMetricMetadataRequestDTOType,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export interface MetricDetailsProps {
@@ -33,7 +32,7 @@ export interface MetadataProps {
 
 export interface AllAttributesProps {
 	metricName: string;
-	metricType: MetricsexplorertypesMetricMetadataDTOType | undefined;
+	metricType: MetrictypesTypeDTO | undefined;
 }
 
 export interface AllAttributesValueProps {
@@ -50,9 +49,9 @@ export type MetricDashboard = MetricsexplorertypesMetricDashboardDTO;
 
 export type MetricMetadata = MetricsexplorertypesMetricMetadataDTO;
 export interface MetricMetadataState {
-	type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType;
+	type: MetrictypesTypeDTO;
 	description: string;
-	temporality?: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality;
+	temporality?: MetrictypesTemporalityDTO;
 	unit: string;
 }
 

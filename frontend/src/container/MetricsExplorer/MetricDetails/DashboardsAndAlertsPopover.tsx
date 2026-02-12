@@ -3,6 +3,10 @@ import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Typography } from 'antd';
 import { Skeleton } from 'antd/lib';
+import {
+	useGetMetricAlerts,
+	useGetMetricDashboards,
+} from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -12,10 +16,6 @@ import { Bell, Grid } from 'lucide-react';
 import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
-import {
-	useGetMetricAlerts,
-	useGetMetricDashboards,
-} from 'api/generated/services/metrics';
 
 function DashboardsAndAlertsPopover({
 	metricName,

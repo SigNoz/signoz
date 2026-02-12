@@ -1,3 +1,4 @@
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 
 import { TreemapViewType } from './types';
@@ -25,12 +26,28 @@ export const METRIC_TYPE_LABEL_MAP = {
 	[MetricType.EXPONENTIAL_HISTOGRAM]: 'Exp. Histogram',
 };
 
+export const METRIC_TYPE_VIEW_LABEL_MAP = {
+	[MetrictypesTypeDTO.sum]: 'Sum',
+	[MetrictypesTypeDTO.gauge]: 'Gauge',
+	[MetrictypesTypeDTO.histogram]: 'Histogram',
+	[MetrictypesTypeDTO.summary]: 'Summary',
+	[MetrictypesTypeDTO.exponentialhistogram]: 'Exp. Histogram',
+};
+
 export const METRIC_TYPE_VALUES_MAP = {
 	[MetricType.SUM]: 'Sum',
 	[MetricType.GAUGE]: 'Gauge',
 	[MetricType.HISTOGRAM]: 'Histogram',
 	[MetricType.SUMMARY]: 'Summary',
 	[MetricType.EXPONENTIAL_HISTOGRAM]: 'ExponentialHistogram',
+};
+
+export const METRIC_TYPE_VIEW_VALUES_MAP = {
+	[MetrictypesTypeDTO.sum]: 'Sum',
+	[MetrictypesTypeDTO.gauge]: 'Gauge',
+	[MetrictypesTypeDTO.histogram]: 'Histogram',
+	[MetrictypesTypeDTO.summary]: 'Summary',
+	[MetrictypesTypeDTO.exponentialhistogram]: 'ExponentialHistogram',
 };
 
 export const IS_METRIC_DETAILS_OPEN_KEY = 'isMetricDetailsOpen';

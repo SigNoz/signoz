@@ -1,12 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { AxiosResponse } from 'axios';
 import {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
 } from 'components/YAxisUnitSelector/types';
-import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import * as useNotificationsHooks from 'hooks/useNotifications';
 import { userEvent } from 'tests/test-utils';
 import { SelectOption } from 'types/common/select';
@@ -15,8 +17,6 @@ import Metadata from '../Metadata';
 import { MetricMetadata } from '../types';
 import { transformMetricMetadata } from '../utils';
 import { getMockMetricMetadataData } from './testUtlls';
-import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosResponse } from 'axios';
 
 // Mock antd select for testing
 jest.mock('antd', () => ({
@@ -120,7 +120,7 @@ describe('Metadata', () => {
 		);
 
 		expect(screen.getByText('Metric Type')).toBeInTheDocument();
-		expect(screen.getByText(mockMetricMetadata.metricType)).toBeInTheDocument();
+		expect(screen.getByText(mockMetricMetadata.type)).toBeInTheDocument();
 		expect(screen.getByText('Description')).toBeInTheDocument();
 		expect(screen.getByText(mockMetricMetadata.description)).toBeInTheDocument();
 		expect(screen.getByText('Unit')).toBeInTheDocument();

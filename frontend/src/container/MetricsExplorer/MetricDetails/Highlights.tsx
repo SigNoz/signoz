@@ -1,5 +1,6 @@
-import { Skeleton, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
+import { Skeleton, Tooltip, Typography } from 'antd';
+import { useGetMetricHighlights } from 'api/generated/services/metrics';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { HighlightsProps } from './types';
@@ -7,7 +8,6 @@ import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
 } from './utils';
-import { useGetMetricHighlights } from 'api/generated/services/metrics';
 
 function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const {
