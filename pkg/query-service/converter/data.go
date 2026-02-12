@@ -94,6 +94,12 @@ func FromDataUnit(u Unit) float64 {
 		return Pebibyte
 	case "decPbytes", "decpbytes", "PBy": // base 10
 		return Petabyte
+	case "EBy": // base 10
+		return Exabyte
+	case "ZBy": // base 10
+		return Zettabyte
+	case "YBy": // base 10
+		return Yottabyte
 	case "Kibit": // base 2
 		return Kibibit
 	case "Mibit": // base 2
@@ -104,6 +110,12 @@ func FromDataUnit(u Unit) float64 {
 		return Tebibit
 	case "Pibit": // base 2
 		return Pebibit
+	case "EiBy": // base 2
+		return Exbibyte
+	case "ZiBy": // base 2
+		return Zebibyte
+	case "YiBy": // base 2
+		return Yobibyte
 	case "kbit": // base 10
 		return Kilobit
 	case "Mbit": // base 10
@@ -114,6 +126,12 @@ func FromDataUnit(u Unit) float64 {
 		return Terabit
 	case "Pbit": // base 10
 		return Petabit
+	case "Ebit": // base 10
+		return Exabit
+	case "Zbit": // base 10
+		return Zettabit
+	case "Ybit": // base 10
+		return Yottabit
 	default:
 		return 1
 	}

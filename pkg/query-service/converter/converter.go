@@ -45,9 +45,9 @@ func FromUnit(u Unit) Converter {
 	switch u {
 	case "ns", "us", "µs", "ms", "s", "m", "h", "d", "min", "w", "wk":
 		return DurationConverter
-	case "bytes", "decbytes", "bits", "bit", "decbits", "kbytes", "decKbytes", "deckbytes", "mbytes", "decMbytes", "decmbytes", "gbytes", "decGbytes", "decgbytes", "tbytes", "decTbytes", "dectbytes", "pbytes", "decPbytes", "decpbytes", "By", "kBy", "MBy", "GBy", "TBy", "PBy", "KiBy", "MiBy", "GiBy", "TiBy", "PiBy", "kbit", "Mbit", "Gbit", "Tbit", "Pbit", "Kibit", "Mibit", "Gibit", "Tibit", "Pibit":
+	case "bytes", "decbytes", "bits", "bit", "decbits", "kbytes", "decKbytes", "deckbytes", "mbytes", "decMbytes", "decmbytes", "gbytes", "decGbytes", "decgbytes", "tbytes", "decTbytes", "dectbytes", "pbytes", "decPbytes", "decpbytes", "By", "kBy", "MBy", "GBy", "TBy", "PBy", "EBy", "ZBy", "YBy", "KiBy", "MiBy", "GiBy", "TiBy", "PiBy", "EiBy", "ZiBy", "YiBy", "kbit", "Mbit", "Gbit", "Tbit", "Pbit", "Ebit", "Zbit", "Ybit", "Kibit", "Mibit", "Gibit", "Tibit", "Pibit":
 		return DataConverter
-	case "binBps", "Bps", "binbps", "bps", "KiBs", "Kibits", "KBs", "Kbits", "MiBs", "Mibits", "MBs", "Mbits", "GiBs", "Gibits", "GBs", "Gbits", "TiBs", "Tibits", "TBs", "Tbits", "PiBs", "Pibits", "PBs", "Pbits", "By/s", "kBy/s", "MBy/s", "GBy/s", "TBy/s", "PBy/s", "bit/s", "kbit/s", "Mbit/s", "Gbit/s", "Tbit/s", "Pbit/s", "KiBy/s", "MiBy/s", "GiBy/s", "TiBy/s", "PiBy/s", "Kibit/s", "Mibit/s", "Gibit/s", "Tibit/s", "Pibit/s":
+	case "binBps", "Bps", "binbps", "bps", "KiBs", "Kibits", "KBs", "Kbits", "MiBs", "Mibits", "MBs", "Mbits", "GiBs", "Gibits", "GBs", "Gbits", "TiBs", "Tibits", "TBs", "Tbits", "PiBs", "Pibits", "PBs", "Pbits", "By/s", "kBy/s", "MBy/s", "GBy/s", "TBy/s", "PBy/s", "EBy/s", "ZBy/s", "YBy/s", "bit/s", "kbit/s", "Mbit/s", "Gbit/s", "Tbit/s", "Pbit/s", "Ebit/s", "Zbit/s", "Ybit/s", "KiBy/s", "MiBy/s", "GiBy/s", "TiBy/s", "PiBy/s", "EiBy/s", "ZiBy/s", "YiBy/s", "Kibit/s", "Mibit/s", "Gibit/s", "Tibit/s", "Pibit/s", "Eibit/s", "Zibit/s", "Yibit/s":
 		return DataRateConverter
 	case "percent", "percentunit", "%":
 		return PercentConverter

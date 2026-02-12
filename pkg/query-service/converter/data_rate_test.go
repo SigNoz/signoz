@@ -114,6 +114,38 @@ func TestDataRateConversionUCUMUnit(t *testing.T) {
 		// Unit alias
 		{name: "Unit alias: 1 KiBs = 1 KiBy/s", input: Value{F: 1, U: "KiBs"}, toUnit: "KiBy/s", expected: Value{F: 1, U: "KiBy/s"}},
 		{name: "Unit alias: 1 Kibits = 1 Kibit/s", input: Value{F: 1, U: "Kibits"}, toUnit: "Kibit/s", expected: Value{F: 1, U: "Kibit/s"}},
+		// SI byte scaling (Exa, Zetta, Yotta)
+		{name: "SI byte scaling: 1000 PBy/s = 1 EBy/s", input: Value{F: 1000, U: "PBy/s"}, toUnit: "EBy/s", expected: Value{F: 1, U: "EBy/s"}},
+		{name: "Exabyte to bytes: 1 EBy/s = 1e18 By/s", input: Value{F: 1, U: "EBy/s"}, toUnit: "By/s", expected: Value{F: 1e18, U: "By/s"}},
+		{name: "SI byte scaling: 1000 EBy/s = 1 ZBy/s", input: Value{F: 1000, U: "EBy/s"}, toUnit: "ZBy/s", expected: Value{F: 1, U: "ZBy/s"}},
+		{name: "Zettabyte to petabytes: 1 ZBy/s = 1000000 PBy/s", input: Value{F: 1, U: "ZBy/s"}, toUnit: "PBy/s", expected: Value{F: 1e6, U: "PBy/s"}},
+		{name: "SI byte scaling: 1000 ZBy/s = 1 YBy/s", input: Value{F: 1000, U: "ZBy/s"}, toUnit: "YBy/s", expected: Value{F: 1, U: "YBy/s"}},
+		{name: "Yottabyte to zettabyte: 1 YBy/s = 1000 ZBy/s", input: Value{F: 1, U: "YBy/s"}, toUnit: "ZBy/s", expected: Value{F: 1000, U: "ZBy/s"}},
+		// Binary byte scaling (Exbi, Zebi, Yobi)
+		{name: "Binary byte scaling: 1024 PiBy/s = 1 EiBy/s", input: Value{F: 1024, U: "PiBy/s"}, toUnit: "EiBy/s", expected: Value{F: 1, U: "EiBy/s"}},
+		{name: "Exbibyte to tebibytes: 1 EiBy/s = 1048576 TiBy/s", input: Value{F: 1, U: "EiBy/s"}, toUnit: "TiBy/s", expected: Value{F: 1024 * 1024, U: "TiBy/s"}},
+		{name: "Binary byte scaling: 1024 EiBy/s = 1 ZiBy/s", input: Value{F: 1024, U: "EiBy/s"}, toUnit: "ZiBy/s", expected: Value{F: 1, U: "ZiBy/s"}},
+		{name: "Zebibyte to exbibyte: 1 ZiBy/s = 1024 EiBy/s", input: Value{F: 1, U: "ZiBy/s"}, toUnit: "EiBy/s", expected: Value{F: 1024, U: "EiBy/s"}},
+		{name: "Binary byte scaling: 1024 ZiBy/s = 1 YiBy/s", input: Value{F: 1024, U: "ZiBy/s"}, toUnit: "YiBy/s", expected: Value{F: 1, U: "YiBy/s"}},
+		{name: "Yobibyte to zebibyte: 1 YiBy/s = 1024 ZiBy/s", input: Value{F: 1, U: "YiBy/s"}, toUnit: "ZiBy/s", expected: Value{F: 1024, U: "ZiBy/s"}},
+		// SI bit scaling (Exa, Zetta, Yotta)
+		{name: "SI bit scaling: 1000 Pbit/s = 1 Ebit/s", input: Value{F: 1000, U: "Pbit/s"}, toUnit: "Ebit/s", expected: Value{F: 1, U: "Ebit/s"}},
+		{name: "Exabit to gigabits: 1 Ebit/s = 1e9 Gbit/s", input: Value{F: 1, U: "Ebit/s"}, toUnit: "Gbit/s", expected: Value{F: 1e9, U: "Gbit/s"}},
+		{name: "SI bit scaling: 1000 Ebit/s = 1 Zbit/s", input: Value{F: 1000, U: "Ebit/s"}, toUnit: "Zbit/s", expected: Value{F: 1, U: "Zbit/s"}},
+		{name: "Zettabit to exabit: 1 Zbit/s = 1000 Ebit/s", input: Value{F: 1, U: "Zbit/s"}, toUnit: "Ebit/s", expected: Value{F: 1000, U: "Ebit/s"}},
+		{name: "SI bit scaling: 1000 Zbit/s = 1 Ybit/s", input: Value{F: 1000, U: "Zbit/s"}, toUnit: "Ybit/s", expected: Value{F: 1, U: "Ybit/s"}},
+		{name: "Yottabit to zettabit: 1 Ybit/s = 1000 Zbit/s", input: Value{F: 1, U: "Ybit/s"}, toUnit: "Zbit/s", expected: Value{F: 1000, U: "Zbit/s"}},
+		// Binary bit scaling (Exbi, Zebi, Yobi)
+		{name: "Binary bit scaling: 1024 Pibit/s = 1 Eibit/s", input: Value{F: 1024, U: "Pibit/s"}, toUnit: "Eibit/s", expected: Value{F: 1, U: "Eibit/s"}},
+		{name: "Exbibit to pebibit: 1 Eibit/s = 1024 Pibit/s", input: Value{F: 1, U: "Eibit/s"}, toUnit: "Pibit/s", expected: Value{F: 1024, U: "Pibit/s"}},
+		{name: "Binary bit scaling: 1024 Eibit/s = 1 Zibit/s", input: Value{F: 1024, U: "Eibit/s"}, toUnit: "Zibit/s", expected: Value{F: 1, U: "Zibit/s"}},
+		{name: "Zebibit to exbibit: 1 Zibit/s = 1024 Eibit/s", input: Value{F: 1, U: "Zibit/s"}, toUnit: "Eibit/s", expected: Value{F: 1024, U: "Eibit/s"}},
+		{name: "Binary bit scaling: 1024 Zibit/s = 1 Yibit/s", input: Value{F: 1024, U: "Zibit/s"}, toUnit: "Yibit/s", expected: Value{F: 1, U: "Yibit/s"}},
+		{name: "Yobibit to zebibit: 1 Yibit/s = 1024 Zibit/s", input: Value{F: 1, U: "Yibit/s"}, toUnit: "Zibit/s", expected: Value{F: 1024, U: "Zibit/s"}},
+		// Bytes to bits (Exbi, Zebi, Yobi)
+		{name: "Bytes to bits: 1 EiBy/s = 8 Eibit/s", input: Value{F: 1, U: "EiBy/s"}, toUnit: "Eibit/s", expected: Value{F: 8, U: "Eibit/s"}},
+		{name: "Bytes to bits: 1 ZiBy/s = 8 Zibit/s", input: Value{F: 1, U: "ZiBy/s"}, toUnit: "Zibit/s", expected: Value{F: 8, U: "Zibit/s"}},
+		{name: "Bytes to bits: 1 YiBy/s = 8 Yibit/s", input: Value{F: 1, U: "YiBy/s"}, toUnit: "Yibit/s", expected: Value{F: 8, U: "Yibit/s"}},
 	}
 
 	for _, tt := range tests {

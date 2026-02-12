@@ -102,6 +102,27 @@ func TestDataConversionUCUMUnit(t *testing.T) {
 		{name: "Bytes to bits: 1 KiBy = 8 Kibit", input: Value{F: 1, U: "KiBy"}, toUnit: "Kibit", expected: Value{F: 8, U: "Kibit"}},
 		{name: "Bytes to bits: 1 MiBy = 8 Mibit", input: Value{F: 1, U: "MiBy"}, toUnit: "Mibit", expected: Value{F: 8, U: "Mibit"}},
 		{name: "Bytes to bits: 1 GiBy = 8 Gibit", input: Value{F: 1, U: "GiBy"}, toUnit: "Gibit", expected: Value{F: 8, U: "Gibit"}},
+		// SI byte scaling (Exa, Zetta, Yotta)
+		{name: "SI byte scaling: 1000 PBy = 1 EBy", input: Value{F: 1000, U: "PBy"}, toUnit: "EBy", expected: Value{F: 1, U: "EBy"}},
+		{name: "Exabyte to bytes: 1 EBy = 1e18 By", input: Value{F: 1, U: "EBy"}, toUnit: "By", expected: Value{F: 1e18, U: "By"}},
+		{name: "SI byte scaling: 1000 EBy = 1 ZBy", input: Value{F: 1000, U: "EBy"}, toUnit: "ZBy", expected: Value{F: 1, U: "ZBy"}},
+		{name: "Zettabyte to petabytes: 1 ZBy = 1000000 PBy", input: Value{F: 1, U: "ZBy"}, toUnit: "PBy", expected: Value{F: 1e6, U: "PBy"}},
+		{name: "SI byte scaling: 1000 ZBy = 1 YBy", input: Value{F: 1000, U: "ZBy"}, toUnit: "YBy", expected: Value{F: 1, U: "YBy"}},
+		{name: "Yottabyte to zettabyte: 1 YBy = 1000 ZBy", input: Value{F: 1, U: "YBy"}, toUnit: "ZBy", expected: Value{F: 1000, U: "ZBy"}},
+		// Binary byte scaling (Exbi, Zebi, Yobi)
+		{name: "Binary byte scaling: 1024 PiBy = 1 EiBy", input: Value{F: 1024, U: "PiBy"}, toUnit: "EiBy", expected: Value{F: 1, U: "EiBy"}},
+		{name: "Exbibyte to tebibytes: 1 EiBy = 1048576 TiBy", input: Value{F: 1, U: "EiBy"}, toUnit: "TiBy", expected: Value{F: 1024 * 1024, U: "TiBy"}},
+		{name: "Binary byte scaling: 1024 EiBy = 1 ZiBy", input: Value{F: 1024, U: "EiBy"}, toUnit: "ZiBy", expected: Value{F: 1, U: "ZiBy"}},
+		{name: "Zebibyte to exbibyte: 1 ZiBy = 1024 EiBy", input: Value{F: 1, U: "ZiBy"}, toUnit: "EiBy", expected: Value{F: 1024, U: "EiBy"}},
+		{name: "Binary byte scaling: 1024 ZiBy = 1 YiBy", input: Value{F: 1024, U: "ZiBy"}, toUnit: "YiBy", expected: Value{F: 1, U: "YiBy"}},
+		{name: "Yobibyte to zebibyte: 1 YiBy = 1024 ZiBy", input: Value{F: 1, U: "YiBy"}, toUnit: "ZiBy", expected: Value{F: 1024, U: "ZiBy"}},
+		// SI bit scaling (Exa, Zetta, Yotta)
+		{name: "SI bit scaling: 1000 Pbit = 1 Ebit", input: Value{F: 1000, U: "Pbit"}, toUnit: "Ebit", expected: Value{F: 1, U: "Ebit"}},
+		{name: "Exabit to gigabits: 1 Ebit = 1e9 Gbit", input: Value{F: 1, U: "Ebit"}, toUnit: "Gbit", expected: Value{F: 1e9, U: "Gbit"}},
+		{name: "SI bit scaling: 1000 Ebit = 1 Zbit", input: Value{F: 1000, U: "Ebit"}, toUnit: "Zbit", expected: Value{F: 1, U: "Zbit"}},
+		{name: "Zettabit to exabit: 1 Zbit = 1000 Ebit", input: Value{F: 1, U: "Zbit"}, toUnit: "Ebit", expected: Value{F: 1000, U: "Ebit"}},
+		{name: "SI bit scaling: 1000 Zbit = 1 Ybit", input: Value{F: 1000, U: "Zbit"}, toUnit: "Ybit", expected: Value{F: 1, U: "Ybit"}},
+		{name: "Yottabit to zettabit: 1 Ybit = 1000 Zbit", input: Value{F: 1, U: "Ybit"}, toUnit: "Zbit", expected: Value{F: 1000, U: "Zbit"}},
 	}
 
 	for _, tt := range tests {

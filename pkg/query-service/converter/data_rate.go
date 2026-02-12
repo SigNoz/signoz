@@ -111,6 +111,30 @@ func FromDataRateUnit(u Unit) float64 {
 		return PetabytePerSecond
 	case "Pbits", "Pbit/s": // petabits/sec
 		return PetabitPerSecond
+	case "EBy/s": // exabytes/sec
+		return ExabytePerSecond
+	case "Ebit/s": // exabits/sec
+		return ExabitPerSecond
+	case "EiBy/s": // exbibytes/sec
+		return ExbibytePerSecond
+	case "Eibit/s": // exbibits/sec
+		return ExbibitPerSecond
+	case "ZBy/s": // zettabytes/sec
+		return ZettabytePerSecond
+	case "Zbit/s": // zettabits/sec
+		return ZettabitPerSecond
+	case "ZiBy/s": // zebibytes/sec
+		return ZebibytePerSecond
+	case "Zibit/s": // zebibits/sec
+		return ZebibitPerSecond
+	case "YBy/s": // yottabytes/sec
+		return YottabytePerSecond
+	case "Ybit/s": // yottabits/sec
+		return YottabitPerSecond
+	case "YiBy/s": // yobibytes/sec
+		return YobibytePerSecond
+	case "Yibit/s": // yobibits/sec
+		return YobibitPerSecond
 	default:
 		return 1
 	}
