@@ -1,7 +1,7 @@
 import * as reactUseHooks from 'react-use';
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
 import { userEvent } from 'tests/test-utils';
 
@@ -23,7 +23,7 @@ jest
 	});
 
 const mockMetricName = 'test-metric';
-const mockMetricType = MetricType.GAUGE;
+const mockMetricType = MetrictypesTypeDTO.gauge;
 
 const mockUseCopyToClipboard = jest.fn();
 jest
