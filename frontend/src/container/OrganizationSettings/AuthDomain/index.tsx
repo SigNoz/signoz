@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { Alert, Button, Table, Typography } from 'antd';
+import { Button } from '@signozhq/button';
+import { Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -12,6 +13,7 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { useNotifications } from 'hooks/useNotifications';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -122,31 +124,37 @@ function AuthDomain(): JSX.Element {
 		);
 	};
 
+	const formattedError = useMemo(() => {
+		if (!errorFetchingAuthDomainListResponse) {
+			return null;
+		}
+
+		try {
+			ErrorResponseHandlerV2(
+				errorFetchingAuthDomainListResponse as AxiosError<ErrorV2Resp>,
+			);
+		} catch (error) {
+			return error as APIError;
+		}
+	}, [errorFetchingAuthDomainListResponse]);
+
 	return (
 		<div className="auth-domain">
 			<section className="auth-domain-header">
 				<Typography.Title level={3}>Authenticated Domains</Typography.Title>
 				<Button
-					type="primary"
-					icon={<PlusOutlined />}
+					prefixIcon={<PlusOutlined />}
 					onClick={(): void => {
 						setAddDomain(true);
 					}}
-					className="button"
+					variant="solid"
+					size="sm"
+					color="primary"
 				>
 					Add Domain
 				</Button>
 			</section>
-			{errorFetchingAuthDomainListResponse && (
-				<Alert
-					type="error"
-					message="Failed to load domains"
-					description={
-						(errorFetchingAuthDomainListResponse as AxiosError<RenderErrorResponseDTO>)
-							?.response?.data?.error?.message || 'An unexpected error occurred'
-					}
-				/>
-			)}
+			{formattedError && <ErrorContent error={formattedError} />}
 			{!errorFetchingAuthDomainListResponse && (
 				<Table
 					columns={columns}
