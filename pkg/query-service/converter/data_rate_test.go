@@ -75,3 +75,51 @@ func TestDataRate(t *testing.T) {
 	// 1024 * 1024 * 1024 bytes = 1 gbytes
 	assert.Equal(t, Value{F: 1, U: "GiBs"}, dataRateConverter.Convert(Value{F: 1024 * 1024 * 1024, U: "binBps"}, "GiBs"))
 }
+
+func TestDataRateConversionUCUMUnit(t *testing.T) {
+	dataRateConverter := NewDataRateConverter()
+
+	tests := []struct {
+		name     string
+		input    Value
+		toUnit   Unit
+		expected Value
+	}{
+		// Binary byte scaling
+		{name: "Binary byte scaling: 1024 By/s = 1 KiBy/s", input: Value{F: 1024, U: "By/s"}, toUnit: "KiBy/s", expected: Value{F: 1, U: "KiBy/s"}},
+		{name: "Kibibyte to bytes: 1 KiBy/s = 1024 By/s", input: Value{F: 1, U: "KiBy/s"}, toUnit: "By/s", expected: Value{F: 1024, U: "By/s"}},
+		{name: "Binary byte scaling: 1024 KiBy/s = 1 MiBy/s", input: Value{F: 1024, U: "KiBy/s"}, toUnit: "MiBy/s", expected: Value{F: 1, U: "MiBy/s"}},
+		{name: "Gibibyte to bytes: 1 GiBy/s = 1073741824 By/s", input: Value{F: 1, U: "GiBy/s"}, toUnit: "By/s", expected: Value{F: 1024 * 1024 * 1024, U: "By/s"}},
+		{name: "Binary byte scaling: 1024 MiBy/s = 1 GiBy/s", input: Value{F: 1024, U: "MiBy/s"}, toUnit: "GiBy/s", expected: Value{F: 1, U: "GiBy/s"}},
+		{name: "Gibibyte to mebibyte: 1 GiBy/s = 1024 MiBy/s", input: Value{F: 1, U: "GiBy/s"}, toUnit: "MiBy/s", expected: Value{F: 1024, U: "MiBy/s"}},
+		{name: "Binary byte scaling: 1024 GiBy/s = 1 TiBy/s", input: Value{F: 1024, U: "GiBy/s"}, toUnit: "TiBy/s", expected: Value{F: 1, U: "TiBy/s"}},
+		{name: "Tebibyte to bytes: 1 TiBy/s = 1099511627776 By/s", input: Value{F: 1, U: "TiBy/s"}, toUnit: "By/s", expected: Value{F: 1024 * 1024 * 1024 * 1024, U: "By/s"}},
+		{name: "Binary byte scaling: 1024 TiBy/s = 1 PiBy/s", input: Value{F: 1024, U: "TiBy/s"}, toUnit: "PiBy/s", expected: Value{F: 1, U: "PiBy/s"}},
+		{name: "Pebibyte to tebibyte: 1 PiBy/s = 1024 TiBy/s", input: Value{F: 1, U: "PiBy/s"}, toUnit: "TiBy/s", expected: Value{F: 1024, U: "TiBy/s"}},
+		// Binary bit scaling
+		{name: "Binary bit scaling: 1024 bit/s = 1 Kibit/s", input: Value{F: 1024, U: "bit/s"}, toUnit: "Kibit/s", expected: Value{F: 1, U: "Kibit/s"}},
+		{name: "Kibibit to bits: 1 Kibit/s = 1024 bit/s", input: Value{F: 1, U: "Kibit/s"}, toUnit: "bit/s", expected: Value{F: 1024, U: "bit/s"}},
+		{name: "Binary bit scaling: 1024 Kibit/s = 1 Mibit/s", input: Value{F: 1024, U: "Kibit/s"}, toUnit: "Mibit/s", expected: Value{F: 1, U: "Mibit/s"}},
+		{name: "Gibibit to bits: 1 Gibit/s = 1073741824 bit/s", input: Value{F: 1, U: "Gibit/s"}, toUnit: "bit/s", expected: Value{F: 1024 * 1024 * 1024, U: "bit/s"}},
+		{name: "Binary bit scaling: 1024 Mibit/s = 1 Gibit/s", input: Value{F: 1024, U: "Mibit/s"}, toUnit: "Gibit/s", expected: Value{F: 1, U: "Gibit/s"}},
+		{name: "Gibibit to mebibit: 1 Gibit/s = 1024 Mibit/s", input: Value{F: 1, U: "Gibit/s"}, toUnit: "Mibit/s", expected: Value{F: 1024, U: "Mibit/s"}},
+		{name: "Binary bit scaling: 1024 Gibit/s = 1 Tibit/s", input: Value{F: 1024, U: "Gibit/s"}, toUnit: "Tibit/s", expected: Value{F: 1, U: "Tibit/s"}},
+		{name: "Tebibit to gibibit: 1 Tibit/s = 1024 Gibit/s", input: Value{F: 1, U: "Tibit/s"}, toUnit: "Gibit/s", expected: Value{F: 1024, U: "Gibit/s"}},
+		{name: "Binary bit scaling: 1024 Tibit/s = 1 Pibit/s", input: Value{F: 1024, U: "Tibit/s"}, toUnit: "Pibit/s", expected: Value{F: 1, U: "Pibit/s"}},
+		{name: "Pebibit to tebibit: 1 Pibit/s = 1024 Tibit/s", input: Value{F: 1, U: "Pibit/s"}, toUnit: "Tibit/s", expected: Value{F: 1024, U: "Tibit/s"}},
+		// Bytes to bits
+		{name: "Bytes to bits: 1 KiBy/s = 8 Kibit/s", input: Value{F: 1, U: "KiBy/s"}, toUnit: "Kibit/s", expected: Value{F: 8, U: "Kibit/s"}},
+		{name: "Bytes to bits: 1 MiBy/s = 8 Mibit/s", input: Value{F: 1, U: "MiBy/s"}, toUnit: "Mibit/s", expected: Value{F: 8, U: "Mibit/s"}},
+		{name: "Bytes to bits: 1 GiBy/s = 8 Gibit/s", input: Value{F: 1, U: "GiBy/s"}, toUnit: "Gibit/s", expected: Value{F: 8, U: "Gibit/s"}},
+		// Unit alias
+		{name: "Unit alias: 1 KiBs = 1 KiBy/s", input: Value{F: 1, U: "KiBs"}, toUnit: "KiBy/s", expected: Value{F: 1, U: "KiBy/s"}},
+		{name: "Unit alias: 1 Kibits = 1 Kibit/s", input: Value{F: 1, U: "Kibits"}, toUnit: "Kibit/s", expected: Value{F: 1, U: "Kibit/s"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := dataRateConverter.Convert(tt.input, tt.toUnit)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
