@@ -24,23 +24,7 @@ type (
 	AWSServicesProvider struct {
 		definitions map[string]*integrationstypes.AWSServiceDefinition
 	}
-	AzureServicesProvider struct {
-		definitions map[string]*integrationstypes.AzureServiceDefinition
-	}
 )
-
-func (a *AzureServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AzureServiceDefinition, error) {
-	return a.definitions, nil
-}
-
-func (a *AzureServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationstypes.AzureServiceDefinition, error) {
-	def, ok := a.definitions[serviceName]
-	if !ok {
-		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "azure service definition not found: %s", serviceName)
-	}
-
-	return def, nil
-}
 
 func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AWSServiceDefinition, error) {
 	return a.definitions, nil
@@ -74,28 +58,6 @@ func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
 		definitions: serviceDefinitions,
 	}, nil
 }
-
-func NewAzureCloudProviderServices() (*AzureServicesProvider, error) {
-	definitions, err := readAllServiceDefinitions(integrationstypes.CloudProviderAzure)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceDefinitions := make(map[string]*integrationstypes.AzureServiceDefinition)
-	for id, def := range definitions {
-		typedDef, ok := def.(*integrationstypes.AzureServiceDefinition)
-		if !ok {
-			return nil, fmt.Errorf("invalid type for Azure service definition %s", id)
-		}
-		serviceDefinitions[id] = typedDef
-	}
-
-	return &AzureServicesProvider{
-		definitions: serviceDefinitions,
-	}, nil
-}
-
-// End of API. Logic for reading service definition files follows
 
 //go:embed definitions/*
 var definitionFiles embed.FS
@@ -170,8 +132,6 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (inte
 	switch cloudProvider {
 	case integrationstypes.CloudProviderAWS:
 		serviceDef = &integrationstypes.AWSServiceDefinition{}
-	case integrationstypes.CloudProviderAzure:
-		serviceDef = &integrationstypes.AzureServiceDefinition{}
 	default:
 		// ideally this shouldn't happen hence throwing internal error
 		return nil, errors.NewInternalf(errors.CodeInternal, "unsupported cloud provider: %s", cloudProvider)
