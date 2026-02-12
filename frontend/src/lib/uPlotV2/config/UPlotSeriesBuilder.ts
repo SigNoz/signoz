@@ -17,7 +17,33 @@ import {
  * Builder for uPlot series configuration
  * Handles creation of series settings
  */
+
+/**
+ * Path builders are static and shared across all instances of UPlotSeriesBuilder
+ */
+let builders: PathBuilders | null = null;
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
+	constructor(props: SeriesProps) {
+		super(props);
+		const pathBuilders = uPlot.paths;
+
+		if (!builders) {
+			const linearBuilder = pathBuilders.linear;
+			const splineBuilder = pathBuilders.spline;
+			const steppedBuilder = pathBuilders.stepped;
+
+			if (!linearBuilder || !splineBuilder || !steppedBuilder) {
+				throw new Error('Required uPlot path builders are not available');
+			}
+			builders = {
+				linear: linearBuilder(),
+				spline: splineBuilder(),
+				stepBefore: steppedBuilder({ align: -1 }),
+				stepAfter: steppedBuilder({ align: 1 }),
+			};
+		}
+	}
+
 	private buildLineConfig({
 		lineColor,
 	}: {
@@ -174,8 +200,6 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
-let builders: PathBuilders | null = null;
-
 /**
  * Get path builder based on draw style and interpolation
  */
@@ -195,20 +219,7 @@ function getPathBuilder({
 	const pathBuilders = uPlot.paths;
 
 	if (!builders) {
-		const linearBuilder = pathBuilders.linear;
-		const splineBuilder = pathBuilders.spline;
-		const steppedBuilder = pathBuilders.stepped;
-
-		if (!linearBuilder || !splineBuilder || !steppedBuilder) {
-			throw new Error('Required uPlot path builders are not available');
-		}
-
-		builders = {
-			linear: linearBuilder(),
-			spline: splineBuilder(),
-			stepBefore: steppedBuilder({ align: -1 }),
-			stepAfter: steppedBuilder({ align: 1 }),
-		};
+		throw new Error('Required uPlot path builders are not available');
 	}
 
 	if (drawStyle === DrawStyle.Bar) {
