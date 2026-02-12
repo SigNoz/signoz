@@ -17,7 +17,6 @@ describe('legendVisibilityUtils', () => {
 
 	afterEach(() => {
 		jest.restoreAllMocks();
-		localStorage.clear();
 	});
 
 	describe('getStoredSeriesVisibility', () => {

@@ -1,26 +1,26 @@
-import React, { useEffect } from 'react';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 describe('useLegendsSync', () => {
-	let requestAnimationFrameSpy: jest.Mock<
+	let requestAnimationFrameSpy: jest.SpyInstance<
 		number,
 		[callback: FrameRequestCallback]
 	>;
-	let cancelAnimationFrameSpy: jest.Mock<void, [handle: number]>;
+	let cancelAnimationFrameSpy: jest.SpyInstance<void, [handle: number]>;
 
 	beforeAll(() => {
-		requestAnimationFrameSpy = jest.fn((cb: FrameRequestCallback): number => {
-			cb(0);
-			return 1;
-		});
+		requestAnimationFrameSpy = jest
+			.spyOn(global, 'requestAnimationFrame')
+			.mockImplementation((cb: FrameRequestCallback): number => {
+				cb(0);
+				return 1;
+			});
 
-		cancelAnimationFrameSpy = jest.fn();
-
-		(global as any).requestAnimationFrame = requestAnimationFrameSpy;
-		(global as any).cancelAnimationFrame = cancelAnimationFrameSpy;
+		cancelAnimationFrameSpy = jest
+			.spyOn(global, 'cancelAnimationFrame')
+			.mockImplementation(() => {});
 	});
 
 	afterEach(() => {
@@ -29,11 +29,8 @@ describe('useLegendsSync', () => {
 	});
 
 	afterAll(() => {
-		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
-
-	type HookResult = ReturnType<typeof useLegendsSync>;
-	let latestHookValue: HookResult;
 
 	const createMockConfig = (
 		legendItems: Record<number, LegendItem>,
@@ -83,23 +80,6 @@ describe('useLegendsSync', () => {
 		return { config, invokeSetSeries };
 	};
 
-	const TestComponent = ({
-		config,
-		subscribeToFocusChange,
-	}: {
-		config: UPlotConfigBuilder;
-		subscribeToFocusChange?: boolean;
-	}): JSX.Element => {
-		const value = useLegendsSync({ config, subscribeToFocusChange });
-		latestHookValue = value;
-
-		useEffect(() => {
-			latestHookValue = value;
-		}, [value]);
-
-		return React.createElement('div', { 'data-testid': 'hook-container' });
-	};
-
 	it('initializes legend items from config', () => {
 		const initialItems: Record<number, LegendItem> = {
 			1: { seriesIndex: 1, label: 'CPU', show: true, color: '#f00' },
@@ -108,11 +88,7 @@ describe('useLegendsSync', () => {
 
 		const { config } = createMockConfig(initialItems);
 
-		render(
-			React.createElement(TestComponent, {
-				config,
-			}),
-		);
+		const { result } = renderHook(() => useLegendsSync({ config }));
 
 		expect(config.getLegendItems).toHaveBeenCalledTimes(1);
 		expect(config.addHook).toHaveBeenCalledWith(
@@ -120,7 +96,7 @@ describe('useLegendsSync', () => {
 			expect.any(Function),
 		);
 
-		expect(latestHookValue.legendItemsMap).toEqual(initialItems);
+		expect(result.current.legendItemsMap).toEqual(initialItems);
 	});
 
 	it('updates focusedSeriesIndex when a series gains focus via setSeries by default', async () => {
@@ -130,19 +106,15 @@ describe('useLegendsSync', () => {
 
 		const { config, invokeSetSeries } = createMockConfig(initialItems);
 
-		render(
-			React.createElement(TestComponent, {
-				config,
-			}),
-		);
+		const { result } = renderHook(() => useLegendsSync({ config }));
 
-		expect(latestHookValue.focusedSeriesIndex).toBeNull();
+		expect(result.current.focusedSeriesIndex).toBeNull();
 
 		await act(async () => {
 			invokeSetSeries(1, { focus: true });
 		});
 
-		expect(latestHookValue.focusedSeriesIndex).toBe(1);
+		expect(result.current.focusedSeriesIndex).toBe(1);
 	});
 
 	it('does not update focusedSeriesIndex when subscribeToFocusChange is false', () => {
@@ -152,16 +124,13 @@ describe('useLegendsSync', () => {
 
 		const { config, invokeSetSeries } = createMockConfig(initialItems);
 
-		render(
-			React.createElement(TestComponent, {
-				config,
-				subscribeToFocusChange: false,
-			}),
+		const { result } = renderHook(() =>
+			useLegendsSync({ config, subscribeToFocusChange: false }),
 		);
 
 		invokeSetSeries(1, { focus: true });
 
-		expect(latestHookValue.focusedSeriesIndex).toBeNull();
+		expect(result.current.focusedSeriesIndex).toBeNull();
 	});
 
 	it('updates legendItemsMap visibility when show changes for a series', async () => {
@@ -172,18 +141,14 @@ describe('useLegendsSync', () => {
 
 		const { config, invokeSetSeries } = createMockConfig(initialItems);
 
-		render(
-			React.createElement(TestComponent, {
-				config,
-			}),
-		);
+		const { result } = renderHook(() => useLegendsSync({ config }));
 
 		// Toggle visibility of series 1
 		await act(async () => {
 			invokeSetSeries(1, { show: false });
 		});
 
-		expect(latestHookValue.legendItemsMap[1].show).toBe(false);
+		expect(result.current.legendItemsMap[1].show).toBe(false);
 	});
 
 	it('ignores visibility updates for unknown legend items or unchanged show values', () => {
@@ -193,21 +158,17 @@ describe('useLegendsSync', () => {
 
 		const { config, invokeSetSeries } = createMockConfig(initialItems);
 
-		render(
-			React.createElement(TestComponent, {
-				config,
-			}),
-		);
+		const { result } = renderHook(() => useLegendsSync({ config }));
 
-		const before = latestHookValue;
+		const before = result.current.legendItemsMap;
 
 		// Unknown series index
 		invokeSetSeries(5, { show: false });
 		// Unchanged visibility for existing item
 		invokeSetSeries(1, { show: true });
 
-		const after = latestHookValue;
-		expect(after.legendItemsMap).toEqual(before.legendItemsMap);
+		const after = result.current.legendItemsMap;
+		expect(after).toEqual(before);
 	});
 
 	it('cancels pending visibility RAF on unmount', () => {
@@ -220,11 +181,7 @@ describe('useLegendsSync', () => {
 		// Override RAF to not immediately invoke callback so we can assert cancellation
 		requestAnimationFrameSpy.mockImplementationOnce(() => 42);
 
-		const { unmount } = render(
-			React.createElement(TestComponent, {
-				config,
-			}),
-		);
+		const { unmount } = renderHook(() => useLegendsSync({ config }));
 
 		invokeSetSeries(1, { show: false });
 

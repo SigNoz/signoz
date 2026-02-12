@@ -99,13 +99,19 @@ describe('Legend', () => {
 		);
 
 	describe('layout and position', () => {
-		it('renders search input when position is RIGHT', () => {
+		it('renders search input when legend position is RIGHT', () => {
 			renderLegend(LegendPosition.RIGHT);
 
 			expect(screen.getByTestId('legend-search-input')).toBeInTheDocument();
 		});
 
-		it('renders the marker with the correct color', () => {
+		it('does not render search input when legend position is BOTTOM (default)', () => {
+			renderLegend();
+
+			expect(screen.queryByTestId('legend-search-input')).not.toBeInTheDocument();
+		});
+
+		it('renders the marker with the correct border color', () => {
 			renderLegend(LegendPosition.RIGHT);
 
 			const legendMarker = document.querySelector(
@@ -115,12 +121,6 @@ describe('Legend', () => {
 			expect(legendMarker).toHaveStyle({
 				'border-color': '#ff0000',
 			});
-		});
-
-		it('does not render search input when position is BOTTOM (default)', () => {
-			renderLegend();
-
-			expect(screen.queryByTestId('legend-search-input')).not.toBeInTheDocument();
 		});
 
 		it('renders all legend items in the grid by default', () => {
