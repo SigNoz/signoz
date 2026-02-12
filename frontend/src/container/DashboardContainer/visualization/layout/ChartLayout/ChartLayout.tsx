@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 import { calculateChartDimensions } from 'container/DashboardContainer/visualization/charts/utils';
+import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/Legend';
 import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 
 import './ChartLayout.styles.scss';
 
 export interface ChartLayoutProps {
+	showLegend?: boolean;
 	legendComponent: (legendPerSet: number) => React.ReactNode;
 	children: (props: {
 		chartWidth: number;
@@ -20,6 +22,7 @@ export interface ChartLayoutProps {
 	config: UPlotConfigBuilder;
 }
 export default function ChartLayout({
+	showLegend = true,
 	legendComponent,
 	children,
 	layoutChildren,
@@ -30,6 +33,15 @@ export default function ChartLayout({
 }: ChartLayoutProps): JSX.Element {
 	const chartDimensions = useMemo(
 		() => {
+			if (!showLegend) {
+				return {
+					width: containerWidth,
+					height: containerHeight,
+					legendWidth: 0,
+					legendHeight: 0,
+					averageLegendWidth: MAX_LEGEND_WIDTH,
+				};
+			}
 			const legendItemsMap = config.getLegendItems();
 			const seriesLabels = Object.values(legendItemsMap)
 				.map((item) => item.label)
@@ -42,7 +54,7 @@ export default function ChartLayout({
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[containerWidth, containerHeight, legendConfig],
+		[containerWidth, containerHeight, legendConfig, showLegend],
 	);
 
 	return (
@@ -60,15 +72,17 @@ export default function ChartLayout({
 						averageLegendWidth: chartDimensions.averageLegendWidth,
 					})}
 				</div>
-				<div
-					className="chart-layout__legend-wrapper"
-					style={{
-						height: chartDimensions.legendHeight,
-						width: chartDimensions.legendWidth,
-					}}
-				>
-					{legendComponent(chartDimensions.averageLegendWidth)}
-				</div>
+				{showLegend && (
+					<div
+						className="chart-layout__legend-wrapper"
+						style={{
+							height: chartDimensions.legendHeight,
+							width: chartDimensions.legendWidth,
+						}}
+					>
+						{legendComponent(chartDimensions.averageLegendWidth)}
+					</div>
+				)}
 			</div>
 			{layoutChildren}
 		</div>

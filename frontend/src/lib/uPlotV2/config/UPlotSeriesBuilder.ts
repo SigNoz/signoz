@@ -39,6 +39,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 
 		if (this.props.panelType === PANEL_TYPES.BAR) {
 			lineConfig.fill = lineColor;
+		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
+			lineConfig.fill = `${lineColor}40`;
 		}
 
 		return lineConfig;

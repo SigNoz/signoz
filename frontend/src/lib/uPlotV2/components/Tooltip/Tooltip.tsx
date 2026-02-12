@@ -16,12 +16,16 @@ export default function Tooltip({
 	uPlotInstance,
 	timezone,
 	content,
+	showTooltipHeader = true,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const tooltipContent = content ?? [];
 
 	const headerTitle = useMemo(() => {
+		if (!showTooltipHeader) {
+			return null;
+		}
 		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
 		if (cursorIdx == null) {
@@ -30,7 +34,12 @@ export default function Tooltip({
 		return dayjs(data[0][cursorIdx] * 1000)
 			.tz(timezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
-	}, [timezone, uPlotInstance.data, uPlotInstance.cursor.idx]);
+	}, [
+		timezone,
+		uPlotInstance.data,
+		uPlotInstance.cursor.idx,
+		showTooltipHeader,
+	]);
 
 	return (
 		<div
@@ -39,9 +48,11 @@ export default function Tooltip({
 				isDarkMode ? 'darkMode' : 'lightMode',
 			)}
 		>
-			<div className="uplot-tooltip-header">
-				<span>{headerTitle}</span>
-			</div>
+			{showTooltipHeader && (
+				<div className="uplot-tooltip-header">
+					<span>{headerTitle}</span>
+				</div>
+			)}
 			<div
 				style={{
 					height: Math.min(
