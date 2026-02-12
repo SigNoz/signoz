@@ -49,7 +49,7 @@ func TestData(t *testing.T) {
 	assert.Equal(t, Value{F: 1, U: "PiBy"}, dataConverter.Convert(Value{F: 1024, U: "tbytes"}, "PiBy"))
 	// 1 pbytes = 1024 tbytes
 	assert.Equal(t, Value{F: 1024, U: "tbytes"}, dataConverter.Convert(Value{F: 1, U: "pbytes"}, "tbytes"))
-	// 1024 pbytes = 1 TiBy
+	// 1024 TiBy = 1 pbytes
 	assert.Equal(t, Value{F: 1024, U: "TiBy"}, dataConverter.Convert(Value{F: 1, U: "pbytes"}, "TiBy"))
 }
 
