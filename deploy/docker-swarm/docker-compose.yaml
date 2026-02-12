@@ -155,7 +155,6 @@ services:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
       - --copy-path=/var/tmp/collector-config.yaml
-      - --feature-gates=-pkg.translator.prometheus.NormalizeName
     configs:
       - source: otel-collector-config
         target: /etc/otel-collector-config.yaml
