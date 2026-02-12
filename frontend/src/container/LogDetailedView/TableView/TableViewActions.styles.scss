@@ -35,10 +35,10 @@
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
 		padding: 0px;
-		.group-by-clause {
+		.more-filter-actions {
 			display: flex;
 			align-items: center;
-			gap: 4px;
+			gap: 8px;
 			color: var(--bg-vanilla-400);
 			font-family: Inter;
 			font-size: 14px;
@@ -53,7 +53,7 @@
 			}
 		}
 
-		.group-by-clause:hover {
+		.more-filter-actions:hover {
 			background-color: unset !important;
 		}
 	}
@@ -65,7 +65,7 @@
 			border: 1px solid var(--bg-vanilla-400);
 			background: var(--bg-vanilla-100) !important;
 
-			.group-by-clause {
+			.more-filter-actions {
 				color: var(--bg-ink-400);
 			}
 		}
