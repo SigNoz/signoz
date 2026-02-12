@@ -81,7 +81,7 @@ function AttributeMappingSection({
 								</Tooltip>
 							</label>
 							<Form.Item
-								name={[...fieldNamePrefix, 'nameAttribute']}
+								name={[...fieldNamePrefix, 'name']}
 								className="attribute-mapping-section__form-item"
 							>
 								<Input id="name-attribute" placeholder="name" />
@@ -103,7 +103,7 @@ function AttributeMappingSection({
 								</Tooltip>
 							</label>
 							<Form.Item
-								name={[...fieldNamePrefix, 'groupsAttribute']}
+								name={[...fieldNamePrefix, 'groups']}
 								className="attribute-mapping-section__form-item"
 							>
 								<Input id="groups-attribute" placeholder="groups" />
@@ -125,7 +125,7 @@ function AttributeMappingSection({
 								</Tooltip>
 							</label>
 							<Form.Item
-								name={[...fieldNamePrefix, 'roleAttribute']}
+								name={[...fieldNamePrefix, 'role']}
 								className="attribute-mapping-section__form-item"
 							>
 								<Input id="role-attribute" placeholder="role" />

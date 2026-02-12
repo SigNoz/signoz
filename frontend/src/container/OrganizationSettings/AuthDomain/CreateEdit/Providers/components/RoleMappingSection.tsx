@@ -29,8 +29,8 @@ function RoleMappingSection({
 	onExpandChange,
 }: RoleMappingSectionProps): JSX.Element {
 	const form = Form.useFormInstance();
-	const useRoleAttributeDirectly = Form.useWatch(
-		[...fieldNamePrefix, 'useRoleAttributeDirectly'],
+	const useRoleAttribute = Form.useWatch(
+		[...fieldNamePrefix, 'useRoleAttribute'],
 		form,
 	);
 
@@ -105,21 +105,18 @@ function RoleMappingSection({
 							</Form.Item>
 						</div>
 
-						{/* Use Role Attribute Directly */}
+						{/* Use Role Attribute */}
 						<div className="role-mapping-section__checkbox-row">
 							<Form.Item
-								name={[...fieldNamePrefix, 'useRoleAttributeDirectly']}
+								name={[...fieldNamePrefix, 'useRoleAttribute']}
 								valuePropName="checked"
 								noStyle
 							>
 								<Checkbox
-									id="use-role-attribute-directly"
+									id="use-role-attribute"
 									labelName="Use Role Attribute Directly"
 									onCheckedChange={(checked: boolean): void => {
-										form.setFieldValue(
-											[...fieldNamePrefix, 'useRoleAttributeDirectly'],
-											checked,
-										);
+										form.setFieldValue([...fieldNamePrefix, 'useRoleAttribute'], checked);
 									}}
 								/>
 							</Form.Item>
@@ -128,8 +125,8 @@ function RoleMappingSection({
 							</Tooltip>
 						</div>
 
-						{/* Group to Role Mappings - only show when useRoleAttributeDirectly is false */}
-						{!useRoleAttributeDirectly && (
+						{/* Group to Role Mappings - only show when useRoleAttribute is false */}
+						{!useRoleAttribute && (
 							<div className="role-mapping-section__group-mappings">
 								<div className="role-mapping-section__group-header">
 									<span className="role-mapping-section__group-title">
@@ -141,7 +138,7 @@ function RoleMappingSection({
 									</p>
 								</div>
 
-								<Form.List name={[...fieldNamePrefix, 'groupMappings']}>
+								<Form.List name={[...fieldNamePrefix, 'groupMappingsList']}>
 									{(fields, { add, remove }): JSX.Element => (
 										<div className="role-mapping-section__items">
 											{fields.map((field) => (

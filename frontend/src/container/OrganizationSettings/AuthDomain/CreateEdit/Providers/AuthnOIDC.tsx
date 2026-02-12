@@ -62,7 +62,13 @@ function ConfigureOIDCAuthnProvider({
 								<CircleHelp size={14} className="google-auth__label-icon" />
 							</Tooltip>
 						</label>
-						<Form.Item name="name" className="google-auth__form-item">
+						<Form.Item
+							name="name"
+							className="google-auth__form-item"
+							rules={[
+								{ required: true, message: 'Domain is required', whitespace: true },
+							]}
+						>
 							<Input id="oidc-domain" disabled={!isCreate} />
 						</Form.Item>
 					</div>
@@ -80,6 +86,9 @@ function ConfigureOIDCAuthnProvider({
 						<Form.Item
 							name={['oidcConfig', 'issuer']}
 							className="google-auth__form-item"
+							rules={[
+								{ required: true, message: 'Issuer URL is required', whitespace: true },
+							]}
 						>
 							<Input id="oidc-issuer" />
 						</Form.Item>
@@ -116,6 +125,9 @@ function ConfigureOIDCAuthnProvider({
 						<Form.Item
 							name={['oidcConfig', 'clientId']}
 							className="google-auth__form-item"
+							rules={[
+								{ required: true, message: 'Client ID is required', whitespace: true },
+							]}
 						>
 							<Input id="oidc-client-id" />
 						</Form.Item>
@@ -134,6 +146,13 @@ function ConfigureOIDCAuthnProvider({
 						<Form.Item
 							name={['oidcConfig', 'clientSecret']}
 							className="google-auth__form-item"
+							rules={[
+								{
+									required: true,
+									message: 'Client Secret is required',
+									whitespace: true,
+								},
+							]}
 						>
 							<Input id="oidc-client-secret" />
 						</Form.Item>
@@ -198,7 +217,7 @@ function ConfigureOIDCAuthnProvider({
 					/>
 
 					<RoleMappingSection
-						fieldNamePrefix={['oidcConfig', 'roleMapping']}
+						fieldNamePrefix={['roleMapping']}
 						isExpanded={expandedSection === 'role-mapping'}
 						onExpandChange={handleRoleMappingChange}
 					/>

@@ -62,7 +62,13 @@ function ConfigureSAMLAuthnProvider({
 								<CircleHelp size={14} className="google-auth__label-icon" />
 							</Tooltip>
 						</label>
-						<Form.Item name="name" className="google-auth__form-item">
+						<Form.Item
+							name="name"
+							className="google-auth__form-item"
+							rules={[
+								{ required: true, message: 'Domain is required', whitespace: true },
+							]}
+						>
 							<Input id="saml-domain" disabled={!isCreate} />
 						</Form.Item>
 					</div>
@@ -80,6 +86,13 @@ function ConfigureSAMLAuthnProvider({
 						<Form.Item
 							name={['samlConfig', 'samlIdp']}
 							className="google-auth__form-item"
+							rules={[
+								{
+									required: true,
+									message: 'SAML ACS URL is required',
+									whitespace: true,
+								},
+							]}
 						>
 							<Input id="saml-acs-url" />
 						</Form.Item>
@@ -98,6 +111,13 @@ function ConfigureSAMLAuthnProvider({
 						<Form.Item
 							name={['samlConfig', 'samlEntity']}
 							className="google-auth__form-item"
+							rules={[
+								{
+									required: true,
+									message: 'SAML Entity ID is required',
+									whitespace: true,
+								},
+							]}
 						>
 							<Input id="saml-entity-id" />
 						</Form.Item>
@@ -116,6 +136,13 @@ function ConfigureSAMLAuthnProvider({
 						<Form.Item
 							name={['samlConfig', 'samlCert']}
 							className="google-auth__form-item"
+							rules={[
+								{
+									required: true,
+									message: 'SAML Certificate is required',
+									whitespace: true,
+								},
+							]}
 						>
 							<TextArea
 								id="saml-certificate"
@@ -166,7 +193,7 @@ function ConfigureSAMLAuthnProvider({
 					/>
 
 					<RoleMappingSection
-						fieldNamePrefix={['samlConfig', 'roleMapping']}
+						fieldNamePrefix={['roleMapping']}
 						isExpanded={expandedSection === 'role-mapping'}
 						onExpandChange={handleRoleMappingChange}
 					/>

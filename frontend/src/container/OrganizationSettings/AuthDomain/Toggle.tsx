@@ -1,45 +1,65 @@
 import { useState } from 'react';
 import { Switch } from 'antd';
-import put from 'api/v1/domains/id/put';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
+import {
+	AuthtypesGettableAuthDomainDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
-import { GettableAuthDomain } from 'types/api/v1/domains/list';
+
+interface ToggleProps {
+	isDefaultChecked: boolean;
+	record: AuthtypesGettableAuthDomainDTO;
+}
 
 function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState<boolean>(isDefaultChecked);
-	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { showErrorModal } = useErrorModal();
 
-	const onChangeHandler = async (checked: boolean): Promise<void> => {
-		setIsLoading(true);
+	const { mutate: updateAuthDomain, isLoading } = useUpdateAuthDomain<
+		AxiosError<RenderErrorResponseDTO>
+	>();
 
-		try {
-			await put({
-				id: record.id,
-				config: {
-					ssoEnabled: checked,
-					ssoType: record.ssoType,
-					googleAuthConfig: record.googleAuthConfig,
-					oidcConfig: record.oidcConfig,
-					samlConfig: record.samlConfig,
-				},
-			});
-			setIsChecked(checked);
-		} catch (error) {
-			showErrorModal(error as APIError);
+	const onChangeHandler = (checked: boolean): void => {
+		if (!record.id) {
+			return;
 		}
 
-		setIsLoading(false);
+		updateAuthDomain(
+			{
+				pathParams: { id: record.id },
+				data: {
+					config: {
+						ssoEnabled: checked,
+						ssoType: record.ssoType,
+						googleAuthConfig: record.googleAuthConfig,
+						oidcConfig: record.oidcConfig,
+						samlConfig: record.samlConfig,
+					},
+				},
+			},
+			{
+				onSuccess: () => {
+					setIsChecked(checked);
+				},
+				onError: (error) => {
+					try {
+						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+					} catch (apiError) {
+						showErrorModal(apiError as APIError);
+					}
+				},
+			},
+		);
 	};
 
 	return (
 		<Switch loading={isLoading} checked={isChecked} onChange={onChangeHandler} />
 	);
-}
-
-interface ToggleProps {
-	isDefaultChecked: boolean;
-	record: GettableAuthDomain;
 }
 
 export default Toggle;

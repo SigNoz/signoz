@@ -1,22 +1,36 @@
 import { useState } from 'react';
-import { useQuery } from 'react-query';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Table, Typography } from 'antd';
+import { Alert, Button, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteDomain from 'api/v1/domains/id/delete';
-import listAllDomain from 'api/v1/domains/list';
-import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import {
+	useDeleteAuthDomain,
+	useListAuthDomains,
+} from 'api/generated/services/authdomains';
+import {
+	AuthtypesGettableAuthDomainDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
+import { useNotifications } from 'hooks/useNotifications';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
-import { GettableAuthDomain, SSOType } from 'types/api/v1/domains/list';
 
 import CreateEdit from './CreateEdit/CreateEdit';
 import Toggle from './Toggle';
 
 import './AuthDomain.styles.scss';
 
-const columns: ColumnsType<GettableAuthDomain> = [
+export const SSOType = new Map<string, string>([
+	['google_auth', 'Google Auth'],
+	['saml', 'SAML'],
+	['email_password', 'Email Password'],
+	['oidc', 'OIDC'],
+]);
+
+const columns: ColumnsType<AuthtypesGettableAuthDomainDTO> = [
 	{
 		title: 'Domain',
 		dataIndex: 'name',
@@ -29,17 +43,18 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		dataIndex: 'ssoEnabled',
 		key: 'ssoEnabled',
 		width: 80,
-		render: (value: boolean, record: GettableAuthDomain): JSX.Element => (
-			<Toggle isDefaultChecked={value} record={record} />
-		),
+		render: (
+			value: boolean,
+			record: AuthtypesGettableAuthDomainDTO,
+		): JSX.Element => <Toggle isDefaultChecked={value} record={record} />,
 	},
 	{
 		title: 'IDP Initiated SSO URL',
 		dataIndex: 'relayState',
 		key: 'relayState',
 		width: 80,
-		render: (_, record: GettableAuthDomain): JSX.Element => {
-			const relayPath = record.authNProviderInfo.relayStatePath;
+		render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => {
+			const relayPath = record.authNProviderInfo?.relayStatePath;
 			if (!relayPath) {
 				return (
 					<Typography.Text style={{ paddingLeft: '6px' }}>N/A</Typography.Text>
@@ -55,10 +70,10 @@ const columns: ColumnsType<GettableAuthDomain> = [
 		dataIndex: 'action',
 		key: 'action',
 		width: 100,
-		render: (_, record: GettableAuthDomain): JSX.Element => (
+		render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 			<section className="auth-domain-list-column-action">
 				<Typography.Link data-column-action="configure">
-					Configure {SSOType.get(record.ssoType)}
+					Configure {SSOType.get(record.ssoType || '')}
 				</Typography.Link>
 				<Typography.Link type="danger" data-column-action="delete">
 					Delete
@@ -68,34 +83,44 @@ const columns: ColumnsType<GettableAuthDomain> = [
 	},
 ];
 
-async function deleteDomainById(
-	id: string,
-	showErrorModal: (error: APIError) => void,
-	refetchAuthDomainListResponse: () => void,
-): Promise<void> {
-	try {
-		await deleteDomain(id);
-		refetchAuthDomainListResponse();
-	} catch (error) {
-		showErrorModal(error as APIError);
-	}
-}
-
 function AuthDomain(): JSX.Element {
-	const [record, setRecord] = useState<GettableAuthDomain>();
+	const [record, setRecord] = useState<AuthtypesGettableAuthDomainDTO>();
 	const [addDomain, setAddDomain] = useState<boolean>(false);
+	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
+
 	const {
 		data: authDomainListResponse,
 		isLoading: isLoadingAuthDomainListResponse,
 		isFetching: isFetchingAuthDomainListResponse,
 		error: errorFetchingAuthDomainListResponse,
 		refetch: refetchAuthDomainListResponse,
-	} = useQuery({
-		queryFn: listAllDomain,
-		queryKey: ['/api/v1/domains', 'list'],
-		enabled: true,
-	});
+	} = useListAuthDomains();
+
+	const { mutate: deleteAuthDomain } = useDeleteAuthDomain<
+		AxiosError<RenderErrorResponseDTO>
+	>();
+
+	const handleDeleteDomain = (id: string): void => {
+		deleteAuthDomain(
+			{ pathParams: { id } },
+			{
+				onSuccess: () => {
+					notifications.success({
+						message: 'Domain deleted successfully',
+					});
+					refetchAuthDomainListResponse();
+				},
+				onError: (error) => {
+					try {
+						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+					} catch (apiError) {
+						showErrorModal(apiError as APIError);
+					}
+				},
+			},
+		);
+	};
 
 	return (
 		<div className="auth-domain">
@@ -112,14 +137,21 @@ function AuthDomain(): JSX.Element {
 					Add Domain
 				</Button>
 			</section>
-			{(errorFetchingAuthDomainListResponse as APIError) && (
-				<ErrorContent error={errorFetchingAuthDomainListResponse as APIError} />
+			{errorFetchingAuthDomainListResponse && (
+				<Alert
+					type="error"
+					message="Failed to load domains"
+					description={
+						(errorFetchingAuthDomainListResponse as AxiosError<RenderErrorResponseDTO>)
+							?.response?.data?.error?.message || 'An unexpected error occurred'
+					}
+				/>
 			)}
-			{!(errorFetchingAuthDomainListResponse as APIError) && (
+			{!errorFetchingAuthDomainListResponse && (
 				<Table
 					columns={columns}
-					dataSource={authDomainListResponse?.data}
-					onRow={(record): any => ({
+					dataSource={authDomainListResponse?.data?.data}
+					onRow={(tableRecord): any => ({
 						onClick: (
 							event: React.SyntheticEvent<HTMLLinkElement, MouseEvent>,
 						): void => {
@@ -127,15 +159,12 @@ function AuthDomain(): JSX.Element {
 							const { columnAction } = target.dataset;
 							switch (columnAction) {
 								case 'configure':
-									setRecord(record);
-
+									setRecord(tableRecord);
 									break;
 								case 'delete':
-									deleteDomainById(
-										record.id,
-										showErrorModal,
-										refetchAuthDomainListResponse,
-									);
+									if (tableRecord.id) {
+										handleDeleteDomain(tableRecord.id);
+									}
 									break;
 								default:
 									console.error('Unknown action:', columnAction);
