@@ -172,43 +172,48 @@ function ExplorerOptions({
 	const { user } = useAppContext();
 
 	const handleConditionalQueryModification = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(defaultQuery: Query | null): string => {
+			const queryToUse = defaultQuery || query;
+			if (!queryToUse) {
+				throw new Error('No query provided');
+			}
+			if (
+				queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
+					StringOperators.NOOP &&
+				sourcepage !== DataSource.LOGS
+			) {
+				return JSON.stringify(queryToUse);
+			}
+
+			// Convert NOOP to COUNT for alerts and strip orderBy for logs
+			const modifiedQuery = cloneDeep(queryToUse);
+			if (modifiedQuery && modifiedQuery.builder?.queryData) {
+				modifiedQuery.builder.queryData = modifiedQuery.builder.queryData.map(
+					(item) => {
+						const updatedItem = { ...item };
+
+						if (updatedItem.aggregateOperator === StringOperators.NOOP) {
+							updatedItem.aggregateOperator = StringOperators.COUNT;
+						}
+
+						// Alerts do not support order by on logs explorer queries
+						if (sourcepage === DataSource.LOGS && panelType === PANEL_TYPES.LIST) {
+							updatedItem.orderBy = [];
+						}
+
+						return updatedItem;
+					},
+				);
+			}
+
 			try {
-				const queryToUse = defaultQuery || query;
-				const modifiedQuery = cloneDeep(queryToUse);
-
-				// Return early only for non-LOGS queries with aggregation
-				if (
-					queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
-						StringOperators.NOOP &&
-					sourcepage !== DataSource.LOGS
-				) {
-					return JSON.stringify(queryToUse);
-				}
-
-				// Convert NOOP to COUNT for alerts and strip orderBy for logs
-				if (modifiedQuery && modifiedQuery.builder?.queryData) {
-					modifiedQuery.builder.queryData = modifiedQuery.builder.queryData.map(
-						(item) => {
-							const updatedItem = { ...item };
-
-							if (updatedItem.aggregateOperator === StringOperators.NOOP) {
-								updatedItem.aggregateOperator = StringOperators.COUNT;
-							}
-
-							// Alerts do not support order by on logs explorer queries
-							if (sourcepage === DataSource.LOGS && panelType === PANEL_TYPES.LIST) {
-								updatedItem.orderBy = [];
-							}
-
-							return updatedItem;
-						},
-					);
-				}
-
 				return JSON.stringify(modifiedQuery);
-			} catch (error) {
-				return JSON.stringify(defaultQuery || query);
+			} catch (err) {
+				throw new Error(
+					'Failed to stringify modified query: ' +
+						(err instanceof Error ? err.message : String(err)),
+				);
 			}
 		},
 		[panelType, query, sourcepage],
