@@ -83,7 +83,7 @@ export const prepareUPlotConfig = ({
 			drawStyle: DrawStyle.Line,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: false,
+			spanGaps: true,
 			lineStyle: LineStyle.Solid,
 			lineInterpolation: LineInterpolation.Spline,
 			showPoints: VisibilityMode.Never,
