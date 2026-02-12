@@ -2,7 +2,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 
 import {
 	determineIsMonotonic,
@@ -140,7 +139,7 @@ describe('MetricDetails utils', () => {
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.SUM,
+				MetrictypesTypeDTO.sum,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('rate');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('rate');
@@ -157,7 +156,7 @@ describe('MetricDetails utils', () => {
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.GAUGE,
+				MetrictypesTypeDTO.gauge,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('avg');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('avg');
@@ -174,7 +173,7 @@ describe('MetricDetails utils', () => {
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.SUMMARY,
+				MetrictypesTypeDTO.summary,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');
@@ -191,7 +190,7 @@ describe('MetricDetails utils', () => {
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.HISTOGRAM,
+				MetrictypesTypeDTO.histogram,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');
@@ -208,7 +207,7 @@ describe('MetricDetails utils', () => {
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.EXPONENTIAL_HISTOGRAM,
+				MetrictypesTypeDTO.exponentialhistogram,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');

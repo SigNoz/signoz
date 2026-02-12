@@ -5,8 +5,9 @@ import {
 	GetMetricDashboards200,
 	GetMetricHighlights200,
 	GetMetricMetadata200,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Temporality } from 'types/common/queryBuilder';
 
 export function getMockMetricHighlightsData(
 	overrides?: Partial<GetMetricHighlights200>,
@@ -159,9 +160,9 @@ export function getMockMetricMetadataData(
 			data: {
 				data: {
 					description: 'test_description',
-					type: 'gauge',
+					type: MetrictypesTypeDTO.gauge,
 					unit: 'test_unit',
-					temporality: Temporality.Delta,
+					temporality: MetrictypesTemporalityDTO.delta,
 					isMonotonic: false,
 				},
 				status: 'success',
