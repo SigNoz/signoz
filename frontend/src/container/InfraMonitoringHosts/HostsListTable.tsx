@@ -178,7 +178,9 @@ export default function HostsListTable({
 				indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 			}}
 			tableLayout="fixed"
-			rowKey={(record): string => record.hostName}
+			rowKey={(record): string =>
+				(record as HostRowData & { key: string }).key ?? record.hostName
+			}
 			onChange={handleTableChange}
 			onRow={(record): { onClick: () => void; className: string } => ({
 				onClick: (): void => handleRowClick(record),
