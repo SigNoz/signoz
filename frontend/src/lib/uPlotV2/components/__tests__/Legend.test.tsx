@@ -29,7 +29,7 @@ jest.mock('react-virtuoso', () => ({
 }));
 
 jest.mock('lib/uPlotV2/hooks/useLegendsSync');
-jest.mock('../Legend/useLegendActions');
+jest.mock('lib/uPlotV2/hooks/useLegendActions');
 
 const mockUseLegendsSync = useLegendsSync as jest.MockedFunction<
 	typeof useLegendsSync
