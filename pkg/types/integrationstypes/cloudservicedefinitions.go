@@ -169,8 +169,6 @@ type AWSCollectionStrategy struct {
 }
 
 type AzureCollectionStrategy struct {
-	Provider valuer.String `json:"provider"`
-
 	AzureMetrics []*AzureMetricsStrategy `json:"azure_metrics"`
 	AzureLogs    []*AzureLogsStrategy    `json:"azure_logs"`
 }

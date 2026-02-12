@@ -132,11 +132,7 @@ func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationstypes
 func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integrationstypes.CloudIntegration) (*integrationstypes.AzureAgentIntegrationConfig, error) {
 	// prepare and return integration config to be consumed by agent
 	agentConfig := &integrationstypes.AzureAgentIntegrationConfig{
-		TelemetryCollectionStrategy: &integrationstypes.AzureCollectionStrategy{
-			Provider:     a.GetName(),
-			AzureMetrics: make([]*integrationstypes.AzureMetricsStrategy, 0),
-			AzureLogs:    make([]*integrationstypes.AzureLogsStrategy, 0),
-		},
+		TelemetryCollectionStrategy: make(map[string]*integrationstypes.AzureCollectionStrategy),
 	}
 
 	accountConfig := new(integrationstypes.AzureAccountConfig)
@@ -209,10 +205,14 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 				}
 			}
 		}
-	}
 
-	agentConfig.TelemetryCollectionStrategy.AzureMetrics = metrics
-	agentConfig.TelemetryCollectionStrategy.AzureLogs = logs
+		strategy := integrationstypes.AzureCollectionStrategy{}
+
+		strategy.AzureMetrics = metrics
+		strategy.AzureLogs = logs
+
+		agentConfig.TelemetryCollectionStrategy[svcType] = &strategy
+	}
 
 	return agentConfig, nil
 }
@@ -280,7 +280,6 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 	}
 
 	details.AzureServiceDefinition = *azureDefinition
-	details.Strategy.Provider = a.GetName()
 	if req.CloudAccountID == nil {
 		return details, nil
 	}

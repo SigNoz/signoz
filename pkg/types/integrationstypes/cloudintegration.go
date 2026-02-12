@@ -199,9 +199,10 @@ type AWSAgentIntegrationConfig struct {
 }
 
 type AzureAgentIntegrationConfig struct {
-	DeploymentRegion            string                   `json:"deployment_region"` // will not be changed once set
-	EnabledResourceGroups       []string                 `json:"resource_groups"`
-	TelemetryCollectionStrategy *AzureCollectionStrategy `json:"telemetry,omitempty"`
+	DeploymentRegion      string   `json:"deployment_region"` // will not be changed once set
+	EnabledResourceGroups []string `json:"resource_groups"`
+	// TelemetryCollectionStrategy is map of service to telemetry config
+	TelemetryCollectionStrategy map[string]*AzureCollectionStrategy `json:"telemetry,omitempty"`
 }
 
 type GettableAzureAgentCheckIn struct {
