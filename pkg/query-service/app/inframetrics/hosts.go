@@ -76,6 +76,7 @@ var (
 		GetDotMetrics("system_cpu_time"),
 		GetDotMetrics("system_memory_usage"),
 		GetDotMetrics("system_cpu_load_average_15m"),
+		GetDotMetrics("system_filesystem_usage"),
 	}
 )
 

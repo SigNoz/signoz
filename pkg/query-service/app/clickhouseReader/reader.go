@@ -3551,7 +3551,7 @@ func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context,
 		  AND attr_name = @attrName
 		  AND last_reported_unix_milli >= @sinceUnixMilli`,
 		signozMetricDBName,
-		constants.SIGNOZ_METRICS_METADATA,
+		constants.SIGNOZ_METRICS_METADATA_TABLENAME,
 	)
 
 	rows, err := r.db.Query(ctx, query,
