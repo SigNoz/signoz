@@ -7,6 +7,24 @@
     "metrics": true,
     "logs": false
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "key": "aws_DynamoDB_AccountMaxReads_max",
+            "attributes": []
+          },
+          {
+            "key": "aws_DynamoDB_AccountProvisionedReadCapacityUtilization_max",
+            "attributes": []
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics": [
       {

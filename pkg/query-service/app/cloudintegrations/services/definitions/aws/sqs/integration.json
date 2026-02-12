@@ -7,6 +7,24 @@
     "metrics": true,
     "logs": false
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "key": "aws_SQS_SentMessageSize_max",
+            "attributes": []
+          },
+          {
+            "key": "aws_SQS_NumberOfMessagesSent_sum",
+            "attributes": []
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics": [
       {
