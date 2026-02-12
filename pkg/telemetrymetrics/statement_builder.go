@@ -534,6 +534,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	}
 }
 
+// because RateInterpolation is not enabled anywhere due to some gaps in the logic wrt cache handling, it hasn't been considered for the multi temporality
 func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 	_ context.Context,
 	start, end uint64,
