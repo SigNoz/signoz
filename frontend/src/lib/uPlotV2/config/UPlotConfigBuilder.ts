@@ -1,3 +1,4 @@
+import { SeriesVisibilityState } from 'container/DashboardContainer/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
@@ -237,7 +238,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	/**
 	 * Returns stored series visibility by index from localStorage when preferences source is LOCAL_STORAGE, otherwise null.
 	 */
-	private getStoredVisibility(): boolean[] | null {
+	private getStoredVisibility(): SeriesVisibilityState | null {
 		if (
 			this.widgetId &&
 			this.selectionPreferencesSource === SelectionPreferencesSource.LOCAL_STORAGE
@@ -251,8 +252,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const visibility = this.getStoredVisibility();
-		const isAnySeriesHidden = !!visibility?.some((show) => !show);
+		const seriesVisibilityState = this.getStoredVisibility();
+		const isAnySeriesHidden = !!seriesVisibilityState?.visibility?.some(
+			(show) => !show,
+		);
 
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
@@ -262,7 +265,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			const show = resolveSeriesVisibility({
 				seriesIndex,
 				seriesShow: seriesConfig.show,
-				visibility,
+				seriesLabel: label,
+				seriesVisibilityState,
 				isAnySeriesHidden,
 			});
 
@@ -292,8 +296,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
-		const visibility = this.getStoredVisibility();
-		const isAnySeriesHidden = !!visibility?.some((show) => !show);
+		const seriesVisibilityState = this.getStoredVisibility();
+		const isAnySeriesHidden = !!seriesVisibilityState?.visibility?.some(
+			(show) => !show,
+		);
 
 		config.series = [
 			{ value: (): string => '' }, // Base series for timestamp
@@ -303,7 +309,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 				const visible = resolveSeriesVisibility({
 					seriesIndex: index + 1,
 					seriesShow: series.show,
-					visibility,
+					seriesLabel: series.label ?? '',
+					seriesVisibilityState,
 					isAnySeriesHidden,
 				});
 				return {

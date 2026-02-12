@@ -1,6 +1,10 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import { GraphVisibilityState, SeriesVisibilityItem } from '../types';
+import {
+	GraphVisibilityState,
+	SeriesVisibilityItem,
+	SeriesVisibilityState,
+} from '../types';
 
 /**
  * Retrieves the stored series visibility for a specific widget from localStorage by index.
@@ -8,7 +12,9 @@ import { GraphVisibilityState, SeriesVisibilityItem } from '../types';
  * @param widgetId - The unique identifier of the widget
  * @returns visibility[i] = show state for series at index i, or null if not found
  */
-export function getStoredSeriesVisibility(widgetId: string): boolean[] | null {
+export function getStoredSeriesVisibility(
+	widgetId: string,
+): SeriesVisibilityState | null {
 	try {
 		const storedData = localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
 
@@ -23,7 +29,10 @@ export function getStoredSeriesVisibility(widgetId: string): boolean[] | null {
 			return null;
 		}
 
-		return widgetState.dataIndex.map((item) => item.show);
+		return {
+			lables: widgetState.dataIndex.map((item) => item.label),
+			visibility: widgetState.dataIndex.map((item) => item.show),
+		};
 	} catch (error) {
 		if (error instanceof SyntaxError) {
 			// If the stored data is malformed, remove it
