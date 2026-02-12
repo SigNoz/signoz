@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { Card, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { MetricsexplorertypesMetricMetadataDTOType } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -41,9 +41,9 @@ import {
  * Show the inspect button in  metrics explorer if the feature flag is enabled
  */
 export function isInspectEnabled(
-	metricType: MetricsexplorertypesMetricMetadataDTOType | undefined,
+	metricType: MetrictypesTypeDTO | undefined,
 ): boolean {
-	return metricType === MetricsexplorertypesMetricMetadataDTOType.gauge;
+	return metricType === MetrictypesTypeDTO.gauge;
 }
 
 export function getAllTimestampsOfMetrics(

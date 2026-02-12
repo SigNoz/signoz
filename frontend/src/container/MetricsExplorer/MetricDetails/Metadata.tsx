@@ -8,11 +8,11 @@ import {
 	useUpdateMetricMetadata,
 } from 'api/generated/services/metrics';
 import {
-	MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality,
-	MetricsexplorertypesUpdateMetricMetadataRequestDTOType,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -24,18 +24,15 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
+import { MetricTypeViewRenderer } from '../Summary/utils';
 import {
-	METRIC_TYPE_LABEL_MAP,
-	METRIC_TYPE_VALUES_MAP,
-} from '../Summary/constants';
-import { MetricTypeRenderer } from '../Summary/utils';
-import { METRIC_METADATA_KEYS } from './constants';
+	METRIC_METADATA_KEYS,
+	METRIC_METADATA_TEMPORALITY_OPTIONS,
+	METRIC_METADATA_TYPE_OPTIONS,
+	METRIC_METADATA_UPDATE_ERROR_MESSAGE,
+} from './constants';
 import { MetadataProps, MetricMetadataState, TableFields } from './types';
-import {
-	transformMetricType,
-	transformTemporality,
-	transformUpdateMetricMetadataRequest,
-} from './utils';
+import { transformUpdateMetricMetadataRequest } from './utils';
 
 function Metadata({
 	metricName,
@@ -45,11 +42,13 @@ function Metadata({
 }: MetadataProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
 
-	const [metricMetadata, setMetricMetadata] = useState<MetricMetadataState>({
-		type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType.sum,
+	const [
+		metricMetadataState,
+		setMetricMetadataState,
+	] = useState<MetricMetadataState>({
+		type: MetrictypesTypeDTO.sum,
 		description: '',
-		temporality:
-			MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality.unspecified,
+		temporality: MetrictypesTemporalityDTO.unspecified,
 		unit: '',
 	});
 	const { notifications } = useNotifications();
@@ -65,10 +64,10 @@ function Metadata({
 	// Initialize state from metadata api data
 	useEffect(() => {
 		if (metadata) {
-			setMetricMetadata({
-				type: transformMetricType(metadata.type),
+			setMetricMetadataState({
+				type: metadata.type,
 				description: metadata.description,
-				temporality: transformTemporality(metadata.temporality),
+				temporality: metadata.temporality,
 				unit: metadata.unit,
 			});
 		}
@@ -77,10 +76,7 @@ function Metadata({
 	const tableData = useMemo(
 		() =>
 			metadata
-				? Object.keys({
-						...metadata,
-						temporality: metadata?.temporality,
-				  })
+				? Object.keys(metadata)
 						// Filter out monotonic as user input is not required
 						.filter((key) => key !== TableFields.IS_MONOTONIC)
 						.map((key) => ({
@@ -101,7 +97,13 @@ function Metadata({
 				return <FieldRenderer field="-" />;
 			}
 			if (key === TableFields.TYPE) {
-				return <MetricTypeRenderer type={value as MetricType} />;
+				return <MetricTypeViewRenderer type={value as MetrictypesTypeDTO} />;
+			}
+			if (key === TableFields.Temporality) {
+				const temporality = METRIC_METADATA_TEMPORALITY_OPTIONS.find(
+					(option) => option.value === value,
+				);
+				return <FieldRenderer field={temporality?.label || '-'} />;
 			}
 			let fieldValue = value;
 			if (key === TableFields.UNIT) {
@@ -129,15 +131,12 @@ function Metadata({
 				return (
 					<Select
 						data-testid="metric-type-select"
-						options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
-							value: key,
-							label: METRIC_TYPE_LABEL_MAP[key as MetricType],
-						}))}
-						value={metricMetadata.type}
+						options={METRIC_METADATA_TYPE_OPTIONS}
+						value={metricMetadataState.type}
 						onChange={(value): void => {
-							setMetricMetadata((prev) => ({
+							setMetricMetadataState((prev) => ({
 								...prev,
-								metricType: value,
+								type: value,
 							}));
 						}}
 					/>
@@ -146,9 +145,9 @@ function Metadata({
 			if (field.key === TableFields.UNIT) {
 				return (
 					<YAxisUnitSelector
-						value={metricMetadata.unit}
+						value={metricMetadataState.unit}
 						onChange={(value): void => {
-							setMetricMetadata((prev) => ({ ...prev, unit: value }));
+							setMetricMetadataState((prev) => ({ ...prev, unit: value }));
 						}}
 						data-testid="unit-select"
 						source={YAxisSource.EXPLORER}
@@ -156,16 +155,17 @@ function Metadata({
 				);
 			}
 			if (field.key === TableFields.Temporality) {
+				const temporalityValue =
+					metricMetadataState.temporality === MetrictypesTemporalityDTO.unspecified
+						? undefined
+						: metricMetadataState.temporality;
 				return (
 					<Select
 						data-testid="temporality-select"
-						options={Object.values(Temporality).map((key) => ({
-							value: key,
-							label: key,
-						}))}
-						value={metricMetadata.temporality}
+						options={METRIC_METADATA_TEMPORALITY_OPTIONS}
+						value={temporalityValue}
 						onChange={(value): void => {
-							setMetricMetadata((prev) => ({
+							setMetricMetadataState((prev) => ({
 								...prev,
 								temporality: value,
 							}));
@@ -178,9 +178,9 @@ function Metadata({
 					<Input
 						data-testid="description-input"
 						name={field.key}
-						defaultValue={metricMetadata.description}
+						defaultValue={metricMetadataState.description}
 						onChange={(e): void => {
-							setMetricMetadata((prev) => ({
+							setMetricMetadataState((prev) => ({
 								...prev,
 								[field.key]: e.target.value,
 							}));
@@ -190,7 +190,7 @@ function Metadata({
 			}
 			return <FieldRenderer field="-" />;
 		},
-		[isEditing, metadata?.unit, metricMetadata, renderUneditableField],
+		[isEditing, metadata?.unit, metricMetadataState, renderUneditableField],
 	);
 
 	const columns: ColumnsType<DataType> = useMemo(
@@ -230,7 +230,7 @@ function Metadata({
 				pathParams: {
 					metricName: metricName ?? '',
 				},
-				data: transformUpdateMetricMetadataRequest(metricName, metricMetadata),
+				data: transformUpdateMetricMetadataRequest(metricName, metricMetadataState),
 			},
 			{
 				onSuccess: (response): void => {
@@ -252,22 +252,23 @@ function Metadata({
 						});
 					} else {
 						notifications.error({
-							message:
-								'Failed to update metadata, please try again. If the issue persists, please contact support.',
+							message: METRIC_METADATA_UPDATE_ERROR_MESSAGE,
 						});
 					}
 				},
-				onError: (): void =>
+				onError: (error): void => {
+					const errorMessage = (error as AxiosError<RenderErrorResponseDTO>).response
+						?.data.error?.message;
 					notifications.error({
-						message:
-							'Failed to update metadata, please try again. If the issue persists, please contact support.',
-					}),
+						message: errorMessage || METRIC_METADATA_UPDATE_ERROR_MESSAGE,
+					});
+				},
 			},
 		);
 	}, [
 		updateMetricMetadata,
 		metricName,
-		metricMetadata,
+		metricMetadataState,
 		notifications,
 		queryClient,
 	]);
@@ -276,10 +277,11 @@ function Metadata({
 		(e: React.MouseEvent<HTMLElement, MouseEvent>): void => {
 			e.stopPropagation();
 			if (metadata) {
-				setMetricMetadata({
-					type: transformMetricType(metadata.type),
+				setMetricMetadataState({
+					type: metadata.type,
 					description: metadata.description,
 					unit: metadata.unit,
+					temporality: metadata.temporality,
 				});
 			}
 			setIsEditing(false);
