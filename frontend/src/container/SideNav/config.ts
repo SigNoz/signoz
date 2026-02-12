@@ -32,6 +32,7 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.LIST_ALL_ALERT]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_LICENSES]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGIN]: [QueryParams.resourceAttributes],
+	[ROUTES.FORGOT_PASSWORD]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGS]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGS_BASE]: [QueryParams.resourceAttributes],
 	[ROUTES.MY_SETTINGS]: [QueryParams.resourceAttributes],
