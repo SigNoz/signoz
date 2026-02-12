@@ -6,10 +6,12 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import { useIsPanelWaitingOnVariable } from 'hooks/dashboard/useVariableFetchState';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
+import { getVariableReferencesInQuery } from 'lib/dashboardVariables/variableReference';
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
@@ -53,7 +55,6 @@ function GridCardGraph({
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
-	widgetsByDynamicVariableId,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -64,8 +65,8 @@ function GridCardGraph({
 		toScrollWidgetId,
 		setToScrollWidgetId,
 		setDashboardQueryRangeCalled,
-		variablesToGetUpdated,
 	} = useDashboard();
+
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -117,10 +118,25 @@ function GridCardGraph({
 
 	const updatedQuery = widget?.query;
 
+	const referencedVariableNames = useMemo(() => {
+		if (!variables || !updatedQuery) {
+			return [];
+		}
+		const allNames = Object.values(variables)
+			.map((v) => v.name)
+			.filter((name): name is string => !!name);
+		return getVariableReferencesInQuery(updatedQuery, allNames);
+	}, [updatedQuery, variables]);
+
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
+	const isPanelWaitingOnAnyVariable = useIsPanelWaitingOnVariable(
+		referencedVariableNames,
+	);
+
+	const queryEnabledCondition =
+		isVisible && !isEmptyWidget && isQueryEnabled && !isPanelWaitingOnAnyVariable;
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -177,27 +193,6 @@ function GridCardGraph({
 		[requestData.query],
 	);
 
-	// Bring back dependency on variable chaining for panels to refetch,
-	// but only for non-dynamic variables. We derive a stable token from
-	// the head of the variablesToGetUpdated queue when it's non-dynamic.
-	const nonDynamicVariableChainToken = useMemo(() => {
-		if (!variablesToGetUpdated || variablesToGetUpdated.length === 0) {
-			return undefined;
-		}
-		if (!variables) {
-			return undefined;
-		}
-		const headName = variablesToGetUpdated[0];
-		const variableObj = Object.values(variables).find(
-			(variable) => variable?.name === headName,
-		);
-		if (variableObj && variableObj.type !== 'DYNAMIC') {
-			return headName;
-		}
-		return undefined;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [variablesToGetUpdated, variables]);
-
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
@@ -224,11 +219,7 @@ function GridCardGraph({
 				requestData,
 				variables
 					? Object.entries(variables).reduce((acc, [id, variable]) => {
-							if (
-								variable.type !== 'DYNAMIC' ||
-								(widgetsByDynamicVariableId?.[variable.id] &&
-									widgetsByDynamicVariableId?.[variable.id].includes(widget.id))
-							) {
+							if (variable.name && referencedVariableNames.includes(variable.name)) {
 								return { ...acc, [id]: variable.selectedValue };
 							}
 							return acc;
@@ -237,9 +228,6 @@ function GridCardGraph({
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
 					: []),
-				// Include non-dynamic variable chaining token to drive refetches
-				// only when a non-dynamic variable is at the head of the queue
-				...(nonDynamicVariableChainToken ? [nonDynamicVariableChainToken] : []),
 			],
 			retry(failureCount, error): boolean {
 				if (
@@ -252,7 +240,8 @@ function GridCardGraph({
 				return failureCount < 2;
 			},
 			keepPreviousData: true,
-			enabled: queryEnabledCondition && !nonDynamicVariableChainToken,
+			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
 				const errorMessage =
@@ -318,7 +307,9 @@ function GridCardGraph({
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
-					isFetchingResponse={queryResponse.isFetching}
+					isFetchingResponse={
+						queryResponse.isFetching || isPanelWaitingOnAnyVariable
+					}
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
