@@ -11,9 +11,8 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
 logger = setup_logger(__name__)
 
-
-@pytest.fixture(name="create_test_account", scope="function")
-def create_test_account(
+@pytest.fixture(scope="function")
+def create_cloud_integration_account(
     request: pytest.FixtureRequest,
     signoz: types.SigNoz,
 ) -> Callable[[str, str], dict]:
