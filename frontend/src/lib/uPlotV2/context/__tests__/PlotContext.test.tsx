@@ -41,8 +41,13 @@ const TestComponent = ({
 	widgetId,
 	shouldSaveSelectionPreference,
 }: TestComponentProps): JSX.Element => {
-	const ctx = usePlotContext();
-
+	const {
+		setPlotContextInitialState,
+		syncSeriesVisibilityToLocalStorage,
+		onToggleSeriesVisibility,
+		onToggleSeriesOnOff,
+		onFocusSeries,
+	} = usePlotContext();
 	const handleInit = (): void => {
 		if (
 			!plot ||
@@ -52,7 +57,7 @@ const TestComponent = ({
 			return;
 		}
 
-		ctx.setPlotContextInitialState({
+		setPlotContextInitialState({
 			uPlotInstance: plot,
 			widgetId,
 			shouldSaveSelectionPreference,
@@ -67,35 +72,35 @@ const TestComponent = ({
 			<button
 				type="button"
 				data-testid="sync-visibility"
-				onClick={(): void => ctx.syncSeriesVisibilityToLocalStorage()}
+				onClick={(): void => syncSeriesVisibilityToLocalStorage()}
 			>
 				Sync visibility
 			</button>
 			<button
 				type="button"
 				data-testid="toggle-visibility"
-				onClick={(): void => ctx.onToggleSeriesVisibility(1)}
+				onClick={(): void => onToggleSeriesVisibility(1)}
 			>
 				Toggle visibility
 			</button>
 			<button
 				type="button"
 				data-testid="toggle-on-off-1"
-				onClick={(): void => ctx.onToggleSeriesOnOff(1)}
+				onClick={(): void => onToggleSeriesOnOff(1)}
 			>
 				Toggle on/off 1
 			</button>
 			<button
 				type="button"
 				data-testid="toggle-on-off-5"
-				onClick={(): void => ctx.onToggleSeriesOnOff(5)}
+				onClick={(): void => onToggleSeriesOnOff(5)}
 			>
 				Toggle on/off 5
 			</button>
 			<button
 				type="button"
 				data-testid="focus-series"
-				onClick={(): void => ctx.onFocusSeries(1)}
+				onClick={(): void => onFocusSeries(1)}
 			>
 				Focus series
 			</button>
