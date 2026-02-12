@@ -52,7 +52,7 @@ def build_builder_query(
     time_aggregation: str,
     space_aggregation: str,
     *,
-    temporality: str = "cumulative",
+    temporality: Optional[str] = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     group_by: Optional[List[str]] = None,
     filter_expression: Optional[str] = None,
@@ -65,7 +65,6 @@ def build_builder_query(
         "aggregations": [
             {
                 "metricName": metric_name,
-                "temporality": temporality,
                 "timeAggregation": time_aggregation,
                 "spaceAggregation": space_aggregation,
             }
@@ -73,6 +72,8 @@ def build_builder_query(
         "stepInterval": step_interval,
         "disabled": disabled,
     }
+    if temporality:
+        spec["aggregations"][0]["temporality"] = temporality
 
     if group_by:
         spec["groupBy"] = [

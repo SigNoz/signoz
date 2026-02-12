@@ -208,7 +208,16 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				event.GroupByApplied = len(spec.GroupBy) > 0
 
 				if spec.Source == telemetrytypes.SourceMeter {
-					spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
+					if spec.StepInterval.Seconds() == 0 {
+						spec.StepInterval = qbtypes.Step{Duration: time.Second * time.Duration(querybuilder.RecommendedStepIntervalForMeter(req.Start, req.End))}
+					}
+
+					if spec.StepInterval.Seconds() < float64(querybuilder.MinAllowedStepIntervalForMeter(req.Start, req.End)) {
+						newStep := qbtypes.Step{
+							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMeter(req.Start, req.End)),
+						}
+						spec.StepInterval = newStep
+					}
 				} else {
 					if spec.StepInterval.Seconds() == 0 {
 						spec.StepInterval = qbtypes.Step{
@@ -269,7 +278,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	var metricTemporality map[string]metrictypes.Temporality
 	if len(metricNames) > 0 {
 		var err error
-		metricTemporality, err = q.metadataStore.FetchTemporalityMulti(ctx, metricNames...)
+		metricTemporality, err = q.metadataStore.FetchTemporalityMulti(ctx, req.Start, req.End, metricNames...)
 		if err != nil {
 			q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
 			// Continue without temporality - statement builder will handle unspecified
