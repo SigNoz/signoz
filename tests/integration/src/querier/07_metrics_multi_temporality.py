@@ -253,7 +253,7 @@ def test_group_by_endpoint(
     ), f"Expected >= 8 increment {time_aggregation} values ({spike_users_value}) for /users, got {count_increment_rate}"
 
 @pytest.mark.parametrize(
-    "time_aggregation, expected_value_at_30th_minute, expected_value_at_31st_minute, steady_value",
+    "time_aggregation, expected_value_at_30th_minute, expected_value_at_31st_minute, value_at_switch",
     [
         ("rate", 0.183, 0.183, 0.25),
         ("increase", 11, 12, 15),
@@ -267,7 +267,7 @@ def test_for_service_with_switch(
     time_aggregation: str,
     expected_value_at_30th_minute: float,
     expected_value_at_31st_minute: float,
-    steady_value: float
+    value_at_switch: float
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -303,7 +303,10 @@ def test_for_service_with_switch(
         result_values[31]["value"] == expected_value_at_31st_minute # 0.183
     )
     assert (
-        result_values[39]["value"] == steady_value # 0.25
+        result_values[38]["value"] == value_at_switch # 0.25
+    ) 
+    assert (
+        result_values[39]["value"] == value_at_switch # 0.25
     ) # 39th minute is when cumulative shifts to delta
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
@@ -374,7 +377,7 @@ def test_for_month_long_time_range(
 
     metrics = Metrics.load_from_file(
         MULTI_TEMPORALITY_FILE_24h,
-        base_time=now - timedelta(minutes=600),
+        base_time=now - timedelta(minutes=1441),
         metric_name_override=metric_name,
     )
     insert_metrics(metrics)
