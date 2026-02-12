@@ -1,0 +1,201 @@
+import { useCallback, useState } from 'react';
+import { Button } from '@signozhq/button';
+import { Checkbox } from '@signozhq/checkbox';
+import { Plus, Trash2 } from '@signozhq/icons';
+import { Input } from '@signozhq/input';
+import { Collapse, Form, Select, Tooltip } from 'antd';
+import { ChevronDown, ChevronRight, CircleHelp } from 'lucide-react';
+
+import './RoleMappingSection.styles.scss';
+
+const ROLE_OPTIONS = [
+	{ value: 'VIEWER', label: 'VIEWER' },
+	{ value: 'EDITOR', label: 'EDITOR' },
+	{ value: 'ADMIN', label: 'ADMIN' },
+];
+
+interface RoleMappingSectionProps {
+	/** The form field name prefix for the role mapping configuration */
+	fieldNamePrefix: string[];
+	/** Whether the section is expanded (controlled mode) */
+	isExpanded?: boolean;
+	/** Callback when expand/collapse is toggled */
+	onExpandChange?: (expanded: boolean) => void;
+}
+
+function RoleMappingSection({
+	fieldNamePrefix,
+	isExpanded,
+	onExpandChange,
+}: RoleMappingSectionProps): JSX.Element {
+	const form = Form.useFormInstance();
+	const useRoleAttributeDirectly = Form.useWatch(
+		[...fieldNamePrefix, 'useRoleAttributeDirectly'],
+		form,
+	);
+
+	// Support both controlled and uncontrolled modes
+	const [internalExpanded, setInternalExpanded] = useState(false);
+	const isControlled = isExpanded !== undefined;
+	const expanded = isControlled ? isExpanded : internalExpanded;
+
+	const handleCollapseChange = useCallback(
+		(keys: string | string[]): void => {
+			const newExpanded = Array.isArray(keys) ? keys.length > 0 : !!keys;
+			if (isControlled && onExpandChange) {
+				onExpandChange(newExpanded);
+			} else {
+				setInternalExpanded(newExpanded);
+			}
+		},
+		[isControlled, onExpandChange],
+	);
+
+	const collapseActiveKey = expanded ? ['role-mapping'] : [];
+
+	return (
+		<div className="role-mapping-section">
+			<Collapse
+				bordered={false}
+				activeKey={collapseActiveKey}
+				onChange={handleCollapseChange}
+				className="role-mapping-section__collapse"
+				expandIcon={(): null => null}
+			>
+				<Collapse.Panel
+					key="role-mapping"
+					header={
+						<div className="role-mapping-section__collapse-header">
+							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+							<div className="role-mapping-section__collapse-header-text">
+								<h4 className="role-mapping-section__section-title typography-label-base-600">
+									Role Mapping (Advanced)
+								</h4>
+								<p className="role-mapping-section__section-description typography-paragraph-small-400">
+									Configure how user roles are determined from your Identity Provider.
+									You can either use a direct role attribute or map IDP groups to SigNoz
+									roles.
+								</p>
+							</div>
+						</div>
+					}
+				>
+					<div className="role-mapping-section__content">
+						{/* Default Role */}
+						<div className="role-mapping-section__field-group">
+							<label
+								className="role-mapping-section__label typography-label-base-500"
+								htmlFor="default-role"
+							>
+								Default Role
+								<Tooltip title='The default role assigned to new SSO users if no other role mapping applies. Default: "VIEWER"'>
+									<CircleHelp size={14} className="role-mapping-section__label-icon" />
+								</Tooltip>
+							</label>
+							<Form.Item
+								name={[...fieldNamePrefix, 'defaultRole']}
+								className="role-mapping-section__form-item"
+								initialValue="VIEWER"
+							>
+								<Select
+									id="default-role"
+									options={ROLE_OPTIONS}
+									className="role-mapping-section__select"
+								/>
+							</Form.Item>
+						</div>
+
+						{/* Use Role Attribute Directly */}
+						<div className="role-mapping-section__checkbox-row">
+							<Form.Item
+								name={[...fieldNamePrefix, 'useRoleAttributeDirectly']}
+								valuePropName="checked"
+								noStyle
+							>
+								<Checkbox
+									id="use-role-attribute-directly"
+									labelName="Use Role Attribute Directly"
+									onCheckedChange={(checked: boolean): void => {
+										form.setFieldValue(
+											[...fieldNamePrefix, 'useRoleAttributeDirectly'],
+											checked,
+										);
+									}}
+								/>
+							</Form.Item>
+							<Tooltip title="If enabled, the role claim/attribute from the IDP will be used directly instead of group mappings. The role value must match a SigNoz role (VIEWER, EDITOR, or ADMIN).">
+								<CircleHelp size={14} className="role-mapping-section__label-icon" />
+							</Tooltip>
+						</div>
+
+						{/* Group to Role Mappings - only show when useRoleAttributeDirectly is false */}
+						{!useRoleAttributeDirectly && (
+							<div className="role-mapping-section__group-mappings">
+								<div className="role-mapping-section__group-header">
+									<span className="role-mapping-section__group-title">
+										Group to Role Mappings
+									</span>
+									<p className="role-mapping-section__group-description">
+										Map IDP group names to SigNoz roles. If a user belongs to multiple
+										groups, the highest privilege role will be assigned.
+									</p>
+								</div>
+
+								<Form.List name={[...fieldNamePrefix, 'groupMappings']}>
+									{(fields, { add, remove }): JSX.Element => (
+										<div className="role-mapping-section__items">
+											{fields.map((field) => (
+												<div key={field.key} className="role-mapping-section__row">
+													<Form.Item
+														name={[field.name, 'groupName']}
+														className="role-mapping-section__field role-mapping-section__field--group"
+														rules={[{ required: true, message: 'Group name is required' }]}
+													>
+														<Input placeholder="IDP Group Name" />
+													</Form.Item>
+
+													<Form.Item
+														name={[field.name, 'role']}
+														className="role-mapping-section__field role-mapping-section__field--role"
+														rules={[{ required: true, message: 'Role is required' }]}
+														initialValue="VIEWER"
+													>
+														<Select
+															options={ROLE_OPTIONS}
+															className="role-mapping-section__select"
+														/>
+													</Form.Item>
+
+													<Button
+														variant="ghost"
+														color="secondary"
+														className="role-mapping-section__remove-btn"
+														onClick={(): void => remove(field.name)}
+														aria-label="Remove mapping"
+													>
+														<Trash2 size={12} />
+													</Button>
+												</div>
+											))}
+
+											<Button
+												variant="dashed"
+												onClick={(): void => add({ groupName: '', role: 'VIEWER' })}
+												prefixIcon={<Plus size={14} />}
+												className="role-mapping-section__add-btn"
+											>
+												Add Group Mapping
+											</Button>
+										</div>
+									)}
+								</Form.List>
+							</div>
+						)}
+					</div>
+				</Collapse.Panel>
+			</Collapse>
+		</div>
+	);
+}
+
+export default RoleMappingSection;

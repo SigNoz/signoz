@@ -1,0 +1,118 @@
+.domain-mapping-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&__header {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		margin-bottom: 4px;
+	}
+
+	&__title {
+		margin: 0;
+		color: var(--l1-foreground);
+	}
+
+	&__description {
+		margin: 0;
+		color: var(--l3-foreground);
+	}
+
+	&__items {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__row {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+
+		.ant-form-item {
+			margin-bottom: 0;
+		}
+	}
+
+	&__field {
+		flex: 1;
+	}
+
+	&__remove-btn {
+		flex-shrink: 0;
+		width: 32px !important;
+		height: 32px !important;
+		min-width: 32px !important;
+		padding: 0 !important;
+		border: none !important;
+		border-radius: 2px !important;
+		background: transparent !important;
+		color: #e5484d !important;
+		opacity: 0.6 !important;
+		cursor: pointer;
+		transition: background-color 0.2s, opacity 0.2s;
+		box-shadow: none !important;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		svg {
+			color: #e5484d !important;
+			width: 12px !important;
+			height: 12px !important;
+		}
+
+		&:hover {
+			background: rgba(229, 72, 77, 0.1) !important;
+			opacity: 0.9 !important;
+			color: #e5484d !important;
+
+			svg {
+				color: #e5484d !important;
+			}
+		}
+
+		&:active {
+			opacity: 0.7 !important;
+			background: rgba(229, 72, 77, 0.15) !important;
+		}
+	}
+
+	&__add-btn {
+		width: 100%;
+
+		// Ensure icon is visible
+		svg,
+		[class*='icon'] {
+			color: var(--l2-foreground) !important;
+			display: inline-block !important;
+			opacity: 1 !important;
+		}
+
+		&:hover {
+			color: var(--l1-foreground);
+
+			svg,
+			[class*='icon'] {
+				color: var(--l1-foreground) !important;
+			}
+		}
+	}
+}
+
+// Light mode overrides
+.lightMode {
+	.domain-mapping-list {
+		&__row input {
+			background: var(--bg-vanilla-200) !important;
+			border-color: var(--bg-vanilla-300) !important;
+			color: var(--text-ink-500) !important;
+
+			&::placeholder {
+				color: var(--text-neutral-light-200) !important;
+			}
+		}
+	}
+}

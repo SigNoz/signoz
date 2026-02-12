@@ -7,7 +7,10 @@ import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { GettableAuthDomain } from 'types/api/v1/domains/list';
+import {
+	GettableAuthDomain,
+	GoogleAuthConfig,
+} from 'types/api/v1/domains/list';
 import { PostableAuthDomain } from 'types/api/v1/domains/post';
 
 import AuthnProviderSelector from './AuthnProviderSelector';
@@ -51,9 +54,35 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const samlEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
+	const getGoogleAuthConfig = (): GoogleAuthConfig | undefined => {
+		const config = form.getFieldValue('googleAuthConfig');
+		if (!config) {
+			return undefined;
+		}
+
+		// Convert domainToAdminEmailList array to domainToAdminEmail Record
+		const { domainToAdminEmailList, ...rest } = config;
+		const domainToAdminEmail: Record<string, string> = {};
+
+		if (Array.isArray(domainToAdminEmailList)) {
+			domainToAdminEmailList.forEach(
+				(item: { domain?: string; adminEmail?: string }) => {
+					if (item.domain && item.adminEmail) {
+						domainToAdminEmail[item.domain] = item.adminEmail;
+					}
+				},
+			);
+		}
+
+		return {
+			...rest,
+			...(Object.keys(domainToAdminEmail).length > 0 && { domainToAdminEmail }),
+		};
+	};
+
 	const onSubmitHandler = async (): Promise<void> => {
 		const name = form.getFieldValue('name');
-		const googleAuthConfig = form.getFieldValue('googleAuthConfig');
+		const googleAuthConfig = getGoogleAuthConfig();
 		const samlConfig = form.getFieldValue('samlConfig');
 		const oidcConfig = form.getFieldValue('oidcConfig');
 
@@ -93,14 +122,39 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	};
 
 	return (
-		<Modal open footer={null} onCancel={onClose}>
+		<Modal
+			open
+			footer={null}
+			onCancel={onClose}
+			width={authnProvider ? 980 : undefined}
+		>
 			<Form
 				name="auth-domain"
-				initialValues={defaultTo(record, {
-					name: '',
-					ssoEnabled: false,
-					ssoType: '',
-				})}
+				initialValues={defaultTo(
+					record
+						? {
+								...record,
+								googleAuthConfig: record.googleAuthConfig
+									? {
+											...record.googleAuthConfig,
+											domainToAdminEmailList: record.googleAuthConfig.domainToAdminEmail
+												? Object.entries(record.googleAuthConfig.domainToAdminEmail).map(
+														([domain, adminEmail]) => ({
+															domain,
+															adminEmail,
+														}),
+												  )
+												: [],
+									  }
+									: undefined,
+						  }
+						: undefined,
+					{
+						name: '',
+						ssoEnabled: false,
+						ssoType: '',
+					},
+				)}
 				form={form}
 				layout="vertical"
 			>

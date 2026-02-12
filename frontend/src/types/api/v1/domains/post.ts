@@ -11,17 +11,41 @@ export interface Config {
 	oidcConfig?: OIDCConfig;
 }
 
+export interface RoleMappingConfig {
+	defaultRole?: 'VIEWER' | 'EDITOR' | 'ADMIN';
+	useRoleAttributeDirectly?: boolean;
+	groupMappings?: Array<{
+		groupName: string;
+		role: 'VIEWER' | 'EDITOR' | 'ADMIN';
+	}>;
+}
+
+export interface SAMLAttributeMapping {
+	nameAttribute?: string;
+	groupsAttribute?: string;
+	roleAttribute?: string;
+}
+
 export interface SAMLConfig {
 	samlEntity: string;
 	samlIdp: string;
 	samlCert: string;
 	insecureSkipAuthNRequestsSigned: boolean;
+	attributeMapping?: SAMLAttributeMapping;
+	roleMapping?: RoleMappingConfig;
 }
 
 export interface GoogleAuthConfig {
 	clientId: string;
 	clientSecret: string;
 	redirectURI: string;
+	insecureSkipEmailVerified?: boolean;
+	fetchGroups?: boolean;
+	serviceAccountJson?: string;
+	domainToAdminEmail?: Record<string, string>;
+	fetchTransitiveGroupMembership?: boolean;
+	allowedGroups?: string[];
+	roleMapping?: RoleMappingConfig;
 }
 
 export interface OIDCConfig {
@@ -32,8 +56,12 @@ export interface OIDCConfig {
 	claimMapping: ClaimMapping;
 	insecureSkipEmailVerified: boolean;
 	getUserInfo: boolean;
+	roleMapping?: RoleMappingConfig;
 }
 
 export interface ClaimMapping {
-	email: string;
+	email?: string;
+	name?: string;
+	groups?: string;
+	role?: string;
 }
