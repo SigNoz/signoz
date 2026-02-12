@@ -407,6 +407,10 @@
 				color: var(--text-neutral-light-200) !important;
 			}
 
+			.ant-select-selection-item {
+				color: var(--text-ink-500) !important;
+			}
+
 			&:hover .ant-select-selector {
 				border-color: var(--bg-vanilla-300) !important;
 			}

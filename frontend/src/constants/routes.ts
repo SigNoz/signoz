@@ -1,6 +1,7 @@
 const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
+	FORGOT_PASSWORD: '/forgot-password',
 	HOME: '/home',
 	SERVICE_METRICS: '/services/:servicename',
 	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
