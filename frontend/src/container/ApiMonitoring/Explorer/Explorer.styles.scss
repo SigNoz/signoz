@@ -220,11 +220,11 @@
 		.no-filtered-domains-message-content {
 			.no-filtered-domains-message {
 				.no-domain-title {
-					color: var(--text-ink-500, #fff);
+					color: var(--text-ink-500);
 				}
 
 				.no-domain-subtitle {
-					color: var(--text-ink-400, #c0c1c3);
+					color: var(--text-ink-400);
 
 					.attribute {
 						font-family: 'Space Mono';
