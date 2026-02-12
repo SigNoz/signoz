@@ -156,9 +156,9 @@ describe('axis utils', () => {
 			const gap = 7;
 			const sizeCalculator = buildYAxisSizeCalculator(gap);
 
-			const axis: any = {
+			const axis: Axis = {
 				ticks: { size: 12 },
-				font: ['12px sans-serif'],
+				font: (['12px sans-serif'] as unknown) as string,
 			};
 
 			const measureText = jest.fn(() => ({ width: 50 }));
@@ -188,8 +188,8 @@ describe('axis utils', () => {
 			const gap = 4;
 			const sizeCalculator = buildYAxisSizeCalculator(gap);
 
-			const axis: any = {
-				font: ['12px sans-serif'],
+			const axis: Axis = {
+				font: (['12px sans-serif'] as unknown) as string,
 			};
 
 			const measureText = jest.fn(() => ({ width: 40 }));
