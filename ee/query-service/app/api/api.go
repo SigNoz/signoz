@@ -21,7 +21,6 @@ import (
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -31,7 +30,6 @@ type APIHandlerOptions struct {
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
 	IntegrationsController        *integrations.Controller
-	CloudIntegrationsRegistry     map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
@@ -52,7 +50,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		Reader:                        opts.DataConnector,
 		RuleManager:                   opts.RulesManager,
 		IntegrationsController:        opts.IntegrationsController,
-		CloudIntegrationsRegistry:     opts.CloudIntegrationsRegistry,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),

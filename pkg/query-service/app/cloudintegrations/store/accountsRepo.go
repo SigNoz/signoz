@@ -23,7 +23,7 @@ type CloudProviderAccountsRepository interface {
 
 	Get(ctx context.Context, orgId string, provider string, id string) (*integrationstypes.CloudIntegration, error)
 
-	GetConnectedCloudAccount(ctx context.Context, orgId string, provider string, accountID string) (*integrationstypes.CloudIntegration, error)
+	GetConnectedCloudAccount(ctx context.Context, orgId, provider string, accountID string) (*integrationstypes.CloudIntegration, error)
 
 	// Insert an account or update it by (cloudProvider, id)
 	// for specified non-empty fields

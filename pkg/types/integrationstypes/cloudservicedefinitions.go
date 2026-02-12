@@ -27,7 +27,6 @@ type Definition interface {
 }
 
 var _ Definition = &AWSServiceDefinition{}
-var _ Definition = &AzureServiceDefinition{}
 
 type AWSServiceDefinition struct {
 	DefinitionMetadata
@@ -90,49 +89,6 @@ func (def *AWSServiceDefinition) PopulateDashboardURLs(serviceId string) {
 	}
 }
 
-type AzureServiceDefinition struct {
-	DefinitionMetadata
-
-	Overview string `json:"overview"` // markdown
-
-	Assets Assets `json:"assets"`
-
-	SupportedSignals SupportedSignals `json:"supported_signals"`
-
-	DataCollected DataCollected `json:"data_collected"`
-
-	Strategy *AzureCollectionStrategy `json:"telemetry_collection_strategy"`
-}
-
-func (def *AzureServiceDefinition) PopulateDashboardURLs(svcId string) {
-	for i := range def.Assets.Dashboards {
-		dashboardId := def.Assets.Dashboards[i].Id
-		url := "/dashboard/" + GetCloudIntegrationDashboardID(CloudProviderAzure, svcId, dashboardId)
-		def.Assets.Dashboards[i].Url = url
-	}
-}
-
-func (def *AzureServiceDefinition) GetId() string {
-	return def.Id
-}
-
-func (def *AzureServiceDefinition) Validate() error {
-	seenDashboardIds := map[string]interface{}{}
-
-	if def.Strategy == nil {
-		return errors.NewInternalf(errors.CodeInternal, "telemetry_collection_strategy is required")
-	}
-
-	for _, dd := range def.Assets.Dashboards {
-		if _, seen := seenDashboardIds[dd.Id]; seen {
-			return errors.NewInternalf(errors.CodeInternal, "multiple dashboards found with id %s for Azure Integration", dd.Id)
-		}
-		seenDashboardIds[dd.Id] = nil
-	}
-
-	return nil
-}
-
 type Assets struct {
 	Dashboards []Dashboard `json:"dashboards"`
 }
@@ -168,16 +124,6 @@ type AWSCollectionStrategy struct {
 	S3Buckets  map[string][]string `json:"s3_buckets,omitempty"` // Only available in S3 Sync Service Type
 }
 
-type AzureCollectionStrategy struct {
-	AzureMetrics []*AzureMetricsStrategy `json:"azure_metrics"`
-	AzureLogs    []*AzureLogsStrategy    `json:"azure_logs"`
-}
-
-type AzureResourceGroup struct {
-	Name   string `json:"name"`
-	Region string `json:"region"`
-}
-
 type AWSMetricsStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	StreamFilters []struct {
@@ -198,16 +144,6 @@ type AWSLogsStrategy struct {
 		// "" implies no filtering is required.
 		FilterPattern string `json:"filter_pattern"`
 	} `json:"cloudwatch_logs_subscriptions"`
-}
-
-type AzureMetricsStrategy struct {
-	CategoryType string `json:"category_type"`
-	Name         string `json:"name"`
-}
-
-type AzureLogsStrategy struct {
-	CategoryType string `json:"category_type"`
-	Name         string `json:"name"`
 }
 
 type Dashboard struct {

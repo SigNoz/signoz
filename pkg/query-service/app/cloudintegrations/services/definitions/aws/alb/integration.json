@@ -7,24 +7,6 @@
     "metrics": true,
     "logs": false
   },
-  "ingestion_status_check": {
-    "metrics": [
-      {
-        "category": "$default",
-        "display_name": "Default",
-        "checks": [
-          {
-            "key": "aws_ApplicationELB_ConsumedLCUs_count",
-            "attributes": []
-          },
-          {
-            "key": "aws_ApplicationELB_ProcessedBytes_sum",
-            "attributes": []
-          }
-        ]
-      }
-    ]
-  },
   "data_collected": {
     "metrics": [
       {

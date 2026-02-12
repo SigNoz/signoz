@@ -26,7 +26,6 @@ import (
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -70,8 +69,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(signoz.Instrumentation.Logger(), signoz.SQLStore, signoz.Querier)
 
 	cacheForTraceDetail, err := memorycache.New(context.TODO(), signoz.Instrumentation.ToProviderSettings(), cache.Config{
 		Provider: "memory",
@@ -124,7 +121,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		Reader:                        reader,
 		RuleManager:                   rm,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsRegistry:     cloudIntegrationsRegistry,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),

@@ -16,8 +16,7 @@ import (
 type CloudProviderType = valuer.String
 
 var (
-	CloudProviderAWS   = valuer.NewString("aws")
-	CloudProviderAzure = valuer.NewString("azure")
+	CloudProviderAWS = valuer.NewString("aws")
 )
 
 var (
@@ -26,7 +25,7 @@ var (
 
 func NewCloudProvider(provider string) (CloudProviderType, error) {
 	switch provider {
-	case CloudProviderAWS.String(), CloudProviderAzure.String():
+	case CloudProviderAWS.String():
 		return valuer.NewString(provider), nil
 	default:
 		return CloudProviderType{}, errors.NewInvalidInputf(CodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider)
@@ -34,13 +33,11 @@ func NewCloudProvider(provider string) (CloudProviderType, error) {
 }
 
 var (
-	AWSIntegrationUserEmail   = valuer.MustNewEmail("aws-integration@signoz.io")
-	AzureIntegrationUserEmail = valuer.MustNewEmail("azure-integration@signoz.io")
+	AWSIntegrationUserEmail = valuer.MustNewEmail("aws-integration@signoz.io")
 )
 
 var IntegrationUserEmails = []valuer.Email{
 	AWSIntegrationUserEmail,
-	AzureIntegrationUserEmail,
 }
 
 func IsCloudIntegrationDashboardUuid(dashboardUuid string) bool {

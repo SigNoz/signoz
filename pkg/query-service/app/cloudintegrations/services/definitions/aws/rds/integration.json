@@ -7,37 +7,6 @@
     "metrics": true,
     "logs": true
   },
-  "ingestion_status_check": {
-    "metrics": [
-      {
-        "category": "$default",
-        "display_name": "Default",
-        "checks": [
-          {
-            "key": "aws_RDS_CPUUtilization_max",
-            "attributes": []
-          }
-        ]
-      }
-    ],
-    "logs": [
-      {
-        "category": "$default",
-        "display_name": "Default",
-        "checks": [
-          {
-            "attributes": [
-              {
-                "name": "resources.aws.cloudwatch.log_group_name",
-                "operator": "ILIKE",
-                "value": "/aws/rds%"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
   "data_collected": {
     "metrics": [
       {

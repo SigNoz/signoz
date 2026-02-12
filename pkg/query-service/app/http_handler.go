@@ -28,6 +28,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -161,9 +162,6 @@ type APIHandlerOpts struct {
 	// Integrations
 	IntegrationsController *integrations.Controller
 
-	// Cloud Provider Integrations
-	CloudIntegrationsRegistry map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider
-
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -214,12 +212,18 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
+	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(opts.Signoz.Instrumentation.Logger(),
+		opts.Signoz.SQLStore,
+		opts.Reader,
+		querier,
+	)
+
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
 		IntegrationsController:        opts.IntegrationsController,
-		cloudIntegrationsRegistry:     opts.CloudIntegrationsRegistry,
+		cloudIntegrationsRegistry:     cloudIntegrationsRegistry,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -3782,7 +3786,7 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 	}
 
 	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GetServiceDetails(r.Context(), &integrationstypes.GetServiceDetailsReq{
-		OrgID:          orgID.String(),
+		OrgID:          orgID,
 		ServiceId:      serviceId,
 		CloudAccountID: cloudAccountId,
 	})
