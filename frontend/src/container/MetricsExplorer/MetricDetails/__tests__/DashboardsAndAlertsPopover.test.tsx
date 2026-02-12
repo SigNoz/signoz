@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { QueryParams } from 'constants/query';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import { QueryParams } from 'constants/query';
 import { userEvent } from 'tests/test-utils';
 
 import DashboardsAndAlertsPopover from '../DashboardsAndAlertsPopover';

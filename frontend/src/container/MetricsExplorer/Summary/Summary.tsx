@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
@@ -34,7 +35,6 @@ import {
 	formatDataForMetricsTable,
 	getMetricsListQuery,
 } from './utils';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 import './Summary.styles.scss';
 
