@@ -32,14 +32,11 @@ def test_list_connected_accounts_empty(
         timeout=10,
     )
 
-    response_data = response.json()
-    logger.info(response_data)
-
     assert (
         response.status_code == HTTPStatus.OK
     ), f"Expected 200, got {response.status_code}"
 
-
+    response_data = response.json()
     data = response_data.get("data", response_data)
     assert "accounts" in data, "Response should contain 'accounts' field"
     assert isinstance(data["accounts"], list), "Accounts should be a list"

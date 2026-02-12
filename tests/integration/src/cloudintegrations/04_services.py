@@ -297,7 +297,6 @@ def test_update_service_config(
     response_data = response.json()
     data = response_data.get("data", response_data)
 
-    logger.info(data)
     # Verify response structure
     assert "id" in data, "Response should contain 'id' field"
     assert data["id"] == service_id, "Service ID should match"

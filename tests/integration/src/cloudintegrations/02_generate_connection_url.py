@@ -137,7 +137,6 @@ def test_generate_connection_url_unsupported_provider(
     ), f"Expected 400 for unsupported provider, got {response.status_code}"
 
     response_data = response.json()
-    logger.info(response_data)
     assert "error" in response_data, "Response should contain 'error' field"
     assert (
         "invalid cloud provider: gcp" in response_data["error"]["message"]
