@@ -283,7 +283,10 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 		// If the inner expression is empty (filtered out), return empty
 		// to avoid generating invalid "not()" in ClickHouse
 		if result == "" {
-			return ""
+			return "true"
+		}
+		if result == "true" {
+			return result
 		}
 		return fmt.Sprintf("NOT (%s)", result)
 	}
@@ -296,6 +299,10 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
 		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
+			// Don't wrap "true" in parentheses - it's a no-op condition
+			if condExpr == "true" {
+				return condExpr
+			}
 			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
 		}
 		return ""
