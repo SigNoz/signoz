@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -69,7 +68,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
 	"go.uber.org/zap"
@@ -104,10 +103,11 @@ type APIHandler struct {
 	querierV2    interfaces.Querier
 	queryBuilder *queryBuilder.QueryBuilder
 
-	// temporalityMap is a map of metric name to temporality
-	// to avoid fetching temporality for the same metric multiple times
-	// querying the v4 table on low cardinal temporality column
-	// should be fast but we can still avoid the query if we have the data in memory
+	// temporalityMap is a map of metric name to temporality to avoid fetching
+	// temporality for the same metric multiple times.
+	//
+	// Querying the v4 table on a low cardinal temporality column should be
+	// fast, but we can still avoid the query if we have the data in memory.
 	temporalityMap map[string]map[v3.Temporality]bool
 	temporalityMux sync.Mutex
 
@@ -145,8 +145,6 @@ type APIHandler struct {
 
 	LicensingAPI licensing.API
 
-	FieldsAPI *fields.API
-
 	QuerierAPI *querierAPI.API
 
 	QueryParserAPI *queryparser.API
@@ -176,8 +174,6 @@ type APIHandlerOpts struct {
 	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
-
-	FieldsAPI *fields.API
 
 	QuerierAPI *querierAPI.API
 
@@ -243,7 +239,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
-		FieldsAPI:                     opts.FieldsAPI,
 		QuerierAPI:                    opts.QuerierAPI,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}
@@ -397,13 +392,6 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.QuerierAPI.QueryRawStream)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *middleware.AuthZ) {
-	subRouter := router.PathPrefix("/api/v1").Subrouter()
-
-	subRouter.HandleFunc("/fields/keys", am.ViewAccess(aH.FieldsAPI.GetFieldsKeys)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields/values", am.ViewAccess(aH.FieldsAPI.GetFieldsValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -1023,7 +1011,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// the query range is calculated based on the rule's evalWindow and evalDelay
 			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
 			// to get the correct query range
-			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
+			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
 				if rule.Version != "v5" {
 					res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
@@ -1230,12 +1218,12 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 
 	dashboard := new(dashboardtypes.Dashboard)
 	if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
-		cloudintegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
+		cloudIntegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
 		if apiErr != nil {
 			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
 			return
 		}
-		dashboard = cloudintegrationDashboard
+		dashboard = cloudIntegrationDashboard
 	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
 		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
 		if apiErr != nil {
@@ -1564,13 +1552,13 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
-	response_data := &model.QueryData{
+	responseData := &model.QueryData{
 		ResultType: res.Value.Type(),
 		Result:     res.Value,
 		Stats:      qs,
 	}
 
-	aH.Respond(w, response_data)
+	aH.Respond(w, responseData)
 
 }
 
@@ -2652,12 +2640,12 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -2705,12 +2693,12 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -2759,12 +2747,12 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -2813,12 +2801,12 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -2870,12 +2858,12 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, producerQueryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 
@@ -2981,12 +2969,12 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -3035,12 +3023,12 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -3089,12 +3077,12 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	result = postprocess.TransformToTableForClickHouseQueries(result)
@@ -3149,12 +3137,12 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 
@@ -4138,11 +4126,11 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	aH.Respond(w, payload)
 }
 
-// listLogsPipelines lists logs piplines for latest version
+// listLogsPipelines lists logs pipelines for latest version
 func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) (
 	*logparsingpipeline.PipelinesResponse, error,
 ) {
-	// get lateset agent config
+	// get latest agent config
 	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
 	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
@@ -4439,7 +4427,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		hasLogsQuery := false
@@ -4456,7 +4444,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		if logsv3.EnrichmentRequired(queryRangeParams) && hasLogsQuery {
 			logsFields, apiErr := aH.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(queryRangeParams.CompositeQuery))
 			if apiErr != nil {
-				RespondError(w, apiErr, errQuriesByName)
+				RespondError(w, apiErr, errQueriesByName)
 				return
 			}
 			// get the fields if any logs query is present
@@ -4467,7 +4455,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+				RespondError(w, apiErrObj, errQueriesByName)
 				return
 			}
 			tracesV4.Enrich(queryRangeParams, spanKeys)
@@ -4512,11 +4500,11 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
-		for name, err := range errQuriesByName {
+		for name, err := range errQueriesByName {
 			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
 		}
 		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -4792,7 +4780,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	var result []*v3.Result
-	var errQuriesByName map[string]error
+	var errQueriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		hasLogsQuery := false
@@ -4822,7 +4810,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+				RespondError(w, apiErrObj, errQueriesByName)
 				return
 			}
 			tracesV4.Enrich(queryRangeParams, spanKeys)
@@ -4845,11 +4833,11 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
 		queryErrors := map[string]string{}
-		for name, err := range errQuriesByName {
+		for name, err := range errQueriesByName {
 			queryErrors[fmt.Sprintf("Query-%s", name)] = err.Error()
 		}
 		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -4866,7 +4854,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj, errQueriesByName)
 		return
 	}
 	aH.sendQueryResultEvents(r, result, queryRangeParams, "v4")

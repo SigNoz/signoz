@@ -762,18 +762,6 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	totalTimeSeries: number;
 }
 
-export enum MetricsexplorertypesMetricMetadataDTOTemporality {
-	delta = 'delta',
-	cumulative = 'cumulative',
-	unspecified = 'unspecified',
-}
-export enum MetricsexplorertypesMetricMetadataDTOType {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
 export interface MetricsexplorertypesMetricMetadataDTO {
 	/**
 	 * @type string
@@ -783,29 +771,14 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 	 * @type boolean
 	 */
 	isMonotonic: boolean;
-	/**
-	 * @enum delta,cumulative,unspecified
-	 * @type string
-	 */
-	temporality: MetricsexplorertypesMetricMetadataDTOTemporality;
-	/**
-	 * @enum gauge,sum,histogram,summary,exponentialhistogram
-	 * @type string
-	 */
-	type: MetricsexplorertypesMetricMetadataDTOType;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
 	unit: string;
 }
 
-export enum MetricsexplorertypesStatDTOType {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
 export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type string
@@ -825,11 +798,7 @@ export interface MetricsexplorertypesStatDTO {
 	 * @minimum 0
 	 */
 	timeseries: number;
-	/**
-	 * @enum gauge,sum,histogram,summary,exponentialhistogram
-	 * @type string
-	 */
-	type: MetricsexplorertypesStatDTOType;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -889,7 +858,7 @@ export interface MetricsexplorertypesTreemapEntryDTO {
 	totalValue: number;
 }
 
-export enum MetricsexplorertypesTreemapRequestDTOMode {
+export enum MetricsexplorertypesTreemapModeDTO {
 	timeseries = 'timeseries',
 	samples = 'samples',
 }
@@ -904,11 +873,7 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 	 * @type integer
 	 */
 	limit: number;
-	/**
-	 * @enum timeseries,samples
-	 * @type string
-	 */
-	mode: MetricsexplorertypesTreemapRequestDTOMode;
+	mode: MetricsexplorertypesTreemapModeDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -929,18 +894,6 @@ export interface MetricsexplorertypesTreemapResponseDTO {
 	timeseries: MetricsexplorertypesTreemapEntryDTO[] | null;
 }
 
-export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality {
-	delta = 'delta',
-	cumulative = 'cumulative',
-	unspecified = 'unspecified',
-}
-export enum MetricsexplorertypesUpdateMetricMetadataRequestDTOType {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
 export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	/**
 	 * @type string
@@ -954,22 +907,26 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	 * @type string
 	 */
 	metricName: string;
-	/**
-	 * @enum delta,cumulative,unspecified
-	 * @type string
-	 */
-	temporality: MetricsexplorertypesUpdateMetricMetadataRequestDTOTemporality;
-	/**
-	 * @enum gauge,sum,histogram,summary,exponentialhistogram
-	 * @type string
-	 */
-	type: MetricsexplorertypesUpdateMetricMetadataRequestDTOType;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
 	unit: string;
 }
 
+export enum MetrictypesTemporalityDTO {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetrictypesTypeDTO {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface PreferencetypesPreferenceDTO {
 	/**
 	 * @type array
@@ -1092,7 +1049,7 @@ export interface Querybuildertypesv5OrderByKeyDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
@@ -1182,6 +1139,79 @@ export interface RoletypesRoleDTO {
 	 * @format date-time
 	 */
 	updatedAt?: Date;
+}
+
+/**
+ * @nullable
+ */
+export type TelemetrytypesGettableFieldKeysDTOKeys = {
+	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
+} | null;
+
+export interface TelemetrytypesGettableFieldKeysDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	keys: TelemetrytypesGettableFieldKeysDTOKeys;
+}
+
+export interface TelemetrytypesGettableFieldValuesDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	values: TelemetrytypesTelemetryFieldValuesDTO;
+}
+
+export interface TelemetrytypesTelemetryFieldKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface TelemetrytypesTelemetryFieldValuesDTO {
+	/**
+	 * @type array
+	 */
+	boolValues?: boolean[];
+	/**
+	 * @type array
+	 */
+	numberValues?: number[];
+	/**
+	 * @type array
+	 */
+	relatedValues?: string[];
+	/**
+	 * @type array
+	 */
+	stringValues?: string[];
 }
 
 export interface TypesChangePasswordRequestDTO {
@@ -1388,7 +1418,7 @@ export interface TypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
 	 */
-	email?: string;
+	email: string;
 	/**
 	 * @type string
 	 */
@@ -1396,7 +1426,7 @@ export interface TypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	orgId: string;
 }
 
 export interface TypesPostableInviteDTO {
@@ -1631,6 +1661,132 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type GetFieldsKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+};
+
+export type GetFieldsKeys200 = {
+	data?: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetFieldsValuesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
+};
+
+export type GetFieldsValues200 = {
+	data?: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
 export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };

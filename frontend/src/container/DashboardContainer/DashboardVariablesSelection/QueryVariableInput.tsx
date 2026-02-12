@@ -1,13 +1,11 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import sortValues from 'lib/dashboardVariables/sortVariableValues';
 import { isArray, isString } from 'lodash-es';
-import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { AppState } from 'store/reducers';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -15,20 +13,18 @@ import { variablePropsToPayloadVariables } from '../utils';
 import SelectVariableInput from './SelectVariableInput';
 import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHelper';
 import { areArraysEqual, checkAPIInvocation } from './util';
+import { VariableItemProps } from './VariableItem';
+import { queryVariableSelectStrategy } from './variableSelectStrategy/queryVariableSelectStrategy';
 
-interface QueryVariableInputProps {
-	variableData: IDashboardVariable;
-	existingVariables: Record<string, IDashboardVariable>;
-	onValueUpdate: (
-		name: string,
-		id: string,
-		value: IDashboardVariable['selectedValue'],
-		allSelected: boolean,
-	) => void;
-	variablesToGetUpdated: string[];
-	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
-	dependencyData: IDependencyData | null;
-}
+type QueryVariableInputProps = Pick<
+	VariableItemProps,
+	| 'variableData'
+	| 'existingVariables'
+	| 'onValueUpdate'
+	| 'variablesToGetUpdated'
+	| 'setVariablesToGetUpdated'
+	| 'dependencyData'
+>;
 
 function QueryVariableInput({
 	variableData,
@@ -56,13 +52,15 @@ function QueryVariableInput({
 		onChange,
 		onDropdownVisibleChange,
 		handleClear,
+		applyDefaultIfNeeded,
 	} = useDashboardVariableSelectHelper({
 		variableData,
 		optionsData,
 		onValueUpdate,
+		strategy: queryVariableSelectStrategy,
 	});
 
-	const validVariableUpdate = (): boolean => {
+	const validVariableUpdate = useCallback((): boolean => {
 		if (!variableData.name) {
 			return false;
 		}
@@ -70,86 +68,100 @@ function QueryVariableInput({
 			variablesToGetUpdated.length &&
 				variablesToGetUpdated[0] === variableData.name,
 		);
-	};
+	}, [variableData.name, variablesToGetUpdated]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const getOptions = (variablesRes: VariableResponseProps | null): void => {
-		try {
-			setErrorMessage(null);
+	const getOptions = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
+		(variablesRes: VariableResponseProps | null): void => {
+			try {
+				setErrorMessage(null);
 
-			if (
-				variablesRes?.variableValues &&
-				Array.isArray(variablesRes?.variableValues)
-			) {
-				const newOptionsData = sortValues(
-					variablesRes?.variableValues,
-					variableData.sort,
-				);
+				if (
+					variablesRes?.variableValues &&
+					Array.isArray(variablesRes?.variableValues)
+				) {
+					const newOptionsData = sortValues(
+						variablesRes?.variableValues,
+						variableData.sort,
+					);
 
-				const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
+					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
 
-				if (!areArraysEqual(newOptionsData, oldOptionsData)) {
-					let valueNotInList = false;
+					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
+						let valueNotInList = false;
 
-					if (isArray(variableData.selectedValue)) {
-						variableData.selectedValue.forEach((val) => {
-							if (!newOptionsData.includes(val)) {
-								valueNotInList = true;
-							}
-						});
-					} else if (
-						isString(variableData.selectedValue) &&
-						!newOptionsData.includes(variableData.selectedValue)
-					) {
-						valueNotInList = true;
-					}
-
-					// variablesData.allSelected is added for the case where on change of options we need to update the
-					// local storage
-					if (
-						variableData.name &&
-						(validVariableUpdate() || valueNotInList || variableData.allSelected)
-					) {
-						if (
-							variableData.allSelected &&
-							variableData.multiSelect &&
-							variableData.showALLOption
+						if (isArray(variableData.selectedValue)) {
+							variableData.selectedValue.forEach((val) => {
+								if (!newOptionsData.includes(val)) {
+									valueNotInList = true;
+								}
+							});
+						} else if (
+							isString(variableData.selectedValue) &&
+							!newOptionsData.includes(variableData.selectedValue)
 						) {
-							onValueUpdate(variableData.name, variableData.id, newOptionsData, true);
+							valueNotInList = true;
+						}
 
-							// Update tempSelection to maintain ALL state when dropdown is open
-							if (tempSelection !== undefined) {
-								setTempSelection(newOptionsData.map((option) => option.toString()));
-							}
-						} else {
-							const value = variableData.selectedValue;
-							let allSelected = false;
+						// variablesData.allSelected is added for the case where on change of options we need to update the
+						// local storage
+						if (
+							variableData.name &&
+							(validVariableUpdate() || valueNotInList || variableData.allSelected)
+						) {
+							if (
+								variableData.allSelected &&
+								variableData.multiSelect &&
+								variableData.showALLOption
+							) {
+								onValueUpdate(variableData.name, variableData.id, newOptionsData, true);
 
-							if (variableData.multiSelect) {
-								const { selectedValue } = variableData;
-								allSelected =
-									newOptionsData.length > 0 &&
-									Array.isArray(selectedValue) &&
-									newOptionsData.every((option) => selectedValue.includes(option));
-							}
+								// Update tempSelection to maintain ALL state when dropdown is open
+								if (tempSelection !== undefined) {
+									setTempSelection(newOptionsData.map((option) => option.toString()));
+								}
+							} else {
+								const value = variableData.selectedValue;
+								let allSelected = false;
 
-							if (variableData.name && variableData.id) {
-								onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								if (variableData.multiSelect) {
+									const { selectedValue } = variableData;
+									allSelected =
+										newOptionsData.length > 0 &&
+										Array.isArray(selectedValue) &&
+										newOptionsData.every((option) => selectedValue.includes(option));
+								}
+
+								if (variableData.name && variableData.id) {
+									onValueUpdate(variableData.name, variableData.id, value, allSelected);
+								}
 							}
 						}
-					}
 
-					setOptionsData(newOptionsData);
-				} else {
-					setVariablesToGetUpdated((prev) =>
-						prev.filter((name) => name !== variableData.name),
-					);
+						setOptionsData(newOptionsData);
+						// Apply default if no value is selected (e.g., new variable, first load)
+						applyDefaultIfNeeded(newOptionsData);
+					} else {
+						setVariablesToGetUpdated((prev) =>
+							prev.filter((name) => name !== variableData.name),
+						);
+					}
 				}
+			} catch (e) {
+				console.error(e);
 			}
-		} catch (e) {
-			console.error(e);
-		}
-	};
+		},
+		[
+			variableData,
+			optionsData,
+			onValueUpdate,
+			tempSelection,
+			setTempSelection,
+			validVariableUpdate,
+			setVariablesToGetUpdated,
+			applyDefaultIfNeeded,
+		],
+	);
 
 	const { isLoading, refetch } = useQuery(
 		[
@@ -162,7 +174,6 @@ function QueryVariableInput({
 		{
 			enabled:
 				variableData &&
-				variableData.type === 'QUERY' &&
 				checkAPIInvocation(
 					variablesToGetUpdated,
 					variableData,
@@ -207,10 +218,19 @@ function QueryVariableInput({
 		refetch();
 	}, [refetch]);
 
+	const selectOptions = useMemo(
+		() =>
+			optionsData.map((option) => ({
+				label: option.toString(),
+				value: option.toString(),
+			})),
+		[optionsData],
+	);
+
 	return (
 		<SelectVariableInput
 			variableId={variableData.id}
-			options={optionsData}
+			options={selectOptions}
 			value={value}
 			onChange={onChange}
 			onDropdownVisibleChange={onDropdownVisibleChange}
