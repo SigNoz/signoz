@@ -235,9 +235,9 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
-	 * Returns stored series visibility map from localStorage when preferences source is LOCAL_STORAGE, otherwise null.
+	 * Returns stored series visibility by index from localStorage when preferences source is LOCAL_STORAGE, otherwise null.
 	 */
-	private getStoredVisibilityMap(): Map<string, boolean> | null {
+	private getStoredVisibility(): boolean[] | null {
 		if (
 			this.widgetId &&
 			this.selectionPreferencesSource === SelectionPreferencesSource.LOCAL_STORAGE
@@ -251,22 +251,20 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const visibilityMap = this.getStoredVisibilityMap();
-		const isAnySeriesHidden = !!(
-			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show)
-		);
+		const visibility = this.getStoredVisibility();
+		const isAnySeriesHidden = !!visibility?.some((show) => !show);
 
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
 			const label = seriesConfig.label ?? '';
-			const seriesIndex = index + 1; // +1 because the first series is the timestamp
-
-			const show = resolveSeriesVisibility(
-				label,
-				seriesConfig.show,
-				visibilityMap,
+			// +1 because uPlot series 0 is x-axis/time; data series are at 1, 2, ... (also matches stored visibility[0]=time, visibility[1]=first data, ...)
+			const seriesIndex = index + 1;
+			const show = resolveSeriesVisibility({
+				seriesIndex,
+				seriesShow: seriesConfig.show,
+				visibility,
 				isAnySeriesHidden,
-			);
+			});
 
 			acc[seriesIndex] = {
 				seriesIndex,
@@ -294,22 +292,20 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
-		const visibilityMap = this.getStoredVisibilityMap();
-		const isAnySeriesHidden = !!(
-			visibilityMap && Array.from(visibilityMap.values()).some((show) => !show)
-		);
+		const visibility = this.getStoredVisibility();
+		const isAnySeriesHidden = !!visibility?.some((show) => !show);
 
 		config.series = [
 			{ value: (): string => '' }, // Base series for timestamp
-			...this.series.map((s) => {
+			...this.series.map((s, index) => {
 				const series = s.getConfig();
-				const label = series.label ?? '';
-				const visible = resolveSeriesVisibility(
-					label,
-					series.show,
-					visibilityMap,
+				// Stored visibility[0] is x-axis/time; data series start at visibility[1]
+				const visible = resolveSeriesVisibility({
+					seriesIndex: index + 1,
+					seriesShow: series.show,
+					visibility,
 					isAnySeriesHidden,
-				);
+				});
 				return {
 					...series,
 					show: visible,

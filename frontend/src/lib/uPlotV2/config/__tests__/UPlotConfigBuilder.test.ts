@@ -186,13 +186,11 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('restores visibility state from localStorage when selectionPreferencesSource is LOCAL_STORAGE', () => {
-		const visibilityMap = new Map<string, boolean>([
-			['Requests', true],
-			['Errors', false],
-		]);
+		// Index 0 = x-axis/time; indices 1,2 = data series (Requests, Errors)
+		const visibility = [true, true, false];
 
 		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue(
-			visibilityMap,
+			visibility,
 		);
 
 		const builder = new UPlotConfigBuilder({

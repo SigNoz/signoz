@@ -42,7 +42,7 @@ describe('legendVisibilityUtils', () => {
 			expect(result).toBeNull();
 		});
 
-		it('returns a Map of label to visibility when widget state exists', () => {
+		it('returns visibility array by index when widget state exists', () => {
 			const stored: GraphVisibilityState[] = [
 				{
 					name: 'widget-1',
@@ -62,10 +62,27 @@ describe('legendVisibilityUtils', () => {
 			const result = getStoredSeriesVisibility('widget-1');
 
 			expect(result).not.toBeNull();
-			expect(result instanceof Map).toBe(true);
-			expect(result?.get('CPU')).toBe(true);
-			expect(result?.get('Memory')).toBe(false);
-			expect(result?.get('Errors')).toBeUndefined();
+			expect(result).toEqual([true, false]);
+		});
+
+		it('returns visibility by index including duplicate labels', () => {
+			const stored: GraphVisibilityState[] = [
+				{
+					name: 'widget-1',
+					dataIndex: [
+						{ label: 'CPU', show: true },
+						{ label: 'CPU', show: false },
+						{ label: 'Memory', show: false },
+					],
+				},
+			];
+
+			localStorage.setItem(storageKey, JSON.stringify(stored));
+
+			const result = getStoredSeriesVisibility('widget-1');
+
+			expect(result).not.toBeNull();
+			expect(result).toEqual([true, false, false]);
 		});
 
 		it('returns null on malformed JSON in localStorage', () => {
@@ -104,8 +121,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 
 			expect(stored).not.toBeNull();
-			expect(stored!.get('CPU')).toBe(true);
-			expect(stored!.get('Memory')).toBe(false);
+			expect(stored).toEqual([true, false]);
 		});
 
 		it('adds a new widget entry when other widgets already exist', () => {
@@ -124,7 +140,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-new');
 
 			expect(stored).not.toBeNull();
-			expect(stored!.get('CPU')).toBe(false);
+			expect(stored).toEqual([false]);
 		});
 
 		it('updates existing widget visibility when entry already exists', () => {
@@ -150,8 +166,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 
 			expect(stored).not.toBeNull();
-			expect(stored!.get('CPU')).toBe(false);
-			expect(stored!.get('Memory')).toBe(true);
+			expect(stored).toEqual([false, true]);
 		});
 
 		it('silently handles malformed existing JSON without throwing', () => {
@@ -162,6 +177,74 @@ describe('legendVisibilityUtils', () => {
 					{ label: 'CPU', show: true },
 				]),
 			).not.toThrow();
+		});
+
+		it('when existing JSON is malformed, overwrites with valid data for the widget', () => {
+			localStorage.setItem(storageKey, '{invalid-json');
+
+			updateSeriesVisibilityToLocalStorage('widget-1', [
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: false },
+			]);
+
+			const stored = getStoredSeriesVisibility('widget-1');
+			expect(stored).not.toBeNull();
+			expect(stored).toEqual([true, false]);
+			const expected = [
+				{
+					name: 'widget-1',
+					dataIndex: [
+						{ label: 'x-axis', show: true },
+						{ label: 'CPU', show: false },
+					],
+				},
+			];
+			expect(localStorage.setItem).toHaveBeenCalledWith(
+				storageKey,
+				JSON.stringify(expected),
+			);
+		});
+
+		it('preserves other widgets when updating one widget', () => {
+			const existing: GraphVisibilityState[] = [
+				{ name: 'widget-a', dataIndex: [{ label: 'A', show: true }] },
+				{ name: 'widget-b', dataIndex: [{ label: 'B', show: false }] },
+			];
+			localStorage.setItem(storageKey, JSON.stringify(existing));
+
+			updateSeriesVisibilityToLocalStorage('widget-b', [
+				{ label: 'B', show: true },
+			]);
+
+			expect(getStoredSeriesVisibility('widget-a')).toEqual([true]);
+			expect(getStoredSeriesVisibility('widget-b')).toEqual([true]);
+		});
+
+		it('calls setItem with storage key and stringified visibility states', () => {
+			updateSeriesVisibilityToLocalStorage('widget-1', [
+				{ label: 'CPU', show: true },
+			]);
+
+			expect(localStorage.setItem).toHaveBeenCalledTimes(1);
+			expect(localStorage.setItem).toHaveBeenCalledWith(
+				storageKey,
+				expect.any(String),
+			);
+			const [_, value] = (localStorage.setItem as jest.Mock).mock.calls[0];
+			expect((): void => JSON.parse(value)).not.toThrow();
+			expect(JSON.parse(value)).toEqual([
+				{ name: 'widget-1', dataIndex: [{ label: 'CPU', show: true }] },
+			]);
+		});
+
+		it('stores empty dataIndex when seriesVisibility is empty', () => {
+			updateSeriesVisibilityToLocalStorage('widget-1', []);
+
+			const raw = localStorage.getItem(storageKey);
+			expect(raw).not.toBeNull();
+			const parsed = JSON.parse(raw ?? '[]');
+			expect(parsed).toEqual([{ name: 'widget-1', dataIndex: [] }]);
+			expect(getStoredSeriesVisibility('widget-1')).toBeNull();
 		});
 	});
 });
