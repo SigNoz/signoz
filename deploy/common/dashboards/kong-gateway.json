@@ -1,0 +1,32 @@
+{
+  "uuid": "kong_gateway_dashboard_001",
+  "title": "Kong Gateway Dashboard",
+  "description": "Monitoring Kong Gateway metrics including latency, requests, and bandwidth.",
+  "tags": ["kong", "gateway", "infrastructure"],
+  "panels": [
+    {
+      "title": "Total Requests (Per Second)",
+      "type": "graph",
+      "query": "sum(rate(kong_http_status[5m]))",
+      "layout": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Average Latency (ms)",
+      "type": "graph",
+      "query": "sum(kong_latency_ms_sum) / sum(kong_latency_ms_count)",
+      "layout": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "HTTP Status Codes",
+      "type": "value",
+      "query": "sum by (code) (rate(kong_http_status[5m]))",
+      "layout": { "h": 8, "w": 24, "x": 0, "y": 8 }
+    },
+    {
+      "title": "Bandwidth Usage (Bytes)",
+      "type": "graph",
+      "query": "sum(rate(kong_bandwidth[5m]))",
+      "layout": { "h": 8, "w": 24, "x": 0, "y": 16 }
+    }
+  ]
+}
