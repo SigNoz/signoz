@@ -24,29 +24,49 @@ func (f *dataFormatter) Format(value float64, unit string) string {
 		return humanize.IBytes(uint64(value))
 	case "decbytes":
 		return humanize.Bytes(uint64(value))
-	case "kbytes", "KiBy", "Kibit":
+	case "kbytes", "KiBy":
 		return humanize.IBytes(uint64(value * converter.Kibibit))
-	case "decKbytes", "deckbytes", "kBy", "kbit":
+	case "Kibit":
+		return humanize.IBytes(uint64(value * converter.Kibibit / 8))
+	case "decKbytes", "deckbytes", "kBy":
 		return humanize.Bytes(uint64(value * converter.Kilobit))
-	case "mbytes", "MiBy", "Mibit":
+	case "kbit":
+		return humanize.Bytes(uint64(value * converter.Kilobit / 8))
+	case "mbytes", "MiBy":
 		return humanize.IBytes(uint64(value * converter.Mebibit))
-	case "decMbytes", "decmbytes", "MBy", "Mbit":
+	case "Mibit":
+		return humanize.IBytes(uint64(value * converter.Mebibit / 8))
+	case "decMbytes", "decmbytes", "MBy":
 		return humanize.Bytes(uint64(value * converter.Megabit))
-	case "gbytes", "GiBy", "Gibit":
+	case "Mbit":
+		return humanize.Bytes(uint64(value * converter.Megabit / 8))
+	case "gbytes", "GiBy":
 		return humanize.IBytes(uint64(value * converter.Gibibit))
-	case "decGbytes", "decgbytes", "GBy", "Gbit":
+	case "Gibit":
+		return humanize.IBytes(uint64(value * converter.Gibibit / 8))
+	case "decGbytes", "decgbytes", "GBy":
 		return humanize.Bytes(uint64(value * converter.Gigabit))
-	case "tbytes", "TiBy", "Tibit":
+	case "Gbit":
+		return humanize.Bytes(uint64(value * converter.Gigabit / 8))
+	case "tbytes", "TiBy":
 		return humanize.IBytes(uint64(value * converter.Tebibit))
-	case "decTbytes", "dectbytes", "TBy", "Tbit":
+	case "Tibit":
+		return humanize.IBytes(uint64(value * converter.Tebibit / 8))
+	case "decTbytes", "dectbytes", "TBy":
 		return humanize.Bytes(uint64(value * converter.Terabit))
-	case "pbytes", "PiBy", "Pibit":
+	case "Tbit":
+		return humanize.Bytes(uint64(value * converter.Terabit / 8))
+	case "pbytes", "PiBy":
 		return humanize.IBytes(uint64(value * converter.Pebibit))
-	case "decPbytes", "decpbytes", "PBy", "Pbit":
+	case "Pbit":
+		return humanize.Bytes(uint64(value * converter.Petabit / 8))
+	case "decPbytes", "decpbytes", "PBy":
 		return humanize.Bytes(uint64(value * converter.Petabit))
 	case "EiBy":
 		return humanize.IBytes(uint64(value * converter.Exbibit))
-	case "EBy", "Ebit":
+	case "Ebit":
+		return humanize.Bytes(uint64(value * converter.Exabit / 8))
+	case "EBy":
 		return humanize.Bytes(uint64(value * converter.Exabit))
 	}
 	// When unit is not matched, return the value as it is.

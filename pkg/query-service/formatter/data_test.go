@@ -127,42 +127,45 @@ func TestDataFormatterComprehensive(t *testing.T) {
 		// Exabytes - EBy (SI)
 		{name: "EBy: 10 = 10 EB", value: 10, unit: "EBy", expected: "10 EB"},
 
-		// Kibibits - Kibit (IEC)
-		{name: "Kibit: 1 = 1 KiB", value: 1, unit: "Kibit", expected: "1.0 KiB"},
-		{name: "Kibit: 1024 = 1 MiB", value: 1024, unit: "Kibit", expected: "1.0 MiB"},
+		// Kibibits - Kibit (IEC): 1 Kibit = 1024 bits = 128 bytes
+		{name: "Kibit: 1 = 128 B", value: 1, unit: "Kibit", expected: "128 B"},
+		{name: "Kibit: 1024 = 128 KiB", value: 1024, unit: "Kibit", expected: "128 KiB"},
 
-		// Mebibits - Mibit (IEC)
-		{name: "Mibit: 1 = 1 MiB", value: 1, unit: "Mibit", expected: "1.0 MiB"},
-		{name: "Mibit: 1024 = 1 GiB", value: 1024, unit: "Mibit", expected: "1.0 GiB"},
+		// Mebibits - Mibit (IEC): 1 Mibit = 1024 Kibit = 128 KiB
+		{name: "Mibit: 1 = 128 KiB", value: 1, unit: "Mibit", expected: "128 KiB"},
+		{name: "Mibit: 1024 = 128 MiB", value: 1024, unit: "Mibit", expected: "128 MiB"},
 
-		// Gibibits - Gibit (IEC)
-		{name: "Gibit: 42*1024 = 42 TiB", value: 42 * 1024, unit: "Gibit", expected: "42 TiB"},
+		// Gibibits - Gibit (IEC): 1 Gibit = 1024 Mibit = 128 MiB
+		{name: "Gibit: 1 = 128 MiB", value: 1, unit: "Gibit", expected: "128 MiB"},
+		{name: "Gibit: 42*1024 = 5.3 TiB", value: 42 * 1024, unit: "Gibit", expected: "5.3 TiB"},
 
-		// Tebibits - Tibit (IEC)
-		{name: "Tibit: 42*1024 = 42 PiB", value: 42 * 1024, unit: "Tibit", expected: "42 PiB"},
+		// Tebibits - Tibit (IEC): 1 Tibit = 1024 Gibit = 128 GiB
+		{name: "Tibit: 1 = 128 GiB", value: 1, unit: "Tibit", expected: "128 GiB"},
+		{name: "Tibit: 42*1024 = 5.3 PiB", value: 42 * 1024, unit: "Tibit", expected: "5.3 PiB"},
 
-		// Pebibits - Pibit (IEC)
-		{name: "Pibit: 10*1024 = 10 EiB", value: 10 * 1024, unit: "Pibit", expected: "10 EiB"},
+		// Kilobits - kbit (SI): 1 kbit = 1000 bits = 125 bytes
+		{name: "kbit: 1 = 125 B", value: 1, unit: "kbit", expected: "125 B"},
+		{name: "kbit: 1000 = 125 kB", value: 1000, unit: "kbit", expected: "125 kB"},
 
-		// Kilobits - kbit (SI)
-		{name: "kbit: 1 = 1 kB", value: 1, unit: "kbit", expected: "1.0 kB"},
-		{name: "kbit: 1000 = 1 MB", value: 1000, unit: "kbit", expected: "1.0 MB"},
+		// Megabits - Mbit (SI): 1 Mbit = 1000 kbit = 125 kB
+		{name: "Mbit: 1 = 125 kB", value: 1, unit: "Mbit", expected: "125 kB"},
+		{name: "Mbit: 1000 = 125 MB", value: 1000, unit: "Mbit", expected: "125 MB"},
 
-		// Megabits - Mbit (SI)
-		{name: "Mbit: 1 = 1 MB", value: 1, unit: "Mbit", expected: "1.0 MB"},
-		{name: "Mbit: 1000 = 1 GB", value: 1000, unit: "Mbit", expected: "1.0 GB"},
+		// Gigabits - Gbit (SI): 1 Gbit = 1000 Mbit = 125 MB
+		{name: "Gbit: 1 = 125 MB", value: 1, unit: "Gbit", expected: "125 MB"},
+		{name: "Gbit: 42*1000 = 5.3 TB", value: 42 * 1000, unit: "Gbit", expected: "5.3 TB"},
 
-		// Gigabits - Gbit (SI)
-		{name: "Gbit: 42*1000 = 42 TB", value: 42 * 1000, unit: "Gbit", expected: "42 TB"},
+		// Terabits - Tbit (SI): 1 Tbit = 1000 Gbit = 125 GB
+		{name: "Tbit: 1 = 125 GB", value: 1, unit: "Tbit", expected: "125 GB"},
+		{name: "Tbit: 42*1000 = 5.3 PB", value: 42 * 1000, unit: "Tbit", expected: "5.3 PB"},
 
-		// Terabits - Tbit (SI)
-		{name: "Tbit: 42*1000 = 42 PB", value: 42 * 1000, unit: "Tbit", expected: "42 PB"},
+		// Petabits - Pbit (SI): 1 Pbit = 1000 Tbit = 125 TB
+		{name: "Pbit: 1 = 125 TB", value: 1, unit: "Pbit", expected: "125 TB"},
+		{name: "Pbit: 42 = 5.3 PB", value: 42, unit: "Pbit", expected: "5.3 PB"},
 
-		// Petabits - Pbit (SI)
-		{name: "Pbit: 42 = 42 PB", value: 42, unit: "Pbit", expected: "42 PB"},
-
-		// Exabits - Ebit (SI)
-		{name: "Ebit: 10 = 10 EB", value: 10, unit: "Ebit", expected: "10 EB"},
+		// Exabits - Ebit (SI): 1 Ebit = 1000 Pbit = 125 PB
+		{name: "Ebit: 1 = 125 PB", value: 1, unit: "Ebit", expected: "125 PB"},
+		{name: "Ebit: 10 = 1.3 EB", value: 10, unit: "Ebit", expected: "1.3 EB"},
 	}
 
 	for _, tt := range tests {
