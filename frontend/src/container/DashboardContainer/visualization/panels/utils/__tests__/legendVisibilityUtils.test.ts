@@ -63,7 +63,7 @@ describe('legendVisibilityUtils', () => {
 
 			expect(result).not.toBeNull();
 			expect(result).toEqual({
-				lables: ['CPU', 'Memory'],
+				labels: ['CPU', 'Memory'],
 				visibility: [true, false],
 			});
 		});
@@ -86,7 +86,7 @@ describe('legendVisibilityUtils', () => {
 
 			expect(result).not.toBeNull();
 			expect(result).toEqual({
-				lables: ['CPU', 'CPU', 'Memory'],
+				labels: ['CPU', 'CPU', 'Memory'],
 				visibility: [true, false, false],
 			});
 		});
@@ -128,7 +128,7 @@ describe('legendVisibilityUtils', () => {
 
 			expect(stored).not.toBeNull();
 			expect(stored).toEqual({
-				lables: ['CPU', 'Memory'],
+				labels: ['CPU', 'Memory'],
 				visibility: [true, false],
 			});
 		});
@@ -149,7 +149,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-new');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual({ lables: ['CPU'], visibility: [false] });
+			expect(stored).toEqual({ labels: ['CPU'], visibility: [false] });
 		});
 
 		it('updates existing widget visibility when entry already exists', () => {
@@ -176,7 +176,7 @@ describe('legendVisibilityUtils', () => {
 
 			expect(stored).not.toBeNull();
 			expect(stored).toEqual({
-				lables: ['CPU', 'Memory'],
+				labels: ['CPU', 'Memory'],
 				visibility: [false, true],
 			});
 		});
@@ -202,7 +202,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 			expect(stored).not.toBeNull();
 			expect(stored).toEqual({
-				lables: ['x-axis', 'CPU'],
+				labels: ['x-axis', 'CPU'],
 				visibility: [true, false],
 			});
 			const expected = [
@@ -232,11 +232,11 @@ describe('legendVisibilityUtils', () => {
 			]);
 
 			expect(getStoredSeriesVisibility('widget-a')).toEqual({
-				lables: ['A'],
+				labels: ['A'],
 				visibility: [true],
 			});
 			expect(getStoredSeriesVisibility('widget-b')).toEqual({
-				lables: ['B'],
+				labels: ['B'],
 				visibility: [true],
 			});
 		});

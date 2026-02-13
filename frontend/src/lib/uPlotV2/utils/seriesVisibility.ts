@@ -16,8 +16,8 @@ export function resolveSeriesVisibility({
 	if (
 		isAnySeriesHidden &&
 		seriesVisibilityState?.visibility &&
-		seriesVisibilityState.lables.length > seriesIndex &&
-		seriesVisibilityState.lables[seriesIndex] === seriesLabel
+		seriesVisibilityState.labels.length > seriesIndex &&
+		seriesVisibilityState.labels[seriesIndex] === seriesLabel
 	) {
 		return seriesVisibilityState.visibility[seriesIndex] ?? false;
 	}

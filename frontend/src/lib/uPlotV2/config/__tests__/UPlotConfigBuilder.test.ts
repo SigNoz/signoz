@@ -188,7 +188,7 @@ describe('UPlotConfigBuilder', () => {
 	it('restores visibility state from localStorage when selectionPreferencesSource is LOCAL_STORAGE', () => {
 		// Index 0 = x-axis/time; indices 1,2 = data series (Requests, Errors). resolveSeriesVisibility matches by seriesIndex + seriesLabel.
 		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue({
-			lables: ['x-axis', 'Requests', 'Errors'],
+			labels: ['x-axis', 'Requests', 'Errors'],
 			visibility: [true, true, false],
 		});
 

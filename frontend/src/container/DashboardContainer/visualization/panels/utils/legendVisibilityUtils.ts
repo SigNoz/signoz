@@ -30,7 +30,7 @@ export function getStoredSeriesVisibility(
 		}
 
 		return {
-			lables: widgetState.dataIndex.map((item) => item.label),
+			labels: widgetState.dataIndex.map((item) => item.label),
 			visibility: widgetState.dataIndex.map((item) => item.show),
 		};
 	} catch (error) {

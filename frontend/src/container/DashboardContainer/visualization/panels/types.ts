@@ -15,7 +15,7 @@ export interface GraphVisibilityState {
 }
 
 export interface SeriesVisibilityState {
-	lables: string[];
+	labels: string[];
 	visibility: boolean[];
 }
 
