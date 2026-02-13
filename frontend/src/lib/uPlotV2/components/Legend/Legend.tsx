@@ -34,9 +34,7 @@ export default function Legend({
 	});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
-	const { copyToClipboard, id: copiedId } = useCopyToClipboard({
-		copiedResetMs: 2000,
-	});
+	const { copyToClipboard, id: copiedId } = useCopyToClipboard();
 
 	const legendItems = useMemo(() => Object.values(legendItemsMap), [
 		legendItemsMap,
