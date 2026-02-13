@@ -170,7 +170,7 @@
 	}
 
 	.legend-copy-button {
-		display: flex;
+		display: none;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
@@ -180,7 +180,7 @@
 		color: var(--bg-vanilla-400);
 		cursor: pointer;
 		border-radius: 4px;
-		opacity: 0;
+		opacity: 1;
 		transition: opacity 0.15s ease, color 0.15s ease;
 
 		&:hover {
@@ -189,7 +189,9 @@
 	}
 
 	&:hover {
+		background: rgba(255, 255, 255, 0.05);
 		.legend-copy-button {
+			display: flex;
 			opacity: 1;
 		}
 	}
@@ -205,6 +207,9 @@
 	}
 
 	.legend-item {
+		&:hover {
+			background: rgba(0, 0, 0, 0.05);
+		}
 		.legend-copy-button {
 			color: var(--bg-ink-400);
 
