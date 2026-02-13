@@ -26,7 +26,7 @@ export const METRIC_TYPE_LABEL_MAP = {
 	[MetricType.EXPONENTIAL_HISTOGRAM]: 'Exp. Histogram',
 };
 
-export const METRIC_TYPE_VIEW_LABEL_MAP = {
+export const METRIC_TYPE_VIEW_LABEL_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.sum]: 'Sum',
 	[MetrictypesTypeDTO.gauge]: 'Gauge',
 	[MetrictypesTypeDTO.histogram]: 'Histogram',
@@ -34,7 +34,8 @@ export const METRIC_TYPE_VIEW_LABEL_MAP = {
 	[MetrictypesTypeDTO.exponentialhistogram]: 'Exp. Histogram',
 };
 
-export const METRIC_TYPE_VALUES_MAP = {
+// TODO(@amlannandy): To remove this once API migration is complete
+export const METRIC_TYPE_VALUES_MAP: Record<MetricType, string> = {
 	[MetricType.SUM]: 'Sum',
 	[MetricType.GAUGE]: 'Gauge',
 	[MetricType.HISTOGRAM]: 'Histogram',
@@ -42,7 +43,7 @@ export const METRIC_TYPE_VALUES_MAP = {
 	[MetricType.EXPONENTIAL_HISTOGRAM]: 'ExponentialHistogram',
 };
 
-export const METRIC_TYPE_VIEW_VALUES_MAP = {
+export const METRIC_TYPE_VIEW_VALUES_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.sum]: 'Sum',
 	[MetrictypesTypeDTO.gauge]: 'Gauge',
 	[MetrictypesTypeDTO.histogram]: 'Histogram',

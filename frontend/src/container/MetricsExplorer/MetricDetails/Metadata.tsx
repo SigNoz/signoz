@@ -244,7 +244,7 @@ function Metadata({
 							message: 'Metadata updated successfully',
 						});
 						setIsEditing(false);
-						// TODO: To update this to use invalidateGetMetricList
+						// TODO(@amlannandy): To update this to use invalidateGetMetricList
 						// once we have switched to the V2 API in summary page
 						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_METRICS_LIST]);
 						invalidateGetMetricMetadata(queryClient, {

@@ -282,11 +282,9 @@ function AllAttributes({
 		],
 	);
 
-	const emptyText = useMemo(
-		() =>
-			isErrorAttributes ? 'Error fetching attributes' : 'No attributes found',
-		[isErrorAttributes],
-	);
+	const emptyText = isErrorAttributes
+		? 'Error fetching attributes'
+		: 'No attributes found';
 
 	const items = useMemo(
 		() => [
@@ -342,7 +340,7 @@ function AllAttributes({
 	return (
 		<Collapse
 			bordered
-			className="metrics-accordion metrics-all-attributes-accordion"
+			className="metrics-accordion"
 			activeKey={activeKey}
 			onChange={(keys): void => setActiveKey(keys as string[])}
 			items={items}

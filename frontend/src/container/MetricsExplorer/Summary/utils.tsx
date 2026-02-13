@@ -212,7 +212,7 @@ function ValidateRowValueWrapper({
 }
 
 export const formatNumberIntoHumanReadableFormat = (
-	num: number | undefined,
+	num: number,
 	addPlusSign = true,
 ): string => {
 	if (!num) {
