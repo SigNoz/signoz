@@ -128,6 +128,15 @@
 		opacity: 1;
 	}
 
+	.legend-item-label-trigger {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex: 1;
+		min-width: 0;
+		cursor: pointer;
+	}
+
 	.legend-marker {
 		border-width: 2px;
 		border-radius: 50%;
@@ -157,10 +166,32 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		min-width: 0;
+		user-select: none;
+	}
+
+	.legend-copy-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		padding: 2px;
+		margin: 0;
+		border: none;
+		color: var(--bg-vanilla-400);
+		cursor: pointer;
+		border-radius: 4px;
+		opacity: 0;
+		transition: opacity 0.15s ease, color 0.15s ease;
+
+		&:hover {
+			color: var(--bg-vanilla-100);
+		}
 	}
 
 	&:hover {
-		background: rgba(255, 255, 255, 0.05);
+		.legend-copy-button {
+			opacity: 1;
+		}
 	}
 }
 
@@ -169,6 +200,16 @@
 		.legend-virtuoso-container {
 			&::-webkit-scrollbar-thumb {
 				background: var(--bg-vanilla-400);
+			}
+		}
+	}
+
+	.legend-item {
+		.legend-copy-button {
+			color: var(--bg-ink-400);
+
+			&:hover {
+				color: var(--bg-ink-500);
 			}
 		}
 	}

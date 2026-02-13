@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
 import { Input, Tooltip as AntdTooltip } from 'antd';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
+import { Copy } from 'lucide-react';
 
 import { useLegendActions } from '../../hooks/useLegendActions';
 import { LegendPosition, LegendProps } from '../types';
@@ -32,6 +33,21 @@ export default function Legend({
 	});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
+	const [copiedSeriesIndex, setCopiedSeriesIndex] = useState<number | null>(
+		null,
+	);
+	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const COPIED_RESET_MS = 2000;
+
+	useEffect(
+		() => (): void => {
+			if (copiedTimeoutRef.current) {
+				clearTimeout(copiedTimeoutRef.current);
+			}
+		},
+		[],
+	);
 
 	const legendItems = useMemo(() => Object.values(legendItemsMap), [
 		legendItemsMap,
@@ -59,26 +75,60 @@ export default function Legend({
 		);
 	}, [position, legendSearchQuery, legendItems]);
 
+	const handleCopyLegend = useCallback(
+		(e: React.MouseEvent, seriesIndex: number, label: string): void => {
+			e.stopPropagation();
+			void navigator.clipboard.writeText(label);
+			if (copiedTimeoutRef.current) {
+				clearTimeout(copiedTimeoutRef.current);
+			}
+			setCopiedSeriesIndex(seriesIndex);
+			copiedTimeoutRef.current = setTimeout(() => {
+				setCopiedSeriesIndex(null);
+				copiedTimeoutRef.current = null;
+			}, COPIED_RESET_MS);
+		},
+		[],
+	);
+
 	const renderLegendItem = useCallback(
 		(item: LegendItem): JSX.Element => (
-			<AntdTooltip key={item.seriesIndex} title={item.label}>
-				<div
-					data-legend-item-id={item.seriesIndex}
-					className={cx('legend-item', `legend-item-${position.toLowerCase()}`, {
-						'legend-item-off': !item.show,
-						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
-					})}
+			<div
+				key={item.seriesIndex}
+				data-legend-item-id={item.seriesIndex}
+				className={cx('legend-item', `legend-item-${position.toLowerCase()}`, {
+					'legend-item-off': !item.show,
+					'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
+				})}
+			>
+				<AntdTooltip title={item.label}>
+					<div className="legend-item-label-trigger">
+						<div
+							className="legend-marker"
+							style={{ borderColor: String(item.color) }}
+							data-is-legend-marker={true}
+						/>
+						<span className="legend-label">{item.label}</span>
+					</div>
+				</AntdTooltip>
+				<AntdTooltip
+					title={copiedSeriesIndex === item.seriesIndex ? 'Copied' : 'Copy'}
 				>
-					<div
-						className="legend-marker"
-						style={{ borderColor: String(item.color) }}
-						data-is-legend-marker={true}
-					/>
-					<span className="legend-label">{item.label}</span>
-				</div>
-			</AntdTooltip>
+					<button
+						type="button"
+						className="legend-copy-button"
+						onClick={(e): void =>
+							handleCopyLegend(e, item.seriesIndex, item.label ?? '')
+						}
+						aria-label={`Copy ${item.label}`}
+						data-testid="legend-copy"
+					>
+						<Copy size={12} />
+					</button>
+				</AntdTooltip>
+			</div>
 		),
-		[focusedSeriesIndex, position],
+		[copiedSeriesIndex, focusedSeriesIndex, handleCopyLegend, position],
 	);
 
 	const isEmptyState = useMemo(() => {
