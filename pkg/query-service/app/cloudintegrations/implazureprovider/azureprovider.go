@@ -29,7 +29,7 @@ type azureProvider struct {
 	logger                  *slog.Logger
 	accountsRepo            store.CloudProviderAccountsRepository
 	serviceConfigRepo       store.ServiceConfigDatabase
-	azureServiceDefinitions *services.AzureServicesProvider
+	azureServiceDefinitions *services.ServicesProvider[*integrationstypes.AzureDefinition]
 	querier                 querier.Querier
 }
 
@@ -176,12 +176,16 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 		metricsStrategyMap := make(map[string]*integrationstypes.AzureMetricsStrategy)
 		logsStrategyMap := make(map[string]*integrationstypes.AzureLogsStrategy)
 
-		for _, metric := range definition.Strategy.AzureMetrics {
-			metricsStrategyMap[metric.Name] = metric
+		if definition.Strategy != nil && definition.Strategy.Metrics != nil {
+			for _, metric := range definition.Strategy.Metrics {
+				metricsStrategyMap[metric.Name] = metric
+			}
 		}
 
-		for _, log := range definition.Strategy.AzureLogs {
-			logsStrategyMap[log.Name] = log
+		if definition.Strategy != nil && definition.Strategy.Logs != nil {
+			for _, log := range definition.Strategy.Logs {
+				logsStrategyMap[log.Name] = log
+			}
 		}
 
 		if serviceConfig.Metrics != nil {
@@ -206,12 +210,12 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 			}
 		}
 
-		strategy := integrationstypes.AzureCollectionStrategy{}
+		strategy := &integrationstypes.AzureCollectionStrategy{
+			Metrics: metrics,
+			Logs:    logs,
+		}
 
-		strategy.AzureMetrics = metrics
-		strategy.AzureLogs = logs
-
-		agentConfig.TelemetryCollectionStrategy[svcType] = &strategy
+		agentConfig.TelemetryCollectionStrategy[svcType] = strategy
 	}
 
 	return agentConfig, nil
@@ -279,12 +283,12 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
 	}
 
-	details.AzureServiceDefinition = *azureDefinition
+	details.AzureDefinition = *azureDefinition
 	if req.CloudAccountID == nil {
 		return details, nil
 	}
 
-	config, err := a.getServiceConfig(ctx, &details.AzureServiceDefinition, req.OrgID.String(), req.ServiceId, *req.CloudAccountID)
+	config, err := a.getServiceConfig(ctx, azureDefinition, req.OrgID.String(), req.ServiceId, *req.CloudAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -296,19 +300,23 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 		cfg := new(integrationstypes.AzureCloudServiceConfig)
 
 		logs := make([]*integrationstypes.AzureCloudServiceLogsConfig, 0)
-		for _, log := range azureDefinition.Strategy.AzureLogs {
-			logs = append(logs, &integrationstypes.AzureCloudServiceLogsConfig{
-				Enabled: false,
-				Name:    log.Name,
-			})
+		if azureDefinition.Strategy != nil && azureDefinition.Strategy.Logs != nil {
+			for _, log := range azureDefinition.Strategy.Logs {
+				logs = append(logs, &integrationstypes.AzureCloudServiceLogsConfig{
+					Enabled: false,
+					Name:    log.Name,
+				})
+			}
 		}
 
 		metrics := make([]*integrationstypes.AzureCloudServiceMetricsConfig, 0)
-		for _, metric := range azureDefinition.Strategy.AzureMetrics {
-			metrics = append(metrics, &integrationstypes.AzureCloudServiceMetricsConfig{
-				Enabled: false,
-				Name:    metric.Name,
-			})
+		if azureDefinition.Strategy != nil && azureDefinition.Strategy.Metrics != nil {
+			for _, metric := range azureDefinition.Strategy.Metrics {
+				metrics = append(metrics, &integrationstypes.AzureCloudServiceMetricsConfig{
+					Enabled: false,
+					Name:    metric.Name,
+				})
+			}
 		}
 
 		cfg.Logs = logs
@@ -324,7 +332,7 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 
 func (a *azureProvider) getServiceConfig(
 	ctx context.Context,
-	definition *integrationstypes.AzureServiceDefinition,
+	definition *integrationstypes.AzureDefinition,
 	orgID string,
 	serviceId string,
 	cloudAccountId string,
@@ -350,7 +358,7 @@ func (a *azureProvider) getServiceConfig(
 
 	for _, metric := range config.Metrics {
 		if metric.Enabled {
-			definition.PopulateDashboardURLs(serviceId)
+			definition.PopulateDashboardURLs(a.GetName(), serviceId)
 			break
 		}
 	}

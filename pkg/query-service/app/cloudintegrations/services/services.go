@@ -20,77 +20,59 @@ var (
 	CodeServiceDefinitionNotFound = errors.MustNewCode("service_definition_not_dound")
 )
 
-type (
-	AWSServicesProvider struct {
-		definitions map[string]*integrationstypes.AWSServiceDefinition
-	}
-	AzureServicesProvider struct {
-		definitions map[string]*integrationstypes.AzureServiceDefinition
-	}
-)
+type ServicesProvider[T integrationstypes.Definition] struct {
+	definitions map[string]T
+}
 
-func (a *AzureServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AzureServiceDefinition, error) {
+func (a *ServicesProvider[T]) ListServiceDefinitions(ctx context.Context) (map[string]T, error) {
 	return a.definitions, nil
 }
 
-func (a *AzureServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationstypes.AzureServiceDefinition, error) {
+func (a *ServicesProvider[T]) GetServiceDefinition(ctx context.Context, serviceName string) (T, error) {
 	def, ok := a.definitions[serviceName]
 	if !ok {
-		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "azure service definition not found: %s", serviceName)
+		return *new(T), errors.NewNotFoundf(CodeServiceDefinitionNotFound, "azure service definition not found: %s", serviceName)
 	}
 
 	return def, nil
 }
 
-func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AWSServiceDefinition, error) {
-	return a.definitions, nil
-}
-
-func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationstypes.AWSServiceDefinition, error) {
-	def, ok := a.definitions[serviceName]
-	if !ok {
-		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "aws service definition not found: %s", serviceName)
-	}
-
-	return def, nil
-}
-
-func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
+func NewAWSCloudProviderServices() (*ServicesProvider[*integrationstypes.AWSDefinition], error) {
 	definitions, err := readAllServiceDefinitions(integrationstypes.CloudProviderAWS)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceDefinitions := make(map[string]*integrationstypes.AWSServiceDefinition)
+	serviceDefinitions := make(map[string]*integrationstypes.AWSDefinition)
 	for id, def := range definitions {
-		typedDef, ok := def.(*integrationstypes.AWSServiceDefinition)
+		typedDef, ok := def.(*integrationstypes.AWSDefinition)
 		if !ok {
 			return nil, fmt.Errorf("invalid type for AWS service definition %s", id)
 		}
 		serviceDefinitions[id] = typedDef
 	}
 
-	return &AWSServicesProvider{
+	return &ServicesProvider[*integrationstypes.AWSDefinition]{
 		definitions: serviceDefinitions,
 	}, nil
 }
 
-func NewAzureCloudProviderServices() (*AzureServicesProvider, error) {
+func NewAzureCloudProviderServices() (*ServicesProvider[*integrationstypes.AzureDefinition], error) {
 	definitions, err := readAllServiceDefinitions(integrationstypes.CloudProviderAzure)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceDefinitions := make(map[string]*integrationstypes.AzureServiceDefinition)
+	serviceDefinitions := make(map[string]*integrationstypes.AzureDefinition)
 	for id, def := range definitions {
-		typedDef, ok := def.(*integrationstypes.AzureServiceDefinition)
+		typedDef, ok := def.(*integrationstypes.AzureDefinition)
 		if !ok {
 			return nil, fmt.Errorf("invalid type for Azure service definition %s", id)
 		}
 		serviceDefinitions[id] = typedDef
 	}
 
-	return &AzureServicesProvider{
+	return &ServicesProvider[*integrationstypes.AzureDefinition]{
 		definitions: serviceDefinitions,
 	}, nil
 }
@@ -169,9 +151,9 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (inte
 
 	switch cloudProvider {
 	case integrationstypes.CloudProviderAWS:
-		serviceDef = &integrationstypes.AWSServiceDefinition{}
+		serviceDef = &integrationstypes.AWSDefinition{}
 	case integrationstypes.CloudProviderAzure:
-		serviceDef = &integrationstypes.AzureServiceDefinition{}
+		serviceDef = &integrationstypes.AzureDefinition{}
 	default:
 		// ideally this shouldn't happen hence throwing internal error
 		return nil, errors.NewInternalf(errors.CodeInternal, "unsupported cloud provider: %s", cloudProvider)

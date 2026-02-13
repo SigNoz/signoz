@@ -34,7 +34,7 @@ type awsProvider struct {
 	querier               querier.Querier
 	accountsRepo          integrationstore.CloudProviderAccountsRepository
 	serviceConfigRepo     integrationstore.ServiceConfigDatabase
-	awsServiceDefinitions *services.AWSServicesProvider
+	serviceDefinitions     *services.ServicesProvider[*integrationstypes.AWSDefinition]
 }
 
 func NewAWSCloudProvider(
@@ -43,7 +43,7 @@ func NewAWSCloudProvider(
 	serviceConfigRepo integrationstore.ServiceConfigDatabase,
 	querier querier.Querier,
 ) integrationstypes.CloudProvider {
-	awsServiceDefinitions, err := services.NewAWSCloudProviderServices()
+	serviceDefinitions, err := services.NewAWSCloudProviderServices()
 	if err != nil {
 		panic("failed to initialize AWS service definitions: " + err.Error())
 	}
@@ -53,7 +53,7 @@ func NewAWSCloudProvider(
 		querier:               querier,
 		accountsRepo:          accountsRepo,
 		serviceConfigRepo:     serviceConfigRepo,
-		awsServiceDefinitions: awsServiceDefinitions,
+		serviceDefinitions: serviceDefinitions,
 	}
 }
 
@@ -139,10 +139,8 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 	agentConfig := &integrationstypes.AWSAgentIntegrationConfig{
 		EnabledRegions: []string{},
 		TelemetryCollectionStrategy: &integrationstypes.AWSCollectionStrategy{
-			Provider:   a.GetName(),
-			AWSMetrics: &integrationstypes.AWSMetricsStrategy{},
-			AWSLogs:    &integrationstypes.AWSLogsStrategy{},
-			S3Buckets:  map[string][]string{},
+			Metrics: &integrationstypes.AWSMetricsStrategy{},
+			Logs:    &integrationstypes.AWSLogsStrategy{},
 		},
 	}
 
@@ -152,7 +150,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 		return nil, err
 	}
 
-	if accountConfig != nil && accountConfig.EnabledRegions != nil {
+	if accountConfig.EnabledRegions != nil {
 		agentConfig.EnabledRegions = accountConfig.EnabledRegions
 	}
 
@@ -168,7 +166,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 	slices.Sort(configuredServices)
 
 	for _, svcType := range configuredServices {
-		definition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, svcType)
+		definition, err := a.serviceDefinitions.GetServiceDefinition(ctx, svcType)
 		if err != nil {
 			continue
 		}
@@ -185,18 +183,18 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 				// S3 bucket sync; No cloudwatch logs are appended for this service type;
 				// Though definition is populated with a custom cloudwatch group that helps in calculating logs connection status
 				agentConfig.TelemetryCollectionStrategy.S3Buckets = serviceConfig.Logs.S3Buckets
-			} else if definition.Strategy.AWSLogs != nil { // services that includes a logs subscription
-				agentConfig.TelemetryCollectionStrategy.AWSLogs.Subscriptions = append(
-					agentConfig.TelemetryCollectionStrategy.AWSLogs.Subscriptions,
-					definition.Strategy.AWSLogs.Subscriptions...,
+			} else if definition.Strategy != nil && definition.Strategy.Logs != nil { // services that includes a logs subscription
+				agentConfig.TelemetryCollectionStrategy.Logs.Subscriptions = append(
+					agentConfig.TelemetryCollectionStrategy.Logs.Subscriptions,
+					definition.Strategy.Logs.Subscriptions...,
 				)
 			}
 		}
 
-		if serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled && definition.Strategy.AWSMetrics != nil {
-			agentConfig.TelemetryCollectionStrategy.AWSMetrics.StreamFilters = append(
-				agentConfig.TelemetryCollectionStrategy.AWSMetrics.StreamFilters,
-				definition.Strategy.AWSMetrics.StreamFilters...,
+		if serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled && definition.Strategy != nil && definition.Strategy.Metrics != nil {
+			agentConfig.TelemetryCollectionStrategy.Metrics.StreamFilters = append(
+				agentConfig.TelemetryCollectionStrategy.Metrics.StreamFilters,
+				definition.Strategy.Metrics.StreamFilters...,
 			)
 		}
 	}
@@ -233,7 +231,7 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 
 	summaries := make([]integrationstypes.AWSServiceSummary, 0)
 
-	definitions, err := a.awsServiceDefinitions.ListServiceDefinitions(ctx)
+	definitions, err := a.serviceDefinitions.ListServiceDefinitions(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't list aws service definitions: %w", err))
 	}
@@ -261,18 +259,17 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationstypes.GetServiceDetailsReq) (any, error) {
 	details := new(integrationstypes.GettableAWSServiceDetails)
 
-	awsDefinition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
+	awsDefinition, err := a.serviceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
 	}
 
-	details.AWSServiceDefinition = *awsDefinition
-	details.Strategy.Provider = a.GetName()
+	details.AWSDefinition = *awsDefinition
 	if req.CloudAccountID == nil {
 		return details, nil
 	}
 
-	config, err := a.getServiceConfig(ctx, &details.AWSServiceDefinition, req.OrgID, a.GetName().String(), req.ServiceId, *req.CloudAccountID)
+	config, err := a.getServiceConfig(ctx, &details.AWSDefinition, req.OrgID, a.GetName().String(), req.ServiceId, *req.CloudAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +284,7 @@ func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationsty
 		ctx,
 		*req.CloudAccountID,
 		req.OrgID,
-		&details.AWSServiceDefinition,
+		&details.AWSDefinition,
 		config,
 	)
 	if err != nil {
@@ -303,7 +300,7 @@ func (a *awsProvider) getServiceConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AWSServiceDefinition,
+	def *integrationstypes.AWSDefinition,
 	serviceConfig *integrationstypes.AWSCloudServiceConfig,
 ) (*integrationstypes.ServiceConnectionStatus, error) {
 	if def.Strategy == nil {
@@ -315,7 +312,7 @@ func (a *awsProvider) getServiceConnectionStatus(
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	if def.Strategy.AWSMetrics != nil && serviceConfig.Metrics.Enabled {
+	if def.Strategy.Metrics != nil && serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -332,7 +329,7 @@ func (a *awsProvider) getServiceConnectionStatus(
 		}()
 	}
 
-	if def.Strategy.AWSLogs != nil && serviceConfig.Logs.Enabled {
+	if def.Strategy.Logs != nil && serviceConfig.Logs != nil && serviceConfig.Logs.Enabled {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -358,10 +355,11 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AWSServiceDefinition,
+	def *integrationstypes.AWSDefinition,
 ) ([]*integrationstypes.SignalConnectionStatus, error) {
 	if def.Strategy == nil ||
-		len(def.Strategy.AWSMetrics.StreamFilters) < 1 ||
+		def.Strategy.Metrics == nil ||
+		len(def.Strategy.Metrics.StreamFilters) < 1 ||
 		len(def.DataCollected.Metrics) < 1 {
 		return nil, nil
 	}
@@ -449,10 +447,11 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AWSServiceDefinition,
+	def *integrationstypes.AWSDefinition,
 ) ([]*integrationstypes.SignalConnectionStatus, error) {
 	if def.Strategy == nil ||
-		len(def.Strategy.AWSLogs.Subscriptions) < 1 ||
+		def.Strategy.Logs == nil ||
+		len(def.Strategy.Logs.Subscriptions) < 1 ||
 		len(def.DataCollected.Logs) < 1 {
 		return nil, nil
 	}
@@ -536,8 +535,10 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 	return statusResp, nil
 }
 
-func (a *awsProvider) getServiceConfig(ctx context.Context,
-	def *integrationstypes.AWSServiceDefinition, orgID valuer.UUID, cloudProvider, serviceId, cloudAccountId string,
+func (a *awsProvider) getServiceConfig(
+	ctx context.Context,
+	def *integrationstypes.AWSDefinition,
+	orgID valuer.UUID, cloudProvider, serviceId, cloudAccountId string,
 ) (*integrationstypes.AWSCloudServiceConfig, error) {
 	activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID.String(), cloudProvider, cloudAccountId)
 	if err != nil {
@@ -560,7 +561,7 @@ func (a *awsProvider) getServiceConfig(ctx context.Context,
 	}
 
 	if config != nil && serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled {
-		def.PopulateDashboardURLs(serviceId)
+		def.PopulateDashboardURLs(a.GetName(), serviceId)
 	}
 
 	return serviceConfig, nil
@@ -598,7 +599,7 @@ func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.U
 
 	svcDashboards := make([]*dashboardtypes.Dashboard, 0)
 
-	allServices, err := a.awsServiceDefinitions.ListServiceDefinitions(ctx)
+	allServices, err := a.serviceDefinitions.ListServiceDefinitions(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list aws service definitions")
 	}
@@ -692,7 +693,7 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 }
 
 func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrationstypes.PatchableServiceConfig) (any, error) {
-	definition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
+	definition, err := a.serviceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("couldn't get aws service definition: %w", err))
 	}

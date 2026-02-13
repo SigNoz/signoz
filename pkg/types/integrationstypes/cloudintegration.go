@@ -194,7 +194,7 @@ type GettableAWSAgentCheckIn struct {
 }
 
 type AWSAgentIntegrationConfig struct {
-	EnabledRegions              []string               `json:"enabled_regions"`
+	EnabledRegions              []string            `json:"enabled_regions"`
 	TelemetryCollectionStrategy *AWSCollectionStrategy `json:"telemetry,omitempty"`
 }
 
@@ -274,7 +274,7 @@ func (a *AWSCloudServiceConfig) Marshal() ([]byte, error) {
 	return serialized, nil
 }
 
-func (a *AWSCloudServiceConfig) Validate(def *AWSServiceDefinition) error {
+func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {
 	if def.Id != S3Sync && a.Logs != nil && a.Logs.S3Buckets != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "s3 buckets can only be added to service-type[%s]", S3Sync)
 	} else if def.Id == S3Sync && a.Logs != nil && a.Logs.S3Buckets != nil {
@@ -288,16 +288,20 @@ func (a *AWSCloudServiceConfig) Validate(def *AWSServiceDefinition) error {
 	return nil
 }
 
-func (a *AzureCloudServiceConfig) Validate(def *AzureServiceDefinition) error {
+func (a *AzureCloudServiceConfig) Validate(def *AzureDefinition) error {
 	logsMap := make(map[string]bool)
 	metricsMap := make(map[string]bool)
 
-	for _, log := range def.Strategy.AzureLogs {
-		logsMap[log.Name] = true
+	if def.Strategy != nil && def.Strategy.Logs != nil {
+		for _, log := range def.Strategy.Logs {
+			logsMap[log.Name] = true
+		}
 	}
 
-	for _, metric := range def.Strategy.AzureMetrics {
-		metricsMap[metric.Name] = true
+	if def.Strategy != nil && def.Strategy.Metrics != nil {
+		for _, metric := range def.Strategy.Metrics {
+			metricsMap[metric.Name] = true
+		}
 	}
 
 	for _, log := range a.Logs {
@@ -623,13 +627,13 @@ type AzureServiceSummary struct {
 }
 
 type GettableAWSServiceDetails struct {
-	AWSServiceDefinition
+	AWSDefinition
 	Config           *AWSCloudServiceConfig   `json:"config"`
 	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
 }
 
 type GettableAzureServiceDetails struct {
-	AzureServiceDefinition
+	AzureDefinition
 	Config           *AzureCloudServiceConfig `json:"config"`
 	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
 }
