@@ -117,7 +117,7 @@ function MetricDetails({
 						<Button
 							onClick={goToMetricsExplorerwithSelectedMetric}
 							icon={<Compass size={16} />}
-							disabled={!metricName}
+							disabled={!metricName || isLoadingMetricMetadata}
 							data-testid="open-in-explorer-button"
 						>
 							Open in Explorer
@@ -127,6 +127,7 @@ function MetricDetails({
 							<Button
 								className="inspect-metrics-button"
 								aria-label="Inspect Metric"
+								disabled={!metricName || isLoadingMetricMetadata}
 								icon={<Crosshair size={18} />}
 								onClick={(): void => {
 									if (metricName) {
