@@ -225,7 +225,7 @@ func buildEndpointsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.Q
 			Signal:       telemetrytypes.SignalTraces,
 			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
 			Aggregations: []qbtypes.TraceAggregation{
-				{Expression: "count_distinct(http_url)"},
+				{Expression: fmt.Sprintf("count_distinct(%s)", derivedKeyHTTPURL)},
 			},
 			Filter:  buildBaseFilter(req.Filter),
 			GroupBy: mergeGroupBy(groupByKeyHTTPHost, req.GroupBy),
