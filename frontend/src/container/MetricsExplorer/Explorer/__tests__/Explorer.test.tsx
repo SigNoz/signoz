@@ -3,8 +3,11 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import {
+	MetricsexplorertypesMetricMetadataDTO,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
@@ -14,7 +17,6 @@ import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
-import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
@@ -135,11 +137,11 @@ jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
 
-const mockMetric: MetricMetadata = {
-	type: MetricType.SUM,
+const mockMetric: MetricsexplorertypesMetricMetadataDTO = {
+	type: MetrictypesTypeDTO.sum,
 	description: 'metric1 description',
 	unit: 'metric1 unit',
-	temporality: Temporality.CUMULATIVE,
+	temporality: MetrictypesTemporalityDTO.cumulative,
 	isMonotonic: true,
 };
 
@@ -269,10 +271,10 @@ describe('Explorer', () => {
 			isError: false,
 			metrics: [
 				{
-					type: MetricType.SUM,
+					type: MetrictypesTypeDTO.sum,
 					description: 'metric1 description',
 					unit: '',
-					temporality: Temporality.CUMULATIVE,
+					temporality: MetrictypesTemporalityDTO.cumulative,
 					isMonotonic: true,
 				},
 			],
