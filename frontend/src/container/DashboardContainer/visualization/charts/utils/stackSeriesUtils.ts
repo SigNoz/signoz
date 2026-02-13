@@ -4,7 +4,7 @@ import uPlot, { AlignedData } from 'uplot';
  * Stack data cumulatively (top-down: first series = top, last = bottom).
  * When `omit(seriesIndex)` returns true, that series is excluded from stacking.
  */
-export function stack(
+export function stackSeries(
 	data: AlignedData,
 	omit: (seriesIndex: number) => boolean,
 ): { data: AlignedData; bands: uPlot.Band[] } {
