@@ -24,35 +24,55 @@ func (f *dataRateFormatter) Format(value float64, unit string) string {
 		return humanize.IBytes(uint64(value)) + "/s"
 	case "Bps", "By/s":
 		return humanize.Bytes(uint64(value)) + "/s"
-	case "binbps":
-		return humanize.IBytes(uint64(value*converter.BitPerSecond)) + "/s"
-	case "bps", "bit/s":
-		return humanize.Bytes(uint64(value*converter.BitPerSecond)) + "/s"
-	case "KiBs", "KiBy/s", "Kibits", "Kibit/s":
+	case "KiBs", "KiBy/s":
 		return humanize.IBytes(uint64(value*converter.KibibitPerSecond)) + "/s"
-	case "KBs", "kBy/s", "Kbits", "kbit/s":
+	case "Kibits", "Kibit/s":
+		return humanize.IBytes(uint64(value*converter.KibibitPerSecond/8)) + "/s"
+	case "KBs", "kBy/s":
 		return humanize.IBytes(uint64(value*converter.KilobitPerSecond)) + "/s"
-	case "MiBs", "MiBy/s", "Mibits", "Mibit/s":
+	case "Kbits", "kbit/s":
+		return humanize.Bytes(uint64(value*converter.KilobitPerSecond/8)) + "/s"
+	case "MiBs", "MiBy/s":
 		return humanize.IBytes(uint64(value*converter.MebibitPerSecond)) + "/s"
-	case "MBs", "MBy/s", "Mbits", "Mbit/s":
+	case "Mibits", "Mibit/s":
+		return humanize.IBytes(uint64(value*converter.MebibitPerSecond/8)) + "/s"
+	case "MBs", "MBy/s":
 		return humanize.IBytes(uint64(value*converter.MegabitPerSecond)) + "/s"
-	case "GiBs", "GiBy/s", "Gibits", "Gibit/s":
+	case "Mbits", "Mbit/s":
+		return humanize.Bytes(uint64(value*converter.MegabitPerSecond/8)) + "/s"
+	case "GiBs", "GiBy/s":
 		return humanize.IBytes(uint64(value*converter.GibibitPerSecond)) + "/s"
-	case "GBs", "GBy/s", "Gbits", "Gbit/s":
+	case "Gibits", "Gibit/s":
+		return humanize.IBytes(uint64(value*converter.GibibitPerSecond/8)) + "/s"
+	case "GBs", "GBy/s":
 		return humanize.IBytes(uint64(value*converter.GigabitPerSecond)) + "/s"
-	case "TiBs", "TiBy/s", "Tibits", "Tibit/s":
+	case "Gbits", "Gbit/s":
+		return humanize.Bytes(uint64(value*converter.GigabitPerSecond/8)) + "/s"
+	case "TiBs", "TiBy/s":
 		return humanize.IBytes(uint64(value*converter.TebibitPerSecond)) + "/s"
-	case "TBs", "TBy/s", "Tbits", "Tbit/s":
+	case "Tibits", "Tibit/s":
+		return humanize.IBytes(uint64(value*converter.TebibitPerSecond/8)) + "/s"
+	case "TBs", "TBy/s":
 		return humanize.IBytes(uint64(value*converter.TerabitPerSecond)) + "/s"
-	case "PiBs", "PiBy/s", "Pibits", "Pibit/s":
+	case "Tbits", "Tbit/s":
+		return humanize.Bytes(uint64(value*converter.TerabitPerSecond/8)) + "/s"
+	case "PiBs", "PiBy/s":
 		return humanize.IBytes(uint64(value*converter.PebibitPerSecond)) + "/s"
-	case "PBs", "PBy/s", "Pbits", "Pbit/s":
+	case "Pibits", "Pibit/s":
+		return humanize.IBytes(uint64(value*converter.PebibitPerSecond/8)) + "/s"
+	case "PBs", "PBy/s":
 		return humanize.IBytes(uint64(value*converter.PetabitPerSecond)) + "/s"
+	case "Pbits", "Pbit/s":
+		return humanize.Bytes(uint64(value*converter.PetabitPerSecond/8)) + "/s"
 	// Exa units
-	case "EBy/s", "Ebit/s":
+	case "EBy/s":
 		return humanize.Bytes(uint64(value*converter.ExabitPerSecond)) + "/s"
-	case "EiBy/s", "Eibit/s":
+	case "Ebit/s":
+		return humanize.Bytes(uint64(value*converter.ExabitPerSecond/8)) + "/s"
+	case "EiBy/s":
 		return humanize.IBytes(uint64(value*converter.ExbibitPerSecond)) + "/s"
+	case "Eibit/s":
+		return humanize.IBytes(uint64(value*converter.ExbibitPerSecond/8)) + "/s"
 	}
 	// When unit is not matched, return the value as it is.
 	return fmt.Sprintf("%v", value)
