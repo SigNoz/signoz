@@ -1,26 +1,40 @@
 {
-  "uuid": "kong-gateway-final-fixed",
+  "uuid": "kong-gateway-monitoring-v1",
   "title": "Kong Gateway Monitoring (Full)",
-  "description": "Complete Kong Monitoring including Latency and RPS",
-  "tags": ["kong"],
+  "description": "Complete Kong Monitoring including Latency, RPS, CPU, and Memory",
+  "tags": ["kong", "infrastructure"],
+  "variables": [
+    {"name": "cluster", "type": "query", "query": "label_values(kong_http_status, cluster)"},
+    {"name": "namespace", "type": "query", "query": "label_values(kong_http_status, namespace)"}
+  ],
   "widgets": [
     {
       "title": "Total Requests",
       "type": "panel",
       "panelType": "graph",
       "query": "sum(rate(kong_http_status[5m]))",
-      "layout": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      "layout": { "h": 6, "w": 12, "x": 0, "y": 0 }
     },
     {
       "title": "P99 Latency",
       "type": "panel",
       "panelType": "graph",
-      "query": "histogram_quantile(0.99, sum by (le) (rate(kong_latency_ms_bucket[5m])))",
-      "layout": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      "query": "histogram_quantile(0.99, sum by (le) (rate(kong_latency_bucket[5m])))",
+      "layout": { "h": 6, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "CPU Usage",
+      "type": "panel",
+      "panelType": "graph",
+      "query": "sum(rate(container_cpu_usage_seconds_total{container=\"kong\"}[5m]))",
+      "layout": { "h": 6, "w": 12, "x": 0, "y": 6 }
+    },
+    {
+      "title": "Memory Usage",
+      "type": "panel",
+      "panelType": "graph",
+      "query": "sum(container_memory_usage_bytes{container=\"kong\"})",
+      "layout": { "h": 6, "w": 12, "x": 12, "y": 6 }
     }
-  ],
-  "layout": [
-    { "h": 8, "i": "0", "w": 12, "x": 0, "y": 0 },
-    { "h": 8, "i": "1", "w": 12, "x": 12, "y": 0 }
   ]
 }
