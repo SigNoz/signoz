@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
 import { Input, Tooltip as AntdTooltip } from 'antd';
 import cx from 'classnames';
+import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { Check, Copy } from 'lucide-react';
@@ -33,21 +34,9 @@ export default function Legend({
 	});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
-	const [copiedSeriesIndex, setCopiedSeriesIndex] = useState<number | null>(
-		null,
-	);
-	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	const COPIED_RESET_MS = 2000;
-
-	useEffect(
-		() => (): void => {
-			if (copiedTimeoutRef.current) {
-				clearTimeout(copiedTimeoutRef.current);
-			}
-		},
-		[],
-	);
+	const { copyToClipboard, id: copiedId } = useCopyToClipboard({
+		copiedResetMs: 2000,
+	});
 
 	const legendItems = useMemo(() => Object.values(legendItemsMap), [
 		legendItemsMap,
@@ -75,25 +64,17 @@ export default function Legend({
 		);
 	}, [position, legendSearchQuery, legendItems]);
 
-	const handleCopyLegend = useCallback(
+	const handleCopyLegendItem = useCallback(
 		(e: React.MouseEvent, seriesIndex: number, label: string): void => {
 			e.stopPropagation();
-			void navigator.clipboard.writeText(label);
-			if (copiedTimeoutRef.current) {
-				clearTimeout(copiedTimeoutRef.current);
-			}
-			setCopiedSeriesIndex(seriesIndex);
-			copiedTimeoutRef.current = setTimeout(() => {
-				setCopiedSeriesIndex(null);
-				copiedTimeoutRef.current = null;
-			}, COPIED_RESET_MS);
+			copyToClipboard(label, seriesIndex);
 		},
-		[],
+		[copyToClipboard],
 	);
 
 	const renderLegendItem = useCallback(
 		(item: LegendItem): JSX.Element => {
-			const isCopied = copiedSeriesIndex === item.seriesIndex;
+			const isCopied = copiedId === item.seriesIndex;
 			return (
 				<div
 					key={item.seriesIndex}
@@ -118,7 +99,7 @@ export default function Legend({
 							type="button"
 							className="legend-copy-button"
 							onClick={(e): void =>
-								handleCopyLegend(e, item.seriesIndex, item.label ?? '')
+								handleCopyLegendItem(e, item.seriesIndex, item.label ?? '')
 							}
 							aria-label={`Copy ${item.label}`}
 							data-testid="legend-copy"
@@ -129,7 +110,7 @@ export default function Legend({
 				</div>
 			);
 		},
-		[copiedSeriesIndex, focusedSeriesIndex, handleCopyLegend, position],
+		[copiedId, focusedSeriesIndex, handleCopyLegendItem, position],
 	);
 
 	const isEmptyState = useMemo(() => {
