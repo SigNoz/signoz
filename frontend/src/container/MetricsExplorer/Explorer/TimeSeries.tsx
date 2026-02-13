@@ -167,25 +167,31 @@ function TimeSeries({
 	} = useUpdateMetricMetadata();
 
 	const handleSaveUnit = (): void => {
-		updateMetricMetadata(
-			{
-				pathParams: {
-					metricName: metricNames[0],
-				},
-				data: buildUpdateMetricYAxisUnitPayload(metrics?.[0], yAxisUnit),
-			},
-			{
-				onSuccess: () => {
-					toast.success('Unit saved successfully');
-					invalidateGetMetricMetadata(queryClient, {
+		if (metrics?.[0]) {
+			updateMetricMetadata(
+				{
+					pathParams: {
 						metricName: metricNames[0],
-					});
+					},
+					data: buildUpdateMetricYAxisUnitPayload(
+						metricNames[0],
+						metrics[0],
+						yAxisUnit,
+					),
 				},
-				onError: () => {
-					toast.error('Failed to save unit');
+				{
+					onSuccess: () => {
+						toast.success('Unit saved successfully');
+						invalidateGetMetricMetadata(queryClient, {
+							metricName: metricNames[0],
+						});
+					},
+					onError: () => {
+						toast.error('Failed to save unit');
+					},
 				},
-			},
-		);
+			);
+		}
 	};
 
 	return (

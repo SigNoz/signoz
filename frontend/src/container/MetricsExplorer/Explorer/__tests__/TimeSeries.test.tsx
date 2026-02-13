@@ -1,9 +1,11 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
+import {
+	MetricsexplorertypesMetricMetadataDTO,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import TimeSeries from '../TimeSeries';
 import { TimeSeriesProps } from '../types';
@@ -52,11 +54,11 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-const mockMetric: MetricMetadata = {
-	type: MetricType.SUM,
+const mockMetric: MetricsexplorertypesMetricMetadataDTO = {
+	type: MetrictypesTypeDTO.sum,
 	description: 'metric1 description',
 	unit: 'metric1 unit',
-	temporality: Temporality.CUMULATIVE,
+	temporality: MetrictypesTemporalityDTO.cumulative,
 	isMonotonic: true,
 };
 
