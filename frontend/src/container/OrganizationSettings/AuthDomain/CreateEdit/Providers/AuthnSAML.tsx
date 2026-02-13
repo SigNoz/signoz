@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Callout } from '@signozhq/callout';
 import { Checkbox } from '@signozhq/checkbox';
+import { CircleHelp } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Form, Tooltip } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
-import { CircleHelp } from 'lucide-react';
 
 import AttributeMappingSection from './components/AttributeMappingSection';
 import RoleMappingSection from './components/RoleMappingSection';

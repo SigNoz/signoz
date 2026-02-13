@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Callout } from '@signozhq/callout';
 import { Checkbox } from '@signozhq/checkbox';
+import { ChevronDown, ChevronRight, CircleHelp } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
-import { ChevronDown, ChevronRight, CircleHelp } from 'lucide-react';
 
 import DomainMappingList from './components/DomainMappingList';
 import EmailTagInput from './components/EmailTagInput';

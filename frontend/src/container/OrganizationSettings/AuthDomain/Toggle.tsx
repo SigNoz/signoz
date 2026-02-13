@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/switch';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
 import {
@@ -58,7 +58,11 @@ function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 	};
 
 	return (
-		<Switch loading={isLoading} checked={isChecked} onChange={onChangeHandler} />
+		<Switch
+			disabled={isLoading}
+			checked={isChecked}
+			onCheckedChange={onChangeHandler}
+		/>
 	);
 }
 

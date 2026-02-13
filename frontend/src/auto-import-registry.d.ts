@@ -23,5 +23,6 @@ import '@signozhq/input';
 import '@signozhq/popover';
 import '@signozhq/resizable';
 import '@signozhq/sonner';
+import '@signozhq/switch';
 import '@signozhq/table';
 import '@signozhq/tooltip';

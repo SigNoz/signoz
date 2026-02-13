@@ -1,10 +1,15 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
-import { Plus, Trash2 } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	CircleHelp,
+	Plus,
+	Trash2,
+} from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Select, Tooltip } from 'antd';
-import { ChevronDown, ChevronRight, CircleHelp } from 'lucide-react';
 
 import './RoleMappingSection.styles.scss';
 

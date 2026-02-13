@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/button';
-import { Table, Typography } from 'antd';
+import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -31,59 +31,6 @@ export const SSOType = new Map<string, string>([
 	['email_password', 'Email Password'],
 	['oidc', 'OIDC'],
 ]);
-
-const columns: ColumnsType<AuthtypesGettableAuthDomainDTO> = [
-	{
-		title: 'Domain',
-		dataIndex: 'name',
-		key: 'name',
-		width: 100,
-		render: (val): JSX.Element => <Typography.Text>{val}</Typography.Text>,
-	},
-	{
-		title: 'Enforce SSO',
-		dataIndex: 'ssoEnabled',
-		key: 'ssoEnabled',
-		width: 80,
-		render: (
-			value: boolean,
-			record: AuthtypesGettableAuthDomainDTO,
-		): JSX.Element => <Toggle isDefaultChecked={value} record={record} />,
-	},
-	{
-		title: 'IDP Initiated SSO URL',
-		dataIndex: 'relayState',
-		key: 'relayState',
-		width: 80,
-		render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => {
-			const relayPath = record.authNProviderInfo?.relayStatePath;
-			if (!relayPath) {
-				return (
-					<Typography.Text style={{ paddingLeft: '6px' }}>N/A</Typography.Text>
-				);
-			}
-
-			const href = `${window.location.origin}/${relayPath}`;
-			return <CopyToClipboard textToCopy={href} />;
-		},
-	},
-	{
-		title: 'Action',
-		dataIndex: 'action',
-		key: 'action',
-		width: 100,
-		render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
-			<section className="auth-domain-list-column-action">
-				<Typography.Link data-column-action="configure">
-					Configure {SSOType.get(record.ssoType || '')}
-				</Typography.Link>
-				<Typography.Link type="danger" data-column-action="delete">
-					Delete
-				</Typography.Link>
-			</section>
-		),
-	},
-];
 
 function AuthDomain(): JSX.Element {
 	const [record, setRecord] = useState<AuthtypesGettableAuthDomainDTO>();
@@ -146,10 +93,76 @@ function AuthDomain(): JSX.Element {
 		}
 	}, [errorFetchingAuthDomainListResponse]);
 
+	const columns: ColumnsType<AuthtypesGettableAuthDomainDTO> = useMemo(
+		() => [
+			{
+				title: 'Domain',
+				dataIndex: 'name',
+				key: 'name',
+				width: 100,
+				render: (val): JSX.Element => <span>{val}</span>,
+			},
+			{
+				title: 'Enforce SSO',
+				dataIndex: 'ssoEnabled',
+				key: 'ssoEnabled',
+				width: 80,
+				render: (
+					value: boolean,
+					record: AuthtypesGettableAuthDomainDTO,
+				): JSX.Element => <Toggle isDefaultChecked={value} record={record} />,
+			},
+			{
+				title: 'IDP Initiated SSO URL',
+				dataIndex: 'relayState',
+				key: 'relayState',
+				width: 80,
+				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => {
+					const relayPath = record.authNProviderInfo?.relayStatePath;
+					if (!relayPath) {
+						return <span className="auth-domain-list-na">N/A</span>;
+					}
+
+					const href = `${window.location.origin}/${relayPath}`;
+					return <CopyToClipboard textToCopy={href} />;
+				},
+			},
+			{
+				title: 'Action',
+				dataIndex: 'action',
+				key: 'action',
+				width: 100,
+				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
+					<section className="auth-domain-list-column-action">
+						<Button
+							className="auth-domain-list-action-link"
+							onClick={(): void => setRecord(record)}
+							variant="link"
+						>
+							Configure {SSOType.get(record.ssoType || '')}
+						</Button>
+						<Button
+							className="auth-domain-list-action-link delete"
+							onClick={(): void => {
+								if (record.id) {
+									handleDeleteDomain(record.id);
+								}
+							}}
+							variant="link"
+						>
+							Delete
+						</Button>
+					</section>
+				),
+			},
+		],
+		[handleDeleteDomain],
+	);
+
 	return (
 		<div className="auth-domain">
 			<section className="auth-domain-header">
-				<Typography.Title level={3}>Authenticated Domains</Typography.Title>
+				<h3 className="auth-domain-title">Authenticated Domains</h3>
 				<Button
 					prefixIcon={<PlusOutlined />}
 					onClick={(): void => {
@@ -167,26 +180,7 @@ function AuthDomain(): JSX.Element {
 				<Table
 					columns={columns}
 					dataSource={authDomainListResponse?.data?.data}
-					onRow={(tableRecord): any => ({
-						onClick: (
-							event: React.SyntheticEvent<HTMLLinkElement, MouseEvent>,
-						): void => {
-							const target = event.target as HTMLLinkElement;
-							const { columnAction } = target.dataset;
-							switch (columnAction) {
-								case 'configure':
-									setRecord(tableRecord);
-									break;
-								case 'delete':
-									if (tableRecord.id) {
-										handleDeleteDomain(tableRecord.id);
-									}
-									break;
-								default:
-									console.error('Unknown action:', columnAction);
-							}
-						},
-					})}
+					onRow={undefined}
 					loading={
 						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
 					}

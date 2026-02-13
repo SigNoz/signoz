@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { Callout } from '@signozhq/callout';
 import { Checkbox } from '@signozhq/checkbox';
+import { CircleHelp } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Form, Tooltip } from 'antd';
-import { CircleHelp } from 'lucide-react';
 
 import ClaimMappingSection from './components/ClaimMappingSection';
 import RoleMappingSection from './components/RoleMappingSection';

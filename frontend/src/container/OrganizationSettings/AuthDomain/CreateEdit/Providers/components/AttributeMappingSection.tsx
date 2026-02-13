@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
+import { ChevronDown, ChevronRight, CircleHelp } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
-import { ChevronDown, ChevronRight, CircleHelp } from 'lucide-react';
 
 import './AttributeMappingSection.styles.scss';
 
