@@ -4,7 +4,7 @@ import { Input, Tooltip as AntdTooltip } from 'antd';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
-import { Copy } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 import { useLegendActions } from '../../hooks/useLegendActions';
 import { LegendPosition, LegendProps } from '../types';
@@ -92,42 +92,43 @@ export default function Legend({
 	);
 
 	const renderLegendItem = useCallback(
-		(item: LegendItem): JSX.Element => (
-			<div
-				key={item.seriesIndex}
-				data-legend-item-id={item.seriesIndex}
-				className={cx('legend-item', `legend-item-${position.toLowerCase()}`, {
-					'legend-item-off': !item.show,
-					'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
-				})}
-			>
-				<AntdTooltip title={item.label}>
-					<div className="legend-item-label-trigger">
-						<div
-							className="legend-marker"
-							style={{ borderColor: String(item.color) }}
-							data-is-legend-marker={true}
-						/>
-						<span className="legend-label">{item.label}</span>
-					</div>
-				</AntdTooltip>
-				<AntdTooltip
-					title={copiedSeriesIndex === item.seriesIndex ? 'Copied' : 'Copy'}
+		(item: LegendItem): JSX.Element => {
+			const isCopied = copiedSeriesIndex === item.seriesIndex;
+			return (
+				<div
+					key={item.seriesIndex}
+					data-legend-item-id={item.seriesIndex}
+					className={cx('legend-item', `legend-item-${position.toLowerCase()}`, {
+						'legend-item-off': !item.show,
+						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
+					})}
 				>
-					<button
-						type="button"
-						className="legend-copy-button"
-						onClick={(e): void =>
-							handleCopyLegend(e, item.seriesIndex, item.label ?? '')
-						}
-						aria-label={`Copy ${item.label}`}
-						data-testid="legend-copy"
-					>
-						<Copy size={12} />
-					</button>
-				</AntdTooltip>
-			</div>
-		),
+					<AntdTooltip title={item.label}>
+						<div className="legend-item-label-trigger">
+							<div
+								className="legend-marker"
+								style={{ borderColor: String(item.color) }}
+								data-is-legend-marker={true}
+							/>
+							<span className="legend-label">{item.label}</span>
+						</div>
+					</AntdTooltip>
+					<AntdTooltip title={isCopied ? 'Copied' : 'Copy'}>
+						<button
+							type="button"
+							className="legend-copy-button"
+							onClick={(e): void =>
+								handleCopyLegend(e, item.seriesIndex, item.label ?? '')
+							}
+							aria-label={`Copy ${item.label}`}
+							data-testid="legend-copy"
+						>
+							{isCopied ? <Check size={12} /> : <Copy size={12} />}
+						</button>
+					</AntdTooltip>
+				</div>
+			);
+		},
 		[copiedSeriesIndex, focusedSeriesIndex, handleCopyLegend, position],
 	);
 
