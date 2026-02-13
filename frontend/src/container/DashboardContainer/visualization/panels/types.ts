@@ -14,6 +14,11 @@ export interface GraphVisibilityState {
 	dataIndex: SeriesVisibilityItem[];
 }
 
+export interface SeriesVisibilityState {
+	labels: string[];
+	visibility: boolean[];
+}
+
 /**
  * Context in which a panel is rendered. Used to vary behavior (e.g. persistence,
  * interactions) per context.
