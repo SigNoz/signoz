@@ -14,23 +14,23 @@ type Templates struct {
 }
 
 type Format struct {
-	Header Header `mapstructure:"header"`
-	Help   Help   `mapstructure:"help"`
-	Footer Footer `mapstructure:"footer"`
+	Header Header `mapstructure:"header" json:"header"`
+	Help   Help   `mapstructure:"help" json:"help"`
+	Footer Footer `mapstructure:"footer" json:"footer"`
 }
 
 type Header struct {
-	Enabled bool   `mapstructure:"enabled"`
-	LogoURL string `mapstructure:"logo_url"`
+	Enabled bool   `mapstructure:"enabled" json:"enabled"`
+	LogoURL string `mapstructure:"logo_url" json:"logo_url"`
 }
 
 type Help struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Email   string `mapstructure:"email"`
+	Enabled bool   `mapstructure:"enabled" json:"enabled"`
+	Email   string `mapstructure:"email" json:"email"`
 }
 
 type Footer struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool `mapstructure:"enabled" json:"enabled"`
 }
 
 type SMTP struct {
