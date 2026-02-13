@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Switch } from '@signozhq/switch';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
@@ -19,6 +19,10 @@ interface ToggleProps {
 function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState<boolean>(isDefaultChecked);
 	const { showErrorModal } = useErrorModal();
+
+	useEffect(() => {
+		setIsChecked(isDefaultChecked);
+	}, [isDefaultChecked]);
 
 	const { mutate: updateAuthDomain, isLoading } = useUpdateAuthDomain<
 		AxiosError<RenderErrorResponseDTO>
