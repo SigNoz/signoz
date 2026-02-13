@@ -1,31 +1,41 @@
 {
-  "uuid": "kong-gateway-dash",
-  "title": "Kong Gateway Overview",
-  "description": "Dashboard for monitoring Kong Gateway performance and errors",
-  "tags": ["kong", "api-gateway"],
+  "uuid": "kong-gateway-advanced-dash",
+  "title": "Kong Gateway Monitoring (Full)",
+  "description": "Complete Kong Monitoring including Latency, Resources, and Plugins",
+  "tags": ["kong", "infrastructure"],
+  "variables": [
+    {"name": "cluster", "type": "query", "query": "label_values(kong_http_status, cluster)"},
+    {"name": "namespace", "type": "query", "query": "label_values(kong_http_status, namespace)"}
+  ],
   "panels": [
     {
-      "title": "Request Rate (RPS)",
-      "type": "time_series",
+      "title": "Total Requests",
+      "type": "graph",
       "query": "sum(rate(kong_http_status[5m]))",
-      "layout": { "h": 6, "w": 12, "x": 0, "y": 0 }
+      "layout": { "h": 6, "w": 8, "x": 0, "y": 0 }
     },
     {
-      "title": "Average Request Latency",
-      "type": "time_series",
-      "query": "avg(rate(kong_latency_ms_sum[5m])) / avg(rate(kong_latency_ms_count[5m]))",
-      "layout": { "h": 6, "w": 12, "x": 12, "y": 0 }
+      "title": "CPU Usage",
+      "type": "graph",
+      "query": "sum(rate(container_cpu_usage_seconds_total{container=\"kong\"}[5m]))",
+      "layout": { "h": 6, "w": 8, "x": 8, "y": 0 }
     },
     {
-      "title": "4xx Errors (Client)",
-      "type": "time_series",
-      "query": "sum(rate(kong_http_status{code=~\"4..\"}[5m]))",
+      "title": "Memory Usage",
+      "type": "graph",
+      "query": "sum(container_memory_usage_bytes{container=\"kong\"})",
+      "layout": { "h": 6, "w": 8, "x": 16, "y": 0 }
+    },
+    {
+      "title": "Avg Request Latency (P99)",
+      "type": "graph",
+      "query": "histogram_quantile(0.99, sum by (le) (rate(kong_latency_ms_bucket[5m])))",
       "layout": { "h": 6, "w": 12, "x": 0, "y": 6 }
     },
     {
-      "title": "5xx Errors (Server)",
-      "type": "time_series",
-      "query": "sum(rate(kong_http_status{code=~\"5..\"}[5m]))",
+      "title": "Upstream Latency",
+      "type": "graph",
+      "query": "avg(rate(kong_upstream_latency_ms_sum[5m]))",
       "layout": { "h": 6, "w": 12, "x": 12, "y": 6 }
     }
   ]
