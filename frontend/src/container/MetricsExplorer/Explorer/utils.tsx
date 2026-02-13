@@ -1,9 +1,11 @@
 import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
+import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { mapMetricUnitToUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
-import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
+
+import { determineIsMonotonicV2 } from '../MetricDetails/utils';
 
 /**
  * Split a query with multiple queryData to multiple distinct queries, each with a single queryData.
@@ -69,16 +71,14 @@ export function useGetMetrics(
 ): {
 	isLoading: boolean;
 	isError: boolean;
-	metrics: (MetricMetadata | undefined)[];
+	metrics: (MetricsexplorertypesMetricMetadataDTO | undefined)[];
 } {
 	const metricsData = useGetMultipleMetrics(metricNames, {
 		enabled: metricNames.length > 0 && isEnabled,
 	});
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
-		metrics: metricsData
-			.map((metric) => metric.data?.data)
-			.map((data) => data?.data),
+		metrics: metricsData.map((metric) => metric.data?.data?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
 }
@@ -90,7 +90,7 @@ export function useGetMetrics(
  * @returns The units of the metrics, can be undefined if the metric has no unit
  */
 export function getMetricUnits(
-	metrics: (MetricMetadata | undefined)[],
+	metrics: (MetricsexplorertypesMetricMetadataDTO | undefined)[],
 ): (string | undefined)[] {
 	return metrics
 		.map((metric) => metric?.unit)
@@ -98,13 +98,16 @@ export function getMetricUnits(
 }
 
 export function buildUpdateMetricYAxisUnitPayload(
-	metric: MetricMetadata | undefined,
+	metricName: string,
+	metric: MetricsexplorertypesMetricMetadataDTO,
 	yAxisUnit: string | undefined,
 ): UpdateMetricMetadataMutationBody {
 	return {
+		metricName,
 		type: metric?.type,
 		description: metric?.description,
-		unit: yAxisUnit,
+		unit: yAxisUnit || '',
 		temporality: metric?.temporality,
+		isMonotonic: determineIsMonotonicV2(metric?.type, metric?.temporality),
 	};
 }

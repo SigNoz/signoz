@@ -3,17 +3,14 @@ import {
 	getGetMetricMetadataQueryKey,
 	getMetricMetadata,
 } from 'api/generated/services/metrics';
-import { SuccessResponseV2 } from 'types/api';
-import { MetricMetadataResponse } from 'types/api/metricsExplorer/v2/getMetricMetadata';
+import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import { AxiosResponse } from 'axios';
 
-type QueryResult = UseQueryResult<
-	SuccessResponseV2<MetricMetadataResponse>,
-	Error
->;
+type QueryResult = UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>;
 
 type UseGetMultipleMetrics = (
 	metricNames: string[],
-	options?: UseQueryOptions<SuccessResponseV2<MetricMetadataResponse>, Error>,
+	options?: UseQueryOptions<AxiosResponse<GetMetricMetadata200>, Error>,
 	headers?: Record<string, string>,
 ) => QueryResult[];
 
@@ -36,6 +33,6 @@ export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 							signal,
 						),
 					...options,
-				} as UseQueryOptions<SuccessResponseV2<MetricMetadataResponse>, Error>),
+				} as UseQueryOptions<AxiosResponse<GetMetricMetadata200>, Error>),
 		),
 	);

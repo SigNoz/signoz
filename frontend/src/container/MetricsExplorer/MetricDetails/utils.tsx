@@ -1,3 +1,7 @@
+import {
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
@@ -46,6 +50,29 @@ export function formatNumberToCompactFormat(num: number): string {
 	}).format(num);
 }
 
+export function determineIsMonotonicV2(
+	metricType: MetrictypesTypeDTO,
+	temporality?: MetrictypesTemporalityDTO,
+): boolean {
+	if (
+		metricType === MetrictypesTypeDTO.histogram ||
+		metricType === MetrictypesTypeDTO.exponentialhistogram
+	) {
+		return true;
+	}
+	if (
+		metricType === MetrictypesTypeDTO.gauge ||
+		metricType === MetrictypesTypeDTO.summary
+	) {
+		return false;
+	}
+	if (metricType === MetrictypesTypeDTO.sum) {
+		return temporality === MetrictypesTemporalityDTO.cumulative;
+	}
+	return false;
+}
+
+// TODO: Remove this after API migration is complete
 export function determineIsMonotonic(
 	metricType: MetricType,
 	temporality?: Temporality,
