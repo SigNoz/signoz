@@ -1,12 +1,12 @@
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import { IDashboardVariables } from './dashboardVariablesStoreTypes';
+import { IDashboardVariables } from '../dashboardVariablesStoreTypes';
 import {
 	buildDynamicVariableOrder,
 	buildSortedVariablesArray,
 	buildVariableTypesMap,
 	computeDerivedValues,
-} from './dashboardVariablesStoreUtils';
+} from '../dashboardVariablesStoreUtils';
 
 const createVariable = (
 	overrides: Partial<IDashboardVariable> = {},

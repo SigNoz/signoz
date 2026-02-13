@@ -1,13 +1,13 @@
 import {
 	IVariableFetchStoreState,
 	VariableFetchState,
-} from './variableFetchStore';
+} from '../variableFetchStore';
 import {
 	areAllQueryVariablesSettled,
 	isSettled,
 	resolveFetchState,
 	unlockWaitingDynamicVariables,
-} from './variableFetchStoreUtils';
+} from '../variableFetchStoreUtils';
 
 describe('variableFetchStoreUtils', () => {
 	describe('isSettled', () => {

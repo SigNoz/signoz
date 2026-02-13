@@ -1,5 +1,5 @@
-import * as dashboardVariablesStore from './dashboardVariables/dashboardVariablesStore';
-import { IDependencyData } from './dashboardVariables/dashboardVariablesStoreTypes';
+import * as dashboardVariablesStore from '../dashboardVariables/dashboardVariablesStore';
+import { IDependencyData } from '../dashboardVariables/dashboardVariablesStoreTypes';
 import {
 	enqueueDescendantsOfVariable,
 	enqueueFetchOfAllVariables,
@@ -8,7 +8,7 @@ import {
 	onVariableFetchFailure,
 	VariableFetchContext,
 	variableFetchStore,
-} from './variableFetchStore';
+} from '../variableFetchStore';
 
 const getVariableDependencyContextSpy = jest.spyOn(
 	dashboardVariablesStore,

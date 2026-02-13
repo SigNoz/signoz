@@ -5,8 +5,8 @@ import {
 	getVariableDependencyContext,
 	setDashboardVariablesStore,
 	updateDashboardVariablesStore,
-} from './dashboardVariablesStore';
-import { IDashboardVariables } from './dashboardVariablesStoreTypes';
+} from '../dashboardVariablesStore';
+import { IDashboardVariables } from '../dashboardVariablesStoreTypes';
 
 function createVariable(
 	overrides: Partial<IDashboardVariable> = {},
