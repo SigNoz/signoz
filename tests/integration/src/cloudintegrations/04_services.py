@@ -1,17 +1,13 @@
+import uuid
 from http import HTTPStatus
 from typing import Callable
-import uuid
 
-import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
-from fixtures.cloudintegrations import (
-    create_cloud_integration_account,
-)
 from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -50,7 +46,6 @@ def test_list_services_without_account(
     assert "icon" in service, "Service should have 'icon' field"
 
 
-
 def test_list_services_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -66,7 +61,9 @@ def test_list_services_with_account(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # List services for the account
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services?cloud_account_id={cloud_account_id}"
@@ -92,7 +89,6 @@ def test_list_services_with_account(
     assert "id" in service, "Service should have 'id' field"
     assert "title" in service, "Service should have 'title' field"
     assert "icon" in service, "Service should have 'icon' field"
-
 
 
 def test_get_service_details_without_account(
@@ -141,7 +137,6 @@ def test_get_service_details_without_account(
     assert isinstance(data["assets"], dict), "Assets should be a dictionary"
 
 
-
 def test_get_service_details_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -157,7 +152,9 @@ def test_get_service_details_with_account(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # Get list of services first
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -196,7 +193,6 @@ def test_get_service_details_with_account(
     assert "status" in data, "Config should have 'status' field"
 
 
-
 def test_get_service_details_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -218,7 +214,6 @@ def test_get_service_details_invalid_service(
     assert (
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected 404, got {response.status_code}"
-
 
 
 def test_list_services_unsupported_provider(
@@ -243,7 +238,6 @@ def test_list_services_unsupported_provider(
     ), f"Expected 400, got {response.status_code}"
 
 
-
 def test_update_service_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -259,7 +253,9 @@ def test_update_service_config(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # Get list of services to pick a valid service ID
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -274,7 +270,9 @@ def test_update_service_config(
     service_id = list_data["services"][0]["id"]
 
     # Update service configuration
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
+    endpoint = (
+        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
+    )
 
     config_payload = {
         "cloud_account_id": cloud_account_id,
@@ -306,7 +304,6 @@ def test_update_service_config(
     assert "logs" in data["config"], "Config should contain 'logs' field"
 
 
-
 def test_update_service_config_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -329,7 +326,9 @@ def test_update_service_config_without_account(
     service_id = list_data["services"][0]["id"]
 
     # Try to update config with non-existent account
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
+    endpoint = (
+        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
+    )
 
     fake_cloud_account_id = str(uuid.uuid4())
     config_payload = {
@@ -351,7 +350,6 @@ def test_update_service_config_without_account(
     ), f"Expected 500 for non-existent account, got {response.status_code}"
 
 
-
 def test_update_service_config_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -367,11 +365,15 @@ def test_update_service_config_invalid_service(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # Try to update config for invalid service
     fake_service_id = "non-existent-service"
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{fake_service_id}/config"
+    endpoint = (
+        f"/api/v1/cloud-integrations/{cloud_provider}/services/{fake_service_id}/config"
+    )
 
     config_payload = {
         "cloud_account_id": cloud_account_id,
@@ -392,7 +394,6 @@ def test_update_service_config_invalid_service(
     ), f"Expected 404 for invalid service, got {response.status_code}"
 
 
-
 def test_update_service_config_disable_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -408,7 +409,9 @@ def test_update_service_config_disable_service(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # Get a valid service
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -422,7 +425,9 @@ def test_update_service_config_disable_service(
     service_id = list_data["services"][0]["id"]
 
     # First enable the service
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
+    endpoint = (
+        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
+    )
 
     enable_payload = {
         "cloud_account_id": cloud_account_id,

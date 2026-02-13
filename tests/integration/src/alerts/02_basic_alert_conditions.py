@@ -15,8 +15,8 @@ from fixtures.logger import setup_logger
 from fixtures.utils import get_testdata_file_path
 
 # test cases for match type and compare operators have wait time of 30 seconds to verify the alert expectation.
-# we've poistioned the alert data to fire the alert on first eval of rule manager, the eval frequency 
-# for most alert rules are set of 15s so considering this delay plus some delay from alert manager's 
+# we've poistioned the alert data to fire the alert on first eval of rule manager, the eval frequency
+# for most alert rules are set of 15s so considering this delay plus some delay from alert manager's
 # group_wait and group_interval, even in worst case most alerts should be triggered in about 30 seconds
 TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     types.AlertTestCase(
@@ -549,8 +549,8 @@ TEST_RULES_MISCELLANEOUS = [
             ],
         ),
     ),
-    # TODO: @abhishekhugetech enable the test for multi threshold rule,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3934) with alertManager is resolved, pylint: disable=W0511
+    # TODO: @abhishekhugetech enable the test for multi threshold rule, pylint: disable=W0511
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3934) with alertManager is resolved
     # types.AlertTestCase(
     #     name="test_multi_threshold_rule_test",
     #     rule_path="alerts/test_scenarios/multi_threshold_rule_test/rule.json",
