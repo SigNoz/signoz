@@ -13,6 +13,34 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// Generic utility functions for JSON serialization/deserialization
+
+// UnmarshalJSON is a generic function to unmarshal JSON data into any type
+func UnmarshalJSON[T any](src []byte, target *T) error {
+	err := json.Unmarshal(src, target)
+	if err != nil {
+		return errors.WrapInternalf(
+			err, errors.CodeInternal, "couldn't deserialize JSON",
+		)
+	}
+	return nil
+}
+
+// MarshalJSON is a generic function to marshal any type to JSON
+func MarshalJSON[T any](source *T) ([]byte, error) {
+	if source == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "source is nil")
+	}
+
+	serialized, err := json.Marshal(source)
+	if err != nil {
+		return nil, errors.WrapInternalf(
+			err, errors.CodeInternal, "couldn't serialize to JSON",
+		)
+	}
+	return serialized, nil
+}
+
 // CloudProvider defines the interface to be implemented by different cloud providers.
 // This is generic interface so it will be accepting and returning generic types instead of concrete.
 // It's the cloud provider's responsibility to cast them to appropriate types and validate
@@ -96,60 +124,14 @@ type PostableConnectionArtifact struct {
 	Data  []byte // either PostableAWSConnectionUrl or PostableAzureConnectionCommand
 }
 
-type PostableAWSConnectionUrl struct {
-	// Optional. To be specified for updates.
-	// TODO: evaluate and remove if not needed.
-	AccountId     *string               `json:"account_id,omitempty"`
-	AccountConfig *AWSAccountConfig     `json:"account_config"`
-	AgentConfig   *SigNozAWSAgentConfig `json:"agent_config"`
+type PostableConnectionArtifactTyped[AgentConfigT any, AccountConfigT any] struct {
+	AccountId     *string         `json:"account_id,omitempty"` // Optional. To be specified for updates.
+	AgentConfig   *AgentConfigT   `json:"agent_config"`
+	AccountConfig *AccountConfigT `json:"account_config"`
 }
 
-type PostableAzureConnectionCommand struct {
-	AgentConfig   *SigNozAzureAgentConfig `json:"agent_config"`
-	AccountConfig *AzureAccountConfig     `json:"account_config"`
-}
-
-func (p *PostableAWSConnectionUrl) Unmarshal(src any) error {
-	var data []byte
-	switch src := src.(type) {
-	case []byte:
-		data = src
-	case string:
-		data = []byte(src)
-	default:
-		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
-	}
-
-	err := json.Unmarshal(data, p)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize aws connection url request from JSON",
-		)
-	}
-
-	return nil
-}
-
-func (p *PostableAzureConnectionCommand) Unmarshal(src any) error {
-	var data []byte
-	switch src := src.(type) {
-	case []byte:
-		data = src
-	case string:
-		data = []byte(src)
-	default:
-		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
-	}
-
-	err := json.Unmarshal(data, p)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize azure connection command request from JSON",
-		)
-	}
-
-	return nil
-}
+type PostableAWSConnectionUrl = PostableConnectionArtifactTyped[SigNozAWSAgentConfig, AWSAccountConfig]
+type PostableAzureConnectionCommand = PostableConnectionArtifactTyped[SigNozAzureAgentConfig, AzureAccountConfig]
 
 type SigNozAzureAgentConfig struct {
 	IngestionUrl string `json:"ingestion_url"`
@@ -158,6 +140,21 @@ type SigNozAzureAgentConfig struct {
 	SigNozAPIKey string `json:"signoz_api_key"`
 
 	Version string `json:"version,omitempty"`
+}
+
+// GettableConnectionArtifact represents base structure for connection artifacts
+type GettableConnectionArtifact[T any] struct {
+	AccountId string `json:"account_id"`
+	Artifact  T      `json:",inline"`
+}
+
+type GettableAWSConnectionArtifact struct {
+	ConnectionUrl string `json:"connection_url"`
+}
+
+type GettableAzureConnectionArtifact struct {
+	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
+	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
 }
 
 type GettableAWSConnectionUrl struct {
@@ -185,16 +182,8 @@ type PostableAgentCheckInPayload struct {
 	OrgID string         `json:"-"`
 }
 
-type GettableAWSAgentCheckIn struct {
-	AccountId      string     `json:"account_id"`
-	CloudAccountId string     `json:"cloud_account_id"`
-	RemovedAt      *time.Time `json:"removed_at"`
-
-	IntegrationConfig AWSAgentIntegrationConfig `json:"integration_config"`
-}
-
 type AWSAgentIntegrationConfig struct {
-	EnabledRegions              []string            `json:"enabled_regions"`
+	EnabledRegions              []string               `json:"enabled_regions"`
 	TelemetryCollectionStrategy *AWSCollectionStrategy `json:"telemetry,omitempty"`
 }
 
@@ -205,12 +194,15 @@ type AzureAgentIntegrationConfig struct {
 	TelemetryCollectionStrategy map[string]*AzureCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-type GettableAzureAgentCheckIn struct {
-	AccountId         string                      `json:"account_id"`
-	CloudAccountId    string                      `json:"cloud_account_id"`
-	RemovedAt         *time.Time                  `json:"removed_at"`
-	IntegrationConfig AzureAgentIntegrationConfig `json:"integration_config"`
+type GettableAgentCheckIn[T any] struct {
+	AccountId         string     `json:"account_id"`
+	CloudAccountId    string     `json:"cloud_account_id"`
+	RemovedAt         *time.Time `json:"removed_at"`
+	IntegrationConfig T          `json:"integration_config"`
 }
+
+type GettableAWSAgentCheckIn = GettableAgentCheckIn[AWSAgentIntegrationConfig]
+type GettableAzureAgentCheckIn = GettableAgentCheckIn[AzureAgentIntegrationConfig]
 
 type PatchableServiceConfig struct {
 	OrgID     string `json:"org_id"`
@@ -218,60 +210,22 @@ type PatchableServiceConfig struct {
 	Config    []byte `json:"config"` // json serialized config
 }
 
-type PatchableAWSCloudServiceConfig struct {
-	CloudAccountId string                 `json:"cloud_account_id"`
-	Config         *AWSCloudServiceConfig `json:"config"`
+type PatchableCloudServiceConfig[T any] struct {
+	CloudAccountId string `json:"cloud_account_id"`
+	Config         *T     `json:"config"`
 }
+
+type PatchableAWSCloudServiceConfig = PatchableCloudServiceConfig[AWSCloudServiceConfig]
+type PatchableAzureCloudServiceConfig = PatchableCloudServiceConfig[AzureCloudServiceConfig]
 
 type AWSCloudServiceConfig struct {
 	Logs    *AWSCloudServiceLogsConfig    `json:"logs,omitempty"`
 	Metrics *AWSCloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
-// Unmarshal unmarshalls data from src
-func (c *PatchableAWSCloudServiceConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, c)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize aws service config req from JSON",
-		)
-	}
-
-	return nil
-}
-
-// Marshal serializes data to bytes
-func (c *PatchableAWSCloudServiceConfig) Marshal() ([]byte, error) {
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize aws service config req to JSON",
-		)
-	}
-	return serialized, nil
-}
-
-// Unmarshal unmarshalls data from src
-func (a *AWSCloudServiceConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, a)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize cloud service config from JSON",
-		)
-	}
-
-	return nil
-}
-
-// Marshal serializes data to bytes
-func (a *AWSCloudServiceConfig) Marshal() ([]byte, error) {
-	serialized, err := json.Marshal(a)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize cloud service config to JSON",
-		)
-	}
-	return serialized, nil
+type AzureCloudServiceConfig struct {
+	Logs    []*AzureCloudServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics []*AzureCloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
 func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {
@@ -340,63 +294,12 @@ type PatchableAccountConfig struct {
 	Data      []byte // can be either AWSAccountConfig or AzureAccountConfig
 }
 
-type PatchableAWSAccountConfig struct {
-	Config *AWSAccountConfig `json:"config"`
+type PatchableAccountConfigTyped[T any] struct {
+	Config *T `json:"config"`
 }
 
-type PatchableAzureAccountConfig struct {
-	Config *AzureAccountConfig `json:"config"`
-}
-
-func (p *PatchableAWSAccountConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, p)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize patchable account config from JSON",
-		)
-	}
-
-	return nil
-}
-
-func (p *PatchableAWSAccountConfig) Marshal() ([]byte, error) {
-	if p == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "patchable account config is nil")
-	}
-
-	serialized, err := json.Marshal(p)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize patchable account config to JSON",
-		)
-	}
-	return serialized, nil
-}
-
-func (p *PatchableAzureAccountConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, p)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize patchable account config from JSON",
-		)
-	}
-
-	return nil
-}
-
-func (p *PatchableAzureAccountConfig) Marshal() ([]byte, error) {
-	if p == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "patchable account config is nil")
-	}
-
-	serialized, err := json.Marshal(p)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize patchable account config to JSON",
-		)
-	}
-	return serialized, nil
-}
+type PatchableAWSAccountConfig = PatchableAccountConfigTyped[AWSAccountConfig]
+type PatchableAzureAccountConfig = PatchableAccountConfigTyped[AzureAccountConfig]
 
 type AWSAccountConfig struct {
 	EnabledRegions []string `json:"regions"`
@@ -407,121 +310,12 @@ type AzureAccountConfig struct {
 	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
 }
 
-// Unmarshal unmarshalls data from src
-func (c *AWSAccountConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, c)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize AWS account config from JSON",
-		)
-	}
-
-	return nil
+type GettableServices[T any] struct {
+	Services []T `json:"services"`
 }
 
-// Marshal serializes data to bytes
-func (c *AWSAccountConfig) Marshal() ([]byte, error) {
-	if c == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "cloud account config is nil")
-	}
-
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize cloud account config to JSON")
-	}
-	return serialized, nil
-}
-
-// Unmarshal unmarshalls data from src
-func (c *AzureAccountConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, c)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize azure account config from JSON",
-		)
-	}
-
-	return nil
-}
-
-// Marshal serializes data to bytes
-func (c *AzureAccountConfig) Marshal() ([]byte, error) {
-	if c == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "cloud account config is nil")
-	}
-
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize cloud account config to JSON")
-	}
-	return serialized, nil
-}
-
-type GettableAWSServices struct {
-	Services []AWSServiceSummary `json:"services"`
-}
-
-type GettableAzureServices struct {
-	Services []AzureServiceSummary `json:"services"`
-}
-
-type PatchableAzureCloudServiceConfig struct {
-	CloudAccountId string                   `json:"cloud_account_id"`
-	Config         *AzureCloudServiceConfig `json:"config"`
-}
-
-type AzureCloudServiceConfig struct {
-	Logs    []*AzureCloudServiceLogsConfig    `json:"logs,omitempty"`
-	Metrics []*AzureCloudServiceMetricsConfig `json:"metrics,omitempty"`
-}
-
-// Unmarshal unmarshalls data from src
-func (c *PatchableAzureCloudServiceConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, c)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize cloud service config from JSON",
-		)
-	}
-
-	return nil
-}
-
-// Marshal serializes data to bytes
-func (c *PatchableAzureCloudServiceConfig) Marshal() ([]byte, error) {
-	if c == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "cloud service config is nil")
-	}
-
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize cloud service config to JSON",
-		)
-	}
-	return serialized, nil
-}
-
-func (a *AzureCloudServiceConfig) Unmarshal(src []byte) error {
-	err := json.Unmarshal(src, a)
-	if err != nil {
-		return errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't deserialize cloud service config from JSON",
-		)
-	}
-
-	return nil
-}
-
-func (a *AzureCloudServiceConfig) Marshal() ([]byte, error) {
-	serialized, err := json.Marshal(a)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize cloud service config to JSON",
-		)
-	}
-	return serialized, nil
-}
+type GettableAWSServices = GettableServices[AWSServiceSummary]
+type GettableAzureServices = GettableServices[AzureServiceSummary]
 
 type GetServiceDetailsReq struct {
 	OrgID          valuer.UUID
@@ -576,11 +370,11 @@ func (a *CloudIntegration) Account(cloudProvider CloudProviderType) *Account {
 	switch cloudProvider {
 	case CloudProviderAWS:
 		config := new(AWSAccountConfig)
-		_ = config.Unmarshal([]byte(a.Config))
+		_ = UnmarshalJSON([]byte(a.Config), config)
 		ca.Config = config
 	case CloudProviderAzure:
 		config := new(AzureAccountConfig)
-		_ = config.Unmarshal([]byte(a.Config))
+		_ = UnmarshalJSON([]byte(a.Config), config)
 		ca.Config = config
 	default:
 	}
@@ -616,15 +410,13 @@ func DefaultAzureAccountConfig() AzureAccountConfig {
 	}
 }
 
-type AWSServiceSummary struct {
+type ServiceSummary[T any] struct {
 	DefinitionMetadata
-	Config *AWSCloudServiceConfig `json:"config"`
+	Config *T `json:"config"`
 }
 
-type AzureServiceSummary struct {
-	DefinitionMetadata
-	Config *AzureCloudServiceConfig `json:"config"`
-}
+type AWSServiceSummary = ServiceSummary[AWSCloudServiceConfig]
+type AzureServiceSummary = ServiceSummary[AzureCloudServiceConfig]
 
 type GettableAWSServiceDetails struct {
 	AWSDefinition

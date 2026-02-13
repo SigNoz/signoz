@@ -27,7 +27,7 @@ type ServiceDefinition[T any] struct {
 	SupportedSignals     SupportedSignals      `json:"supported_signals"`
 	DataCollected        DataCollected         `json:"data_collected"`
 	IngestionStatusCheck *IngestionStatusCheck `json:"ingestion_status_check,omitempty"`
-	Strategy             *T                     `json:"telemetry_collection_strategy"`
+	Strategy             *T                    `json:"telemetry_collection_strategy"`
 }
 
 func (def *ServiceDefinition[T]) PopulateDashboardURLs(cloudProvider CloudProviderType, svcId string) {
@@ -119,17 +119,15 @@ type CollectedMetric struct {
 	Description string `json:"description"`
 }
 
-type CollectionStrategy[MetricsStrategy any, LogsStrategy any] struct {
-	Metrics   MetricsStrategy     `json:"metrics,omitempty"`
-	Logs      LogsStrategy        `json:"logs,omitempty"`
+type AWSCollectionStrategy struct {
+	Metrics   *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
+	Logs      *AWSLogsStrategy    `json:"aws_logs,omitempty"`
 	S3Buckets map[string][]string `json:"s3_buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
 }
 
-type AzureCollectionStrategy = CollectionStrategy[[]*AzureMetricsStrategy, []*AzureLogsStrategy]
-type AWSCollectionStrategy = CollectionStrategy[*AWSMetricsStrategy, *AWSLogsStrategy]
-type AzureResourceGroup struct {
-	Name   string `json:"name"`
-	Region string `json:"region"`
+type AzureCollectionStrategy struct {
+	Metrics []*AzureMetricsStrategy `json:"azure_metrics,omitempty"`
+	Logs    []*AzureLogsStrategy    `json:"azure_logs,omitempty"`
 }
 
 type AWSMetricsStrategy struct {

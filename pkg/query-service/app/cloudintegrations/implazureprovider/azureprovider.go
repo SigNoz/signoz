@@ -136,7 +136,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 	}
 
 	accountConfig := new(integrationstypes.AzureAccountConfig)
-	err := accountConfig.Unmarshal([]byte(account.Config))
+	err := integrationstypes.UnmarshalJSON([]byte(account.Config), accountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 		config := svcConfigs[svcType]
 
 		serviceConfig := new(integrationstypes.AzureCloudServiceConfig)
-		err = serviceConfig.Unmarshal(config)
+		err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 		if err != nil {
 			continue
 		}
@@ -240,7 +240,7 @@ func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAcc
 
 		for svcType, config := range serviceConfigs {
 			serviceConfig := new(integrationstypes.AzureCloudServiceConfig)
-			err = serviceConfig.Unmarshal(config)
+			err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -351,7 +351,7 @@ func (a *azureProvider) getServiceConfig(
 	}
 
 	config := new(integrationstypes.AzureCloudServiceConfig)
-	err = config.Unmarshal(configBytes)
+	err = integrationstypes.UnmarshalJSON(configBytes, config)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +369,7 @@ func (a *azureProvider) getServiceConfig(
 func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationstypes.PostableConnectionArtifact) (any, error) {
 	connection := new(integrationstypes.PostableAzureConnectionCommand)
 
-	err := connection.Unmarshal(req.Data)
+	err := integrationstypes.UnmarshalJSON(req.Data, connection)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed unmarshal request data into AWS connection config")
 	}
@@ -383,7 +383,7 @@ func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *int
 		}
 	}
 
-	config, err := connection.AccountConfig.Marshal()
+	config, err := integrationstypes.MarshalJSON(connection.AccountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integratio
 	}
 
 	serviceConfig := new(integrationstypes.PatchableAzureCloudServiceConfig)
-	err = serviceConfig.Unmarshal(req.Config)
+	err = integrationstypes.UnmarshalJSON(req.Config, serviceConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +439,7 @@ func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integratio
 		return nil, err
 	}
 
-	serviceConfigBytes, err := serviceConfig.Config.Marshal()
+	serviceConfigBytes, err := integrationstypes.MarshalJSON(serviceConfig.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integratio
 		return nil, err
 	}
 
-	if err = serviceConfig.Unmarshal(updatedConfig); err != nil {
+	if err = integrationstypes.UnmarshalJSON(updatedConfig, serviceConfig); err != nil {
 		return nil, err
 	}
 
@@ -482,7 +482,7 @@ func (a *azureProvider) GetAvailableDashboards(ctx context.Context, orgID valuer
 
 		for svcId, config := range configsBySvcId {
 			serviceConfig := new(integrationstypes.AzureCloudServiceConfig)
-			err = serviceConfig.Unmarshal(config)
+			err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -534,7 +534,7 @@ func (a *azureProvider) GetDashboard(ctx context.Context, req *integrationstypes
 func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integrationstypes.PatchableAccountConfig) (any, error) {
 	config := new(integrationstypes.PatchableAzureAccountConfig)
 
-	err := config.Unmarshal(req.Data)
+	err := integrationstypes.UnmarshalJSON(req.Data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -550,7 +550,7 @@ func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integratio
 	}
 
 	storedConfig := new(integrationstypes.AzureAccountConfig)
-	err = storedConfig.Unmarshal([]byte(account.Config))
+	err = integrationstypes.UnmarshalJSON([]byte(account.Config), storedConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +559,7 @@ func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integratio
 		config.Config.DeploymentRegion = storedConfig.DeploymentRegion
 	}
 
-	configBytes, err := config.Config.Marshal()
+	configBytes, err := integrationstypes.MarshalJSON(config.Config)
 	if err != nil {
 		return nil, err
 	}

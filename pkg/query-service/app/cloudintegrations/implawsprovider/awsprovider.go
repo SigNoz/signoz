@@ -30,11 +30,11 @@ var (
 )
 
 type awsProvider struct {
-	logger                *slog.Logger
-	querier               querier.Querier
-	accountsRepo          integrationstore.CloudProviderAccountsRepository
-	serviceConfigRepo     integrationstore.ServiceConfigDatabase
-	serviceDefinitions     *services.ServicesProvider[*integrationstypes.AWSDefinition]
+	logger             *slog.Logger
+	querier            querier.Querier
+	accountsRepo       integrationstore.CloudProviderAccountsRepository
+	serviceConfigRepo  integrationstore.ServiceConfigDatabase
+	serviceDefinitions *services.ServicesProvider[*integrationstypes.AWSDefinition]
 }
 
 func NewAWSCloudProvider(
@@ -49,10 +49,10 @@ func NewAWSCloudProvider(
 	}
 
 	return &awsProvider{
-		logger:                logger,
-		querier:               querier,
-		accountsRepo:          accountsRepo,
-		serviceConfigRepo:     serviceConfigRepo,
+		logger:             logger,
+		querier:            querier,
+		accountsRepo:       accountsRepo,
+		serviceConfigRepo:  serviceConfigRepo,
 		serviceDefinitions: serviceDefinitions,
 	}
 }
@@ -145,7 +145,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 	}
 
 	accountConfig := new(integrationstypes.AWSAccountConfig)
-	err := accountConfig.Unmarshal([]byte(account.Config))
+	err := integrationstypes.UnmarshalJSON([]byte(account.Config), accountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 		config := svcConfigs[svcType]
 
 		serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-		err = serviceConfig.Unmarshal(config)
+		err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 		if err != nil {
 			continue
 		}
@@ -221,7 +221,7 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 
 		for svcType, config := range serviceConfigs {
 			serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-			err = serviceConfig.Unmarshal(config)
+			err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -555,7 +555,7 @@ func (a *awsProvider) getServiceConfig(
 	}
 
 	serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-	err = serviceConfig.Unmarshal(config)
+	err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +585,7 @@ func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.U
 
 			for svcId, config := range configsBySvcId {
 				serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-				err = serviceConfig.Unmarshal(config)
+				err = integrationstypes.UnmarshalJSON(config, serviceConfig)
 				if err != nil {
 					return nil, err
 				}
@@ -633,7 +633,7 @@ func (a *awsProvider) GetDashboard(ctx context.Context, req *integrationstypes.G
 func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationstypes.PostableConnectionArtifact) (any, error) {
 	connection := new(integrationstypes.PostableAWSConnectionUrl)
 
-	err := connection.Unmarshal(req.Data)
+	err := integrationstypes.UnmarshalJSON(req.Data, connection)
 	if err != nil {
 		return nil, err
 	}
@@ -648,7 +648,7 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 		}
 	}
 
-	config, err := connection.AccountConfig.Marshal()
+	config, err := integrationstypes.MarshalJSON(connection.AccountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +699,7 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 	}
 
 	serviceConfig := new(integrationstypes.PatchableAWSCloudServiceConfig)
-	err = serviceConfig.Unmarshal(req.Config)
+	err = integrationstypes.UnmarshalJSON(req.Config, serviceConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -716,7 +716,7 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 		return nil, err
 	}
 
-	serviceConfigBytes, err := serviceConfig.Config.Marshal()
+	serviceConfigBytes, err := integrationstypes.MarshalJSON(serviceConfig.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -728,7 +728,7 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 		return nil, err
 	}
 
-	if err = serviceConfig.Unmarshal(updatedConfig); err != nil {
+	if err = integrationstypes.UnmarshalJSON(updatedConfig, serviceConfig); err != nil {
 		return nil, err
 	}
 
@@ -741,7 +741,7 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrationstypes.PatchableAccountConfig) (any, error) {
 	config := new(integrationstypes.PatchableAWSAccountConfig)
 
-	err := config.Unmarshal(req.Data)
+	err := integrationstypes.UnmarshalJSON(req.Data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -758,7 +758,7 @@ func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrations
 		return nil, errors.NewInvalidInputf(CodeInvalidAWSRegion, "invalid aws region: %s", region)
 	}
 
-	configBytes, err := config.Config.Marshal()
+	configBytes, err := integrationstypes.MarshalJSON(config.Config)
 	if err != nil {
 		return nil, err
 	}
