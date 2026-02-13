@@ -92,9 +92,9 @@ const (
 // Validate performs preliminary validation on QueryBuilderQuery
 func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 	// Validate signal
-	// if err := q.validateSignal(); err != nil {
-	// 	return err
-	// }
+	if err := q.validateSignal(); err != nil {
+		return err
+	}
 
 	if err := q.validateAggregations(requestType); err != nil {
 		return err
