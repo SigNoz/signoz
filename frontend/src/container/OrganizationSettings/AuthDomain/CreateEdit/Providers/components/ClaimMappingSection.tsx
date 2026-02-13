@@ -53,10 +53,10 @@ function ClaimMappingSection({
 						<div className="claim-mapping-section__collapse-header">
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="claim-mapping-section__collapse-header-text">
-								<h4 className="claim-mapping-section__section-title typography-label-base-600">
+								<h4 className="claim-mapping-section__section-title">
 									Claim Mapping (Advanced)
 								</h4>
-								<p className="claim-mapping-section__section-description typography-paragraph-small-400">
+								<p className="claim-mapping-section__section-description">
 									Configure how claims from your Identity Provider map to SigNoz user
 									attributes. Leave empty to use default values.
 								</p>
@@ -67,10 +67,7 @@ function ClaimMappingSection({
 					<div className="claim-mapping-section__content">
 						{/* Email Claim */}
 						<div className="claim-mapping-section__field-group">
-							<label
-								className="claim-mapping-section__label typography-label-base-500"
-								htmlFor="email-claim"
-							>
+							<label className="claim-mapping-section__label" htmlFor="email-claim">
 								Email Claim
 								<Tooltip title="The claim key that contains the user's email address. Default: 'email'">
 									<CircleHelp size={14} className="claim-mapping-section__label-icon" />
@@ -80,16 +77,13 @@ function ClaimMappingSection({
 								name={[...fieldNamePrefix, 'email']}
 								className="claim-mapping-section__form-item"
 							>
-								<Input id="email-claim" placeholder="email" />
+								<Input id="email-claim" placeholder="Email" />
 							</Form.Item>
 						</div>
 
 						{/* Name Claim */}
 						<div className="claim-mapping-section__field-group">
-							<label
-								className="claim-mapping-section__label typography-label-base-500"
-								htmlFor="name-claim"
-							>
+							<label className="claim-mapping-section__label" htmlFor="name-claim">
 								Name Claim
 								<Tooltip title="The claim key that contains the user's display name. Default: 'name'">
 									<CircleHelp size={14} className="claim-mapping-section__label-icon" />
@@ -99,16 +93,13 @@ function ClaimMappingSection({
 								name={[...fieldNamePrefix, 'name']}
 								className="claim-mapping-section__form-item"
 							>
-								<Input id="name-claim" placeholder="name" />
+								<Input id="name-claim" placeholder="Name" />
 							</Form.Item>
 						</div>
 
 						{/* Groups Claim */}
 						<div className="claim-mapping-section__field-group">
-							<label
-								className="claim-mapping-section__label typography-label-base-500"
-								htmlFor="groups-claim"
-							>
+							<label className="claim-mapping-section__label" htmlFor="groups-claim">
 								Groups Claim
 								<Tooltip title="The claim key that contains the user's group memberships. Used for role mapping. Default: 'groups'">
 									<CircleHelp size={14} className="claim-mapping-section__label-icon" />
@@ -118,16 +109,13 @@ function ClaimMappingSection({
 								name={[...fieldNamePrefix, 'groups']}
 								className="claim-mapping-section__form-item"
 							>
-								<Input id="groups-claim" placeholder="groups" />
+								<Input id="groups-claim" placeholder="Groups" />
 							</Form.Item>
 						</div>
 
 						{/* Role Claim */}
 						<div className="claim-mapping-section__field-group">
-							<label
-								className="claim-mapping-section__label typography-label-base-500"
-								htmlFor="role-claim"
-							>
+							<label className="claim-mapping-section__label" htmlFor="role-claim">
 								Role Claim
 								<Tooltip title="The claim key that contains the user's role directly from the IDP. Default: 'role'">
 									<CircleHelp size={14} className="claim-mapping-section__label-icon" />
@@ -137,7 +125,7 @@ function ClaimMappingSection({
 								name={[...fieldNamePrefix, 'role']}
 								className="claim-mapping-section__form-item"
 							>
-								<Input id="role-claim" placeholder="role" />
+								<Input id="role-claim" placeholder="Role" />
 							</Form.Item>
 						</div>
 					</div>

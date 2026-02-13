@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button, Form, Modal } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -190,13 +190,16 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
 
-	const handleError = (error: AxiosError<RenderErrorResponseDTO>): void => {
-		try {
-			ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		} catch (apiError) {
-			showErrorModal(apiError as APIError);
-		}
-	};
+	const handleError = useCallback(
+		(error: AxiosError<RenderErrorResponseDTO>): void => {
+			try {
+				ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+			} catch (apiError) {
+				showErrorModal(apiError as APIError);
+			}
+		},
+		[showErrorModal],
+	);
 	const samlEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
@@ -213,7 +216,9 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	/**
 	 * Prepares Google Auth config for API payload
 	 */
-	const getGoogleAuthConfig = (): AuthtypesGoogleConfigDTO | undefined => {
+	const getGoogleAuthConfig = useCallback(():
+		| AuthtypesGoogleConfigDTO
+		| undefined => {
 		const config = form.getFieldValue('googleAuthConfig');
 		if (!config) {
 			return undefined;
@@ -228,12 +233,12 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 			...rest,
 			...(domainToAdminEmail && { domainToAdminEmail }),
 		};
-	};
+	}, [form]);
 
 	/**
 	 * Prepares role mapping for API payload
 	 */
-	const getRoleMapping = (): AuthtypesRoleMappingDTO | undefined => {
+	const getRoleMapping = useCallback((): AuthtypesRoleMappingDTO | undefined => {
 		const roleMapping = form.getFieldValue('roleMapping');
 		if (!roleMapping) {
 			return undefined;
@@ -256,9 +261,9 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 			...rest,
 			...(groupMappings && { groupMappings }),
 		};
-	};
+	}, [form]);
 
-	const onSubmitHandler = async (): Promise<void> => {
+	const onSubmitHandler = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
 		} catch {
@@ -326,12 +331,24 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				},
 			);
 		}
-	};
+	}, [
+		authnProvider,
+		createAuthDomain,
+		form,
+		getGoogleAuthConfig,
+		getRoleMapping,
+		handleError,
+		isCreate,
+		notifications,
+		onClose,
+		record,
+		updateAuthDomain,
+	]);
 
-	const onBackHandler = (): void => {
+	const onBackHandler = useCallback((): void => {
 		form.resetFields();
 		setAuthnProvider('');
-	};
+	}, [form]);
 
 	return (
 		<Modal

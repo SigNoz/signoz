@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/button';
 import { Table, Typography } from 'antd';
@@ -103,26 +103,34 @@ function AuthDomain(): JSX.Element {
 		AxiosError<RenderErrorResponseDTO>
 	>();
 
-	const handleDeleteDomain = (id: string): void => {
-		deleteAuthDomain(
-			{ pathParams: { id } },
-			{
-				onSuccess: () => {
-					notifications.success({
-						message: 'Domain deleted successfully',
-					});
-					refetchAuthDomainListResponse();
+	const handleDeleteDomain = useCallback(
+		(id: string): void => {
+			deleteAuthDomain(
+				{ pathParams: { id } },
+				{
+					onSuccess: () => {
+						notifications.success({
+							message: 'Domain deleted successfully',
+						});
+						refetchAuthDomainListResponse();
+					},
+					onError: (error) => {
+						try {
+							ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+						} catch (apiError) {
+							showErrorModal(apiError as APIError);
+						}
+					},
 				},
-				onError: (error) => {
-					try {
-						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-					} catch (apiError) {
-						showErrorModal(apiError as APIError);
-					}
-				},
-			},
-		);
-	};
+			);
+		},
+		[
+			deleteAuthDomain,
+			notifications,
+			refetchAuthDomainListResponse,
+			showErrorModal,
+		],
+	);
 
 	const formattedError = useMemo(() => {
 		if (!errorFetchingAuthDomainListResponse) {

@@ -68,10 +68,10 @@ function RoleMappingSection({
 						<div className="role-mapping-section__collapse-header">
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="role-mapping-section__collapse-header-text">
-								<h4 className="role-mapping-section__section-title typography-label-base-600">
+								<h4 className="role-mapping-section__section-title">
 									Role Mapping (Advanced)
 								</h4>
-								<p className="role-mapping-section__section-description typography-paragraph-small-400">
+								<p className="role-mapping-section__section-description">
 									Configure how user roles are determined from your Identity Provider.
 									You can either use a direct role attribute or map IDP groups to SigNoz
 									roles.
@@ -83,10 +83,7 @@ function RoleMappingSection({
 					<div className="role-mapping-section__content">
 						{/* Default Role */}
 						<div className="role-mapping-section__field-group">
-							<label
-								className="role-mapping-section__label typography-label-base-500"
-								htmlFor="default-role"
-							>
+							<label className="role-mapping-section__label" htmlFor="default-role">
 								Default Role
 								<Tooltip title='The default role assigned to new SSO users if no other role mapping applies. Default: "VIEWER"'>
 									<CircleHelp size={14} className="role-mapping-section__label-icon" />

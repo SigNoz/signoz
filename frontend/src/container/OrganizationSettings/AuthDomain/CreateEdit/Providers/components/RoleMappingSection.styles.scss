@@ -3,7 +3,6 @@
 	flex-direction: column;
 	margin-top: 24px;
 
-	// --- Collapsible section ---
 	&__collapse {
 		background: transparent !important;
 
@@ -54,7 +53,6 @@
 		color: var(--l3-foreground);
 	}
 
-	// --- Content area with scroll ---
 	&__content {
 		display: flex;
 		flex-direction: column;
@@ -81,12 +79,10 @@
 			}
 		}
 
-		// Firefox thin scrollbar
 		scrollbar-width: thin;
 		scrollbar-color: var(--l3-foreground) transparent;
 	}
 
-	// --- Field group layout ---
 	&__field-group {
 		display: flex;
 		flex-direction: column;
@@ -110,14 +106,12 @@
 		margin-bottom: 0 !important;
 	}
 
-	// --- Checkbox row ---
 	&__checkbox-row {
 		display: flex;
 		align-items: center;
 		gap: 6px;
 	}
 
-	// --- Select styling ---
 	&__select {
 		width: 100%;
 
@@ -149,7 +143,6 @@
 		}
 	}
 
-	// --- Group mappings section ---
 	&__group-mappings {
 		display: flex;
 		flex-direction: column;
@@ -209,7 +202,7 @@
 		border: none !important;
 		border-radius: 2px !important;
 		background: transparent !important;
-		color: #e5484d !important;
+		color: var(--bg-cherry-500) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
 		transition: background-color 0.2s, opacity 0.2s;
@@ -219,7 +212,7 @@
 		justify-content: center;
 
 		svg {
-			color: #e5484d !important;
+			color: var(--bg-cherry-500) !important;
 			width: 12px !important;
 			height: 12px !important;
 		}
@@ -227,10 +220,10 @@
 		&:hover {
 			background: rgba(229, 72, 77, 0.1) !important;
 			opacity: 0.9 !important;
-			color: #e5484d !important;
+			color: var(--bg-cherry-500) !important;
 
 			svg {
-				color: #e5484d !important;
+				color: var(--bg-cherry-500) !important;
 			}
 		}
 
@@ -294,35 +287,6 @@
 			border-color: var(--bg-robin-500) !important;
 			box-shadow: none !important;
 			outline: none;
-		}
-	}
-}
-
-// --- Light mode overrides ---
-.lightMode {
-	.role-mapping-section {
-		input {
-			background: var(--bg-vanilla-200) !important;
-			border-color: var(--bg-vanilla-300) !important;
-			color: var(--text-ink-500) !important;
-
-			&::placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
-		}
-
-		&__select {
-			&.ant-select {
-				.ant-select-selector {
-					background: var(--bg-vanilla-200) !important;
-					border-color: var(--bg-vanilla-300) !important;
-					color: var(--text-ink-500) !important;
-
-					.ant-select-selection-item {
-						color: var(--text-ink-500) !important;
-					}
-				}
-			}
 		}
 	}
 }

@@ -39,10 +39,8 @@ function ConfigureGoogleAuthAuthnProvider({
 	return (
 		<div className="google-auth">
 			<section className="google-auth__header">
-				<h3 className="google-auth__title typography-label-medium-600">
-					Edit Google Authentication
-				</h3>
-				<p className="google-auth__description typography-paragraph-base-400">
+				<h3 className="google-auth__title">Edit Google Authentication</h3>
+				<p className="google-auth__description">
 					Enter OAuth 2.0 credentials obtained from the Google API Console below.
 					Read the{' '}
 					<a
@@ -60,10 +58,7 @@ function ConfigureGoogleAuthAuthnProvider({
 				{/* Left Column - Core OAuth Settings */}
 				<div className="google-auth__left">
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="google-domain"
-						>
+						<label className="google-auth__label" htmlFor="google-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -81,10 +76,7 @@ function ConfigureGoogleAuthAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="google-client-id"
-						>
+						<label className="google-auth__label" htmlFor="google-client-id">
 							Client ID
 							<Tooltip title="ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -102,10 +94,7 @@ function ConfigureGoogleAuthAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="google-client-secret"
-						>
+						<label className="google-auth__label" htmlFor="google-client-secret">
 							Client Secret
 							<Tooltip title="It is the application's secret.">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -178,10 +167,10 @@ function ConfigureGoogleAuthAuthnProvider({
 										<ChevronDown size={16} />
 									)}
 									<div className="google-auth__collapse-header-text">
-										<h4 className="google-auth__section-title typography-label-base-600">
+										<h4 className="google-auth__section-title">
 											Google Workspace Groups (Advanced)
 										</h4>
-										<p className="google-auth__section-description typography-paragraph-small-400">
+										<p className="google-auth__section-description">
 											Enable group fetching to retrieve user groups from Google Workspace.
 											Requires a Service Account with domain-wide delegation.
 										</p>
@@ -213,7 +202,7 @@ function ConfigureGoogleAuthAuthnProvider({
 									<div className="google-auth__group-fields">
 										<div className="google-auth__field-group">
 											<label
-												className="google-auth__label typography-label-base-500"
+												className="google-auth__label"
 												htmlFor="google-service-account-json"
 											>
 												Service Account JSON
@@ -262,7 +251,7 @@ function ConfigureGoogleAuthAuthnProvider({
 
 										<div className="google-auth__field-group">
 											<label
-												className="google-auth__label typography-label-base-500"
+												className="google-auth__label"
 												htmlFor="google-allowed-groups"
 											>
 												Allowed Groups

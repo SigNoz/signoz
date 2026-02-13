@@ -33,10 +33,8 @@ function ConfigureSAMLAuthnProvider({
 	return (
 		<div className="google-auth">
 			<section className="google-auth__header">
-				<h3 className="google-auth__title typography-label-medium-600">
-					Edit SAML Authentication
-				</h3>
-				<p className="google-auth__description typography-paragraph-base-400">
+				<h3 className="google-auth__title">Edit SAML Authentication</h3>
+				<p className="google-auth__description">
 					Configure SAML 2.0 Single Sign-On with your Identity Provider. Read the{' '}
 					<a
 						href="https://signoz.io/docs/userguide/sso-authentication"
@@ -53,10 +51,7 @@ function ConfigureSAMLAuthnProvider({
 				{/* Left Column - Core SAML Settings */}
 				<div className="google-auth__left">
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="saml-domain"
-						>
+						<label className="google-auth__label" htmlFor="saml-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -74,10 +69,7 @@ function ConfigureSAMLAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="saml-acs-url"
-						>
+						<label className="google-auth__label" htmlFor="saml-acs-url">
 							SAML ACS URL
 							<Tooltip title="The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider.">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -99,10 +91,7 @@ function ConfigureSAMLAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="saml-entity-id"
-						>
+						<label className="google-auth__label" htmlFor="saml-entity-id">
 							SAML Entity ID
 							<Tooltip title="The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata.">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -124,10 +113,7 @@ function ConfigureSAMLAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="saml-certificate"
-						>
+						<label className="google-auth__label" htmlFor="saml-certificate">
 							SAML X.509 Certificate
 							<Tooltip title="The certificate of the SAML identity provider. It can typically be found in the X509Certificate element in the SAML metadata.">
 								<CircleHelp size={14} className="google-auth__label-icon" />

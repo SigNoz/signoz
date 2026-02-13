@@ -12,11 +12,19 @@
 	&__title {
 		margin: 0;
 		color: var(--l1-foreground);
+		font-family: 'Inter', sans-serif;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
 	}
 
 	&__description {
 		margin: 0;
 		color: var(--l2-foreground);
+		font-family: 'Inter', sans-serif;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px;
 
 		a {
 			color: var(--accent-primary);
@@ -46,7 +54,6 @@
 		flex-direction: column;
 	}
 
-	// --- Form field layout ---
 	&__field-group {
 		display: flex;
 		flex-direction: column;
@@ -71,7 +78,6 @@
 		margin-bottom: 0 !important;
 	}
 
-	// --- Checkbox row: label on left, checkbox on right ---
 	&__checkbox-row {
 		display: flex;
 		align-items: center;
@@ -79,7 +85,6 @@
 		margin-bottom: 12px;
 	}
 
-	// --- Input styles (matching auth flow standards) ---
 	input,
 	textarea {
 		height: 32px;
@@ -105,12 +110,9 @@
 		}
 	}
 
-	// Textarea should not have fixed height
 	textarea {
 		height: auto;
 	}
-
-	// --- Textarea specific styles ---
 	&__textarea {
 		min-height: 60px !important;
 		max-height: 200px;
@@ -140,7 +142,6 @@
 		}
 	}
 
-	// --- Checkbox border visibility (lighter for dark modal bg) ---
 	button[role='checkbox'] {
 		border: 1px solid var(--l2-foreground) !important;
 		border-radius: 2px;
@@ -151,7 +152,6 @@
 		}
 	}
 
-	// --- Collapsible section ---
 	&__collapse {
 		background: transparent !important;
 
@@ -202,7 +202,6 @@
 		color: var(--l3-foreground);
 	}
 
-	// --- Group fields that scroll when "Fetch Groups" is on ---
 	&__group-content {
 		display: flex;
 		flex-direction: column;
@@ -217,13 +216,10 @@
 		overflow-y: auto;
 		padding-right: 4px;
 
-		// Remove bottom margins from children since we rely on gap
 		.google-auth__field-group,
 		.google-auth__checkbox-row {
 			margin-bottom: 0;
 		}
-
-		// Thin scrollbar
 		&::-webkit-scrollbar {
 			width: 4px;
 		}
@@ -241,44 +237,12 @@
 			}
 		}
 
-		// Firefox thin scrollbar
 		scrollbar-width: thin;
 		scrollbar-color: var(--l3-foreground) transparent;
 	}
 
 	.callout {
 		margin-top: 16px;
-	}
-}
-
-// --- Light mode overrides ---
-.lightMode {
-	.google-auth {
-		input,
-		textarea {
-			background: var(--bg-vanilla-200) !important;
-			border-color: var(--bg-vanilla-300) !important;
-			color: var(--text-ink-500) !important;
-
-			&::placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
-
-			&:focus,
-			&:focus-visible {
-				border-color: var(--bg-robin-500) !important;
-			}
-		}
-
-		&__textarea {
-			background: var(--bg-vanilla-200) !important;
-			border-color: var(--bg-vanilla-300) !important;
-			color: var(--text-ink-500) !important;
-
-			&::placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
-		}
 	}
 }
 

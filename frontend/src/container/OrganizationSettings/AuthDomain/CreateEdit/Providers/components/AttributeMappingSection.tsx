@@ -53,10 +53,10 @@ function AttributeMappingSection({
 						<div className="attribute-mapping-section__collapse-header">
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="attribute-mapping-section__collapse-header-text">
-								<h4 className="attribute-mapping-section__section-title typography-label-base-600">
+								<h4 className="attribute-mapping-section__section-title">
 									Attribute Mapping (Advanced)
 								</h4>
-								<p className="attribute-mapping-section__section-description typography-paragraph-small-400">
+								<p className="attribute-mapping-section__section-description">
 									Configure how SAML assertion attributes from your Identity Provider map
 									to SigNoz user attributes. Leave empty to use default values. Note:
 									Email is always extracted from the NameID assertion.
@@ -69,7 +69,7 @@ function AttributeMappingSection({
 						{/* Name Attribute */}
 						<div className="attribute-mapping-section__field-group">
 							<label
-								className="attribute-mapping-section__label typography-label-base-500"
+								className="attribute-mapping-section__label"
 								htmlFor="name-attribute"
 							>
 								Name Attribute
@@ -84,14 +84,14 @@ function AttributeMappingSection({
 								name={[...fieldNamePrefix, 'name']}
 								className="attribute-mapping-section__form-item"
 							>
-								<Input id="name-attribute" placeholder="name" />
+								<Input id="name-attribute" placeholder="Name" />
 							</Form.Item>
 						</div>
 
 						{/* Groups Attribute */}
 						<div className="attribute-mapping-section__field-group">
 							<label
-								className="attribute-mapping-section__label typography-label-base-500"
+								className="attribute-mapping-section__label"
 								htmlFor="groups-attribute"
 							>
 								Groups Attribute
@@ -106,14 +106,14 @@ function AttributeMappingSection({
 								name={[...fieldNamePrefix, 'groups']}
 								className="attribute-mapping-section__form-item"
 							>
-								<Input id="groups-attribute" placeholder="groups" />
+								<Input id="groups-attribute" placeholder="Groups" />
 							</Form.Item>
 						</div>
 
 						{/* Role Attribute */}
 						<div className="attribute-mapping-section__field-group">
 							<label
-								className="attribute-mapping-section__label typography-label-base-500"
+								className="attribute-mapping-section__label"
 								htmlFor="role-attribute"
 							>
 								Role Attribute
@@ -128,7 +128,7 @@ function AttributeMappingSection({
 								name={[...fieldNamePrefix, 'role']}
 								className="attribute-mapping-section__form-item"
 							>
-								<Input id="role-attribute" placeholder="role" />
+								<Input id="role-attribute" placeholder="Role" />
 							</Form.Item>
 						</div>
 					</div>

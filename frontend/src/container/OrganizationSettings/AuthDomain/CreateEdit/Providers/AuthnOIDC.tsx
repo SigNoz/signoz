@@ -32,10 +32,8 @@ function ConfigureOIDCAuthnProvider({
 	return (
 		<div className="google-auth">
 			<section className="google-auth__header">
-				<h3 className="google-auth__title typography-label-medium-600">
-					Edit OIDC Authentication
-				</h3>
-				<p className="google-auth__description typography-paragraph-base-400">
+				<h3 className="google-auth__title">Edit OIDC Authentication</h3>
+				<p className="google-auth__description">
 					Configure OpenID Connect Single Sign-On with your Identity Provider. Read
 					the{' '}
 					<a
@@ -53,10 +51,7 @@ function ConfigureOIDCAuthnProvider({
 				{/* Left Column - Core OIDC Settings */}
 				<div className="google-auth__left">
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="oidc-domain"
-						>
+						<label className="google-auth__label" htmlFor="oidc-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -74,10 +69,7 @@ function ConfigureOIDCAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="oidc-issuer"
-						>
+						<label className="google-auth__label" htmlFor="oidc-issuer">
 							Issuer URL
 							<Tooltip title='The URL identifier for the OIDC provider. For example: "https://accounts.google.com" or "https://login.salesforce.com".'>
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -95,10 +87,7 @@ function ConfigureOIDCAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="oidc-issuer-alias"
-						>
+						<label className="google-auth__label" htmlFor="oidc-issuer-alias">
 							Issuer Alias
 							<Tooltip title="Optional: Override the issuer URL from .well-known/openid-configuration for providers like Azure or Oracle IDCS.">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -113,10 +102,7 @@ function ConfigureOIDCAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="oidc-client-id"
-						>
+						<label className="google-auth__label" htmlFor="oidc-client-id">
 							Client ID
 							<Tooltip title="The application's client ID from your OIDC provider.">
 								<CircleHelp size={14} className="google-auth__label-icon" />
@@ -134,10 +120,7 @@ function ConfigureOIDCAuthnProvider({
 					</div>
 
 					<div className="google-auth__field-group">
-						<label
-							className="google-auth__label typography-label-base-500"
-							htmlFor="oidc-client-secret"
-						>
+						<label className="google-auth__label" htmlFor="oidc-client-secret">
 							Client Secret
 							<Tooltip title="The application's client secret from your OIDC provider.">
 								<CircleHelp size={14} className="google-auth__label-icon" />

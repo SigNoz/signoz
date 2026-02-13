@@ -49,7 +49,7 @@
 		border: none !important;
 		border-radius: 2px !important;
 		background: transparent !important;
-		color: #e5484d !important;
+		color: var(--bg-cherry-500) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
 		transition: background-color 0.2s, opacity 0.2s;
@@ -59,7 +59,7 @@
 		justify-content: center;
 
 		svg {
-			color: #e5484d !important;
+			color: var(--bg-cherry-500) !important;
 			width: 12px !important;
 			height: 12px !important;
 		}
@@ -67,10 +67,10 @@
 		&:hover {
 			background: rgba(229, 72, 77, 0.1) !important;
 			opacity: 0.9 !important;
-			color: #e5484d !important;
+			color: var(--bg-cherry-500) !important;
 
 			svg {
-				color: #e5484d !important;
+				color: var(--bg-cherry-500) !important;
 			}
 		}
 
@@ -97,21 +97,6 @@
 			svg,
 			[class*='icon'] {
 				color: var(--l1-foreground) !important;
-			}
-		}
-	}
-}
-
-// Light mode overrides
-.lightMode {
-	.domain-mapping-list {
-		&__row input {
-			background: var(--bg-vanilla-200) !important;
-			border-color: var(--bg-vanilla-300) !important;
-			color: var(--text-ink-500) !important;
-
-			&::placeholder {
-				color: var(--text-neutral-light-200) !important;
 			}
 		}
 	}

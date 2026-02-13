@@ -2,7 +2,6 @@
 	display: flex;
 	flex-direction: column;
 
-	// --- Collapsible section ---
 	&__collapse {
 		background: transparent !important;
 
@@ -53,7 +52,6 @@
 		color: var(--l3-foreground);
 	}
 
-	// --- Content area with scroll ---
 	&__content {
 		display: flex;
 		flex-direction: column;
@@ -80,12 +78,10 @@
 			}
 		}
 
-		// Firefox thin scrollbar
 		scrollbar-width: thin;
 		scrollbar-color: var(--l3-foreground) transparent;
 	}
 
-	// --- Field group layout ---
 	&__field-group {
 		display: flex;
 		flex-direction: column;
@@ -109,7 +105,6 @@
 		margin-bottom: 0 !important;
 	}
 
-	// --- Input styles ---
 	input {
 		height: 32px;
 		background: var(--l3-background) !important;
@@ -131,21 +126,6 @@
 			border-color: var(--bg-robin-500) !important;
 			box-shadow: none !important;
 			outline: none;
-		}
-	}
-}
-
-// --- Light mode overrides ---
-.lightMode {
-	.attribute-mapping-section {
-		input {
-			background: var(--bg-vanilla-200) !important;
-			border-color: var(--bg-vanilla-300) !important;
-			color: var(--text-ink-500) !important;
-
-			&::placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
 		}
 	}
 }
