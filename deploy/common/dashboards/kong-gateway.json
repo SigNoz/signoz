@@ -26,10 +26,10 @@
       "layout": { "h": 6, "w": 12, "x": 0, "y": 0 }
     },
     {
-      "title": "P99 Latency",
+      "title": "P99 Request Latency",
       "panelType": "graph",
       "query": {
-        "promql": "histogram_quantile(0.99, sum by (le) (rate(kong_latency_bucket{cluster=\"$cluster\", namespace=\"$namespace\"}[5m])))",
+        "promql": "histogram_quantile(0.99, sum by (le) (rate(kong_latency_bucket{type=\"request\", cluster=\"$cluster\", namespace=\"$namespace\"}[5m])))",
         "queryType": "promql"
       },
       "layout": { "h": 6, "w": 12, "x": 12, "y": 0 }
