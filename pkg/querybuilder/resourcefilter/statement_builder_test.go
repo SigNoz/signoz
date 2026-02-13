@@ -148,8 +148,8 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			start: testStartNs,
 			end:   testEndNs,
 			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) OR true) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", expectedBucketStart, expectedBucketEnd},
+				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
+				Args:  []any{expectedBucketStart, expectedBucketEnd},
 			},
 		},
 		{
@@ -473,7 +473,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 			start: uint64(1769976178000000000), // These will give bucket start 1769974378 and end 1770062578
 			end:   uint64(1770062578000000000),
 			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'env') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.deployment.name') = ? AND labels LIKE ? AND labels LIKE ?) AND true AND true AND ((true AND true)) AND ((true AND true)) AND ((true AND true)) AND ((true AND true)) AND ((true AND true))) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
+				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'env') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.deployment.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"prod", "%env%", "%env\":\"prod%", "fnscrapers", "%k8s.deployment.name%", "%k8s.deployment.name\":\"fnscrapers%", uint64(1769974378), uint64(1770062578)},
 			},
 		},
@@ -519,6 +519,23 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 					// http.request.method is an attribute field, not a resource field
 					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
 					Expression: "not(http.request.method = 'POST')",
+				},
+			},
+			start: testStartNs,
+			end:   testEndNs,
+			expected: qbtypes.Statement{
+				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
+				Args:  []any{expectedBucketStart, expectedBucketEnd},
+			},
+		},
+		{
+			name: "NOT with multiple attribute fields should not generate NOT (true and true)",
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{
+					// http.request.method is an attribute field, not a resource field
+					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
+					Expression: "not(http.request.method = 'POST' and http.request.method = 'GET')",
 				},
 			},
 			start: testStartNs,

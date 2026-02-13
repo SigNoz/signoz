@@ -165,7 +165,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 	}
 
 	if cond == "" {
-		cond = "true"
+		cond = TrueConditionLiteral
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
@@ -234,10 +234,15 @@ func (v *filterExpressionVisitor) VisitExpression(ctx *grammar.ExpressionContext
 func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
 	andExpressions := ctx.AllAndExpression()
 
-	andExpressionConditions := make([]string, len(andExpressions))
-	for i, expr := range andExpressions {
+	andExpressionConditions := make([]string, 0, len(andExpressions))
+	for _, expr := range andExpressions {
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
-			andExpressionConditions[i] = condExpr
+			// in an OR, a single "true" makes the entire expression true
+			// so short-circuit immediately
+			if condExpr == TrueConditionLiteral {
+				return TrueConditionLiteral
+			}
+			andExpressionConditions = append(andExpressionConditions, condExpr)
 		}
 	}
 
@@ -256,14 +261,26 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
 	unaryExpressions := ctx.AllUnaryExpression()
 
-	unaryExpressionConditions := make([]string, len(unaryExpressions))
-	for i, expr := range unaryExpressions {
+	hasTrueConditionLiteral := false
+	unaryExpressionConditions := make([]string, 0, len(unaryExpressions))
+	for _, expr := range unaryExpressions {
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
-			unaryExpressionConditions[i] = condExpr
+			// filter out "true" no-op conditions (e.g. non-resource attributes in resource filter)
+			// to avoid producing compound expressions like "(true AND true)" that
+			// don't match literal "true" checks in VisitPrimary/VisitUnaryExpression
+			if condExpr == TrueConditionLiteral {
+				hasTrueConditionLiteral = true
+				continue
+			}
+			unaryExpressionConditions = append(unaryExpressionConditions, condExpr)
 		}
 	}
 
+	// If there are no conditions and hasTrueConditionLiteral is set, return TrueConditionLiteral
 	if len(unaryExpressionConditions) == 0 {
+		if hasTrueConditionLiteral {
+			return TrueConditionLiteral
+		}
 		return ""
 	}
 
@@ -283,9 +300,9 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 		// If the inner expression is empty (filtered out), return empty
 		// to avoid generating invalid "not()" in ClickHouse
 		if result == "" {
-			return "true"
+			return TrueConditionLiteral
 		}
-		if result == "true" {
+		if result == TrueConditionLiteral {
 			return result
 		}
 		return fmt.Sprintf("NOT (%s)", result)
@@ -300,8 +317,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		// This is a parenthesized expression
 		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
 			// Don't wrap "true" in parentheses - it's a no-op condition
-			if condExpr == "true" {
-				return condExpr
+			if condExpr == TrueConditionLiteral {
+				return TrueConditionLiteral
 			}
 			return fmt.Sprintf("(%s)", v.Visit(ctx.OrExpression()).(string))
 		}
@@ -829,7 +846,7 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	} else if ctx.BOOL() != nil {
 		// Convert to ClickHouse boolean literal
 		boolText := strings.ToLower(ctx.BOOL().GetText())
-		return boolText == "true"
+		return boolText == TrueConditionLiteral
 	} else if ctx.KEY() != nil {
 		// Why do we have a KEY context here?
 		// When the user writes an expression like `service.name=redis`
@@ -867,7 +884,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// 1. either user meant key ( this is already handled above in fieldKeysForName )
 	// 2. or user meant `attribute.key` we look up in the map for all possible field keys with name 'attribute.key'
 
-	// Note: 
+	// Note:
 	// If user only wants to search `attribute.key`, then they have to use `attribute.attribute.key`
 	// If user only wants to search `key`, then they have to use `key`
 	// If user wants to search both, they can use `attribute.key` and we will resolve the ambiguity
