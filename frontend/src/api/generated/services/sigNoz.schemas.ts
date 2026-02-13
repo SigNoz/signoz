@@ -650,11 +650,11 @@ export interface MetricsexplorertypesMetricAlertDTO {
 	/**
 	 * @type string
 	 */
-	alertId?: string;
+	alertId: string;
 	/**
 	 * @type string
 	 */
-	alertName?: string;
+	alertName: string;
 }
 
 export interface MetricsexplorertypesMetricAlertsResponseDTO {
@@ -662,24 +662,24 @@ export interface MetricsexplorertypesMetricAlertsResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	alerts?: MetricsexplorertypesMetricAlertDTO[] | null;
+	alerts: MetricsexplorertypesMetricAlertDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricAttributeDTO {
 	/**
 	 * @type string
 	 */
-	key?: string;
+	key: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	valueCount?: number;
+	valueCount: number;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	values?: string[] | null;
+	values: string[] | null;
 }
 
 export interface MetricsexplorertypesMetricAttributesRequestDTO {
@@ -691,7 +691,7 @@ export interface MetricsexplorertypesMetricAttributesRequestDTO {
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
 	/**
 	 * @type integer
 	 * @nullable true
@@ -704,31 +704,31 @@ export interface MetricsexplorertypesMetricAttributesResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	attributes?: MetricsexplorertypesMetricAttributeDTO[] | null;
+	attributes: MetricsexplorertypesMetricAttributeDTO[] | null;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	totalKeys?: number;
+	totalKeys: number;
 }
 
 export interface MetricsexplorertypesMetricDashboardDTO {
 	/**
 	 * @type string
 	 */
-	dashboardId?: string;
+	dashboardId: string;
 	/**
 	 * @type string
 	 */
-	dashboardName?: string;
+	dashboardName: string;
 	/**
 	 * @type string
 	 */
-	widgetId?: string;
+	widgetId: string;
 	/**
 	 * @type string
 	 */
-	widgetName?: string;
+	widgetName: string;
 }
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
@@ -736,7 +736,7 @@ export interface MetricsexplorertypesMetricDashboardsResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	dashboards?: MetricsexplorertypesMetricDashboardDTO[] | null;
+	dashboards: MetricsexplorertypesMetricDashboardDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricHighlightsResponseDTO {
@@ -744,74 +744,65 @@ export interface MetricsexplorertypesMetricHighlightsResponseDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	activeTimeSeries?: number;
+	activeTimeSeries: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	dataPoints?: number;
+	dataPoints: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	lastReceived?: number;
+	lastReceived: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	totalTimeSeries?: number;
+	totalTimeSeries: number;
 }
 
 export interface MetricsexplorertypesMetricMetadataDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type boolean
 	 */
-	isMonotonic?: boolean;
+	isMonotonic: boolean;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
-	temporality?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	unit: string;
 }
 
 export interface MetricsexplorertypesStatDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	samples?: number;
+	samples: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	timeseries?: number;
+	timeseries: number;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	unit: string;
 }
 
 export interface MetricsexplorertypesStatsRequestDTO {
@@ -819,12 +810,12 @@ export interface MetricsexplorertypesStatsRequestDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	end?: number;
+	end: number;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type integer
 	 */
-	limit?: number;
+	limit: number;
 	/**
 	 * @type integer
 	 */
@@ -834,7 +825,7 @@ export interface MetricsexplorertypesStatsRequestDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	start?: number;
+	start: number;
 }
 
 export interface MetricsexplorertypesStatsResponseDTO {
@@ -842,51 +833,52 @@ export interface MetricsexplorertypesStatsResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	metrics?: MetricsexplorertypesStatDTO[] | null;
+	metrics: MetricsexplorertypesStatDTO[] | null;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	total?: number;
+	total: number;
 }
 
 export interface MetricsexplorertypesTreemapEntryDTO {
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	percentage?: number;
+	percentage: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	totalValue?: number;
+	totalValue: number;
 }
 
+export enum MetricsexplorertypesTreemapModeDTO {
+	timeseries = 'timeseries',
+	samples = 'samples',
+}
 export interface MetricsexplorertypesTreemapRequestDTO {
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	end?: number;
+	end: number;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type integer
 	 */
-	limit?: number;
-	/**
-	 * @type string
-	 */
-	mode?: string;
+	limit: number;
+	mode: MetricsexplorertypesTreemapModeDTO;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	start?: number;
+	start: number;
 }
 
 export interface MetricsexplorertypesTreemapResponseDTO {
@@ -894,41 +886,47 @@ export interface MetricsexplorertypesTreemapResponseDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	samples?: MetricsexplorertypesTreemapEntryDTO[] | null;
+	samples: MetricsexplorertypesTreemapEntryDTO[] | null;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	timeseries?: MetricsexplorertypesTreemapEntryDTO[] | null;
+	timeseries: MetricsexplorertypesTreemapEntryDTO[] | null;
 }
 
 export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type boolean
 	 */
-	isMonotonic?: boolean;
+	isMonotonic: boolean;
 	/**
 	 * @type string
 	 */
-	metricName?: string;
+	metricName: string;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
 	/**
 	 * @type string
 	 */
-	temporality?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	unit: string;
 }
 
+export enum MetrictypesTemporalityDTO {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetrictypesTypeDTO {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface PreferencetypesPreferenceDTO {
 	/**
 	 * @type array
@@ -1051,7 +1049,7 @@ export interface Querybuildertypesv5OrderByKeyDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
@@ -1108,6 +1106,112 @@ export interface RenderErrorResponseDTO {
 	 * @type string
 	 */
 	status?: string;
+}
+
+export interface RoletypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+/**
+ * @nullable
+ */
+export type TelemetrytypesGettableFieldKeysDTOKeys = {
+	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
+} | null;
+
+export interface TelemetrytypesGettableFieldKeysDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	keys: TelemetrytypesGettableFieldKeysDTOKeys;
+}
+
+export interface TelemetrytypesGettableFieldValuesDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	values: TelemetrytypesTelemetryFieldValuesDTO;
+}
+
+export interface TelemetrytypesTelemetryFieldKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface TelemetrytypesTelemetryFieldValuesDTO {
+	/**
+	 * @type array
+	 */
+	boolValues?: boolean[];
+	/**
+	 * @type array
+	 */
+	numberValues?: number[];
+	/**
+	 * @type array
+	 */
+	relatedValues?: string[];
+	/**
+	 * @type array
+	 */
+	stringValues?: string[];
 }
 
 export interface TypesChangePasswordRequestDTO {
@@ -1310,6 +1414,21 @@ export interface TypesPostableAcceptInviteDTO {
 	token?: string;
 }
 
+export interface TypesPostableForgotPasswordDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseURL?: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+}
+
 export interface TypesPostableInviteDTO {
 	/**
 	 * @type string
@@ -1341,6 +1460,11 @@ export interface TypesPostableResetPasswordDTO {
 }
 
 export interface TypesResetPasswordTokenDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	expiresAt?: Date;
 	/**
 	 * @type string
 	 */
@@ -1537,6 +1661,132 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type GetFieldsKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+};
+
+export type GetFieldsKeys200 = {
+	data?: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetFieldsValuesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldContext?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	fieldDataType?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
+};
+
+export type GetFieldsValues200 = {
+	data?: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
 export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };
@@ -1682,6 +1932,42 @@ export type GetPublicDashboardWidgetQueryRange200 = {
 	status?: string;
 };
 
+export type ListRoles200 = {
+	/**
+	 * @type array
+	 */
+	data?: RoletypesRoleDTO[];
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type CreateRole201 = {
+	data?: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type DeleteRolePathParameters = {
+	id: string;
+};
+export type GetRolePathParameters = {
+	id: string;
+};
+export type GetRole200 = {
+	data?: RoletypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type PatchRolePathParameters = {
+	id: string;
+};
 export type ListUsers200 = {
 	/**
 	 * @type array
@@ -1762,6 +2048,19 @@ export type GetFeatures200 = {
 	status?: string;
 };
 
+export type GetIngestionKeysParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	page?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	per_page?: number;
+};
+
 export type GetIngestionKeys200 = {
 	data?: GatewaytypesGettableIngestionKeysDTO;
 	/**
@@ -1801,6 +2100,24 @@ export type DeleteIngestionKeyLimitPathParameters = {
 export type UpdateIngestionKeyLimitPathParameters = {
 	limitId: string;
 };
+export type SearchIngestionKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	page?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	per_page?: number;
+};
+
 export type SearchIngestionKeys200 = {
 	data?: GatewaytypesGettableIngestionKeysDTO;
 	/**
@@ -1814,7 +2131,7 @@ export type GetMetricAlertsParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricAlerts200 = {
@@ -1830,7 +2147,7 @@ export type GetMetricDashboardsParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricDashboards200 = {
@@ -1846,7 +2163,7 @@ export type GetMetricHighlightsParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricHighlights200 = {
@@ -1873,7 +2190,7 @@ export type GetMetricMetadataParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	metricName?: string;
+	metricName: string;
 };
 
 export type GetMetricMetadata200 = {

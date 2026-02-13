@@ -17,6 +17,7 @@ import {
 	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
+	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
 	InstalledIntegrations,
@@ -338,6 +339,13 @@ const routes: AppRoutes[] = [
 		component: Login,
 		isPrivate: false,
 		key: 'LOGIN',
+	},
+	{
+		path: ROUTES.FORGOT_PASSWORD,
+		exact: true,
+		component: ForgotPassword,
+		isPrivate: false,
+		key: 'FORGOT_PASSWORD',
 	},
 	{
 		path: ROUTES.UN_AUTHORIZED,

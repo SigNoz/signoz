@@ -1,6 +1,9 @@
 import { OptionData } from 'components/NewSelect/types';
 import { isEmpty, isNull } from 'lodash-es';
-import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import {
+	IDashboardVariables,
+	IDependencyData,
+} from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
@@ -96,14 +99,6 @@ export const buildDependencies = (
 
 	return graph;
 };
-
-export interface IDependencyData {
-	order: string[];
-	graph: VariableGraph;
-	parentDependencyGraph: VariableGraph;
-	hasCycle: boolean;
-	cycleNodes?: string[];
-}
 
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
@@ -368,21 +363,15 @@ export const uniqueOptions = (options: OptionData[]): OptionData[] => {
 	return uniqueOptions;
 };
 
-export const uniqueValues = (values: string[] | string): string[] | string => {
-	if (Array.isArray(values)) {
-		const uniqueValues: string[] = [];
-		const seenValues = new Set<string>();
-
-		values.forEach((value) => {
-			if (seenValues.has(value)) {
-				return;
-			}
-			seenValues.add(value);
-			uniqueValues.push(value);
-		});
-
-		return uniqueValues;
+export const getSelectValue = (
+	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
+): string | string[] | undefined => {
+	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString();
+		}
+		return selectedValue.map((item) => item.toString());
 	}
-
-	return values;
+	return selectedValue?.toString();
 };

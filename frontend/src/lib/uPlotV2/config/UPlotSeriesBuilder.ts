@@ -5,8 +5,8 @@ import uPlot, { Series } from 'uplot';
 import {
 	ConfigBuilder,
 	DrawStyle,
-	FillStyle,
 	LineInterpolation,
+	LineStyle,
 	SeriesProps,
 	VisibilityMode,
 } from './types';
@@ -15,24 +15,56 @@ import {
  * Builder for uPlot series configuration
  * Handles creation of series settings
  */
+
+/**
+ * Path builders are static and shared across all instances of UPlotSeriesBuilder
+ */
+let builders: PathBuilders | null = null;
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
-	private buildLineConfig(
-		lineColor: string,
-		lineWidth?: number,
-		lineStyle?: { fill?: FillStyle; dash?: number[] },
-	): Partial<Series> {
+	constructor(props: SeriesProps) {
+		super(props);
+		const pathBuilders = uPlot.paths;
+
+		if (!builders) {
+			const linearBuilder = pathBuilders.linear;
+			const splineBuilder = pathBuilders.spline;
+			const steppedBuilder = pathBuilders.stepped;
+
+			if (!linearBuilder || !splineBuilder || !steppedBuilder) {
+				throw new Error('Required uPlot path builders are not available');
+			}
+			builders = {
+				linear: linearBuilder(),
+				spline: splineBuilder(),
+				stepBefore: steppedBuilder({ align: -1 }),
+				stepAfter: steppedBuilder({ align: 1 }),
+			};
+		}
+	}
+
+	private buildLineConfig({
+		lineColor,
+		lineWidth,
+		lineStyle,
+		lineCap,
+	}: {
+		lineColor: string;
+		lineWidth?: number;
+		lineStyle?: LineStyle;
+		lineCap?: Series.Cap;
+	}): Partial<Series> {
 		const lineConfig: Partial<Series> = {
 			stroke: lineColor,
 			width: lineWidth ?? 2,
 		};
 
-		if (lineStyle && lineStyle.fill !== FillStyle.Solid) {
-			if (lineStyle.fill === FillStyle.Dot) {
-				lineConfig.cap = 'round';
-			}
-			lineConfig.dash = lineStyle.dash ?? [10, 10];
+		if (lineStyle === LineStyle.Dashed) {
+			lineConfig.dash = [10, 10];
 		}
 
+		if (lineCap) {
+			lineConfig.cap = lineCap;
+		}
 		return lineConfig;
 	}
 
@@ -138,6 +170,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineInterpolation,
 			lineWidth,
 			lineStyle,
+			lineCap,
 			showPoints,
 			pointSize,
 			scaleKey,
@@ -148,7 +181,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 
 		const lineColor = this.getLineColor();
 
-		const lineConfig = this.buildLineConfig(lineColor, lineWidth, lineStyle);
+		const lineConfig = this.buildLineConfig({
+			lineColor,
+			lineWidth,
+			lineStyle,
+			lineCap,
+		});
 		const pathConfig = this.buildPathConfig({
 			pathBuilder,
 			drawStyle,
@@ -186,8 +224,6 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
-let builders: PathBuilders | null = null;
-
 /**
  * Get path builder based on draw style and interpolation
  */
@@ -195,23 +231,8 @@ function getPathBuilder(
 	style: DrawStyle,
 	lineInterpolation?: LineInterpolation,
 ): Series.PathBuilder {
-	const pathBuilders = uPlot.paths;
-
 	if (!builders) {
-		const linearBuilder = pathBuilders.linear;
-		const splineBuilder = pathBuilders.spline;
-		const steppedBuilder = pathBuilders.stepped;
-
-		if (!linearBuilder || !splineBuilder || !steppedBuilder) {
-			throw new Error('Required uPlot path builders are not available');
-		}
-
-		builders = {
-			linear: linearBuilder(),
-			spline: splineBuilder(),
-			stepBefore: steppedBuilder({ align: -1 }),
-			stepAfter: steppedBuilder({ align: 1 }),
-		};
+		throw new Error('Required uPlot path builders are not available');
 	}
 
 	if (style === DrawStyle.Line) {

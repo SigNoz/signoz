@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 

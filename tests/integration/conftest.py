@@ -20,6 +20,7 @@ pytest_plugins = [
     "fixtures.idputils",
     "fixtures.notification_channel",
     "fixtures.alerts",
+    "fixtures.cloudintegrations",
 ]
 
 

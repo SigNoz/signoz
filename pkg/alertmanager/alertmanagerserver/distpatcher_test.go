@@ -1183,8 +1183,8 @@ func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T)
 
 route:
   group_by: ['alertname']
-  group_wait: 1h
-  group_interval: 1h
+  group_wait: 30s
+  group_interval: 5m
   receiver: 'slack'`
 	conf, err := config.Load(confData)
 	if err != nil {
@@ -1307,4 +1307,96 @@ func TestDispatcher_DoMaintenance(t *testing.T) {
 	mutedBy, isMuted = marker.Muted(route.ID(), aggrGroup1.GroupKey())
 	require.False(t, isMuted)
 	require.Empty(t, mutedBy)
+}
+
+func TestDispatcher_GetOrCreateRoute(t *testing.T) {
+	testCases := []struct {
+		name                  string
+		confData              string
+		expectedReceiver      string
+		expectedGroupWait     time.Duration
+		expectedGroupInterval time.Duration
+		expectedGroupByAll    bool
+		expectedMatchersLen   int
+		expectedMatcherName   string
+		expectedMatcherValue  string
+	}{
+		{
+			name: "create route for slack receiver",
+			confData: `receivers:
+- name: 'slack'
+- name: 'email'
+- name: 'pagerduty'
+
+route:
+  group_by: ['alertname']
+  group_wait: 1m
+  group_interval: 1m
+  receiver: 'slack'`,
+			expectedReceiver:      "slack",
+			expectedGroupWait:     1 * time.Minute,
+			expectedGroupInterval: 1 * time.Minute,
+			expectedGroupByAll:    false,
+			expectedMatchersLen:   1,
+			expectedMatcherName:   "__receiver__",
+			expectedMatcherValue:  "slack",
+		},
+		{
+			name: "no group_wait and group_interval use default values",
+			confData: `receivers:
+- name: 'slack'
+
+route:
+  group_by: ['alertname']
+  receiver: 'slack'`,
+			expectedReceiver:      "slack",
+			expectedGroupWait:     30 * time.Second,
+			expectedGroupInterval: 5 * time.Minute,
+			expectedGroupByAll:    false,
+			expectedMatchersLen:   1,
+			expectedMatcherName:   "__receiver__",
+			expectedMatcherValue:  "slack",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf, err := config.Load(tc.confData)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			providerSettings := createTestProviderSettings()
+			logger := providerSettings.Logger
+			route := dispatch.NewRoute(conf.Route, nil)
+			marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
+			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer alerts.Close()
+
+			timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
+			recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*alertmanagertypes.Alert)}
+			metrics := NewDispatcherMetrics(false, prometheus.NewRegistry())
+			store := nfroutingstoretest.NewMockSQLRouteStore()
+			store.MatchExpectationsInOrder(false)
+			nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
+			if err != nil {
+				t.Fatal(err)
+			}
+			d := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, "test-org")
+			// setup the dispatcher for tests
+			d.receiverRoutes = map[string]*dispatch.Route{}
+
+			newRoute := d.getOrCreateRoute(tc.expectedReceiver)
+			require.Equal(t, tc.expectedReceiver, newRoute.RouteOpts.Receiver)
+			require.Equal(t, tc.expectedGroupWait, newRoute.RouteOpts.GroupWait)
+			require.Equal(t, tc.expectedGroupInterval, newRoute.RouteOpts.GroupInterval)
+			require.Equal(t, tc.expectedGroupByAll, newRoute.RouteOpts.GroupByAll)
+			require.Equal(t, tc.expectedMatchersLen, len(newRoute.Matchers))
+			require.Equal(t, tc.expectedMatcherName, newRoute.Matchers[0].Name)
+			require.Equal(t, tc.expectedMatcherValue, newRoute.Matchers[0].Value)
+		})
+	}
 }

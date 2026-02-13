@@ -23,12 +23,22 @@ export abstract class ConfigBuilder<P, T> {
 }
 
 /**
+ * Preferences source for the uPlot config builder
+ */
+export enum SelectionPreferencesSource {
+	LOCAL_STORAGE = 'LOCAL_STORAGE',
+	IN_MEMORY = 'IN_MEMORY',
+}
+
+/**
  * Props for configuring the uPlot config builder
  */
 export interface ConfigBuilderProps {
 	widgetId?: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	tzDate?: uPlot.LocalDateFromUnix;
+	selectionPreferencesSource?: SelectionPreferencesSource;
+	shouldSaveSelectionPreference?: boolean;
 }
 
 /**
@@ -92,21 +102,15 @@ export interface ScaleProps {
  * Props for configuring a series
  */
 
-export enum FillStyle {
+export enum LineStyle {
 	Solid = 'solid',
-	Dash = 'dash',
-	Dot = 'dot',
-	Square = 'square',
-}
-
-export interface LineStyle {
-	dash?: Array<number>;
-	fill?: FillStyle;
+	Dashed = 'dashed',
 }
 
 export enum DrawStyle {
 	Line = 'line',
 	Points = 'points',
+	Bar = 'bar',
 }
 
 export enum LineInterpolation {
@@ -125,7 +129,7 @@ export enum VisibilityMode {
 export interface SeriesProps {
 	scaleKey: string;
 	label?: string;
-
+	panelType: PANEL_TYPES;
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
 	pathBuilder?: Series.PathBuilder;
@@ -141,6 +145,7 @@ export interface SeriesProps {
 	lineInterpolation?: LineInterpolation;
 	lineStyle?: LineStyle;
 	lineWidth?: number;
+	lineCap?: Series.Cap;
 
 	// Points config
 	pointColor?: string;

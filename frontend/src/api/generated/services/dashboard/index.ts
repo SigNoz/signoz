@@ -39,7 +39,7 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 /**
- * This endpoints deletes the public sharing config and disables the public sharing of a dashboard
+ * This endpoint deletes the public sharing config and disables the public sharing of a dashboard
  * @summary Delete public dashboard
  */
 export const deletePublicDashboard = ({
@@ -118,7 +118,7 @@ export const useDeletePublicDashboard = <
 	return useMutation(mutationOptions);
 };
 /**
- * This endpoints returns public sharing config for a dashboard
+ * This endpoint returns public sharing config for a dashboard
  * @summary Get public dashboard
  */
 export const getPublicDashboard = (
@@ -222,7 +222,7 @@ export const invalidateGetPublicDashboard = async (
 };
 
 /**
- * This endpoints creates public sharing config and enables public sharing of the dashboard
+ * This endpoint creates public sharing config and enables public sharing of the dashboard
  * @summary Create public dashboard
  */
 export const createPublicDashboard = (
@@ -321,7 +321,7 @@ export const useCreatePublicDashboard = <
 	return useMutation(mutationOptions);
 };
 /**
- * This endpoints updates the public sharing config for a dashboard
+ * This endpoint updates the public sharing config for a dashboard
  * @summary Update public dashboard
  */
 export const updatePublicDashboard = (
@@ -418,7 +418,7 @@ export const useUpdatePublicDashboard = <
 	return useMutation(mutationOptions);
 };
 /**
- * This endpoints returns the sanitized dashboard data for public access
+ * This endpoint returns the sanitized dashboard data for public access
  * @summary Get public dashboard data
  */
 export const getPublicDashboardData = (

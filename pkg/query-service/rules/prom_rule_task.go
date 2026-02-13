@@ -41,12 +41,12 @@ type PromRuleTask struct {
 	orgID            valuer.UUID
 }
 
-// newPromRuleTask holds rules that have promql condition
-// and evalutes the rule at a given frequency
+// NewPromRuleTask holds rules that have promql condition
+// and evaluates the rule at a given frequency
 func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *PromRuleTask {
 	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
-	if time.Now() == time.Now().Add(frequency) {
+	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
 

@@ -11,6 +11,7 @@ export interface ChartLayoutProps {
 	children: (props: {
 		chartWidth: number;
 		chartHeight: number;
+		averageLegendWidth: number;
 	}) => React.ReactNode;
 	layoutChildren?: React.ReactNode;
 	containerWidth: number;
@@ -56,6 +57,7 @@ export default function ChartLayout({
 					{children({
 						chartWidth: chartDimensions.width,
 						chartHeight: chartDimensions.height,
+						averageLegendWidth: chartDimensions.averageLegendWidth,
 					})}
 				</div>
 				<div
@@ -65,7 +67,7 @@ export default function ChartLayout({
 						width: chartDimensions.legendWidth,
 					}}
 				>
-					{legendComponent(chartDimensions.legendsPerSet)}
+					{legendComponent(chartDimensions.averageLegendWidth)}
 				</div>
 			</div>
 			{layoutChildren}
