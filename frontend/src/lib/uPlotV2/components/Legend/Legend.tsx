@@ -5,8 +5,8 @@ import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
+import { useLegendActions } from '../../hooks/useLegendActions';
 import { LegendPosition, LegendProps } from '../types';
-import { useLegendActions } from './useLegendActions';
 
 import './Legend.styles.scss';
 
@@ -106,6 +106,7 @@ export default function Legend({
 						placeholder="Search..."
 						value={legendSearchQuery}
 						onChange={(e): void => setLegendSearchQuery(e.target.value)}
+						data-testid="legend-search-input"
 						className="legend-search-input"
 					/>
 				</div>
