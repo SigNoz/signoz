@@ -1,5 +1,11 @@
 import React from 'react';
-import { render, RenderResult, screen } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	RenderResult,
+	screen,
+	within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
@@ -7,6 +13,9 @@ import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { useLegendActions } from '../../hooks/useLegendActions';
 import Legend from '../Legend/Legend';
 import { LegendPosition } from '../types';
+
+const mockWriteText = jest.fn().mockResolvedValue(undefined);
+let clipboardSpy: jest.SpyInstance | undefined;
 
 jest.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({
@@ -39,6 +48,15 @@ const mockUseLegendActions = useLegendActions as jest.MockedFunction<
 >;
 
 describe('Legend', () => {
+	beforeAll(() => {
+		// JSDOM does not define navigator.clipboard; add it so we can spy on writeText
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText: () => Promise.resolve() },
+			writable: true,
+			configurable: true,
+		});
+	});
+
 	const baseLegendItemsMap = {
 		0: {
 			seriesIndex: 0,
@@ -70,6 +88,11 @@ describe('Legend', () => {
 		onLegendMouseMove = jest.fn();
 		onLegendMouseLeave = jest.fn();
 		onFocusSeries = jest.fn();
+		mockWriteText.mockClear();
+
+		clipboardSpy = jest
+			.spyOn(navigator.clipboard, 'writeText')
+			.mockImplementation(mockWriteText);
 
 		mockUseLegendsSync.mockReturnValue({
 			legendItemsMap: baseLegendItemsMap,
@@ -86,6 +109,7 @@ describe('Legend', () => {
 	});
 
 	afterEach(() => {
+		clipboardSpy?.mockRestore();
 		jest.clearAllMocks();
 	});
 
@@ -208,6 +232,49 @@ describe('Legend', () => {
 			await user.unhover(container);
 
 			expect(onLegendMouseLeave).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('copy action', () => {
+		it('copies the legend label to clipboard when copy button is clicked', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			const firstLegendItem = document.querySelector(
+				'[data-legend-item-id="0"]',
+			) as HTMLElement;
+			const copyButton = within(firstLegendItem).getByTestId('legend-copy');
+
+			fireEvent.click(copyButton);
+
+			expect(mockWriteText).toHaveBeenCalledTimes(1);
+			expect(mockWriteText).toHaveBeenCalledWith('A');
+		});
+
+		it('copies the correct label when copy is clicked on a different legend item', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			const thirdLegendItem = document.querySelector(
+				'[data-legend-item-id="2"]',
+			) as HTMLElement;
+			const copyButton = within(thirdLegendItem).getByTestId('legend-copy');
+
+			fireEvent.click(copyButton);
+
+			expect(mockWriteText).toHaveBeenCalledTimes(1);
+			expect(mockWriteText).toHaveBeenCalledWith('C');
+		});
+
+		it('does not call onLegendClick when copy button is clicked', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			const firstLegendItem = document.querySelector(
+				'[data-legend-item-id="0"]',
+			) as HTMLElement;
+			const copyButton = within(firstLegendItem).getByTestId('legend-copy');
+
+			fireEvent.click(copyButton);
+
+			expect(onLegendClick).not.toHaveBeenCalled();
 		});
 	});
 });
