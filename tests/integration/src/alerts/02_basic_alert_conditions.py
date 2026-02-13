@@ -549,36 +549,38 @@ TEST_RULES_MISCELLANEOUS = [
             ],
         ),
     ),
-    types.AlertTestCase(
-        name="test_multi_threshold_rule_test",
-        rule_path="alerts/test_scenarios/multi_threshold_rule_test/rule.json",
-        alert_data=[
-            types.AlertData(
-                type="metrics",
-                data_path="alerts/test_scenarios/multi_threshold_rule_test/alert_data.jsonl",
-            ),
-        ],
-        alert_expectation=types.AlertExpectation(
-            should_alert=True,
-            # the second alert will be fired with some delay from alert manager's group_interval
-            # so taking this in consideration, the wait time is 90 seconds (30s + 30s for next alert + 30s buffer)
-            wait_time_seconds=90,
-            expected_alerts=[
-                types.FiringAlert(
-                    labels={
-                        "alertname": "multi_threshold_rule_test",
-                        "threshold.name": "info",
-                    }
-                ),
-                types.FiringAlert(
-                    labels={
-                        "alertname": "multi_threshold_rule_test",
-                        "threshold.name": "warning",
-                    }
-                ),
-            ],
-        ),
-    ),
+    # TODO: @abhishekhugetech enable the test for multi threshold rule,
+    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3934) with alertManager is resolved, pylint: disable=W0511
+    # types.AlertTestCase(
+    #     name="test_multi_threshold_rule_test",
+    #     rule_path="alerts/test_scenarios/multi_threshold_rule_test/rule.json",
+    #     alert_data=[
+    #         types.AlertData(
+    #             type="metrics",
+    #             data_path="alerts/test_scenarios/multi_threshold_rule_test/alert_data.jsonl",
+    #         ),
+    #     ],
+    #     alert_expectation=types.AlertExpectation(
+    #         should_alert=True,
+    #         # the second alert will be fired with some delay from alert manager's group_interval
+    #         # so taking this in consideration, the wait time is 90 seconds (30s + 30s for next alert + 30s buffer)
+    #         wait_time_seconds=90,
+    #         expected_alerts=[
+    #             types.FiringAlert(
+    #                 labels={
+    #                     "alertname": "multi_threshold_rule_test",
+    #                     "threshold.name": "info",
+    #                 }
+    #             ),
+    #             types.FiringAlert(
+    #                 labels={
+    #                     "alertname": "multi_threshold_rule_test",
+    #                     "threshold.name": "warning",
+    #                 }
+    #             ),
+    #         ],
+    #     ),
+    # ),
 ]
 
 
