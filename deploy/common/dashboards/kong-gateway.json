@@ -1,32 +1,32 @@
 {
-  "uuid": "kong_gateway_dashboard_001",
-  "title": "Kong Gateway Dashboard",
-  "description": "Monitoring Kong Gateway metrics including latency, requests, and bandwidth.",
-  "tags": ["kong", "gateway", "infrastructure"],
+  "uuid": "kong-gateway-dash",
+  "title": "Kong Gateway Overview",
+  "description": "Dashboard for monitoring Kong Gateway performance and errors",
+  "tags": ["kong", "api-gateway"],
   "panels": [
     {
-      "title": "Total Requests (Per Second)",
-      "type": "graph",
+      "title": "Request Rate (RPS)",
+      "type": "time_series",
       "query": "sum(rate(kong_http_status[5m]))",
-      "layout": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      "layout": { "h": 6, "w": 12, "x": 0, "y": 0 }
     },
     {
-      "title": "Average Latency (ms)",
-      "type": "graph",
-      "query": "sum(kong_latency_ms_sum) / sum(kong_latency_ms_count)",
-      "layout": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      "title": "Average Request Latency",
+      "type": "time_series",
+      "query": "avg(rate(kong_latency_ms_sum[5m])) / avg(rate(kong_latency_ms_count[5m]))",
+      "layout": { "h": 6, "w": 12, "x": 12, "y": 0 }
     },
     {
-      "title": "HTTP Status Codes",
-      "type": "value",
-      "query": "sum by (code) (rate(kong_http_status[5m]))",
-      "layout": { "h": 8, "w": 24, "x": 0, "y": 8 }
+      "title": "4xx Errors (Client)",
+      "type": "time_series",
+      "query": "sum(rate(kong_http_status{code=~\"4..\"}[5m]))",
+      "layout": { "h": 6, "w": 12, "x": 0, "y": 6 }
     },
     {
-      "title": "Bandwidth Usage (Bytes)",
-      "type": "graph",
-      "query": "sum(rate(kong_bandwidth[5m]))",
-      "layout": { "h": 8, "w": 24, "x": 0, "y": 16 }
+      "title": "5xx Errors (Server)",
+      "type": "time_series",
+      "query": "sum(rate(kong_http_status{code=~\"5..\"}[5m]))",
+      "layout": { "h": 6, "w": 12, "x": 12, "y": 6 }
     }
   ]
 }
