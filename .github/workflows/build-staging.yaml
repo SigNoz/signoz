@@ -93,7 +93,7 @@ jobs:
     needs: [prepare, js-build]
     secrets: inherit
     with:
-      PRIMUS_REF: main
+      PRIMUS_REF: provenance
       GO_VERSION: 1.24
       GO_INPUT_ARTIFACT_CACHE_KEY: staging-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
