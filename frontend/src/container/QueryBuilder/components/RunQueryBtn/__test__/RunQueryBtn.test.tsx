@@ -3,6 +3,16 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import RunQueryBtn from '../RunQueryBtn';
 
+jest.mock('react-query', () => {
+	const actual = jest.requireActual('react-query');
+	return {
+		...actual,
+		useIsFetching: jest.fn(),
+		useQueryClient: jest.fn(),
+	};
+});
+import { useIsFetching, useQueryClient } from 'react-query';
+
 // Mock OS util
 jest.mock('utils/getUserOS', () => ({
 	getUserOperatingSystem: jest.fn(),
@@ -11,10 +21,43 @@ jest.mock('utils/getUserOS', () => ({
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 describe('RunQueryBtn', () => {
-	test('renders run state and triggers on click', () => {
+	beforeEach(() => {
+		jest.resetAllMocks();
 		(getUserOperatingSystem as jest.Mock).mockReturnValue(
 			UserOperatingSystem.MACOS,
 		);
+		(useIsFetching as jest.Mock).mockReturnValue(0);
+		(useQueryClient as jest.Mock).mockReturnValue({
+			cancelQueries: jest.fn(),
+		});
+	});
+
+	test('uses isLoadingQueries prop over useIsFetching', () => {
+		// Simulate fetching but prop forces not loading
+		(useIsFetching as jest.Mock).mockReturnValue(1);
+		const onRun = jest.fn();
+		render(<RunQueryBtn onStageRunQuery={onRun} isLoadingQueries={false} />);
+		// Should show "Run Query" (not cancel)
+		const runBtn = screen.getByRole('button', { name: /run query/i });
+		expect(runBtn).toBeInTheDocument();
+		expect(runBtn).toBeEnabled();
+	});
+
+	test('fallback cancel: uses handleCancelQuery when no key provided', () => {
+		(useIsFetching as jest.Mock).mockReturnValue(0);
+		const cancelQueries = jest.fn();
+		(useQueryClient as jest.Mock).mockReturnValue({ cancelQueries });
+
+		const onCancel = jest.fn();
+		render(<RunQueryBtn isLoadingQueries handleCancelQuery={onCancel} />);
+
+		const cancelBtn = screen.getByRole('button', { name: /cancel/i });
+		fireEvent.click(cancelBtn);
+		expect(onCancel).toHaveBeenCalledTimes(1);
+		expect(cancelQueries).not.toHaveBeenCalled();
+	});
+
+	test('renders run state and triggers on click', () => {
 		const onRun = jest.fn();
 		render(<RunQueryBtn onStageRunQuery={onRun} />);
 		const btn = screen.getByRole('button', { name: /run query/i });
@@ -24,17 +67,11 @@ describe('RunQueryBtn', () => {
 	});
 
 	test('disabled when onStageRunQuery is undefined', () => {
-		(getUserOperatingSystem as jest.Mock).mockReturnValue(
-			UserOperatingSystem.MACOS,
-		);
 		render(<RunQueryBtn />);
 		expect(screen.getByRole('button', { name: /run query/i })).toBeDisabled();
 	});
 
 	test('shows cancel state and calls handleCancelQuery', () => {
-		(getUserOperatingSystem as jest.Mock).mockReturnValue(
-			UserOperatingSystem.MACOS,
-		);
 		const onCancel = jest.fn();
 		render(<RunQueryBtn isLoadingQueries handleCancelQuery={onCancel} />);
 		const cancel = screen.getByRole('button', { name: /cancel/i });
@@ -42,10 +79,24 @@ describe('RunQueryBtn', () => {
 		expect(onCancel).toHaveBeenCalledTimes(1);
 	});
 
+	test('derives loading from queryKey via useIsFetching and cancels via queryClient', () => {
+		(useIsFetching as jest.Mock).mockReturnValue(1);
+		const cancelQueries = jest.fn();
+		(useQueryClient as jest.Mock).mockReturnValue({ cancelQueries });
+
+		const queryKey = ['GET_QUERY_RANGE', '1h', { some: 'req' }, 1, 2];
+		render(<RunQueryBtn queryRangeKey={queryKey} />);
+
+		// Button switches to cancel state
+		const cancelBtn = screen.getByRole('button', { name: /cancel/i });
+		expect(cancelBtn).toBeInTheDocument();
+
+		// Clicking cancel calls cancelQueries with the key
+		fireEvent.click(cancelBtn);
+		expect(cancelQueries).toHaveBeenCalledWith(queryKey);
+	});
+
 	test('shows Command + CornerDownLeft on mac', () => {
-		(getUserOperatingSystem as jest.Mock).mockReturnValue(
-			UserOperatingSystem.MACOS,
-		);
 		const { container } = render(
 			<RunQueryBtn onStageRunQuery={(): void => {}} />,
 		);
@@ -70,9 +121,6 @@ describe('RunQueryBtn', () => {
 	});
 
 	test('renders custom label when provided', () => {
-		(getUserOperatingSystem as jest.Mock).mockReturnValue(
-			UserOperatingSystem.MACOS,
-		);
 		const onRun = jest.fn();
 		render(<RunQueryBtn onStageRunQuery={onRun} label="Stage & Run Query" />);
 		expect(

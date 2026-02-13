@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { FilterOutlined } from '@ant-design/icons';
+import { FilterOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
@@ -32,6 +32,7 @@ export default function LeftToolbarActions({
 				<Tooltip title="Show Filters">
 					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
 						<FilterOutlined />
+						<VerticalAlignTopOutlined rotate={90} />
 					</Button>
 				</Tooltip>
 			)}

@@ -9,8 +9,6 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { Labels } from 'types/api/alerts/def';
 
-import { GetCreateAlertLocalStateFromAlertDefReturn } from '../types';
-
 export interface ICreateAlertContextProps {
 	alertState: AlertState;
 	setAlertState: Dispatch<CreateAlertAction>;
@@ -52,7 +50,7 @@ export interface ICreateAlertContextProps {
 export interface ICreateAlertProviderProps {
 	children: React.ReactNode;
 	initialAlertType: AlertTypes;
-	initialAlertState?: GetCreateAlertLocalStateFromAlertDefReturn;
+	initialAlertState?: CreateAlertState;
 	isEditMode?: boolean;
 	ruleId?: string;
 }
@@ -272,3 +270,31 @@ export type NotificationSettingsAction =
 	| { type: 'SET_ROUTING_POLICIES'; payload: boolean }
 	| { type: 'SET_INITIAL_STATE'; payload: NotificationSettingsState }
 	| { type: 'RESET' };
+
+export type CreateAlertState = {
+	basic: AlertState;
+	threshold: AlertThresholdState;
+	advancedOptions: AdvancedOptionsState;
+	evaluationWindow: EvaluationWindowState;
+	notificationSettings: NotificationSettingsState;
+};
+
+export enum CreateAlertSlice {
+	BASIC = 'basic',
+	THRESHOLD = 'threshold',
+	ADVANCED_OPTIONS = 'advancedOptions',
+	EVALUATION_WINDOW = 'evaluationWindow',
+	NOTIFICATION_SETTINGS = 'notificationSettings',
+}
+
+export type CreateAlertReducerAction =
+	| { slice: CreateAlertSlice.BASIC; action: CreateAlertAction }
+	| { slice: CreateAlertSlice.THRESHOLD; action: AlertThresholdAction }
+	| { slice: CreateAlertSlice.ADVANCED_OPTIONS; action: AdvancedOptionsAction }
+	| { slice: CreateAlertSlice.EVALUATION_WINDOW; action: EvaluationWindowAction }
+	| {
+			slice: CreateAlertSlice.NOTIFICATION_SETTINGS;
+			action: NotificationSettingsAction;
+	  }
+	| { type: 'RESET' }
+	| { type: 'SET_INITIAL_STATE'; payload: CreateAlertState };
