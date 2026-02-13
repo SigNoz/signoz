@@ -16,7 +16,7 @@ var (
 )
 
 var (
-	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation_email")}
+	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invite")}
 	TemplateNameUpdateRole      = TemplateName{valuer.NewString("update_role")}
 	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password_email")}
 )

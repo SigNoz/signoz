@@ -15,6 +15,7 @@ type provider struct {
 	settings factory.ScopedProviderSettings
 	store    emailtypes.TemplateStore
 	client   *client.Client
+	config   emailing.Config
 }
 
 func NewFactory() factory.ProviderFactory[emailing.Emailing, emailing.Config] {
@@ -55,7 +56,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	return &provider{settings: settings, store: store, client: client}, nil
+	return &provider{settings: settings, store: store, client: client, config: config}, nil
 }
 
 func (provider *provider) SendHTML(ctx context.Context, to string, subject string, templateName emailtypes.TemplateName, data map[string]any) error {
@@ -68,6 +69,9 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 	if err != nil {
 		return err
 	}
+
+	data["format"] = provider.config.Templates.Format
+	data["to"] = to
 
 	content, err := emailtypes.NewContent(template, data)
 	if err != nil {
