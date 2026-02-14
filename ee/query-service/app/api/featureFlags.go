@@ -67,14 +67,6 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	if constants.IsDotMetricsEnabled {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.DotMetricsEnabled {
-				featureSet[idx].Active = true
-			}
-		}
-	}
-
 	ah.Respond(w, featureSet)
 }
 

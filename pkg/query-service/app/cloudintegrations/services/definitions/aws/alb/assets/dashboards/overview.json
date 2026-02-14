@@ -99,7 +99,7 @@
       "multiSelect": false,
       "name": "Account",
       "order": 0,
-      "queryValue": "SELECT JSONExtractString(labels, 'cloud_account_id') as cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApplicationELB_ConsumedLCUs_max'\nGROUP BY cloud_account_id",
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud.account.id') as `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApplicationELB_ConsumedLCUs_max'\nGROUP BY `cloud.account.id`",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
@@ -115,7 +115,7 @@
       "multiSelect": false,
       "name": "Region",
       "order": 1,
-      "queryValue": "SELECT JSONExtractString(labels, 'cloud_region') as cloud_region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApplicationELB_ConsumedLCUs_max'\n    and JSONExtractString(labels, 'cloud_account_id') IN {{.Account}}\nGROUP BY cloud_region\n",
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud.region') as `cloud.region`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApplicationELB_ConsumedLCUs_max'\n    and JSONExtractString(labels, 'cloud.account.id') IN {{.Account}}\nGROUP BY `cloud.region`\n",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
@@ -158,10 +158,10 @@
                     "id": "b282d9f1",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -171,10 +171,10 @@
                     "id": "71837c70",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -221,18 +221,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -364,10 +364,10 @@
                     "id": "448b551a",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -377,10 +377,10 @@
                     "id": "a8821216",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -427,18 +427,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -570,10 +570,10 @@
                     "id": "702a8765",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -583,10 +583,10 @@
                     "id": "32985f2d",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -625,18 +625,18 @@
               "groupBy": [
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 },
                 {
@@ -776,10 +776,10 @@
                     "id": "5807a1e3",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -789,10 +789,10 @@
                     "id": "0dd63d0c",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -826,18 +826,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -969,10 +969,10 @@
                     "id": "72c256c0",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -982,10 +982,10 @@
                     "id": "b433c2a1",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1019,18 +1019,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -1162,10 +1162,10 @@
                     "id": "9226a37c",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1175,10 +1175,10 @@
                     "id": "c3ff0c8f",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1221,18 +1221,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -1364,10 +1364,10 @@
                     "id": "20627274",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1377,10 +1377,10 @@
                     "id": "cd861e27",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1401,18 +1401,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -1544,10 +1544,10 @@
                     "id": "7d4a3494",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1557,10 +1557,10 @@
                     "id": "3c307858",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1594,18 +1594,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],
@@ -1737,10 +1737,10 @@
                     "id": "a416e862",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1750,10 +1750,10 @@
                     "id": "ed7d0a39",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -1774,18 +1774,18 @@
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_account_id--string--tag--false",
+                  "id": "cloud.account.id--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_account_id",
+                  "key": "cloud.account.id",
                   "type": "tag"
                 },
                 {
                   "dataType": "string",
-                  "id": "cloud_region--string--tag--false",
+                  "id": "cloud.region--string--tag--false",
                   "isColumn": false,
                   "isJSON": false,
-                  "key": "cloud_region",
+                  "key": "cloud.region",
                   "type": "tag"
                 }
               ],

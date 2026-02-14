@@ -32,7 +32,6 @@ export const externalCallErrorPercent = ({
 	servicename,
 	legend,
 	tagFilterItems,
-	dotMetricsEnabled,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
@@ -49,9 +48,7 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
 			},
@@ -61,7 +58,7 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
+				key: WidgetKeys.StatusCode,
 				dataType: DataTypes.Int64,
 				type: MetricsType.Tag,
 			},
@@ -74,9 +71,7 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
 			},
@@ -120,7 +115,6 @@ export const externalCallErrorPercent = ({
 export const externalCallDuration = ({
 	servicename,
 	tagFilterItems,
-	dotMetricsEnabled,
 }: ExternalCallProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
@@ -141,9 +135,7 @@ export const externalCallDuration = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -183,7 +175,6 @@ export const externalCallRpsByAddress = ({
 	servicename,
 	legend,
 	tagFilterItems,
-	dotMetricsEnabled,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
@@ -198,9 +189,7 @@ export const externalCallRpsByAddress = ({
 				id: '',
 				key: {
 					dataType: DataTypes.String,
-					key: dotMetricsEnabled
-						? WidgetKeys.Service_name
-						: WidgetKeys.Service_name_norm,
+					key: WidgetKeys.OTelServiceName,
 					type: MetricsType.Resource,
 				},
 				op: OPERATORS.IN,
@@ -231,7 +220,6 @@ export const externalCallDurationByAddress = ({
 	servicename,
 	legend,
 	tagFilterItems,
-	dotMetricsEnabled,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
@@ -251,9 +239,7 @@ export const externalCallDurationByAddress = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,

@@ -5,13 +5,13 @@ import { mappingWithRoutesAndKeys } from '../utils';
 
 describe('useResourceAttribute config', () => {
 	describe('whilelistedKeys', () => {
-		it('should include underscore-notation keys (DOT_METRICS_ENABLED=false)', () => {
+		it('should include underscore-notation keys', () => {
 			expect(whilelistedKeys).toContain('resource_deployment_environment');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_name');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_namespace');
 		});
 
-		it('should include dot-notation keys (DOT_METRICS_ENABLED=true)', () => {
+		it('should include dot-notation keys', () => {
 			expect(whilelistedKeys).toContain('resource_deployment.environment');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.name');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.namespace');

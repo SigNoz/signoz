@@ -16,20 +16,20 @@ import (
 )
 
 var (
-	metricToUseForJobs = GetDotMetrics("k8s_job_desired_successful_pods")
-	k8sJobNameAttrKey  = GetDotMetrics("k8s_job_name")
+	metricToUseForJobs = MetricKey("k8s_job_desired_successful_pods")
+	k8sJobNameAttrKey  = MetricKey("k8s_job_name")
 
 	metricNamesForJobs = map[string]string{
-		"desired_successful_pods": GetDotMetrics("k8s_job_desired_successful_pods"),
-		"active_pods":             GetDotMetrics("k8s_job_active_pods"),
-		"failed_pods":             GetDotMetrics("k8s_job_failed_pods"),
-		"successful_pods":         GetDotMetrics("k8s_job_successful_pods"),
+		"desired_successful_pods": MetricKey("k8s_job_desired_successful_pods"),
+		"active_pods":             MetricKey("k8s_job_active_pods"),
+		"failed_pods":             MetricKey("k8s_job_failed_pods"),
+		"successful_pods":         MetricKey("k8s_job_successful_pods"),
 	}
 
 	jobAttrsToEnrich = []string{
-		GetDotMetrics("k8s_job_name"),
-		GetDotMetrics("k8s_namespace_name"),
-		GetDotMetrics("k8s_cluster_name"),
+		MetricKey("k8s_job_name"),
+		MetricKey("k8s_namespace_name"),
+		MetricKey("k8s_cluster_name"),
 	}
 
 	queryNamesForJobs = map[string][]string{
@@ -52,7 +52,7 @@ var (
 			QueryName:  "H",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      GetDotMetrics(metricNamesForJobs["desired_successful_pods"]),
+				Key:      MetricKey(metricNamesForJobs["desired_successful_pods"]),
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -72,7 +72,7 @@ var (
 			QueryName:  "I",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      GetDotMetrics(metricNamesForJobs["active_pods"]),
+				Key:      MetricKey(metricNamesForJobs["active_pods"]),
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -92,7 +92,7 @@ var (
 			QueryName:  "J",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      GetDotMetrics(metricNamesForJobs["failed_pods"]),
+				Key:      MetricKey(metricNamesForJobs["failed_pods"]),
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -112,7 +112,7 @@ var (
 			QueryName:  "K",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      GetDotMetrics(metricNamesForJobs["successful_pods"]),
+				Key:      MetricKey(metricNamesForJobs["successful_pods"]),
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -321,7 +321,7 @@ func (d *JobsRepo) GetJobList(ctx context.Context, orgID valuer.UUID, req model.
 	}
 
 	if req.OrderBy == nil {
-		req.OrderBy = &v3.OrderBy{ColumnName: GetDotMetrics("desired_pods"), Order: v3.DirectionDesc}
+		req.OrderBy = &v3.OrderBy{ColumnName: MetricKey("desired_pods"), Order: v3.DirectionDesc}
 	}
 
 	if req.GroupBy == nil {

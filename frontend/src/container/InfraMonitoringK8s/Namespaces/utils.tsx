@@ -122,7 +122,7 @@ export const getK8sNamespacesListColumns = (
 	return columnsConfig as ColumnType<K8sNamespacesRowData>[];
 };
 
-const dotToUnder: Record<string, keyof K8sNamespacesData['meta']> = {
+const attributeToMetaKey: Record<string, keyof K8sNamespacesData['meta']> = {
 	'k8s.namespace.name': 'k8s_namespace_name',
 	'k8s.cluster.name': 'k8s_cluster_name',
 };
@@ -137,7 +137,8 @@ const getGroupByEle = (
 		const rawKey = group.key as string;
 
 		// Choose mapped key if present, otherwise use rawKey
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof namespace.meta;
+		const metaKey = (attributeToMetaKey[rawKey] ??
+			rawKey) as keyof typeof namespace.meta;
 		const value = namespace.meta[metaKey];
 
 		groupByValues.push(value);

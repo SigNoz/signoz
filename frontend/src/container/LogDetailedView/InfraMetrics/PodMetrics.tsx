@@ -11,13 +11,11 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
-import { FeatureKeys } from '../../../constants/features';
 import { getPodQueryPayload, podWidgetInfo } from './constants';
 
 function PodMetrics({
@@ -53,14 +51,9 @@ function PodMetrics({
 		scrollLeft: 0,
 	});
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const queryPayloads = useMemo(
-		() => getPodQueryPayload(clusterName, podName, start, end, dotMetricsEnabled),
-		[clusterName, end, podName, start, dotMetricsEnabled],
+		() => getPodQueryPayload(clusterName, podName, start, end),
+		[clusterName, end, podName, start],
 	);
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({

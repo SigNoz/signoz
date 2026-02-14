@@ -71,20 +71,12 @@ describe('InfraMonitoringHosts utils', () => {
 	});
 
 	describe('GetHostsQuickFiltersConfig', () => {
-		it('should return correct config when dotMetricsEnabled is true', () => {
-			const result = GetHostsQuickFiltersConfig(true);
+		it('should return correct config with dot-notation keys', () => {
+			const result = GetHostsQuickFiltersConfig();
 
 			expect(result[0].attributeKey.key).toBe('host.name');
 			expect(result[1].attributeKey.key).toBe('os.type');
 			expect(result[0].aggregateAttribute).toBe('system.cpu.load_average.15m');
-		});
-
-		it('should return correct config when dotMetricsEnabled is false', () => {
-			const result = GetHostsQuickFiltersConfig(false);
-
-			expect(result[0].attributeKey.key).toBe('host_name');
-			expect(result[1].attributeKey.key).toBe('os_type');
-			expect(result[0].aggregateAttribute).toBe('system_cpu_load_average_15m');
 		});
 	});
 });

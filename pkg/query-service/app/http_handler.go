@@ -57,7 +57,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -1168,10 +1167,6 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", tmplErr
 	}
 
-	if !constants.IsDotMetricsEnabled {
-		return queryBuf.String(), nil
-	}
-
 	query = queryBuf.String()
 
 	// Now handle $var replacements (simple string replace)
@@ -2007,13 +2002,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	if constants.IsDotMetricsEnabled {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.DotMetricsEnabled {
-				featureSet[idx].Active = true
-			}
-		}
-	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2449,12 +2437,8 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
-	var kafkaConsumerLag string = "kafka_consumer_group_lag"
-	if constants.IsDotMetricsEnabled {
-		kafkaConsumerLag = "kafka.consumer_group.lag"
-		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
-	}
+	var kafkaConsumerFetchLatencyAvg string = "kafka.consumer.fetch_latency_avg"
+	var kafkaConsumerLag string = "kafka.consumer_group.lag"
 
 	if !fetchLatencyState && !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{

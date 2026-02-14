@@ -121,7 +121,7 @@
       "customValue": "",
       "defaultValue": "",
       "description": "",
-      "dynamicVariablesAttribute": "cloud_region",
+      "dynamicVariablesAttribute": "cloud.region",
       "dynamicVariablesSource": "Metrics",
       "id": "3e37f808-da29-4f42-b9fd-ed0c5a9f55af",
       "key": "3e37f808-da29-4f42-b9fd-ed0c5a9f55af",
@@ -159,7 +159,7 @@
       "customValue": "",
       "defaultValue": "",
       "description": "",
-      "dynamicVariablesAttribute": "cloud_account_id",
+      "dynamicVariablesAttribute": "cloud.account.id",
       "dynamicVariablesSource": "Metrics",
       "id": "ae760815-3966-421c-97ac-f7793e524779",
       "key": "ae760815-3966-421c-97ac-f7793e524779",
@@ -232,7 +232,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [],
@@ -364,7 +364,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
               },
               "functions": [],
               "groupBy": [],
@@ -496,7 +496,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [],
@@ -628,7 +628,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service"
               },
               "functions": [],
               "groupBy": [],
@@ -760,7 +760,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -901,7 +901,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1042,7 +1042,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1183,7 +1183,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1324,7 +1324,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1465,7 +1465,7 @@
               "disabled": false,
               "expression": "A",
               "filter": {
-                "expression": "cloud_account_id = $Account AND cloud_region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
+                "expression": "cloud.account.id = $Account AND cloud.region = $Region AND ClusterName = $Cluster AND ServiceName = $Service AND TaskId in $TaskId AND TaskId != \"\""
               },
               "functions": [],
               "groupBy": [
@@ -1572,5 +1572,5 @@
       "yAxisUnit": "Bps"
     }
   ],
-  "uuid": "019ada51-9b8a-75b8-aa67-8fd35114855c"
+  "uuid": "019add91-55bd-778b-8459-60e19b691b6e"
 }

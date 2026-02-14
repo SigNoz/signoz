@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
@@ -67,11 +66,6 @@ func buildBuilderQueriesProducerBytes(
 	attributeCache *Clients,
 ) (map[string]*v3.BuilderQuery, error) {
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	bq := make(map[string]*v3.BuilderQuery)
 	queryName := "byte_rate"
 
@@ -80,7 +74,7 @@ func buildBuilderQueriesProducerBytes(
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key:      getDotMetrics("kafka_producer_byte_rate", normalized),
+			Key:      "kafka.producer.byte-rate",
 			DataType: v3.AttributeKeyDataTypeFloat64,
 			Type:     v3.AttributeKeyType("Gauge"),
 			IsColumn: true,
@@ -94,7 +88,7 @@ func buildBuilderQueriesProducerBytes(
 			Items: []v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      getDotMetrics("service_name", normalized),
+						Key:      "service.name",
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -116,7 +110,7 @@ func buildBuilderQueriesProducerBytes(
 		ReduceTo:   v3.ReduceToOperatorAvg,
 		GroupBy: []v3.AttributeKey{
 			{
-				Key:      getDotMetrics("service_name", normalized),
+				Key:      "service.name",
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -139,17 +133,12 @@ func buildBuilderQueriesNetwork(
 	bq := make(map[string]*v3.BuilderQuery)
 	queryName := "latency"
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	chq := &v3.BuilderQuery{
 		QueryName:    queryName,
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: getDotMetrics("kafka_consumer_fetch_latency_avg", normalized),
+			Key: "kafka.consumer.fetch_latency_avg",
 		},
 		AggregateOperator: v3.AggregateOperatorAvg,
 		Temporality:       v3.Unspecified,
@@ -160,7 +149,7 @@ func buildBuilderQueriesNetwork(
 			Items: []v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      getDotMetrics("service_name", normalized),
+						Key:      "service.name",
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -169,7 +158,7 @@ func buildBuilderQueriesNetwork(
 				},
 				{
 					Key: v3.AttributeKey{
-						Key:      getDotMetrics("client_id", normalized),
+						Key:      "client-id",
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -178,7 +167,7 @@ func buildBuilderQueriesNetwork(
 				},
 				{
 					Key: v3.AttributeKey{
-						Key:      getDotMetrics("service_instance_id", normalized),
+						Key:      "service.instance.id",
 						Type:     v3.AttributeKeyTypeTag,
 						DataType: v3.AttributeKeyDataTypeString,
 					},
@@ -191,17 +180,17 @@ func buildBuilderQueriesNetwork(
 		ReduceTo:   v3.ReduceToOperatorAvg,
 		GroupBy: []v3.AttributeKey{
 			{
-				Key:      getDotMetrics("service_name", normalized),
+				Key:      "service.name",
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
 			{
-				Key:      getDotMetrics("client_id", normalized),
+				Key:      "client-id",
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
 			{
-				Key:      getDotMetrics("service_instance_id", normalized),
+				Key:      "service.instance.id",
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -218,17 +207,12 @@ func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.Que
 	unixMilliStart := messagingQueue.Start / 1000000
 	unixMilliEnd := messagingQueue.End / 1000000
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	buiderQuery := &v3.BuilderQuery{
 		QueryName:    "fetch_latency",
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: getDotMetrics("kafka_consumer_fetch_latency_avg", normalized),
+			Key: "kafka.consumer.fetch_latency_avg",
 		},
 		AggregateOperator: v3.AggregateOperatorCount,
 		Temporality:       v3.Unspecified,
@@ -243,7 +227,7 @@ func BuildBuilderQueriesKafkaOnboarding(messagingQueue *MessagingQueue) (*v3.Que
 		StepInterval: common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
 		DataSource:   v3.DataSourceMetrics,
 		AggregateAttribute: v3.AttributeKey{
-			Key: getDotMetrics("kafka_consumer_group_lag", normalized),
+			Key: "kafka.consumer_group.lag",
 		},
 		AggregateOperator: v3.AggregateOperatorCount,
 		Temporality:       v3.Unspecified,
@@ -428,18 +412,3 @@ func buildCompositeQuery(chq *v3.ClickHouseQuery, queryContext string) (*v3.Comp
 	}, nil
 }
 
-func getDotMetrics(metricName string, normalized bool) string {
-	dotMetricsMap := map[string]string{
-		"kafka_producer_byte_rate":         "kafka.producer.byte-rate",
-		"service_name":                     "service.name",
-		"kafka_consumer_fetch_latency_avg": "kafka.consumer.fetch_latency_avg",
-		"service_instance_id":              "service.instance.id",
-		"client_id":                        "client-id",
-		"kafka_consumer_group_lag":         "kafka.consumer_group.lag",
-	}
-	if _, ok := dotMetricsMap[metricName]; ok && !normalized {
-		return dotMetricsMap[metricName]
-	} else {
-		return metricName
-	}
-}

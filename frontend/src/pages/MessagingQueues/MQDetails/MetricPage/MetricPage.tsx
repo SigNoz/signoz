@@ -8,8 +8,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import { FeatureKeys } from '../../../../constants/features';
-import { useAppContext } from '../../../../providers/App/App';
 import MetricColumnGraphs from './MetricColumnGraphs';
 import MetricPageGridGraph from './MetricPageGraph';
 import {
@@ -97,11 +95,6 @@ function MetricPage(): JSX.Element {
 		}));
 	};
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const { t } = useTranslation('messagingQueues');
 
 	const metricSections = [
@@ -110,10 +103,10 @@ function MetricPage(): JSX.Element {
 			title: t('metricGraphCategory.brokerJVMMetrics.title'),
 			description: t('metricGraphCategory.brokerJVMMetrics.description'),
 			graphCount: [
-				getJvmGCCountWidgetData(dotMetricsEnabled),
-				getJvmGcCollectionsElapsedWidgetData(dotMetricsEnabled),
-				getCpuRecentUtilizationWidgetData(dotMetricsEnabled),
-				getJvmMemoryHeapWidgetData(dotMetricsEnabled),
+				getJvmGCCountWidgetData(),
+				getJvmGcCollectionsElapsedWidgetData(),
+				getCpuRecentUtilizationWidgetData(),
+				getJvmMemoryHeapWidgetData(),
 			],
 		},
 		{
@@ -121,10 +114,10 @@ function MetricPage(): JSX.Element {
 			title: t('metricGraphCategory.partitionMetrics.title'),
 			description: t('metricGraphCategory.partitionMetrics.description'),
 			graphCount: [
-				getPartitionCountPerTopicWidgetData(dotMetricsEnabled),
-				getCurrentOffsetPartitionWidgetData(dotMetricsEnabled),
-				getOldestOffsetWidgetData(dotMetricsEnabled),
-				getInsyncReplicasWidgetData(dotMetricsEnabled),
+				getPartitionCountPerTopicWidgetData(),
+				getCurrentOffsetPartitionWidgetData(),
+				getOldestOffsetWidgetData(),
+				getInsyncReplicasWidgetData(),
 			],
 		},
 	];

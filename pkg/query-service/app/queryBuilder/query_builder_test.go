@@ -212,7 +212,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		// So(queries["F5"], ShouldContainSubstring, "SELECT A.ts as ts, ((A.value - B.value) / B.value) * 100")
 		// So(strings.Count(queries["F5"], " ON "), ShouldEqual, 1)
 	})
-	t.Run("TestBuildQueryWithDotMetricNameAndAttribute", func(t *testing.T) {
+	t.Run("TestBuildQueryWithMetricNameAndAttribute", func(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1735036101000,
 			End:   1735637901000,

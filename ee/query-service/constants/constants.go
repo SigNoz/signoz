@@ -18,14 +18,3 @@ func GetOrDefaultEnv(key string, fallback string) string {
 	return v
 }
 
-// constant functions that override env vars
-
-const DotMetricsEnabled = "DOT_METRICS_ENABLED"
-
-var IsDotMetricsEnabled = false
-
-func init() {
-	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
-		IsDotMetricsEnabled = true
-	}
-}

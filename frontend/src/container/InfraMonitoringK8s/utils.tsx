@@ -299,7 +299,7 @@ export const getK8sPodsListColumns = (
 	return updatedColumnsConfig as ColumnType<K8sPodsRowData>[];
 };
 
-const dotToUnder: Record<string, keyof K8sPodsData['meta']> = {
+const attributeToMetaKey: Record<string, keyof K8sPodsData['meta']> = {
 	'k8s.cronjob.name': 'k8s_cronjob_name',
 	'k8s.daemonset.name': 'k8s_daemonset_name',
 	'k8s.deployment.name': 'k8s_deployment_name',
@@ -322,7 +322,8 @@ const getGroupByEle = (
 		const rawKey = group.key as string;
 
 		// Choose mapped key if present, otherwise use rawKey
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof pod.meta;
+		const metaKey = (attributeToMetaKey[rawKey] ??
+			rawKey) as keyof typeof pod.meta;
 		const value = pod.meta[metaKey];
 
 		groupByValues.push(value);

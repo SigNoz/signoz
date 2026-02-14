@@ -16,12 +16,12 @@ import (
 )
 
 var (
-	metricToUseForClusters = GetDotMetrics("k8s_node_cpu_usage")
+	metricToUseForClusters = MetricKey("k8s_node_cpu_usage")
 
-	clusterAttrsToEnrich = []string{GetDotMetrics("k8s_cluster_name")}
+	clusterAttrsToEnrich = []string{MetricKey("k8s_cluster_name")}
 
 	// TODO(srikanthccv): change this to k8s_cluster_uid after showing the missing data banner
-	k8sClusterUIDAttrKey = GetDotMetrics("k8s_cluster_name")
+	k8sClusterUIDAttrKey = MetricKey("k8s_cluster_name")
 
 	queryNamesForClusters = map[string][]string{
 		"cpu":                {"A"},

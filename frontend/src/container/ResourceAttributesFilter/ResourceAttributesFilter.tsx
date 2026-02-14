@@ -14,8 +14,6 @@ import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 
@@ -42,12 +40,7 @@ function ResourceAttributesFilter({
 		SelectOption<string, string>[]
 	>([]);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
-	const resourceDeploymentKey = getResourceDeploymentKeys(dotMetricsEnabled);
+	const resourceDeploymentKey = getResourceDeploymentKeys();
 
 	const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
 
@@ -73,14 +66,14 @@ function ResourceAttributesFilter({
 	}, [queries, resourceDeploymentKey]);
 
 	useEffect(() => {
-		getEnvironmentTagKeys(dotMetricsEnabled).then((tagKeys) => {
+		getEnvironmentTagKeys().then((tagKeys) => {
 			if (tagKeys && Array.isArray(tagKeys) && tagKeys.length > 0) {
-				getEnvironmentTagValues(dotMetricsEnabled).then((tagValues) => {
+				getEnvironmentTagValues().then((tagValues) => {
 					setEnvironments(tagValues);
 				});
 			}
 		});
-	}, [dotMetricsEnabled]);
+	}, []);
 
 	return (
 		<div className="resourceAttributesFilter-container">
