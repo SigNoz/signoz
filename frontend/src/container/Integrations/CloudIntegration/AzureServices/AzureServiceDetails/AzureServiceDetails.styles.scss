@@ -41,6 +41,82 @@
 			flex-direction: column;
 			gap: 16px;
 
+			.azure-service-details-overview-configuration {
+				display: flex;
+				flex-direction: column;
+
+				border-radius: 4px;
+				border: 1px solid var(--Slate-400, #1d212d);
+				background: var(--Ink-400, #121317);
+
+				.azure-service-details-overview-configuration-title {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					justify-content: space-between;
+					gap: 8px;
+					width: 100%;
+
+					border-radius: 4px 4px 0 0;
+					border-bottom: 1px solid var(--Slate-400, #1d212d);
+					background: rgba(171, 189, 255, 0.04);
+
+					padding: 8px 12px;
+
+					.azure-service-details-overview-configuration-title-text {
+						color: var(--Vanilla-100, #fff);
+						font-family: Inter;
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 22px; /* 157.143% */
+						letter-spacing: -0.07px;
+					}
+
+					.configuration-action {
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						gap: 8px;
+					}
+				}
+
+				.azure-service-details-overview-configuration-content {
+					display: flex;
+					flex-direction: column;
+					gap: 16px;
+
+					padding: 12px;
+					background: var(--Ink-400, #121317);
+
+					.azure-service-details-overview-configuration-content-item {
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						justify-content: space-between;
+						gap: 8px;
+					}
+				}
+
+				.azure-service-details-overview-configuration-actions {
+					display: flex;
+					flex-direction: row;
+					justify-content: flex-end;
+					gap: 8px;
+					padding: 8px 12px;
+
+					border-top: 1px solid var(--Slate-400, #1d212d);
+					background: var(--Ink-400, #121317);
+				}
+			}
+
+			.azure-service-details-actions {
+				display: flex;
+				flex-direction: row;
+				gap: 8px;
+				padding: 12px 0;
+			}
+
 			.azure-service-dashboards {
 				border-radius: 6px;
 				border: 1px solid var(--Slate-400, #1d212d);

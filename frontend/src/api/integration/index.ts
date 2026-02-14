@@ -2,12 +2,11 @@ import axios from 'api';
 import {
 	CloudAccount,
 	ServiceData,
-	UpdateServiceConfigPayload,
-	UpdateServiceConfigResponse,
 } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import {
 	AzureCloudAccountConfig,
 	AzureService,
+	AzureServiceConfigPayload,
 } from 'container/Integrations/types';
 import {
 	AccountConfigResponse,
@@ -77,9 +76,9 @@ export const updateAccountConfig = async (
 export const updateServiceConfig = async (
 	cloudServiceId: string,
 	serviceId: string,
-	payload: UpdateServiceConfigPayload,
-): Promise<UpdateServiceConfigResponse> => {
-	const response = await axios.post<UpdateServiceConfigResponse>(
+	payload: AzureServiceConfigPayload,
+): Promise<AzureServiceConfigPayload> => {
+	const response = await axios.post<AzureServiceConfigPayload>(
 		`/cloud-integrations/${cloudServiceId}/services/${serviceId}/config`,
 		payload,
 	);

@@ -40,6 +40,11 @@ export interface AzureServicesConfig {
 	metrics: AzureConfig[];
 }
 
+export interface AzureServiceConfigPayload {
+	cloud_account_id: string;
+	config: AzureServicesConfig;
+}
+
 interface Dashboard {
 	id: string;
 	url: string;
@@ -101,4 +106,17 @@ export interface AzureRegion {
 	label: string;
 	geography: string;
 	value: string;
+}
+
+export interface UpdateServiceConfigPayload {
+	cloud_account_id: string;
+	config: AzureServicesConfig;
+}
+
+export interface UpdateServiceConfigResponse {
+	status: string;
+	data: {
+		id: string;
+		config: AzureServicesConfig;
+	};
 }
