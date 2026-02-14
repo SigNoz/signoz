@@ -75,6 +75,10 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 		return err
 	}
 
+	if data == nil {
+		data = make(map[string]any)
+	}
+
 	// the following are overridden if provided in the data map
 	data["format"] = provider.config.Templates.Format
 	data["to"] = to
