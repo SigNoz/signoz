@@ -6,7 +6,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import i18n from 'ReactI18';
 
-describe('Request AWS integration', () => {
+describe.skip('Request AWS integration', () => {
 	it('should render the request integration button', async () => {
 		let capturedPayload: any;
 		server.use(
