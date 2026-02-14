@@ -1,9 +1,6 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	fillMissingXAxisTimestamps,
-	getXAxisTimestamps,
-} from 'container/DashboardContainer/visualization/panels/utils';
+import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -17,21 +14,23 @@ import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData } from 'types/api/widgets/getQuery';
+import { AlignedData } from 'uplot';
 
 import { PanelMode } from '../types';
+import { fillMissingXAxisTimestamps, getXAxisTimestamps } from '../utils';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
 
-export const prepareChartData = (
+export function prepareBarPanelData(
 	apiResponse: MetricRangePayloadProps,
-): uPlot.AlignedData => {
+): AlignedData {
 	const seriesList = apiResponse?.data?.result || [];
 	const timestampArr = getXAxisTimestamps(seriesList);
 	const yAxisValuesArr = fillMissingXAxisTimestamps(timestampArr, seriesList);
-
 	return [timestampArr, ...yAxisValuesArr];
-};
+}
 
-export const prepareUPlotConfig = ({
+export function prepareBarPanelConfig({
 	widget,
 	isDarkMode,
 	currentQuery,
@@ -53,7 +52,7 @@ export const prepareUPlotConfig = ({
 	panelMode: PanelMode;
 	minTimeScale?: number;
 	maxTimeScale?: number;
-}): UPlotConfigBuilder => {
+}): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
 		widget,
 		isDarkMode,
@@ -62,12 +61,24 @@ export const prepareUPlotConfig = ({
 		apiResponse,
 		timezone,
 		panelMode,
-		panelType: PANEL_TYPES.TIME_SERIES,
+		panelType: PANEL_TYPES.BAR,
 		minTimeScale,
 		maxTimeScale,
 	});
 
-	apiResponse.data?.result?.forEach((series) => {
+	builder.setCursor({
+		focus: {
+			prox: 1e3,
+		},
+	});
+
+	if (widget.stackedBarChart) {
+		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
+		builder.setBands(getInitialStackedBands(seriesCount));
+	}
+
+	const seriesList: QueryData[] = apiResponse?.data?.result || [];
+	seriesList.forEach((series) => {
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query
@@ -80,18 +91,18 @@ export const prepareUPlotConfig = ({
 
 		builder.addSeries({
 			scaleKey: 'y',
-			drawStyle: DrawStyle.Line,
+			drawStyle: DrawStyle.Bar,
+			panelType: PANEL_TYPES.BAR,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: true,
+			spanGaps: false,
 			lineStyle: LineStyle.Solid,
 			lineInterpolation: LineInterpolation.Spline,
 			showPoints: VisibilityMode.Never,
 			pointSize: 5,
 			isDarkMode,
-			panelType: PANEL_TYPES.TIME_SERIES,
 		});
 	});
 
 	return builder;
-};
+}

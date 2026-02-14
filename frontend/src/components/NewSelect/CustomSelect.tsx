@@ -63,6 +63,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	showIncompleteDataMessage = false,
 	showRetryButton = true,
 	isDynamicVariable = false,
+	waitingMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -568,6 +569,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
+						!waitingMessage &&
 						!(showIncompleteDataMessage && isScrolledToBottom) && (
 							<section className="navigate">
 								<ArrowDown size={8} className="icons" />
@@ -581,6 +583,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								<LoadingOutlined />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
+						</div>
+					)}
+					{!loading && waitingMessage && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<LoadingOutlined />
+							</div>
+							<div className="navigation-text" title={waitingMessage}>
+								{waitingMessage}
+							</div>
 						</div>
 					)}
 					{errorMessage && !loading && (
@@ -605,6 +617,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{showIncompleteDataMessage &&
 						isScrolledToBottom &&
 						!loading &&
+						!waitingMessage &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
 								Don&apos;t see the value? Use search
@@ -641,6 +654,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		showRetryButton,
 		isDarkMode,
 		isDynamicVariable,
+		waitingMessage,
 	]);
 
 	// Handle dropdown visibility changes
