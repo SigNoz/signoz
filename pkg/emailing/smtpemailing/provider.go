@@ -56,7 +56,12 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	return &provider{settings: settings, store: store, client: client, config: config}, nil
+	return &provider{
+		settings: settings,
+		store:    store,
+		client:   client,
+		config:   config,
+	}, nil
 }
 
 func (provider *provider) SendHTML(ctx context.Context, to string, subject string, templateName emailtypes.TemplateName, data map[string]any) error {
@@ -70,11 +75,14 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 		return err
 	}
 
+	// the following are overridden if provided in the data map
 	data["format"] = provider.config.Templates.Format
 	data["to"] = to
+	data["subject"] = subject
 
 	content, err := emailtypes.NewContent(template, data)
 	if err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to create email content", "error", err)
 		return err
 	}
 

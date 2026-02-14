@@ -22,8 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 type Module struct {
@@ -259,18 +257,6 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	traits["updated_by"] = updatedBy
 	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
 
-	// if the role is updated then send an email
-	if existingUser.Role != updatedUser.Role {
-		if err := m.emailing.SendHTML(ctx, existingUser.Email.String(), "Your Role Has Been Updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
-			"CustomerName":   existingUser.DisplayName,
-			"UpdatedByEmail": requestor.Email,
-			"OldRole":        cases.Title(language.English).String(strings.ToLower(existingUser.Role.String())),
-			"NewRole":        cases.Title(language.English).String(strings.ToLower(updatedUser.Role.String())),
-		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
-		}
-	}
-
 	if err := m.tokenizer.DeleteIdentity(ctx, valuer.MustNewUUID(id)); err != nil {
 		return nil, err
 	}
@@ -392,10 +378,9 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	if err := module.emailing.SendHTML(
 		ctx,
 		user.Email.String(),
-		"Reset your SigNoz password",
+		"A Password Reset Was Requested for SigNoz",
 		emailtypes.TemplateNameResetPassword,
 		map[string]any{
-			"Name":   user.DisplayName,
 			"Link":   resetLink,
 			"Expiry": humanizedTokenLifetime,
 		},
