@@ -19,6 +19,7 @@ export const getFieldValues = async (
 	startUnixMilli?: number,
 	endUnixMilli?: number,
 	existingQuery?: string,
+	abortSignal?: AbortSignal,
 ): Promise<SuccessResponseV2<FieldValueResponse>> => {
 	const params: Record<string, string> = {};
 
@@ -47,7 +48,10 @@ export const getFieldValues = async (
 	}
 
 	try {
-		const response = await axios.get('/fields/values', { params });
+		const response = await axios.get('/fields/values', {
+			params,
+			signal: abortSignal,
+		});
 
 		// Normalize values from different types (stringValues, boolValues, etc.)
 		if (response.data?.data?.values) {

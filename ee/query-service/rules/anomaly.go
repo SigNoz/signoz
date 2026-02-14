@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/transition"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
@@ -62,6 +62,8 @@ type AnomalyRule struct {
 
 	seasonality anomaly.Seasonality
 }
+
+var _ baserules.Rule = (*AnomalyRule)(nil)
 
 func NewAnomalyRule(
 	id string,
@@ -234,6 +236,11 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 		}
 	}
 
+	hasData := len(queryResult.AnomalyScores) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
+
 	var resultVector ruletypes.Vector
 
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
@@ -284,6 +291,11 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 	}
 
 	queryResult := transition.ConvertV5TimeSeriesDataToV4Result(qbResult)
+
+	hasData := len(queryResult.AnomalyScores) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
 
 	var resultVector ruletypes.Vector
 
@@ -480,7 +492,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			continue
 		}
 
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.HoldDuration() {
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.HoldDuration().Duration() {
 			a.State = model.StateFiring
 			a.FiredAt = ts
 			state := model.StateFiring
@@ -543,7 +555,7 @@ func (r *AnomalyRule) String() string {
 	ar := ruletypes.PostableRule{
 		AlertName:         r.Name(),
 		RuleCondition:     r.Condition(),
-		EvalWindow:        ruletypes.Duration(r.EvalWindow()),
+		EvalWindow:        r.EvalWindow(),
 		Labels:            r.Labels().Map(),
 		Annotations:       r.Annotations().Map(),
 		PreferredChannels: r.PreferredChannels(),

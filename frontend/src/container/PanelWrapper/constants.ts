@@ -1,5 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
+import TimeSeriesPanel from '../DashboardContainer/visualization/panels/TimeSeriesPanel/TimeSeriesPanel';
 import HistogramPanelWrapper from './HistogramPanelWrapper';
 import ListPanelWrapper from './ListPanelWrapper';
 import PiePanelWrapper from './PiePanelWrapper';
@@ -8,7 +9,7 @@ import UplotPanelWrapper from './UplotPanelWrapper';
 import ValuePanelWrapper from './ValuePanelWrapper';
 
 export const PanelTypeVsPanelWrapper = {
-	[PANEL_TYPES.TIME_SERIES]: UplotPanelWrapper,
+	[PANEL_TYPES.TIME_SERIES]: TimeSeriesPanel,
 	[PANEL_TYPES.TABLE]: TablePanelWrapper,
 	[PANEL_TYPES.LIST]: ListPanelWrapper,
 	[PANEL_TYPES.VALUE]: ValuePanelWrapper,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { QueryKey } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -35,8 +36,11 @@ import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
 import './QuerySection.styles.scss';
-
-function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
+function QuerySection({
+	selectedGraph,
+	queryRangeKey,
+	isLoadingQueries,
+}: QueryProps): JSX.Element {
 	const {
 		currentQuery,
 		handleRunQuery: handleRunQueryFromQueryBuilder,
@@ -164,6 +168,7 @@ function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 							queryComponents={queryComponents}
 							signalSourceChangeEnabled
+							savePreviousQuery
 						/>
 					</div>
 				),
@@ -237,7 +242,13 @@ function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-						<RunQueryBtn label="Stage & Run Query" onStageRunQuery={handleRunQuery} />
+						<RunQueryBtn
+							className="run-query-dashboard-btn"
+							label="Stage & Run Query"
+							onStageRunQuery={handleRunQuery}
+							isLoadingQueries={isLoadingQueries}
+							queryRangeKey={queryRangeKey}
+						/>
 					</span>
 				}
 				items={items}
@@ -248,6 +259,8 @@ function QuerySection({ selectedGraph }: QueryProps): JSX.Element {
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
+	queryRangeKey?: QueryKey;
+	isLoadingQueries?: boolean;
 }
 
 export default QuerySection;

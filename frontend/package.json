@@ -19,7 +19,7 @@
 		"commitlint": "commitlint --edit $1",
 		"test": "jest",
 		"test:changedsince": "jest --changedSince=main --coverage --silent",
-		"generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh && prettier --write src/api/generated && (eslint --fix src/api/generated || true)"
+		"generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -51,8 +51,9 @@
 		"@signozhq/checkbox": "0.0.2",
 		"@signozhq/combobox": "0.0.2",
 		"@signozhq/command": "0.0.0",
-		"@signozhq/design-tokens": "1.1.4",
 		"@signozhq/drawer": "0.0.4",
+		"@signozhq/design-tokens": "2.1.1",
+		"@signozhq/icons": "0.1.0",
 		"@signozhq/input": "0.0.2",
 		"@signozhq/popover": "0.0.0",
 		"@signozhq/resizable": "0.0.0",
@@ -108,6 +109,7 @@
 		"i18next": "^21.6.12",
 		"i18next-browser-languagedetector": "^6.1.3",
 		"i18next-http-backend": "^1.3.2",
+		"immer": "11.1.3",
 		"jest": "^27.5.1",
 		"js-base64": "^3.7.2",
 		"less": "^4.1.2",

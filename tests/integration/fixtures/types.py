@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List, Literal
 from urllib.parse import urljoin
 
 import clickhouse_connect
@@ -162,3 +162,44 @@ class Network:
 
     def __log__(self) -> str:
         return f"Network(id={self.id}, name={self.name})"
+
+
+# Alerts related types
+
+
+@dataclass(frozen=True)
+class AlertData:
+    # type of the alert data, one of 'metrics', 'logs', 'traces'
+    type: Literal["metrics", "logs", "traces"]
+    # path to the data file in testdata directory
+    data_path: str
+
+
+@dataclass(frozen=True)
+class FiringAlert:
+    # labels of the alert that is firing
+    labels: dict[str, str]
+    # annotations and other fields can be added later as per need
+
+
+@dataclass(frozen=True)
+class AlertExpectation:
+    # whether we expect any alerts to be fired
+    should_alert: bool
+    # alerts that we expect to be fired
+    expected_alerts: List[FiringAlert]
+    # seconds to wait for the alerts to be fired, if no
+    # alerts are fired in the expected time, the test will fail
+    wait_time_seconds: int
+
+
+@dataclass(frozen=True)
+class AlertTestCase:
+    # name of the test case
+    name: str
+    # path to the rule file in testdata directory
+    rule_path: str
+    # list of alert data that will be inserted into the database
+    alert_data: List[AlertData]
+    # list of alert expectations for the test case
+    alert_expectation: AlertExpectation

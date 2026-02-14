@@ -8,8 +8,8 @@ import { populateMultipleResults } from 'container/NewWidget/LeftContainer/Widge
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
@@ -53,7 +53,7 @@ function GridCardGraph({
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
-	widgetsHavingDynamicVariables,
+	widgetsByDynamicVariableId,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -226,8 +226,8 @@ function GridCardGraph({
 					? Object.entries(variables).reduce((acc, [id, variable]) => {
 							if (
 								variable.type !== 'DYNAMIC' ||
-								(widgetsHavingDynamicVariables?.[variable.id] &&
-									widgetsHavingDynamicVariables?.[variable.id].includes(widget.id))
+								(widgetsByDynamicVariableId?.[variable.id] &&
+									widgetsByDynamicVariableId?.[variable.id].includes(widget.id))
 							) {
 								return { ...acc, [id]: variable.selectedValue };
 							}
