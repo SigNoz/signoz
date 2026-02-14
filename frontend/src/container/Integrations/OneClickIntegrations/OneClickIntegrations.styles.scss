@@ -8,6 +8,7 @@
 		flex-direction: row;
 		justify-content: space-between;
 		align-items: center;
+		gap: 32px;
 
 		.one-click-integrations-header-title {
 			color: var(--bg-vanilla-400);
@@ -16,6 +17,14 @@
 			line-height: 20px;
 			letter-spacing: 0.48px;
 			text-transform: uppercase;
+
+			display: inline-block;
+			word-wrap: normal;
+			white-space: nowrap;
+		}
+		.one-click-integrations-header-dotted-double-line {
+			width: 100%;
+			height: 100%;
 		}
 	}
 
@@ -23,7 +32,6 @@
 		display: flex;
 		flex-direction: row;
 		gap: 16px;
-
 		.one-click-integrations-list-item {
 			display: flex;
 			flex-direction: column;

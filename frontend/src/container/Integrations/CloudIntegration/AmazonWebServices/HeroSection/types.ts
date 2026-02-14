@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { FormInstance } from 'antd';
-import { ConnectionParams } from 'types/api/integrations/aws';
+import { ConnectionParams } from 'types/api/integrations/types';
 
 export enum ActiveViewEnum {
 	SELECT_REGIONS = 'select-regions',

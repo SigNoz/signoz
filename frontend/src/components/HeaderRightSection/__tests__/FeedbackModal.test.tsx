@@ -5,8 +5,8 @@ import { toast } from '@signozhq/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { handleContactSupport } from 'container/Integrations/utils';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import FeedbackModal from '../FeedbackModal';
 

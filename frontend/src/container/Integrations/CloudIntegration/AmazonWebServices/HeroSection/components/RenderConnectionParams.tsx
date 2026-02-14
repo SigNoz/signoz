@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd';
-import { ConnectionParams } from 'types/api/integrations/aws';
+import { ConnectionParams } from 'types/api/integrations/types';
 
 function RenderConnectionFields({
 	isConnectionParamsLoading,

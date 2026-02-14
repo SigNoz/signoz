@@ -1,8 +1,9 @@
 import { useRef } from 'react';
 import { Form } from 'antd';
 import cx from 'classnames';
-import { useAccountStatus } from 'hooks/integration/aws/useAccountStatus';
-import { AccountStatusResponse } from 'types/api/integrations/aws';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+import { useGetAccountStatus } from 'hooks/integration/useGetAccountStatus';
+import { AccountStatusResponse } from 'types/api/integrations/types';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../../../../api/common/logEvent';
@@ -44,27 +45,31 @@ export function RegionForm({
 	const refetchInterval = 10 * 1000;
 	const errorTimeout = 10 * 60 * 1000;
 
-	const { isLoading: isAccountStatusLoading } = useAccountStatus(accountId, {
-		refetchInterval,
-		enabled: !!accountId && modalState === ModalStateEnum.WAITING,
-		onSuccess: (data: AccountStatusResponse) => {
-			if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
-				setModalState(ModalStateEnum.SUCCESS);
-				logEvent('AWS Integration: Account connected', {
-					cloudAccountId: data?.data?.cloud_account_id,
-					status: data?.data?.status,
-				});
-			} else if (Date.now() - startTimeRef.current >= errorTimeout) {
+	const { isLoading: isAccountStatusLoading } = useGetAccountStatus(
+		INTEGRATION_TYPES.AWS,
+		accountId,
+		{
+			refetchInterval,
+			enabled: !!accountId && modalState === ModalStateEnum.WAITING,
+			onSuccess: (data: AccountStatusResponse) => {
+				if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
+					setModalState(ModalStateEnum.SUCCESS);
+					logEvent('AWS Integration: Account connected', {
+						cloudAccountId: data?.data?.cloud_account_id,
+						status: data?.data?.status,
+					});
+				} else if (Date.now() - startTimeRef.current >= errorTimeout) {
+					setModalState(ModalStateEnum.ERROR);
+					logEvent('AWS Integration: Account connection attempt timed out', {
+						id: accountId,
+					});
+				}
+			},
+			onError: () => {
 				setModalState(ModalStateEnum.ERROR);
-				logEvent('AWS Integration: Account connection attempt timed out', {
-					id: accountId,
-				});
-			}
+			},
 		},
-		onError: () => {
-			setModalState(ModalStateEnum.ERROR);
-		},
-	});
+	);
 
 	const isFormDisabled =
 		modalState === ModalStateEnum.WAITING || isAccountStatusLoading;

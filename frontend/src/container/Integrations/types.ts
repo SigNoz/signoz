@@ -85,7 +85,7 @@ export interface CloudAccount {
 }
 
 export interface AzureCloudAccountConfig {
-	deployment_regions: string;
+	deployment_region: string;
 	resource_groups: string[];
 }
 
@@ -95,4 +95,10 @@ export interface AccountStatus {
 
 export interface IntegrationStatus {
 	last_heartbeat_ts_ms: number;
+}
+
+export interface AzureRegion {
+	label: string;
+	geography: string;
+	value: string;
 }

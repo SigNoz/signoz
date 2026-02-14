@@ -59,11 +59,38 @@
 		}
 	}
 
+	.integrations-list-title-header {
+		display: flex;
+		flex-direction: row;
+		gap: 32px;
+		align-items: center;
+
+		.integrations-list-header-title {
+			color: var(--Vanilla-400, #c0c1c3);
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px; /* 166.667% */
+			letter-spacing: 0.48px;
+			text-transform: uppercase;
+
+			word-wrap: normal;
+			white-space: nowrap;
+		}
+
+		.integrations-list-header-dotted-double-line {
+			width: 100%;
+			height: 100%;
+		}
+	}
+
 	.integrations-list {
 		display: flex;
 		flex-direction: column;
 		margin-left: -16px;
 		margin-right: -16px;
+		margin-top: 16px;
 
 		.integrations-list-header {
 			display: flex;

@@ -14,12 +14,14 @@ export default function CloudIntegrationsHeader({
 	accounts,
 	isLoadingAccounts,
 	onSelectAccount,
+	refetchAccounts,
 }: {
 	selectedAccount: CloudAccount | null;
 	accounts: CloudAccount[] | [];
 	isLoadingAccounts: boolean;
 	onSelectAccount: (account: CloudAccount) => void;
 	cloudServiceId: IntegrationType;
+	refetchAccounts: () => void;
 }): JSX.Element {
 	const INTEGRATION_DATA =
 		cloudServiceId === IntegrationType.AWS_SERVICES
@@ -51,6 +53,7 @@ export default function CloudIntegrationsHeader({
 					accounts={accounts}
 					isLoadingAccounts={isLoadingAccounts}
 					onSelectAccount={onSelectAccount}
+					refetchAccounts={refetchAccounts}
 				/>
 			</div>
 		</div>

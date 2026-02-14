@@ -5,13 +5,19 @@ import {
 	UpdateServiceConfigPayload,
 	UpdateServiceConfigResponse,
 } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
-import { AzureService } from 'container/Integrations/types';
 import {
-	AccountConfigPayload,
+	AzureCloudAccountConfig,
+	AzureService,
+} from 'container/Integrations/types';
+import {
 	AccountConfigResponse,
-	ConnectionParams,
-	ConnectionUrlResponse,
+	AWSAccountConfigPayload,
 } from 'types/api/integrations/aws';
+import {
+	AzureAccountConfig,
+	ConnectionParams,
+	IAzureDeploymentCommands,
+} from 'types/api/integrations/types';
 
 export const getCloudIntegrationAccounts = async (
 	cloudServiceId: string,
@@ -56,25 +62,10 @@ export const getCloudIntegrationServiceDetails = async (
 	return response.data.data;
 };
 
-export const generateConnectionUrl = async (
-	cloudServiceId: string,
-	params: {
-		agent_config: { region: string };
-		account_config: { regions: string[] };
-		account_id?: string;
-	},
-): Promise<ConnectionUrlResponse> => {
-	const response = await axios.post(
-		`/cloud-integrations/${cloudServiceId}/accounts/generate-connection-url`,
-		params,
-	);
-	return response.data.data;
-};
-
 export const updateAccountConfig = async (
 	cloudServiceId: string,
 	accountId: string,
-	payload: AccountConfigPayload,
+	payload: AWSAccountConfigPayload | AzureAccountConfig,
 ): Promise<AccountConfigResponse> => {
 	const response = await axios.post<AccountConfigResponse>(
 		`/cloud-integrations/${cloudServiceId}/accounts/${accountId}/config`,
@@ -101,5 +92,17 @@ export const getConnectionParams = async (
 	const response = await axios.get(
 		`/cloud-integrations/${cloudServiceId}/accounts/generate-connection-params`,
 	);
+	return response.data.data;
+};
+
+export const getAzureDeploymentCommands = async (params: {
+	agent_config: ConnectionParams;
+	account_config: AzureCloudAccountConfig;
+}): Promise<IAzureDeploymentCommands> => {
+	const response = await axios.post(
+		`/cloud-integrations/azure/accounts/generate-connection-url`,
+		params,
+	);
+
 	return response.data.data;
 };

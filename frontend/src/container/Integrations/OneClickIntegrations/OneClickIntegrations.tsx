@@ -22,6 +22,15 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 				<div className="one-click-integrations-header-title">
 					One Click Integrations
 				</div>
+
+				<div className="one-click-integrations-header-dotted-double-line">
+					<img
+						src="/svgs/dotted-double-line.svg"
+						alt="dotted-double-line"
+						width="100%"
+						height="100%"
+					/>
+				</div>
 			</div>
 
 			<div className="one-click-integrations-list">

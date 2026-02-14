@@ -7,11 +7,11 @@ import {
 	UpdateServiceConfigResponse,
 } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import {
-	AccountConfigPayload,
 	AccountConfigResponse,
-	ConnectionParams,
+	AWSAccountConfigPayload,
 	ConnectionUrlResponse,
 } from 'types/api/integrations/aws';
+import { ConnectionParams } from 'types/api/integrations/types';
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get('/cloud-integrations/aws/accounts');
@@ -60,7 +60,7 @@ export const generateConnectionUrl = async (params: {
 
 export const updateAccountConfig = async (
 	accountId: string,
-	payload: AccountConfigPayload,
+	payload: AWSAccountConfigPayload,
 ): Promise<AccountConfigResponse> => {
 	const response = await axios.post<AccountConfigResponse>(
 		`/cloud-integrations/aws/accounts/${accountId}/config`,

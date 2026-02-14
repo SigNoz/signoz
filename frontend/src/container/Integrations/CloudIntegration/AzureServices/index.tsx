@@ -20,7 +20,6 @@ import './AzureServices.styles.scss';
 
 function AzureServices(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const [selectedAccount, setSelectedAccount] = useState<CloudAccount | null>(
 		null,
 	);
@@ -32,6 +31,7 @@ function AzureServices(): JSX.Element {
 		data: accounts = [],
 		isLoading: isLoadingAccounts,
 		isFetching: isFetchingAccounts,
+		refetch: refetchAccounts,
 	} = useGetCloudIntegrationAccounts(INTEGRATION_TYPES.AZURE);
 
 	const initialAccount = useMemo(
@@ -90,12 +90,21 @@ function AzureServices(): JSX.Element {
 				accounts={accounts}
 				isLoadingAccounts={isLoadingAccounts}
 				onSelectAccount={setSelectedAccount}
+				refetchAccounts={refetchAccounts}
 			/>
 			<div className="azure-services-content">
 				<div className="azure-services-list-section">
 					{(isLoadingAzureServices || isFetchingAccounts) && (
 						<div className="azure-services-list-section-loading-skeleton">
-							<Skeleton active />
+							<div className="azure-services-list-section-loading-skeleton-sidebar">
+								<Skeleton active />
+								<Skeleton active />
+							</div>
+							<div className="azure-services-list-section-loading-skeleton-main">
+								<Skeleton active />
+								<Skeleton active />
+								<Skeleton active />
+							</div>
 						</div>
 					)}
 
@@ -110,7 +119,7 @@ function AzureServices(): JSX.Element {
 
 							<AzureServiceDetails
 								selectedService={selectedService}
-								cloudAccountId={cloudAccountId || ''}
+								cloudAccountId={selectedAccount?.cloud_account_id || ''}
 							/>
 						</div>
 					)}

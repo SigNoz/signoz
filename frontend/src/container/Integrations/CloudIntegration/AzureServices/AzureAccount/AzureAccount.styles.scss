@@ -1,0 +1,273 @@
+.azure-account-container {
+	padding: 16px 8px;
+
+	.azure-account-title {
+		font-size: 24px;
+		font-weight: 600;
+		color: #000;
+	}
+
+	.azure-account-prerequisites-step {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		padding: 16px 0px;
+
+		.azure-account-prerequisites-step-description {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+
+			.azure-account-prerequisites-step-description-item {
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px;
+
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
+				.azure-account-prerequisites-step-description-item-bullet {
+					color: var(--Robin-500, #4e74f8);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 20px; /* 142.857% */
+				}
+			}
+		}
+
+		.azure-account-prerequisites-step-how-it-works {
+			.azure-account-prerequisites-step-how-it-works-title {
+				display: flex;
+				flex-direction: row;
+				gap: 8px;
+				align-items: center;
+				cursor: pointer;
+
+				padding: 8px 16px;
+
+				border: 1px solid var(--Slate-400, #1d212d);
+				border-radius: 4px;
+				border-bottom-left-radius: 0;
+				border-bottom-right-radius: 0;
+				background: var(--Ink-400, #121317);
+				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+
+				.azure-account-prerequisites-step-how-it-works-title-icon {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					width: 20px;
+					height: 20px;
+
+					color: var(--Vanilla-100, #fff);
+				}
+
+				.azure-account-prerequisites-step-how-it-works-title-text {
+					color: var(--Vanilla-100, #fff);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 20px; /* 166.667% */
+					letter-spacing: -0.06px;
+				}
+			}
+
+			.azure-account-prerequisites-step-how-it-works-description {
+				padding: 16px;
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 13px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 150% */
+				letter-spacing: -0.06px;
+
+				border: 1px solid var(--Slate-400, #1d212d);
+				border-top: none;
+				border-radius: 4px;
+				border-top-left-radius: 0;
+				border-top-right-radius: 0;
+				background: var(--Ink-400, #121317);
+				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+			}
+		}
+	}
+
+	.azure-account-configure-agent-step {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		padding: 16px 0px;
+	}
+
+	.azure-account-deploy-agent-step {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		padding: 16px 0px;
+
+		.azure-account-deploy-agent-step-subtitle {
+			color: var(--Vanilla-400, #c0c1c3);
+			font-family: Inter;
+			font-size: 13px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+		}
+
+		.azure-account-deploy-agent-step-commands {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			.azure-account-deploy-agent-step-commands-tabs {
+				width: 100%;
+				border-radius: 6px;
+				border: 1px solid var(--Slate-500, #161922);
+				background: var(--Ink-400, #121317);
+				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+
+				padding: 8px;
+
+				// attribute - role="tabpanel"
+
+				[role='tabpanel'] {
+					width: 100%;
+				}
+
+				.azure-account-deploy-agent-step-commands-tabs-content {
+					width: 100%;
+				}
+			}
+		}
+
+		.azure-account-connection-status-container {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+
+			.azure-account-connection-status-content {
+				width: 100%;
+
+				.azure-account-connection-status-callout {
+					width: 100%;
+
+					[data-slot='callout-title'] {
+						font-size: 13px;
+						font-weight: 400 !important;
+						line-height: 22px; /* 157.143% */
+						letter-spacing: -0.07px;
+					}
+				}
+			}
+
+			.azure-account-connection-status-close-disclosure {
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+			}
+		}
+	}
+
+	.azure-account-form {
+		.azure-account-configure-agent-step-primary-region {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			.azure-account-configure-agent-step-primary-region-title {
+				color: var(--Vanilla-100, #fff);
+				font-family: Inter;
+				font-size: 13px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 150% */
+				letter-spacing: -0.06px;
+			}
+
+			.azure-account-configure-agent-step-primary-region-select {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+		}
+
+		.azure-account-configure-agent-step-resource-groups {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			.azure-account-configure-agent-step-resource-groups-title {
+				color: var(--Vanilla-100, #fff);
+				font-family: Inter;
+				font-size: 13px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 150% */
+				letter-spacing: -0.06px;
+			}
+
+			.azure-account-configure-agent-step-resource-groups-select {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+		}
+
+		.azure-account-fetch-deployment-command {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-end;
+			gap: 8px;
+		}
+	}
+
+	.ant-select {
+		.ant-select-selector {
+			background: var(--Ink-400, #121317);
+			border: 1px solid var(--Slate-500, #161922);
+			border-radius: 6px;
+			box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+		}
+
+		.ant-select-selection-item {
+			color: var(--Vanilla-100, #fff);
+		}
+
+		.ant-select-arrow {
+			color: var(--Vanilla-100, #fff);
+		}
+
+		.ant-select-dropdown {
+			background: var(--Ink-400, #121317);
+			border: 1px solid var(--Slate-500, #161922);
+			border-radius: 6px;
+			box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+		}
+
+		.ant-select-item {
+			color: var(--Vanilla-100, #fff);
+		}
+
+		.ant-select-item-option-active {
+			background: var(--Ink-400, #121317);
+		}
+	}
+}

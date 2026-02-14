@@ -1,5 +1,5 @@
 .cloud-integration-accounts {
-	padding: 0px 16px 16px 16px;
+	padding: 0px 16px;
 
 	display: flex;
 	flex-direction: column;
@@ -42,16 +42,22 @@
 				.selected-cloud-integration-account-section-header-title-text {
 					display: flex;
 					flex-direction: row;
+					align-items: center;
 					gap: 16px;
-					line-height: 32px;
 
-					color: var(--Vanilla-400, #c0c1c3);
-					font-family: 'Space Mono';
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 22px; /* 157.143% */
-					letter-spacing: -0.07px;
+					.azure-cloud-account-selector {
+						.ant-select {
+							background-color: transparent !important;
+							border: none !important;
+							box-shadow: none !important;
+
+							.ant-select-selector {
+								background: transparent !important;
+								border: none !important;
+								box-shadow: none !important;
+							}
+						}
+					}
 				}
 			}
 
@@ -63,6 +69,21 @@
 				margin-right: 8px;
 				cursor: pointer;
 			}
+		}
+
+		.account-settings-container {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		.add-new-cloud-integration-account-button {
+			display: flex;
+			flex-direction: row;
+			gap: 16px;
+			line-height: 32px;
+			margin-right: 8px;
+			cursor: pointer;
 		}
 	}
 }

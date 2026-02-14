@@ -1,21 +1,25 @@
 import { useMutation, UseMutationResult } from 'react-query';
 import { updateAccountConfig } from 'api/integration/aws';
 import {
-	AccountConfigPayload,
 	AccountConfigResponse,
+	AWSAccountConfigPayload,
 } from 'types/api/integrations/aws';
 
-interface UpdateConfigVariables {
+interface UpdateAWSAccountConfigVariables {
 	accountId: string;
-	payload: AccountConfigPayload;
+	payload: AWSAccountConfigPayload;
 }
 
-export function useUpdateAccountConfig(): UseMutationResult<
+export function useUpdateAWSAccountConfig(): UseMutationResult<
 	AccountConfigResponse,
 	Error,
-	UpdateConfigVariables
+	UpdateAWSAccountConfigVariables
 > {
-	return useMutation<AccountConfigResponse, Error, UpdateConfigVariables>({
+	return useMutation<
+		AccountConfigResponse,
+		Error,
+		UpdateAWSAccountConfigVariables
+	>({
 		mutationFn: ({ accountId, payload }) =>
 			updateAccountConfig(accountId, payload),
 	});

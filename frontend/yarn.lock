@@ -5082,10 +5082,10 @@
   resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-1.1.4.tgz#5d5de5bd9d19b6a3631383db015cc4b70c3f7661"
   integrity sha512-ICZz5szxTq8NcKAsk6LP+nSybPyEcyy8eu2zfxlPQCnJ1YjJP1PglaKLlF0N6+D60gAd3yC5he06BqR8/HxjNg==
 
-"@signozhq/drawer@0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@signozhq/drawer/-/drawer-0.0.3.tgz#00b1bb4f354f68ff69ddf7a29519351a0839fac4"
-  integrity sha512-SMt4wyECAEvEzL3Xg7nXBWCG6mLRuPDLKP/gQlH4DiOAOKiSqaiwdxZudx/MXVjxtR8IHVP/xTIAK2Lrh+75BQ==
+"@signozhq/drawer@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/drawer/-/drawer-0.0.4.tgz#7c6e6779602113f55df8a55076e68b9cc13c7d79"
+  integrity sha512-m/shStl5yVPjHjrhDAh3EeKqqTtMmZUBVlgJPUGgoNV3sFsuN6JNaaAtEJI8cQBWkbEEiHLWKVkL/vhbQ7YrUg==
   dependencies:
     "@radix-ui/react-dialog" "^1.1.11"
     "@radix-ui/react-icons" "^1.3.0"
@@ -6544,6 +6544,13 @@
   dependencies:
     "@uiw/codemirror-themes" "4.23.11"
 
+"@uiw/codemirror-theme-dracula@4.25.4":
+  version "4.25.4"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-dracula/-/codemirror-theme-dracula-4.25.4.tgz#e96b6fab6ccb727dbab743966ed21f25da9b9fe9"
+  integrity sha512-ejmDA9cXVLWDJGlgxCjz4vVMn2fnFexMX3QxoH8d/pbunIFy//lyqmEO6zzKC9+ltc0PaKvZYYx668qqip/pDA==
+  dependencies:
+    "@uiw/codemirror-themes" "4.25.4"
+
 "@uiw/codemirror-theme-github@4.24.1":
   version "4.24.1"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-github/-/codemirror-theme-github-4.24.1.tgz#80a6e735ed9bb97d66d7914b951b8243f974634f"
@@ -6564,6 +6571,15 @@
   version "4.24.1"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.24.1.tgz#f27075079b5a899d99716d035b58f38d62fffa12"
   integrity sha512-hduBbFNiWNW6nYa2/giKQ9YpzhWNw87BGpCjC+cXYMZ7bCD6q5DC6Hw+7z7ZwSzEaOQvV91lmirOjJ8hn9+pkg==
+  dependencies:
+    "@codemirror/language" "^6.0.0"
+    "@codemirror/state" "^6.0.0"
+    "@codemirror/view" "^6.0.0"
+
+"@uiw/codemirror-themes@4.25.4":
+  version "4.25.4"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.25.4.tgz#caa0df8b19368dfee6494f08c4983d1e36199500"
+  integrity sha512-2SLktItgcZC4p0+PfFusEbAHwbuAWe3bOOntCevVgHtrWGtGZX3IPv2k8IKZMgOXtAHyGKpJvT9/nspPn/uCQg==
   dependencies:
     "@codemirror/language" "^6.0.0"
     "@codemirror/state" "^6.0.0"

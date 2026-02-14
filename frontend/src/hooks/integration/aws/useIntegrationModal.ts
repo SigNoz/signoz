@@ -14,10 +14,10 @@ import {
 } from 'container/Integrations/CloudIntegration/AmazonWebServices/HeroSection/types';
 import useAxiosError from 'hooks/useAxiosError';
 import {
-	ConnectionParams,
 	ConnectionUrlResponse,
 	GenerateConnectionUrlPayload,
 } from 'types/api/integrations/aws';
+import { ConnectionParams } from 'types/api/integrations/types';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';

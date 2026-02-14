@@ -39,7 +39,6 @@ export default function AzureServiceDetails({
 
 		return (
 			<div className="azure-service-details-overview">
-				<div className="azure-service-config-actions"></div>
 				<MarkdownRenderer
 					variables={{}}
 					markdownContent={serviceDetailsData?.overview}

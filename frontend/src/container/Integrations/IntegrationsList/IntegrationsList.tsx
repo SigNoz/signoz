@@ -80,7 +80,17 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 	return (
 		<div className="integrations-list-container">
-			<div className="integrations-list-title">All Integrations</div>
+			<div className="integrations-list-title-header">
+				<div className="integrations-list-header-title">All Integrations</div>
+				<div className="integrations-list-header-dotted-double-line">
+					<img
+						src="/svgs/dotted-double-line.svg"
+						alt="dotted-double-line"
+						width="100%"
+						height="100%"
+					/>
+				</div>
+			</div>
 
 			{!loading && isError && renderError()}
 
