@@ -22,7 +22,7 @@
 			.azure-account-prerequisites-step-description-item {
 				color: var(--Vanilla-400, #c0c1c3);
 				font-family: Inter;
-				font-size: 14px;
+				font-size: 13px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 20px;
@@ -34,7 +34,7 @@
 				.azure-account-prerequisites-step-description-item-bullet {
 					color: var(--Robin-500, #4e74f8);
 					font-family: Inter;
-					font-size: 14px;
+					font-size: 13px;
 					font-style: normal;
 					font-weight: 400;
 					line-height: 20px; /* 142.857% */
@@ -231,10 +231,11 @@
 			}
 		}
 
-		.azure-account-fetch-deployment-command {
+		.azure-account-actions-container {
 			display: flex;
-			flex-direction: column;
-			align-items: flex-end;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
 			gap: 8px;
 		}
 	}
@@ -269,5 +270,57 @@
 		.ant-select-item-option-active {
 			background: var(--Ink-400, #121317);
 		}
+	}
+
+	.azure-account-disconnect-container {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+		gap: 8px;
+
+		padding: 16px 0px;
+	}
+}
+
+.azure-account-disconnect-modal {
+	.ant-modal-content {
+		width: 480px;
+		min-height: 200px;
+		flex-shrink: 0;
+		background: var(--bg-ink-400);
+		color: var(--bg-vanilla-100);
+		border: 1px solid var(--bg-slate-500);
+		border-radius: 4px;
+		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
+		padding: 12px;
+	}
+
+	.ant-modal-header {
+		background: var(--bg-ink-400);
+		color: var(--bg-vanilla-100);
+
+		.ant-modal-title {
+			color: var(--bg-vanilla-100);
+		}
+	}
+
+	.ant-modal-body {
+		margin-top: 16px;
+	}
+
+	.ant-modal-close {
+		color: var(--bg-vanilla-100);
+	}
+
+	.ant-modal-footer {
+		margin-top: 32px;
+	}
+}
+
+.lightMode {
+	.azure-account-disconnect-container {
+		border-color: var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
 	}
 }

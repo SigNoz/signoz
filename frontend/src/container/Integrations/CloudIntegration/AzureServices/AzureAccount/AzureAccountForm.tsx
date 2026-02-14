@@ -1,23 +1,23 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { useMutation, useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
+import { toast } from '@signozhq/sonner';
 import { Form, Select } from 'antd';
-import { AZURE_REGIONS } from 'container/Integrations/constants';
+import { Modal } from 'antd/lib';
+import { removeIntegrationAccount } from 'api/integration';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import {
+	AZURE_REGIONS,
+	INTEGRATION_TYPES,
+} from 'container/Integrations/constants';
 import {
 	AzureCloudAccountConfig,
 	CloudAccount,
 } from 'container/Integrations/types';
-import { CornerDownRight } from 'lucide-react';
+import { CornerDownRight, Unlink } from 'lucide-react';
 import { ConnectionParams } from 'types/api/integrations/types';
 
-export const AzureAccountForm = ({
-	mode = 'add',
-	selectedAccount,
-	connectionParams,
-	isConnectionParamsLoading,
-	isLoading,
-	onSubmit,
-	submitButtonText = 'Fetch Deployment Command',
-}: {
+interface AzureAccountFormProps {
 	mode?: 'add' | 'edit';
 	selectedAccount: CloudAccount | null;
 	connectionParams: ConnectionParams;
@@ -28,8 +28,22 @@ export const AzureAccountForm = ({
 		resourceGroups: string[];
 	}) => void;
 	submitButtonText?: string;
-}): JSX.Element => {
+	showDisconnectAccountButton?: boolean;
+}
+
+export const AzureAccountForm = ({
+	mode = 'add',
+	selectedAccount,
+	connectionParams,
+	isConnectionParamsLoading,
+	isLoading,
+	onSubmit,
+	submitButtonText = 'Fetch Deployment Command',
+	showDisconnectAccountButton = false,
+}: AzureAccountFormProps): JSX.Element => {
 	const [azureAccountForm] = Form.useForm();
+	const queryClient = useQueryClient();
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleSubmit = useCallback((): void => {
 		azureAccountForm
@@ -44,6 +58,40 @@ export const AzureAccountForm = ({
 				console.error('Form submission failed:', error);
 			});
 	}, [azureAccountForm, onSubmit]);
+
+	const handleDisconnect = (): void => {
+		setIsModalOpen(true);
+	};
+
+	const {
+		mutate: removeIntegration,
+		isLoading: isRemoveIntegrationLoading,
+	} = useMutation(removeIntegrationAccount, {
+		onSuccess: () => {
+			toast.success('Azure account disconnected successfully', {
+				description: 'Azure account disconnected successfully',
+				position: 'top-right',
+				duration: 3000,
+			});
+
+			queryClient.invalidateQueries([REACT_QUERY_KEY.CLOUD_INTEGRATION_ACCOUNTS]);
+			setIsModalOpen(false);
+		},
+		onError: (error) => {
+			console.error('Failed to remove integration:', error);
+		},
+	});
+
+	const handleOk = (): void => {
+		removeIntegration({
+			cloudServiceId: INTEGRATION_TYPES.AZURE,
+			accountId: selectedAccount?.id as string,
+		});
+	};
+
+	const handleCancel = (): void => {
+		setIsModalOpen(false);
+	};
 
 	return (
 		<Form
@@ -113,19 +161,58 @@ export const AzureAccountForm = ({
 				</div>
 			</div>
 
-			<div className="azure-account-fetch-deployment-command">
+			<div className="azure-account-actions-container">
+				{showDisconnectAccountButton && (
+					<div className="azure-account-disconnect-container">
+						<Button
+							variant="solid"
+							color="destructive"
+							prefixIcon={<Unlink size={14} />}
+							size="sm"
+							onClick={handleDisconnect}
+							disabled={isRemoveIntegrationLoading}
+						>
+							Disconnect
+						</Button>
+					</div>
+				)}
+
 				<Button
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit}
 					size="sm"
 					prefixIcon={<CornerDownRight size={12} />}
-					loading={isConnectionParamsLoading || isLoading}
-					disabled={isConnectionParamsLoading || !connectionParams || isLoading}
+					loading={
+						isConnectionParamsLoading || isLoading || isRemoveIntegrationLoading
+					}
+					disabled={
+						isConnectionParamsLoading ||
+						!connectionParams ||
+						isLoading ||
+						isRemoveIntegrationLoading
+					}
 				>
 					{submitButtonText}
 				</Button>
 			</div>
+
+			<Modal
+				className="azure-account-disconnect-modal"
+				open={isModalOpen}
+				title="Remove integration"
+				onOk={handleOk}
+				onCancel={handleCancel}
+				okText="Remove Integration"
+				okButtonProps={{
+					danger: true,
+				}}
+			>
+				<div className="remove-integration-modal-content">
+					Removing this account will remove all components created for sending
+					telemetry to SigNoz in your Azure account within the next ~15 minutes
+				</div>
+			</Modal>
 		</Form>
 	);
 };

@@ -98,9 +98,9 @@ const ConnectionSuccess = {
 	description: 'You can now safely close this panel.',
 };
 
-const ConnectionError = {
-	type: 'error' as const,
-	title: 'Agent deployment failed.',
+const ConnectionWarning = {
+	type: 'warning' as const,
+	title: 'Listening for data...',
 	description:
 		'Do not close this panel until the agent stack is deployed successfully.',
 };
@@ -197,7 +197,7 @@ const DeployAgentStep = ({
 		refetchInterval,
 		enabled: !!accountId,
 		onSuccess: (data: AccountStatusResponse) => {
-			if (data.data.status.integration.last_heartbeat_ts_ms === null) {
+			if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
 				setIsAccountConnected(true);
 				setShowConnectionStatus(true);
 				onAccountConnected();
@@ -299,19 +299,21 @@ const DeployAgentStep = ({
 					<div className="azure-account-connection-status-content">
 						<Callout
 							className="azure-account-connection-status-callout"
-							type={isAccountConnected ? ConnectionSuccess.type : ConnectionError.type}
+							type={
+								isAccountConnected ? ConnectionSuccess.type : ConnectionWarning.type
+							}
 							size="small"
 							showIcon
 							message={
-								!isAccountConnected ? ConnectionSuccess.title : ConnectionError.title
+								isAccountConnected ? ConnectionSuccess.title : ConnectionWarning.title
 							}
 						/>
 					</div>
 
 					<div className="azure-account-connection-status-close-disclosure">
-						{!isAccountConnected
-							? ConnectionError.description
-							: ConnectionSuccess.description}
+						{isAccountConnected
+							? ConnectionSuccess.description
+							: ConnectionWarning.description}
 					</div>
 				</div>
 			)}

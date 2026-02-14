@@ -81,6 +81,7 @@ function EditAzureAccount({
 				onSubmit={handleSubmit}
 				isLoading={isLoading}
 				submitButtonText="Save Changes"
+				showDisconnectAccountButton
 			/>
 		</div>
 	);

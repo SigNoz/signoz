@@ -8,6 +8,7 @@ import {
 	AzureService,
 	AzureServiceConfigPayload,
 } from 'container/Integrations/types';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AccountConfigResponse,
 	AWSAccountConfigPayload,
@@ -104,4 +105,18 @@ export const getAzureDeploymentCommands = async (params: {
 	);
 
 	return response.data.data;
+};
+
+export const removeIntegrationAccount = async ({
+	cloudServiceId,
+	accountId,
+}: {
+	cloudServiceId: string;
+	accountId: string;
+}): Promise<SuccessResponse<Record<string, never>> | ErrorResponse> => {
+	const response = await axios.post(
+		`/cloud-integrations/${cloudServiceId}/accounts/${accountId}/disconnect`,
+	);
+
+	return response.data;
 };
