@@ -1,0 +1,77 @@
+---
+description: Global vs local mock strategy for Jest tests
+globs:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/__tests__/**/*.ts"
+  - "**/__tests__/**/*.tsx"
+alwaysApply: false
+---
+
+# Mock Decision Strategy
+
+## Global Mocks (20+ test files)
+
+- Core infrastructure: react-router-dom, react-query, antd
+- Browser APIs: ResizeObserver, matchMedia, localStorage
+- Utility libraries: date-fns, lodash
+- Available: `uplot` → `__mocks__/uplotMock.ts`
+
+## Local Mocks (5–15 test files)
+
+- Business logic dependencies
+- API endpoints with specific responses
+- Domain-specific components
+- Error scenarios and edge cases
+
+## Decision Tree
+
+```
+Is it used in 20+ test files?
+├─ YES → Use Global Mock
+│   ├─ react-router-dom
+│   ├─ react-query
+│   ├─ antd components
+│   └─ browser APIs
+│
+└─ NO → Is it business logic?
+    ├─ YES → Use Local Mock
+    │   ├─ API endpoints
+    │   ├─ Custom hooks
+    │   └─ Domain components
+    │
+    └─ NO → Is it test-specific?
+        ├─ YES → Use Local Mock
+        │   ├─ Error scenarios
+        │   ├─ Loading states
+        │   └─ Specific data
+        │
+        └─ NO → Consider Global Mock
+            └─ If it becomes frequently used
+```
+
+## Anti-patterns
+
+❌ Don't mock global dependencies locally:
+```ts
+jest.mock('react-router-dom', () => ({ ... }));  // Already globally mocked
+```
+
+❌ Don't create global mocks for test-specific data:
+```ts
+jest.mock('../api/tracesService', () => ({
+  getTraces: jest.fn(() => specificTestData)  // BAD - should be local
+}));
+```
+
+✅ Do use global mocks for infrastructure:
+```ts
+import { useLocation } from 'react-router-dom';
+```
+
+✅ Do create local mocks for business logic:
+```ts
+jest.mock('../api/tracesService', () => ({
+  getTraces: jest.fn(() => mockTracesData)
+}));
+```
