@@ -25,16 +25,28 @@ export function getTooltipBaseValue({
 	index,
 	dataIndex,
 	isStackedBarChart,
+	series,
 }: {
 	data: AlignedData;
 	index: number;
 	dataIndex: number;
 	isStackedBarChart?: boolean;
+	series?: Series[];
 }): number | null {
 	let baseValue = data[index][dataIndex] ?? null;
-	if (isStackedBarChart && index + 1 < data.length && baseValue !== null) {
-		const nextValue = data[index + 1][dataIndex] ?? null;
-		if (nextValue !== null) {
+	// Top-down stacking (first series at top): raw = stacked[i] - stacked[nextVisible].
+	// When series are hidden, we must use the next *visible* series, not index+1,
+	// since hidden series keep raw values and would produce negative/wrong results.
+	if (isStackedBarChart && baseValue !== null && series) {
+		let nextVisibleIdx = -1;
+		for (let j = index + 1; j < series.length; j++) {
+			if (series[j]?.show) {
+				nextVisibleIdx = j;
+				break;
+			}
+		}
+		if (nextVisibleIdx >= 1) {
+			const nextValue = data[nextVisibleIdx][dataIndex] ?? 0;
 			baseValue = baseValue - nextValue;
 		}
 	}
@@ -80,6 +92,7 @@ export function buildTooltipContent({
 			index,
 			dataIndex,
 			isStackedBarChart,
+			series,
 		});
 
 		const isActive = index === activeSeriesIndex;

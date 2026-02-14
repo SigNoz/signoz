@@ -2,11 +2,11 @@
 Look at the multi_temporality_counters_1h.jsonl file for the relevant data
 """
 
-import os
+import random
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-import random
-from typing import Any, Callable, List
+from typing import Callable, List
+
 import pytest
 
 from fixtures import types
