@@ -21,8 +21,13 @@ from fixtures.querier import (
 from fixtures.utils import get_testdata_file_path
 
 MULTI_TEMPORALITY_FILE = get_testdata_file_path("multi_temporality_counters_1h.jsonl")
-MULTI_TEMPORALITY_FILE_10h = get_testdata_file_path("multi_temporality_counters_10h.jsonl")
-MULTI_TEMPORALITY_FILE_24h = get_testdata_file_path("multi_temporality_counters_24h.jsonl")
+MULTI_TEMPORALITY_FILE_10h = get_testdata_file_path(
+    "multi_temporality_counters_10h.jsonl"
+)
+MULTI_TEMPORALITY_FILE_24h = get_testdata_file_path(
+    "multi_temporality_counters_24h.jsonl"
+)
+
 
 @pytest.mark.parametrize(
     "time_aggregation, expected_value_at_31st_minute, expected_value_at_32nd_minute, steady_value",
@@ -39,7 +44,7 @@ def test_with_steady_values_and_reset(
     time_aggregation: str,
     expected_value_at_31st_minute: float,
     expected_value_at_32nd_minute: float,
-    steady_value: float
+    steady_value: float,
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -67,24 +72,24 @@ def test_with_steady_values_and_reset(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert len(result_values) >= 59
+    assert len(result_values) >= 58
     # the counter reset happened at 31st minute
+    # we skip the rate value for the first data point without previous value
+    assert result_values[29]["value"] == expected_value_at_31st_minute
+    assert result_values[30]["value"] == expected_value_at_32nd_minute
     assert (
-        result_values[30]["value"] == expected_value_at_31st_minute
-    )
-    assert (
-        result_values[31]["value"] == expected_value_at_32nd_minute
-    )
-    assert (
-        result_values[39]["value"] == steady_value
-    ) # 39th minute is when cumulative shifts to delta
+        result_values[38]["value"] == steady_value
+    )  # 38th minute is when cumulative shifts to delta
     count_of_steady_rate = sum(1 for v in result_values if v["value"] == steady_value)
     assert (
-        count_of_steady_rate >= 56
+        count_of_steady_rate >= 55
     )  # 59 - (1 reset + 1 high rate + 1 at the beginning)
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
-        assert v["value"] >= 0, f"{time_aggregation} should not be negative: {v['value']}"
+        assert (
+            v["value"] >= 0
+        ), f"{time_aggregation} should not be negative: {v['value']}"
+
 
 @pytest.mark.parametrize(
     "time_aggregation, stable_health_value, stable_products_value, stable_checkout_value, spike_checkout_value, stable_orders_value, spike_users_value",
@@ -161,20 +166,26 @@ def test_group_by_endpoint(
     assert (
         len(health_values) >= 58
     ), f"Expected >= 58 values for /health, got {len(health_values)}"
-    count_steady_health = sum(1 for v in health_values if v["value"] == stable_health_value) 
+    count_steady_health = sum(
+        1 for v in health_values if v["value"] == stable_health_value
+    )
     assert (
         count_steady_health >= 57
     ), f"Expected >= 57 steady rate values ({stable_health_value}) for /health, got {count_steady_health}"
     # all /health rates should be state except possibly first/last due to boundaries
     for v in health_values[1:-1]:
-        assert v["value"] == stable_health_value, f"Expected /health rate {stable_health_value}, got {v['value']}"
+        assert (
+            v["value"] == stable_health_value
+        ), f"Expected /health rate {stable_health_value}, got {v['value']}"
 
     # /products: 51 data points with 10-minute gap (t20-t29 missing), steady +20/min
     products_values = endpoint_values["/products"]
     assert (
         len(products_values) >= 49
     ), f"Expected >= 49 values for /products, got {len(products_values)}"
-    count_steady_products = sum(1 for v in products_values if v["value"] == stable_products_value)
+    count_steady_products = sum(
+        1 for v in products_values if v["value"] == stable_products_value
+    )
 
     # most values should be stable, some boundary values differ due to 10-min gap
     assert (
@@ -182,7 +193,9 @@ def test_group_by_endpoint(
     ), f"Expected >= 46 steady rate values ({stable_products_value}) for /products, got {count_steady_products}"
 
     # check that non-stable values are due to gap averaging (should be lower)
-    gap_boundary_values = [v["value"] for v in products_values if v["value"] != stable_products_value]
+    gap_boundary_values = [
+        v["value"] for v in products_values if v["value"] != stable_products_value
+    ]
     for val in gap_boundary_values:
         assert (
             0 < val < stable_products_value
@@ -193,12 +206,16 @@ def test_group_by_endpoint(
     assert (
         len(checkout_values) >= 59
     ), f"Expected >= 59 values for /checkout, got {len(checkout_values)}"
-    count_steady_checkout = sum(1 for v in checkout_values if v["value"] == stable_checkout_value)
+    count_steady_checkout = sum(
+        1 for v in checkout_values if v["value"] == stable_checkout_value
+    )
     assert (
         count_steady_checkout >= 53
     ), f"Expected >= 53 steady {time_aggregation} values ({stable_checkout_value}) for /checkout, got {count_steady_checkout}"
     # check that spike values exist (traffic spike +50/min at t40-t44)
-    count_spike_checkout = sum(1 for v in checkout_values if v["value"] == spike_checkout_value)
+    count_spike_checkout = sum(
+        1 for v in checkout_values if v["value"] == spike_checkout_value
+    )
     assert (
         count_spike_checkout >= 4
     ), f"Expected >= 4 spike {time_aggregation} values ({spike_checkout_value}) for /checkout, got {count_spike_checkout}"
@@ -220,12 +237,16 @@ def test_group_by_endpoint(
     assert (
         len(orders_values) >= 58
     ), f"Expected >= 58 values for /orders, got {len(orders_values)}"
-    count_steady_orders = sum(1 for v in orders_values if v["value"] == stable_orders_value)
+    count_steady_orders = sum(
+        1 for v in orders_values if v["value"] == stable_orders_value
+    )
     assert (
         count_steady_orders >= 55
     ), f"Expected >= 55 steady {time_aggregation} values ({stable_orders_value}) for /orders, got {count_steady_orders}"
     # check for counter reset effects - there should be some non-standard values
-    non_standard_orders = [v["value"] for v in orders_values if v["value"] != stable_orders_value]
+    non_standard_orders = [
+        v["value"] for v in orders_values if v["value"] != stable_orders_value
+    ]
     assert (
         len(non_standard_orders) >= 2
     ), f"Expected >= 2 non-standard values due to counter reset, got {non_standard_orders}"
@@ -252,6 +273,7 @@ def test_group_by_endpoint(
         count_increment_rate >= 8
     ), f"Expected >= 8 increment {time_aggregation} values ({spike_users_value}) for /users, got {count_increment_rate}"
 
+
 @pytest.mark.parametrize(
     "time_aggregation, expected_value_at_30th_minute, expected_value_at_31st_minute, value_at_switch",
     [
@@ -267,7 +289,7 @@ def test_for_service_with_switch(
     time_aggregation: str,
     expected_value_at_30th_minute: float,
     expected_value_at_31st_minute: float,
-    value_at_switch: float
+    value_at_switch: float,
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -295,22 +317,19 @@ def test_for_service_with_switch(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert len(result_values) >= 60
+    assert len(result_values) >= 59
+    assert result_values[29]["value"] == expected_value_at_30th_minute  # 0.183
+    assert result_values[30]["value"] == expected_value_at_31st_minute  # 0.183
+    assert result_values[37]["value"] == value_at_switch  # 0.25
     assert (
-        result_values[30]["value"] == expected_value_at_30th_minute #0.183
-    ) 
-    assert (
-        result_values[31]["value"] == expected_value_at_31st_minute # 0.183
-    )
-    assert (
-        result_values[38]["value"] == value_at_switch # 0.25
-    ) 
-    assert (
-        result_values[39]["value"] == value_at_switch # 0.25
-    ) # 39th minute is when cumulative shifts to delta
+        result_values[38]["value"] == value_at_switch  # 0.25
+    )  # 39th minute is when cumulative shifts to delta
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
-        assert v["value"] >= 0, f"{time_aggregation} should not be negative: {v['value']}"
+        assert (
+            v["value"] >= 0
+        ), f"{time_aggregation} should not be negative: {v['value']}"
+
 
 @pytest.mark.parametrize(
     "time_aggregation, expected_value",
@@ -354,6 +373,7 @@ def test_for_week_long_time_range(
     # the zeroth value may not cover the whole time range
     for value in result_values[1:]:
         assert value["value"] == expected_value
+
 
 @pytest.mark.parametrize(
     "time_aggregation, expected_value",

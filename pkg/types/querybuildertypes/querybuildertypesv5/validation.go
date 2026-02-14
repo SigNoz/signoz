@@ -179,14 +179,6 @@ func (q *QueryBuilderQuery[T]) validateAggregations() error {
 					aggId,
 				)
 			}
-			// Validate metric-specific aggregations
-			if err := validateMetricAggregation(v); err != nil {
-				aggId := fmt.Sprintf("aggregation #%d", i+1)
-				if q.Name != "" {
-					aggId = fmt.Sprintf("aggregation #%d in query '%s'", i+1, q.Name)
-				}
-				return wrapValidationError(err, aggId, "invalid metric %s: %s")
-			}
 		case TraceAggregation:
 			if v.Expression == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
@@ -802,86 +794,4 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 		)
 	}
-}
-
-// validateMetricAggregation validates metric-specific aggregation parameters
-func validateMetricAggregation(agg MetricAggregation) error {
-	// we can't decide anything here without known temporality
-	if agg.Temporality == metrictypes.Unknown {
-		return nil
-	}
-
-	// Validate that rate/increase are only used with appropriate temporalities
-	if agg.TimeAggregation == metrictypes.TimeAggregationRate || agg.TimeAggregation == metrictypes.TimeAggregationIncrease {
-		// For gauge metrics (Unspecified temporality), rate/increase doesn't make sense
-		if agg.Temporality == metrictypes.Unspecified {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"rate/increase aggregation cannot be used with gauge metrics (unspecified temporality)",
-			)
-		}
-	}
-
-	// Validate percentile aggregations are only used with histogram types
-	if agg.SpaceAggregation.IsPercentile() {
-		if agg.Type != metrictypes.HistogramType && agg.Type != metrictypes.ExpHistogramType && agg.Type != metrictypes.SummaryType {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"percentile aggregation can only be used with histogram or summary metric types",
-			)
-		}
-	}
-
-	// Validate time aggregation values
-	validTimeAggregations := []metrictypes.TimeAggregation{
-		metrictypes.TimeAggregationUnspecified,
-		metrictypes.TimeAggregationLatest,
-		metrictypes.TimeAggregationSum,
-		metrictypes.TimeAggregationAvg,
-		metrictypes.TimeAggregationMin,
-		metrictypes.TimeAggregationMax,
-		metrictypes.TimeAggregationCount,
-		metrictypes.TimeAggregationCountDistinct,
-		metrictypes.TimeAggregationRate,
-		metrictypes.TimeAggregationIncrease,
-	}
-
-	validTimeAgg := slices.Contains(validTimeAggregations, agg.TimeAggregation)
-	if !validTimeAgg {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid time aggregation: %s",
-			agg.TimeAggregation.StringValue(),
-		).WithAdditional(
-			"Valid time aggregations: latest, sum, avg, min, max, count, count_distinct, rate, increase",
-		)
-	}
-
-	// Validate space aggregation values
-	validSpaceAggregations := []metrictypes.SpaceAggregation{
-		metrictypes.SpaceAggregationUnspecified,
-		metrictypes.SpaceAggregationSum,
-		metrictypes.SpaceAggregationAvg,
-		metrictypes.SpaceAggregationMin,
-		metrictypes.SpaceAggregationMax,
-		metrictypes.SpaceAggregationCount,
-		metrictypes.SpaceAggregationPercentile50,
-		metrictypes.SpaceAggregationPercentile75,
-		metrictypes.SpaceAggregationPercentile90,
-		metrictypes.SpaceAggregationPercentile95,
-		metrictypes.SpaceAggregationPercentile99,
-	}
-
-	validSpaceAgg := slices.Contains(validSpaceAggregations, agg.SpaceAggregation)
-	if !validSpaceAgg {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid space aggregation: %s",
-			agg.SpaceAggregation.StringValue(),
-		).WithAdditional(
-			"Valid space aggregations: sum, avg, min, max, count, p50, p75, p90, p95, p99",
-		)
-	}
-
-	return nil
 }

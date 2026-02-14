@@ -285,7 +285,6 @@ flagger:
   config:
     boolean:
       use_span_metrics: true
-      interpolation_enabled: false
       kafka_span_eval: false
     string:
     float:

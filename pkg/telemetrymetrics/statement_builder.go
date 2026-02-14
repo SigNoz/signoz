@@ -5,67 +5,27 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/slices"
 )
 
 const (
-	RateWithoutNegative     = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
-	IncreaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))`
+	RateTmpl = `multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window))`
 
-	RateWithoutNegativeMultiTemporality     = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF((%s - lagInFrame(%s, 1, 0) OVER rate_window) < 0, %s / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window), (%s - lagInFrame(%s, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))) AS per_series_value`
-	IncreaseWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, IF((%s - lagInFrame(%s, 1, 0) OVER rate_window) < 0, %s, ((%s - lagInFrame(%s, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(%d))) OVER rate_window))) AS per_series_value`
-	OthersMultiTemporality                  = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
+	IncreaseTmpl = `multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value, per_series_value - lagInFrame(per_series_value, 1) OVER rate_window)`
 
-	RateWithInterpolation = `
-		CASE 
-			WHEN row_number() OVER rate_window = 1 THEN 
-				-- First row: try to interpolate using next value
-				CASE 
-					WHEN leadInFrame(per_series_value, 1) OVER rate_window IS NOT NULL THEN
-						-- Assume linear growth to next point
-						(leadInFrame(per_series_value, 1) OVER rate_window - per_series_value) / 
-						(leadInFrame(ts, 1) OVER rate_window - ts)
-					ELSE 
-						0  -- No next value either, can't interpolate
-				END
-			WHEN (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0 THEN
-				-- Counter reset detected
-				per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window)
-			ELSE 
-				-- Normal case: calculate rate
-				(per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / 
-				(ts - lagInFrame(ts, 1) OVER rate_window)
-		END`
+	RateWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s / (ts - lagInFrame(ts, 1) OVER rate_window), (%s - lagInFrame(%s, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window))) AS per_series_value`
 
-	IncreaseWithInterpolation = `
-		CASE 
-			WHEN row_number() OVER rate_window = 1 THEN 
-				-- First row: try to interpolate using next value
-				CASE 
-					WHEN leadInFrame(per_series_value, 1) OVER rate_window IS NOT NULL THEN
-						-- Calculate the interpolated increase for this interval
-						((leadInFrame(per_series_value, 1) OVER rate_window - per_series_value) / 
-						 (leadInFrame(ts, 1) OVER rate_window - ts)) * 
-						(leadInFrame(ts, 1) OVER rate_window - ts)
-					ELSE 
-						0  -- No next value either, can't interpolate
-				END
-			WHEN (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0 THEN
-				-- Counter reset detected: the increase is the current value
-				per_series_value
-			ELSE 
-				-- Normal case: calculate increase
-				(per_series_value - lagInFrame(per_series_value, 1) OVER rate_window)
-		END`
+	IncreaseWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s, (%s - lagInFrame(%s, 1) OVER rate_window))) AS per_series_value`
+
+	OthersMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
 )
 
 type MetricQueryStatementBuilder struct {
@@ -258,8 +218,9 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 
 	if b.CanShortCircuitDelta(query) {
 		// spatial_aggregation_cte directly for certain delta queries
-		frag, args := b.buildTemporalAggDeltaFastPath(start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
-		if frag != "" {
+		if frag, args, err := b.buildTemporalAggDeltaFastPath(start, end, query, timeSeriesCTE, timeSeriesCTEArgs); err != nil {
+			return nil, err
+		} else if frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -273,8 +234,9 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 
 		// spatial_aggregation_cte
-		frag, args := b.buildSpatialAggregationCTE(ctx, start, end, query, keys)
-		if frag != "" {
+		if frag, args, err := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); err != nil {
+			return nil, err
+		} else if frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -294,7 +256,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
-) (string, []any) {
+) (string, []any, error) {
 	stepSec := int64(query.StepInterval.Seconds())
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -307,10 +269,13 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
 
-	aggCol := AggregationColumnForSamplesTable(
+	aggCol, err := AggregationColumnForSamplesTable(
 		start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality,
 		query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints,
 	)
+	if err != nil {
+		return "", []any{}, err
+	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
 	}
@@ -334,7 +299,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
 }
 
 func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
@@ -437,7 +402,10 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
 
-	aggCol := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggCol, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	if err != nil {
+		return "", []any{}, err
+	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
 	}
@@ -461,7 +429,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 }
 
 func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
-	ctx context.Context,
+	_ context.Context,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	timeSeriesCTE string,
@@ -479,7 +447,10 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
 
-	aggCol := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggCol, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	if err != nil {
+		return "", []any{}, err
+	}
 	baseSb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
 	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -496,36 +467,25 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
-	// ! TODO (balanikaran) Get OrgID via function parameter instead of valuer.GenerateUUID()
-	interpolationEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureInterpolationEnabled, featuretypes.NewFlaggerEvaluationContext(valuer.GenerateUUID()))
-
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		rateExpr := fmt.Sprintf(RateWithoutNegative, start, start)
-		if interpolationEnabled {
-			rateExpr = RateWithInterpolation
-		}
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
-		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", rateExpr))
+		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", RateTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
 
 	case metrictypes.TimeAggregationIncrease:
-		incExpr := fmt.Sprintf(IncreaseWithoutNegative, start, start)
-		if interpolationEnabled {
-			incExpr = IncreaseWithInterpolation
-		}
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
-		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", incExpr))
+		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", IncreaseTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
@@ -534,7 +494,6 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	}
 }
 
-// because RateInterpolation is not enabled anywhere due to some gaps in the logic wrt cache handling, it hasn't been considered for the multi temporality
 func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 	_ context.Context,
 	start, end uint64,
@@ -553,18 +512,32 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
 
-	aggForDeltaTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Delta, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
-	aggForCumulativeTemporality := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Cumulative, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	aggForDeltaTemporality, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Delta, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	if err != nil {
+		return "", []any{}, err
+	}
+	aggForCumulativeTemporality, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Cumulative, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	if err != nil {
+		return "", []any{}, err
+	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggForDeltaTemporality = fmt.Sprintf("%s/%d", aggForDeltaTemporality, stepSec)
 	}
 
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, start, aggForCumulativeTemporality, aggForCumulativeTemporality, start)
+		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality,
+			aggForDeltaTemporality,
+			aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality,
+			aggForCumulativeTemporality, aggForCumulativeTemporality,
+		)
 		sb.SelectMore(rateExpr)
 	case metrictypes.TimeAggregationIncrease:
-		increaseExpr := fmt.Sprintf(IncreaseWithoutNegativeMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality, start, start)
+		increaseExpr := fmt.Sprintf(IncreaseWithoutNegativeMultiTemporality,
+			aggForDeltaTemporality,
+			aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality,
+			aggForCumulativeTemporality, aggForCumulativeTemporality,
+		)
 		sb.SelectMore(increaseExpr)
 	default:
 		expr := fmt.Sprintf(OthersMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality)
@@ -592,7 +565,14 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, []any) {
+) (string, []any, error) {
+	if query.Aggregations[0].SpaceAggregation.IsZero() {
+		return "", []any{}, errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+		)
+	}
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("ts")
@@ -609,7 +589,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
 }
 
 func (b *MetricQueryStatementBuilder) BuildFinalSelect(
