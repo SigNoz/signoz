@@ -18,6 +18,16 @@ import AzureServicesListView from './AzureServicesListView';
 
 import './AzureServices.styles.scss';
 
+/** Service is enabled if even one sub item (log or metric) is enabled */
+function hasAnySubItemEnabled(service: AzureService): boolean {
+	const logs = service.config?.logs ?? [];
+	const metrics = service.config?.metrics ?? [];
+	return (
+		logs.some((log: AzureConfig) => log.enabled) ||
+		metrics.some((metric: AzureConfig) => metric.enabled)
+	);
+}
+
 function AzureServices(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const [selectedAccount, setSelectedAccount] = useState<CloudAccount | null>(
@@ -49,29 +59,24 @@ function AzureServices(): JSX.Element {
 		setSelectedAccount(initialAccount as CloudAccount | null);
 	}, [initialAccount]);
 
+	const cloudAccountId = initialAccount?.cloud_account_id;
 	const {
 		data: azureServices = [],
 		isLoading: isLoadingAzureServices,
-	} = useGetAccountServices(INTEGRATION_TYPES.AZURE);
+	} = useGetAccountServices(INTEGRATION_TYPES.AZURE, cloudAccountId);
 
 	const enabledServices = useMemo(
-		() =>
-			azureServices?.filter(
-				(service: AzureService) =>
-					service.config?.logs?.some((log: AzureConfig) => log.enabled) ||
-					service.config?.metrics?.some((metric: AzureConfig) => metric.enabled),
-			) ?? [],
+		() => azureServices?.filter(hasAnySubItemEnabled) ?? [],
 		[azureServices],
 	);
 
+	// Derive from enabled to guarantee each service is in exactly one list
+	const enabledIds = useMemo(() => new Set(enabledServices.map((s) => s.id)), [
+		enabledServices,
+	]);
 	const notEnabledServices = useMemo(
-		() =>
-			azureServices?.filter(
-				(service: AzureService) =>
-					!service.config?.logs?.some((log: AzureConfig) => log.enabled) ||
-					!service.config?.metrics?.some((metric: AzureConfig) => metric.enabled),
-			) ?? [],
-		[azureServices],
+		() => azureServices?.filter((s) => !enabledIds.has(s.id)) ?? [],
+		[azureServices, enabledIds],
 	);
 
 	useEffect(() => {

@@ -6,7 +6,9 @@ export function useGetAccountServices(
 	cloudServiceId: string,
 	accountId?: string,
 ): UseQueryResult<AzureService[]> {
-	return useQuery([cloudServiceId, accountId], () =>
-		getCloudIntegrationServices(cloudServiceId, accountId),
+	return useQuery(
+		[cloudServiceId, accountId],
+		() => getCloudIntegrationServices(cloudServiceId, accountId),
+		{ enabled: !!accountId },
 	);
 }

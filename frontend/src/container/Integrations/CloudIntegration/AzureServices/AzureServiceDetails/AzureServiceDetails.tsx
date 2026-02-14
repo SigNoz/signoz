@@ -142,6 +142,8 @@ export default function AzureServiceDetails({
 						selectedService?.id,
 						cloudAccountId,
 					]);
+					// Invalidate services list so Enabled/Not Enabled stays in sync
+					queryClient.invalidateQueries([INTEGRATION_TYPES.AZURE]);
 					refetchServiceDetails();
 				},
 			},
