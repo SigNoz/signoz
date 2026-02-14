@@ -75,6 +75,7 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 		return err
 	}
 
+	// if no data is provided, create an empty map to prevent a panic when we add the format, to, and subject data
 	if data == nil {
 		data = make(map[string]any)
 	}
