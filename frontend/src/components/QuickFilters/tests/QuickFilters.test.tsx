@@ -1,4 +1,8 @@
 import { ENVIRONMENT } from 'constants/env';
+import {
+	ApiMonitoringParams,
+	useApiMonitoringParams,
+} from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	otherFiltersResponse,
@@ -18,10 +22,15 @@ import { QuickFiltersConfig } from './constants';
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
+jest.mock('container/ApiMonitoring/queryParams');
 
 const handleFilterVisibilityChange = jest.fn();
 const redirectWithQueryBuilderData = jest.fn();
 const putHandler = jest.fn();
+const mockSetApiMonitoringParams = jest.fn() as jest.MockedFunction<
+	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void
+>;
+const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
@@ -84,6 +93,28 @@ TestQuickFilters.defaultProps = {
 	config: QuickFiltersConfig,
 };
 
+function TestQuickFiltersApiMonitoring({
+	signal = SignalType.LOGS,
+	config = QuickFiltersConfig,
+}: {
+	signal?: SignalType;
+	config?: IQuickFiltersConfig[];
+}): JSX.Element {
+	return (
+		<QuickFilters
+			source={QuickFiltersSource.API_MONITORING}
+			config={config}
+			handleFilterVisibilityChange={handleFilterVisibilityChange}
+			signal={signal}
+		/>
+	);
+}
+
+TestQuickFiltersApiMonitoring.defaultProps = {
+	signal: '',
+	config: QuickFiltersConfig,
+};
+
 beforeAll(() => {
 	server.listen();
 });
@@ -112,6 +143,10 @@ beforeEach(() => {
 		lastUsedQuery: 0,
 		redirectWithQueryBuilderData,
 	});
+	mockUseApiMonitoringParams.mockReturnValue([
+		{ showIP: true } as ApiMonitoringParams,
+		mockSetApiMonitoringParams,
+	]);
 	setupServer();
 });
 
@@ -248,6 +283,24 @@ describe('Quick Filters', () => {
 						]),
 					},
 				}),
+			);
+		});
+	});
+	it('toggles Show IP addresses and updates API Monitoring params', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(<TestQuickFiltersApiMonitoring />);
+
+		// Switch should be rendered and initially checked
+		expect(screen.getByText('Show IP addresses')).toBeInTheDocument();
+		const toggle = screen.getByRole('switch');
+		expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+		await user.click(toggle);
+
+		await waitFor(() => {
+			expect(mockSetApiMonitoringParams).toHaveBeenCalledWith(
+				expect.objectContaining({ showIP: false }),
 			);
 		});
 	});
