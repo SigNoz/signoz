@@ -31,7 +31,7 @@ jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(),
 }));
 
-jest.mock('pages/Integrations/utils', () => ({
+jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 
