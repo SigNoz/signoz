@@ -1,15 +1,17 @@
 """Fixtures for cloud integration tests."""
-from typing import Callable, Optional
+
 from http import HTTPStatus
+from typing import Callable, Optional
 
 import pytest
 import requests
 
 from fixtures import types
-from fixtures.logger import setup_logger
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
 
 @pytest.fixture(scope="function")
 def create_cloud_integration_account(
@@ -24,9 +26,7 @@ def create_cloud_integration_account(
         cloud_provider: str = "aws",
     ) -> dict:
         nonlocal created_account_id, cloud_provider_used
-        endpoint = (
-            f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
-        )
+        endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
 
         request_payload = {
             "account_config": {"regions": ["us-east-1"]},
@@ -59,9 +59,7 @@ def create_cloud_integration_account(
 
     def _disconnect(admin_token: str, cloud_provider: str) -> requests.Response:
         assert created_account_id
-        disconnect_endpoint = (
-            f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{created_account_id}/disconnect"
-        )
+        disconnect_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{created_account_id}/disconnect"
         return requests.post(
             signoz.self.host_configs["8080"].get(disconnect_endpoint),
             headers={"Authorization": f"Bearer {admin_token}"},
