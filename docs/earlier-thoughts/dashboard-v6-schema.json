@@ -1,0 +1,1466 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://signoz.io/schemas/dashboard/v6",
+  "title": "SigNoz Dashboard v6",
+  "description": "Schema for SigNoz Dashboard format version 6. Adopts kind+spec envelope pattern, separates panels from layouts, uses discriminated unions for queries, eliminates boilerplate, and enforces strict validation.",
+  "type": "object",
+  "required": ["kind", "apiVersion", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "Dashboard",
+      "description": "Resource kind identifier."
+    },
+    "apiVersion": {
+      "const": "v6",
+      "description": "Schema version for this dashboard format."
+    },
+    "metadata": {
+      "$ref": "#/$defs/DashboardMetadata"
+    },
+    "spec": {
+      "$ref": "#/$defs/DashboardSpec"
+    }
+  },
+
+  "$defs": {
+
+    "DashboardMetadata": {
+      "type": "object",
+      "description": "Dashboard-level metadata including identity, ownership, and audit timestamps.",
+      "required": ["id", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique dashboard identifier (UUID v4)."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Human-readable dashboard title."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 5000,
+          "default": "",
+          "description": "Optional dashboard description."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Tags for categorization and search."
+        },
+        "image": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional preview image URI for the dashboard."
+        },
+        "locked": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the dashboard cannot be modified."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 last-update timestamp."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User ID or email of creator."
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "User ID or email of last updater."
+        },
+        "orgId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Organization ID this dashboard belongs to."
+        }
+      }
+    },
+
+    "DashboardSpec": {
+      "type": "object",
+      "description": "Dashboard specification containing panels, layouts, and variables.",
+      "required": ["panels", "layouts"],
+      "additionalProperties": false,
+      "properties": {
+        "timePreference": {
+          "$ref": "#/$defs/TimePreference",
+          "description": "Default time range preference for the dashboard. Corrected spelling from legacy 'timePreferance'."
+        },
+        "panels": {
+          "type": "object",
+          "description": "Map of panel ID to panel definition. Panels are decoupled from layout; layouts reference panels by their key in this map.",
+          "additionalProperties": {
+            "$ref": "#/$defs/Panel"
+          },
+          "minProperties": 0
+        },
+        "layouts": {
+          "type": "array",
+          "description": "Ordered list of layout sections. Each section can be a flat grid or a collapsible row group.",
+          "items": {
+            "$ref": "#/$defs/LayoutSection"
+          }
+        },
+        "variables": {
+          "type": "array",
+          "description": "Ordered list of dashboard variables. Using an array (not a map) guarantees consistent ordering and avoids name-vs-UUID keying issues.",
+          "items": {
+            "$ref": "#/$defs/Variable"
+          },
+          "default": []
+        }
+      }
+    },
+
+    "TimePreference": {
+      "type": "string",
+      "enum": [
+        "GLOBAL_TIME",
+        "LAST_5_MIN",
+        "LAST_15_MIN",
+        "LAST_30_MIN",
+        "LAST_1_HR",
+        "LAST_6_HR",
+        "LAST_1_DAY",
+        "LAST_3_DAYS",
+        "LAST_1_WEEK",
+        "LAST_1_MONTH"
+      ],
+      "default": "GLOBAL_TIME",
+      "description": "Predefined time range relative to now, or GLOBAL_TIME to inherit from the global picker."
+    },
+
+    "Panel": {
+      "type": "object",
+      "description": "A panel definition containing its query, display type, and type-specific display options. Each panel only carries fields relevant to its panelType -- no boilerplate for unrelated signals or modes.",
+      "required": ["id", "title", "panelType", "query"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique panel identifier within this dashboard. Must match its key in spec.panels."
+        },
+        "title": {
+          "type": "string",
+          "description": "Panel title displayed in the header."
+        },
+        "description": {
+          "type": "string",
+          "default": "",
+          "description": "Optional panel description / subtitle."
+        },
+        "panelType": {
+          "$ref": "#/$defs/PanelType"
+        },
+        "query": {
+          "$ref": "#/$defs/CompositeQuery",
+          "description": "The composite query powering this panel."
+        },
+        "timePreference": {
+          "$ref": "#/$defs/TimePreference",
+          "description": "Per-panel time range override. If omitted, inherits from the dashboard-level timePreference."
+        },
+        "display": {
+          "$ref": "#/$defs/PanelDisplay",
+          "description": "Type-specific display options for the panel."
+        },
+        "thresholds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Threshold" },
+          "description": "Visual thresholds rendered as lines, bands, or background coloring."
+        },
+        "contextLinks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ContextLink" },
+          "description": "Links shown in the panel context menu for drill-down navigation."
+        }
+      }
+    },
+
+    "PanelType": {
+      "type": "string",
+      "enum": ["graph", "value", "table", "list", "trace", "bar", "pie", "histogram"],
+      "description": "The visualization type for this panel. 'row' is handled at the layout level, not as a panel type."
+    },
+
+    "PanelDisplay": {
+      "type": "object",
+      "description": "Display options that vary by panel type. Only include fields relevant to the chosen panelType.",
+      "additionalProperties": false,
+      "properties": {
+        "yAxisUnit": {
+          "type": "string",
+          "description": "Unit for the Y-axis (e.g., 'bytes', 'ms', 'percent', 'ops/s'). Applied to graph, bar, value, histogram panels."
+        },
+        "decimalPrecision": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0, "maximum": 20 },
+            { "const": "full" }
+          ],
+          "description": "Number of decimal places for displayed values, or 'full' for maximum precision."
+        },
+        "opacity": {
+          "type": "string",
+          "description": "Fill opacity for chart areas. Legacy string representation preserved for compatibility."
+        },
+        "nullZeroValues": {
+          "type": "string",
+          "enum": ["zero", "interpolate", "remove"],
+          "description": "How to handle null/zero values in time series. 'zero' shows 0, 'interpolate' connects adjacent points, 'remove' creates gaps."
+        },
+        "fillSpans": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, fill gaps in time series with zero values at regular intervals."
+        },
+        "stackedBarChart": {
+          "type": "boolean",
+          "default": false,
+          "description": "For bar/graph panels: stack series on top of each other."
+        },
+        "isLogScale": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use logarithmic scale for the Y-axis."
+        },
+        "softMin": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Soft minimum for the Y-axis. The axis can go below this if data requires."
+        },
+        "softMax": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Soft maximum for the Y-axis. The axis can go above this if data requires."
+        },
+        "mergeAllActiveQueries": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, merge series from all queries into a single visualization."
+        },
+        "stepSize": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Query step size override in seconds."
+        },
+        "legend": {
+          "$ref": "#/$defs/LegendOptions",
+          "description": "Legend display configuration."
+        },
+        "bucketCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "For histogram panels: number of buckets."
+        },
+        "bucketWidth": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "For histogram panels: fixed width of each bucket."
+        },
+        "columnUnits": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "For table panels: map of column name to unit string for per-column unit formatting."
+        },
+        "columnWidths": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0 },
+          "description": "For table panels: map of column name to pixel width."
+        },
+        "customColTitles": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "For table panels: map of column name to custom display title."
+        },
+        "hiddenColumns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "For table panels: list of column names to hide."
+        },
+        "customLegendColors": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Map of series identifier to custom color hex string."
+        },
+        "selectedFields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TelemetryFieldKey" },
+          "description": "For list/table panels querying logs or traces: which fields to display. Replaces legacy selectedLogFields and selectedTracesFields -- only present when relevant."
+        }
+      }
+    },
+
+    "LegendOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "type": "string",
+          "enum": ["bottom", "right", "hidden"],
+          "default": "bottom",
+          "description": "Where to render the legend."
+        }
+      }
+    },
+
+    "Threshold": {
+      "type": "object",
+      "description": "A threshold line/band for visual alerting on panels.",
+      "required": ["value"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this threshold."
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the threshold."
+        },
+        "value": {
+          "type": "number",
+          "description": "Threshold value."
+        },
+        "operator": {
+          "type": "string",
+          "enum": [">", "<", ">=", "<=", "="],
+          "default": ">",
+          "description": "Comparison operator defining which side of the threshold triggers."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of the threshold value (must match panel Y-axis unit)."
+        },
+        "color": {
+          "type": "string",
+          "description": "Color for the threshold indicator (CSS color or hex)."
+        },
+        "format": {
+          "type": "string",
+          "enum": ["Text", "Background"],
+          "default": "Text",
+          "description": "How to render the threshold: as colored text or colored background."
+        },
+        "tableOptions": {
+          "type": "string",
+          "description": "For table panels: which column this threshold applies to."
+        }
+      }
+    },
+
+    "ContextLink": {
+      "type": "object",
+      "description": "A drill-down link shown in the panel context menu.",
+      "required": ["url", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this context link."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL template. May contain {{variable}} placeholders."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Display text for the link."
+        }
+      }
+    },
+
+    "LayoutSection": {
+      "type": "object",
+      "description": "A layout section: either a flat grid of panel placements, or a collapsible row group containing its own grid.",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["grid", "row"],
+          "description": "'grid' for a flat section of panel placements, 'row' for a collapsible group."
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this layout section."
+        },
+        "title": {
+          "type": "string",
+          "description": "For 'row' type: the collapsible section header title."
+        },
+        "collapsed": {
+          "type": "boolean",
+          "default": false,
+          "description": "For 'row' type: whether the section is initially collapsed."
+        },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/LayoutItem" },
+          "description": "Panel placement items within this section."
+        }
+      },
+      "if": { "properties": { "type": { "const": "row" } } },
+      "then": { "required": ["type", "id", "title", "items"] }
+    },
+
+    "LayoutItem": {
+      "type": "object",
+      "description": "Positions a panel on the grid. References a panel by ID from spec.panels.",
+      "required": ["panelId", "x", "y", "w", "h"],
+      "additionalProperties": false,
+      "properties": {
+        "panelId": {
+          "type": "string",
+          "description": "References a key in spec.panels."
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 11,
+          "description": "Column position (0-based, 12-column grid)."
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Row position (0-based, grows downward)."
+        },
+        "w": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Width in grid columns (1-12)."
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Height in grid rows."
+        },
+        "static": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the panel cannot be moved or resized."
+        }
+      }
+    },
+
+    "Variable": {
+      "type": "object",
+      "description": "A dashboard variable. Uses discriminated union on 'type' field. Variables are ordered in an array to guarantee render/dependency order.",
+      "required": ["id", "name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Stable UUID for this variable. Used for internal references."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+          "description": "Variable name used in expressions and filters (e.g., $host_name). Must be a valid identifier."
+        },
+        "description": {
+          "type": "string",
+          "default": "",
+          "description": "Human-readable description."
+        },
+        "type": {
+          "$ref": "#/$defs/VariableType"
+        },
+        "multiSelect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow selecting multiple values."
+        },
+        "showAllOption": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show an 'ALL' option that selects all values."
+        },
+        "sort": {
+          "type": "string",
+          "enum": ["DISABLED", "ASC", "DESC"],
+          "default": "DISABLED",
+          "description": "Sort order for variable values."
+        },
+        "defaultValue": {
+          "description": "Default value(s) for the variable.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "array", "items": { "oneOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }] } },
+            { "type": "null" }
+          ]
+        },
+        "spec": {
+          "description": "Type-specific variable configuration.",
+          "oneOf": [
+            { "$ref": "#/$defs/VariableQuerySpec" },
+            { "$ref": "#/$defs/VariableTextboxSpec" },
+            { "$ref": "#/$defs/VariableCustomSpec" },
+            { "$ref": "#/$defs/VariableDynamicSpec" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "QUERY" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/VariableQuerySpec" } }, "required": ["id", "name", "type", "spec"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "TEXTBOX" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/VariableTextboxSpec" } }, "required": ["id", "name", "type"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "CUSTOM" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/VariableCustomSpec" } }, "required": ["id", "name", "type", "spec"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "DYNAMIC" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/VariableDynamicSpec" } }, "required": ["id", "name", "type", "spec"] }
+        }
+      ]
+    },
+
+    "VariableType": {
+      "type": "string",
+      "enum": ["QUERY", "TEXTBOX", "CUSTOM", "DYNAMIC"],
+      "description": "Discriminator for variable type."
+    },
+
+    "VariableQuerySpec": {
+      "type": "object",
+      "description": "Configuration for QUERY-type variables. The query is a builder query instead of raw SQL, enabling signal-aware attribute discovery.",
+      "required": ["query"],
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "$ref": "#/$defs/CompositeQuery",
+          "description": "Builder/PromQL/ClickHouse query that returns the set of values for this variable."
+        }
+      }
+    },
+
+    "VariableTextboxSpec": {
+      "type": "object",
+      "description": "Configuration for TEXTBOX-type variables (free-form text input).",
+      "additionalProperties": false,
+      "properties": {
+        "defaultText": {
+          "type": "string",
+          "default": "",
+          "description": "Default text value."
+        }
+      }
+    },
+
+    "VariableCustomSpec": {
+      "type": "object",
+      "description": "Configuration for CUSTOM-type variables (predefined list of values).",
+      "required": ["values"],
+      "additionalProperties": false,
+      "properties": {
+        "values": {
+          "type": "string",
+          "description": "Comma-separated list of predefined values."
+        }
+      }
+    },
+
+    "VariableDynamicSpec": {
+      "type": "object",
+      "description": "Configuration for DYNAMIC-type variables (auto-populated from telemetry attributes).",
+      "required": ["source", "attribute"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Signal source (e.g., 'logs', 'traces', 'metrics')."
+        },
+        "attribute": {
+          "type": "string",
+          "description": "Attribute name whose distinct values populate the variable."
+        }
+      }
+    },
+
+    "CompositeQuery": {
+      "type": "object",
+      "description": "A composite query containing one or more typed query envelopes. Each query uses a discriminated union on the 'type' field -- only that query type's fields are present.",
+      "required": ["queries"],
+      "additionalProperties": false,
+      "properties": {
+        "queries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/QueryEnvelope" },
+          "minItems": 1,
+          "description": "Ordered list of query envelopes. Names must be unique within the composite query."
+        }
+      }
+    },
+
+    "QueryEnvelope": {
+      "type": "object",
+      "description": "A typed query envelope following the kind+spec pattern. The 'type' field discriminates the shape of 'spec'.",
+      "required": ["type", "spec"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/QueryType"
+        },
+        "spec": {
+          "description": "Query specification. Shape depends on the 'type' discriminator.",
+          "oneOf": [
+            { "$ref": "#/$defs/BuilderQuerySpec" },
+            { "$ref": "#/$defs/BuilderFormulaSpec" },
+            { "$ref": "#/$defs/BuilderJoinSpec" },
+            { "$ref": "#/$defs/BuilderTraceOperatorSpec" },
+            { "$ref": "#/$defs/PromQLSpec" },
+            { "$ref": "#/$defs/ClickHouseSQLSpec" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "builder_query" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/BuilderQuerySpec" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "builder_sub_query" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/BuilderQuerySpec" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "builder_formula" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/BuilderFormulaSpec" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "builder_join" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/BuilderJoinSpec" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "builder_trace_operator" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/BuilderTraceOperatorSpec" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "promql" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/PromQLSpec" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "clickhouse_sql" } } },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/ClickHouseSQLSpec" } } }
+        }
+      ]
+    },
+
+    "QueryType": {
+      "type": "string",
+      "enum": [
+        "builder_query",
+        "builder_sub_query",
+        "builder_formula",
+        "builder_join",
+        "builder_trace_operator",
+        "promql",
+        "clickhouse_sql"
+      ],
+      "description": "Discriminator for query type within a QueryEnvelope."
+    },
+
+    "BuilderQuerySpec": {
+      "type": "object",
+      "description": "A builder query for a specific signal. The 'signal' field further determines the shape of 'aggregations'. For metrics, each aggregation is a MetricAggregation; for traces/logs, each is an ExpressionAggregation.",
+      "required": ["name", "signal"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "description": "Query name used for formula references (e.g., 'A', 'B', 'error_count')."
+        },
+        "signal": {
+          "$ref": "#/$defs/Signal"
+        },
+        "source": {
+          "type": "string",
+          "description": "Optional source qualifier within a signal (e.g., a specific log source or trace service)."
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this query is excluded from execution."
+        },
+        "aggregations": {
+          "type": "array",
+          "description": "Aggregation definitions. Shape depends on signal: MetricAggregation for metrics, ExpressionAggregation for traces/logs.",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/MetricAggregation" },
+              { "$ref": "#/$defs/ExpressionAggregation" }
+            ]
+          }
+        },
+        "filter": {
+          "$ref": "#/$defs/Filter",
+          "description": "Filter expression applied before aggregation."
+        },
+        "groupBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/GroupByKey" },
+          "description": "Fields to group results by."
+        },
+        "order": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OrderBy" },
+          "description": "Result ordering."
+        },
+        "selectFields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TelemetryFieldKey" },
+          "description": "For raw/list queries: which columns to select."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000,
+          "description": "Maximum number of result rows."
+        },
+        "limitBy": {
+          "$ref": "#/$defs/LimitBy",
+          "description": "Limit results per group."
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of rows to skip (cursor-based pagination preferred)."
+        },
+        "cursor": {
+          "type": "string",
+          "description": "Opaque cursor for cursor-based pagination."
+        },
+        "having": {
+          "$ref": "#/$defs/Having",
+          "description": "Post-aggregation filter."
+        },
+        "secondaryAggregations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SecondaryAggregation" },
+          "description": "Additional aggregations applied on top of primary results."
+        },
+        "functions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PostProcessingFunction" },
+          "description": "Post-processing functions applied to query results."
+        },
+        "legend": {
+          "type": "string",
+          "description": "Legend template using {{.label_name}} interpolation."
+        },
+        "stepInterval": {
+          "$ref": "#/$defs/StepInterval",
+          "description": "Query resolution step interval."
+        }
+      }
+    },
+
+    "BuilderFormulaSpec": {
+      "type": "object",
+      "description": "A formula that combines results from other queries using a mathematical expression.",
+      "required": ["name", "expression"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "description": "Formula name."
+        },
+        "expression": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Mathematical expression referencing other query names. Supports aggregation references like A.0, A.my_alias. Example: 'A / B * 100'."
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "order": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OrderBy" }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "having": {
+          "$ref": "#/$defs/Having"
+        },
+        "functions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PostProcessingFunction" }
+        },
+        "legend": {
+          "type": "string"
+        }
+      }
+    },
+
+    "BuilderJoinSpec": {
+      "type": "object",
+      "description": "A join query combining results from two other queries with SQL-style join semantics.",
+      "required": ["name", "left", "right", "joinType", "on"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "left": {
+          "$ref": "#/$defs/QueryRef",
+          "description": "Reference to the left-side query."
+        },
+        "right": {
+          "$ref": "#/$defs/QueryRef",
+          "description": "Reference to the right-side query."
+        },
+        "joinType": {
+          "type": "string",
+          "enum": ["inner", "left", "right", "full", "cross"],
+          "description": "SQL-style join type."
+        },
+        "on": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Join condition expression."
+        },
+        "aggregations": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/MetricAggregation" },
+              { "$ref": "#/$defs/ExpressionAggregation" }
+            ]
+          },
+          "description": "Optional post-join aggregations."
+        },
+        "selectFields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TelemetryFieldKey" }
+        },
+        "filter": {
+          "$ref": "#/$defs/Filter"
+        },
+        "groupBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/GroupByKey" }
+        },
+        "having": {
+          "$ref": "#/$defs/Having"
+        },
+        "order": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OrderBy" }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "secondaryAggregations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SecondaryAggregation" }
+        },
+        "functions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PostProcessingFunction" }
+        }
+      }
+    },
+
+    "BuilderTraceOperatorSpec": {
+      "type": "object",
+      "description": "A trace operator query for expressing span relationships using operators like =>, ->, &&, ||, NOT.",
+      "required": ["name", "expression"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "expression": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Trace operator expression combining query references. Operators: => (direct descendant), -> (indirect descendant), && (AND), || (OR), NOT (exclude). Example: 'A => B && C'."
+        },
+        "filter": {
+          "$ref": "#/$defs/Filter"
+        },
+        "returnSpansFrom": {
+          "type": "string",
+          "description": "Which query's spans to return in the result."
+        },
+        "order": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TraceOrderBy" },
+          "description": "Ordering for trace results (only 'span_count' and 'trace_duration' allowed)."
+        },
+        "aggregations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ExpressionAggregation" }
+        },
+        "stepInterval": {
+          "$ref": "#/$defs/StepInterval"
+        },
+        "groupBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/GroupByKey" }
+        },
+        "having": {
+          "$ref": "#/$defs/Having"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cursor": {
+          "type": "string"
+        },
+        "legend": {
+          "type": "string"
+        },
+        "selectFields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TelemetryFieldKey" }
+        },
+        "functions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PostProcessingFunction" }
+        }
+      }
+    },
+
+    "PromQLSpec": {
+      "type": "object",
+      "description": "A PromQL query for Prometheus-compatible metric querying.",
+      "required": ["name", "query"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Query name."
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "description": "PromQL query expression."
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "step": {
+          "$ref": "#/$defs/StepInterval",
+          "description": "Query resolution step."
+        },
+        "stats": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, return query execution statistics."
+        },
+        "legend": {
+          "type": "string",
+          "description": "Legend format template."
+        }
+      }
+    },
+
+    "ClickHouseSQLSpec": {
+      "type": "object",
+      "description": "A raw ClickHouse SQL query for advanced use cases not covered by the builder.",
+      "required": ["name", "query"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Query name."
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "description": "ClickHouse SQL query string."
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "legend": {
+          "type": "string",
+          "description": "Legend format template."
+        }
+      }
+    },
+
+    "Signal": {
+      "type": "string",
+      "enum": ["metrics", "traces", "logs"],
+      "description": "Telemetry signal type. Extensible to 'events' and 'profiles' in future versions."
+    },
+
+    "MetricAggregation": {
+      "type": "object",
+      "description": "Aggregation definition for metrics queries. Specifies the metric, its temporality, and the two-level aggregation model (time then space).",
+      "required": ["metricName"],
+      "additionalProperties": false,
+      "properties": {
+        "metricName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the metric to query."
+        },
+        "temporality": {
+          "$ref": "#/$defs/MetricTemporality",
+          "description": "Metric temporality from OTLP data model."
+        },
+        "timeAggregation": {
+          "$ref": "#/$defs/TimeAggregation",
+          "description": "Temporal aggregation: how to aggregate samples within each time bucket."
+        },
+        "spaceAggregation": {
+          "$ref": "#/$defs/SpaceAggregation",
+          "description": "Spatial aggregation: how to aggregate across label dimensions."
+        },
+        "reduceTo": {
+          "$ref": "#/$defs/ReduceTo",
+          "description": "For scalar request types: how to reduce a time series to a single value."
+        }
+      }
+    },
+
+    "ExpressionAggregation": {
+      "type": "object",
+      "description": "Expression-based aggregation for traces and logs queries. Uses ClickHouse aggregate function syntax.",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Aggregation expression. Examples: 'count()', 'sum(item_price)', 'p99(duration_nano)', 'countIf(day > 10)'."
+        },
+        "alias": {
+          "type": "string",
+          "description": "Optional alias for this aggregation in the result. Used for formula references like A.my_alias."
+        }
+      }
+    },
+
+    "MetricTemporality": {
+      "type": "string",
+      "enum": ["delta", "cumulative", "unspecified"],
+      "description": "OTLP metric temporality."
+    },
+
+    "TimeAggregation": {
+      "type": "string",
+      "enum": [
+        "latest",
+        "sum",
+        "avg",
+        "min",
+        "max",
+        "count",
+        "count_distinct",
+        "rate",
+        "increase"
+      ],
+      "description": "How to aggregate metric samples within each time bucket."
+    },
+
+    "SpaceAggregation": {
+      "type": "string",
+      "enum": [
+        "sum",
+        "avg",
+        "min",
+        "max",
+        "count",
+        "p50",
+        "p75",
+        "p90",
+        "p95",
+        "p99"
+      ],
+      "description": "How to aggregate metric values across label dimensions. Percentile aggregations (p50-p99) are only valid for histogram/summary metric types."
+    },
+
+    "ReduceTo": {
+      "type": "string",
+      "enum": ["sum", "count", "avg", "min", "max", "last", "median"],
+      "description": "For scalar requests: how to reduce a time series to a single value."
+    },
+
+    "Filter": {
+      "type": "object",
+      "description": "Expression-based filter. In v6, filters use the expression syntax (e.g., 'host_name IN $host_name AND status_code >= 400') instead of the legacy structured filter with synthetic IDs.",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "Filter expression string. Supports operators: =, !=, >, >=, <, <=, IN, NOT IN, LIKE, NOT LIKE, ILIKE, NOT ILIKE, BETWEEN, NOT BETWEEN, EXISTS, NOT EXISTS, REGEXP, NOT REGEXP, CONTAINS, NOT CONTAINS. Variable interpolation uses $variable_name syntax."
+        }
+      }
+    },
+
+    "GroupByKey": {
+      "type": "object",
+      "description": "A telemetry field to group by.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Field name."
+        },
+        "signal": {
+          "$ref": "#/$defs/Signal",
+          "description": "Signal this field belongs to."
+        },
+        "fieldContext": {
+          "$ref": "#/$defs/FieldContext",
+          "description": "Context within the signal (e.g., 'resource', 'span', 'log')."
+        },
+        "fieldDataType": {
+          "$ref": "#/$defs/FieldDataType",
+          "description": "Data type of the field."
+        }
+      }
+    },
+
+    "OrderBy": {
+      "type": "object",
+      "description": "Ordering specification with a key and direction.",
+      "required": ["key", "direction"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/OrderByKey",
+          "description": "Field to order by. Can reference group by keys, aggregation expressions, aliases, or aggregation indices."
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "description": "Sort direction."
+        }
+      }
+    },
+
+    "TraceOrderBy": {
+      "type": "object",
+      "description": "Ordering specification for trace operator queries. Only span_count and trace_duration are valid keys.",
+      "required": ["key", "direction"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "object",
+          "required": ["name"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["span_count", "trace_duration"],
+              "description": "Trace-specific ordering field."
+            }
+          }
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["asc", "desc"]
+        }
+      }
+    },
+
+    "OrderByKey": {
+      "type": "object",
+      "description": "Key reference for ordering. Can be a telemetry field, aggregation alias, aggregation expression, or aggregation index.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Field name, aggregation alias, aggregation expression, aggregation index (as string), or special value '__result__'."
+        },
+        "signal": {
+          "$ref": "#/$defs/Signal"
+        },
+        "fieldContext": {
+          "$ref": "#/$defs/FieldContext"
+        },
+        "fieldDataType": {
+          "$ref": "#/$defs/FieldDataType"
+        }
+      }
+    },
+
+    "Having": {
+      "type": "object",
+      "description": "Post-aggregation filter expression. Only valid on queries with aggregations.",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Having expression applied after aggregation. Example: 'count() > 100'."
+        }
+      }
+    },
+
+    "SecondaryAggregation": {
+      "type": "object",
+      "description": "A secondary aggregation applied on top of primary query results.",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "stepInterval": {
+          "$ref": "#/$defs/StepInterval",
+          "description": "Override step interval for this aggregation."
+        },
+        "expression": {
+          "type": "string",
+          "description": "Aggregation expression (e.g., 'count()', 'sum(value)')."
+        },
+        "alias": {
+          "type": "string",
+          "description": "Result alias."
+        },
+        "groupBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/GroupByKey" }
+        },
+        "order": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OrderBy" }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "limitBy": {
+          "$ref": "#/$defs/LimitBy"
+        }
+      }
+    },
+
+    "LimitBy": {
+      "type": "object",
+      "description": "Limit results per group of specified keys.",
+      "required": ["keys", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Field names to group the limit by."
+        },
+        "value": {
+          "type": "string",
+          "description": "Maximum number of rows per group (as string for compatibility)."
+        }
+      }
+    },
+
+    "PostProcessingFunction": {
+      "type": "object",
+      "description": "A post-processing function applied to query/formula results. These transform the result time series data.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/FunctionName",
+          "description": "Function identifier."
+        },
+        "args": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FunctionArg" },
+          "description": "Arguments for the function. Required arguments depend on the function name."
+        }
+      }
+    },
+
+    "FunctionName": {
+      "type": "string",
+      "enum": [
+        "cutOffMin",
+        "cutOffMax",
+        "clampMin",
+        "clampMax",
+        "absolute",
+        "runningDiff",
+        "log2",
+        "log10",
+        "cumulativeSum",
+        "ewma3",
+        "ewma5",
+        "ewma7",
+        "median3",
+        "median5",
+        "median7",
+        "timeShift",
+        "anomaly",
+        "fillZero"
+      ],
+      "description": "Available post-processing functions: cutOffMin/Max (NaN below/above threshold), clampMin/Max (clamp to threshold), absolute, runningDiff, log2, log10, cumulativeSum, ewma3/5/7 (exponentially weighted moving average), median3/5/7 (sliding median window), timeShift (shift timestamps), anomaly (anomaly detection), fillZero (fill gaps with zeros)."
+    },
+
+    "FunctionArg": {
+      "type": "object",
+      "description": "An argument to a post-processing function.",
+      "required": ["value"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Optional argument name for readability."
+        },
+        "value": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "string" },
+            { "type": "boolean" }
+          ],
+          "description": "Argument value. For threshold-based functions (cutOffMin, cutOffMax, clampMin, clampMax), this is a numeric threshold. For timeShift, this is the shift amount in seconds. For EWMA functions, this is an optional alpha value."
+        }
+      }
+    },
+
+    "StepInterval": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "description": "Step interval in seconds (numeric form)."
+        },
+        {
+          "type": "string",
+          "pattern": "^[0-9]+(ns|us|ms|s|m|h)$",
+          "description": "Step interval as a Go-style duration string (e.g., '15s', '1m', '1h')."
+        }
+      ],
+      "description": "Query resolution step interval. Accepts either a numeric value in seconds or a duration string."
+    },
+
+    "TelemetryFieldKey": {
+      "type": "object",
+      "description": "A reference to a telemetry field (attribute, resource field, body field, etc.).",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Field name (e.g., 'service.name', 'duration_nano', 'http.status_code')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of the field value."
+        },
+        "signal": {
+          "$ref": "#/$defs/Signal",
+          "description": "Signal this field belongs to."
+        },
+        "fieldContext": {
+          "$ref": "#/$defs/FieldContext",
+          "description": "Context within the signal (e.g., 'resource', 'span', 'log', 'metric')."
+        },
+        "fieldDataType": {
+          "$ref": "#/$defs/FieldDataType",
+          "description": "Data type of the field."
+        }
+      }
+    },
+
+    "FieldContext": {
+      "type": "string",
+      "enum": [
+        "resource",
+        "scope",
+        "span",
+        "event",
+        "link",
+        "log",
+        "metric",
+        "body",
+        "trace"
+      ],
+      "description": "Context of a telemetry field within its signal. For traces: span, event, link, trace. For logs: log, body. For metrics: metric. Cross-signal: resource, scope."
+    },
+
+    "FieldDataType": {
+      "type": "string",
+      "enum": [
+        "string",
+        "int64",
+        "float64",
+        "bool",
+        "array(string)",
+        "array(int64)",
+        "array(float64)",
+        "array(bool)"
+      ],
+      "description": "Data type of a telemetry field."
+    },
+
+    "QueryRef": {
+      "type": "object",
+      "description": "A reference to another query by name.",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the referenced query."
+        }
+      }
+    }
+  }
+}
