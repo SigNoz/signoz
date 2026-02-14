@@ -9,7 +9,13 @@ import { routePermission } from 'utils/permission';
 
 import './IntegrationsHeader.styles.scss';
 
-function IntegrationsHeader(): JSX.Element {
+interface IntegrationsHeaderProps {
+	searchQuery: string;
+	onSearchChange: (value: string) => void;
+}
+
+function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
+	const { searchQuery, onSearchChange } = props;
 	const history = useHistory();
 	const { user } = useAppContext();
 
@@ -31,7 +37,11 @@ function IntegrationsHeader(): JSX.Element {
 			</Flex>
 
 			<div className="integrations-search-request-container">
-				<Input placeholder="Search for an integration..." />
+				<Input
+					placeholder="Search for an integration..."
+					value={searchQuery}
+					onChange={(e): void => onSearchChange(e.target.value)}
+				/>
 				<Button
 					variant="solid"
 					color="secondary"

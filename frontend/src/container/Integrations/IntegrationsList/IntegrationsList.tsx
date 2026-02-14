@@ -12,11 +12,12 @@ import { handleContactSupport } from '../utils';
 import './IntegrationsList.styles.scss';
 
 interface IntegrationsListProps {
+	searchQuery: string;
 	setSelectedIntegration: (integration: IntegrationsProps) => void;
 }
 
 function IntegrationsList(props: IntegrationsListProps): JSX.Element {
-	const { setSelectedIntegration } = props;
+	const { searchQuery, setSelectedIntegration } = props;
 
 	const {
 		data,
@@ -30,12 +31,20 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const integrationsList = useMemo(() => {
-		if (data?.data.data.integrations) {
-			return data.data.data.integrations;
+		if (!data?.data.data.integrations) {
+			return [];
 		}
-
-		return [];
-	}, [data?.data.data.integrations]);
+		const integrations = data.data.data.integrations;
+		const query = searchQuery.trim().toLowerCase();
+		if (!query) {
+			return integrations;
+		}
+		return integrations.filter(
+			(integration) =>
+				integration.title.toLowerCase().includes(query) ||
+				integration.description.toLowerCase().includes(query),
+		);
+	}, [data?.data.data.integrations, searchQuery]);
 
 	const loading = isLoading || isFetching || isRefetching;
 
@@ -104,7 +113,22 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 				</div>
 			)}
 
-			{!isError && !loading && (
+			{!loading && integrationsList.length === 0 && searchQuery.trim() && (
+				<div className="integrations-not-found-container">
+					<div className="integrations-not-found-content">
+						<img
+							src="/Icons/awwSnap.svg"
+							alt="no-integrations"
+							className="integrations-not-found-image"
+						/>
+						<div className="integrations-not-found-text">
+							No integrations found for &ldquo;{searchQuery.trim()}&rdquo;
+						</div>
+					</div>
+				</div>
+			)}
+
+			{!loading && integrationsList.length > 0 && (
 				<div className="integrations-list">
 					<div className="integrations-list-header">
 						<div className="integrations-list-header-column title-column">Name</div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -13,6 +13,7 @@ import './Integrations.styles.scss';
 
 function Integrations(): JSX.Element {
 	const history = useHistory();
+	const [searchQuery, setSearchQuery] = useState('');
 
 	const setSelectedIntegration = useCallback(
 		(integration: IntegrationsProps | null) => {
@@ -37,9 +38,18 @@ function Integrations(): JSX.Element {
 		<div className="integrations-page">
 			<div className="integrations-content">
 				<div className="integrations-listing-container">
-					<IntegrationsHeader />
-					<OneClickIntegrations setSelectedIntegration={setSelectedIntegration} />
-					<IntegrationsList setSelectedIntegration={setSelectedIntegration} />
+					<IntegrationsHeader
+						searchQuery={searchQuery}
+						onSearchChange={setSearchQuery}
+					/>
+					<OneClickIntegrations
+						searchQuery={searchQuery}
+						setSelectedIntegration={setSelectedIntegration}
+					/>
+					<IntegrationsList
+						searchQuery={searchQuery}
+						setSelectedIntegration={setSelectedIntegration}
+					/>
 				</div>
 			</div>
 		</div>

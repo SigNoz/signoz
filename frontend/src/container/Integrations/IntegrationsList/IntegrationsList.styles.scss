@@ -1,4 +1,8 @@
 .integrations-list-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
 	.integrations-list-title {
 		color: var(--Vanilla-400, #c0c1c3);
 		font-family: Inter;
@@ -8,8 +12,6 @@
 		line-height: 20px; /* 166.667% */
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
-
-		margin-bottom: 16px;
 	}
 
 	.error-container {
@@ -90,7 +92,6 @@
 		flex-direction: column;
 		margin-left: -16px;
 		margin-right: -16px;
-		margin-top: 16px;
 
 		.integrations-list-header {
 			display: flex;
