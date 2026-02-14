@@ -355,6 +355,14 @@ func (r *PostableRule) validate() error {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
 	}
 
+	if r.Version != "" && r.Version != "v5" {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "only version v5 is supported, got %q", r.Version))
+	}
+
+	if r.Version == "v5" && r.RuleCondition.CompositeQuery != nil && len(r.RuleCondition.CompositeQuery.Queries) == 0 {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "queries envelope is required in compositeQuery"))
+	}
+
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "all queries are disabled in rule condition"))
 	}

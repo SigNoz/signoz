@@ -26,33 +26,33 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// createTestSeries creates a *v3.Series with the given labels and optional points
+// createTestSeries creates a *qbtypes.TimeSeries with the given labels and optional values
 // so we don't exactly need the points in the series because the labels are used to determine if the series is new or old
 // we use the labels to create a lookup key for the series and then check the first_seen timestamp for the series in the metadata table
-func createTestSeries(labels map[string]string, points []v3.Point) *v3.Series {
+func createTestSeries(labels map[string]string, points []*qbtypes.TimeSeriesValue) *qbtypes.TimeSeries {
 	if points == nil {
-		points = []v3.Point{}
+		points = []*qbtypes.TimeSeriesValue{}
 	}
-	return &v3.Series{
-		Labels: labels,
-		Points: points,
+	lbls := make([]*qbtypes.Label, 0, len(labels))
+	for k, v := range labels {
+		lbls = append(lbls, &qbtypes.Label{Key: telemetrytypes.TelemetryFieldKey{Name: k}, Value: v})
+	}
+	return &qbtypes.TimeSeries{
+		Labels: lbls,
+		Values: points,
 	}
 }
 
-// seriesEqual compares two v3.Series by their labels
+// seriesEqual compares two *qbtypes.TimeSeries by their labels
 // Returns true if the series have the same labels (order doesn't matter)
-func seriesEqual(s1, s2 *v3.Series) bool {
-	if s1 == nil && s2 == nil {
-		return true
-	}
-	if s1 == nil || s2 == nil {
+func seriesEqual(s1, s2 *qbtypes.TimeSeries) bool {
+	m1 := s1.LabelsMap()
+	m2 := s2.LabelsMap()
+	if len(m1) != len(m2) {
 		return false
 	}
-	if len(s1.Labels) != len(s2.Labels) {
-		return false
-	}
-	for k, v := range s1.Labels {
-		if s2.Labels[k] != v {
+	for k, v := range m1 {
+		if m2[k] != v {
 			return false
 		}
 	}
@@ -149,11 +149,11 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 type filterNewSeriesTestCase struct {
 	name              string
 	compositeQuery    *v3.CompositeQuery
-	series            []*v3.Series
+	series            []*qbtypes.TimeSeries
 	firstSeenMap      map[telemetrytypes.MetricMetadataLookupKey]int64
 	newGroupEvalDelay valuer.TextDuration
 	evalTime          time.Time
-	expectedFiltered  []*v3.Series // series that should be in the final filtered result (old enough)
+	expectedFiltered  []*qbtypes.TimeSeries // series that should be in the final filtered result (old enough)
 	expectError       bool
 }
 
@@ -193,7 +193,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
@@ -205,7 +205,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
 			}, // svc-old and svc-missing should be included; svc-new is filtered out
@@ -227,7 +227,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-new1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new2", "env": "stage"}, nil),
 			},
@@ -237,7 +237,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered:  []*v3.Series{}, // all should be filtered out (new series)
+			expectedFiltered:  []*qbtypes.TimeSeries{}, // all should be filtered out (new series)
 		},
 		{
 			name: "all old series - ClickHouse query",
@@ -254,7 +254,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
 			},
@@ -264,7 +264,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
 			}, // all should be included (old series)
@@ -292,13 +292,13 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			}, // early return, no filtering - all series included
 		},
@@ -322,13 +322,13 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			}, // early return, no filtering - all series included
 		},
@@ -358,13 +358,13 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"status": "200"}, nil), // no service_name or env
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"status": "200"}, nil),
 			}, // series included as we can't decide if it's new or old
 		},
@@ -385,7 +385,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
 			},
@@ -393,7 +393,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// svc-no-metadata has no entry in firstSeenMap
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
 			}, // both should be included - svc-old is old, svc-no-metadata can't be decided
@@ -413,7 +413,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
 			},
 			// Only provide metadata for service_name, not env
@@ -423,7 +423,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			},
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
 			}, // has some metadata, uses max first_seen which is old
 		},
@@ -453,11 +453,11 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series:            []*v3.Series{},
+			series:            []*qbtypes.TimeSeries{},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered:  []*v3.Series{},
+			expectedFiltered:  []*qbtypes.TimeSeries{},
 		},
 		{
 			name: "zero delay - Builder",
@@ -485,13 +485,13 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 			newGroupEvalDelay: valuer.TextDuration{}, // zero delay
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			}, // with zero delay, all series pass
 		},
@@ -526,7 +526,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap: mergeFirstSeenMaps(
@@ -535,7 +535,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 		},
@@ -565,7 +565,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			// service_name is old, env is new - should use max (new)
@@ -575,7 +575,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered:  []*v3.Series{}, // max first_seen is new, so should be filtered out
+			expectedFiltered:  []*qbtypes.TimeSeries{}, // max first_seen is new, so should be filtered out
 		},
 		{
 			name: "Logs query - should skip filtering and return empty skip indexes",
@@ -600,14 +600,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			}, // Logs queries should return early, no filtering - all included
@@ -635,14 +635,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			}, // Traces queries should return early, no filtering - all included
@@ -724,14 +724,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Build a map to count occurrences of each unique label combination in expected series
 			expectedCounts := make(map[string]int)
 			for _, expected := range tt.expectedFiltered {
-				key := labelsKey(expected.Labels)
+				key := labelsKey(expected.LabelsMap())
 				expectedCounts[key]++
 			}
 
 			// Build a map to count occurrences of each unique label combination in filtered series
 			actualCounts := make(map[string]int)
 			for _, filtered := range filteredSeries {
-				key := labelsKey(filtered.Labels)
+				key := labelsKey(filtered.LabelsMap())
 				actualCounts[key]++
 			}
 

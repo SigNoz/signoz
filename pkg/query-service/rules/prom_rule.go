@@ -12,19 +12,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 )
 
 type PromRule struct {
 	*BaseRule
-	version    string
 	prometheus prometheus.Prometheus
 }
 
@@ -48,7 +47,6 @@ func NewPromRule(
 
 	p := PromRule{
 		BaseRule:   baseRule,
-		version:    postableRule.Version,
 		prometheus: prometheus,
 	}
 	p.logger = logger
@@ -83,48 +81,30 @@ func (r *PromRule) GetSelectedQuery() string {
 }
 
 func (r *PromRule) getPqlQuery() (string, error) {
-	if r.version == "v5" {
-		if len(r.ruleCondition.CompositeQuery.Queries) > 0 {
-			selectedQuery := r.GetSelectedQuery()
-			for _, item := range r.ruleCondition.CompositeQuery.Queries {
-				switch item.Type {
-				case qbtypes.QueryTypePromQL:
-					promQuery, ok := item.Spec.(qbtypes.PromQuery)
-					if !ok {
-						return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", item.Spec)
-					}
-					if promQuery.Name == selectedQuery {
-						return promQuery.Query, nil
-					}
+	if len(r.ruleCondition.CompositeQuery.Queries) > 0 {
+		selectedQuery := r.GetSelectedQuery()
+		for _, item := range r.ruleCondition.CompositeQuery.Queries {
+			switch item.Type {
+			case qbtypes.QueryTypePromQL:
+				promQuery, ok := item.Spec.(qbtypes.PromQuery)
+				if !ok {
+					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", item.Spec)
+				}
+				if promQuery.Name == selectedQuery {
+					return promQuery.Query, nil
 				}
 			}
 		}
-		return "", fmt.Errorf("invalid promql rule setup")
 	}
-
-	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
-		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {
-			selectedQuery := r.GetSelectedQuery()
-			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries[selectedQuery]; ok {
-				query := promQuery.Query
-				if query == "" {
-					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
-				}
-				return query, nil
-			}
-		}
-	}
-
-	return "", fmt.Errorf("invalid promql rule query")
+	return "", fmt.Errorf("invalid promql rule setup")
 }
 
-func (r *PromRule) matrixToV3Series(res promql.Matrix) []*v3.Series {
-	v3Series := make([]*v3.Series, 0, len(res))
+func matrixToTimeSeries(res promql.Matrix) []*qbtypes.TimeSeries {
+	result := make([]*qbtypes.TimeSeries, 0, len(res))
 	for _, series := range res {
-		commonSeries := toCommonSeries(series)
-		v3Series = append(v3Series, &commonSeries)
+		result = append(result, promSeriesToTimeSeries(series))
 	}
-	return v3Series
+	return result
 }
 
 func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
@@ -143,31 +123,31 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		return nil, err
 	}
 
-	matrixToProcess := r.matrixToV3Series(res)
+	seriesToProcess := matrixToTimeSeries(res)
 
-	hasData := len(matrixToProcess) > 0
+	hasData := len(seriesToProcess) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
 	// Filter out new series if newGroupEvalDelay is configured
 	if r.ShouldSkipNewGroups() {
-		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
 		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
 			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
 		} else {
-			matrixToProcess = filteredSeries
+			seriesToProcess = filteredSeries
 		}
 	}
 
 	var resultVector ruletypes.Vector
 
-	for _, series := range matrixToProcess {
+	for _, series := range seriesToProcess {
 		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
 				ctx, "not enough data points to evaluate series, skipping",
-				"rule_id", r.ID(), "num_points", len(series.Points), "required_points", r.Condition().RequiredNumPoints,
+				"rule_id", r.ID(), "num_points", len(series.Values), "required_points", r.Condition().RequiredNumPoints,
 			)
 			continue
 		}
@@ -454,26 +434,25 @@ func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time
 	}
 }
 
-func toCommonSeries(series promql.Series) v3.Series {
-	commonSeries := v3.Series{
-		Labels:      make(map[string]string),
-		LabelsArray: make([]map[string]string, 0),
-		Points:      make([]v3.Point, 0),
+func promSeriesToTimeSeries(series promql.Series) *qbtypes.TimeSeries {
+	ts := &qbtypes.TimeSeries{
+		Labels: make([]*qbtypes.Label, 0, len(series.Metric)),
+		Values: make([]*qbtypes.TimeSeriesValue, 0, len(series.Floats)),
 	}
 
 	for _, lbl := range series.Metric {
-		commonSeries.Labels[lbl.Name] = lbl.Value
-		commonSeries.LabelsArray = append(commonSeries.LabelsArray, map[string]string{
-			lbl.Name: lbl.Value,
+		ts.Labels = append(ts.Labels, &qbtypes.Label{
+			Key:   telemetrytypes.TelemetryFieldKey{Name: lbl.Name},
+			Value: lbl.Value,
 		})
 	}
 
 	for _, f := range series.Floats {
-		commonSeries.Points = append(commonSeries.Points, v3.Point{
+		ts.Values = append(ts.Values, &qbtypes.TimeSeriesValue{
 			Timestamp: f.T,
 			Value:     f.F,
 		})
 	}
 
-	return commonSeries
+	return ts
 }

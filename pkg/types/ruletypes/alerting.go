@@ -203,11 +203,11 @@ func (rc *RuleCondition) IsValid() bool {
 }
 
 // ShouldEval checks if the further series should be evaluated at all for alerts.
-func (rc *RuleCondition) ShouldEval(series *v3.Series) bool {
+func (rc *RuleCondition) ShouldEval(series *qbtypes.TimeSeries) bool {
 	if rc == nil {
 		return true
 	}
-	return !rc.RequireMinPoints || len(series.Points) >= rc.RequiredNumPoints
+	return !rc.RequireMinPoints || len(series.NonPartialValues()) >= rc.RequiredNumPoints
 }
 
 // QueryType is a shorthand method to get query type

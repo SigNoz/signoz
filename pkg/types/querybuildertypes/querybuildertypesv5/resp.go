@@ -76,6 +76,33 @@ type TimeSeries struct {
 	Values []*TimeSeriesValue `json:"values"`
 }
 
+// LabelsMap converts the label slice to a map[string]string for use in
+// alert evaluation helpers that operate on flat label maps.
+func (ts *TimeSeries) LabelsMap() map[string]string {
+	if ts == nil {
+		return nil
+	}
+	m := make(map[string]string, len(ts.Labels))
+	for _, l := range ts.Labels {
+		m[l.Key.Name] = fmt.Sprintf("%v", l.Value)
+	}
+	return m
+}
+
+// NonPartialValues returns only the values where Partial is false.
+func (ts *TimeSeries) NonPartialValues() []*TimeSeriesValue {
+	if ts == nil {
+		return nil
+	}
+	result := make([]*TimeSeriesValue, 0, len(ts.Values))
+	for _, v := range ts.Values {
+		if !v.Partial {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
 type Label struct {
 	Key   telemetrytypes.TelemetryFieldKey `json:"key"`
 	Value any                              `json:"value"`
