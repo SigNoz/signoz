@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SettingOutlined } from '@ant-design/icons';
-import { Popover } from 'antd';
+import { Popover, Typography } from 'antd';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
@@ -11,7 +11,14 @@ import ApDexSettings from './ApDexSettings';
 
 function ApDexApplication(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = ((): string => {
+		try {
+			return decodeURIComponent(encodedServiceName || '');
+		} catch {
+			return encodedServiceName || '';
+		}
+	})();
+	const serviceDisplayName = servicename || 'unknown';
 
 	const {
 		data,
@@ -59,6 +66,12 @@ function ApDexApplication(): JSX.Element {
 			}
 		>
 			<div className="ap-dex-settings-popover-content">
+				<Typography.Text
+					className="service-name-inline"
+					title={`service.name = ${serviceDisplayName}`}
+				>
+					{`service.name = ${serviceDisplayName}`}
+				</Typography.Text>
 				<Button size="middle" icon={<SettingOutlined />}>
 					Settings
 				</Button>
