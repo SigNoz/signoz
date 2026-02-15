@@ -5,8 +5,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { TooltipContentItem, TooltipProps } from '../types';
-import { buildTooltipContent } from './utils';
+import { TooltipProps } from '../types';
 
 import './Tooltip.styles.scss';
 
@@ -14,14 +13,14 @@ const TOOLTIP_LIST_MAX_HEIGHT = 330;
 const TOOLTIP_ITEM_HEIGHT = 38;
 
 export default function Tooltip({
-	seriesIndex,
-	dataIndexes,
 	uPlotInstance,
 	timezone,
-	yAxisUnit = '',
-	decimalPrecision,
+	content,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+
+	const tooltipContent = content ?? [];
+
 	const headerTitle = useMemo(() => {
 		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
@@ -32,20 +31,6 @@ export default function Tooltip({
 			.tz(timezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 	}, [timezone, uPlotInstance.data, uPlotInstance.cursor.idx]);
-
-	const content = useMemo(
-		(): TooltipContentItem[] =>
-			buildTooltipContent({
-				data: uPlotInstance.data,
-				series: uPlotInstance.series,
-				dataIndexes,
-				activeSeriesIndex: seriesIndex,
-				uPlotInstance,
-				yAxisUnit,
-				decimalPrecision,
-			}),
-		[uPlotInstance, seriesIndex, dataIndexes, yAxisUnit, decimalPrecision],
-	);
 
 	return (
 		<div
@@ -60,16 +45,16 @@ export default function Tooltip({
 			<div
 				style={{
 					height: Math.min(
-						content.length * TOOLTIP_ITEM_HEIGHT,
+						tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
 						TOOLTIP_LIST_MAX_HEIGHT,
 					),
 					minHeight: 0,
 				}}
 			>
-				{content.length > 0 ? (
+				{tooltipContent.length > 0 ? (
 					<Virtuoso
 						className="uplot-tooltip-list"
-						data={content}
+						data={tooltipContent}
 						defaultItemHeight={TOOLTIP_ITEM_HEIGHT}
 						itemContent={(_, item): JSX.Element => (
 							<div className="uplot-tooltip-item">

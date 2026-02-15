@@ -1,8 +1,10 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import uPlot, { Series } from 'uplot';
 
 import {
+	BarAlignment,
 	ConfigBuilder,
 	DrawStyle,
 	LineInterpolation,
@@ -15,20 +17,41 @@ import {
  * Builder for uPlot series configuration
  * Handles creation of series settings
  */
+
+/**
+ * Path builders are static and shared across all instances of UPlotSeriesBuilder
+ */
+let builders: PathBuilders | null = null;
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
+	constructor(props: SeriesProps) {
+		super(props);
+		const pathBuilders = uPlot.paths;
+
+		if (!builders) {
+			const linearBuilder = pathBuilders.linear;
+			const splineBuilder = pathBuilders.spline;
+			const steppedBuilder = pathBuilders.stepped;
+
+			if (!linearBuilder || !splineBuilder || !steppedBuilder) {
+				throw new Error('Required uPlot path builders are not available');
+			}
+			builders = {
+				linear: linearBuilder(),
+				spline: splineBuilder(),
+				stepBefore: steppedBuilder({ align: -1 }),
+				stepAfter: steppedBuilder({ align: 1 }),
+			};
+		}
+	}
+
 	private buildLineConfig({
-		lineColor,
-		lineWidth,
-		lineStyle,
-		lineCap,
+		resolvedLineColor,
 	}: {
-		lineColor: string;
-		lineWidth?: number;
-		lineStyle?: LineStyle;
-		lineCap?: Series.Cap;
+		resolvedLineColor: string;
 	}): Partial<Series> {
+		const { lineWidth, lineStyle, lineCap } = this.props;
 		const lineConfig: Partial<Series> = {
-			stroke: lineColor,
+			stroke: resolvedLineColor,
 			width: lineWidth ?? 2,
 		};
 
@@ -39,21 +62,26 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		if (lineCap) {
 			lineConfig.cap = lineCap;
 		}
+
+		if (this.props.panelType === PANEL_TYPES.BAR) {
+			lineConfig.fill = resolvedLineColor;
+		}
+
 		return lineConfig;
 	}
 
 	/**
 	 * Build path configuration
 	 */
-	private buildPathConfig({
-		pathBuilder,
-		drawStyle,
-		lineInterpolation,
-	}: {
-		pathBuilder?: Series.PathBuilder | null;
-		drawStyle: DrawStyle;
-		lineInterpolation?: LineInterpolation;
-	}): Partial<Series> {
+	private buildPathConfig(): Partial<Series> {
+		const {
+			pathBuilder,
+			drawStyle,
+			lineInterpolation,
+			barAlignment,
+			barMaxWidth,
+			barWidthFactor,
+		} = this.props;
 		if (pathBuilder) {
 			return { paths: pathBuilder };
 		}
@@ -70,7 +98,13 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 					idx0: number,
 					idx1: number,
 				): Series.Paths | null => {
-					const pathsBuilder = getPathBuilder(drawStyle, lineInterpolation);
+					const pathsBuilder = getPathBuilder({
+						drawStyle,
+						lineInterpolation,
+						barAlignment,
+						barMaxWidth,
+						barWidthFactor,
+					});
 
 					return pathsBuilder(self, seriesIdx, idx0, idx1);
 				},
@@ -84,25 +118,21 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	 * Build points configuration
 	 */
 	private buildPointsConfig({
-		lineColor,
-		lineWidth,
-		pointSize,
-		pointsBuilder,
-		pointsFilter,
-		drawStyle,
-		showPoints,
+		resolvedLineColor,
 	}: {
-		lineColor: string;
-		lineWidth?: number;
-		pointSize?: number;
-		pointsBuilder: Series.Points.Show | null;
-		pointsFilter: Series.Points.Filter | null;
-		drawStyle: DrawStyle;
-		showPoints?: VisibilityMode;
+		resolvedLineColor: string;
 	}): Partial<Series.Points> {
+		const {
+			lineWidth,
+			pointSize,
+			pointsBuilder,
+			pointsFilter,
+			drawStyle,
+			showPoints,
+		} = this.props;
 		const pointsConfig: Partial<Series.Points> = {
-			stroke: lineColor,
-			fill: lineColor,
+			stroke: resolvedLineColor,
+			fill: resolvedLineColor,
 			size: !pointSize || pointSize < (lineWidth ?? 2) ? undefined : pointSize,
 			filter: pointsFilter || undefined,
 		};
@@ -136,44 +166,16 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}
 
 	getConfig(): Series {
-		const {
-			drawStyle,
-			pathBuilder,
-			pointsBuilder,
-			pointsFilter,
-			lineInterpolation,
-			lineWidth,
-			lineStyle,
-			lineCap,
-			showPoints,
-			pointSize,
-			scaleKey,
-			label,
-			spanGaps,
-			show = true,
-		} = this.props;
+		const { scaleKey, label, spanGaps, show = true } = this.props;
 
-		const lineColor = this.getLineColor();
+		const resolvedLineColor = this.getLineColor();
 
 		const lineConfig = this.buildLineConfig({
-			lineColor,
-			lineWidth,
-			lineStyle,
-			lineCap,
+			resolvedLineColor,
 		});
-		const pathConfig = this.buildPathConfig({
-			pathBuilder,
-			drawStyle,
-			lineInterpolation,
-		});
+		const pathConfig = this.buildPathConfig();
 		const pointsConfig = this.buildPointsConfig({
-			lineColor,
-			lineWidth,
-			pointSize,
-			pointsBuilder: pointsBuilder ?? null,
-			pointsFilter: pointsFilter ?? null,
-			drawStyle,
-			showPoints,
+			resolvedLineColor,
 		});
 
 		return {
@@ -198,35 +200,39 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
-let builders: PathBuilders | null = null;
-
 /**
  * Get path builder based on draw style and interpolation
  */
-function getPathBuilder(
-	style: DrawStyle,
-	lineInterpolation?: LineInterpolation,
-): Series.PathBuilder {
-	const pathBuilders = uPlot.paths;
-
+function getPathBuilder({
+	drawStyle,
+	lineInterpolation,
+	barAlignment = BarAlignment.Center,
+	barWidthFactor = 0.6,
+	barMaxWidth = 200,
+}: {
+	drawStyle: DrawStyle;
+	lineInterpolation?: LineInterpolation;
+	barAlignment?: BarAlignment;
+	barMaxWidth?: number;
+	barWidthFactor?: number;
+}): Series.PathBuilder {
 	if (!builders) {
-		const linearBuilder = pathBuilders.linear;
-		const splineBuilder = pathBuilders.spline;
-		const steppedBuilder = pathBuilders.stepped;
-
-		if (!linearBuilder || !splineBuilder || !steppedBuilder) {
-			throw new Error('Required uPlot path builders are not available');
-		}
-
-		builders = {
-			linear: linearBuilder(),
-			spline: splineBuilder(),
-			stepBefore: steppedBuilder({ align: -1 }),
-			stepAfter: steppedBuilder({ align: 1 }),
-		};
+		throw new Error('Required uPlot path builders are not available');
 	}
 
-	if (style === DrawStyle.Line) {
+	if (drawStyle === DrawStyle.Bar) {
+		const pathBuilders = uPlot.paths;
+		const barsConfigKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
+		if (!builders[barsConfigKey] && pathBuilders.bars) {
+			builders[barsConfigKey] = pathBuilders.bars({
+				size: [barWidthFactor, barMaxWidth],
+				align: barAlignment,
+			});
+		}
+		return builders[barsConfigKey];
+	}
+
+	if (drawStyle === DrawStyle.Line) {
 		if (lineInterpolation === LineInterpolation.StepBefore) {
 			return builders.stepBefore;
 		}
