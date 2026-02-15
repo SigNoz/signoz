@@ -3,14 +3,38 @@ import { Typography } from 'antd';
 export default function HostsEmptyOrIncorrectMetrics({
 	noData,
 	incorrectData,
+	endTimeBeforeRetention,
+	noRecordsInSelectedTimeRangeAndFilters,
 }: {
 	noData: boolean;
 	incorrectData: boolean;
+	endTimeBeforeRetention?: boolean;
+	noRecordsInSelectedTimeRangeAndFilters?: boolean;
 }): JSX.Element {
 	return (
 		<div className="hosts-empty-state-container">
 			<div className="hosts-empty-state-container-content">
 				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+
+				{noRecordsInSelectedTimeRangeAndFilters && (
+					<div className="no-hosts-message">
+						<Typography.Text className="no-hosts-message-text">
+							No host metrics in the selected time range and filters.
+						</Typography.Text>
+					</div>
+				)}
+
+				{endTimeBeforeRetention && (
+					<div className="no-hosts-message">
+						<Typography.Title level={5} className="no-hosts-message-title">
+							End time before retention
+						</Typography.Title>
+						<Typography.Text className="no-hosts-message-text">
+							Your requested end time is earlier than the earliest time of retention of
+							host metrics, please adjust your end time.
+						</Typography.Text>
+					</div>
+				)}
 
 				{noData && (
 					<div className="no-hosts-message">

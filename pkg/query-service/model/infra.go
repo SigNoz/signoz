@@ -44,6 +44,8 @@ type HostListResponse struct {
 	IsSendingK8SAgentMetrics bool             `json:"isSendingK8SAgentMetrics"`
 	ClusterNames             []string         `json:"clusterNames"`
 	NodeNames                []string         `json:"nodeNames"`
+	EndTimeBeforeRetention                bool   `json:"endTimeBeforeRetention"`
+	NoRecordsInSelectedTimeRangeAndFilters bool   `json:"noRecordsInSelectedTimeRangeAndFilters"`
 }
 
 func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {

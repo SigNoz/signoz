@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -19,6 +19,90 @@ import {
 	HostRowData,
 	HostsListTableProps,
 } from './utils';
+
+function getEmptyOrLoadingView(viewState: {
+	isError: boolean;
+	errorMessage: string;
+	showHostsEmptyState: boolean;
+	sentAnyHostMetricsData: boolean;
+	isSendingIncorrectK8SAgentMetrics: boolean;
+	showEndTimeBeforeRetentionMessage: boolean;
+	showNoRecordsInSelectedTimeRangeMessage: boolean;
+	showNoFilteredHostsMessage: boolean;
+	showTableLoadingState: boolean;
+}): React.ReactNode {
+	const { isError, errorMessage } = viewState;
+	if (isError) {
+		return <Typography>{errorMessage}</Typography>;
+	}
+	if (viewState.showHostsEmptyState) {
+		return (
+			<HostsEmptyOrIncorrectMetrics
+				noData={!viewState.sentAnyHostMetricsData}
+				incorrectData={viewState.isSendingIncorrectK8SAgentMetrics}
+			/>
+		);
+	}
+	if (viewState.showEndTimeBeforeRetentionMessage) {
+		return (
+			<HostsEmptyOrIncorrectMetrics
+				noData={false}
+				incorrectData={false}
+				endTimeBeforeRetention
+			/>
+		);
+	}
+	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
+		return (
+			<HostsEmptyOrIncorrectMetrics
+				noData={false}
+				incorrectData={false}
+				noRecordsInSelectedTimeRangeAndFilters
+			/>
+		);
+	}
+	if (viewState.showNoFilteredHostsMessage) {
+		return (
+			<div className="no-filtered-hosts-message-container">
+				<div className="no-filtered-hosts-message-content">
+					<img
+						src="/Icons/emptyState.svg"
+						alt="thinking-emoji"
+						className="empty-state-svg"
+					/>
+					<Typography.Text className="no-filtered-hosts-message">
+						This query had no results. Edit your query and try again!
+					</Typography.Text>
+				</div>
+			</div>
+		);
+	}
+	if (viewState.showTableLoadingState) {
+		return (
+			<div className="hosts-list-loading-state">
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+			</div>
+		);
+	}
+	return null;
+}
 
 export default function HostsListTable({
 	isLoading,
@@ -43,6 +127,16 @@ export default function HostsListTable({
 
 	const isSendingIncorrectK8SAgentMetrics = useMemo(
 		() => data?.payload?.data?.isSendingK8SAgentMetrics || false,
+		[data],
+	);
+
+	const endTimeBeforeRetention = useMemo(
+		() => data?.payload?.data?.endTimeBeforeRetention || false,
+		[data],
+	);
+
+	const noRecordsInSelectedTimeRangeAndFilters = useMemo(
+		() => data?.payload?.data?.noRecordsInSelectedTimeRangeAndFilters || false,
 		[data],
 	);
 
@@ -97,63 +191,36 @@ export default function HostsListTable({
 		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
 		!filters.items.length;
 
+	const showEndTimeBeforeRetentionMessage =
+		!isFetching &&
+		!isLoading &&
+		formattedHostMetricsData.length === 0 &&
+		endTimeBeforeRetention &&
+		!filters.items.length;
+
+	const showNoRecordsInSelectedTimeRangeMessage =
+		!isFetching &&
+		!isLoading &&
+		formattedHostMetricsData.length === 0 &&
+		noRecordsInSelectedTimeRangeAndFilters;
+
 	const showTableLoadingState =
 		(isLoading || isFetching) && formattedHostMetricsData.length === 0;
 
-	if (isError) {
-		return <Typography>{data?.error || 'Something went wrong'}</Typography>;
-	}
+	const emptyOrLoadingView = getEmptyOrLoadingView({
+		isError,
+		errorMessage: data?.error || 'Something went wrong',
+		showHostsEmptyState,
+		sentAnyHostMetricsData,
+		isSendingIncorrectK8SAgentMetrics,
+		showEndTimeBeforeRetentionMessage,
+		showNoRecordsInSelectedTimeRangeMessage,
+		showNoFilteredHostsMessage,
+		showTableLoadingState,
+	});
 
-	if (showHostsEmptyState) {
-		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={!sentAnyHostMetricsData}
-				incorrectData={isSendingIncorrectK8SAgentMetrics}
-			/>
-		);
-	}
-
-	if (showNoFilteredHostsMessage) {
-		return (
-			<div className="no-filtered-hosts-message-container">
-				<div className="no-filtered-hosts-message-content">
-					<img
-						src="/Icons/emptyState.svg"
-						alt="thinking-emoji"
-						className="empty-state-svg"
-					/>
-
-					<Typography.Text className="no-filtered-hosts-message">
-						This query had no results. Edit your query and try again!
-					</Typography.Text>
-				</div>
-			</div>
-		);
-	}
-
-	if (showTableLoadingState) {
-		return (
-			<div className="hosts-list-loading-state">
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-			</div>
-		);
+	if (emptyOrLoadingView) {
+		return <>{emptyOrLoadingView}</>;
 	}
 
 	return (
