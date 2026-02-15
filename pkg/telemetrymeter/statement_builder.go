@@ -74,7 +74,7 @@ func (b *meterQueryStatementBuilder) buildPipelineStatement(
 		cteArgs      [][]any
 	)
 
-	if b.metricsStatementBuilder.CanShortCircuitDelta(query) {
+	if qbtypes.CanShortCircuitDelta(query.Aggregations[0]) {
 		// spatial_aggregation_cte directly for certain delta queries
 		if frag, args, err := b.buildTemporalAggDeltaFastPath(ctx, start, end, query, keys, variables); err != nil {
 			return nil, err

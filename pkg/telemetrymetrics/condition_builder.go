@@ -38,7 +38,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// todo(srikanthccv): use the same data type collision handling when metrics schemas are updated
+	// TODO(srikanthccv): use the same data type collision handling when metrics schemas are updated
 	switch v := value.(type) {
 	case float64:
 		tblFieldName = fmt.Sprintf("toFloat64OrNull(%s)", tblFieldName)

@@ -107,54 +107,6 @@ func (b *MetricQueryStatementBuilder) Build(
 	return b.buildPipelineStatement(ctx, start, end, query, keys, variables)
 }
 
-// Fast‑path (no fingerprint grouping)
-// canShortCircuitDelta returns true if we can use the optimized query
-// for the given query
-// This is used to avoid the group by fingerprint thus improving the performance
-// for certain queries
-// cases where we can short circuit:
-// 1. time aggregation = (rate|increase) and space aggregation = sum
-//   - rate = sum(value)/step, increase = sum(value) - sum of sums is same as sum of all values
-//
-// 2. time aggregation = sum and space aggregation = sum
-//   - sum of sums is same as sum of all values
-//
-// 3. time aggregation = min and space aggregation = min
-//   - min of mins is same as min of all values
-//
-// 4. time aggregation = max and space aggregation = max
-//   - max of maxs is same as max of all values
-//
-// 5. special case exphist, there is no need for per series/fingerprint aggregation
-// we can directly use the quantilesDDMerge function
-//
-// all of this is true only for delta metrics
-func (b *MetricQueryStatementBuilder) CanShortCircuitDelta(q qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) bool {
-	if q.Aggregations[0].Temporality != metrictypes.Delta {
-		return false
-	}
-
-	ta := q.Aggregations[0].TimeAggregation
-	sa := q.Aggregations[0].SpaceAggregation
-
-	if (ta == metrictypes.TimeAggregationRate || ta == metrictypes.TimeAggregationIncrease) && sa == metrictypes.SpaceAggregationSum {
-		return true
-	}
-	if ta == metrictypes.TimeAggregationSum && sa == metrictypes.SpaceAggregationSum {
-		return true
-	}
-	if ta == metrictypes.TimeAggregationMin && sa == metrictypes.SpaceAggregationMin {
-		return true
-	}
-	if ta == metrictypes.TimeAggregationMax && sa == metrictypes.SpaceAggregationMax {
-		return true
-	}
-	if q.Aggregations[0].Type == metrictypes.ExpHistogramType && sa.IsPercentile() {
-		return true
-	}
-	return false
-}
-
 func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	ctx context.Context,
 	start, end uint64,
@@ -216,7 +168,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		return nil, err
 	}
 
-	if b.CanShortCircuitDelta(query) {
+	if qbtypes.CanShortCircuitDelta(query.Aggregations[0]) {
 		// spatial_aggregation_cte directly for certain delta queries
 		if frag, args, err := b.buildTemporalAggDeltaFastPath(start, end, query, timeSeriesCTE, timeSeriesCTEArgs); err != nil {
 			return nil, err
@@ -277,6 +229,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		return "", []any{}, err
 	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
+		// TODO(srikanthccv): should it be step interval or use [start_time_unix_nano](https://github.com/open-telemetry/opentelemetry-proto/blob/d3fb76d70deb0874692bd0ebe03148580d85f3bb/opentelemetry/proto/metrics/v1/metrics.proto#L400C11-L400C31)?
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
 	}
 
@@ -407,6 +360,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 		return "", []any{}, err
 	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
+		// TODO(srikanthccv): should it be step interval or use [start_time_unix_nano](https://github.com/open-telemetry/opentelemetry-proto/blob/d3fb76d70deb0874692bd0ebe03148580d85f3bb/opentelemetry/proto/metrics/v1/metrics.proto#L400C11-L400C31)?
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
 	}
 
@@ -621,9 +575,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			quantile,
 		))
 		sb.From("__spatial_aggregation_cte")
-		for _, g := range query.GroupBy {
-			sb.GroupBy(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
-		}
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		sb.GroupBy("ts")
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
@@ -639,6 +591,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.Where(rewrittenExpr)
 		}
 	}
+	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	sb.OrderBy("ts")
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
