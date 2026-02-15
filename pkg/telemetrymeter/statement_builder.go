@@ -124,7 +124,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
 		if err != nil {
-			return "", []any{}, err
+			return "", nil, err
 		}
 		sb.SelectMore(col)
 	}
@@ -132,7 +132,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	aggCol, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if err != nil {
-		return "", []any{}, err
+		return "", nil, err
 	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
@@ -155,7 +155,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 			Variables:        variables,
 		}, start, end)
 		if err != nil {
-			return "", []any{}, err
+			return "", nil, err
 		}
 	}
 	if filterWhere != nil {
@@ -360,7 +360,7 @@ func (b *meterQueryStatementBuilder) buildSpatialAggregationCTE(
 ) (string, []any, error) {
 
 	if query.Aggregations[0].SpaceAggregation.IsZero() {
-		return "", []any{}, errors.Newf(
+		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`]",

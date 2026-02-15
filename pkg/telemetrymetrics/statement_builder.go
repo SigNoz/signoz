@@ -226,7 +226,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints,
 	)
 	if err != nil {
-		return "", []any{}, err
+		return "", nil, err
 	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		// TODO(srikanthccv): should it be step interval or use [start_time_unix_nano](https://github.com/open-telemetry/opentelemetry-proto/blob/d3fb76d70deb0874692bd0ebe03148580d85f3bb/opentelemetry/proto/metrics/v1/metrics.proto#L400C11-L400C31)?
@@ -357,7 +357,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 
 	aggCol, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if err != nil {
-		return "", []any{}, err
+		return "", nil, err
 	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		// TODO(srikanthccv): should it be step interval or use [start_time_unix_nano](https://github.com/open-telemetry/opentelemetry-proto/blob/d3fb76d70deb0874692bd0ebe03148580d85f3bb/opentelemetry/proto/metrics/v1/metrics.proto#L400C11-L400C31)?
@@ -403,7 +403,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	aggCol, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if err != nil {
-		return "", []any{}, err
+		return "", nil, err
 	}
 	baseSb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
@@ -468,11 +468,11 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 
 	aggForDeltaTemporality, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Delta, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if err != nil {
-		return "", []any{}, err
+		return "", nil, err
 	}
 	aggForCumulativeTemporality, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, metrictypes.Cumulative, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if err != nil {
-		return "", []any{}, err
+		return "", nil, err
 	}
 	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
 		aggForDeltaTemporality = fmt.Sprintf("%s/%d", aggForDeltaTemporality, stepSec)
@@ -521,7 +521,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 	if query.Aggregations[0].SpaceAggregation.IsZero() {
-		return "", []any{}, errors.Newf(
+		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
