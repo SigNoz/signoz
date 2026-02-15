@@ -9,6 +9,8 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Button } from '../styles';
 import ApDexSettings from './ApDexSettings';
 
+import './ApDexApplication.styles.scss';
+
 function ApDexApplication(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = ((): string => {
