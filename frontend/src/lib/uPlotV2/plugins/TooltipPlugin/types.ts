@@ -1,7 +1,13 @@
-import { CSSProperties } from 'react';
+import type {
+	CSSProperties,
+	MutableRefObject,
+	ReactNode,
+	RefObject,
+} from 'react';
+import type uPlot from 'uplot';
 
-import { TooltipRenderArgs } from '../../components/types';
-import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
+import type { TooltipRenderArgs } from '../../components/types';
+import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 
 export const TOOLTIP_OFFSET = 10;
 
@@ -17,7 +23,7 @@ export interface TooltipViewState {
 	isHovering: boolean;
 	isPinned: boolean;
 	dismiss: () => void;
-	contents?: React.ReactNode;
+	contents?: ReactNode;
 }
 
 export interface TooltipLayoutInfo {
@@ -31,7 +37,7 @@ export interface TooltipPluginProps {
 	canPinTooltip?: boolean;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
-	render: (args: TooltipRenderArgs) => React.ReactNode;
+	render: (args: TooltipRenderArgs) => ReactNode;
 	maxWidth?: number;
 	maxHeight?: number;
 }
@@ -75,13 +81,11 @@ export interface TooltipControllerState {
  */
 export interface TooltipControllerContext {
 	controller: TooltipControllerState;
-	layoutRef: React.MutableRefObject<TooltipLayoutInfo | undefined>;
-	containerRef: React.RefObject<HTMLDivElement | null>;
-	rafId: React.MutableRefObject<number | null>;
+	layoutRef: MutableRefObject<TooltipLayoutInfo | undefined>;
+	containerRef: RefObject<HTMLDivElement | null>;
+	rafId: MutableRefObject<number | null>;
 	updateState: (updates: Partial<TooltipViewState>) => void;
-	renderRef: React.MutableRefObject<
-		(args: TooltipRenderArgs) => React.ReactNode
-	>;
+	renderRef: MutableRefObject<(args: TooltipRenderArgs) => ReactNode>;
 	syncMode: DashboardCursorSync;
 	syncKey: string;
 	canPinTooltip: boolean;
