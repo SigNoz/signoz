@@ -21,6 +21,7 @@ import '@signozhq/design-tokens';
 import '@signozhq/icons';
 import '@signozhq/input';
 import '@signozhq/popover';
+import '@signozhq/radio-group';
 import '@signozhq/resizable';
 import '@signozhq/sonner';
 import '@signozhq/switch';
