@@ -246,10 +246,26 @@ export const buildDependencyGraph = (
 
 	const hasCycle = topologicalOrder.length !== Object.keys(dependencies)?.length;
 
+	// Pre-compute transitive descendants by walking topological order in reverse.
+	// Each node's transitive descendants = direct children + their transitive descendants.
+	const transitiveDescendants: VariableGraph = {};
+	for (let i = topologicalOrder.length - 1; i >= 0; i--) {
+		const node = topologicalOrder[i];
+		const desc = new Set<string>();
+		for (const child of adjList[node] || []) {
+			desc.add(child);
+			for (const d of transitiveDescendants[child] || []) {
+				desc.add(d);
+			}
+		}
+		transitiveDescendants[node] = Array.from(desc);
+	}
+
 	return {
 		order: topologicalOrder,
 		graph: adjList,
 		parentDependencyGraph: buildParentDependencyGraph(adjList),
+		transitiveDescendants,
 		hasCycle,
 		cycleNodes,
 	};

@@ -53,6 +53,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						transitiveDescendants: {},
 						hasCycle: false,
 					}}
 				/>
@@ -75,6 +76,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						transitiveDescendants: {},
 						hasCycle: false,
 					}}
 				/>
@@ -98,6 +100,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						transitiveDescendants: {},
 						hasCycle: false,
 					}}
 				/>
@@ -139,6 +142,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						transitiveDescendants: {},
 						hasCycle: false,
 					}}
 				/>
@@ -169,6 +173,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						transitiveDescendants: {},
 						hasCycle: false,
 					}}
 				/>
@@ -191,6 +196,7 @@ describe('VariableItem', () => {
 						order: [],
 						graph: {},
 						parentDependencyGraph: {},
+						transitiveDescendants: {},
 						hasCycle: false,
 					}}
 				/>
