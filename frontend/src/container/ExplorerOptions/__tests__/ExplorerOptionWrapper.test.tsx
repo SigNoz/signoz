@@ -1,3 +1,4 @@
+import { useHistory } from 'react-router-dom';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -15,6 +16,11 @@ import { getExplorerToolBarVisibility } from '../utils';
 // Mock dependencies
 jest.mock('hooks/dashboard/useUpdateDashboard');
 
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useHistory: jest.fn(),
+}));
+
 jest.mock('../utils', () => ({
 	getExplorerToolBarVisibility: jest.fn(),
 	generateRGBAFromHex: jest.fn(() => 'rgba(0, 0, 0, 0.08)'),
@@ -29,6 +35,7 @@ const mockGetExplorerToolBarVisibility = jest.mocked(
 );
 
 const mockUseUpdateDashboard = jest.mocked(useUpdateDashboard);
+const mockUseHistory = jest.mocked(useHistory);
 
 // Mock data
 const TEST_QUERY_ID = 'test-query-id';
@@ -103,7 +110,6 @@ describe('ExplorerOptionWrapper', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetExplorerToolBarVisibility.mockReturnValue(true);
-
 		// Mock useUpdateDashboard to return a mutation object
 		mockUseUpdateDashboard.mockReturnValue(({
 			mutate: jest.fn(),
@@ -115,6 +121,28 @@ describe('ExplorerOptionWrapper', () => {
 			error: null,
 			reset: jest.fn(),
 		} as unknown) as ReturnType<typeof useUpdateDashboard>);
+	});
+
+	it('should navigate to alert creation page when "Create an Alert" is clicked in logs-explorer', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockPush = jest.fn();
+		mockUseHistory.mockReturnValue(({
+			push: mockPush,
+		} as unknown) as ReturnType<typeof useHistory>);
+
+		renderExplorerOptionWrapper({ sourcepage: DataSource.LOGS });
+
+		const createAlertButton = screen.getByRole('button', {
+			name: 'Create an Alert',
+		});
+		await user.click(createAlertButton);
+
+		expect(mockPush).toHaveBeenCalledTimes(1);
+		const calledWith = mockPush.mock.calls[0][0] as string;
+		const [path, search = ''] = calledWith.split('?');
+		expect(path).toBe('/alerts/new');
+		const params = new URLSearchParams(search);
+		expect(params.has('compositeQuery')).toBe(true);
 	});
 
 	describe('onExport functionality', () => {
