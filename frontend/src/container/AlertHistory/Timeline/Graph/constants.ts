@@ -7,6 +7,7 @@ export const ALERT_STATUS: { [key: string]: number } = {
 	'no-data': 2,
 	disabled: 3,
 	muted: 4,
+	recovering: 5,
 };
 
 export const STATE_VS_COLOR: {
@@ -19,6 +20,7 @@ export const STATE_VS_COLOR: {
 		2: { stroke: Color.BG_SIENNA_400, fill: Color.BG_SIENNA_400 },
 		3: { stroke: Color.BG_VANILLA_400, fill: Color.BG_VANILLA_400 },
 		4: { stroke: Color.BG_INK_100, fill: Color.BG_INK_100 },
+		5: { stroke: Color.BG_CHERRY_300, fill: Color.BG_CHERRY_100 },
 	},
 ];
 

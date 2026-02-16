@@ -247,7 +247,7 @@ export function getThresholdStateFromAlertDef(
 				id: v4(),
 				label: threshold.name,
 				thresholdValue: threshold.target,
-				recoveryThresholdValue: null,
+				recoveryThresholdValue: threshold.recoveryTarget ?? null,
 				unit: threshold.targetUnit,
 				color: getColorForThreshold(threshold.name),
 				channels: threshold.channels,
