@@ -80,11 +80,25 @@ function AzureServices(): JSX.Element {
 	);
 
 	useEffect(() => {
+		const allServices = [...enabledServices, ...notEnabledServices];
+
+		// If a service is already selected and still exists in the refreshed list, keep it
+		if (selectedService && allServices.some((s) => s.id === selectedService.id)) {
+			// Update the selected service reference to the fresh object from the new list
+			const freshService = allServices.find((s) => s.id === selectedService.id);
+			if (freshService && freshService !== selectedService) {
+				setSelectedService(freshService);
+			}
+			return;
+		}
+
+		// No valid selection — pick a default
 		if (enabledServices.length > 0) {
 			setSelectedService(enabledServices[0]);
 		} else if (notEnabledServices.length > 0) {
 			setSelectedService(notEnabledServices[0]);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [enabledServices, notEnabledServices]);
 
 	return (
