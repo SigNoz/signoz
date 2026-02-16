@@ -7,6 +7,19 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import DynamicVariableInput from '../DynamicVariableInput';
 
+// Mock useVariableFetchState to return "fetching" state so useQuery is enabled
+jest.mock('hooks/dashboard/useVariableFetchState', () => ({
+	useVariableFetchState: (): Record<string, unknown> => ({
+		variableFetchCycleId: 0,
+		variableFetchState: 'loading',
+		isVariableSettled: false,
+		isVariableFetching: true,
+		hasVariableFetchedOnce: false,
+		isVariableWaitingForDependencies: false,
+		variableDependencyWaitMessage: '',
+	}),
+}));
+
 // Don't mock the components - use real ones
 
 // Mock for useQuery
@@ -217,9 +230,10 @@ describe('DynamicVariableInput Component', () => {
 				'',
 				'Traces',
 				'service.name',
+				0, // variableFetchCycleId
 			],
 			expect.objectContaining({
-				enabled: true, // Type is 'DYNAMIC'
+				enabled: true, // isVariableFetching is true from mock
 				queryFn: expect.any(Function),
 				onSuccess: expect.any(Function),
 				onError: expect.any(Function),
