@@ -405,8 +405,10 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		resp.NodeNames = nodeNames
 	}
 
-	// check if any host metrics exist and get earliest retention time
-	// if no hosts metrics exist, that means we should show the onboarding guide on UI, and return early
+	// 1. Check if any host metrics exist and get earliest retention time
+	// if no hosts metrics exist, that means we should show the onboarding guide on UI, and return early.
+	// 2. If host metrics exist, but req.End is earlier than the earliest time of host metrics as read from
+	// metadata table, then we should convey the same to the user and return early
 	if count, minFirstReportedUnixMilli, err := h.GetHostMetricsExistenceAndEarliestTime(ctx, req); err == nil {
 		if count == 0 {
 			resp.SentAnyHostMetricsData = false

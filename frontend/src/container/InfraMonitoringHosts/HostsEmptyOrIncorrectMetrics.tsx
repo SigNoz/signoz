@@ -19,7 +19,8 @@ export default function HostsEmptyOrIncorrectMetrics({
 				{noRecordsInSelectedTimeRangeAndFilters && (
 					<div className="no-hosts-message">
 						<Typography.Text className="no-hosts-message-text">
-							No host metrics in the selected time range and filters.
+							No host metrics in the selected time range and filters. Please adjust
+							your time range or filters.
 						</Typography.Text>
 					</div>
 				)}
@@ -30,8 +31,8 @@ export default function HostsEmptyOrIncorrectMetrics({
 							End time before retention
 						</Typography.Title>
 						<Typography.Text className="no-hosts-message-text">
-							Your requested end time is earlier than the earliest time of retention of
-							host metrics, please adjust your end time.
+							Your requested end time is earlier than the earliest detected time of
+							host metrics data, please adjust your end time.
 						</Typography.Text>
 					</div>
 				)}
