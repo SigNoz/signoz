@@ -254,7 +254,9 @@ function EntityLogs({
 			)}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="entity-logs-list-container">{renderContent}</div>
+				<div className="entity-logs-list-container" data-log-detail-ignore="true">
+					{renderContent}
+				</div>
 			)}
 			{selectedTab && activeLog && (
 				<LogDetail
