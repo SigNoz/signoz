@@ -56,7 +56,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 
 	const [usesOtel, setUsesOtel] = useState<boolean | null>(orgDetails.usesOtel);
 	const [migrationTimeline, setMigrationTimeline] = useState<string | null>(
-		null,
+		orgDetails?.migrationTimeline || null,
 	);
 
 	const showMigrationQuestion =
