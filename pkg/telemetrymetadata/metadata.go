@@ -544,15 +544,15 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				field := getField()
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
 					keys = append(keys, &field)
-					continue
 				}
-
-				keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-					Name:         key,
-					FieldContext: telemetrytypes.FieldContextLog,
-					Signal:       telemetrytypes.SignalLogs,
-				})
+				continue
 			}
+
+			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+				Name:         key,
+				FieldContext: telemetrytypes.FieldContextLog,
+				Signal:       telemetrytypes.SignalLogs,
+			})
 		}
 	}
 
