@@ -21,7 +21,10 @@ import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues'
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isArray from 'lodash-es/isArray';
+import isEqual from 'lodash-es/isEqual';
+import isFunction from 'lodash-es/isFunction';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';

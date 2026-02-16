@@ -20,8 +20,9 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo, isUndefined } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import isEqual from 'lodash-es/isEqual';
+import isUndefined from 'lodash-es/isUndefined';
 import {
 	Check,
 	ChevronDown,

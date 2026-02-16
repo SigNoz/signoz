@@ -1,6 +1,6 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 
 import { IUser } from './types';
 

@@ -7,7 +7,7 @@ import { CodeProps } from 'react-markdown/lib/ast-to-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import logEvent from 'api/common/logEvent';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import rehypeRaw from 'rehype-raw';
 
 import CodeCopyBtn from './CodeCopyBtn/CodeCopyBtn';

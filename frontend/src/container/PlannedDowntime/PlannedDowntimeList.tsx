@@ -13,7 +13,7 @@ import {
 import { AxiosError, AxiosResponse } from 'axios';
 import cx from 'classnames';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';

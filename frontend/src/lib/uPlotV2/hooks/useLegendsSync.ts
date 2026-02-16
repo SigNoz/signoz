@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { get } from 'lodash-es';
+import get from 'lodash-es/get';
 
 /**
  * Syncs legend UI state with the uPlot chart: which series is focused and each series' visibility.

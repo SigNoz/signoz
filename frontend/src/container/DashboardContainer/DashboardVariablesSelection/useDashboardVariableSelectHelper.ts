@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { ALL_SELECT_VALUE } from '../utils';

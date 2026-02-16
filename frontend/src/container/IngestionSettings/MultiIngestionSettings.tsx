@@ -53,7 +53,9 @@ import dayjs from 'dayjs';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { cloneDeep, isNil, isUndefined } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isNil from 'lodash-es/isNil';
+import isUndefined from 'lodash-es/isUndefined';
 import {
 	ArrowUpRight,
 	BellPlus,

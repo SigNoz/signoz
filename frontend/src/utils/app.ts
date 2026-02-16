@@ -1,7 +1,7 @@
 import getLocalStorage from 'api/browser/localstorage/get';
 import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
-import { get } from 'lodash-es';
+import get from 'lodash-es/get';
 
 export const isOnboardingSkipped = (): boolean =>
 	getLocalStorage(SKIP_ONBOARDING) === 'true';

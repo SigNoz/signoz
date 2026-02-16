@@ -3,7 +3,7 @@ import {
 	IIntervalUnit,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import { toFixed } from 'utils/toFixed';
 
 import { Interval } from './types';

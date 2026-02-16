@@ -31,7 +31,8 @@ import {
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
-import { debounce, isNull } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
+import isNull from 'lodash-es/isNull';
 import { Info, TriangleAlert } from 'lucide-react';
 import {
 	IDetailedError,

@@ -1,7 +1,7 @@
 /**
  * string is present on the span or not
  */
-import { sortBy } from 'lodash-es';
+import sortBy from 'lodash-es/sortBy';
 import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
 export const filterSpansByString = (

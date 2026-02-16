@@ -1,5 +1,5 @@
 import { ForwardedRef, ReactNode } from 'react';
-import {
+import type {
 	ActiveElement,
 	Chart,
 	ChartData,
@@ -79,17 +79,9 @@ export interface ITimeRange {
 	maxTime: number | null;
 }
 
-export const DEFAULT_SIGNIFICANT_DIGITS = 15;
-
-// max decimals to keep should not exceed 15 decimal places to avoid floating point precision issues
-export const MAX_DECIMALS = 15;
-
-export enum PrecisionOptionsEnum {
-	ZERO = 0,
-	ONE = 1,
-	TWO = 2,
-	THREE = 3,
-	FOUR = 4,
-	FULL = 'full',
-}
-export type PrecisionOption = 0 | 1 | 2 | 3 | 4 | PrecisionOptionsEnum.FULL;
+export type { PrecisionOption } from './precision';
+export {
+	DEFAULT_SIGNIFICANT_DIGITS,
+	MAX_DECIMALS,
+	PrecisionOptionsEnum,
+} from './precision';

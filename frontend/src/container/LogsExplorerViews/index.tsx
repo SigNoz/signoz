@@ -39,7 +39,8 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { isEmpty, isUndefined } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isUndefined from 'lodash-es/isUndefined';
 import LiveLogs from 'pages/LiveLogs';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';

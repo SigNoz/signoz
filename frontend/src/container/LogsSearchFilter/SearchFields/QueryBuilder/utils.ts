@@ -12,7 +12,7 @@ export const parseQuery = (queries: Query): Query => {
 				// update the value to wrap with ""
 				_set(
 					queries,
-					[valueIndex, 'value'],
+					`${valueIndex}.value`,
 					`'${queries[valueIndex].value || ''}'`,
 				);
 			}

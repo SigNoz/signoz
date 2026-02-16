@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 
 import './GridCardLayout.styles.scss';
 

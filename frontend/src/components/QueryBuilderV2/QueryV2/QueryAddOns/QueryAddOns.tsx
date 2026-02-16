@@ -8,7 +8,8 @@ import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/Orde
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { get, isEmpty } from 'lodash-es';
+import get from 'lodash-es/get';
+import isEmpty from 'lodash-es/isEmpty';
 import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';

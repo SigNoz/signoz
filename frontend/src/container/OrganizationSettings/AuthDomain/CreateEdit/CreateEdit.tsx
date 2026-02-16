@@ -3,7 +3,7 @@ import { Button, Form, Modal } from 'antd';
 import put from 'api/v1/domains/id/put';
 import post from 'api/v1/domains/post';
 import { FeatureKeys } from 'constants/features';
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';

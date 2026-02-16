@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax */
-import { cloneDeep } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { ITraceForest, ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
 const getSpanReferences = (

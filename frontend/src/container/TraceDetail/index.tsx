@@ -21,7 +21,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
-import { map } from 'lodash-es';
+import map from 'lodash-es/map';
 import { PanelRight } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';

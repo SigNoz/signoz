@@ -15,7 +15,12 @@ import {
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
-import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import defaultTo from 'lodash-es/defaultTo';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
+import set from 'lodash-es/set';
+import unset from 'lodash-es/unset';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';

@@ -1,5 +1,5 @@
 import { ApiV2Instance as axios } from 'api';
-import { omit } from 'lodash-es';
+import omit from 'lodash-es/omit';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	GetTraceV2PayloadProps,

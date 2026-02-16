@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash-es';
+import sortBy from 'lodash-es/sortBy';
 import { TSortVariableValuesType } from 'types/api/dashboard/getAll';
 
 type TValuesDataType = (string | number | boolean)[];

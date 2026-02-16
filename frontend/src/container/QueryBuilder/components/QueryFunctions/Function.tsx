@@ -10,7 +10,8 @@ import {
 	queryFunctionsTypesConfig,
 } from 'constants/queryFunctionOptions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { debounce, isNil } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
+import isNil from 'lodash-es/isNil';
 import { X } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';

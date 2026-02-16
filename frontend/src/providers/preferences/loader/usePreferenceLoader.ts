@@ -2,7 +2,7 @@
 /* eslint-disable no-empty */
 import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { has } from 'lodash-es';
+import has from 'lodash-es/has';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';

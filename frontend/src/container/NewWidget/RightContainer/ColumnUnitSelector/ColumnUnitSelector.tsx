@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
 import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
 import YAxisUnitSelectorV2 from '../DashboardYAxisUnitSelectorWrapper';

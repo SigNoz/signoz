@@ -5,7 +5,7 @@ import { noop } from 'antd/lib/_util/warning';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction } from 'lodash-es';
+import isFunction from 'lodash-es/isFunction';
 import {
 	ChevronDown,
 	ChevronRight,

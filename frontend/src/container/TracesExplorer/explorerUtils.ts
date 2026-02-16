@@ -1,6 +1,7 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { cloneDeep, set } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import set from 'lodash-es/set';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const getListViewQuery = (

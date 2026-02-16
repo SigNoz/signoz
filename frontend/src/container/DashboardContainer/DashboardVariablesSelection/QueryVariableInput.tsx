@@ -5,7 +5,9 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useVariableFetchState } from 'hooks/dashboard/useVariableFetchState';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
-import { isArray, isEmpty, isString } from 'lodash-es';
+import isArray from 'lodash-es/isArray';
+import isEmpty from 'lodash-es/isEmpty';
+import isString from 'lodash-es/isString';
 import { AppState } from 'store/reducers';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';

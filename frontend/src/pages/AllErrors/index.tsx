@@ -16,7 +16,7 @@ import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/Reso
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
-import { isNull } from 'lodash-es';
+import isNull from 'lodash-es/isNull';
 
 import { routes } from './config';
 

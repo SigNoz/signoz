@@ -1,5 +1,5 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { IField } from 'types/api/logs/fields';
 import {
 	IBuilderQuery,

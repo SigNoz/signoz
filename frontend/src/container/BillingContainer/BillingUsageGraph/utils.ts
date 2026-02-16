@@ -2,7 +2,8 @@ import { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { isEmpty, isNull } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isNull from 'lodash-es/isNull';
 import { unparse } from 'papaparse';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 

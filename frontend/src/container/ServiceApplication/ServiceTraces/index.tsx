@@ -11,7 +11,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';

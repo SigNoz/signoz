@@ -1,6 +1,9 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
-import { formatDecimalWithLeadingZeros } from 'components/Graph/utils';
+import { formatDecimalWithLeadingZeros } from 'components/Graph/formatters';
+import {
+	PrecisionOption,
+	PrecisionOptionsEnum,
+} from 'components/Graph/precision';
 import {
 	AdditionalLabelsMappingForGrafanaUnits,
 	CUSTOM_SCALING_FAMILIES,

@@ -2,7 +2,7 @@ import Convert from 'ansi-to-html';
 import { DataNode } from 'antd/es/tree';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
-import { uniqueId } from 'lodash-es';
+import uniqueId from 'lodash-es/uniqueId';
 import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';

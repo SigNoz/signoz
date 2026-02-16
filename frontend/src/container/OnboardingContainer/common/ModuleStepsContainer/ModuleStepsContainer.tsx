@@ -17,7 +17,8 @@ import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import history from 'lib/history';
-import { isEmpty, isNull } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isNull from 'lodash-es/isNull';
 import { UserPlus } from 'lucide-react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';

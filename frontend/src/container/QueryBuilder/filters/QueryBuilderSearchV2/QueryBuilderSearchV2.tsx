@@ -29,15 +29,13 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebounceValue from 'hooks/useDebounce';
-import {
-	cloneDeep,
-	isArray,
-	isEmpty,
-	isEqual,
-	isObject,
-	isUndefined,
-	unset,
-} from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isArray from 'lodash-es/isArray';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
+import isObject from 'lodash-es/isObject';
+import isUndefined from 'lodash-es/isUndefined';
+import unset from 'lodash-es/unset';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {

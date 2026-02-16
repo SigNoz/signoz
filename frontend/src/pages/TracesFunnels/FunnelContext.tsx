@@ -19,7 +19,7 @@ import {
 import { normalizeSteps } from 'hooks/TracesFunnels/useFunnelConfiguration';
 import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import {
 	createInitialStepsData,
 	createSingleStepData,

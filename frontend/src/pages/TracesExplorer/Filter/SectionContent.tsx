@@ -10,7 +10,8 @@ import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isArray, isEmpty } from 'lodash-es';
+import isArray from 'lodash-es/isArray';
+import isEmpty from 'lodash-es/isEmpty';
 
 import {
 	addFilter,

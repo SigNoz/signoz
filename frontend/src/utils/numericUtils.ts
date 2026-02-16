@@ -1,4 +1,4 @@
-import { isNumber } from 'lodash-es';
+import isNumber from 'lodash-es/isNumber';
 
 export function formatNumericValue(value: number | string): string {
 	if (isNumber(value)) {

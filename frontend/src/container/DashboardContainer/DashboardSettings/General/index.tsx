@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Col, Input, Select, Space, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import { Check, X } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 

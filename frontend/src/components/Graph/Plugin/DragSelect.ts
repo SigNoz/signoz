@@ -1,4 +1,4 @@
-import { Chart, ChartTypeRegistry, Plugin } from 'chart.js';
+import type { Chart, ChartTypeRegistry, Plugin } from 'chart.js';
 import { getRelativePosition } from 'chart.js/helpers';
 
 // utils

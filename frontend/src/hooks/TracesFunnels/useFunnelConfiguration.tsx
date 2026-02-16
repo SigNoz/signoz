@@ -5,7 +5,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';

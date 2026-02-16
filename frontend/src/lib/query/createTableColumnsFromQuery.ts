@@ -10,7 +10,10 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { get, isEqual, isNaN, isObject } from 'lodash-es';
+import get from 'lodash-es/get';
+import isEqual from 'lodash-es/isEqual';
+import isNaN from 'lodash-es/isNaN';
+import isObject from 'lodash-es/isObject';
 import {
 	IBuilderFormula,
 	IBuilderQuery,

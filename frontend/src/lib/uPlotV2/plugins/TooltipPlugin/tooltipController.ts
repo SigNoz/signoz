@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import uPlot from 'uplot';
 
 import { TooltipControllerContext, TooltipControllerState } from './types';

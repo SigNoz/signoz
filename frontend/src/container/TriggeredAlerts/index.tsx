@@ -5,7 +5,7 @@ import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 import { useAppContext } from 'providers/App/App';
 
 import { Value } from './Filter';

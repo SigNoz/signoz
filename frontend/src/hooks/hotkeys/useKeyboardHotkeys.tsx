@@ -6,7 +6,8 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
-import { noop, unset } from 'lodash-es';
+import noop from 'lodash-es/noop';
+import unset from 'lodash-es/unset';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 

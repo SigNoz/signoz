@@ -17,7 +17,7 @@ import { QueryParams } from 'constants/query';
 import { History } from 'history';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import {
 	ConsumerLagDetailTitle,
 	convertToTitleCase,

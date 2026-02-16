@@ -21,7 +21,9 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/constants';
 import dayjs from 'dayjs';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
-import { defaultTo, isFunction, noop } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
+import isFunction from 'lodash-es/isFunction';
+import noop from 'lodash-es/noop';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
