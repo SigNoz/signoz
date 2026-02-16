@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -57,7 +57,7 @@ func (r *serviceConfigSQLRepository) Get(
 	cloudAccountId string,
 	serviceType string,
 ) ([]byte, error) {
-	var result integrationstypes.CloudIntegrationService
+	var result integrationtypes.CloudIntegrationService
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
@@ -89,7 +89,7 @@ func (r *serviceConfigSQLRepository) Upsert(
 	// if the account is not connected, we don't need to upsert the config
 	var cloudIntegrationId string
 	err := r.store.BunDB().NewSelect().
-		Model((*integrationstypes.CloudIntegration)(nil)).
+		Model((*integrationtypes.CloudIntegration)(nil)).
 		Column("id").
 		Where("provider = ?", cloudProvider).
 		Where("account_id = ?", cloudAccountId).
@@ -108,7 +108,7 @@ func (r *serviceConfigSQLRepository) Upsert(
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud integration id")
 	}
 
-	serviceConfig := integrationstypes.CloudIntegrationService{
+	serviceConfig := integrationtypes.CloudIntegrationService{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
@@ -134,7 +134,7 @@ func (r *serviceConfigSQLRepository) GetAllForAccount(
 	orgID string,
 	cloudAccountId string,
 ) (map[string][]byte, error) {
-	var serviceConfigs []integrationstypes.CloudIntegrationService
+	var serviceConfigs []integrationtypes.CloudIntegrationService
 
 	err := r.store.BunDB().NewSelect().
 		Model(&serviceConfigs).
