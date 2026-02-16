@@ -5,6 +5,7 @@ import requests
 
 from fixtures import types
 from fixtures.logger import setup_logger
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 logger = setup_logger(__name__)
 
@@ -72,7 +73,7 @@ def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is True
 
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
@@ -92,7 +93,7 @@ def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
     assert found_user["role"] == "ADMIN"
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{found_user["id"]}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{found_user['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -110,7 +111,7 @@ def test_invite_and_register(
         json={"email": "editor@integration.test", "role": "EDITOR", "name": "editor"},
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
+            "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
         },
     )
 
@@ -120,7 +121,7 @@ def test_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
+            "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
         },
     )
 
@@ -159,7 +160,7 @@ def test_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_token("editor@integration.test", "password123Z$")}"
+            "Authorization": f"Bearer {get_token('editor@integration.test', 'password123Z$')}"
         },
     )
 
@@ -170,7 +171,7 @@ def test_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
+            "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
         },
     )
 
@@ -191,7 +192,7 @@ def test_invite_and_register(
 def test_revoke_invite_and_register(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     # Generate an invite token for the viewer user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
@@ -206,7 +207,7 @@ def test_revoke_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
+            "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
         },
     )
 
@@ -234,7 +235,7 @@ def test_revoke_invite_and_register(
         json={
             "password": "password123Z$",
             "displayName": "viewer",
-            "token": f"{found_invite["token"]}",
+            "token": f"{found_invite['token']}",
         },
         timeout=2,
     )
@@ -245,7 +246,7 @@ def test_revoke_invite_and_register(
 def test_self_access(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),

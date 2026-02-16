@@ -21,9 +21,9 @@ logger = setup_logger(__name__)
 # USER_ADMIN_EMAIL = "admin@integration.test"
 # USER_ADMIN_PASSWORD = "password123Z$"
 
-USER_EDITOR_NAME = "editor"
-USER_EDITOR_EMAIL = "editor@integration.test"
-USER_EDITOR_PASSWORD = "password123Z$"
+# USER_EDITOR_NAME = "editor"
+# USER_EDITOR_EMAIL = "editor@integration.test"
+# USER_EDITOR_PASSWORD = "password123Z$"
 
 
 # @pytest.fixture(name="create_user_admin", scope="package")
