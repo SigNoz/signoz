@@ -30,10 +30,10 @@ function ConfigureOIDCAuthnProvider({
 	}, []);
 
 	return (
-		<div className="google-auth">
-			<section className="google-auth__header">
-				<h3 className="google-auth__title">Edit OIDC Authentication</h3>
-				<p className="google-auth__description">
+		<div className="authn-provider">
+			<section className="authn-provider__header">
+				<h3 className="authn-provider__title">Edit OIDC Authentication</h3>
+				<p className="authn-provider__description">
 					Configure OpenID Connect Single Sign-On with your Identity Provider. Read
 					the{' '}
 					<a
@@ -47,19 +47,19 @@ function ConfigureOIDCAuthnProvider({
 				</p>
 			</section>
 
-			<div className="google-auth__columns">
+			<div className="authn-provider__columns">
 				{/* Left Column - Core OIDC Settings */}
-				<div className="google-auth__left">
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="oidc-domain">
+				<div className="authn-provider__left">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="oidc-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name="name"
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{ required: true, message: 'Domain is required', whitespace: true },
 							]}
@@ -68,16 +68,16 @@ function ConfigureOIDCAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="oidc-issuer">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="oidc-issuer">
 							Issuer URL
 							<Tooltip title='The URL identifier for the OIDC provider. For example: "https://accounts.google.com" or "https://login.salesforce.com".'>
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['oidcConfig', 'issuer']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{ required: true, message: 'Issuer URL is required', whitespace: true },
 							]}
@@ -86,31 +86,31 @@ function ConfigureOIDCAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="oidc-issuer-alias">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="oidc-issuer-alias">
 							Issuer Alias
 							<Tooltip title="Optional: Override the issuer URL from .well-known/openid-configuration for providers like Azure or Oracle IDCS.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['oidcConfig', 'issuerAlias']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 						>
 							<Input id="oidc-issuer-alias" />
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="oidc-client-id">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="oidc-client-id">
 							Client ID
 							<Tooltip title="The application's client ID from your OIDC provider.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['oidcConfig', 'clientId']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{ required: true, message: 'Client ID is required', whitespace: true },
 							]}
@@ -119,16 +119,16 @@ function ConfigureOIDCAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="oidc-client-secret">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="oidc-client-secret">
 							Client Secret
 							<Tooltip title="The application's client secret from your OIDC provider.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['oidcConfig', 'clientSecret']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{
 									required: true,
@@ -141,7 +141,7 @@ function ConfigureOIDCAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__checkbox-row">
+					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['oidcConfig', 'insecureSkipEmailVerified']}
 							valuePropName="checked"
@@ -159,11 +159,11 @@ function ConfigureOIDCAuthnProvider({
 							/>
 						</Form.Item>
 						<Tooltip title='Whether to skip email verification. Defaults to "false"'>
-							<CircleHelp size={14} className="google-auth__label-icon" />
+							<CircleHelp size={14} className="authn-provider__label-icon" />
 						</Tooltip>
 					</div>
 
-					<div className="google-auth__checkbox-row">
+					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['oidcConfig', 'getUserInfo']}
 							valuePropName="checked"
@@ -178,7 +178,7 @@ function ConfigureOIDCAuthnProvider({
 							/>
 						</Form.Item>
 						<Tooltip title="Use the userinfo endpoint to get additional claims. Useful when providers return thin ID tokens.">
-							<CircleHelp size={14} className="google-auth__label-icon" />
+							<CircleHelp size={14} className="authn-provider__label-icon" />
 						</Tooltip>
 					</div>
 
@@ -192,7 +192,7 @@ function ConfigureOIDCAuthnProvider({
 				</div>
 
 				{/* Right Column - Advanced Settings */}
-				<div className="google-auth__right">
+				<div className="authn-provider__right">
 					<ClaimMappingSection
 						fieldNamePrefix={['oidcConfig', 'claimMapping']}
 						isExpanded={expandedSection === 'claim-mapping'}

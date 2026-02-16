@@ -1,4 +1,4 @@
-.google-auth {
+.authn-provider {
 	display: flex;
 	flex-direction: column;
 
@@ -216,8 +216,8 @@
 		overflow-y: auto;
 		padding-right: 4px;
 
-		.google-auth__field-group,
-		.google-auth__checkbox-row {
+		.authn-provider__field-group,
+		.authn-provider__checkbox-row {
 			margin-bottom: 0;
 		}
 		&::-webkit-scrollbar {

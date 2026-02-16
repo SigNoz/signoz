@@ -84,13 +84,15 @@ function AuthDomain(): JSX.Element {
 			return null;
 		}
 
+		let errorResult: APIError | null = null;
 		try {
 			ErrorResponseHandlerV2(
 				errorFetchingAuthDomainListResponse as AxiosError<ErrorV2Resp>,
 			);
 		} catch (error) {
-			return error as APIError;
+			errorResult = error as APIError;
 		}
+		return errorResult;
 	}, [errorFetchingAuthDomainListResponse]);
 
 	const columns: ColumnsType<AuthtypesGettableAuthDomainDTO> = useMemo(

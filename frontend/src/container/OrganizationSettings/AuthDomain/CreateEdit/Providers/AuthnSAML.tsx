@@ -31,10 +31,10 @@ function ConfigureSAMLAuthnProvider({
 	}, []);
 
 	return (
-		<div className="google-auth">
-			<section className="google-auth__header">
-				<h3 className="google-auth__title">Edit SAML Authentication</h3>
-				<p className="google-auth__description">
+		<div className="authn-provider">
+			<section className="authn-provider__header">
+				<h3 className="authn-provider__title">Edit SAML Authentication</h3>
+				<p className="authn-provider__description">
 					Configure SAML 2.0 Single Sign-On with your Identity Provider. Read the{' '}
 					<a
 						href="https://signoz.io/docs/userguide/sso-authentication"
@@ -47,19 +47,19 @@ function ConfigureSAMLAuthnProvider({
 				</p>
 			</section>
 
-			<div className="google-auth__columns">
+			<div className="authn-provider__columns">
 				{/* Left Column - Core SAML Settings */}
-				<div className="google-auth__left">
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="saml-domain">
+				<div className="authn-provider__left">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="saml-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name="name"
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{ required: true, message: 'Domain is required', whitespace: true },
 							]}
@@ -68,16 +68,16 @@ function ConfigureSAMLAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="saml-acs-url">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="saml-acs-url">
 							SAML ACS URL
 							<Tooltip title="The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['samlConfig', 'samlIdp']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{
 									required: true,
@@ -90,16 +90,16 @@ function ConfigureSAMLAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="saml-entity-id">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="saml-entity-id">
 							SAML Entity ID
 							<Tooltip title="The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['samlConfig', 'samlEntity']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{
 									required: true,
@@ -112,16 +112,16 @@ function ConfigureSAMLAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="saml-certificate">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="saml-certificate">
 							SAML X.509 Certificate
 							<Tooltip title="The certificate of the SAML identity provider. It can typically be found in the X509Certificate element in the SAML metadata.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['samlConfig', 'samlCert']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{
 									required: true,
@@ -134,12 +134,12 @@ function ConfigureSAMLAuthnProvider({
 								id="saml-certificate"
 								rows={3}
 								placeholder="Paste X.509 certificate"
-								className="google-auth__textarea"
+								className="authn-provider__textarea"
 							/>
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__checkbox-row">
+					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['samlConfig', 'insecureSkipAuthNRequestsSigned']}
 							valuePropName="checked"
@@ -157,7 +157,7 @@ function ConfigureSAMLAuthnProvider({
 							/>
 						</Form.Item>
 						<Tooltip title="Whether to skip signing the SAML requests. For providers like JumpCloud, this should be enabled.">
-							<CircleHelp size={14} className="google-auth__label-icon" />
+							<CircleHelp size={14} className="authn-provider__label-icon" />
 						</Tooltip>
 					</div>
 
@@ -171,7 +171,7 @@ function ConfigureSAMLAuthnProvider({
 				</div>
 
 				{/* Right Column - Advanced Settings */}
-				<div className="google-auth__right">
+				<div className="authn-provider__right">
 					<AttributeMappingSection
 						fieldNamePrefix={['samlConfig', 'attributeMapping']}
 						isExpanded={expandedSection === 'attribute-mapping'}

@@ -37,10 +37,10 @@ function ConfigureGoogleAuthAuthnProvider({
 	}, []);
 
 	return (
-		<div className="google-auth">
-			<section className="google-auth__header">
-				<h3 className="google-auth__title">Edit Google Authentication</h3>
-				<p className="google-auth__description">
+		<div className="authn-provider">
+			<section className="authn-provider__header">
+				<h3 className="authn-provider__title">Edit Google Authentication</h3>
+				<p className="authn-provider__description">
 					Enter OAuth 2.0 credentials obtained from the Google API Console below.
 					Read the{' '}
 					<a
@@ -54,19 +54,19 @@ function ConfigureGoogleAuthAuthnProvider({
 				</p>
 			</section>
 
-			<div className="google-auth__columns">
+			<div className="authn-provider__columns">
 				{/* Left Column - Core OAuth Settings */}
-				<div className="google-auth__left">
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="google-domain">
+				<div className="authn-provider__left">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="google-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name="name"
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{ required: true, message: 'Domain is required', whitespace: true },
 							]}
@@ -75,16 +75,16 @@ function ConfigureGoogleAuthAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="google-client-id">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="google-client-id">
 							Client ID
 							<Tooltip title="ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['googleAuthConfig', 'clientId']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{ required: true, message: 'Client ID is required', whitespace: true },
 							]}
@@ -93,16 +93,16 @@ function ConfigureGoogleAuthAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="google-client-secret">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="google-client-secret">
 							Client Secret
 							<Tooltip title="It is the application's secret.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['googleAuthConfig', 'clientSecret']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[
 								{
 									required: true,
@@ -115,23 +115,23 @@ function ConfigureGoogleAuthAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__field-group">
-						<label className="google-auth__label" htmlFor="google-redirect-uri">
+					<div className="authn-provider__field-group">
+						<label className="authn-provider__label" htmlFor="google-redirect-uri">
 							Redirect URI
 							<Tooltip title="The redirect URI where Google should send the response. This must match one of the authorized redirect URIs in the Google API Console.">
-								<CircleHelp size={14} className="google-auth__label-icon" />
+								<CircleHelp size={14} className="authn-provider__label-icon" />
 							</Tooltip>
 						</label>
 						<Form.Item
 							name={['googleAuthConfig', 'redirectURI']}
-							className="google-auth__form-item"
+							className="authn-provider__form-item"
 							rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
 						>
 							<Input id="google-redirect-uri" />
 						</Form.Item>
 					</div>
 
-					<div className="google-auth__checkbox-row">
+					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['googleAuthConfig', 'insecureSkipEmailVerified']}
 							valuePropName="checked"
@@ -149,7 +149,7 @@ function ConfigureGoogleAuthAuthnProvider({
 							/>
 						</Form.Item>
 						<Tooltip title='Whether to skip email verification. Defaults to "false"'>
-							<CircleHelp size={14} className="google-auth__label-icon" />
+							<CircleHelp size={14} className="authn-provider__label-icon" />
 						</Tooltip>
 					</div>
 
@@ -163,30 +163,30 @@ function ConfigureGoogleAuthAuthnProvider({
 				</div>
 
 				{/* Right Column - Google Workspace Groups (Advanced) */}
-				<div className="google-auth__right">
+				<div className="authn-provider__right">
 					<Collapse
 						bordered={false}
 						activeKey={
 							expandedSection === 'workspace-groups' ? ['workspace-groups'] : []
 						}
 						onChange={handleWorkspaceGroupsChange}
-						className="google-auth__collapse"
+						className="authn-provider__collapse"
 						expandIcon={(): null => null}
 					>
 						<Collapse.Panel
 							key="workspace-groups"
 							header={
-								<div className="google-auth__collapse-header">
+								<div className="authn-provider__collapse-header">
 									{expandedSection !== 'workspace-groups' ? (
 										<ChevronRight size={16} />
 									) : (
 										<ChevronDown size={16} />
 									)}
-									<div className="google-auth__collapse-header-text">
-										<h4 className="google-auth__section-title">
+									<div className="authn-provider__collapse-header-text">
+										<h4 className="authn-provider__section-title">
 											Google Workspace Groups (Advanced)
 										</h4>
-										<p className="google-auth__section-description">
+										<p className="authn-provider__section-description">
 											Enable group fetching to retrieve user groups from Google Workspace.
 											Requires a Service Account with domain-wide delegation.
 										</p>
@@ -194,8 +194,8 @@ function ConfigureGoogleAuthAuthnProvider({
 								</div>
 							}
 						>
-							<div className="google-auth__group-content">
-								<div className="google-auth__checkbox-row">
+							<div className="authn-provider__group-content">
+								<div className="authn-provider__checkbox-row">
 									<Form.Item
 										name={['googleAuthConfig', 'fetchGroups']}
 										valuePropName="checked"
@@ -210,31 +210,31 @@ function ConfigureGoogleAuthAuthnProvider({
 										/>
 									</Form.Item>
 									<Tooltip title="Enable fetching Google Workspace groups for the user. Requires service account configuration.">
-										<CircleHelp size={14} className="google-auth__label-icon" />
+										<CircleHelp size={14} className="authn-provider__label-icon" />
 									</Tooltip>
 								</div>
 
 								{fetchGroups && (
-									<div className="google-auth__group-fields">
-										<div className="google-auth__field-group">
+									<div className="authn-provider__group-fields">
+										<div className="authn-provider__field-group">
 											<label
-												className="google-auth__label"
+												className="authn-provider__label"
 												htmlFor="google-service-account-json"
 											>
 												Service Account JSON
 												<Tooltip title="The JSON content of the Google Service Account credentials file. Required for group fetching.">
-													<CircleHelp size={14} className="google-auth__label-icon" />
+													<CircleHelp size={14} className="authn-provider__label-icon" />
 												</Tooltip>
 											</label>
 											<Form.Item
 												name={['googleAuthConfig', 'serviceAccountJson']}
-												className="google-auth__form-item"
+												className="authn-provider__form-item"
 											>
 												<TextArea
 													id="google-service-account-json"
 													rows={3}
 													placeholder="Paste service account JSON"
-													className="google-auth__textarea"
+													className="authn-provider__textarea"
 												/>
 											</Form.Item>
 										</div>
@@ -243,7 +243,7 @@ function ConfigureGoogleAuthAuthnProvider({
 											fieldNamePrefix={['googleAuthConfig', 'domainToAdminEmailList']}
 										/>
 
-										<div className="google-auth__checkbox-row">
+										<div className="authn-provider__checkbox-row">
 											<Form.Item
 												name={['googleAuthConfig', 'fetchTransitiveGroupMembership']}
 												valuePropName="checked"
@@ -261,23 +261,23 @@ function ConfigureGoogleAuthAuthnProvider({
 												/>
 											</Form.Item>
 											<Tooltip title="If enabled, recursively fetch groups that contain other groups (transitive membership).">
-												<CircleHelp size={14} className="google-auth__label-icon" />
+												<CircleHelp size={14} className="authn-provider__label-icon" />
 											</Tooltip>
 										</div>
 
-										<div className="google-auth__field-group">
+										<div className="authn-provider__field-group">
 											<label
-												className="google-auth__label"
+												className="authn-provider__label"
 												htmlFor="google-allowed-groups"
 											>
 												Allowed Groups
 												<Tooltip title="Optional list of allowed groups. If configured, only users belonging to one of these groups will be allowed to login.">
-													<CircleHelp size={14} className="google-auth__label-icon" />
+													<CircleHelp size={14} className="authn-provider__label-icon" />
 												</Tooltip>
 											</label>
 											<Form.Item
 												name={['googleAuthConfig', 'allowedGroups']}
-												className="google-auth__form-item"
+												className="authn-provider__form-item"
 											>
 												<EmailTagInput placeholder="Type a group email and press Enter" />
 											</Form.Item>

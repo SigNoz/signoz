@@ -33,6 +33,8 @@ function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 			return;
 		}
 
+		setIsChecked(checked);
+
 		updateAuthDomain(
 			{
 				pathParams: { id: record.id },
@@ -43,14 +45,13 @@ function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 						googleAuthConfig: record.googleAuthConfig,
 						oidcConfig: record.oidcConfig,
 						samlConfig: record.samlConfig,
+						roleMapping: record.roleMapping,
 					},
 				},
 			},
 			{
-				onSuccess: () => {
-					setIsChecked(checked);
-				},
 				onError: (error) => {
+					setIsChecked(!checked);
 					try {
 						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 					} catch (apiError) {

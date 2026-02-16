@@ -248,7 +248,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		const groupMappings = convertGroupMappingsToRecord(groupMappingsList);
 
 		// Only return roleMapping if there's meaningful content
-		const hasDefaultRole = rest.defaultRole && rest.defaultRole !== 'VIEWER';
+		const hasDefaultRole = !!rest.defaultRole;
 		const hasUseRoleAttribute = rest.useRoleAttribute === true;
 		const hasGroupMappings =
 			groupMappings && Object.keys(groupMappings).length > 0;
