@@ -144,6 +144,72 @@ describe('dashboardVariables - utilities and processors', () => {
 
 				expect(buildDependencyGraph(graph)).toEqual(expected);
 			});
+
+			it('should return empty transitiveDescendants for an empty graph', () => {
+				const result = buildDependencyGraph({});
+				expect(result.transitiveDescendants).toEqual({});
+				expect(result.order).toEqual([]);
+				expect(result.hasCycle).toBe(false);
+			});
+
+			it('should compute transitiveDescendants for a linear chain (a -> b -> c)', () => {
+				const linearGraph: VariableGraph = {
+					a: ['b'],
+					b: ['c'],
+					c: [],
+				};
+				const result = buildDependencyGraph(linearGraph);
+				expect(result.transitiveDescendants).toEqual({
+					a: ['b', 'c'],
+					b: ['c'],
+					c: [],
+				});
+			});
+
+			it('should compute transitiveDescendants for a diamond dependency (a -> b, a -> c, b -> d, c -> d)', () => {
+				const diamondGraph: VariableGraph = {
+					a: ['b', 'c'],
+					b: ['d'],
+					c: ['d'],
+					d: [],
+				};
+				const result = buildDependencyGraph(diamondGraph);
+				expect(result.transitiveDescendants.a).toEqual(
+					expect.arrayContaining(['b', 'c', 'd']),
+				);
+				expect(result.transitiveDescendants.a).toHaveLength(3);
+				expect(result.transitiveDescendants.b).toEqual(['d']);
+				expect(result.transitiveDescendants.c).toEqual(['d']);
+				expect(result.transitiveDescendants.d).toEqual([]);
+			});
+
+			it('should handle disconnected components in transitiveDescendants', () => {
+				const disconnectedGraph: VariableGraph = {
+					a: ['b'],
+					b: [],
+					x: ['y'],
+					y: [],
+				};
+				const result = buildDependencyGraph(disconnectedGraph);
+				expect(result.transitiveDescendants.a).toEqual(['b']);
+				expect(result.transitiveDescendants.b).toEqual([]);
+				expect(result.transitiveDescendants.x).toEqual(['y']);
+				expect(result.transitiveDescendants.y).toEqual([]);
+			});
+
+			it('should return empty transitiveDescendants for all leaf nodes', () => {
+				const leafOnlyGraph: VariableGraph = {
+					a: [],
+					b: [],
+					c: [],
+				};
+				const result = buildDependencyGraph(leafOnlyGraph);
+				expect(result.transitiveDescendants).toEqual({
+					a: [],
+					b: [],
+					c: [],
+				});
+			});
 		});
 
 		describe('buildDependencies', () => {
