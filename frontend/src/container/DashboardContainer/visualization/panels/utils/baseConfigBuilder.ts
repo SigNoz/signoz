@@ -88,7 +88,7 @@ export function buildBaseConfig({
 		max: undefined,
 		softMin: widget.softMin ?? undefined,
 		softMax: widget.softMax ?? undefined,
-		// thresholds,
+		thresholds: thresholdOptions,
 		logBase: widget.isLogScale ? 10 : undefined,
 		distribution: widget.isLogScale
 			? DistributionType.Logarithmic
