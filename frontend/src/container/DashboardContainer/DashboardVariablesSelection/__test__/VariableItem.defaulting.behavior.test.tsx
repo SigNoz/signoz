@@ -8,6 +8,18 @@ import '@testing-library/jest-dom/extend-expect';
 import VariableItem from '../VariableItem';
 
 const mockOnValueUpdate = jest.fn();
+<<<<<<< chore/issue-3780-use-variable-state-updates-3
+=======
+const mockSetVariablesToGetUpdated = jest.fn();
+
+const baseDependencyData = {
+	order: [],
+	graph: {},
+	parentDependencyGraph: {},
+	transitiveDescendants: {},
+	hasCycle: false,
+};
+>>>>>>> main
 
 const TEST_VARIABLE_ID = 'test_variable';
 const VARIABLE_SELECT_TESTID = 'variable-select';
