@@ -31,6 +31,7 @@ function LiveLogsList({
 	handleChangeSelectedView,
 }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
+	const logRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 
 	const { isConnectionLoading } = useEventSource();
 
@@ -85,37 +86,66 @@ function LiveLogsList({
 		setSelectedTab(undefined);
 	}, [onClearActiveLog]);
 
+	const handleScrollToLog = useCallback((logId: string): void => {
+		const logElement = logRefsMap.current.get(logId);
+		if (logElement) {
+			logElement.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest',
+			});
+		} else {
+			// If element is not in viewport, wait a bit for virtualization to render it
+			setTimeout(() => {
+				const element = logRefsMap.current.get(logId);
+				if (element) {
+					element.scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest',
+					});
+				}
+			}, 100);
+		}
+	}, []);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
+			const getItemRef = (element: HTMLElement | null): void => {
+				if (element) {
+					logRefsMap.current.set(log.id, element);
+				}
+			};
+
 			if (options.format === 'raw') {
 				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						isActiveLog={activeLog?.id === log.id}
-						linesPerRow={options.maxLines}
-						selectedFields={selectedFields}
-						fontSize={options.fontSize}
-						handleChangeSelectedView={handleChangeSelectedView}
-						onSetActiveLog={handleSetActiveLog}
-						onClearActiveLog={handleCloseLogDetail}
-					/>
+					<div key={log.id} ref={getItemRef}>
+						<RawLogView
+							data={log}
+							isActiveLog={activeLog?.id === log.id}
+							linesPerRow={options.maxLines}
+							selectedFields={selectedFields}
+							fontSize={options.fontSize}
+							handleChangeSelectedView={handleChangeSelectedView}
+							onSetActiveLog={handleSetActiveLog}
+							onClearActiveLog={handleCloseLogDetail}
+						/>
+					</div>
 				);
 			}
 
 			return (
-				<ListLogView
-					key={log.id}
-					logData={log}
-					isActiveLog={activeLog?.id === log.id}
-					selectedFields={selectedFields}
-					linesPerRow={options.maxLines}
-					onAddToQuery={onAddToQuery}
-					onSetActiveLog={handleSetActiveLog}
-					onClearActiveLog={handleCloseLogDetail}
-					fontSize={options.fontSize}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
+				<div key={log.id} ref={getItemRef}>
+					<ListLogView
+						logData={log}
+						isActiveLog={activeLog?.id === log.id}
+						selectedFields={selectedFields}
+						linesPerRow={options.maxLines}
+						onAddToQuery={onAddToQuery}
+						onSetActiveLog={handleSetActiveLog}
+						onClearActiveLog={handleCloseLogDetail}
+						fontSize={options.fontSize}
+						handleChangeSelectedView={handleChangeSelectedView}
+					/>
+				</div>
 			);
 		},
 		[
@@ -128,6 +158,7 @@ function LiveLogsList({
 			handleSetActiveLog,
 			handleCloseLogDetail,
 			handleChangeSelectedView,
+			logRefsMap,
 		],
 	);
 
@@ -142,6 +173,22 @@ function LiveLogsList({
 			behavior: 'smooth',
 		});
 	}, [activeLogId, activeLogIndex]);
+
+	// Clean up stale refs when logs change
+	useEffect(() => {
+		const logIds = new Set(formattedLogs.map((log) => log.id));
+		const refsToDelete: string[] = [];
+
+		logRefsMap.current.forEach((_, logId) => {
+			if (!logIds.has(logId)) {
+				refsToDelete.push(logId);
+			}
+		});
+
+		refsToDelete.forEach((logId) => {
+			logRefsMap.current.delete(logId);
+		});
+	}, [formattedLogs]);
 
 	const isLoadingList = isConnectionLoading && formattedLogs.length === 0;
 
@@ -187,6 +234,7 @@ function LiveLogsList({
 							onSetActiveLog={handleSetActiveLog}
 							onClearActiveLog={handleCloseLogDetail}
 							activeLog={activeLog}
+							logRefsMap={logRefsMap}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
@@ -214,6 +262,7 @@ function LiveLogsList({
 					handleChangeSelectedView={handleChangeSelectedView}
 					logs={formattedLogs}
 					onNavigateLog={handleSetActiveLog}
+					onScrollToLog={handleScrollToLog}
 				/>
 			)}
 		</div>

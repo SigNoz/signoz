@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
-import { Virtuoso } from 'react-virtuoso';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -31,6 +31,8 @@ interface Props {
 }
 
 function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
+	const virtuosoRef = useRef<VirtuosoHandle>(null);
+	const logRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 	const {
 		activeLog,
 		onSetActiveLog,
@@ -85,6 +87,22 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		setIsPaginating(false);
 	}, [data, setIsPaginating]);
 
+	// Clean up stale refs when logs change
+	useEffect(() => {
+		const logIds = new Set(logs.map((log) => log.id));
+		const refsToDelete: string[] = [];
+
+		logRefsMap.current.forEach((_, logId) => {
+			if (!logIds.has(logId)) {
+				refsToDelete.push(logId);
+			}
+		});
+
+		refsToDelete.forEach((logId) => {
+			logRefsMap.current.delete(logId);
+		});
+	}, [logs]);
+
 	const handleSetActiveLog = useCallback(
 		(
 			log: ILog,
@@ -106,32 +124,76 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		setSelectedTab(undefined);
 	}, [onClearActiveLog]);
 
+	const handleScrollToLog = useCallback(
+		(logId: string): void => {
+			const logIndex = logs.findIndex(({ id }) => id === logId);
+			if (logIndex !== -1 && virtuosoRef.current) {
+				virtuosoRef.current.scrollToIndex({
+					index: logIndex,
+					align: 'center',
+					behavior: 'smooth',
+				});
+				return;
+			}
+
+			const logElement = logRefsMap.current.get(logId);
+			if (logElement) {
+				logElement.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest',
+				});
+				return;
+			}
+
+			// If element is not in viewport, wait a bit for virtualization to render it
+			setTimeout(() => {
+				const element = logRefsMap.current.get(logId);
+				if (element) {
+					element.scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest',
+					});
+				}
+			}, 100);
+		},
+		[logs],
+	);
+
 	const getItemContent = useCallback(
-		(_: number, logToRender: ILog): JSX.Element => (
-			<RawLogView
-				isTextOverflowEllipsisDisabled
-				key={logToRender.id}
-				data={logToRender}
-				linesPerRow={5}
-				fontSize={FontSize.MEDIUM}
-				selectedFields={[
-					{
-						dataType: 'string',
-						type: '',
-						name: 'body',
-					},
-					{
-						dataType: 'string',
-						type: '',
-						name: 'timestamp',
-					},
-				]}
-				onSetActiveLog={handleSetActiveLog}
-				onClearActiveLog={handleCloseLogDetail}
-				isActiveLog={activeLog?.id === logToRender.id}
-			/>
-		),
-		[activeLog, handleSetActiveLog, handleCloseLogDetail],
+		(_: number, logToRender: ILog): JSX.Element => {
+			const getItemRef = (element: HTMLElement | null): void => {
+				if (element) {
+					logRefsMap.current.set(logToRender.id, element);
+				}
+			};
+
+			return (
+				<div key={logToRender.id} ref={getItemRef}>
+					<RawLogView
+						isTextOverflowEllipsisDisabled
+						data={logToRender}
+						linesPerRow={5}
+						fontSize={FontSize.MEDIUM}
+						selectedFields={[
+							{
+								dataType: 'string',
+								type: '',
+								name: 'body',
+							},
+							{
+								dataType: 'string',
+								type: '',
+								name: 'timestamp',
+							},
+						]}
+						onSetActiveLog={handleSetActiveLog}
+						onClearActiveLog={handleCloseLogDetail}
+						isActiveLog={activeLog?.id === logToRender.id}
+					/>
+				</div>
+			);
+		},
+		[activeLog, handleSetActiveLog, handleCloseLogDetail, logRefsMap],
 	);
 
 	const renderFooter = useCallback(
@@ -155,6 +217,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 					<Virtuoso
 						className="host-metrics-logs-virtuoso"
 						key="host-metrics-logs-virtuoso"
+						ref={virtuosoRef}
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -192,6 +255,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 					selectedTab={selectedTab}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					onScrollToLog={handleScrollToLog}
 				/>
 			)}
 		</div>

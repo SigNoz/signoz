@@ -66,6 +66,7 @@ function LogDetailInner({
 	handleChangeSelectedView,
 	logs,
 	onNavigateLog,
+	onScrollToLog,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -131,14 +132,24 @@ function LogDetailInner({
 				e.stopPropagation();
 				// Navigate to previous log
 				if (currentIndex > 0) {
-					onNavigateLog(logs[currentIndex - 1]);
+					const prevLog = logs[currentIndex - 1];
+					onNavigateLog(prevLog);
+					// Trigger scroll to the log element
+					if (onScrollToLog) {
+						onScrollToLog(prevLog.id);
+					}
 				}
 			} else if (e.key === 'ArrowDown') {
 				e.preventDefault();
 				e.stopPropagation();
 				// Navigate to next log
 				if (currentIndex < logs.length - 1) {
-					onNavigateLog(logs[currentIndex + 1]);
+					const nextLog = logs[currentIndex + 1];
+					onNavigateLog(nextLog);
+					// Trigger scroll to the log element
+					if (onScrollToLog) {
+						onScrollToLog(nextLog.id);
+					}
 				}
 			}
 		};
@@ -147,7 +158,7 @@ function LogDetailInner({
 		return (): void => {
 			document.removeEventListener('keydown', handleKeyDown);
 		};
-	}, [log.id, logs, onNavigateLog, selectedView]);
+	}, [log.id, logs, onNavigateLog, onScrollToLog, selectedView]);
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
@@ -315,6 +326,7 @@ function LogDetailInner({
 		logs: LogDetailInnerProps['logs'],
 		log: LogDetailInnerProps['log'],
 		onNavigateLog: LogDetailInnerProps['onNavigateLog'],
+		onScrollToLog: LogDetailInnerProps['onScrollToLog'],
 		direction: 'next' | 'previous',
 		// eslint-disable-next-line max-params
 	): void => {
@@ -323,9 +335,13 @@ function LogDetailInner({
 			return;
 		}
 		if (direction === 'previous' && !isPrevDisabled) {
-			onNavigateLog(logs[currentLogIndex - 1]);
+			const prevLog = logs[currentLogIndex - 1];
+			onNavigateLog(prevLog);
+			onScrollToLog?.(prevLog.id);
 		} else if (direction === 'next' && !isNextDisabled) {
-			onNavigateLog(logs[currentLogIndex + 1]);
+			const nextLog = logs[currentLogIndex + 1];
+			onNavigateLog(nextLog);
+			onScrollToLog?.(nextLog.id);
 		}
 	};
 
@@ -355,7 +371,7 @@ function LogDetailInner({
 									onMouseEnter={(): void => setActiveTooltip('prev')}
 									onMouseLeave={(): void => setActiveTooltip(null)}
 									onClick={(): void =>
-										handleNavigateLog(logs, log, onNavigateLog, 'previous')
+										handleNavigateLog(logs, log, onNavigateLog, onScrollToLog, 'previous')
 									}
 								/>
 							</Tooltip>
@@ -372,7 +388,7 @@ function LogDetailInner({
 									onMouseEnter={(): void => setActiveTooltip('next')}
 									onMouseLeave={(): void => setActiveTooltip(null)}
 									onClick={(): void =>
-										handleNavigateLog(logs, log, onNavigateLog, 'next')
+										handleNavigateLog(logs, log, onNavigateLog, onScrollToLog, 'next')
 									}
 								/>
 							</Tooltip>

@@ -64,6 +64,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onSetActiveLog,
 			onClearActiveLog,
 			activeLog,
+			logRefsMap,
 		},
 		ref,
 	): JSX.Element | null {
@@ -111,19 +112,29 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 
 		const itemContent = useCallback(
-			(index: number, log: Record<string, unknown>): JSX.Element => (
-				<TableRow
-					tableColumns={tableColumns}
-					index={index}
-					log={log}
-					logs={tableViewProps.logs}
-					hasActions
-					fontSize={tableViewProps.fontSize}
-					onShowLogDetails={onSetActiveLog}
-					isActiveLog={activeLog?.id === log.id}
-					onClearActiveLog={onCloseActiveLog}
-				/>
-			),
+			(index: number, log: Record<string, unknown>): JSX.Element => {
+				const getItemRef = (element: HTMLElement | null): void => {
+					if (element && logRefsMap?.current) {
+						logRefsMap.current.set(log.id as string, element);
+					}
+				};
+
+				return (
+					<div key={log.id as string} ref={getItemRef}>
+						<TableRow
+							tableColumns={tableColumns}
+							index={index}
+							log={log}
+							logs={tableViewProps.logs}
+							hasActions
+							fontSize={tableViewProps.fontSize}
+							onShowLogDetails={onSetActiveLog}
+							isActiveLog={activeLog?.id === log.id}
+							onClearActiveLog={onCloseActiveLog}
+						/>
+					</div>
+				);
+			},
 			[
 				tableColumns,
 				onSetActiveLog,
@@ -131,6 +142,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				tableViewProps.fontSize,
 				activeLog?.id,
 				onCloseActiveLog,
+				logRefsMap,
 			],
 		);
 		const tableHeader = useCallback(

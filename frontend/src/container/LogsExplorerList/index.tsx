@@ -51,6 +51,7 @@ function LogsExplorerList({
 	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
+	const logRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 	const { activeLogId } = useCopyLogLink();
 
 	const {
@@ -103,6 +104,41 @@ function LogsExplorerList({
 		setSelectedTab(undefined);
 	}, [onClearActiveLog]);
 
+	const handleScrollToLog = useCallback(
+		(logId: string): void => {
+			const logIndex = logs.findIndex(({ id }) => id === logId);
+			if (logIndex !== -1 && ref.current) {
+				ref.current.scrollToIndex({
+					index: logIndex,
+					align: 'center',
+					behavior: 'smooth',
+				});
+				return;
+			}
+
+			const logElement = logRefsMap.current.get(logId);
+			if (logElement) {
+				logElement.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest',
+				});
+				return;
+			}
+
+			// If element is not in viewport, wait a bit for virtualization to render it
+			setTimeout(() => {
+				const element = logRefsMap.current.get(logId);
+				if (element) {
+					element.scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest',
+					});
+				}
+			}, 100);
+		},
+		[logs],
+	);
+
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && logs.length !== 0) {
 			logEvent('Logs Explorer: Data present', {
@@ -111,38 +147,62 @@ function LogsExplorerList({
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
 
+	// Clean up stale refs when logs change
+	useEffect(() => {
+		const logIds = new Set(logs.map((log) => log.id));
+		const refsToDelete: string[] = [];
+
+		logRefsMap.current.forEach((_, logId) => {
+			if (!logIds.has(logId)) {
+				refsToDelete.push(logId);
+			}
+		});
+
+		refsToDelete.forEach((logId) => {
+			logRefsMap.current.delete(logId);
+		});
+	}, [logs]);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
+			const getItemRef = (element: HTMLElement | null): void => {
+				if (element) {
+					logRefsMap.current.set(log.id, element);
+				}
+			};
+
 			if (options.format === 'raw') {
 				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						isActiveLog={activeLog?.id === log.id}
-						linesPerRow={options.maxLines}
-						selectedFields={selectedFields}
-						fontSize={options.fontSize}
-						handleChangeSelectedView={handleChangeSelectedView}
-						onSetActiveLog={handleSetActiveLog}
-						onClearActiveLog={handleCloseLogDetail}
-					/>
+					<div key={log.id} ref={getItemRef}>
+						<RawLogView
+							data={log}
+							isActiveLog={activeLog?.id === log.id}
+							linesPerRow={options.maxLines}
+							selectedFields={selectedFields}
+							fontSize={options.fontSize}
+							handleChangeSelectedView={handleChangeSelectedView}
+							onSetActiveLog={handleSetActiveLog}
+							onClearActiveLog={handleCloseLogDetail}
+						/>
+					</div>
 				);
 			}
 
 			return (
-				<ListLogView
-					key={log.id}
-					logData={log}
-					isActiveLog={activeLog?.id === log.id}
-					selectedFields={selectedFields}
-					onAddToQuery={onAddToQuery}
-					onSetActiveLog={handleSetActiveLog}
-					activeLog={activeLog}
-					fontSize={options.fontSize}
-					linesPerRow={options.maxLines}
-					handleChangeSelectedView={handleChangeSelectedView}
-					onClearActiveLog={handleCloseLogDetail}
-				/>
+				<div key={log.id} ref={getItemRef}>
+					<ListLogView
+						logData={log}
+						isActiveLog={activeLog?.id === log.id}
+						selectedFields={selectedFields}
+						onAddToQuery={onAddToQuery}
+						onSetActiveLog={handleSetActiveLog}
+						activeLog={activeLog}
+						fontSize={options.fontSize}
+						linesPerRow={options.maxLines}
+						handleChangeSelectedView={handleChangeSelectedView}
+						onClearActiveLog={handleCloseLogDetail}
+					/>
+				</div>
 			);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,6 +245,7 @@ function LogsExplorerList({
 					onSetActiveLog={handleSetActiveLog}
 					onClearActiveLog={handleCloseLogDetail}
 					activeLog={activeLog}
+					logRefsMap={logRefsMap}
 				/>
 			);
 		}
@@ -323,6 +384,7 @@ function LogsExplorerList({
 							handleChangeSelectedView={handleChangeSelectedView}
 							logs={logs}
 							onNavigateLog={handleSetActiveLog}
+							onScrollToLog={handleScrollToLog}
 						/>
 					)}
 				</>

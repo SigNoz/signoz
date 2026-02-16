@@ -1,3 +1,4 @@
+import { RefObject } from 'react';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { UseTableViewProps } from 'components/Logs/TableView/types';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -17,4 +18,5 @@ export type InfinityTableProps = {
 	) => void;
 	onClearActiveLog?: () => void;
 	activeLog?: ILog | null;
+	logRefsMap?: RefObject<Map<string, HTMLElement>>;
 };
