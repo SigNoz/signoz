@@ -4315,20 +4315,14 @@ func (r *ClickHouseReader) GetHostMetricsExistenceAndEarliestTime(ctx context.Co
 		return 0, 0, nil
 	}
 
-	quotedNames := make([]string, len(metricNames))
-	for i, m := range metricNames {
-		quotedNames[i] = utils.ClickHouseFormattedValue(m)
-	}
-	namesStr := strings.Join(quotedNames, ", ")
-
 	query := fmt.Sprintf(
 		`SELECT count(*) AS cnt, min(first_reported_unix_milli) AS min_first_reported
 		FROM %s.%s
-		WHERE metric_name IN (%s)`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_METADATA_TABLENAME, namesStr)
+		WHERE metric_name IN @metric_names`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_METADATA_TABLENAME)
 
 	var count, minFirstReported uint64
-	err := r.db.QueryRow(ctx, query).Scan(&count, &minFirstReported)
+	err := r.db.QueryRow(ctx, query, clickhouse.Named("metric_names", metricNames)).Scan(&count, &minFirstReported)
 	if err != nil {
 		zap.L().Error("error getting host metrics existence and earliest time", zap.Error(err))
 		return 0, 0, err
