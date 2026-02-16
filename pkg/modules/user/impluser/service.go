@@ -2,7 +2,6 @@ package impluser
 
 import (
 	"context"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -79,42 +78,35 @@ func (s *service) Stop(ctx context.Context) error {
 }
 
 func (s *service) reconcile(ctx context.Context) error {
-	orgs, err := s.orgGetter.ListByOwnedKeyRange(ctx)
+	org, err := s.orgGetter.GetByName(ctx, s.config.OrgName)
 	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			newOrg := types.NewOrganizationWithName(s.config.OrgName)
+			_, err := s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
+			return err
+		}
+
 		return err
 	}
 
-	if len(orgs) == 0 {
-		return nil
-	}
-
-	slices.SortFunc(orgs, func(a, b *types.Organization) int {
-		return a.CreatedAt.Compare(b.CreatedAt)
-	})
-
-	return s.reconcileRootUser(ctx, orgs[0].ID)
+	return s.reconcileRootUser(ctx, org.ID)
 }
 
 func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) error {
-	email, err := valuer.NewEmail(s.config.Email)
-	if err != nil {
-		return err
-	}
-
 	existingRoot, err := s.store.GetRootUserByOrgID(ctx, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
 
 	if existingRoot == nil {
-		return s.createOrPromoteRootUser(ctx, orgID, email)
+		return s.createOrPromoteRootUser(ctx, orgID)
 	}
 
-	return s.updateExistingRootUser(ctx, orgID, existingRoot, email)
+	return s.updateExistingRootUser(ctx, orgID, existingRoot)
 }
 
-func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID, email valuer.Email) error {
-	existingUser, err := s.store.GetUserByEmailAndOrgID(ctx, email, orgID)
+func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
+	existingUser, err := s.store.GetUserByEmailAndOrgID(ctx, s.config.Email, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
@@ -142,7 +134,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	// Create new root user
-	newUser, err := types.NewRootUser(email.String(), email, orgID)
+	newUser, err := types.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
 	if err != nil {
 		return err
 	}
@@ -155,11 +147,11 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
 }
 
-func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User, email valuer.Email) error {
+func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
 	existingRoot.PromoteToRoot()
 
-	if existingRoot.Email.String() != s.config.Email {
-		existingRoot.UpdateEmail(email)
+	if existingRoot.Email != s.config.Email {
+		existingRoot.UpdateEmail(s.config.Email)
 		if err := s.module.UpdateAnyUser(ctx, orgID, existingRoot); err != nil {
 			return err
 		}

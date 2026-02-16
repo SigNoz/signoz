@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Config struct {
@@ -14,10 +15,12 @@ type Config struct {
 }
 
 type RootConfig struct {
-	Enabled  bool   `mapstructure:"enabled"`
-	Email    string `mapstructure:"email"`
-	Password string `mapstructure:"password"`
+	Enabled  bool         `mapstructure:"enabled"`
+	Email    valuer.Email `mapstructure:"email"`
+	Password string       `mapstructure:"password"`
+	OrgName  string       `mapstructure:"org_name"`
 }
+
 type PasswordConfig struct {
 	Reset ResetConfig `mapstructure:"reset"`
 }
@@ -39,6 +42,10 @@ func newConfig() factory.Config {
 				MaxTokenLifetime: 6 * time.Hour,
 			},
 		},
+		Root: RootConfig{
+			Enabled: false,
+			OrgName: "default",
+		},
 	}
 }
 
@@ -48,7 +55,7 @@ func (c Config) Validate() error {
 	}
 
 	if c.Root.Enabled {
-		if c.Root.Email == "" {
+		if c.Root.Email.IsZero() {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::root::email is required when root user is enabled")
 		}
 		if c.Root.Password == "" {

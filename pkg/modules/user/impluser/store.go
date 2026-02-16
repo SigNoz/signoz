@@ -222,6 +222,7 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Column("is_root").
 		Column("updated_at").
 		Where("org_id = ?", orgID).
+		Where("id = ?", user.ID).
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user does not exist in org: %s", orgID)
