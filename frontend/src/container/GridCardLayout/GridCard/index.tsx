@@ -240,7 +240,6 @@ function GridCardGraph({
 				return failureCount < 2;
 			},
 			keepPreviousData: true,
-			// eslint-disable-next-line sonarjs/no-redundant-boolean
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
