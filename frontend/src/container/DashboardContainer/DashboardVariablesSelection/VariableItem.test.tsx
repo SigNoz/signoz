@@ -47,18 +47,6 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-<<<<<<< chore/issue-3780-use-variable-state-updates-3
-=======
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						transitiveDescendants: {},
-						hasCycle: false,
-					}}
->>>>>>> main
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -73,18 +61,6 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-<<<<<<< chore/issue-3780-use-variable-state-updates-3
-=======
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						transitiveDescendants: {},
-						hasCycle: false,
-					}}
->>>>>>> main
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -100,18 +76,6 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-<<<<<<< chore/issue-3780-use-variable-state-updates-3
-=======
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						transitiveDescendants: {},
-						hasCycle: false,
-					}}
->>>>>>> main
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -145,18 +109,6 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-<<<<<<< chore/issue-3780-use-variable-state-updates-3
-=======
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						transitiveDescendants: {},
-						hasCycle: false,
-					}}
->>>>>>> main
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -179,18 +131,6 @@ describe('VariableItem', () => {
 					variableData={customVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-<<<<<<< chore/issue-3780-use-variable-state-updates-3
-=======
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						transitiveDescendants: {},
-						hasCycle: false,
-					}}
->>>>>>> main
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -205,18 +145,6 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-<<<<<<< chore/issue-3780-use-variable-state-updates-3
-=======
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						transitiveDescendants: {},
-						hasCycle: false,
-					}}
->>>>>>> main
 				/>
 			</MockQueryClientProvider>,
 		);
