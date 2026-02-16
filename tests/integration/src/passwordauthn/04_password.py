@@ -6,6 +6,7 @@ from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.logger import setup_logger
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 logger = setup_logger(__name__)
 
@@ -13,7 +14,7 @@ logger = setup_logger(__name__)
 def test_change_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create another admin user
     response = requests.post(
@@ -130,7 +131,7 @@ def test_change_password(
 def test_reset_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get the user id for admin+password@integration.test
     response = requests.get(
@@ -188,7 +189,7 @@ def test_reset_password(
 def test_reset_password_with_no_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get the user id for admin+password@integration.test
     response = requests.get(

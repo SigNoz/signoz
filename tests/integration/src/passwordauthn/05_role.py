@@ -4,6 +4,7 @@ from typing import Callable, Tuple
 import requests
 
 from fixtures import types
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 
 def test_change_role(
@@ -11,7 +12,7 @@ def test_change_role(
     get_token: Callable[[str, str], str],
     get_tokens: Callable[[str, str], Tuple[str, str]],
 ):
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a new user as VIEWER
     response = requests.post(
