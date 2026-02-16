@@ -313,9 +313,9 @@ func (a *awsProvider) getServiceConnectionStatus(
 	resp := new(integrationstypes.ServiceConnectionStatus)
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
 
 	if def.Strategy.AWSMetrics != nil && serviceConfig.Metrics.Enabled {
+		wg.Add(1)
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -333,6 +333,7 @@ func (a *awsProvider) getServiceConnectionStatus(
 	}
 
 	if def.Strategy.AWSLogs != nil && serviceConfig.Logs.Enabled {
+		wg.Add(1)
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -368,7 +369,14 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 
 	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
 
-	for _, category := range def.IngestionStatusCheck.Metrics {
+	for _, metric := range def.IngestionStatusCheck.Metrics {
+		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+			CategoryID:          metric.Category,
+			CategoryDisplayName: metric.DisplayName,
+		})
+	}
+
+	for index, category := range def.IngestionStatusCheck.Metrics {
 		queries := make([]qbtypes.QueryEnvelope, 0)
 
 		for _, check := range category.Checks {
@@ -434,12 +442,12 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 			continue
 		}
 
-		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+		statusResp[index] = &integrationstypes.SignalConnectionStatus{
 			CategoryID:           category.Category,
 			CategoryDisplayName:  category.DisplayName,
 			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
 			LastReceivedFrom:     "signoz-aws-integration",
-		})
+		}
 	}
 
 	return statusResp, nil
@@ -459,7 +467,14 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 
 	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
 
-	for _, category := range def.IngestionStatusCheck.Logs {
+	for _, log := range def.IngestionStatusCheck.Logs {
+		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+			CategoryID:          log.Category,
+			CategoryDisplayName: log.DisplayName,
+		})
+	}
+
+	for index, category := range def.IngestionStatusCheck.Logs {
 		queries := make([]qbtypes.QueryEnvelope, 0)
 
 		for _, check := range category.Checks {
@@ -525,12 +540,12 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 			continue
 		}
 
-		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+		statusResp[index] = &integrationstypes.SignalConnectionStatus{
 			CategoryID:           category.Category,
 			CategoryDisplayName:  category.DisplayName,
 			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
 			LastReceivedFrom:     "signoz-aws-integration",
-		})
+		}
 	}
 
 	return statusResp, nil
