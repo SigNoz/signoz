@@ -17,10 +17,9 @@ import (
 )
 
 func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
-	enableBodyJSONQuery(t)
-	defer func() {
-		disableBodyJSONQuery(t)
-	}()
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t)
 
 	cases := []struct {
@@ -98,10 +97,9 @@ func TestStmtBuilderTimeSeriesBodyGroupByJSON(t *testing.T) {
 }
 
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	enableBodyJSONQuery(t)
-	defer func() {
-		disableBodyJSONQuery(t)
-	}()
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t, "user.age", "user.name")
 
 	cases := []struct {
@@ -160,10 +158,9 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyHas(t *testing.T) {
-	enableBodyJSONQuery(t)
-	defer func() {
-		disableBodyJSONQuery(t)
-	}()
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
 
 	statementBuilder := buildJSONTestStatementBuilder(t)
 	cases := []struct {
@@ -238,10 +235,9 @@ func TestStatementBuilderListQueryBodyHas(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBody(t *testing.T) {
-	enableBodyJSONQuery(t)
-	defer func() {
-		disableBodyJSONQuery(t)
-	}()
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
 
 	statementBuilder := buildJSONTestStatementBuilder(t)
 	cases := []struct {
@@ -487,10 +483,9 @@ func TestStatementBuilderListQueryBody(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	enableBodyJSONQuery(t)
-	defer func() {
-		disableBodyJSONQuery(t)
-	}()
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
 
 	statementBuilder := buildJSONTestStatementBuilder(t, "education")
 	cases := []struct {
@@ -650,10 +645,9 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
-	enableBodyJSONQuery(t)
-	defer func() {
-		disableBodyJSONQuery(t)
-	}()
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
 
 	statementBuilder := buildJSONTestStatementBuilder(t)
 	indexed := []*telemetrytypes.TelemetryFieldKey{
@@ -830,10 +824,33 @@ func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilde
 	}
 }
 
-func enableBodyJSONQuery(_ *testing.T) {
+func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
 	querybuilder.BodyJSONQueryEnabled = true
-}
+	base := telemetrytypes.TelemetryFieldKey{
+		Name:          "body",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	jsonEnabled := telemetrytypes.TelemetryFieldKey{
+		Name:          "message",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextBody,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		JSONDataType:  &telemetrytypes.String,
+	}
 
-func disableBodyJSONQuery(_ *testing.T) {
-	querybuilder.BodyJSONQueryEnabled = false
+	enable := func() {
+		querybuilder.BodyJSONQueryEnabled = true
+		DefaultFullTextColumn = &jsonEnabled
+		IntrinsicFields["body"] = jsonEnabled
+	}
+
+	disable := func() {
+		querybuilder.BodyJSONQueryEnabled = false
+		DefaultFullTextColumn = &base
+		IntrinsicFields["body"] = base
+	}
+
+	return enable, disable
 }

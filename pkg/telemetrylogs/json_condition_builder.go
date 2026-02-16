@@ -32,7 +32,6 @@ func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType te
 
 // BuildCondition builds the full WHERE condition for body_json JSON paths
 func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-
 	conditions := []string{}
 	for _, node := range c.key.JSONPlan {
 		condition, err := c.emitPlannedCondition(node, operator, value, sb)
@@ -41,6 +40,7 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 		}
 		conditions = append(conditions, condition)
 	}
+
 	return sb.Or(conditions...), nil
 }
 

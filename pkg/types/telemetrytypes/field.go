@@ -60,6 +60,10 @@ func (f *TelemetryFieldKey) ArrayParentPaths() []string {
 	return paths
 }
 
+func (f *TelemetryFieldKey) MustBuildJSONCondition() bool {
+	return f.FieldDataType != FieldDataTypeJSON && len(f.JSONPlan) > 0 && f.JSONDataType != nil
+}
+
 func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
 	paths := f.ArrayParentPaths()
 	selectors := make([]*FieldKeySelector, 0, len(paths))

@@ -940,10 +940,8 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 	}
 
 	// add intrinsic fields to the map
-	for fieldName, keys := range IntrinsicFields {
-		for _, key := range keys() {
-			keysMap[fieldName] = append(keysMap[fieldName], &key)
-		}
+	for fieldName, key := range IntrinsicFields {
+		keysMap[fieldName] = append(keysMap[fieldName], &key)
 	}
 	return keysMap
 }

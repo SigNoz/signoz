@@ -49,66 +49,57 @@ var (
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
-	IntrinsicFields = map[string]func() telemetrytypes.TelemetryFieldKey{
-		"body": getBodyIntrinsicField,
-		"trace_id": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "trace_id",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}
+	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"body": telemetrytypes.TelemetryFieldKey{
+			Name:          "body",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		"span_id": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "span_id",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}
+		"trace_id": telemetrytypes.TelemetryFieldKey{
+			Name:          "trace_id",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		"trace_flags": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "trace_flags",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			}
+		"span_id": telemetrytypes.TelemetryFieldKey{
+			Name:          "span_id",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		"severity_text": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_text",
-				Description:   "Log level. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitytext)",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}
+		"trace_flags": telemetrytypes.TelemetryFieldKey{
+			Name:          "trace_flags",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
-		"severity_number": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "severity_number",
-				Description:   "Numerical value of the severity. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber)",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeNumber,
-			}
+		"severity_text": telemetrytypes.TelemetryFieldKey{
+			Name:          "severity_text",
+			Description:   "Log level. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitytext)",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
-		"scope_name": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "scope_name",
-				Description:   "Logger name. Learn more about instrumentation scope [here](https://opentelemetry.io/docs/concepts/instrumentation-scope/)",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextScope,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}
+		"severity_number": telemetrytypes.TelemetryFieldKey{
+			Name:          "severity_number",
+			Description:   "Numerical value of the severity. Learn more [here](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber)",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
-		"scope_version": func() telemetrytypes.TelemetryFieldKey {
-			return telemetrytypes.TelemetryFieldKey{
-				Name:          "scope_version",
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextScope,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}
+		"scope_name": telemetrytypes.TelemetryFieldKey{
+			Name:          "scope_name",
+			Description:   "Logger name. Learn more about instrumentation scope [here](https://opentelemetry.io/docs/concepts/instrumentation-scope/)",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextScope,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"scope_version": telemetrytypes.TelemetryFieldKey{
+			Name:          "scope_version",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextScope,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 	}
 
@@ -140,21 +131,18 @@ func bodyAliasExpression() string {
 	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
 }
 
-func getBodyIntrinsicField() telemetrytypes.TelemetryFieldKey {
-	if querybuilder.BodyJSONQueryEnabled {
-		// body logical field is mapped to message field in the body context that too only with String data type
-		return telemetrytypes.TelemetryFieldKey{
-			Name:          MessageSubColumn,
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  telemetrytypes.FieldContextBody,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		}
+func init() {
+	// body logical field is mapped to message field in the body context that too only with String data type
+	jsonEnabled := telemetrytypes.TelemetryFieldKey{
+		Name:          MessageSubColumn,
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextBody,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		JSONDataType:  &telemetrytypes.String,
 	}
 
-	return telemetrytypes.TelemetryFieldKey{
-		Name:          "body",
-		Signal:        telemetrytypes.SignalLogs,
-		FieldContext:  telemetrytypes.FieldContextLog,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
+	if querybuilder.BodyJSONQueryEnabled {
+		DefaultFullTextColumn = &jsonEnabled
+		IntrinsicFields["body"] = jsonEnabled
 	}
 }

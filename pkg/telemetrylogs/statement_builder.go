@@ -206,7 +206,7 @@ func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldK
 	// First check if it matches with any intrinsic fields
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
-		intrinsicOrCalculatedField = IntrinsicFields[key.Name]()
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]
 		return querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)
 	}
 

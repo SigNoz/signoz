@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -383,6 +384,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		for _, key := range keys {
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
 			if err != nil {
+				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
 			}
 			conds = append(conds, condition)
@@ -889,6 +891,13 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			v.errors = append(v.errors, fmt.Sprintf("key `%s` not found", fieldKey.Name))
 			v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#key-fieldname-not-found"
 		}
+	}
+
+	// TODO(Piyush): Handle this better; Use constants for the strings later
+	if BodyJSONQueryEnabled && fieldKey.Name == "body" && slices.ContainsFunc(fieldKeysForName, func(key *telemetrytypes.TelemetryFieldKey) bool {
+		return key.Name == "message" && key.FieldDataType == telemetrytypes.FieldDataTypeString && key.FieldContext == telemetrytypes.FieldContextBody
+	}) {
+		v.warnings = append(v.warnings, "You searched for body. Query Builder now defaults this to body.message:string. Check that this matches what you want to search.")
 	}
 
 	if len(fieldKeysForName) > 1 {
