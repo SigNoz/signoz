@@ -23,7 +23,7 @@ import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
-import OrgQuestions, { OrgData, OrgDetails } from './OrgQuestions/OrgQuestions';
+import OrgQuestions, { OrgDetails } from './OrgQuestions/OrgQuestions';
 
 import './OnboardingQuestionaire.styles.scss';
 
@@ -37,7 +37,6 @@ export const showErrorNotification = (
 };
 
 const INITIAL_ORG_DETAILS: OrgDetails = {
-	organisationName: '',
 	usesObservability: true,
 	observabilityTool: '',
 	otherTool: '',
@@ -80,24 +79,10 @@ function OnboardingQuestionaire(): JSX.Element {
 		InviteTeamMembersProps[] | null
 	>(null);
 
-	const [currentOrgData, setCurrentOrgData] = useState<OrgData | null>(null);
-
 	const [
 		updatingOrgOnboardingStatus,
 		setUpdatingOrgOnboardingStatus,
 	] = useState<boolean>(false);
-
-	useEffect(() => {
-		if (org) {
-			setCurrentOrgData(org[0]);
-
-			setOrgDetails({
-				...orgDetails,
-				organisationName: org[0].displayName,
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [org]);
 
 	useEffect(() => {
 		logEvent('Org Onboarding: Started', {
@@ -210,7 +195,6 @@ function OnboardingQuestionaire(): JSX.Element {
 			<div className="onboarding-questionaire-content">
 				{currentStep === 1 && (
 					<OrgQuestions
-						currentOrgData={currentOrgData}
 						orgDetails={{
 							...orgDetails,
 							usesOtel: orgDetails.usesOtel ?? null,

@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@signozhq/button';
 import { Input } from '@signozhq/input';
 import {
@@ -10,20 +9,11 @@ import {
 } from '@signozhq/radio-group';
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import editOrg from 'api/organization/editOrg';
-import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
+import { ArrowRight } from 'lucide-react';
 
 import '../OnboardingQuestionaire.styles.scss';
 
-export interface OrgData {
-	id: string;
-	displayName: string;
-}
-
 export interface OrgDetails {
-	organisationName: string;
 	usesObservability: boolean | null;
 	observabilityTool: string | null;
 	otherTool: string | null;
@@ -32,7 +22,6 @@ export interface OrgDetails {
 }
 
 interface OrgQuestionsProps {
-	currentOrgData: OrgData | null;
 	orgDetails: OrgDetails;
 	onNext: (details: OrgDetails) => void;
 }
@@ -56,19 +45,7 @@ const migrationTimelineOptions = {
 	justExploring: 'Just exploring',
 };
 
-function OrgQuestions({
-	currentOrgData,
-	orgDetails,
-	onNext,
-}: OrgQuestionsProps): JSX.Element {
-	const { updateOrg } = useAppContext();
-	const { notifications } = useNotifications();
-
-	const { t } = useTranslation(['organizationsettings', 'common']);
-
-	const [organisationName, setOrganisationName] = useState<string>(
-		orgDetails?.organisationName || '',
-	);
+function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 	const [observabilityTool, setObservabilityTool] = useState<string | null>(
 		orgDetails?.observabilityTool || null,
 	);
@@ -76,12 +53,6 @@ function OrgQuestions({
 		orgDetails?.otherTool || '',
 	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
-
-	useEffect(() => {
-		setOrganisationName(orgDetails.organisationName);
-	}, [orgDetails.organisationName]);
-
-	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const [usesOtel, setUsesOtel] = useState<boolean | null>(orgDetails.usesOtel);
 	const [migrationTimeline, setMigrationTimeline] = useState<string | null>(
@@ -91,88 +62,25 @@ function OrgQuestions({
 	const showMigrationQuestion =
 		observabilityTool !== null && observabilityTool !== 'None';
 
-	const handleOrgNameUpdate = async (): Promise<void> => {
+	const handleNext = (): void => {
 		const usesObservability =
 			!observabilityTool?.includes('None') && observabilityTool !== null;
 
-		/* Early bailout if orgData is not set or if the organisation name is not set or if the organisation name is empty or if the organisation name is the same as the one in the orgData */
-		if (
-			!currentOrgData ||
-			!organisationName ||
-			organisationName === '' ||
-			orgDetails.organisationName === organisationName
-		) {
-			logEvent('Org Onboarding: Answered', {
-				usesObservability,
-				observabilityTool,
-				otherTool,
-				usesOtel,
-				migrationTimeline,
-			});
+		logEvent('Org Onboarding: Answered', {
+			usesObservability,
+			observabilityTool,
+			otherTool,
+			usesOtel,
+			migrationTimeline,
+		});
 
-			onNext({
-				organisationName,
-				usesObservability,
-				observabilityTool,
-				otherTool,
-				usesOtel,
-				migrationTimeline,
-			});
-
-			return;
-		}
-
-		try {
-			setIsLoading(true);
-			const { statusCode, error } = await editOrg({
-				displayName: organisationName,
-				orgId: currentOrgData.id,
-			});
-			if (statusCode === 204) {
-				updateOrg(currentOrgData?.id, organisationName);
-
-				logEvent('Org Onboarding: Org Name Updated', {
-					organisationName,
-				});
-
-				logEvent('Org Onboarding: Answered', {
-					usesObservability,
-					observabilityTool,
-					otherTool,
-					usesOtel,
-					migrationTimeline,
-				});
-
-				onNext({
-					organisationName,
-					usesObservability,
-					observabilityTool,
-					otherTool,
-					usesOtel,
-					migrationTimeline,
-				});
-			} else {
-				logEvent('Org Onboarding: Org Name Update Failed', {
-					organisationName: orgDetails.organisationName,
-				});
-
-				notifications.error({
-					message:
-						error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
-			setIsLoading(false);
-		} catch (error) {
-			setIsLoading(false);
-			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
-			});
-		}
+		onNext({
+			usesObservability,
+			observabilityTool,
+			otherTool,
+			usesOtel,
+			migrationTimeline,
+		});
 	};
 
 	const isValidUsesObservability = (): boolean => {
@@ -196,19 +104,13 @@ function OrgQuestions({
 		const isValidObservability = isValidUsesObservability();
 		const isMigrationValid = !showMigrationQuestion || migrationTimeline !== null;
 
-		if (
-			organisationName !== '' &&
-			usesOtel !== null &&
-			isValidObservability &&
-			isMigrationValid
-		) {
+		if (usesOtel !== null && isValidObservability && isMigrationValid) {
 			setIsNextDisabled(false);
 		} else {
 			setIsNextDisabled(true);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		organisationName,
 		usesOtel,
 		observabilityTool,
 		otherTool,
@@ -228,10 +130,6 @@ function OrgQuestions({
 
 	const handleOtelChange = (value: string): void => {
 		setUsesOtel(value === 'yes');
-	};
-
-	const handleOnNext = (): void => {
-		handleOrgNameUpdate();
 	};
 
 	return (
@@ -335,15 +233,9 @@ function OrgQuestions({
 					variant="solid"
 					color="primary"
 					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
-					onClick={handleOnNext}
+					onClick={handleNext}
 					disabled={isNextDisabled}
-					suffixIcon={
-						isLoading ? (
-							<Loader2 className="animate-spin" size={12} />
-						) : (
-							<ArrowRight size={12} />
-						)
-					}
+					suffixIcon={<ArrowRight size={12} />}
 				>
 					Next
 				</Button>
