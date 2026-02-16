@@ -4678,6 +4678,8 @@ components:
           type: string
         id:
           type: string
+        isRoot:
+          type: boolean
         orgId:
           type: string
         role:
