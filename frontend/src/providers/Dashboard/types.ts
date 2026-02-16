@@ -47,7 +47,6 @@ export interface IDashboardContext {
 		allSelected: boolean,
 		isDynamic?: boolean,
 	) => void;
-	variablesToGetUpdated?: string[];
 	dashboardQueryRangeCalled: boolean;
 	setDashboardQueryRangeCalled: (value: boolean) => void;
 	selectedRowWidgetId: string | null;
