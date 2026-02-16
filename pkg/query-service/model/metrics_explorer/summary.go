@@ -36,6 +36,7 @@ type MetricDetail struct {
 	TimeSeries   uint64 `json:"timeseries"`
 	Samples      uint64 `json:"samples"`
 	LastReceived int64  `json:"lastReceived"`
+	IsMonotonic  bool   `json:"is_monotonic"`
 }
 
 type TreeMapResponseItem struct {

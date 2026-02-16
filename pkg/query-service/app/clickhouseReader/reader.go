@@ -3261,20 +3261,14 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 		metadata := metadataMap[name]
 
 		typ := string(metadata.MetricType)
-		temporality := string(metadata.Temporality)
-		isMonotonic := metadata.IsMonotonic
-
-		// Non-monotonic cumulative sums are treated as gauges
-		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
-			typ = "Gauge"
-		}
 
 		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
 		key := v3.AttributeKey{
-			Key:      name,
-			DataType: v3.AttributeKeyDataTypeFloat64,
-			Type:     v3.AttributeKeyType(typ),
-			IsColumn: true,
+			Key:         name,
+			DataType:    v3.AttributeKeyDataTypeFloat64,
+			Type:        v3.AttributeKeyType(typ),
+			IsMonotonic: metadata.IsMonotonic,
+			IsColumn:    true,
 		}
 
 		if _, ok := seen[name+typ]; ok {
@@ -5419,6 +5413,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		    t.metric_name AS metric_name,
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS metric_type,
+			ANY_VALUE(t.is_monotonic) AS metric_is_monotonic,
 		    ANY_VALUE(t.unit) AS metric_unit,
 		    uniq(t.fingerprint) AS timeseries,
 			uniq(metric_name) OVER() AS total
@@ -5450,7 +5445,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 
 	for rows.Next() {
 		var metric metrics_explorer.MetricDetail
-		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.MetricType, &metric.MetricUnit, &metric.TimeSeries, &response.Total); err != nil {
+		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.MetricType, &metric.IsMonotonic, &metric.MetricUnit, &metric.TimeSeries, &response.Total); err != nil {
 			zap.L().Error("Error scanning metric row", zap.Error(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
