@@ -219,6 +219,14 @@ function DynamicVariableInput({
 			variableFetchCycleId,
 		],
 		{
+			/*
+			 * enabled if
+			 * - we have dynamic variable source and attribute defined (ALWAYS)
+			 * - AND
+			 *   - we're either still fetching variable options
+			 *   - OR
+			 *   - if variable is in idle state and we have already fetched options for it
+			 **/
 			enabled:
 				!!variableData.dynamicVariablesSource &&
 				!!variableData.dynamicVariablesAttribute &&

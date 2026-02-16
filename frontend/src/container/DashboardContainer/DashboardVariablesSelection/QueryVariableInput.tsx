@@ -168,9 +168,13 @@ function QueryVariableInput({
 			variableFetchCycleId,
 		],
 		{
-			enabled:
-				variableData &&
-				(isVariableFetching || (isVariableSettled && hasVariableFetchedOnce)),
+			/*
+			 * enabled if
+			 *   - we're either still fetching variable options
+			 *   - OR
+			 *   - if variable is in idle state and we have already fetched options for it
+			 **/
+			enabled: isVariableFetching || (isVariableSettled && hasVariableFetchedOnce),
 			queryFn: ({ signal }) =>
 				dashboardVariablesQuery(
 					{
