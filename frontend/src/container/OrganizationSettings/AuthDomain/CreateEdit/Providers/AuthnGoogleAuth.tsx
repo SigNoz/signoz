@@ -27,10 +27,7 @@ function ConfigureGoogleAuthAuthnProvider({
 	isCreate: boolean;
 }): JSX.Element {
 	const form = Form.useFormInstance();
-	const fetchGroups = Form.useWatch(
-		['googleAuthConfig', 'workspaceGroups', 'fetchGroups'],
-		form,
-	);
+	const fetchGroups = Form.useWatch(['googleAuthConfig', 'fetchGroups'], form);
 
 	const [expandedSection, setExpandedSection] = useState<ExpandedSection>(null);
 
@@ -49,7 +46,16 @@ function ConfigureGoogleAuthAuthnProvider({
 	const {
 		hasErrors: hasWorkspaceGroupsErrors,
 		errorMessages: workspaceGroupsErrorMessages,
-	} = useCollapseSectionErrors(['googleAuthConfig', 'workspaceGroups']);
+	} = useCollapseSectionErrors(
+		['googleAuthConfig'],
+		[
+			['googleAuthConfig', 'fetchGroups'],
+			['googleAuthConfig', 'serviceAccountJson'],
+			['googleAuthConfig', 'domainToAdminEmailList'],
+			['googleAuthConfig', 'fetchTransitiveGroupMembership'],
+			['googleAuthConfig', 'allowedGroups'],
+		],
+	);
 
 	return (
 		<div className="authn-provider">
@@ -209,7 +215,7 @@ function ConfigureGoogleAuthAuthnProvider({
 							<div className="authn-provider__group-content">
 								<div className="authn-provider__checkbox-row">
 									<Form.Item
-										name={['googleAuthConfig', 'workspaceGroups', 'fetchGroups']}
+										name={['googleAuthConfig', 'fetchGroups']}
 										valuePropName="checked"
 										noStyle
 									>
@@ -217,10 +223,7 @@ function ConfigureGoogleAuthAuthnProvider({
 											id="google-fetch-groups"
 											labelName="Fetch Groups"
 											onCheckedChange={(checked: boolean): void => {
-												form.setFieldValue(
-													['googleAuthConfig', 'workspaceGroups', 'fetchGroups'],
-													checked,
-												);
+												form.setFieldValue(['googleAuthConfig', 'fetchGroups'], checked);
 											}}
 										/>
 									</Form.Item>
@@ -242,7 +245,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												</Tooltip>
 											</label>
 											<Form.Item
-												name={['googleAuthConfig', 'workspaceGroups', 'serviceAccountJson']}
+												name={['googleAuthConfig', 'serviceAccountJson']}
 												className="authn-provider__form-item"
 											>
 												<TextArea
@@ -255,20 +258,12 @@ function ConfigureGoogleAuthAuthnProvider({
 										</div>
 
 										<DomainMappingList
-											fieldNamePrefix={[
-												'googleAuthConfig',
-												'workspaceGroups',
-												'domainToAdminEmailList',
-											]}
+											fieldNamePrefix={['googleAuthConfig', 'domainToAdminEmailList']}
 										/>
 
 										<div className="authn-provider__checkbox-row">
 											<Form.Item
-												name={[
-													'googleAuthConfig',
-													'workspaceGroups',
-													'fetchTransitiveGroupMembership',
-												]}
+												name={['googleAuthConfig', 'fetchTransitiveGroupMembership']}
 												valuePropName="checked"
 												noStyle
 											>
@@ -277,11 +272,7 @@ function ConfigureGoogleAuthAuthnProvider({
 													labelName="Fetch Transitive Group Membership"
 													onCheckedChange={(checked: boolean): void => {
 														form.setFieldValue(
-															[
-																'googleAuthConfig',
-																'workspaceGroups',
-																'fetchTransitiveGroupMembership',
-															],
+															['googleAuthConfig', 'fetchTransitiveGroupMembership'],
 															checked,
 														);
 													}}
@@ -303,7 +294,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												</Tooltip>
 											</label>
 											<Form.Item
-												name={['googleAuthConfig', 'workspaceGroups', 'allowedGroups']}
+												name={['googleAuthConfig', 'allowedGroups']}
 												className="authn-provider__form-item"
 											>
 												<EmailTagInput placeholder="Type a group email and press Enter" />

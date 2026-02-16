@@ -72,8 +72,7 @@ function AttributeMappingSection({
 								</h4>
 								<p className="attribute-mapping-section__section-description">
 									Configure how SAML assertion attributes from your Identity Provider map
-									to SigNoz user attributes. Leave empty to use default values. Note:
-									Email is always extracted from the NameID assertion.
+									to SigNoz user attributes. Leave empty to use default values.
 								</p>
 							</div>
 							{!expanded && hasErrors && (
@@ -96,6 +95,27 @@ function AttributeMappingSection({
 						id="attribute-mapping-content"
 						className="attribute-mapping-section__content"
 					>
+						<div className="attribute-mapping-section__field-group">
+							<label
+								className="attribute-mapping-section__label"
+								htmlFor="email-attribute"
+							>
+								Email Attribute
+								<Tooltip title="The SAML attribute key that contains the user's email. Default: 'email'">
+									<CircleHelp
+										size={14}
+										className="attribute-mapping-section__label-icon"
+									/>
+								</Tooltip>
+							</label>
+							<Form.Item
+								name={[...fieldNamePrefix, 'email']}
+								className="attribute-mapping-section__form-item"
+							>
+								<Input id="email-attribute" placeholder="Email" />
+							</Form.Item>
+						</div>
+
 						{/* Name Attribute */}
 						<div className="attribute-mapping-section__field-group">
 							<label
