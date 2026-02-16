@@ -6,6 +6,7 @@ import requests
 from fixtures import types
 from fixtures.logger import setup_logger
 from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
+from fixtures.auth import USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD, USER_EDITOR_NAME
 
 logger = setup_logger(__name__)
 
@@ -108,7 +109,7 @@ def test_invite_and_register(
     # Generate an invite token for the editor user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "editor@integration.test", "role": "EDITOR", "name": "editor"},
+        json={"email": USER_EDITOR_EMAIL, "role": "EDITOR", "name": USER_EDITOR_NAME},
         timeout=2,
         headers={
             "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
@@ -130,7 +131,7 @@ def test_invite_and_register(
         (
             invite
             for invite in invite_response
-            if invite["email"] == "editor@integration.test"
+            if invite["email"] == USER_EDITOR_EMAIL
         ),
         None,
     )
@@ -139,8 +140,8 @@ def test_invite_and_register(
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={
-            "password": "password123Z$",
-            "displayName": "editor",
+            "password": USER_EDITOR_PASSWORD,
+            "displayName": USER_EDITOR_NAME,
             "token": f"{found_invite['token']}",
         },
         timeout=2,
@@ -160,7 +161,7 @@ def test_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
         headers={
-            "Authorization": f"Bearer {get_token('editor@integration.test', 'password123Z$')}"
+            "Authorization": f"Bearer {get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)}"
         },
     )
 
@@ -179,14 +180,14 @@ def test_invite_and_register(
 
     user_response = response.json()["data"]
     found_user = next(
-        (user for user in user_response if user["email"] == "editor@integration.test"),
+        (user for user in user_response if user["email"] == USER_EDITOR_EMAIL),
         None,
     )
 
     assert found_user is not None
     assert found_user["role"] == "EDITOR"
-    assert found_user["displayName"] == "editor"
-    assert found_user["email"] == "editor@integration.test"
+    assert found_user["displayName"] == USER_EDITOR_NAME
+    assert found_user["email"] == USER_EDITOR_EMAIL
 
 
 def test_revoke_invite_and_register(
@@ -258,7 +259,7 @@ def test_self_access(
 
     user_response = response.json()["data"]
     found_user = next(
-        (user for user in user_response if user["email"] == "editor@integration.test"),
+        (user for user in user_response if user["email"] == USER_EDITOR_EMAIL),
         None,
     )
 
