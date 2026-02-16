@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
@@ -21,7 +20,6 @@ type service struct {
 	settings  factory.ScopedProviderSettings
 	store     types.UserStore
 	module    user.Module
-	tokenizer tokenizer.Tokenizer
 	orgGetter organization.Getter
 	authz     authz.AuthZ
 	config    user.RootConfig
@@ -32,7 +30,6 @@ func NewService(
 	providerSettings factory.ProviderSettings,
 	store types.UserStore,
 	module user.Module,
-	tokenizer tokenizer.Tokenizer,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
 	config user.RootConfig,
@@ -41,7 +38,6 @@ func NewService(
 		settings:  factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/pkg/modules/user"),
 		store:     store,
 		module:    module,
-		tokenizer: tokenizer,
 		orgGetter: orgGetter,
 		authz:     authz,
 		config:    config,
@@ -87,6 +83,7 @@ func (s *service) reconcile(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if len(orgs) == 0 {
 		return nil
 	}
@@ -99,10 +96,6 @@ func (s *service) reconcile(ctx context.Context) error {
 }
 
 func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) error {
-	if s.config.Email == "" || s.config.Password == "" {
-		return nil
-	}
-
 	email, err := valuer.NewEmail(s.config.Email)
 	if err != nil {
 		return err
@@ -128,10 +121,12 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 
 	if existingUser != nil {
 		oldRole := existingUser.Role
+
 		existingUser.PromoteToRoot()
-		if err := s.store.UpdateUser(ctx, orgID, existingUser.ID.StringValue(), existingUser); err != nil {
+		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return err
 		}
+
 		if oldRole != types.RoleAdmin {
 			if err := s.authz.ModifyGrant(ctx,
 				orgID,
@@ -142,6 +137,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 				return err
 			}
 		}
+
 		return s.setPassword(ctx, existingUser.ID)
 	}
 
@@ -160,12 +156,11 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 }
 
 func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User, email valuer.Email) error {
+	existingRoot.PromoteToRoot()
+
 	if existingRoot.Email.String() != s.config.Email {
-		existingRoot.Email = email
-		if err := s.store.UpdateUser(ctx, orgID, existingRoot.ID.StringValue(), existingRoot); err != nil {
-			return err
-		}
-		if err := s.tokenizer.DeleteIdentity(ctx, existingRoot.ID); err != nil {
+		existingRoot.UpdateEmail(email)
+		if err := s.module.UpdateAnyUser(ctx, orgID, existingRoot); err != nil {
 			return err
 		}
 	}
@@ -179,10 +174,12 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return err
 		}
+
 		factorPassword, err := types.NewFactorPassword(s.config.Password, userID.StringValue())
 		if err != nil {
 			return err
 		}
+
 		return s.store.CreatePassword(ctx, factorPassword)
 	}
 
@@ -190,6 +187,7 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 		if err := password.Update(s.config.Password); err != nil {
 			return err
 		}
+
 		return s.store.UpdatePassword(ctx, password)
 	}
 

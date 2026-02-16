@@ -118,6 +118,12 @@ func (u *User) PromoteToRoot() {
 	u.UpdatedAt = time.Now()
 }
 
+// UpdateEmail updates the email of the user.
+func (u *User) UpdateEmail(email valuer.Email) {
+	u.Email = email
+	u.UpdatedAt = time.Now()
+}
+
 // ErrIfRoot returns an error if the user is a root user. The caller should
 // enrich the error with the specific operation using errors.WithAdditionalf.
 func (u *User) ErrIfRoot() error {
@@ -189,7 +195,7 @@ type UserStore interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *User) error
+	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// Creates a password.

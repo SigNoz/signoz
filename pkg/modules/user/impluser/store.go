@@ -210,19 +210,21 @@ func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role,
 	return users, nil
 }
 
-func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User) error {
-	_, err := store.sqlstore.BunDB().NewUpdate().
+func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
 		Model(user).
 		Column("display_name").
 		Column("email").
 		Column("role").
 		Column("is_root").
 		Column("updated_at").
-		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
+		return store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user does not exist in org: %s", orgID)
 	}
 	return nil
 }

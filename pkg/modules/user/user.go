@@ -34,6 +34,9 @@ type Module interface {
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
 	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error)
+
+	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
+	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite

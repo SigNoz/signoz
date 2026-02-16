@@ -246,21 +246,27 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	}
 
 	existingUser.Update(user.DisplayName, user.Role)
-	if err := m.store.UpdateUser(ctx, orgID, id, existingUser); err != nil {
-		return nil, err
-	}
-
-	traits := types.NewTraitsFromUser(existingUser)
-	m.analytics.IdentifyUser(ctx, existingUser.OrgID.String(), existingUser.ID.String(), traits)
-
-	traits["updated_by"] = updatedBy
-	m.analytics.TrackUser(ctx, existingUser.OrgID.String(), existingUser.ID.String(), "User Updated", traits)
-
-	if err := m.tokenizer.DeleteIdentity(ctx, valuer.MustNewUUID(id)); err != nil {
+	if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 		return nil, err
 	}
 
 	return existingUser, nil
+}
+
+func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+		return err
+	}
+
+	traits := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
+
+	if err := module.tokenizer.DeleteIdentity(ctx, user.ID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
