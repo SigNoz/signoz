@@ -1,7 +1,15 @@
 import { useCallback, useState } from 'react';
-import { ChevronDown, ChevronRight, CircleHelp } from '@signozhq/icons';
+import { Color } from '@signozhq/design-tokens';
+import {
+	ChevronDown,
+	ChevronRight,
+	CircleHelp,
+	TriangleAlert,
+} from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
+
+import { useCollapseSectionErrors } from './hooks/useCollapseSectionErrors';
 
 import './ClaimMappingSection.styles.scss';
 
@@ -37,6 +45,7 @@ function ClaimMappingSection({
 	);
 
 	const collapseActiveKey = expanded ? ['claim-mapping'] : [];
+	const { hasErrors, errorMessages } = useCollapseSectionErrors(fieldNamePrefix);
 
 	return (
 		<div className="claim-mapping-section">
@@ -66,6 +75,19 @@ function ClaimMappingSection({
 									attributes. Leave empty to use default values.
 								</p>
 							</div>
+							{!expanded && hasErrors && (
+								<Tooltip
+									title={
+										<div>
+											{errorMessages.map((msg) => (
+												<div key={msg}>{msg}</div>
+											))}
+										</div>
+									}
+								>
+									<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+								</Tooltip>
+							)}
 						</div>
 					}
 				>

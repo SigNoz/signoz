@@ -1,15 +1,19 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
+import { Color } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
 	ChevronRight,
 	CircleHelp,
 	Plus,
 	Trash2,
+	TriangleAlert,
 } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Select, Tooltip } from 'antd';
+
+import { useCollapseSectionErrors } from './hooks/useCollapseSectionErrors';
 
 import './RoleMappingSection.styles.scss';
 
@@ -57,6 +61,7 @@ function RoleMappingSection({
 	);
 
 	const collapseActiveKey = expanded ? ['role-mapping'] : [];
+	const { hasErrors, errorMessages } = useCollapseSectionErrors(fieldNamePrefix);
 
 	return (
 		<div className="role-mapping-section">
@@ -87,6 +92,19 @@ function RoleMappingSection({
 									roles.
 								</p>
 							</div>
+							{!expanded && hasErrors && (
+								<Tooltip
+									title={
+										<div>
+											{errorMessages.map((msg) => (
+												<div key={msg}>{msg}</div>
+											))}
+										</div>
+									}
+								>
+									<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+								</Tooltip>
+							)}
 						</div>
 					}
 				>

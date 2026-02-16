@@ -15,7 +15,6 @@ export const mockGoogleAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	googleAuthConfig: {
 		clientId: 'test-client-id',
 		clientSecret: 'test-client-secret',
-		redirectURI: 'https://signoz.io/api/v1/auth/google/callback',
 	},
 	authNProviderInfo: {
 		relayStatePath: 'api/v1/sso/relay/domain-1',

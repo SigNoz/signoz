@@ -1,13 +1,20 @@
 import { useCallback, useState } from 'react';
 import { Callout } from '@signozhq/callout';
 import { Checkbox } from '@signozhq/checkbox';
-import { ChevronDown, ChevronRight, CircleHelp } from '@signozhq/icons';
+import { Color } from '@signozhq/design-tokens';
+import {
+	ChevronDown,
+	ChevronRight,
+	CircleHelp,
+	TriangleAlert,
+} from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 
 import DomainMappingList from './components/DomainMappingList';
 import EmailTagInput from './components/EmailTagInput';
+import { useCollapseSectionErrors } from './components/hooks/useCollapseSectionErrors';
 import RoleMappingSection from './components/RoleMappingSection';
 
 import './Providers.styles.scss';
@@ -20,7 +27,10 @@ function ConfigureGoogleAuthAuthnProvider({
 	isCreate: boolean;
 }): JSX.Element {
 	const form = Form.useFormInstance();
-	const fetchGroups = Form.useWatch(['googleAuthConfig', 'fetchGroups'], form);
+	const fetchGroups = Form.useWatch(
+		['googleAuthConfig', 'workspaceGroups', 'fetchGroups'],
+		form,
+	);
 
 	const [expandedSection, setExpandedSection] = useState<ExpandedSection>(null);
 
@@ -35,6 +45,11 @@ function ConfigureGoogleAuthAuthnProvider({
 	const handleRoleMappingChange = useCallback((expanded: boolean): void => {
 		setExpandedSection(expanded ? 'role-mapping' : null);
 	}, []);
+
+	const {
+		hasErrors: hasWorkspaceGroupsErrors,
+		errorMessages: workspaceGroupsErrorMessages,
+	} = useCollapseSectionErrors(['googleAuthConfig', 'workspaceGroups']);
 
 	return (
 		<div className="authn-provider">
@@ -115,22 +130,6 @@ function ConfigureGoogleAuthAuthnProvider({
 						</Form.Item>
 					</div>
 
-					<div className="authn-provider__field-group">
-						<label className="authn-provider__label" htmlFor="google-redirect-uri">
-							Redirect URI
-							<Tooltip title="The redirect URI where Google should send the response. This must match one of the authorized redirect URIs in the Google API Console.">
-								<CircleHelp size={14} className="authn-provider__label-icon" />
-							</Tooltip>
-						</label>
-						<Form.Item
-							name={['googleAuthConfig', 'redirectURI']}
-							className="authn-provider__form-item"
-							rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
-						>
-							<Input id="google-redirect-uri" />
-						</Form.Item>
-					</div>
-
 					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['googleAuthConfig', 'insecureSkipEmailVerified']}
@@ -191,13 +190,26 @@ function ConfigureGoogleAuthAuthnProvider({
 											Requires a Service Account with domain-wide delegation.
 										</p>
 									</div>
+									{expandedSection !== 'workspace-groups' && hasWorkspaceGroupsErrors && (
+										<Tooltip
+											title={
+												<div>
+													{workspaceGroupsErrorMessages.map((msg) => (
+														<div key={msg}>{msg}</div>
+													))}
+												</div>
+											}
+										>
+											<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+										</Tooltip>
+									)}
 								</div>
 							}
 						>
 							<div className="authn-provider__group-content">
 								<div className="authn-provider__checkbox-row">
 									<Form.Item
-										name={['googleAuthConfig', 'fetchGroups']}
+										name={['googleAuthConfig', 'workspaceGroups', 'fetchGroups']}
 										valuePropName="checked"
 										noStyle
 									>
@@ -205,7 +217,10 @@ function ConfigureGoogleAuthAuthnProvider({
 											id="google-fetch-groups"
 											labelName="Fetch Groups"
 											onCheckedChange={(checked: boolean): void => {
-												form.setFieldValue(['googleAuthConfig', 'fetchGroups'], checked);
+												form.setFieldValue(
+													['googleAuthConfig', 'workspaceGroups', 'fetchGroups'],
+													checked,
+												);
 											}}
 										/>
 									</Form.Item>
@@ -227,7 +242,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												</Tooltip>
 											</label>
 											<Form.Item
-												name={['googleAuthConfig', 'serviceAccountJson']}
+												name={['googleAuthConfig', 'workspaceGroups', 'serviceAccountJson']}
 												className="authn-provider__form-item"
 											>
 												<TextArea
@@ -240,12 +255,20 @@ function ConfigureGoogleAuthAuthnProvider({
 										</div>
 
 										<DomainMappingList
-											fieldNamePrefix={['googleAuthConfig', 'domainToAdminEmailList']}
+											fieldNamePrefix={[
+												'googleAuthConfig',
+												'workspaceGroups',
+												'domainToAdminEmailList',
+											]}
 										/>
 
 										<div className="authn-provider__checkbox-row">
 											<Form.Item
-												name={['googleAuthConfig', 'fetchTransitiveGroupMembership']}
+												name={[
+													'googleAuthConfig',
+													'workspaceGroups',
+													'fetchTransitiveGroupMembership',
+												]}
 												valuePropName="checked"
 												noStyle
 											>
@@ -254,7 +277,11 @@ function ConfigureGoogleAuthAuthnProvider({
 													labelName="Fetch Transitive Group Membership"
 													onCheckedChange={(checked: boolean): void => {
 														form.setFieldValue(
-															['googleAuthConfig', 'fetchTransitiveGroupMembership'],
+															[
+																'googleAuthConfig',
+																'workspaceGroups',
+																'fetchTransitiveGroupMembership',
+															],
 															checked,
 														);
 													}}
@@ -276,7 +303,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												</Tooltip>
 											</label>
 											<Form.Item
-												name={['googleAuthConfig', 'allowedGroups']}
+												name={['googleAuthConfig', 'workspaceGroups', 'allowedGroups']}
 												className="authn-provider__form-item"
 											>
 												<EmailTagInput placeholder="Type a group email and press Enter" />

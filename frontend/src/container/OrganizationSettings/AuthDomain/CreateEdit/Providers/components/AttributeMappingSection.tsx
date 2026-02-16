@@ -1,7 +1,15 @@
 import { useCallback, useState } from 'react';
-import { ChevronDown, ChevronRight, CircleHelp } from '@signozhq/icons';
+import { Color } from '@signozhq/design-tokens';
+import {
+	ChevronDown,
+	ChevronRight,
+	CircleHelp,
+	TriangleAlert,
+} from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
+
+import { useCollapseSectionErrors } from './hooks/useCollapseSectionErrors';
 
 import './AttributeMappingSection.styles.scss';
 
@@ -37,6 +45,7 @@ function AttributeMappingSection({
 	);
 
 	const collapseActiveKey = expanded ? ['attribute-mapping'] : [];
+	const { hasErrors, errorMessages } = useCollapseSectionErrors(fieldNamePrefix);
 
 	return (
 		<div className="attribute-mapping-section">
@@ -67,6 +76,19 @@ function AttributeMappingSection({
 									Email is always extracted from the NameID assertion.
 								</p>
 							</div>
+							{!expanded && hasErrors && (
+								<Tooltip
+									title={
+										<div>
+											{errorMessages.map((msg) => (
+												<div key={msg}>{msg}</div>
+											))}
+										</div>
+									}
+								>
+									<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+								</Tooltip>
+							)}
 						</div>
 					}
 				>
