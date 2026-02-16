@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -14,6 +14,8 @@ import BarChart from '../../charts/BarChart/BarChart';
 import ChartManager from '../../components/ChartManager/ChartManager';
 import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
 import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
+
+import '../Panel.styles.scss';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -115,20 +117,24 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		onToggleModelHandler,
 	]);
 
+	const onPlotDestroy = useCallback(() => {
+		uPlotRef.current = null;
+	}, []);
+
+	const onPlotRef = useCallback((plot: uPlot | null): void => {
+		uPlotRef.current = plot;
+	}, []);
+
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<BarChart
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
-					plotRef={(plot: uPlot | null): void => {
-						uPlotRef.current = plot;
-					}}
-					onDestroy={(): void => {
-						uPlotRef.current = null;
-					}}
+					plotRef={onPlotRef}
+					onDestroy={onPlotDestroy}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone.value}

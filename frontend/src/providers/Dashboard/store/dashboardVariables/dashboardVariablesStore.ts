@@ -1,4 +1,7 @@
+import { isEmpty, isUndefined } from 'lodash-es';
+
 import createStore from '../store';
+import { VariableFetchContext } from '../variableFetchStore';
 import { IDashboardVariablesStoreState } from './dashboardVariablesStoreTypes';
 import {
 	computeDerivedValues,
@@ -10,6 +13,8 @@ const initialState: IDashboardVariablesStoreState = {
 	variables: {},
 	sortedVariablesArray: [],
 	dependencyData: null,
+	variableTypes: {},
+	dynamicVariableOrder: [],
 };
 
 export const dashboardVariablesStore = createStore<IDashboardVariablesStoreState>(
@@ -54,4 +59,39 @@ export function updateDashboardVariablesStore({
 
 		updateDerivedValues(draft);
 	});
+}
+
+/**
+ * Read current store snapshot as VariableFetchContext.
+ * Used by components to pass context to variableFetchStore actions
+ * without creating a circular import.
+ */
+export function getVariableDependencyContext(): VariableFetchContext {
+	const state = dashboardVariablesStore.getSnapshot();
+
+	// If every variable already has a selectedValue (e.g. persisted from
+	// localStorage/URL), dynamic variables can start in parallel.
+	// Otherwise they wait for query vars to settle first.
+	const doAllVariablesHaveValuesSelected = Object.values(state.variables).every(
+		(variable) => {
+			if (
+				variable.type === 'DYNAMIC' &&
+				(variable.selectedValue === null || isEmpty(variable.selectedValue)) &&
+				variable.allSelected === true
+			) {
+				return true;
+			}
+
+			return (
+				!isUndefined(variable.selectedValue) && !isEmpty(variable.selectedValue)
+			);
+		},
+	);
+
+	return {
+		doAllVariablesHaveValuesSelected,
+		variableTypes: state.variableTypes,
+		dynamicVariableOrder: state.dynamicVariableOrder,
+		dependencyData: state.dependencyData,
+	};
 }

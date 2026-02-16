@@ -1,6 +1,6 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackUtils';
+import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -11,6 +11,7 @@ import {
 	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -77,6 +78,12 @@ export function prepareBarPanelConfig({
 		builder.setBands(getInitialStackedBands(seriesCount));
 	}
 
+	const stepIntervals: Record<string, number> = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+
 	const seriesList: QueryData[] = apiResponse?.data?.result || [];
 	seriesList.forEach((series) => {
 		const baseLabelName = getLabelName(
@@ -88,6 +95,8 @@ export function prepareBarPanelConfig({
 		const label = currentQuery
 			? getLegend(series, currentQuery, baseLabelName)
 			: baseLabelName;
+
+		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
 
 		builder.addSeries({
 			scaleKey: 'y',
@@ -101,6 +110,7 @@ export function prepareBarPanelConfig({
 			showPoints: VisibilityMode.Never,
 			pointSize: 5,
 			isDarkMode,
+			stepInterval: currentStepInterval,
 		});
 	});
 

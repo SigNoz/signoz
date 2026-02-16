@@ -9,7 +9,7 @@ import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { has } from 'lodash-es';
 import uPlot from 'uplot';
 
-import { stack } from '../charts/utils/stackUtils';
+import { stackSeries } from '../charts/utils/stackSeriesUtils';
 
 /** Returns true if the series at the given index is hidden (e.g. via legend toggle). */
 function isSeriesHidden(plot: uPlot, seriesIndex: number): boolean {
@@ -17,15 +17,15 @@ function isSeriesHidden(plot: uPlot, seriesIndex: number): boolean {
 }
 
 function canApplyStacking(
-	unstacked: uPlot.AlignedData | null,
+	unstackedData: uPlot.AlignedData | null,
 	plot: uPlot,
 	isUpdating: boolean,
 ): boolean {
 	return (
 		!isUpdating &&
-		!!unstacked &&
+		!!unstackedData &&
 		!!plot.data &&
-		unstacked[0]?.length === plot.data[0]?.length
+		unstackedData[0]?.length === plot.data[0]?.length
 	);
 }
 
@@ -89,7 +89,7 @@ export function useBarChartStacking({
 			return data;
 		}
 		const noSeriesHidden = (): boolean => false; // include all series in initial stack
-		const { data: stacked } = stack(data, noSeriesHidden);
+		const { data: stacked } = stackSeries(data, noSeriesHidden);
 		return stacked;
 	}, [data, isStackedBarChart]);
 
@@ -104,7 +104,7 @@ export function useBarChartStacking({
 
 		const shouldExcludeSeries = (idx: number): boolean =>
 			isSeriesHidden(plot, idx);
-		const { data: stacked, bands } = stack(unstacked, shouldExcludeSeries);
+		const { data: stacked, bands } = stackSeries(unstacked, shouldExcludeSeries);
 
 		plot.delBand(null);
 		bands.forEach((band: uPlot.Band) => plot.addBand(band));
