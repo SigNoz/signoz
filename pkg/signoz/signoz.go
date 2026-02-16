@@ -389,7 +389,7 @@ func New(
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard)
 
-	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, tokenizer, orgGetter, config.User.Root)
+	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, tokenizer, orgGetter, authz, config.User.Root)
 
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, gateway, telemetryMetadataStore, authz)

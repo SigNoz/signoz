@@ -5,12 +5,15 @@ import (
 	"slices"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -20,6 +23,7 @@ type service struct {
 	module    user.Module
 	tokenizer tokenizer.Tokenizer
 	orgGetter organization.Getter
+	authz     authz.AuthZ
 	config    user.RootConfig
 	stopC     chan struct{}
 }
@@ -30,6 +34,7 @@ func NewService(
 	module user.Module,
 	tokenizer tokenizer.Tokenizer,
 	orgGetter organization.Getter,
+	authz authz.AuthZ,
 	config user.RootConfig,
 ) user.Service {
 	return &service{
@@ -38,6 +43,7 @@ func NewService(
 		module:    module,
 		tokenizer: tokenizer,
 		orgGetter: orgGetter,
+		authz:     authz,
 		config:    config,
 		stopC:     make(chan struct{}),
 	}
@@ -121,11 +127,20 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		// Promote existing user to root
-		existingUser.IsRoot = true
-		existingUser.Role = types.RoleAdmin
+		oldRole := existingUser.Role
+		existingUser.PromoteToRoot()
 		if err := s.store.UpdateUser(ctx, orgID, existingUser.ID.StringValue(), existingUser); err != nil {
 			return err
+		}
+		if oldRole != types.RoleAdmin {
+			if err := s.authz.ModifyGrant(ctx,
+				orgID,
+				roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole),
+				roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin),
+				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+			); err != nil {
+				return err
+			}
 		}
 		return s.setPassword(ctx, existingUser.ID)
 	}

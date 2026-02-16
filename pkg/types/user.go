@@ -111,6 +111,13 @@ func (u *User) Update(displayName string, role Role) {
 	u.UpdatedAt = time.Now()
 }
 
+// PromoteToRoot promotes the user to a root user with admin role.
+func (u *User) PromoteToRoot() {
+	u.IsRoot = true
+	u.Role = RoleAdmin
+	u.UpdatedAt = time.Now()
+}
+
 // ErrIfRoot returns an error if the user is a root user. The caller should
 // enrich the error with the specific operation using errors.WithAdditionalf.
 func (u *User) ErrIfRoot() error {
