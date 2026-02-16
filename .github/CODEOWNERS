@@ -43,6 +43,12 @@
 /pkg/analytics/ @vikrantgupta25
 /pkg/statsreporter/ @vikrantgupta25
 
+# Emailing Owners
+
+/pkg/emailing/ @vikrantgupta25
+/pkg/types/emailtypes/ @vikrantgupta25
+/templates/email/ @vikrantgupta25
+
 # Querier Owners
 
 /pkg/querier/ @srikanthccv
