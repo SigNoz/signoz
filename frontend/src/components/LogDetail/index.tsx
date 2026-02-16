@@ -36,6 +36,8 @@ import {
 	ArrowUp,
 	BarChart2,
 	Braces,
+	ChevronDown,
+	ChevronUp,
 	Compass,
 	Copy,
 	Filter,
@@ -76,6 +78,9 @@ function LogDetailInner({
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
+	const [activeTooltip, setActiveTooltip] = useState<'prev' | 'next' | null>(
+		null,
+	);
 	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	// Handle clicks outside to close drawer, except on explicitly ignored regions
@@ -297,6 +302,32 @@ function LogDetailInner({
 	);
 
 	const logType = log?.attributes_string?.log_level || LogType.INFO;
+	const currentLogIndex = logs ? logs.findIndex((l) => l.id === log.id) : -1;
+	const isPrevDisabled =
+		!logs || !onNavigateLog || logs.length === 0 || currentLogIndex <= 0;
+	const isNextDisabled =
+		!logs ||
+		!onNavigateLog ||
+		logs.length === 0 ||
+		currentLogIndex === logs.length - 1;
+
+	const handleNavigateLog = (
+		logs: LogDetailInnerProps['logs'],
+		log: LogDetailInnerProps['log'],
+		onNavigateLog: LogDetailInnerProps['onNavigateLog'],
+		direction: 'next' | 'previous',
+		// eslint-disable-next-line max-params
+	): void => {
+		setActiveTooltip(null);
+		if (!logs || !onNavigateLog || currentLogIndex === -1) {
+			return;
+		}
+		if (direction === 'previous' && !isPrevDisabled) {
+			onNavigateLog(logs[currentLogIndex - 1]);
+		} else if (direction === 'next' && !isNextDisabled) {
+			onNavigateLog(logs[currentLogIndex + 1]);
+		}
+	};
 
 	return (
 		<Drawer
@@ -309,17 +340,55 @@ function LogDetailInner({
 						<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
 						<Typography.Text className="title">Log details</Typography.Text>
 					</div>
-					{showOpenInExplorerBtn && (
-						<div className="log-detail-drawer__title-right">
-							<Button
-								className="open-in-explorer-btn"
-								icon={<Compass size={16} />}
-								onClick={handleOpenInExplorer}
+					<div className="log-detail-drawer__title-right">
+						<div className="log-arrows">
+							<Tooltip
+								title={isPrevDisabled ? '' : 'Move to previous log'}
+								placement="top"
+								mouseLeaveDelay={0}
+								open={isPrevDisabled ? false : activeTooltip === 'prev'}
 							>
-								Open in Explorer
-							</Button>
+								<Button
+									icon={<ChevronUp size={14} />}
+									className="log-arrow-btn log-arrow-btn-up"
+									disabled={isPrevDisabled}
+									onMouseEnter={(): void => setActiveTooltip('prev')}
+									onMouseLeave={(): void => setActiveTooltip(null)}
+									onClick={(): void =>
+										handleNavigateLog(logs, log, onNavigateLog, 'previous')
+									}
+								/>
+							</Tooltip>
+							<Tooltip
+								title={isNextDisabled ? '' : 'Move to next log'}
+								placement="top"
+								mouseLeaveDelay={0}
+								open={isNextDisabled ? false : activeTooltip === 'next'}
+							>
+								<Button
+									icon={<ChevronDown size={14} />}
+									className="log-arrow-btn log-arrow-btn-down"
+									disabled={isNextDisabled}
+									onMouseEnter={(): void => setActiveTooltip('next')}
+									onMouseLeave={(): void => setActiveTooltip(null)}
+									onClick={(): void =>
+										handleNavigateLog(logs, log, onNavigateLog, 'next')
+									}
+								/>
+							</Tooltip>
 						</div>
-					)}
+						{showOpenInExplorerBtn && (
+							<div>
+								<Button
+									className="open-in-explorer-btn"
+									icon={<Compass size={16} />}
+									onClick={handleOpenInExplorer}
+								>
+									Open in Explorer
+								</Button>
+							</div>
+						)}
+					</div>
 				</div>
 			}
 			placement="right"
