@@ -1,7 +1,7 @@
 import { PrecisionOption } from 'components/Graph/types';
 import { LegendConfig, TooltipRenderArgs } from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import { CrossPanelSync } from 'types/api/dashboard/getAll';
 
 interface BaseChartProps {
 	width: number;
@@ -17,7 +17,7 @@ interface BaseChartProps {
 interface UPlotBasedChartProps {
 	config: UPlotConfigBuilder;
 	data: uPlot.AlignedData;
-	syncMode?: DashboardCursorSync;
+	syncMode?: CrossPanelSync;
 	syncKey?: string;
 	plotRef?: (plot: uPlot | null) => void;
 	onDestroy?: (plot: uPlot) => void;
