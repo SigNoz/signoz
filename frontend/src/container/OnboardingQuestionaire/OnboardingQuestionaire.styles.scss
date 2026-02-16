@@ -477,47 +477,67 @@
 			}
 		}
 
-		.opentelemetry-radio-container {
+		.observability-tools-radio-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0 12px;
 			width: 528px;
 
-			.opentelemetry-radio-group {
-				width: 100%;
+			.observability-tool-radio-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				height: 32px;
+				width: calc((528px - 12px) / 2);
+				flex: 0 0 calc((528px - 12px) / 2);
 
-				.opentelemetry-radio-items-wrapper {
-					display: flex;
-					flex-direction: row;
-					flex-wrap: nowrap;
-					gap: 12px;
-					width: 100%;
+				label {
+					color: var(--l1-foreground);
+					font-size: 13px;
+					cursor: pointer;
 				}
 
-				.opentelemetry-radio-item {
-					display: flex;
-					align-items: center;
-					gap: 8px;
-					height: 32px;
-					width: calc((528px - 12px) / 2);
-					min-width: 258px;
-					flex: 0 0 calc((528px - 12px) / 2);
+				button[role='radio'] {
+					&[data-state='unchecked'] {
+						border-color: var(--l3-border) !important;
+						border-width: 1px !important;
+					}
+				}
+
+				&.observability-tool-others-item {
+					.onboarding-questionaire-other-input {
+						flex: 1;
+					}
+				}
+			}
+		}
+
+		.migration-timeline-radio-container,
+		.opentelemetry-radio-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0 12px;
+			width: 528px;
+
+			.migration-timeline-radio-item,
+			.opentelemetry-radio-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				height: 32px;
+				width: calc((528px - 12px) / 2);
+				flex: 0 0 calc((528px - 12px) / 2);
+
+				label {
 					color: var(--l1-foreground);
-					font-family: Inter, sans-serif;
 					font-size: 13px;
-					font-weight: 400;
-					line-height: 1;
-					letter-spacing: -0.065px;
-					box-sizing: border-box;
+					cursor: pointer;
+				}
 
-					.ant-radio {
-						.ant-radio-inner {
-							width: 16px;
-							height: 16px;
-							border-color: var(--l3-border);
-						}
-
-						&.ant-radio-checked .ant-radio-inner {
-							border-color: var(--bg-robin-500);
-							background-color: var(--bg-robin-500);
-						}
+				button[role='radio'] {
+					&[data-state='unchecked'] {
+						border-color: var(--l3-border) !important;
+						border-width: 1px !important;
 					}
 				}
 			}
@@ -975,27 +995,6 @@
 
 			.arrow {
 				color: var(--bg-slate-300);
-			}
-
-			.opentelemetry-radio-container {
-				.opentelemetry-radio-group {
-					.opentelemetry-radio-items-wrapper {
-						.opentelemetry-radio-item {
-							color: var(--l1-foreground);
-
-							.ant-radio {
-								.ant-radio-inner {
-									border-color: var(--l3-border);
-								}
-
-								&.ant-radio-checked .ant-radio-inner {
-									border-color: var(--bg-robin-500);
-									background-color: var(--bg-robin-500);
-								}
-							}
-						}
-					}
-				}
 			}
 
 			.onboarding-back-button {
