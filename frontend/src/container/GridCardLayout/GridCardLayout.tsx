@@ -16,7 +16,6 @@ import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useWidgetsByDynamicVariableId } from 'hooks/dashboard/useWidgetsByDynamicVariableId';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -101,8 +100,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const [currentPanelMap, setCurrentPanelMap] = useState<
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
-
-	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
 		setCurrentPanelMap(panelMap);
@@ -617,7 +614,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
 									enableDrillDown={enableDrillDown}
-									widgetsByDynamicVariableId={widgetsByDynamicVariableId}
 								/>
 							</Card>
 						</CardContainer>
