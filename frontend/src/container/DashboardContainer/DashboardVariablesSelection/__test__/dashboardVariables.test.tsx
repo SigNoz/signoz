@@ -223,6 +223,16 @@ describe('dashboardVariables - utilities and processors', () => {
 					},
 					hasCycle: false,
 					cycleNodes: undefined,
+					transitiveDescendants: {
+						deployment_environment: ['service_name', 'endpoint', 'http_status_code'],
+						endpoint: ['http_status_code'],
+						environment: [],
+						http_status_code: [],
+						k8s_cluster_name: ['k8s_node_name', 'k8s_namespace_name'],
+						k8s_namespace_name: [],
+						k8s_node_name: ['k8s_namespace_name'],
+						service_name: ['endpoint', 'http_status_code'],
+					},
 				};
 
 				expect(buildDependencyGraph(graph)).toEqual(expected);
