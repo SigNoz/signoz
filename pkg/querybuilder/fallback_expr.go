@@ -241,13 +241,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 
 		// if the key is a number, the value is a string, we will let clickHouse handle the conversion
 		case float32, float64:
-			switch key.FieldDataType {
-			case telemetrytypes.FieldDataTypeFloat64,
-				telemetrytypes.FieldDataTypeArrayFloat64:
-				// intentionally skip casting when already a float64
-			default:
-				tblFieldName = castFloatHack(tblFieldName)
-			}
+			tblFieldName = castFloatHack(tblFieldName)
 		case string:
 			// check if it's a number inside a string
 			isNumber := false
