@@ -6,22 +6,18 @@ import requests
 from selenium import webdriver
 from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import (
-    USER_ADMIN_EMAIL,
-    USER_ADMIN_PASSWORD,
-    add_license,
-)
+from fixtures.auth import add_license
 from fixtures.idputils import (
     get_oidc_domain,
     get_user_by_email,
     perform_oidc_login,
 )
-from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
+from fixtures.types import SigNoz, TestContainerDocker, TestContainerIDP
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 
 def test_apply_license(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
@@ -36,7 +32,6 @@ def test_create_auth_domain(
     idp: TestContainerIDP,  # pylint: disable=unused-argument
     create_oidc_client: Callable[[str, str], None],
     get_oidc_settings: Callable[[], dict],
-    create_user_admin: Callable[[], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -50,7 +45,7 @@ def test_create_auth_domain(
     settings = get_oidc_settings(client_id)
 
     # Create a auth domain in signoz.
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
@@ -109,7 +104,7 @@ def test_oidc_authn(
     driver.get(actual_url)
     idp_login("viewer@oidc.integration.test", "password123")
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Assert that the user was created in signoz.
     response = requests.get(
@@ -143,7 +138,7 @@ def test_oidc_update_domain_with_group_mappings(
     """
     Updates OIDC domain to add role mapping with group mappings and claim mapping.
     """
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     domain = get_oidc_domain(signoz, admin_token)
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
     settings = get_oidc_settings(client_id)
@@ -204,7 +199,7 @@ def test_oidc_role_mapping_single_group_admin(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -230,7 +225,7 @@ def test_oidc_role_mapping_single_group_editor(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -260,7 +255,7 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -287,7 +282,7 @@ def test_oidc_role_mapping_explicit_viewer_group(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -313,7 +308,7 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -329,7 +324,7 @@ def test_oidc_update_domain_with_use_role_claim(
     """
     Updates OIDC domain to enable useRoleClaim.
     """
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     domain = get_oidc_domain(signoz, admin_token)
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
     settings = get_oidc_settings(client_id)
@@ -393,7 +388,7 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -425,7 +420,7 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -455,7 +450,7 @@ def test_oidc_role_mapping_case_insensitive(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -481,7 +476,7 @@ def test_oidc_name_mapping(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -517,7 +512,7 @@ def test_oidc_empty_name_uses_fallback(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         headers={"Authorization": f"Bearer {admin_token}"},

@@ -6,22 +6,18 @@ import requests
 from selenium import webdriver
 from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import (
-    USER_ADMIN_EMAIL,
-    USER_ADMIN_PASSWORD,
-    add_license,
-)
+from fixtures.auth import add_license
 from fixtures.idputils import (
     get_saml_domain,
     get_user_by_email,
     perform_saml_login,
 )
-from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
+from fixtures.types import SigNoz, TestContainerDocker, TestContainerIDP
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 
 def test_apply_license(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
@@ -34,7 +30,6 @@ def test_create_auth_domain(
     create_saml_client: Callable[[str, str], None],
     update_saml_client_attributes: Callable[[str, Dict[str, Any]], None],
     get_saml_settings: Callable[[], dict],
-    create_user_admin: Callable[[], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     # Create a saml client in the idp.
@@ -44,7 +39,7 @@ def test_create_auth_domain(
     settings = get_saml_settings()
 
     # Create a auth domain in signoz.
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/domains"),
@@ -127,7 +122,7 @@ def test_saml_authn(
     driver.get(url)
     idp_login("viewer@saml.integration.test", "password")
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Assert that the user was created in signoz.
     response = requests.get(
@@ -178,7 +173,7 @@ def test_idp_initiated_saml_authn(
     driver.get(idp_initiated_login_url)
     idp_login("viewer.idp.initiated@saml.integration.test", "password")
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Assert that the user was created in signoz.
     response = requests.get(
@@ -208,7 +203,7 @@ def test_saml_update_domain_with_group_mappings(
     get_token: Callable[[str, str], str],
     get_saml_settings: Callable[[], dict],
 ) -> None:
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     domain = get_saml_domain(signoz, admin_token)
     settings = get_saml_settings()
 
@@ -266,7 +261,7 @@ def test_saml_role_mapping_single_group_admin(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -292,7 +287,7 @@ def test_saml_role_mapping_single_group_editor(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -322,7 +317,7 @@ def test_saml_role_mapping_multiple_groups_highest_wins(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -349,7 +344,7 @@ def test_saml_role_mapping_explicit_viewer_group(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -375,7 +370,7 @@ def test_saml_role_mapping_unmapped_group_uses_default(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -390,7 +385,7 @@ def test_saml_update_domain_with_use_role_claim(
     """
     Updates SAML domain to enable useRoleAttribute (direct role attribute).
     """
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     domain = get_saml_domain(signoz, admin_token)
     settings = get_saml_settings()
 
@@ -452,7 +447,7 @@ def test_saml_role_mapping_role_claim_takes_precedence(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -482,7 +477,7 @@ def test_saml_role_mapping_invalid_role_claim_fallback(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -512,7 +507,7 @@ def test_saml_role_mapping_case_insensitive(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -537,7 +532,7 @@ def test_saml_name_mapping(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
@@ -565,7 +560,7 @@ def test_saml_empty_name_fallback(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None

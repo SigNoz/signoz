@@ -10,7 +10,7 @@ from typing import Callable, List
 import pytest
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     build_builder_query,
@@ -38,7 +38,6 @@ MULTI_TEMPORALITY_FILE_24h = get_testdata_file_path(
 )
 def test_with_steady_values_and_reset(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
@@ -58,7 +57,7 @@ def test_with_steady_values_and_reset(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,
@@ -99,7 +98,6 @@ def test_with_steady_values_and_reset(
 )
 def test_group_by_endpoint(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
@@ -122,7 +120,7 @@ def test_group_by_endpoint(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,
@@ -282,7 +280,6 @@ def test_group_by_endpoint(
 )
 def test_for_service_with_switch(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
@@ -302,7 +299,7 @@ def test_for_service_with_switch(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,
@@ -339,7 +336,6 @@ def test_for_service_with_switch(
 )
 def test_for_week_long_time_range(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
@@ -357,7 +353,7 @@ def test_for_week_long_time_range(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,
@@ -383,7 +379,6 @@ def test_for_week_long_time_range(
 )
 def test_for_month_long_time_range(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
     time_aggregation: str,
@@ -401,7 +396,7 @@ def test_for_month_long_time_range(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,

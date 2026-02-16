@@ -5,18 +5,17 @@ import pytest
 import requests
 from sqlalchemy import sql
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.types import Operation, SigNoz
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
+from fixtures.types import SigNoz
 
 ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 
 def test_managed_roles_create_on_register(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # get the list of all roles.
     response = requests.get(
@@ -45,10 +44,9 @@ def test_managed_roles_create_on_register(
 def test_root_user_signoz_admin_assignment(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get the user from the /user/me endpoint and extract the id
     user_response = requests.get(
@@ -106,10 +104,9 @@ def test_root_user_signoz_admin_assignment(
 def test_anonymous_user_signoz_anonymous_assignment(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/roles"),

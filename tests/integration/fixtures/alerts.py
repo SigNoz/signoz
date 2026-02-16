@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
@@ -20,7 +20,7 @@ logger = setup_logger(__name__)
 def create_alert_rule(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> Callable[[dict], str]:
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     rule_ids = []
 

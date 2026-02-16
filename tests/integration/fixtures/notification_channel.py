@@ -9,7 +9,7 @@ from testcontainers.core.container import Network
 from wiremock.testing.testcontainer import WireMockContainer
 
 from fixtures import dev, types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -74,10 +74,9 @@ def notification_channel(
 @pytest.fixture(name="create_webhook_notification_channel", scope="function")
 def create_webhook_notification_channel(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> Callable[[str, str, dict, bool], str]:
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # function to create notification channel
     def _create_webhook_notification_channel(

@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.querier import (
     assert_minutely_bucket_values,
     find_named_result,
@@ -23,7 +23,6 @@ from src.querier.util import (
 
 def test_traces_list(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -150,7 +149,7 @@ def test_traces_list(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Query all traces for the past 5 minutes
     response = requests.post(
@@ -662,7 +661,6 @@ def test_traces_list(
 )
 def test_traces_list_with_corrupt_data(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
     payload: Dict[str, Any],
@@ -680,7 +678,7 @@ def test_traces_list_with_corrupt_data(
     # 4 Traces with corrupt metadata inserted
     # traces[i] occured before traces[j] where i < j
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = make_query_request(
         signoz,
@@ -766,7 +764,6 @@ def test_traces_list_with_corrupt_data(
 )
 def test_traces_aggergate_order_by_count(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
     order_by: Dict[str, str],
@@ -893,7 +890,7 @@ def test_traces_aggergate_order_by_count(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     query = {
         "type": "builder_query",
@@ -937,7 +934,6 @@ def test_traces_aggergate_order_by_count(
 
 def test_traces_aggregate_with_mixed_field_selectors(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1061,7 +1057,7 @@ def test_traces_aggregate_with_mixed_field_selectors(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     query = {
         "type": "builder_query",
@@ -1114,7 +1110,6 @@ def test_traces_aggregate_with_mixed_field_selectors(
 
 def test_traces_fill_gaps(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1141,7 +1136,7 @@ def test_traces_fill_gaps(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1198,7 +1193,6 @@ def test_traces_fill_gaps(
 
 def test_traces_fill_gaps_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1237,7 +1231,7 @@ def test_traces_fill_gaps_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1311,7 +1305,6 @@ def test_traces_fill_gaps_with_group_by(
 
 def test_traces_fill_gaps_formula(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1350,7 +1343,7 @@ def test_traces_fill_gaps_formula(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1431,7 +1424,6 @@ def test_traces_fill_gaps_formula(
 
 def test_traces_fill_gaps_formula_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1470,7 +1462,7 @@ def test_traces_fill_gaps_formula_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1572,7 +1564,6 @@ def test_traces_fill_gaps_formula_with_group_by(
 
 def test_traces_fill_zero(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1598,7 +1589,7 @@ def test_traces_fill_zero(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1655,7 +1646,6 @@ def test_traces_fill_zero(
 
 def test_traces_fill_zero_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1694,7 +1684,7 @@ def test_traces_fill_zero_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1769,7 +1759,6 @@ def test_traces_fill_zero_with_group_by(
 
 def test_traces_fill_zero_formula(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1808,7 +1797,7 @@ def test_traces_fill_zero_formula(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1889,7 +1878,6 @@ def test_traces_fill_zero_formula(
 
 def test_traces_fill_zero_formula_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
@@ -1928,7 +1916,7 @@ def test_traces_fill_zero_formula_with_group_by(
     ]
     insert_traces(traces)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)

@@ -35,7 +35,6 @@ def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:
 def test_teardown(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     idp: types.TestContainerIDP,  # pylint: disable=unused-argument
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     migrator: types.Operation,  # pylint: disable=unused-argument
 ) -> None:
     pass

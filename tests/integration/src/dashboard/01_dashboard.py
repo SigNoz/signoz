@@ -4,16 +4,16 @@ from typing import Callable, List
 import requests
 from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.types import Operation, SigNoz, TestContainerDocker
+from fixtures.auth import add_license
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
+from fixtures.types import SigNoz, TestContainerDocker
 
 
 def test_create_and_delete_dashboard_without_license(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
@@ -38,7 +38,6 @@ def test_create_and_delete_dashboard_without_license(
 
 def test_apply_license(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
@@ -50,10 +49,9 @@ def test_apply_license(
 
 def test_create_and_delete_dashboard_with_license(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),

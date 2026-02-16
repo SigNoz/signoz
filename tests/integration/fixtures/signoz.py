@@ -15,6 +15,9 @@ from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+ROOT_USER_EMAIL = "root@integration.test"
+ROOT_USER_PASSWORD = "Str0ngP@ssw0rd!"
+
 
 @pytest.fixture(name="signoz", scope="package")
 def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -73,6 +76,9 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_POLL__INTERVAL": "5s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__WAIT": "1s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__INTERVAL": "5s",
+                "SIGNOZ_USER_ROOT_ENABLED": True,
+                "SIGNOZ_USER_ROOT_EMAIL": ROOT_USER_EMAIL,
+                "SIGNOZ_USER_ROOT_PASSWORD": ROOT_USER_PASSWORD,
             }
             | sqlstore.env
             | clickhouse.env

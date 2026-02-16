@@ -6,13 +6,13 @@ import requests
 from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.types import Operation, SigNoz, TestContainerDocker
+from fixtures.auth import add_license
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
+from fixtures.types import SigNoz, TestContainerDocker
 
 
 def test_apply_license(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
@@ -24,10 +24,9 @@ def test_apply_license(
 
 def test_create_and_get_public_dashboard(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
@@ -72,10 +71,9 @@ def test_create_and_get_public_dashboard(
 
 def test_public_dashboard_widget_query_range(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     dashboard_req = {
         "title": "Test Widget Query Range Dashboard",
@@ -196,13 +194,12 @@ def test_public_dashboard_widget_query_range(
 def test_anonymous_role_has_public_dashboard_permission(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """
     Verify that the signoz-anonymous role has the public-dashboard/* permission.
     """
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get the roles to find the org_id
     response = requests.get(
