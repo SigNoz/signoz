@@ -10,6 +10,7 @@ import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { AzureConfig, AzureService } from 'container/Integrations/types';
 import { useGetCloudIntegrationServiceDetails } from 'hooks/integration/useServiceDetails';
 import { useUpdateServiceConfig } from 'hooks/integration/useUpdateServiceConfig';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEqual } from 'lodash-es';
 import { Save, X } from 'lucide-react';
 
@@ -37,6 +38,8 @@ export default function AzureServiceDetails({
 	cloudAccountId,
 }: AzureServiceDetailsProps): JSX.Element {
 	const queryClient = useQueryClient();
+	const { safeNavigate } = useSafeNavigate();
+
 	const {
 		data: serviceDetailsData,
 		isLoading,
@@ -236,7 +239,11 @@ export default function AzureServiceDetails({
 											handleAzureLogsEnableAllChange(e.target.checked)
 										}
 										disabled={isUpdating}
-									/>
+									>
+										<span className="azure-service-details-overview-configuration-title-text-select-all">
+											Select All
+										</span>
+									</Checkbox>
 								</div>
 							</div>
 
@@ -279,7 +286,11 @@ export default function AzureServiceDetails({
 											handleAzureMetricsEnableAllChange(e.target.checked)
 										}
 										disabled={isUpdating}
-									/>
+									>
+										<span className="azure-service-details-overview-configuration-title-text-select-all">
+											Select All
+										</span>
+									</Checkbox>
 								</div>
 							</div>
 
@@ -343,7 +354,17 @@ export default function AzureServiceDetails({
 					<div className="azure-service-dashboards-title">Dashboards</div>
 					<div className="azure-service-dashboards-items">
 						{dashboards.map((dashboard) => (
-							<div key={dashboard.id} className="azure-service-dashboard-item">
+							<div
+								key={dashboard.id}
+								className={`azure-service-dashboard-item ${
+									dashboard.url ? 'azure-service-dashboard-item-clickable' : ''
+								}`}
+								onClick={(): void => {
+									if (dashboard.url) {
+										safeNavigate(dashboard.url);
+									}
+								}}
+							>
 								<div className="azure-service-dashboard-item-title">
 									{dashboard.title}
 								</div>

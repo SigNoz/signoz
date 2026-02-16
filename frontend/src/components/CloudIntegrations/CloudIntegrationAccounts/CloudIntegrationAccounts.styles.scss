@@ -87,3 +87,22 @@
 		}
 	}
 }
+
+.cloud-integration-accounts-drawer-content {
+	height: 100%;
+	max-height: calc(100vh - 120px); // Account for drawer header and padding
+	overflow-y: auto;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+
+	&::-webkit-scrollbar {
+		width: 0.2rem;
+	}
+
+	.edit-account-content,
+	.add-new-account-content {
+		flex: 1;
+		min-height: 0; // Allows flex children to shrink below content size
+	}
+}
