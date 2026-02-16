@@ -1598,12 +1598,12 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
 	if metricName == "" {
 		return metrictypes.Unknown, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
 	}
 
-	temporalityMap, err := t.FetchTemporalityMulti(ctx, metricName)
+	temporalityMap, err := t.FetchTemporalityMulti(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricName)
 	if err != nil {
 		return metrictypes.Unknown, err
 	}
@@ -1616,13 +1616,13 @@ func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName st
 	return temporality, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	if len(metricNames) == 0 {
 		return make(map[string]metrictypes.Temporality), nil
 	}
 
 	result := make(map[string]metrictypes.Temporality)
-	metricsTemporality, err := t.fetchMetricsTemporality(ctx, metricNames...)
+	metricsTemporality, err := t.fetchMetricsTemporality(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -1631,8 +1631,12 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
-		if temporality, exists := metricsTemporality[metricName]; exists {
-			result[metricName] = temporality
+		if temporality, exists := metricsTemporality[metricName]; exists && len(temporality) > 0 {
+			if len(temporality) > 1 {
+				result[metricName] = metrictypes.Multiple
+			} else {
+				result[metricName] = temporality[0]
+			}
 			continue
 		}
 		if temporality, exists := meterMetricsTemporality[metricName]; exists {
@@ -1645,8 +1649,10 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	return result, nil
 }
 
-func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
-	result := make(map[string]metrictypes.Temporality)
+func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
+	result := make(map[string][]metrictypes.Temporality)
+
+	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
 
 	// Build query to fetch temporality for all metrics
 	// We use attr_string_value where attr_name = '__temporality__'
@@ -1654,14 +1660,18 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metric
 	// and metric_name column contains temporality value, so we use the correct mapping
 	sb := sqlbuilder.Select(
 		"metric_name",
-		"argMax(temporality, last_reported_unix_milli) as temporality",
-	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
+		"temporality",
+	).
+		From(t.metricsDBName + "." + tsTableName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
-	sb.Where(sb.In("metric_name", metricNames))
+	sb.Where(
+		sb.In("metric_name", metricNames),
+		sb.GTE("unix_milli", adjustedStartTs),
+		sb.LT("unix_milli", adjustedEndTs),
+	)
 
-	// Group by metric name to get one temporality per metric
-	sb.GroupBy("metric_name")
+	sb.GroupBy("metric_name", "temporality")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -1693,8 +1703,12 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metric
 			// Unknown or empty temporality
 			temporality = metrictypes.Unknown
 		}
-
-		result[metricName] = temporality
+		if temporality != metrictypes.Unknown {
+			result[metricName] = append(result[metricName], temporality)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
 	}
 
 	return result, nil

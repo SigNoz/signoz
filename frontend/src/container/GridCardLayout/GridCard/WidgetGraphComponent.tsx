@@ -14,6 +14,7 @@ import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplor
 import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
@@ -407,6 +408,7 @@ function WidgetGraphComponent({
 					ref={graphRef}
 				>
 					<PanelWrapper
+						panelMode={PanelMode.DASHBOARD_VIEW}
 						widget={widget}
 						queryResponse={queryResponse}
 						setRequestData={setRequestData}

@@ -1,6 +1,10 @@
 import { OptionData } from 'components/NewSelect/types';
 import { isEmpty, isNull } from 'lodash-es';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import {
+	IDashboardVariables,
+	IDependencyData,
+} from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
 	a: (string | number | boolean)[],
@@ -21,7 +25,7 @@ export function areArraysEqual(
 
 export const convertVariablesToDbFormat = (
 	variblesArr: IDashboardVariable[],
-): Dashboard['data']['variables'] =>
+): IDashboardVariables =>
 	variblesArr.reduce((result, obj: IDashboardVariable) => {
 		const { id } = obj;
 
@@ -95,14 +99,6 @@ export const buildDependencies = (
 
 	return graph;
 };
-
-export interface IDependencyData {
-	order: string[];
-	graph: VariableGraph;
-	parentDependencyGraph: VariableGraph;
-	hasCycle: boolean;
-	cycleNodes?: string[];
-}
 
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
@@ -250,10 +246,26 @@ export const buildDependencyGraph = (
 
 	const hasCycle = topologicalOrder.length !== Object.keys(dependencies)?.length;
 
+	// Pre-compute transitive descendants by walking topological order in reverse.
+	// Each node's transitive descendants = direct children + their transitive descendants.
+	const transitiveDescendants: VariableGraph = {};
+	for (let i = topologicalOrder.length - 1; i >= 0; i--) {
+		const node = topologicalOrder[i];
+		const desc = new Set<string>();
+		for (const child of adjList[node] || []) {
+			desc.add(child);
+			for (const d of transitiveDescendants[child] || []) {
+				desc.add(d);
+			}
+		}
+		transitiveDescendants[node] = Array.from(desc);
+	}
+
 	return {
 		order: topologicalOrder,
 		graph: adjList,
 		parentDependencyGraph: buildParentDependencyGraph(adjList),
+		transitiveDescendants,
 		hasCycle,
 		cycleNodes,
 	};
@@ -367,21 +379,15 @@ export const uniqueOptions = (options: OptionData[]): OptionData[] => {
 	return uniqueOptions;
 };
 
-export const uniqueValues = (values: string[] | string): string[] | string => {
-	if (Array.isArray(values)) {
-		const uniqueValues: string[] = [];
-		const seenValues = new Set<string>();
-
-		values.forEach((value) => {
-			if (seenValues.has(value)) {
-				return;
-			}
-			seenValues.add(value);
-			uniqueValues.push(value);
-		});
-
-		return uniqueValues;
+export const getSelectValue = (
+	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
+): string | string[] | undefined => {
+	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString();
+		}
+		return selectedValue.map((item) => item.toString());
 	}
-
-	return values;
+	return selectedValue?.toString();
 };
