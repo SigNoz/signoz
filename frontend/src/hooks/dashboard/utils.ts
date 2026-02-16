@@ -3,6 +3,7 @@ import { TelemetryFieldKey } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
+import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 import { isArray } from 'lodash-es';
 import {
 	Dashboard,
@@ -116,10 +117,17 @@ export const createDynamicVariableToWidgetsMap = (
 						dynamicVariables.forEach((variable) => {
 							if (
 								variable.dynamicVariablesAttribute &&
+								variable.name &&
 								filter.key?.key === variable.dynamicVariablesAttribute &&
-								((isArray(filter.value) &&
-									filter.value.includes(`$${variable.name}`)) ||
-									filter.value === `$${variable.name}`) &&
+								(isArray(filter.value)
+									? filter.value.some(
+											(v) =>
+												typeof v === 'string' &&
+												variable.name &&
+												textContainsVariableReference(v, variable.name),
+									  )
+									: typeof filter.value === 'string' &&
+									  textContainsVariableReference(filter.value, variable.name)) &&
 								!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 							) {
 								dynamicVariableToWidgetsMap[variable.id].push(widget.id);
@@ -132,7 +140,12 @@ export const createDynamicVariableToWidgetsMap = (
 						dynamicVariables.forEach((variable) => {
 							if (
 								variable.dynamicVariablesAttribute &&
-								queryData.filter?.expression?.includes(`$${variable.name}`) &&
+								variable.name &&
+								queryData.filter?.expression &&
+								textContainsVariableReference(
+									queryData.filter.expression,
+									variable.name,
+								) &&
 								!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 							) {
 								dynamicVariableToWidgetsMap[variable.id].push(widget.id);
@@ -149,7 +162,9 @@ export const createDynamicVariableToWidgetsMap = (
 					dynamicVariables.forEach((variable) => {
 						if (
 							variable.dynamicVariablesAttribute &&
-							promqlQuery.query?.includes(`$${variable.name}`) &&
+							variable.name &&
+							promqlQuery.query &&
+							textContainsVariableReference(promqlQuery.query, variable.name) &&
 							!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 						) {
 							dynamicVariableToWidgetsMap[variable.id].push(widget.id);
@@ -165,7 +180,9 @@ export const createDynamicVariableToWidgetsMap = (
 					dynamicVariables.forEach((variable) => {
 						if (
 							variable.dynamicVariablesAttribute &&
-							clickhouseQuery.query?.includes(`$${variable.name}`) &&
+							variable.name &&
+							clickhouseQuery.query &&
+							textContainsVariableReference(clickhouseQuery.query, variable.name) &&
 							!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 						) {
 							dynamicVariableToWidgetsMap[variable.id].push(widget.id);
