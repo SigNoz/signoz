@@ -518,7 +518,7 @@ export enum YAxisUnit {
 	OPEN_METRICS_COUNT = 'count',
 
 	AWS_COUNT_SECOND = 'Count/Second',
-	UCUM_COUNT_SECOND = '{count}/s',
+	UCUM_COUNT_SECOND = '{count}/s', // oxlint-disable-line no-duplicate-enum-values
 	OPEN_METRICS_COUNT_SECOND = 'count_per_second',
 
 	AWS_PERCENT = 'Percent',
@@ -616,7 +616,7 @@ export enum YAxisUnit {
 	UCUM_YOBIBITS_SECOND = 'Yibit/s',
 	OPEN_METRICS_YOBIBITS_SECOND = 'yobibits_per_second',
 
-	UCUM_TRUE_FALSE = '{bool}',
+	UCUM_TRUE_FALSE = '{bool}', // oxlint-disable-line no-duplicate-enum-values
 	OPEN_METRICS_TRUE_FALSE = 'boolean_true_false',
 
 	UCUM_YES_NO = '{bool}',

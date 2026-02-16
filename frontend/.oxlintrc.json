@@ -1,0 +1,327 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "react",
+    "react-perf",
+    "typescript",
+    "unicorn",
+    "jsx-a11y",
+    "import",
+    "jest"
+  ],
+  "categories": {
+    "correctness": "warn"
+  },
+  "env": {
+    "builtin": true,
+    "es2021": true,
+    "browser": true,
+    "jest": true,
+    "node": true
+  },
+  "settings": {
+    "react": {
+      "version": "18.2.0"
+    }
+  },
+  "rules": {
+    "constructor-super": "error",
+    "for-direction": "error",
+    "getter-return": "error",
+    "no-async-promise-executor": "error",
+    "no-case-declarations": "error",
+    "no-class-assign": "error",
+    "no-compare-neg-zero": "error",
+    "no-cond-assign": "error", // Prevents accidental assignment in conditions (if (x = 1) instead of if (x === 1))
+    "no-const-assign": "error",
+    "no-constant-binary-expression": "error",
+    "no-constant-condition": "error",
+    "no-control-regex": "error",
+    "no-debugger": "error", // Disallows debugger statements in production code
+    "no-delete-var": "error",
+    "no-dupe-class-members": "error",
+    "no-dupe-else-if": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty": "error",
+    "no-empty-character-class": "error",
+    "no-empty-pattern": "error",
+    "no-empty-static-block": "error",
+    "no-ex-assign": "error",
+    "no-extra-boolean-cast": "error",
+    "no-fallthrough": "error",
+    "no-func-assign": "error",
+    "no-global-assign": "error",
+    "no-import-assign": "error",
+    "no-invalid-regexp": "error",
+    "no-irregular-whitespace": "error",
+    "no-loss-of-precision": "error",
+    "no-misleading-character-class": "error",
+    "no-new-native-nonconstructor": "error",
+    "no-nonoctal-decimal-escape": "error",
+    "no-obj-calls": "error",
+    "no-prototype-builtins": "error",
+    "no-redeclare": "error",
+    "no-regex-spaces": "error",
+    "no-self-assign": "error",
+    "no-setter-return": "error",
+    "no-shadow-restricted-names": "error",
+    "no-sparse-arrays": "error",
+    "no-this-before-super": "error",
+    "no-undef": "error",
+    "no-unreachable": "error",
+    "no-unsafe-finally": "error",
+    "no-unsafe-negation": "error",
+    "no-unsafe-optional-chaining": "error",
+    "no-unused-labels": "error",
+    "no-unused-private-class-members": "error",
+    "no-unused-vars": [ // Disallows unused variables/args
+      "error",
+      {
+        "argsIgnorePattern": "^_", // Allows unused args prefixed with _ (e.g., _unusedParam)
+        "varsIgnorePattern": "^_", // Allows unused vars prefixed with _ (e.g., _unusedVar)
+        "caughtErrors": "none"
+      }
+    ],
+    "no-useless-backreference": "error",
+    "no-useless-catch": "error",
+    "no-useless-escape": "error",
+    "no-with": "error",
+    "require-yield": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "react/display-name": "error",
+    "react/jsx-key": "error",
+    "react/jsx-no-comment-textnodes": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/jsx-no-target-blank": "error",
+    "react/jsx-no-undef": "error",
+    "react/no-children-prop": "error",
+    "react/no-danger-with-children": "error",
+    "react/no-direct-mutation-state": "error",
+    "react/no-find-dom-node": "error",
+    "react/no-is-mounted": "error",
+    "react/no-render-return-value": "error",
+    "react/no-string-refs": "error",
+    "react/no-unescaped-entities": "error",
+    "react/no-unknown-property": "error",
+    "react/require-render-return": "error",
+    "no-array-constructor": "error",
+    "@typescript-eslint/no-duplicate-enum-values": "error",
+    "@typescript-eslint/no-empty-object-type": "error",
+    "@typescript-eslint/no-explicit-any": "warn", // Warns when using 'any' type (consider upgrading to error)
+    "@typescript-eslint/no-empty-function": "off", // TODO: Change to 'error' after fixing ~80 empty function placeholders in providers/contexts
+    "@typescript-eslint/ban-ts-comment": "off", // Allows @ts-ignore comments (sometimes needed for third-party libs)
+    "no-empty-function": "off", // Disabled in favor of TypeScript version above
+    "@typescript-eslint/no-extra-non-null-assertion": "error",
+    "@typescript-eslint/no-misused-new": "error",
+    "@typescript-eslint/no-namespace": "error",
+    "@typescript-eslint/no-non-null-asserted-optional-chain": "error",
+    "@typescript-eslint/no-require-imports": "error",
+    "@typescript-eslint/no-this-alias": "error",
+    "@typescript-eslint/no-unnecessary-type-constraint": "error",
+    "@typescript-eslint/no-unsafe-declaration-merging": "error",
+    "@typescript-eslint/no-unsafe-function-type": "error",
+    "no-unused-expressions": "error",
+    "@typescript-eslint/no-wrapper-object-types": "error",
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/prefer-namespace-keyword": "error",
+    "@typescript-eslint/triple-slash-reference": "error",
+    "curly": "error", // Requires curly braces for all control statements
+    "prettier/prettier": [ // Prettier - code formatting
+      "error",
+      {},
+      {
+        "usePrettierrc": true // Uses .prettierrc.json for formatting rules
+      }
+    ],
+    "prefer-const": "error", // Enforces const for variables never reassigned
+    "no-var": "error", // Disallows var, enforces let/const
+    "no-else-return": [ // Reduces nesting by disallowing else after return
+      "error",
+      {
+        "allowElseIf": false
+      }
+    ],
+    "eqeqeq": [ // Enforces === and !== (allows == null for null/undefined check)
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "no-console": [ // Warns on console.log, allows console.warn/error
+      "error",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "@typescript-eslint/explicit-function-return-type": "error", // Requires explicit return types on functions
+    "@typescript-eslint/no-var-requires": "error", // Disallows require() in TypeScript (use import instead)
+    "react/prop-types": "off", // Disabled - using TypeScript instead
+    "react/jsx-props-no-spreading": "off", // Allows {...props} spreading (common in HOCs, forms, wrappers)
+    "react/jsx-filename-extension": [ // Warns if JSX is used in non-.jsx/.tsx files
+      "error",
+      {
+        "extensions": [
+          ".tsx",
+          ".jsx"
+        ]
+      }
+    ],
+    "react/no-array-index-key": "error", // Prevents using array index as key (causes bugs when list changes)
+    "jsx-a11y/label-has-associated-control": [ // Accessibility rules - Labels must either wrap inputs or use htmlFor/id
+      "error",
+      {
+        "required": {
+          "some": [
+            "nesting",
+            "id"
+          ]
+        }
+      }
+    ],
+    "import/extensions": "off", // Import/export rules - Disallows .js/.jsx/.ts/.tsx extension in imports
+    "import/no-extraneous-dependencies": [ // Prevents importing packages not in package.json
+      "error",
+      {
+        "devDependencies": true
+      }
+    ],
+    "import/no-cycle": "warn", // Warns about circular dependencies
+    "simple-import-sort/imports": [ // Import sorting rules - React first, then external packages, then absolute imports with @ alias, then side effect imports, then relative imports, then style imports
+      "error",
+      {
+        "groups": [
+          [
+            "^react",
+            "^@?\\w" // React first, then external packages
+          ],
+          [
+            "^@/" // Absolute imports with @ alias
+          ],
+          [
+            "^\\u0000" // Side effect imports (import './file')
+          ],
+          [
+            "^\\." // Relative imports
+          ],
+          [
+            "^.+\\.s?css$" // Style imports
+          ]
+        ]
+      }
+    ],
+    "simple-import-sort/exports": "error", // Auto-sorts exports
+    "sonarjs/no-all-duplicated-branches": "error",
+    "sonarjs/no-duplicate-string": "off", // SonarJS - code quality and complexity - Disabled - can be noisy (enable periodically to check)
+    "sonarjs/no-element-overwrite": "error",
+    "sonarjs/no-empty-collection": "error",
+    "sonarjs/no-extra-arguments": "error",
+    "sonarjs/no-identical-conditions": "error",
+    "sonarjs/no-identical-expressions": "error",
+    "sonarjs/no-ignored-return": "error",
+    "sonarjs/no-use-of-empty-return-value": "error",
+    "sonarjs/non-existent-operator": "error",
+    "sonarjs/cognitive-complexity": "off",
+    "sonarjs/elseif-without-else": "off",
+    "sonarjs/max-switch-cases": "error",
+    "sonarjs/no-collapsible-if": "error",
+    "sonarjs/no-collection-size-mischeck": "error",
+    "sonarjs/no-duplicated-branches": "error",
+    "sonarjs/no-gratuitous-expressions": "error",
+    "sonarjs/no-identical-functions": "error",
+    "sonarjs/no-inverted-boolean-check": "off",
+    "sonarjs/no-nested-switch": "error",
+    "sonarjs/no-nested-template-literals": "error",
+    "sonarjs/no-redundant-boolean": "error",
+    "sonarjs/no-redundant-jump": "error",
+    "sonarjs/no-same-line-conditional": "error",
+    "sonarjs/no-small-switch": "error",
+    "sonarjs/no-unused-collection": "error",
+    "sonarjs/prefer-immediate-return": "error",
+    "sonarjs/prefer-object-literal": "error",
+    "sonarjs/prefer-single-boolean-return": "error",
+    "sonarjs/prefer-while": "error",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off",
+    "import/first": "error",
+    "import/newline-after-import": "error",
+    "import/no-duplicates": "error",
+    "jest/no-disabled-tests": "warn", // Jest test rules
+    "jest/no-focused-tests": "error",
+    "jest/no-identical-title": "error",
+    "jest/prefer-to-have-length": "warn",
+    "jest/valid-expect": "error",
+    "react-hooks/rules-of-hooks": "error", // React Hooks rules - Enforces Rules of Hooks (only call at top level)
+    "react-hooks/exhaustive-deps": "warn", // Warns about missing dependencies in useEffect/useMemo/useCallback
+    "react-hooks/config": "error",
+    "react-hooks/error-boundaries": "error",
+    "react-hooks/component-hook-factories": "error",
+    "react-hooks/gating": "error",
+    "react-hooks/globals": "error",
+    "react-hooks/immutability": "error",
+    "react-hooks/preserve-manual-memoization": "error",
+    "react-hooks/purity": "error",
+    "react-hooks/refs": "error",
+    "react-hooks/set-state-in-effect": "error",
+    "react-hooks/set-state-in-render": "error",
+    "react-hooks/static-components": "error",
+    "react-hooks/unsupported-syntax": "warn",
+    "react-hooks/use-memo": "error",
+    "react-hooks/incompatible-library": "warn"
+  },
+  "jsPlugins": [
+    "eslint-plugin-prettier",
+    "eslint-plugin-simple-import-sort",
+    "eslint-plugin-sonarjs"
+  ],
+  "ignorePatterns": [
+    "src/parser/*.ts",
+    "scripts/update-registry.js",
+    "**/node_modules",
+    "**/build",
+    "**/*.typegen.ts",
+    "**/i18-generate-hash.js",
+    "src/parser/TraceOperatorParser/**/*",
+    "**/orval.config.ts"
+  ],
+  "overrides": [
+			{
+				"files": [
+					"**/*.test.{js,jsx,ts,tsx}",
+					"**/*.spec.{js,jsx,ts,tsx}",
+					"**/__tests__/**/*.{js,jsx,ts,tsx}"
+				],
+				"rules": {
+          // Tests often have intentional duplication and complexity - disable SonarJS rules
+					"sonarjs/cognitive-complexity": "off", // Tests can be complex
+					"sonarjs/no-identical-functions": "off", // Similar test patterns are OK
+					"sonarjs/no-small-switch": "off" // Small switches are OK in tests
+				}
+			},
+    {
+      "files": [
+        "src/api/generated/**/*.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "no-nested-ternary": "off",
+        "sonarjs/no-duplicate-string": "off",
+        "no-unused-vars": [
+          "warn",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrors": "none"
+          }
+        ]
+      }
+    }
+  ]
+}

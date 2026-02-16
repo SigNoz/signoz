@@ -116,7 +116,7 @@ describe('ExpandedView', () => {
 					]
 				} of`,
 			),
-		);
+		).toBeInTheDocument();
 		expect(screen.getByText('42.123')).toBeInTheDocument();
 		expect(screen.getByText('43.456')).toBeInTheDocument();
 	});

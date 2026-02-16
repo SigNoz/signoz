@@ -187,17 +187,23 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleSpaceAggregationChange = useCallback(
 		(value: string): void => {
+			const metricAggregation = query.aggregations?.[0] as MetricAggregation;
+
+			// since this will throw TypeError if metricAggregation is undefined
+			if (!metricAggregation) {
+				return;
+			}
+
 			const newQuery: IBuilderQuery = {
 				...query,
 				spaceAggregation: value,
 				aggregations: [
 					{
-						...query.aggregations?.[0],
+						...metricAggregation,
 						spaceAggregation: value as SpaceAggregation,
-						metricName: (query.aggregations?.[0] as MetricAggregation).metricName,
-						temporality: (query.aggregations?.[0] as MetricAggregation).temporality,
-						timeAggregation: (query.aggregations?.[0] as MetricAggregation)
-							.timeAggregation,
+						metricName: metricAggregation.metricName,
+						temporality: metricAggregation.temporality,
+						timeAggregation: metricAggregation.timeAggregation,
 					},
 				],
 			};

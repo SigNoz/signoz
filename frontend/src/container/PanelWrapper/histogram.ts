@@ -54,10 +54,7 @@ export function join(
 	tables: AlignedData[],
 	nullModes?: number[][],
 ): AlignedData[] {
-	let xVals: Set<number>;
-
-	// eslint-disable-next-line prefer-const
-	xVals = new Set();
+	const xVals = new Set<number>();
 
 	for (let ti = 0; ti < tables.length; ti++) {
 		const t = tables[ti];

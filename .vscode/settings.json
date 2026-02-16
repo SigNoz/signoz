@@ -1,21 +1,20 @@
 {
-	"eslint.workingDirectories": [
-		"./frontend"
-	],
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": "explicit"
-	},
-	"prettier.requireConfig": true,
-	"[go]": {
-		"editor.formatOnSave": true,
-		"editor.defaultFormatter": "golang.go"
-	},
-	"[sql]": {
-		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
-	},
-	"[html]": {
-		"editor.defaultFormatter": "vscode.html-language-features"
-	}
+  "oxc.typeAware": true,
+  "oxc.tsConfigPath": "./frontend/tsconfig.json",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+  "prettier.requireConfig": true,
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "golang.go"
+  },
+  "[sql]": {
+    "editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  }
 }
