@@ -50,7 +50,12 @@ function ClaimMappingSection({
 				<Collapse.Panel
 					key="claim-mapping"
 					header={
-						<div className="claim-mapping-section__collapse-header">
+						<div
+							className="claim-mapping-section__collapse-header"
+							role="button"
+							aria-expanded={expanded}
+							aria-controls="claim-mapping-content"
+						>
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="claim-mapping-section__collapse-header-text">
 								<h4 className="claim-mapping-section__section-title">
@@ -64,7 +69,7 @@ function ClaimMappingSection({
 						</div>
 					}
 				>
-					<div className="claim-mapping-section__content">
+					<div id="claim-mapping-content" className="claim-mapping-section__content">
 						{/* Email Claim */}
 						<div className="claim-mapping-section__field-group">
 							<label className="claim-mapping-section__label" htmlFor="email-claim">

@@ -70,7 +70,12 @@ function RoleMappingSection({
 				<Collapse.Panel
 					key="role-mapping"
 					header={
-						<div className="role-mapping-section__collapse-header">
+						<div
+							className="role-mapping-section__collapse-header"
+							role="button"
+							aria-expanded={expanded}
+							aria-controls="role-mapping-content"
+						>
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="role-mapping-section__collapse-header-text">
 								<h4 className="role-mapping-section__section-title">
@@ -85,7 +90,7 @@ function RoleMappingSection({
 						</div>
 					}
 				>
-					<div className="role-mapping-section__content">
+					<div id="role-mapping-content" className="role-mapping-section__content">
 						{/* Default Role */}
 						<div className="role-mapping-section__field-group">
 							<label className="role-mapping-section__label" htmlFor="default-role">

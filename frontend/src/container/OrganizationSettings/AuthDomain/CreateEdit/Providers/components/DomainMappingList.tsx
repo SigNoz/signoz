@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { Button } from '@signozhq/button';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
@@ -8,6 +7,16 @@ import './DomainMappingList.styles.scss';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const validateEmail = (_: unknown, value: string): Promise<void> => {
+	if (!value) {
+		return Promise.reject(new Error('Admin email is required'));
+	}
+	if (!EMAIL_REGEX.test(value)) {
+		return Promise.reject(new Error('Please enter a valid email'));
+	}
+	return Promise.resolve();
+};
+
 interface DomainMappingListProps {
 	/** The form field name prefix for the domain mapping list */
 	fieldNamePrefix: string[];
@@ -16,19 +25,6 @@ interface DomainMappingListProps {
 function DomainMappingList({
 	fieldNamePrefix,
 }: DomainMappingListProps): JSX.Element {
-	const validateEmail = useCallback(
-		(_: unknown, value: string): Promise<void> => {
-			if (!value) {
-				return Promise.reject(new Error('Admin email is required'));
-			}
-			if (!EMAIL_REGEX.test(value)) {
-				return Promise.reject(new Error('Please enter a valid email'));
-			}
-			return Promise.resolve();
-		},
-		[],
-	);
-
 	return (
 		<div className="domain-mapping-list">
 			<div className="domain-mapping-list__header">

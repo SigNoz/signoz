@@ -187,6 +187,7 @@ function AuthDomain(): JSX.Element {
 						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
 					}
 					className="auth-domain-list"
+					rowKey="id"
 				/>
 			)}
 			{(addDomain || record) && (

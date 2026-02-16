@@ -50,7 +50,12 @@ function AttributeMappingSection({
 				<Collapse.Panel
 					key="attribute-mapping"
 					header={
-						<div className="attribute-mapping-section__collapse-header">
+						<div
+							className="attribute-mapping-section__collapse-header"
+							role="button"
+							aria-expanded={expanded}
+							aria-controls="attribute-mapping-content"
+						>
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="attribute-mapping-section__collapse-header-text">
 								<h4 className="attribute-mapping-section__section-title">
@@ -65,7 +70,10 @@ function AttributeMappingSection({
 						</div>
 					}
 				>
-					<div className="attribute-mapping-section__content">
+					<div
+						id="attribute-mapping-content"
+						className="attribute-mapping-section__content"
+					>
 						{/* Name Attribute */}
 						<div className="attribute-mapping-section__field-group">
 							<label
