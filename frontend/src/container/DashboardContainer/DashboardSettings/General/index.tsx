@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Col, Input, Select, Space, Typography } from 'antd';
+import { Col, Input, Radio, Select, Space, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import {
+	CROSS_PANEL_SYNC_OPTIONS,
+	CrossPanelSync,
+} from 'types/api/dashboard/getAll';
 
 import { Button } from './styles';
 import { Base64Icons } from './utils';
@@ -21,8 +25,13 @@ function GeneralDashboardSettings(): JSX.Element {
 
 	const selectedData = selectedDashboard?.data;
 
-	const { title = '', tags = [], description = '', image = Base64Icons[0] } =
-		selectedData || {};
+	const {
+		title = '',
+		tags = [],
+		description = '',
+		image = Base64Icons[0],
+		crossPanelSync = 'NONE',
+	} = selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
@@ -30,6 +39,10 @@ function GeneralDashboardSettings(): JSX.Element {
 		description || '',
 	);
 	const [updatedImage, setUpdatedImage] = useState<string>(image);
+	const [
+		updatedCrossPanelSync,
+		setUpdatedCrossPanelSync,
+	] = useState<CrossPanelSync>(crossPanelSync);
 	const [numberOfUnsavedChanges, setNumberOfUnsavedChanges] = useState<number>(
 		0,
 	);
@@ -50,6 +63,7 @@ function GeneralDashboardSettings(): JSX.Element {
 					tags: updatedTags,
 					title: updatedTitle,
 					image: updatedImage,
+					crossPanelSync: updatedCrossPanelSync,
 				},
 			},
 			{
@@ -65,12 +79,13 @@ function GeneralDashboardSettings(): JSX.Element {
 
 	useEffect(() => {
 		let numberOfUnsavedChanges = 0;
-		const initialValues = [title, description, tags, image];
+		const initialValues = [title, description, tags, image, crossPanelSync];
 		const updatedValues = [
 			updatedTitle,
 			updatedDescription,
 			updatedTags,
 			updatedImage,
+			updatedCrossPanelSync,
 		];
 		initialValues.forEach((val, index) => {
 			if (!isEqual(val, updatedValues[index])) {
@@ -79,21 +94,38 @@ function GeneralDashboardSettings(): JSX.Element {
 		});
 		setNumberOfUnsavedChanges(numberOfUnsavedChanges);
 	}, [
+		crossPanelSync,
 		description,
 		image,
 		tags,
 		title,
+		updatedCrossPanelSync,
 		updatedDescription,
 		updatedImage,
 		updatedTags,
 		updatedTitle,
 	]);
 
+	const crossPanelSyncOptions = useMemo(() => {
+		return CROSS_PANEL_SYNC_OPTIONS.map((value) => {
+			const sanitizedValue = value.toLowerCase();
+			const label =
+				sanitizedValue === 'none'
+					? 'No Sync'
+					: sanitizedValue.charAt(0).toUpperCase() + sanitizedValue.slice(1);
+			return {
+				label,
+				value,
+			};
+		});
+	}, []);
+
 	const discardHandler = (): void => {
 		setUpdatedTitle(title);
 		setUpdatedImage(image);
 		setUpdatedTags(tags);
 		setUpdatedDescription(description);
+		setUpdatedCrossPanelSync(crossPanelSync);
 	};
 
 	return (
@@ -155,6 +187,28 @@ function GeneralDashboardSettings(): JSX.Element {
 						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
 					</div>
 				</Space>
+			</Col>
+			<Col className="overview-settings">
+				<div className="cross-panel-sync-section">
+					<div className="cross-panel-sync-info">
+						<Typography className="cross-panel-sync-title">
+							Cross-Panel Sync
+						</Typography>
+						<Typography.Text className="cross-panel-sync-description">
+							Sync crosshair and tooltip across all the dashboard panels
+						</Typography.Text>
+					</div>
+					<Radio.Group
+						value={updatedCrossPanelSync}
+						onChange={(e): void =>
+							setUpdatedCrossPanelSync(e.target.value as CrossPanelSync)
+						}
+						optionType="button"
+						buttonStyle="solid"
+						options={crossPanelSyncOptions}
+						data-testid="cross-panel-sync"
+					/>
+				</div>
 			</Col>
 			{numberOfUnsavedChanges > 0 && (
 				<div className="overview-settings-footer">

@@ -14,6 +14,7 @@ import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
+import { PanelMode } from '../types';
 
 import '../Panel.styles.scss';
 
@@ -26,7 +27,11 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		isFullViewMode,
 		onToggleModelHandler,
 	} = props;
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const {
+		toScrollWidgetId,
+		setToScrollWidgetId,
+		selectedDashboard,
+	} = useDashboard();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -96,6 +101,15 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		timezone,
 	]);
 
+	const crossPanelSync = selectedDashboard?.data?.crossPanelSync ?? 'NONE';
+
+	const cursorSyncMode = useMemo(() => {
+		if (panelMode !== PanelMode.DASHBOARD_VIEW) {
+			return 'NONE';
+		}
+		return crossPanelSync;
+	}, [panelMode, crossPanelSync]);
+
 	const layoutChildren = useMemo(() => {
 		if (!isFullViewMode) {
 			return null;
@@ -126,6 +140,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					}}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
+					syncMode={cursorSyncMode}
 					timezone={timezone.value}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}

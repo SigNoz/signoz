@@ -4,18 +4,13 @@ import type {
 	ReactNode,
 	RefObject,
 } from 'react';
+import { CrossPanelSync } from 'types/api/dashboard/getAll';
 import type uPlot from 'uplot';
 
 import type { TooltipRenderArgs } from '../../components/types';
 import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 
 export const TOOLTIP_OFFSET = 10;
-
-export enum DashboardCursorSync {
-	Crosshair,
-	None,
-	Tooltip,
-}
 
 export interface TooltipViewState {
 	plot?: uPlot | null;
@@ -35,7 +30,7 @@ export interface TooltipLayoutInfo {
 export interface TooltipPluginProps {
 	config: UPlotConfigBuilder;
 	canPinTooltip?: boolean;
-	syncMode?: DashboardCursorSync;
+	syncMode?: CrossPanelSync;
 	syncKey?: string;
 	render: (args: TooltipRenderArgs) => ReactNode;
 	maxWidth?: number;
@@ -86,7 +81,7 @@ export interface TooltipControllerContext {
 	rafId: MutableRefObject<number | null>;
 	updateState: (updates: Partial<TooltipViewState>) => void;
 	renderRef: MutableRefObject<(args: TooltipRenderArgs) => ReactNode>;
-	syncMode: DashboardCursorSync;
+	syncMode: CrossPanelSync;
 	syncKey: string;
 	canPinTooltip: boolean;
 	createTooltipContents: () => React.ReactNode;

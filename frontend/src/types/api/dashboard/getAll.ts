@@ -81,6 +81,13 @@ export interface DashboardTemplate {
 	previewImage: string;
 }
 
+export const CROSS_PANEL_SYNC_OPTIONS = [
+	'NONE',
+	'CROSSHAIR',
+	'TOOLTIP',
+] as const;
+export type CrossPanelSync = typeof CROSS_PANEL_SYNC_OPTIONS[number];
+
 export interface DashboardData {
 	// uuid?: string;
 	description?: string;
@@ -93,6 +100,7 @@ export interface DashboardData {
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
 	image?: string;
+	crossPanelSync?: CrossPanelSync;
 }
 
 export interface WidgetRow {

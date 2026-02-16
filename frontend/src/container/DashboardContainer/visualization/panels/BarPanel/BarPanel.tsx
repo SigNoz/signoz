@@ -13,6 +13,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 import BarChart from '../../charts/BarChart/BarChart';
 import ChartManager from '../../components/ChartManager/ChartManager';
 import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
+import { PanelMode } from '../types';
 import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
@@ -27,7 +28,11 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		onToggleModelHandler,
 	} = props;
 	const uPlotRef = useRef<uPlot | null>(null);
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const {
+		toScrollWidgetId,
+		setToScrollWidgetId,
+		selectedDashboard,
+	} = useDashboard();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -117,6 +122,15 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		onToggleModelHandler,
 	]);
 
+	const crossPanelSync = selectedDashboard?.data?.crossPanelSync ?? 'NONE';
+
+	const cursorSyncMode = useMemo(() => {
+		if (panelMode !== PanelMode.DASHBOARD_VIEW) {
+			return 'NONE';
+		}
+		return crossPanelSync;
+	}, [panelMode, crossPanelSync]);
+
 	const onPlotDestroy = useCallback(() => {
 		uPlotRef.current = null;
 	}, []);
@@ -137,6 +151,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					onDestroy={onPlotDestroy}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
+					syncMode={cursorSyncMode}
 					timezone={timezone.value}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}

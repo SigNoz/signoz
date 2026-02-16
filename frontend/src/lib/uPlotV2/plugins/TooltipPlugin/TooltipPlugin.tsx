@@ -13,7 +13,6 @@ import {
 	updateWindowSize,
 } from './tooltipController';
 import {
-	DashboardCursorSync,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
@@ -35,7 +34,7 @@ export default function TooltipPlugin({
 	render,
 	maxWidth = 300,
 	maxHeight = 400,
-	syncMode = DashboardCursorSync.None,
+	syncMode = 'NONE',
 	syncKey = '_tooltip_sync_global_',
 	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
@@ -78,11 +77,11 @@ export default function TooltipPlugin({
 		// render on every mouse move.
 		const controller: TooltipControllerState = createInitialControllerState();
 
-		const syncTooltipWithDashboard = syncMode === DashboardCursorSync.Tooltip;
+		const syncTooltipWithDashboard = syncMode === 'TOOLTIP';
 
 		// Enable uPlot's built-in cursor sync when requested so that
 		// crosshair / tooltip can follow the dashboard-wide cursor.
-		if (syncMode !== DashboardCursorSync.None && config.scales[0]?.props.time) {
+		if (syncMode !== 'NONE' && config.scales[0]?.props.time) {
 			config.setCursor({
 				sync: { key: syncKey, scales: ['x', null] },
 			});

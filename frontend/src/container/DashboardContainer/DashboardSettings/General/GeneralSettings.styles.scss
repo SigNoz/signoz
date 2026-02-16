@@ -1,6 +1,7 @@
 .overview-content {
 	display: flex;
 	flex-direction: column;
+	gap: 16px;
 
 	.overview-settings {
 		border-radius: 3px;
@@ -54,6 +55,35 @@
 			border-radius: 2px;
 			border: 1px solid var(--bg-slate-400);
 			background: var(--bg-ink-300);
+		}
+
+		.cross-panel-sync-section {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 16px;
+			flex-wrap: wrap;
+
+			.cross-panel-sync-info {
+				display: flex;
+				flex-direction: column;
+				flex: 1;
+				min-width: 200px;
+
+				.cross-panel-sync-title {
+					color: var(--bg-vanilla-400);
+					font-size: 14px;
+				}
+
+				.cross-panel-sync-description {
+					color: var(--bg-vanilla-400);
+					font-size: 12px;
+				}
+			}
+
+			.ant-radio-group {
+				flex-shrink: 0;
+			}
 		}
 	}
 
@@ -167,6 +197,15 @@
 			.description-text-area {
 				border: 1px solid var(--bg-vanilla-300);
 				background: var(--bg-vanilla-300);
+			}
+
+			.cross-panel-sync-section {
+				.cross-panel-sync-title {
+					color: var(--bg-ink-400);
+				}
+				.cross-panel-sync-description {
+					color: var(--bg-ink-300);
+				}
 			}
 		}
 
