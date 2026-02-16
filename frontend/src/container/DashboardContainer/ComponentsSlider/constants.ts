@@ -31,7 +31,7 @@ export const listViewInitialLogQuery: Query = {
 	},
 };
 
-export const listViewInitialTraceQuery = {
+export const listViewInitialTraceQuery: Query = {
 	// it should be the above commented query
 	...initialQueriesMap.traces,
 	builder: {

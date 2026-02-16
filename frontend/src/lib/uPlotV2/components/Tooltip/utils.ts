@@ -9,10 +9,10 @@ const FALLBACK_SERIES_COLOR = '#000000';
 export function resolveSeriesColor(
 	stroke: Series.Stroke | undefined,
 	u: uPlot,
-	seriesIdx: number,
+	seriesIndex: number,
 ): string {
 	if (typeof stroke === 'function') {
-		return String(stroke(u, seriesIdx));
+		return String(stroke(u, seriesIndex));
 	}
 	if (typeof stroke === 'string') {
 		return stroke;
@@ -20,55 +20,97 @@ export function resolveSeriesColor(
 	return FALLBACK_SERIES_COLOR;
 }
 
+export function getTooltipBaseValue({
+	data,
+	index,
+	dataIndex,
+	isStackedBarChart,
+	series,
+}: {
+	data: AlignedData;
+	index: number;
+	dataIndex: number;
+	isStackedBarChart?: boolean;
+	series?: Series[];
+}): number | null {
+	let baseValue = data[index][dataIndex] ?? null;
+	// Top-down stacking (first series at top): raw = stacked[i] - stacked[nextVisible].
+	// When series are hidden, we must use the next *visible* series, not index+1,
+	// since hidden series keep raw values and would produce negative/wrong results.
+	if (isStackedBarChart && baseValue !== null && series) {
+		let nextVisibleIdx = -1;
+		for (let j = index + 1; j < series.length; j++) {
+			if (series[j]?.show) {
+				nextVisibleIdx = j;
+				break;
+			}
+		}
+		if (nextVisibleIdx >= 1) {
+			const nextValue = data[nextVisibleIdx][dataIndex] ?? 0;
+			baseValue = baseValue - nextValue;
+		}
+	}
+	return baseValue;
+}
+
 export function buildTooltipContent({
 	data,
 	series,
 	dataIndexes,
-	activeSeriesIdx,
+	activeSeriesIndex,
 	uPlotInstance,
 	yAxisUnit,
 	decimalPrecision,
+	isStackedBarChart,
 }: {
 	data: AlignedData;
 	series: Series[];
 	dataIndexes: Array<number | null>;
-	activeSeriesIdx: number | null;
+	activeSeriesIndex: number | null;
 	uPlotInstance: uPlot;
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
+	isStackedBarChart?: boolean;
 }): TooltipContentItem[] {
 	const active: TooltipContentItem[] = [];
 	const rest: TooltipContentItem[] = [];
 
-	for (let idx = 1; idx < series.length; idx += 1) {
-		const s = series[idx];
+	for (let index = 1; index < series.length; index += 1) {
+		const s = series[index];
 		if (!s?.show) {
 			continue;
 		}
 
-		const dataIdx = dataIndexes[idx];
+		const dataIndex = dataIndexes[index];
 		// Skip series with no data at the current cursor position
-		if (dataIdx === null) {
+		if (dataIndex === null) {
 			continue;
 		}
 
-		const raw = data[idx]?.[dataIdx];
-		const value = Number(raw);
-		const displayValue = Number.isNaN(value) ? 0 : value;
-		const isActive = idx === activeSeriesIdx;
+		const baseValue = getTooltipBaseValue({
+			data,
+			index,
+			dataIndex,
+			isStackedBarChart,
+			series,
+		});
 
-		const item: TooltipContentItem = {
-			label: String(s.label ?? ''),
-			value: displayValue,
-			tooltipValue: getToolTipValue(displayValue, yAxisUnit, decimalPrecision),
-			color: resolveSeriesColor(s.stroke, uPlotInstance, idx),
-			isActive,
-		};
+		const isActive = index === activeSeriesIndex;
 
-		if (isActive) {
-			active.push(item);
-		} else {
-			rest.push(item);
+		if (Number.isFinite(baseValue) && baseValue !== null) {
+			const item: TooltipContentItem = {
+				label: String(s.label ?? ''),
+				value: baseValue,
+				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
+				color: resolveSeriesColor(s.stroke, uPlotInstance, index),
+				isActive,
+			};
+
+			if (isActive) {
+				active.push(item);
+			} else {
+				rest.push(item);
+			}
 		}
 	}
 

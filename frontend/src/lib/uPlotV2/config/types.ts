@@ -23,12 +23,22 @@ export abstract class ConfigBuilder<P, T> {
 }
 
 /**
+ * Preferences source for the uPlot config builder
+ */
+export enum SelectionPreferencesSource {
+	LOCAL_STORAGE = 'LOCAL_STORAGE',
+	IN_MEMORY = 'IN_MEMORY',
+}
+
+/**
  * Props for configuring the uPlot config builder
  */
 export interface ConfigBuilderProps {
 	widgetId?: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	tzDate?: uPlot.LocalDateFromUnix;
+	selectionPreferencesSource?: SelectionPreferencesSource;
+	shouldSaveSelectionPreference?: boolean;
 }
 
 /**
@@ -92,21 +102,15 @@ export interface ScaleProps {
  * Props for configuring a series
  */
 
-export enum FillStyle {
+export enum LineStyle {
 	Solid = 'solid',
-	Dash = 'dash',
-	Dot = 'dot',
-	Square = 'square',
-}
-
-export interface LineStyle {
-	dash?: Array<number>;
-	fill?: FillStyle;
+	Dashed = 'dashed',
 }
 
 export enum DrawStyle {
 	Line = 'line',
 	Points = 'points',
+	Bar = 'bar',
 }
 
 export enum LineInterpolation {
@@ -122,10 +126,48 @@ export enum VisibilityMode {
 	Never = 'never',
 }
 
-export interface SeriesProps {
+/**
+ * Props for configuring lines
+ */
+export interface LineConfig {
+	lineColor?: string;
+	lineInterpolation?: LineInterpolation;
+	lineStyle?: LineStyle;
+	lineWidth?: number;
+	lineCap?: Series.Cap;
+}
+
+/**
+ * Alignment of bars
+ */
+export enum BarAlignment {
+	After = 1,
+	Before = -1,
+	Center = 0,
+}
+
+/**
+ * Props for configuring bars
+ */
+export interface BarConfig {
+	barAlignment?: BarAlignment;
+	barMaxWidth?: number;
+	barWidthFactor?: number;
+}
+
+/**
+ * Props for configuring points
+ */
+export interface PointsConfig {
+	pointColor?: string;
+	pointSize?: number;
+	showPoints?: VisibilityMode;
+}
+
+export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	scaleKey: string;
 	label?: string;
-
+	panelType: PANEL_TYPES;
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
 	pathBuilder?: Series.PathBuilder;
@@ -133,19 +175,8 @@ export interface SeriesProps {
 	pointsBuilder?: Series.Points.Show;
 	show?: boolean;
 	spanGaps?: boolean;
-
 	isDarkMode?: boolean;
-
-	// Line config
-	lineColor?: string;
-	lineInterpolation?: LineInterpolation;
-	lineStyle?: LineStyle;
-	lineWidth?: number;
-
-	// Points config
-	pointColor?: string;
-	pointSize?: number;
-	showPoints?: VisibilityMode;
+	stepInterval?: number;
 }
 
 export interface LegendItem {

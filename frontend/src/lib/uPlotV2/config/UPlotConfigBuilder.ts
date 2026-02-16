@@ -1,6 +1,8 @@
+import { SeriesVisibilityState } from 'container/DashboardContainer/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
+import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
 import { merge } from 'lodash-es';
 import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
@@ -11,6 +13,7 @@ import {
 	DEFAULT_CURSOR_CONFIG,
 	DEFAULT_PLOT_CONFIG,
 	LegendItem,
+	SelectionPreferencesSource,
 } from './types';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
@@ -35,6 +38,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	Partial<Options>
 > {
 	series: UPlotSeriesBuilder[] = [];
+
+	private selectionPreferencesSource: SelectionPreferencesSource =
+		SelectionPreferencesSource.IN_MEMORY;
+	private shouldSaveSelectionPreference = false;
 
 	private axes: Record<string, UPlotAxisBuilder> = {};
 
@@ -64,11 +71,15 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	private onDragSelect: (startTime: number, endTime: number) => void;
 
-	private cleanups: Array<() => void> = [];
-
 	constructor(args?: ConfigBuilderProps) {
 		super(args ?? {});
-		const { widgetId, onDragSelect, tzDate } = args ?? {};
+		const {
+			widgetId,
+			onDragSelect,
+			tzDate,
+			selectionPreferencesSource,
+			shouldSaveSelectionPreference,
+		} = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
 		}
@@ -77,23 +88,36 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			this.tzDate = tzDate;
 		}
 
-		this.onDragSelect = noop;
+		if (selectionPreferencesSource) {
+			this.selectionPreferencesSource = selectionPreferencesSource;
+		}
 
+		if (shouldSaveSelectionPreference) {
+			this.shouldSaveSelectionPreference = shouldSaveSelectionPreference;
+		}
+
+		this.onDragSelect = noop;
 		if (onDragSelect) {
 			this.onDragSelect = onDragSelect;
-			// Add a hook to handle the select event
-			const cleanup = this.addHook('setSelect', (self: uPlot): void => {
+			this.addHook('setSelect', (self: uPlot): void => {
 				const selection = self.select;
 				// Only trigger onDragSelect when there's an actual drag range (width > 0)
 				// A click without dragging produces width === 0, which should be ignored
 				if (selection && selection.width > 0) {
 					const startTime = self.posToVal(selection.left, 'x');
 					const endTime = self.posToVal(selection.left + selection.width, 'x');
+
 					this.onDragSelect(startTime * 1000, endTime * 1000);
 				}
 			});
-			this.cleanups.push(cleanup);
 		}
+	}
+
+	/**
+	 * Get the save selection preferences
+	 */
+	getShouldSaveSelectionPreference(): boolean {
+		return this.shouldSaveSelectionPreference;
 	}
 
 	/**
@@ -158,8 +182,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	addThresholds(options: ThresholdsDrawHookOptions): void {
 		if (!this.thresholds[options.scaleKey]) {
 			this.thresholds[options.scaleKey] = options;
-			const cleanup = this.addHook('draw', thresholdsDrawHook(options));
-			this.cleanups.push(cleanup);
+			this.addHook('draw', thresholdsDrawHook(options));
 		}
 	}
 
@@ -213,19 +236,39 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
+	 * Returns stored series visibility by index from localStorage when preferences source is LOCAL_STORAGE, otherwise null.
+	 */
+	private getStoredVisibility(): SeriesVisibilityState | null {
+		if (
+			this.widgetId &&
+			this.selectionPreferencesSource === SelectionPreferencesSource.LOCAL_STORAGE
+		) {
+			return getStoredSeriesVisibility(this.widgetId);
+		}
+		return null;
+	}
+
+	/**
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const visibilityMap = this.widgetId
-			? getStoredSeriesVisibility(this.widgetId)
-			: null;
+		const seriesVisibilityState = this.getStoredVisibility();
+		const isAnySeriesHidden = !!seriesVisibilityState?.visibility?.some(
+			(show) => !show,
+		);
+
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
 			const label = seriesConfig.label ?? '';
-			const seriesIndex = index + 1; // +1 because the first series is the timestamp
-
-			// Priority: stored visibility > series config > default (true)
-			const show = visibilityMap?.get(label) ?? seriesConfig.show ?? true;
+			// +1 because uPlot series 0 is x-axis/time; data series are at 1, 2, ... (also matches stored visibility[0]=time, visibility[1]=first data, ...)
+			const seriesIndex = index + 1;
+			const show = resolveSeriesVisibility({
+				seriesIndex,
+				seriesShow: seriesConfig.show,
+				seriesLabel: label,
+				seriesVisibilityState,
+				isAnySeriesHidden,
+			});
 
 			acc[seriesIndex] = {
 				seriesIndex,
@@ -236,13 +279,6 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 			return acc;
 		}, {} as Record<number, LegendItem>);
-	}
-
-	/**
-	 * Remove all hooks and cleanup functions
-	 */
-	destroy(): void {
-		this.cleanups.forEach((cleanup) => cleanup());
 	}
 
 	/**
@@ -260,9 +296,28 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
+		const seriesVisibilityState = this.getStoredVisibility();
+		const isAnySeriesHidden = !!seriesVisibilityState?.visibility?.some(
+			(show) => !show,
+		);
+
 		config.series = [
 			{ value: (): string => '' }, // Base series for timestamp
-			...this.series.map((s) => s.getConfig()),
+			...this.series.map((s, index) => {
+				const series = s.getConfig();
+				// Stored visibility[0] is x-axis/time; data series start at visibility[1]
+				const visible = resolveSeriesVisibility({
+					seriesIndex: index + 1,
+					seriesShow: series.show,
+					seriesLabel: series.label ?? '',
+					seriesVisibilityState,
+					isAnySeriesHidden,
+				});
+				return {
+					...series,
+					show: visible,
+				};
+			}),
 		];
 		config.axes = Object.values(this.axes).map((a) => a.getConfig());
 		config.scales = this.scales.reduce(

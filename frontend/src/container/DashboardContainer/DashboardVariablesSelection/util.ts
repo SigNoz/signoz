@@ -1,6 +1,16 @@
 import { OptionData } from 'components/NewSelect/types';
-import { isEmpty, isNull } from 'lodash-es';
-import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariablesStore';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
+import { isEmpty } from 'lodash-es';
+import {
+	IDashboardVariables,
+	IDependencyData,
+} from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import {
+	onVariableFetchComplete,
+	onVariableFetchFailure,
+	variableFetchStore,
+} from 'providers/Dashboard/store/variableFetchStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
@@ -42,30 +52,16 @@ const getDependentVariablesBasedOnVariableName = (
 	}
 
 	return variables
-		?.map((variable: any) => {
+		.map((variable) => {
 			if (variable.type === 'QUERY') {
-				// Combined pattern for all formats
-				// {{.variable_name}} - original format
-				// $variable_name - dollar prefix format
-				// [[variable_name]] - square bracket format
-				// {{variable_name}} - without dot format
-				const patterns = [
-					`\\{\\{\\s*?\\.${variableName}\\s*?\\}\\}`, // {{.var}}
-					`\\{\\{\\s*${variableName}\\s*\\}\\}`, // {{var}}
-					`\\$${variableName}\\b`, // $var
-					`\\[\\[\\s*${variableName}\\s*\\]\\]`, // [[var]]
-				];
-				const combinedRegex = new RegExp(patterns.join('|'));
-
 				const queryValue = variable.queryValue || '';
-				const dependVarReMatch = queryValue.match(combinedRegex);
-				if (dependVarReMatch !== null && dependVarReMatch.length > 0) {
+				if (textContainsVariableReference(queryValue, variableName)) {
 					return variable.name;
 				}
 			}
 			return null;
 		})
-		.filter((val: string | null) => !isNull(val));
+		.filter((val): val is string => val !== null);
 };
 export type VariableGraph = Record<string, string[]>;
 
@@ -96,14 +92,6 @@ export const buildDependencies = (
 
 	return graph;
 };
-
-export interface IDependencyData {
-	order: string[];
-	graph: VariableGraph;
-	parentDependencyGraph: VariableGraph;
-	hasCycle: boolean;
-	cycleNodes?: string[];
-}
 
 export const buildParentDependencyGraph = (
 	graph: VariableGraph,
@@ -251,10 +239,26 @@ export const buildDependencyGraph = (
 
 	const hasCycle = topologicalOrder.length !== Object.keys(dependencies)?.length;
 
+	// Pre-compute transitive descendants by walking topological order in reverse.
+	// Each node's transitive descendants = direct children + their transitive descendants.
+	const transitiveDescendants: VariableGraph = {};
+	for (let i = topologicalOrder.length - 1; i >= 0; i--) {
+		const node = topologicalOrder[i];
+		const desc = new Set<string>();
+		for (const child of adjList[node] || []) {
+			desc.add(child);
+			for (const d of transitiveDescendants[child] || []) {
+				desc.add(d);
+			}
+		}
+		transitiveDescendants[node] = Array.from(desc);
+	}
+
 	return {
 		order: topologicalOrder,
 		graph: adjList,
 		parentDependencyGraph: buildParentDependencyGraph(adjList),
+		transitiveDescendants,
 		hasCycle,
 		cycleNodes,
 	};
@@ -287,33 +291,6 @@ export const onUpdateVariableNode = (
 			});
 		}
 	});
-};
-
-export const checkAPIInvocation = (
-	variablesToGetUpdated: string[],
-	variableData: IDashboardVariable,
-	parentDependencyGraph?: VariableGraph,
-): boolean => {
-	if (isEmpty(variableData.name)) {
-		return false;
-	}
-
-	if (isEmpty(parentDependencyGraph)) {
-		return false;
-	}
-
-	// if no dependency then true
-	const haveDependency =
-		parentDependencyGraph?.[variableData.name || '']?.length > 0;
-	if (!haveDependency) {
-		return true;
-	}
-
-	// if variable is in the list and has dependency then check if its the top element in the queue then true else false
-	return (
-		variablesToGetUpdated.length > 0 &&
-		variablesToGetUpdated[0] === variableData.name
-	);
 };
 
 export const getOptionsForDynamicVariable = (
@@ -368,21 +345,142 @@ export const uniqueOptions = (options: OptionData[]): OptionData[] => {
 	return uniqueOptions;
 };
 
-export const uniqueValues = (values: string[] | string): string[] | string => {
-	if (Array.isArray(values)) {
-		const uniqueValues: string[] = [];
-		const seenValues = new Set<string>();
+export const getSelectValue = (
+	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
+): string | string[] | undefined => {
+	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString();
+		}
+		return selectedValue.map((item) => item.toString());
+	}
+	return selectedValue?.toString();
+};
 
-		values.forEach((value) => {
-			if (seenValues.has(value)) {
-				return;
-			}
-			seenValues.add(value);
-			uniqueValues.push(value);
-		});
+/**
+ * Merges multiple arrays of values into a single deduplicated string array.
+ */
+export function mergeUniqueStrings(
+	...arrays: (string | number | boolean)[][]
+): string[] {
+	return [...new Set(arrays.flatMap((arr) => arr.map((v) => v.toString())))];
+}
 
-		return uniqueValues;
+function isEligibleFilterVariable(
+	variable: IDashboardVariable,
+	currentVariableId: string,
+): boolean {
+	if (variable.id === currentVariableId) {
+		return false;
+	}
+	if (variable.type !== 'DYNAMIC') {
+		return false;
+	}
+	if (!variable.dynamicVariablesAttribute) {
+		return false;
+	}
+	if (!variable.selectedValue || isEmpty(variable.selectedValue)) {
+		return false;
+	}
+	return !(variable.showALLOption && variable.allSelected);
+}
+
+function formatQueryValue(val: string): string {
+	const numValue = Number(val);
+	if (!Number.isNaN(numValue) && Number.isFinite(numValue)) {
+		return val;
+	}
+	return `'${val.replace(/'/g, "\\'")}'`;
+}
+
+function buildQueryPart(attribute: string, values: string[]): string {
+	const formatted = values.map(formatQueryValue);
+	if (formatted.length === 1) {
+		return `${attribute} = ${formatted[0]}`;
+	}
+	return `${attribute} IN [${formatted.join(', ')}]`;
+}
+
+/**
+ * Builds a filter query string from sibling dynamic variables' selected values.
+ * e.g. `k8s.namespace.name IN ['zeus', 'gene'] AND doc_op_type = 'test'`
+ */
+export function buildExistingDynamicVariableQuery(
+	existingVariables: IDashboardVariables | null,
+	currentVariableId: string,
+	hasDynamicAttribute: boolean,
+): string {
+	if (!existingVariables || !hasDynamicAttribute) {
+		return '';
 	}
 
-	return values;
-};
+	const queryParts: string[] = [];
+
+	for (const variable of Object.values(existingVariables)) {
+		// Skip the current variable being processed
+		if (!isEligibleFilterVariable(variable, currentVariableId)) {
+			continue;
+		}
+
+		const rawValues = Array.isArray(variable.selectedValue)
+			? variable.selectedValue
+			: [variable.selectedValue];
+
+		// Filter out empty values and convert to strings
+		const validValues = rawValues
+			.filter(
+				(val): val is string | number | boolean =>
+					val !== null && val !== undefined && val !== '',
+			)
+			.map((val) => val.toString());
+
+		if (validValues.length > 0 && variable.dynamicVariablesAttribute) {
+			queryParts.push(
+				buildQueryPart(variable.dynamicVariablesAttribute, validValues),
+			);
+		}
+	}
+
+	return queryParts.join(' AND ');
+}
+
+function isVariableInActiveFetchState(state: string | undefined): boolean {
+	return state === 'loading' || state === 'revalidating';
+}
+
+/**
+ * Completes or fails a variable's fetch state machine transition.
+ * No-ops if the variable is not currently in an active fetch state.
+ */
+export function settleVariableFetch(
+	name: string | undefined,
+	outcome: 'complete' | 'failure',
+): void {
+	if (!name) {
+		return;
+	}
+
+	const currentState = variableFetchStore.getSnapshot().states[name];
+	if (!isVariableInActiveFetchState(currentState)) {
+		return;
+	}
+
+	if (outcome === 'complete') {
+		onVariableFetchComplete(name);
+	} else {
+		onVariableFetchFailure(name);
+	}
+}
+
+export function extractErrorMessage(
+	error: { message?: string } | null,
+): string {
+	if (!error) {
+		return SOMETHING_WENT_WRONG;
+	}
+	return (
+		error.message ||
+		'Please make sure configuration is valid and you have required setup and permissions'
+	);
+}

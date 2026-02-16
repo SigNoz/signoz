@@ -25,7 +25,7 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 /**
- * This endpoints returns global config
+ * This endpoint returns global config
  * @summary Get global config
  */
 export const getGlobalConfig = (signal?: AbortSignal) => {

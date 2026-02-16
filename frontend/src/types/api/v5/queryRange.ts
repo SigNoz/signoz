@@ -334,6 +334,7 @@ export interface ExecStats {
 	rowsScanned: number;
 	bytesScanned: number;
 	durationMs: number;
+	stepIntervals: Record<string, number>;
 }
 
 export interface Label {

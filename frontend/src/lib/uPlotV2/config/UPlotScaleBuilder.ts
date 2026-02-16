@@ -40,8 +40,8 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			range,
 			thresholds,
 			logBase = 10,
-			padMinBy = 0.1,
-			padMaxBy = 0.1,
+			padMinBy = 0,
+			padMaxBy = 0.05,
 		} = this.props;
 
 		// Special handling for time scales (X axis)
