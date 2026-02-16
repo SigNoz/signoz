@@ -151,6 +151,7 @@ describe('CreateEdit Modal', () => {
 				expect(screen.getByLabelText(/domain/i)).toBeInTheDocument();
 				expect(screen.getByLabelText(/client id/i)).toBeInTheDocument();
 				expect(screen.getByLabelText(/client secret/i)).toBeInTheDocument();
+				expect(screen.getByLabelText(/redirect uri/i)).toBeInTheDocument();
 				expect(screen.getByText(/skip email verification/i)).toBeInTheDocument();
 			});
 		});

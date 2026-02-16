@@ -115,6 +115,22 @@ function ConfigureGoogleAuthAuthnProvider({
 						</Form.Item>
 					</div>
 
+					<div className="google-auth__field-group">
+						<label className="google-auth__label" htmlFor="google-redirect-uri">
+							Redirect URI
+							<Tooltip title="The redirect URI where Google should send the response. This must match one of the authorized redirect URIs in the Google API Console.">
+								<CircleHelp size={14} className="google-auth__label-icon" />
+							</Tooltip>
+						</label>
+						<Form.Item
+							name={['googleAuthConfig', 'redirectURI']}
+							className="google-auth__form-item"
+							rules={[{ type: 'url', message: 'Please enter a valid URL' }]}
+						>
+							<Input id="google-redirect-uri" />
+						</Form.Item>
+					</div>
+
 					<div className="google-auth__checkbox-row">
 						<Form.Item
 							name={['googleAuthConfig', 'insecureSkipEmailVerified']}
