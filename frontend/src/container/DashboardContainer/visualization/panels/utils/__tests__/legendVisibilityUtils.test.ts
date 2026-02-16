@@ -62,10 +62,10 @@ describe('legendVisibilityUtils', () => {
 			const result = getStoredSeriesVisibility('widget-1');
 
 			expect(result).not.toBeNull();
-			expect(result).toEqual({
-				labels: ['CPU', 'Memory'],
-				visibility: [true, false],
-			});
+			expect(result).toEqual([
+				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: false },
+			]);
 		});
 
 		it('returns visibility by index including duplicate labels', () => {
@@ -85,10 +85,11 @@ describe('legendVisibilityUtils', () => {
 			const result = getStoredSeriesVisibility('widget-1');
 
 			expect(result).not.toBeNull();
-			expect(result).toEqual({
-				labels: ['CPU', 'CPU', 'Memory'],
-				visibility: [true, false, false],
-			});
+			expect(result).toEqual([
+				{ label: 'CPU', show: true },
+				{ label: 'CPU', show: false },
+				{ label: 'Memory', show: false },
+			]);
 		});
 
 		it('returns null on malformed JSON in localStorage', () => {
@@ -127,10 +128,10 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual({
-				labels: ['CPU', 'Memory'],
-				visibility: [true, false],
-			});
+			expect(stored).toEqual([
+				{ label: 'CPU', show: true },
+				{ label: 'Memory', show: false },
+			]);
 		});
 
 		it('adds a new widget entry when other widgets already exist', () => {
@@ -149,7 +150,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-new');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual({ labels: ['CPU'], visibility: [false] });
+			expect(stored).toEqual([{ label: 'CPU', show: false }]);
 		});
 
 		it('updates existing widget visibility when entry already exists', () => {
@@ -175,10 +176,10 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual({
-				labels: ['CPU', 'Memory'],
-				visibility: [false, true],
-			});
+			expect(stored).toEqual([
+				{ label: 'CPU', show: false },
+				{ label: 'Memory', show: true },
+			]);
 		});
 
 		it('silently handles malformed existing JSON without throwing', () => {
@@ -201,10 +202,10 @@ describe('legendVisibilityUtils', () => {
 
 			const stored = getStoredSeriesVisibility('widget-1');
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual({
-				labels: ['x-axis', 'CPU'],
-				visibility: [true, false],
-			});
+			expect(stored).toEqual([
+				{ label: 'x-axis', show: true },
+				{ label: 'CPU', show: false },
+			]);
 			const expected = [
 				{
 					name: 'widget-1',
@@ -231,14 +232,12 @@ describe('legendVisibilityUtils', () => {
 				{ label: 'B', show: true },
 			]);
 
-			expect(getStoredSeriesVisibility('widget-a')).toEqual({
-				labels: ['A'],
-				visibility: [true],
-			});
-			expect(getStoredSeriesVisibility('widget-b')).toEqual({
-				labels: ['B'],
-				visibility: [true],
-			});
+			expect(getStoredSeriesVisibility('widget-a')).toEqual([
+				{ label: 'A', show: true },
+			]);
+			expect(getStoredSeriesVisibility('widget-b')).toEqual([
+				{ label: 'B', show: true },
+			]);
 		});
 
 		it('calls setItem with storage key and stringified visibility states', () => {

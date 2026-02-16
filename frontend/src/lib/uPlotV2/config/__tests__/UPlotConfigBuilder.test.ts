@@ -186,11 +186,10 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('restores visibility state from localStorage when selectionPreferencesSource is LOCAL_STORAGE', () => {
-		// Index 0 = x-axis/time; indices 1,2 = data series (Requests, Errors). resolveSeriesVisibility matches by seriesIndex + seriesLabel.
-		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue({
-			labels: ['x-axis', 'Requests', 'Errors'],
-			visibility: [true, true, false],
-		});
+		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+			{ label: 'Requests', show: true },
+			{ label: 'Errors', show: false },
+		]);
 
 		const builder = new UPlotConfigBuilder({
 			widgetId: 'widget-1',
@@ -202,7 +201,7 @@ describe('UPlotConfigBuilder', () => {
 
 		const legendItems = builder.getLegendItems();
 
-		// When any series is hidden, legend visibility is driven by the stored map
+		// When any series is hidden, visibility is driven by stored label-based preferences
 		expect(legendItems[1].show).toBe(true);
 		expect(legendItems[2].show).toBe(false);
 
@@ -211,6 +210,109 @@ describe('UPlotConfigBuilder', () => {
 
 		expect(firstSeries?.show).toBe(true);
 		expect(secondSeries?.show).toBe(false);
+	});
+
+	it('hides new series by default when there is a mixed preference and a visible label matches current series', () => {
+		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+			{ label: 'Requests', show: true },
+			{ label: 'Errors', show: false },
+		]);
+
+		const builder = new UPlotConfigBuilder({
+			widgetId: 'widget-1',
+			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
+		});
+
+		builder.addSeries(createSeriesProps({ label: 'Requests' }));
+		builder.addSeries(createSeriesProps({ label: 'Errors' }));
+		builder.addSeries(createSeriesProps({ label: 'Latency' }));
+
+		const legendItems = builder.getLegendItems();
+
+		// Stored labels: Requests (visible), Errors (hidden).
+		// New label "Latency" should be hidden because there is a mixed preference
+		// and "Requests" (a visible stored label) is present in the current series.
+		expect(legendItems[1].label).toBe('Requests');
+		expect(legendItems[1].show).toBe(true);
+		expect(legendItems[2].label).toBe('Errors');
+		expect(legendItems[2].show).toBe(false);
+		expect(legendItems[3].label).toBe('Latency');
+		expect(legendItems[3].show).toBe(false);
+
+		const config = builder.getConfig();
+		const [, firstSeries, secondSeries, thirdSeries] = config.series ?? [];
+
+		expect(firstSeries?.label).toBe('Requests');
+		expect(firstSeries?.show).toBe(true);
+		expect(secondSeries?.label).toBe('Errors');
+		expect(secondSeries?.show).toBe(false);
+		expect(thirdSeries?.label).toBe('Latency');
+		expect(thirdSeries?.show).toBe(false);
+	});
+
+	it('shows all series when there is a mixed preference but no visible stored labels match current series', () => {
+		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+			{ label: 'StoredVisible', show: true },
+			{ label: 'StoredHidden', show: false },
+		]);
+
+		const builder = new UPlotConfigBuilder({
+			widgetId: 'widget-1',
+			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
+		});
+
+		// None of these labels intersect with the stored visible label "StoredVisible"
+		builder.addSeries(createSeriesProps({ label: 'CPU' }));
+		builder.addSeries(createSeriesProps({ label: 'Memory' }));
+
+		const legendItems = builder.getLegendItems();
+
+		// Mixed preference exists in storage, but since no visible labels intersect
+		// with current series, stored preferences are ignored and all are visible.
+		expect(legendItems[1].label).toBe('CPU');
+		expect(legendItems[1].show).toBe(true);
+		expect(legendItems[2].label).toBe('Memory');
+		expect(legendItems[2].show).toBe(true);
+
+		const config = builder.getConfig();
+		const [, firstSeries, secondSeries] = config.series ?? [];
+
+		expect(firstSeries?.label).toBe('CPU');
+		expect(firstSeries?.show).toBe(true);
+		expect(secondSeries?.label).toBe('Memory');
+		expect(secondSeries?.show).toBe(true);
+	});
+
+	it('treats duplicate labels as visible when any stored entry for that label is visible', () => {
+		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+			{ label: 'CPU', show: true },
+			{ label: 'CPU', show: false },
+		]);
+
+		const builder = new UPlotConfigBuilder({
+			widgetId: 'widget-dup',
+			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
+		});
+
+		// Two series with the same label; both should be visible because at least
+		// one stored entry for "CPU" is visible.
+		builder.addSeries(createSeriesProps({ label: 'CPU' }));
+		builder.addSeries(createSeriesProps({ label: 'CPU' }));
+
+		const legendItems = builder.getLegendItems();
+
+		expect(legendItems[1].label).toBe('CPU');
+		expect(legendItems[1].show).toBe(true);
+		expect(legendItems[2].label).toBe('CPU');
+		expect(legendItems[2].show).toBe(true);
+
+		const config = builder.getConfig();
+		const [, firstSeries, secondSeries] = config.series ?? [];
+
+		expect(firstSeries?.label).toBe('CPU');
+		expect(firstSeries?.show).toBe(true);
+		expect(secondSeries?.label).toBe('CPU');
+		expect(secondSeries?.show).toBe(true);
 	});
 
 	it('does not attempt to read stored visibility when using in-memory preferences', () => {
