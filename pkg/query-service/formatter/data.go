@@ -25,7 +25,7 @@ func (f *dataFormatter) Format(value float64, unit string) string {
 	case "decbytes":
 		return humanize.Bytes(uint64(value))
 	case "bits", "bit":
-		// humanize.IBytes doesn't support bits
+		// humanize.IBytes/Bytes doesn't support bits
 		// and returns 0 B for values less than a byte
 		if value < 8 {
 			return fmt.Sprintf("%v b", value)

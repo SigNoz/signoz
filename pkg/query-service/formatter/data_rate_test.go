@@ -15,6 +15,16 @@ func TestDataRateFormatterComprehensive(t *testing.T) {
 		unit     string
 		expected string
 	}{
+		// IEC Bits/sec - binbps, bps
+		{name: "binbps as Bps", value: 7, unit: "binbps", expected: "7 b/s"},
+		{name: "100 binbps as 12 Bps", value: 100, unit: "binbps", expected: "12 B/s"},
+		{name: "binbps as 23 GiBs", value: 8 * 1024 * 1024 * 1024 * 23, unit: "binbps", expected: "23 GiB/s"},
+
+		// SI Bits/sec - bps, bit/s
+		{name: "bps as Bps", value: 5, unit: "bps", expected: "5 b/s"},
+		{name: "200 bitps as 25 Bps", value: 200, unit: "bit/s", expected: "25 B/s"},
+		{name: "bitps as MBs", value: 8 * 1000 * 1000 * 7, unit: "bit/s", expected: "7.0 MB/s"},
+
 		// IEC Base bytes/sec - binBps
 		{name: "binBps as Bps", value: 0, unit: "binBps", expected: "0 B/s"},
 		{name: "1 binBps as 1 Bps", value: 1, unit: "binBps", expected: "1 B/s"},

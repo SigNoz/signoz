@@ -24,6 +24,18 @@ func (f *dataRateFormatter) Format(value float64, unit string) string {
 		return humanize.IBytes(uint64(value)) + "/s"
 	case "Bps", "By/s":
 		return humanize.Bytes(uint64(value)) + "/s"
+	case "binbps":
+		// humanize.IBytes/Bytes doesn't support bits
+		// and returns 0 B for values less than a byte
+		if value < 8 {
+			return fmt.Sprintf("%v b/s", value)
+		}
+		return humanize.IBytes(uint64(value/8)) + "/s"
+	case "bps", "bit/s":
+		if value < 8 {
+			return fmt.Sprintf("%v b/s", value)
+		}
+		return humanize.Bytes(uint64(value/8)) + "/s"
 	case "KiBs", "KiBy/s":
 		return humanize.IBytes(uint64(value*converter.KibibitPerSecond)) + "/s"
 	case "Kibits", "Kibit/s":
