@@ -193,6 +193,15 @@ emailing:
   templates:
     # The directory containing the email templates. This directory should contain a list of files defined at pkg/types/emailtypes/template.go.
     directory: /opt/signoz/conf/templates/email
+    format:
+      header:
+        enabled: false
+        logo_url: ""
+      help:
+        enabled: false
+        email: ""
+      footer:
+        enabled: false
   smtp:
     # The SMTP server address.
     address: localhost:25
