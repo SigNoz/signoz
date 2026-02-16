@@ -42,6 +42,16 @@ func TestDataFormatterComprehensive(t *testing.T) {
 		unit     string
 		expected string
 	}{
+		// IEC Bits - bits, bit
+		{name: "bits: 1", value: 1, unit: "bits", expected: "1 b"},
+		{name: "bits: 7", value: 7, unit: "bit", expected: "7 b"},
+		{name: "bits: to MiB = 8 * 1024 * 1024 * 9", value: 8 * 1024 * 1024 * 9, unit: "bits", expected: "9.0 MiB"},
+
+		// SI Bits - decbits, bit
+		{name: "decbits: 1", value: 1, unit: "decbits", expected: "1 b"},
+		{name: "decbits: 7", value: 7, unit: "decbits", expected: "7 b"},
+		{name: "decbits: to MB = 8 * 1000 * 1000 * 4", value: 8 * 1000 * 1000 * 4, unit: "decbits", expected: "4.0 MB"},
+
 		// IEC Base bytes - bytes, By
 		{name: "bytes: 0", value: 0, unit: "bytes", expected: "0 B"},
 		{name: "bytes: 1", value: 1, unit: "bytes", expected: "1 B"},
