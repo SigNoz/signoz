@@ -617,12 +617,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	cteArgs [][]any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	combined := querybuilder.CombineCTEs(cteFragments)
-
+	var combined string
 	var args []any
-	for _, a := range cteArgs {
-		args = append(args, a...)
-	}
 
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -632,25 +628,59 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	}
 
 	if quantile != 0 && query.Aggregations[0].Type != metrictypes.ExpHistogramType {
+		// Build diagnostics CTE to pre-aggregate arrays and counts per ts/group.
+		diag := sqlbuilder.NewSelectBuilder()
+		diag.Select("ts")
+		for _, g := range query.GroupBy {
+			diag.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+		diag.SelectMore("groupArray(le) AS les")
+		diag.SelectMore("groupArray(value) AS vals")
+		diag.SelectMore("arraySum(groupArray(value)) AS bucket_sum")
+		diag.SelectMore("countDistinct(le) AS bucket_count")
+		diag.From("__spatial_aggregation_cte")
+		for _, g := range query.GroupBy {
+			diag.GroupBy(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+		diag.GroupBy("ts")
+		diagQ, diagArgs := diag.BuildWithFlavor(sqlbuilder.ClickHouse)
+		cteFragments = append(cteFragments, fmt.Sprintf("__diagnostics_cte AS (%s)", diagQ))
+		cteArgs = append(cteArgs, diagArgs)
+
+		combined = querybuilder.CombineCTEs(cteFragments)
+		for _, a := range cteArgs {
+			args = append(args, a...)
+		}
+
+		// Final select from diagnostics cte
 		sb.Select("ts")
 		for _, g := range query.GroupBy {
 			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
+		// expose quantile and diagnostics as __result_* so they are parsed, then stripped in post-processing
+
+		// TODO(nikhilmantri0902): putting below as __result_0, __result_1, __result_2,
+		// but is this correct and not a hack to extract the warnings?
+		// what if the aliases are used by client, there will be collision in select statements ...
+
 		sb.SelectMore(fmt.Sprintf(
-			"histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) AS value",
+			"histogramQuantile(arrayMap(x -> toFloat64(x), les), vals, %.3f) AS __result_0",
 			quantile,
 		))
-		sb.From("__spatial_aggregation_cte")
-		for _, g := range query.GroupBy {
-			sb.GroupBy(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
-		}
-		sb.GroupBy("ts")
+		sb.SelectMore(fmt.Sprintf("bucket_sum AS %s", DiagnosticColumnCumulativeHistLeSum))
+		sb.SelectMore(fmt.Sprintf("bucket_count AS %s", DiagnosticColumnCumulativeHistLeCount))
+
+		sb.From("__diagnostics_cte")
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
 			sb.Having(rewrittenExpr)
 		}
 	} else {
+		combined = querybuilder.CombineCTEs(cteFragments)
+		for _, a := range cteArgs {
+			args = append(args, a...)
+		}
 		sb.Select("*")
 		sb.From("__spatial_aggregation_cte")
 		if query.Having != nil && query.Having.Expression != "" {
@@ -661,5 +691,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
+	return &qbtypes.Statement{
+		Query: combined + q,
+		Args:  append(args, a...),
+	}, nil
 }
