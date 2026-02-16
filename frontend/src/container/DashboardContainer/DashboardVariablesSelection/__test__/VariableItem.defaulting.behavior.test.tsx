@@ -14,6 +14,7 @@ const baseDependencyData = {
 	order: [],
 	graph: {},
 	parentDependencyGraph: {},
+	transitiveDescendants: {},
 	hasCycle: false,
 };
 
