@@ -160,7 +160,7 @@ describe('HostsListTable', () => {
 		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
 		expect(
 			screen.getByText(
-				/Your requested end time is earlier than the earliest time of retention/,
+				/Your requested end time is earlier than the earliest detected time of host metrics data, please adjust your end time\./,
 			),
 		).toBeInTheDocument();
 	});
