@@ -54,6 +54,9 @@ type Module interface {
 }
 
 type Getter interface {
+	// Get root user by org id.
+	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, error)
+
 	// Get gets the users based on the given id
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
 

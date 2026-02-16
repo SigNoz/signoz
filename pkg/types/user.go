@@ -11,15 +11,16 @@ import (
 )
 
 var (
-	ErrCodeUserNotFound                = errors.MustNewCode("user_not_found")
-	ErrCodeAmbiguousUser               = errors.MustNewCode("ambiguous_user")
-	ErrUserAlreadyExists               = errors.MustNewCode("user_already_exists")
-	ErrPasswordAlreadyExists           = errors.MustNewCode("password_already_exists")
-	ErrResetPasswordTokenAlreadyExists = errors.MustNewCode("reset_password_token_already_exists")
-	ErrPasswordNotFound                = errors.MustNewCode("password_not_found")
-	ErrResetPasswordTokenNotFound      = errors.MustNewCode("reset_password_token_not_found")
-	ErrAPIKeyAlreadyExists             = errors.MustNewCode("api_key_already_exists")
-	ErrAPIKeyNotFound                  = errors.MustNewCode("api_key_not_found")
+	ErrCodeUserNotFound                 = errors.MustNewCode("user_not_found")
+	ErrCodeAmbiguousUser                = errors.MustNewCode("ambiguous_user")
+	ErrUserAlreadyExists                = errors.MustNewCode("user_already_exists")
+	ErrPasswordAlreadyExists            = errors.MustNewCode("password_already_exists")
+	ErrResetPasswordTokenAlreadyExists  = errors.MustNewCode("reset_password_token_already_exists")
+	ErrPasswordNotFound                 = errors.MustNewCode("password_not_found")
+	ErrResetPasswordTokenNotFound       = errors.MustNewCode("reset_password_token_not_found")
+	ErrAPIKeyAlreadyExists              = errors.MustNewCode("api_key_already_exists")
+	ErrAPIKeyNotFound                   = errors.MustNewCode("api_key_not_found")
+	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
 )
 
 type GettableUser = User
@@ -29,9 +30,10 @@ type User struct {
 
 	Identifiable
 	DisplayName string       `bun:"display_name" json:"displayName"`
-	Email       valuer.Email `bun:"email,type:text" json:"email"`
-	Role        Role         `bun:"role,type:text" json:"role"`
-	OrgID       valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
+	Email       valuer.Email `bun:"email" json:"email"`
+	Role        Role         `bun:"role" json:"role"`
+	OrgID       valuer.UUID  `bun:"org_id" json:"orgId"`
+	IsRoot      bool         `bun:"is_root" json:"isRoot"`
 	TimeAuditable
 }
 
@@ -64,11 +66,58 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		Email:       email,
 		Role:        role,
 		OrgID:       orgID,
+		IsRoot:      false,
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
 	}, nil
+}
+
+func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*User, error) {
+	if email.IsZero() {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
+	}
+
+	if orgID.IsZero() {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
+	}
+
+	return &User{
+		Identifiable: Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		DisplayName: displayName,
+		Email:       email,
+		Role:        RoleAdmin,
+		OrgID:       orgID,
+		IsRoot:      true,
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	}, nil
+}
+
+// Update applies mutable fields from the input to the user. Immutable fields
+// (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
+func (u *User) Update(displayName string, role Role) {
+	if displayName != "" {
+		u.DisplayName = displayName
+	}
+	if role != "" {
+		u.Role = role
+	}
+	u.UpdatedAt = time.Now()
+}
+
+// ErrIfRoot returns an error if the user is a root user. The caller should
+// enrich the error with the specific operation using errors.WithAdditionalf.
+func (u *User) ErrIfRoot() error {
+	if u.IsRoot {
+		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
+	}
+	return nil
 }
 
 func NewTraitsFromUser(user *User) map[string]any {
@@ -133,7 +182,7 @@ type UserStore interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *User) (*User, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 
 	// Creates a password.
@@ -155,6 +204,9 @@ type UserStore interface {
 	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+
+	// Get root user by org.
+	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
