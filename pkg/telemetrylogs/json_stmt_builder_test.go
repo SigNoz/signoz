@@ -777,7 +777,7 @@ func buildTestTelemetryMetadataStore(t *testing.T, promotedPaths ...string) *tel
 				Materialized:  promoted,
 			}
 			err := key.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
-				BaseColumn:     LogsV2BodyJSONColumn,
+				BaseColumn:     LogsV2BodyV2Column,
 				PromotedColumn: LogsV2BodyPromotedColumn,
 			}, types)
 			require.NoError(t, err)

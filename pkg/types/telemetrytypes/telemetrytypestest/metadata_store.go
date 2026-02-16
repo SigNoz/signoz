@@ -177,7 +177,7 @@ func matchesKey(selector *telemetrytypes.FieldKeySelector, key *telemetrytypes.T
 	}
 
 	// Check name (already checked in matchesName, but double-check here)
-	if selector.Name != "" && !(matchesName(selector, key.Name) || matchesName(selector, key.LogicalName)) {
+	if selector.Name != "" && !matchesName(selector, key.Name) {
 		return false
 	}
 

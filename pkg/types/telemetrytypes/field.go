@@ -35,7 +35,6 @@ type TelemetryFieldKey struct {
 	FieldContext  FieldContext  `json:"fieldContext,omitempty"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitempty"`
 
-	LogicalName  string              `json:"-"` // refers to fields that are to be considered same as Name for logical fields
 	JSONDataType *JSONDataType       `json:"-"`
 	JSONPlan     JSONAccessPlan      `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
@@ -155,10 +154,6 @@ func (f *TelemetryFieldKey) Normalize() {
 		}
 	}
 
-}
-
-func (f *TelemetryFieldKey) IsPsuedoKey() bool {
-	return f.LogicalName != ""
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.

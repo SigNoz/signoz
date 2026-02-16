@@ -30,12 +30,11 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
-		LogsV2BodyJSONColumn: {Name: LogsV2BodyJSONColumn, Type: schema.JSONColumnType{
+		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{
 			MaxDynamicTypes: utils.ToPointer(uint(32)),
 			MaxDynamicPaths: utils.ToPointer(uint(0)),
 		}},
 		LogsV2BodyPromotedColumn: {Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}},
-		jsonMergeExpr():         {Name: jsonMergeExpr(), Type: schema.ColumnTypeString},
 		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
@@ -94,7 +93,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		// Body context is for JSON body fields
 		// Use body_json if feature flag is enabled
 		if querybuilder.BodyJSONQueryEnabled {
-			return logsV2Columns[LogsV2BodyJSONColumn], nil
+			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
 		// Fall back to legacy body column
 		return logsV2Columns["body"], nil
@@ -105,7 +104,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_json if feature flag is enabled and we have a body condition builder
 				if querybuilder.BodyJSONQueryEnabled {
-					return logsV2Columns[LogsV2BodyJSONColumn], nil
+					return logsV2Columns[LogsV2BodyV2Column], nil
 				}
 				// Fall back to legacy body column
 				return logsV2Columns["body"], nil

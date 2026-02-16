@@ -256,7 +256,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		case *qbtypes.RawData:
 			for _, rr := range typedPayload.Rows {
 				seeder := func() error {
-					body, ok := rr.Data[telemetrylogs.LogsV2BodyJSONColumn].(map[string]any)
+					body, ok := rr.Data[telemetrylogs.LogsV2BodyV2Column].(map[string]any)
 					if !ok {
 						return nil
 					}
@@ -277,7 +277,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 					return nil, err
 				}
 
-				delete(rr.Data, telemetrylogs.LogsV2BodyJSONColumn)
+				delete(rr.Data, telemetrylogs.LogsV2BodyV2Column)
 				delete(rr.Data, telemetrylogs.LogsV2BodyPromotedColumn)
 			}
 			payload = typedPayload

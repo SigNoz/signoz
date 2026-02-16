@@ -100,7 +100,7 @@ func NewTelemetryMetaStore(
 		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
 			telemetrytypes.SignalLogs: {
 				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
-					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					BaseColumn:     telemetrylogs.LogsV2BodyV2Column,
 					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
 				},
 			},
@@ -540,20 +540,19 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		if found {
-			if fields, exists := telemetrylogs.IntrinsicFields[key]; exists {
-				for _, field := range fields() {
-					if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
-						keys = append(keys, &field)
-					}
+			if getField, exists := telemetrylogs.IntrinsicFields[key]; exists {
+				field := getField()
+				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+					keys = append(keys, &field)
+					continue
 				}
-				continue
-			}
 
-			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-				Name:         key,
-				FieldContext: telemetrytypes.FieldContextLog,
-				Signal:       telemetrytypes.SignalLogs,
-			})
+				keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+					Name:         key,
+					FieldContext: telemetrytypes.FieldContextLog,
+					Signal:       telemetrytypes.SignalLogs,
+				})
+			}
 		}
 	}
 

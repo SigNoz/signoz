@@ -203,17 +203,14 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 }
 
 func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
-
 	// First check if it matches with any intrinsic fields
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
-		// TODO(Piyush): Handle better
-		intrinsicOrCalculatedField = IntrinsicFields[key.Name]()[0]
+		intrinsicOrCalculatedField = IntrinsicFields[key.Name]()
 		return querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)
 	}
 
 	return querybuilder.AdjustKey(key, keys, nil)
-
 }
 
 // buildListQuery builds a query for list panel type

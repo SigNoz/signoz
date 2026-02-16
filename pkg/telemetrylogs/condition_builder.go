@@ -50,11 +50,6 @@ func (c *conditionBuilder) conditionFor(
 		}
 	}
 
-	if key.IsPsuedoKey() && slices.Contains(PsuedoIntrinsicFieldsInvalidOps[key.Name], operator) {
-		// Skip building a condition for psuedo intrinsic fields with invalid operators
-		return "", nil
-	}
-
 	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
