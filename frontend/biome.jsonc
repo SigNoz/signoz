@@ -1,0 +1,189 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": { "ignoreUnknown": false },
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 1,
+		"lineEnding": "lf",
+		"lineWidth": 80,
+		"attributePosition": "auto",
+		"bracketSameLine": false,
+		"bracketSpacing": true,
+		"expand": "auto",
+		"useEditorconfig": true,
+		"includes": [
+			"**",
+			"!**/build",
+			"!**/coverage",
+			"!**/*.md",
+			"!**/*.json",
+			// Ignore generated parser files
+			"!src/parser/**",
+			"!src/TraceOperator/parser/**"
+		]
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": false,
+			"a11y": {
+				// Corresponds to jsx-a11y/label-has-associated-control and jsx-a11y/label-has-for
+				"noLabelWithoutControl": "error"
+			},
+			"complexity": {
+				"noBannedTypes": "error",
+				"noExcessiveCognitiveComplexity": "warn",
+				// Corresponds to max-params: 3 from ESLint (airbnb config)
+				"useMaxParams": "warn",
+				"useWhile": "error"
+			},
+			"correctness": {
+				"noChildrenProp": "error",
+				"noUndeclaredDependencies": "off",
+				// Corresponds to @typescript-eslint/no-unused-vars
+				"noUnusedVariables": "warn",
+				// Corresponds to react-hooks/exhaustive-deps
+				"useExhaustiveDependencies": "warn",
+				// Corresponds to react-hooks/rules-of-hooks
+				"useHookAtTopLevel": "error",
+				// Corresponds to react/no-array-index-key
+				"useJsxKeyInIterable": "error"
+			},
+			"security": { "noDangerouslySetInnerHtmlWithChildren": "error" },
+			"style": {
+				// Corresponds to @typescript-eslint/no-var-requires
+				"noCommonJs": "warn",
+				"noInferrableTypes": "warn",
+				"noNamespace": "warn", // TODO: Change to error
+				"noNonNullAssertion": "warn",
+				"useArrayLiterals": "error",
+				"useAsConstAssertion": "error",
+				"useBlockStatements": "warn",
+				// Corresponds to arrow-body-style
+				"useConsistentArrowReturn": "off",
+				// Corresponds to prefer-const
+				"useConst": "warn" // TODO: Change to error
+			},
+			"suspicious": {
+				// Corresponds to react/no-array-index-key
+				"noArrayIndexKey": "warn",
+				"noCommentText": "error",
+				// Corresponds to no-console (airbnb config has it off)
+				"noConsole": {
+					"level": "warn",
+					"options": { "allow": ["warn", "error"] }
+				},
+				"noDebugger": "error",
+				// Corresponds to eqeqeq from ESLint
+				"noDoubleEquals": "error",
+				"noDuplicateJsxProps": "error",
+				// ESLint rules that need to be removed - consistent-return
+				"noEmptyBlockStatements": "off",
+				// Corresponds to no-explicit-any warning
+				"noExplicitAny": "warn",
+				"noExtraNonNullAssertion": "error",
+				// Corresponds to import/no-cycle (currently off in ESLint)
+				"noImportCycles": "warn",
+				"noMisleadingInstantiator": "error",
+				"noNonNullAssertedOptionalChain": "error",
+				// Corresponds to @typescript-eslint/no-var-requires and no-var
+				"noVar": "warn", // TODO: Change to error
+				"useAdjacentOverloadSignatures": "error",
+				"useNamespaceKeyword": "error"
+			}
+		},
+		"includes": [
+			"src/**",
+			"!**/node_modules",
+			"!**/build",
+			"!**/*.typegen.ts",
+			"!**/i18-generate-hash.js",
+			"!src/parser/TraceOperatorParser/**",
+			"!**/orval.config.ts"
+		],
+		"domains": { "types": "recommended" }
+	},
+	"javascript": {
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSameLine": false,
+			"quoteStyle": "single",
+			"attributePosition": "auto",
+			"bracketSpacing": true
+		}
+	},
+	"html": {
+		"formatter": {
+			"indentScriptAndStyle": false,
+			"selfCloseVoidElements": "always"
+		}
+	},
+	"overrides": [
+		{
+			"includes": [
+				"**/*.test.{js,jsx,ts,tsx}",
+				"**/*.spec.{js,jsx,ts,tsx}",
+				"**/__tests__/**/*.{js,jsx,ts,tsx}"
+			],
+			"linter": {
+				"rules": { "complexity": { "noExcessiveCognitiveComplexity": "off" } }
+			}
+		},
+		{
+			// Generated API client files - reduce strictness
+			"includes": ["src/api/generated/**/*.ts"],
+			"linter": {
+				"rules": {
+					"correctness": { "noUnusedVariables": "warn" },
+					"style": { "noNestedTernary": "off" }
+				}
+			}
+		},
+		{
+			"includes": ["*.ts", "*.tsx"],
+			"linter": {
+				"rules": {
+					"complexity": { "noArguments": "error" },
+					"correctness": {
+						"noConstAssign": "off",
+						"noGlobalObjectCalls": "off",
+						"noInvalidConstructorSuper": "off",
+						"noSetterReturn": "off",
+						"noUndeclaredVariables": "off",
+						"noUnreachable": "off",
+						"noUnreachableSuper": "off",
+						"useValidTypeof": "off"
+					},
+					"style": { "useConst": "warn" }, // TODO: Change to error
+					"suspicious": {
+						"noDuplicateClassMembers": "off",
+						"noDuplicateObjectKeys": "off",
+						"noDuplicateParameters": "off",
+						"noFunctionAssign": "off",
+						"noImportAssign": "off",
+						"noRedeclare": "off",
+						"noUnsafeNegation": "off",
+						"noVar": "error",
+						"useGetterReturn": "off"
+					}
+				}
+			}
+		}
+	],
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				// Corresponds to simple-import-sort/imports and simple-import-sort/exports
+				"organizeImports": "on"
+			}
+		}
+	}
+}

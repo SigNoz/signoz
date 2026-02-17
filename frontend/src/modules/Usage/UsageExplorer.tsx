@@ -61,7 +61,7 @@ const interval = [
 	},
 ];
 
-function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
+function PrivateUsageExplorer(props: UsageExplorerProps): JSX.Element {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
@@ -115,7 +115,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 					<Select
 						onSelect={(value): void => {
 							setSelectedTime(
-								timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
+								timeDaysOptions.filter((item) => item.value === parseInt(value))[0],
 							);
 						}}
 						value={selectedTime.label}
@@ -220,5 +220,5 @@ export const UsageExplorer = withRouter(
 	connect(mapStateToProps, {
 		getUsageData,
 		getServicesList: GetService,
-	})(_UsageExplorer),
+	})(PrivateUsageExplorer),
 );

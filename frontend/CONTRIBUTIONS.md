@@ -38,19 +38,10 @@ Embrace the spirit of collaboration and contribute to the success of our open-so
 
 ### Linting and Setup
 
-- It is crucial to refrain from disabling ESLint and TypeScript errors within the project. If there is a specific rule that needs to be disabled, provide a clear and justified explanation for doing so. Maintaining the integrity of the linting and type-checking processes ensures code quality and consistency throughout the codebase.
-- In our project, we rely on several essential ESLint plugins and configurations:
+- It is crucial to refrain from disabling Biome and TypeScript errors within the project. If there is a specific rule that needs to be disabled, provide a clear and justified explanation for doing so. Maintaining the integrity of the linting and type-checking processes ensures code quality and consistency throughout the codebase.
+- In our project, we rely on [Biome](https://biomejs.dev/) for linting and formatting. Biome provides fast, comprehensive linting and formatting for JavaScript, TypeScript, and JSX. Refer to the [Biome documentation](https://biomejs.dev/reference/configuration/) to understand the rules and configuration options available.
 
-  - [eslint:recommended](https://eslint.org/docs/latest/rules/) - Core ESLint rules for JavaScript best practices
-  - [plugin:@typescript-eslint](https://typescript-eslint.io/rules/) - TypeScript-specific linting rules
-  - [plugin:react](https://github.com/jsx-eslint/eslint-plugin-react) - React best practices and patterns
-  - [plugin:react-hooks](https://www.npmjs.com/package/eslint-plugin-react-hooks) - Rules of Hooks enforcement
-  - [plugin:sonarjs](https://github.com/SonarSource/eslint-plugin-sonarjs) - Code quality and complexity analysis
-  - [plugin:prettier](https://github.com/prettier/eslint-plugin-prettier) - Code formatting via Prettier
-  - [simple-import-sort](https://github.com/lydell/eslint-plugin-simple-import-sort) - Automatic import organization
-  - [plugin:jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y) - Accessibility rules for JSX elements
-
-  To ensure compliance with our coding standards and best practices, we encourage you to refer to the documentation of these plugins. Familiarizing yourself with the ESLint rules they provide will help maintain code quality and consistency throughout the project.
+  To ensure compliance with our coding standards and best practices, we encourage you to refer to the Biome documentation. Familiarizing yourself with the linting rules will help maintain code quality and consistency throughout the project.
 
 ### Naming Conventions
 
