@@ -58,36 +58,80 @@ func (*dataConverter) Name() string {
 	return "data"
 }
 
+// Notation followed by UCUM:
+// https://ucum.org/ucum
+// kibi = Ki, mebi = Mi, gibi = Gi, tebi = Ti, pibi = Pi
+// kilo = k, mega = M, giga = G, tera = T, peta = P
+// exa = E, zetta = Z, yotta = Y
+// byte = By, bit = bit
 func FromDataUnit(u Unit) float64 {
 	switch u {
 	case "bytes", "By": // base 2
 		return Byte
 	case "decbytes": // base 10
 		return Byte
-	case "bits": // base 2
+	case "bits", "bit": // base 2
 		return Bit
 	case "decbits": // base 10
 		return Bit
-	case "kbytes", "kBy": // base 2
+	case "kbytes", "KiBy": // base 2
 		return Kibibyte
-	case "decKbytes", "deckbytes": // base 10
+	case "decKbytes", "deckbytes", "kBy": // base 10
 		return Kilobyte
-	case "mbytes", "MBy": // base 2
+	case "mbytes", "MiBy": // base 2
 		return Mebibyte
-	case "decMbytes", "decmbytes": // base 10
+	case "decMbytes", "decmbytes", "MBy": // base 10
 		return Megabyte
-	case "gbytes", "GBy": // base 2
+	case "gbytes", "GiBy": // base 2
 		return Gibibyte
-	case "decGbytes", "decgbytes": // base 10
+	case "decGbytes", "decgbytes", "GBy": // base 10
 		return Gigabyte
-	case "tbytes", "TBy": // base 2
+	case "tbytes", "TiBy": // base 2
 		return Tebibyte
-	case "decTbytes", "dectbytes": // base 10
+	case "decTbytes", "dectbytes", "TBy": // base 10
 		return Terabyte
-	case "pbytes", "PBy": // base 2
+	case "pbytes", "PiBy": // base 2
 		return Pebibyte
-	case "decPbytes", "decpbytes": // base 10
+	case "decPbytes", "decpbytes", "PBy": // base 10
 		return Petabyte
+	case "EBy": // base 10
+		return Exabyte
+	case "ZBy": // base 10
+		return Zettabyte
+	case "YBy": // base 10
+		return Yottabyte
+	case "Kibit": // base 2
+		return Kibibit
+	case "Mibit": // base 2
+		return Mebibit
+	case "Gibit": // base 2
+		return Gibibit
+	case "Tibit": // base 2
+		return Tebibit
+	case "Pibit": // base 2
+		return Pebibit
+	case "EiBy": // base 2
+		return Exbibyte
+	case "ZiBy": // base 2
+		return Zebibyte
+	case "YiBy": // base 2
+		return Yobibyte
+	case "kbit": // base 10
+		return Kilobit
+	case "Mbit": // base 10
+		return Megabit
+	case "Gbit": // base 10
+		return Gigabit
+	case "Tbit": // base 10
+		return Terabit
+	case "Pbit": // base 10
+		return Petabit
+	case "Ebit": // base 10
+		return Exabit
+	case "Zbit": // base 10
+		return Zettabit
+	case "Ybit": // base 10
+		return Yottabit
 	default:
 		return 1
 	}

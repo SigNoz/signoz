@@ -183,7 +183,7 @@ type APIHandlerOpts struct {
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
+func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
 		Reader:       opts.Reader,
 		Cache:        opts.Signoz.Cache,
@@ -268,6 +268,11 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		if count > 0 {
 			aH.SetupCompleted = true
 		}
+	}
+
+	// If the root user is enabled, the setup is complete
+	if config.User.Root.Enabled {
+		aH.SetupCompleted = true
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
