@@ -55,6 +55,7 @@
 		"@signozhq/icons": "0.1.0",
 		"@signozhq/input": "0.0.2",
 		"@signozhq/popover": "0.0.0",
+		"@signozhq/radio-group": "0.0.2",
 		"@signozhq/resizable": "0.0.0",
 		"@signozhq/sonner": "0.1.0",
 		"@signozhq/table": "0.3.7",

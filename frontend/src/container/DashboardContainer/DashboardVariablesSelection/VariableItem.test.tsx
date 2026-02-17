@@ -47,14 +47,6 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -69,14 +61,6 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -92,14 +76,6 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -133,14 +109,6 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -163,14 +131,6 @@ describe('VariableItem', () => {
 					variableData={customVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -185,14 +145,6 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);

@@ -1,4 +1,5 @@
 """Fixtures for cloud integration tests."""
+
 from http import HTTPStatus
 
 import requests

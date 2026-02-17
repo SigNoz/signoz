@@ -14,5 +14,8 @@
 	},
 	"[sql]": {
 		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+	},
+	"[html]": {
+		"editor.defaultFormatter": "vscode.html-language-features"
 	}
 }
