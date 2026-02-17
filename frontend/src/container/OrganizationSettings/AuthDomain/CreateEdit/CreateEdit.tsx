@@ -8,10 +8,7 @@ import {
 import {
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
-	AuthtypesOIDCConfigDTO,
-	AuthtypesPostableAuthDomainDTO,
 	AuthtypesRoleMappingDTO,
-	AuthtypesSamlConfigDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -24,33 +21,17 @@ import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
 import AuthnProviderSelector from './AuthnProviderSelector';
+import {
+	convertDomainMappingsToRecord,
+	convertGroupMappingsToRecord,
+	FormValues,
+	prepareInitialValues,
+} from './CreateEdit.utils';
 import ConfigureGoogleAuthAuthnProvider from './Providers/AuthnGoogleAuth';
 import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
 import ConfigureSAMLAuthnProvider from './Providers/AuthnSAML';
 
 import './CreateEdit.styles.scss';
-
-interface CreateOrEditProps {
-	isCreate: boolean;
-	onClose: () => void;
-	record?: AuthtypesGettableAuthDomainDTO;
-}
-
-// Form values interface for internal use (includes array-based fields for UI)
-interface FormValues {
-	name?: string;
-	ssoEnabled?: boolean;
-	ssoType?: string;
-	googleAuthConfig?: AuthtypesGoogleConfigDTO & {
-		domainToAdminEmailList?: Array<{ domain?: string; adminEmail?: string }>;
-	};
-	samlConfig?: AuthtypesSamlConfigDTO;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
-	roleMapping?: AuthtypesRoleMappingDTO & {
-		groupMappingsList?: Array<{ groupName?: string; role?: string }>;
-	};
-}
-
 function configureAuthnProvider(
 	authnProvider: string,
 	isCreate: boolean,
@@ -67,121 +48,15 @@ function configureAuthnProvider(
 	}
 }
 
-/**
- * Converts groupMappingsList array to groupMappings Record for API
- */
-function convertGroupMappingsToRecord(
-	groupMappingsList?: Array<{ groupName?: string; role?: string }>,
-): Record<string, string> | undefined {
-	if (!Array.isArray(groupMappingsList) || groupMappingsList.length === 0) {
-		return undefined;
-	}
-
-	const groupMappings: Record<string, string> = {};
-	groupMappingsList.forEach((item) => {
-		if (item.groupName && item.role) {
-			groupMappings[item.groupName] = item.role;
-		}
-	});
-
-	return Object.keys(groupMappings).length > 0 ? groupMappings : undefined;
-}
-
-/**
- * Converts groupMappings Record to groupMappingsList array for form
- */
-function convertGroupMappingsToList(
-	groupMappings?: Record<string, string> | null,
-): Array<{ groupName: string; role: string }> {
-	if (!groupMappings) {
-		return [];
-	}
-
-	return Object.entries(groupMappings).map(([groupName, role]) => ({
-		groupName,
-		role,
-	}));
-}
-
-/**
- * Converts domainToAdminEmailList array to domainToAdminEmail Record for API
- */
-function convertDomainMappingsToRecord(
-	domainToAdminEmailList?: Array<{ domain?: string; adminEmail?: string }>,
-): Record<string, string> | undefined {
-	if (
-		!Array.isArray(domainToAdminEmailList) ||
-		domainToAdminEmailList.length === 0
-	) {
-		return undefined;
-	}
-
-	const domainToAdminEmail: Record<string, string> = {};
-	domainToAdminEmailList.forEach((item) => {
-		if (item.domain && item.adminEmail) {
-			domainToAdminEmail[item.domain] = item.adminEmail;
-		}
-	});
-
-	return Object.keys(domainToAdminEmail).length > 0
-		? domainToAdminEmail
-		: undefined;
-}
-
-/**
- * Converts domainToAdminEmail Record to domainToAdminEmailList array for form
- */
-function convertDomainMappingsToList(
-	domainToAdminEmail?: Record<string, string>,
-): Array<{ domain: string; adminEmail: string }> {
-	if (!domainToAdminEmail) {
-		return [];
-	}
-
-	return Object.entries(domainToAdminEmail).map(([domain, adminEmail]) => ({
-		domain,
-		adminEmail,
-	}));
-}
-
-/**
- * Prepares initial form values from API record
- */
-function prepareInitialValues(
-	record?: AuthtypesGettableAuthDomainDTO,
-): FormValues {
-	if (!record) {
-		return {
-			name: '',
-			ssoEnabled: false,
-			ssoType: '',
-		};
-	}
-
-	return {
-		...record,
-		googleAuthConfig: record.googleAuthConfig
-			? {
-					...record.googleAuthConfig,
-					domainToAdminEmailList: convertDomainMappingsToList(
-						record.googleAuthConfig.domainToAdminEmail,
-					),
-			  }
-			: undefined,
-		roleMapping: record.roleMapping
-			? {
-					...record.roleMapping,
-					groupMappingsList: convertGroupMappingsToList(
-						record.roleMapping.groupMappings,
-					),
-			  }
-			: undefined,
-	};
+interface CreateOrEditProps {
+	isCreate: boolean;
+	onClose: () => void;
+	record?: AuthtypesGettableAuthDomainDTO;
 }
 
 function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { isCreate, record, onClose } = props;
-	const [form] = Form.useForm<AuthtypesPostableAuthDomainDTO>();
+	const [form] = Form.useForm<FormValues>();
 	const [authnProvider, setAuthnProvider] = useState<string>(
 		record?.ssoType || '',
 	);

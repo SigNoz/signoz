@@ -11,10 +11,10 @@ import {
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
+import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import DomainMappingList from './components/DomainMappingList';
 import EmailTagInput from './components/EmailTagInput';
-import { useCollapseSectionErrors } from './components/hooks/useCollapseSectionErrors';
 import RoleMappingSection from './components/RoleMappingSection';
 
 import './Providers.styles.scss';

@@ -12,8 +12,7 @@ import {
 } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Select, Tooltip } from 'antd';
-
-import { useCollapseSectionErrors } from './hooks/useCollapseSectionErrors';
+import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import './RoleMappingSection.styles.scss';
 

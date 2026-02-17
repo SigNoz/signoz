@@ -8,8 +8,7 @@ import {
 } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Collapse, Form, Tooltip } from 'antd';
-
-import { useCollapseSectionErrors } from './hooks/useCollapseSectionErrors';
+import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import './ClaimMappingSection.styles.scss';
 
