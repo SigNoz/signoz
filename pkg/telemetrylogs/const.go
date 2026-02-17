@@ -141,12 +141,15 @@ func bodyAliasExpression() string {
 
 func init() {
 	// body logical field is mapped to message field in the body context that too only with String data type
-	BodyLogicalFieldJSONMapping.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
-		BaseColumn:     "body_v2",
-		PromotedColumn: "body_promoted",
+	err := BodyLogicalFieldJSONMapping.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
+		BaseColumn:     LogsV2BodyV2Column,
+		PromotedColumn: LogsV2BodyPromotedColumn,
 	}, map[string][]telemetrytypes.JSONDataType{
-		"message": {telemetrytypes.String},
+		MessageSubColumn: {telemetrytypes.String},
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	if querybuilder.BodyJSONQueryEnabled {
 		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
