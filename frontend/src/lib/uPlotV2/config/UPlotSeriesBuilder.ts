@@ -49,7 +49,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor } = this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
 			width: lineWidth ?? 2,
@@ -63,7 +63,9 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineConfig.cap = lineCap;
 		}
 
-		if (this.props.panelType === PANEL_TYPES.BAR) {
+		if (fillColor) {
+			lineConfig.fill = fillColor;
+		} else if (this.props.panelType === PANEL_TYPES.BAR) {
 			lineConfig.fill = resolvedLineColor;
 		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
 			lineConfig.fill = `${resolvedLineColor}40`;
