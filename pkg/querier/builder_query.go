@@ -375,18 +375,3 @@ func decodeCursor(cur string) (int64, error) {
 	}
 	return strconv.ParseInt(string(b), 10, 64)
 }
-
-func seed(promoted map[string]any, body map[string]any) {
-	for key, fromValue := range promoted {
-		if toValue, ok := body[key]; !ok {
-			body[key] = fromValue
-		} else {
-			if fromValue, ok := fromValue.(map[string]any); ok {
-				if toValue, ok := toValue.(map[string]any); ok {
-					seed(fromValue, toValue)
-					body[key] = toValue
-				}
-			}
-		}
-	}
-}
