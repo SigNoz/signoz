@@ -33,4 +33,5 @@ Commit staged changes using conventional commit format: `type(scope): descriptio
 
 - Description: imperative mood, lowercase, no period
 - Body: explain WHY, not WHAT (code shows what). Keep it concise and brief.
-- Do not include co-authored by claude in commit message, we want ownership and accountability to remain with the human contributor
+- Do not include co-authored by claude in commit message, we want ownership and accountability to remain with the human contributor.
+- Do not automatically add files to stage unless asked to.

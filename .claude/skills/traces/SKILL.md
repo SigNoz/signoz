@@ -1,12 +1,14 @@
 ---
-description: Architecture context for the traces module (trace detail, waterfall, flamegraph)
+description: Architecture context for the traces module (query building, waterfall, flamegraph)
 ---
 
 # Traces Module
 
-Read [trace-detail-architecture.md](./trace-detail-architecture.md) for full context before working on this module. It covers:
+Read [traces-module.md](./traces-module.md) for full context before working on this module. It covers:
 
-- ClickHouse tables (`signoz_index_v3`, `trace_summary`) and their gotchas
-- Backend API endpoints (waterfall + flamegraph) and processing pipelines
+- Storage schema (`signoz_index_v3`, `trace_summary`) and gotchas
+- API endpoints (Query Range V5, waterfall, flamegraph, funnels)
+- Query building system (statement builder, field mapper, trace operators)
+- Backend processing pipelines and caching
 - Frontend component map, state flow, and API hooks
-- Key file index for both backend and frontend
+- Key file index for backend and frontend
