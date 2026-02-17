@@ -2,6 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import { HostData, HostListResponse } from 'api/infraMonitoring/getHostLists';
 import { SuccessResponse } from 'types/api';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import HostsListTable from '../HostsListTable';
 import { HostsListTableProps } from '../utils';
@@ -182,6 +183,39 @@ describe('HostsListTable', () => {
 		expect(
 			screen.getByText(/No host metrics in the selected time range and filters/),
 		).toBeInTheDocument();
+	});
+
+	it('renders no filtered hosts message when filters are present and no hosts are found', () => {
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				hostMetricsData={[]}
+				filters={{
+					items: [
+						{
+							id: 'host_name',
+							key: {
+								key: 'host_name',
+								dataType: DataTypes.String,
+								type: 'tag',
+								isIndexed: true,
+							},
+							op: '=',
+							value: 'unknown',
+						},
+					],
+					op: 'AND',
+				}}
+				tableData={createMockTableData({
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: false,
+					noRecordsInSelectedTimeRangeAndFilters: true,
+					records: [],
+				})}
+			/>,
+		);
+		expect(container.querySelector('.no-filtered-hosts-message')).toBeTruthy();
+		expect(screen.getByText(/This query had no results/)).toBeInTheDocument();
 	});
 
 	it('renders table data', () => {

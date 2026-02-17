@@ -52,15 +52,6 @@ function getEmptyOrLoadingView(viewState: {
 			/>
 		);
 	}
-	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
-		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={false}
-				incorrectData={false}
-				noRecordsInSelectedTimeRangeAndFilters
-			/>
-		);
-	}
 	if (viewState.showNoFilteredHostsMessage) {
 		return (
 			<div className="no-filtered-hosts-message-container">
@@ -75,6 +66,15 @@ function getEmptyOrLoadingView(viewState: {
 					</Typography.Text>
 				</div>
 			</div>
+		);
+	}
+	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
+		return (
+			<HostsEmptyOrIncorrectMetrics
+				noData={false}
+				incorrectData={false}
+				noRecordsInSelectedTimeRangeAndFilters
+			/>
 		);
 	}
 	if (viewState.showTableLoadingState) {
