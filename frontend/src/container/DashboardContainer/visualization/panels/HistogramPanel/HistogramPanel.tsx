@@ -16,6 +16,8 @@ import {
 	prepareHistogramPanelData,
 } from './utils';
 
+import '../Panel.styles.scss';
+
 function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	const {
 		panelMode,
@@ -90,7 +92,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	]);
 
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<Histogram
 					config={config}

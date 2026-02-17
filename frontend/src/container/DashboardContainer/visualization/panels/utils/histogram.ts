@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable no-param-reassign */
 import {
 	NULL_EXPAND,
 	NULL_REMOVE,
@@ -8,160 +5,221 @@ import {
 } from 'container/PanelWrapper/constants';
 import { AlignedData } from 'uplot';
 
-function nullExpand(
-	yVals: Array<number | null>,
-	nullIdxs: number[],
-	alignedLen: number,
+/**
+ * Expands contiguous runs of `null` values to the left and right of their
+ * original positions so that visual gaps in the series are continuous.
+ *
+ * This is used when `NULL_EXPAND` mode is selected while joining series.
+ */
+function propagateNullsAcrossNeighbors(
+	seriesValues: Array<number | null>,
+	nullIndices: number[],
+	alignedLength: number,
 ): void {
-	for (let i = 0, xi, lastNullIdx = -1; i < nullIdxs.length; i++) {
-		const nullIdx = nullIdxs[i];
+	for (
+		let i = 0, currentIndex, lastExpandedNullIndex = -1;
+		i < nullIndices.length;
+		i++
+	) {
+		const nullIndex = nullIndices[i];
 
-		if (nullIdx > lastNullIdx) {
-			xi = nullIdx - 1;
-			while (xi >= 0 && yVals[xi] == null) {
-				yVals[xi--] = null;
+		if (nullIndex > lastExpandedNullIndex) {
+			// expand left until we hit a non-null value
+			currentIndex = nullIndex - 1;
+			while (currentIndex >= 0 && seriesValues[currentIndex] == null) {
+				seriesValues[currentIndex--] = null;
 			}
 
-			xi = nullIdx + 1;
-			while (xi < alignedLen && yVals[xi] == null) {
-				yVals[(lastNullIdx = xi++)] = null;
+			// expand right until we hit a non-null value
+			currentIndex = nullIndex + 1;
+			while (currentIndex < alignedLength && seriesValues[currentIndex] == null) {
+				seriesValues[(lastExpandedNullIndex = currentIndex++)] = null;
 			}
 		}
 	}
 }
 
-export function join(
-	tables: AlignedData[],
+/**
+ * Merges multiple uPlot `AlignedData` tables into a single aligned table.
+ *
+ * - Merges and sorts all distinct x-values from each table.
+ * - Re-aligns every series onto the merged x-axis.
+ * - Applies per-series null handling (`NULL_REMOVE`, `NULL_RETAIN`, `NULL_EXPAND`).
+ */
+/* eslint-disable sonarjs/cognitive-complexity */
+export function mergeAlignedDataTables(
+	alignedTables: AlignedData[],
 	nullModes?: number[][],
 ): AlignedData {
-	let xVals: Set<number>;
+	let mergedXValues: Set<number>;
 
 	// eslint-disable-next-line prefer-const
-	xVals = new Set();
+	mergedXValues = new Set();
 
-	for (let ti = 0; ti < tables.length; ti++) {
-		const t = tables[ti];
-		const xs = t[0];
-		const len = xs.length;
+	// Collect all unique x-values from every table.
+	for (let tableIndex = 0; tableIndex < alignedTables.length; tableIndex++) {
+		const table = alignedTables[tableIndex];
+		const xValues = table[0];
+		const xLength = xValues.length;
 
-		for (let i = 0; i < len; i++) {
-			xVals.add(xs[i]);
+		for (let i = 0; i < xLength; i++) {
+			mergedXValues.add(xValues[i]);
 		}
 	}
 
-	const data = [Array.from(xVals).sort((a, b) => a - b)];
+	// Sorted, merged x-axis used by the final result.
+	const alignedData: (number | null | undefined)[][] = [
+		Array.from(mergedXValues).sort((a, b) => a - b),
+	];
 
-	const alignedLen = data[0].length;
+	const alignedLength = alignedData[0].length;
 
-	const xIdxs = new Map();
+	// Map from x-value to its index in the merged x-axis.
+	const xValueToIndexMap = new Map<number, number>();
 
-	for (let i = 0; i < alignedLen; i++) {
-		xIdxs.set(data[0][i], i);
+	for (let i = 0; i < alignedLength; i++) {
+		xValueToIndexMap.set(alignedData[0][i] as number, i);
 	}
 
-	for (let ti = 0; ti < tables.length; ti++) {
-		const t = tables[ti];
-		const xs = t[0];
+	// Re-align all series from all tables onto the merged x-axis.
+	for (let tableIndex = 0; tableIndex < alignedTables.length; tableIndex++) {
+		const table = alignedTables[tableIndex];
+		const xValues = table[0];
 
-		for (let si = 1; si < t.length; si++) {
-			const ys = t[si];
+		for (let seriesIndex = 1; seriesIndex < table.length; seriesIndex++) {
+			const seriesValues = table[seriesIndex];
 
-			const yVals = Array(alignedLen).fill(undefined);
+			const alignedSeriesValues = Array(alignedLength).fill(undefined);
 
-			const nullMode = nullModes ? nullModes[ti][si] : NULL_RETAIN;
+			const nullHandlingMode = nullModes
+				? nullModes[tableIndex][seriesIndex]
+				: NULL_RETAIN;
 
-			const nullIdxs = [];
+			const nullIndices: number[] = [];
 
-			for (let i = 0; i < ys.length; i++) {
-				const yVal = ys[i];
-				const alignedIdx = xIdxs.get(xs[i]);
+			for (let i = 0; i < seriesValues.length; i++) {
+				const valueAtPoint = seriesValues[i];
+				const alignedIndex = xValueToIndexMap.get(xValues[i]);
 
-				if (yVal === null) {
-					if (nullMode !== NULL_REMOVE) {
-						yVals[alignedIdx] = yVal;
+				if (alignedIndex == null) {
+					continue;
+				}
 
-						if (nullMode === NULL_EXPAND) {
-							nullIdxs.push(alignedIdx);
+				if (valueAtPoint === null) {
+					if (nullHandlingMode !== NULL_REMOVE) {
+						alignedSeriesValues[alignedIndex] = valueAtPoint;
+
+						if (nullHandlingMode === NULL_EXPAND) {
+							nullIndices.push(alignedIndex);
 						}
 					}
 				} else {
-					yVals[alignedIdx] = yVal;
+					alignedSeriesValues[alignedIndex] = valueAtPoint;
 				}
 			}
 
-			nullExpand(yVals, nullIdxs, alignedLen);
+			// Optionally expand nulls to visually preserve gaps.
+			propagateNullsAcrossNeighbors(
+				alignedSeriesValues,
+				nullIndices,
+				alignedLength,
+			);
 
-			data.push(yVals);
+			alignedData.push(alignedSeriesValues);
 		}
 	}
 
-	return data as AlignedData;
+	return alignedData as AlignedData;
 }
 
-export function histogram(
-	vals: number[],
-	getBucket: (v: number) => number,
-	sort?: ((a: number, b: number) => number) | null,
+/**
+ * Builds histogram buckets from raw values.
+ *
+ * - Each value is mapped into a bucket via `getBucketForValue`.
+ * - Counts how many values fall into each bucket.
+ * - Optionally sorts buckets using the provided comparator.
+ */
+export function buildHistogramBuckets(
+	values: number[],
+	getBucketForValue: (value: number) => number,
+	sortBuckets?: ((a: number, b: number) => number) | null,
 ): AlignedData {
-	const hist = new Map();
+	const bucketMap = new Map<number, { value: number; count: number }>();
 
-	for (let i = 0; i < vals.length; i++) {
-		let v = vals[i];
+	for (let i = 0; i < values.length; i++) {
+		let value = values[i];
 
-		if (v != null) {
-			v = getBucket(v);
+		if (value != null) {
+			value = getBucketForValue(value);
 		}
 
-		const entry = hist.get(v);
+		const bucket = bucketMap.get(value);
 
-		if (entry) {
-			entry.count++;
+		if (bucket) {
+			bucket.count++;
 		} else {
-			hist.set(v, { value: v, count: 1 });
+			bucketMap.set(value, { value, count: 1 });
 		}
 	}
 
-	const bins = [...hist.values()];
+	const buckets = [...bucketMap.values()];
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	sort && bins.sort((a, b) => sort(a.value, b.value));
+	sortBuckets && buckets.sort((a, b) => sortBuckets(a.value, b.value));
 
-	const values = Array(bins.length);
-	const counts = Array(bins.length);
+	const bucketValues = Array(buckets.length);
+	const bucketCounts = Array(buckets.length);
 
-	for (let i = 0; i < bins.length; i++) {
-		values[i] = bins[i].value;
-		counts[i] = bins[i].count;
+	for (let i = 0; i < buckets.length; i++) {
+		bucketValues[i] = buckets[i].value;
+		bucketCounts[i] = buckets[i].count;
 	}
 
-	return [values, counts];
+	return [bucketValues, bucketCounts];
 }
 
-export function replaceUndefinedWithNull(data: AlignedData): AlignedData {
-	const arrays = data as (number | null | undefined)[][];
-	for (let i = 0; i < arrays.length; i++) {
-		for (let j = 0; j < arrays[i].length; j++) {
-			if (arrays[i][j] === undefined) {
-				arrays[i][j] = null;
+/**
+ * Mutates an `AlignedData` instance, replacing all `undefined` entries
+ * with explicit `null` values so uPlot treats them as gaps.
+ */
+export function replaceUndefinedWithNullInAlignedData(
+	data: AlignedData,
+): AlignedData {
+	const seriesList = data as (number | null | undefined)[][];
+	for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex++) {
+		for (
+			let pointIndex = 0;
+			pointIndex < seriesList[seriesIndex].length;
+			pointIndex++
+		) {
+			if (seriesList[seriesIndex][pointIndex] === undefined) {
+				seriesList[seriesIndex][pointIndex] = null;
 			}
 		}
 	}
 	return data;
 }
 
-export function addNullToFirstHistogram(
-	data: AlignedData,
+/**
+ * Ensures the first histogram series has a leading "empty" bin so that
+ * all series line up visually when rendered as bars.
+ *
+ * - Prepends a new x-value (first x - `bucketSize`) to the first series.
+ * - Prepends `null` to all subsequent series at the same index.
+ */
+export function prependNullBinToFirstHistogramSeries(
+	alignedData: AlignedData,
 	bucketSize: number,
 ): void {
-	const histograms = data as (number | null)[][];
+	const seriesList = alignedData as (number | null)[][];
 	if (
-		histograms.length > 0 &&
-		histograms[0].length > 0 &&
-		histograms[0][0] !== null
+		seriesList.length > 0 &&
+		seriesList[0].length > 0 &&
+		seriesList[0][0] !== null
 	) {
-		histograms[0].unshift(histograms[0][0] - bucketSize);
-		for (let i = 1; i < histograms.length; i++) {
-			histograms[i].unshift(null);
+		seriesList[0].unshift(seriesList[0][0] - bucketSize);
+		for (let seriesIndex = 1; seriesIndex < seriesList.length; seriesIndex++) {
+			seriesList[seriesIndex].unshift(null);
 		}
 	}
 }

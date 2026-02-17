@@ -13,10 +13,10 @@ import { incrRoundDn, roundDecimals } from 'utils/round';
 import { PanelMode } from '../types';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
 import {
-	addNullToFirstHistogram,
-	histogram,
-	join,
-	replaceUndefinedWithNull,
+	buildHistogramBuckets,
+	mergeAlignedDataTables,
+	prependNullBinToFirstHistogramSeries,
+	replaceUndefinedWithNullInAlignedData,
 } from '../utils/histogram';
 
 export interface PrepareHistogramPanelDataParams {
@@ -128,18 +128,18 @@ export function prepareHistogramPanelData({
 		roundDecimals(incrRoundDn(v - BUCKET_OFFSET, bucketSize) + BUCKET_OFFSET, 9);
 
 	const frames = buildFrames(result, mergeAllActiveQueries);
-	const histograms: AlignedData[] = frames
+	const histogramsPerSeries: AlignedData[] = frames
 		.filter((frame) => frame.length > 0)
-		.map((frame) => histogram(frame, getBucket, HIST_SORT));
+		.map((frame) => buildHistogramBuckets(frame, getBucket, HIST_SORT));
 
-	if (histograms.length === 0) {
+	if (histogramsPerSeries.length === 0) {
 		return [[]];
 	}
 
-	const joined = join(histograms);
-	replaceUndefinedWithNull(joined);
-	addNullToFirstHistogram(joined, bucketSize);
-	return joined;
+	const mergedHistogramData = mergeAlignedDataTables(histogramsPerSeries);
+	replaceUndefinedWithNullInAlignedData(mergedHistogramData);
+	prependNullBinToFirstHistogramSeries(mergedHistogramData, bucketSize);
+	return mergedHistogramData;
 }
 
 export function prepareHistogramPanelConfig({
