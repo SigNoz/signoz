@@ -5573,6 +5573,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 			if updatedMetrics.Description != "" {
 				response.Metrics[i].Description = updatedMetrics.Description
 			}
+			response.Metrics[i].IsMonotonic = updatedMetrics.IsMonotonic
 		}
 		if samples, exists := samplesMap[response.Metrics[i].MetricName]; exists {
 			response.Metrics[i].Samples = samples
