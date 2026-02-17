@@ -204,6 +204,78 @@ describe('dashboardVariablesStore', () => {
 			expect(doAllVariablesHaveValuesSelected).toBe(true);
 		});
 
+		it('should treat DYNAMIC variable with allSelected=true and selectedValue=undefined as having a value', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					dyn1: createVariable({
+						name: 'dyn1',
+						type: 'DYNAMIC',
+						order: 0,
+						selectedValue: undefined,
+						allSelected: true,
+					}),
+					env: createVariable({
+						name: 'env',
+						type: 'QUERY',
+						order: 1,
+						selectedValue: 'prod',
+					}),
+				},
+			});
+
+			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
+			expect(doAllVariablesHaveValuesSelected).toBe(true);
+		});
+
+		it('should treat DYNAMIC variable with allSelected=true and empty string selectedValue as having a value', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					dyn1: createVariable({
+						name: 'dyn1',
+						type: 'DYNAMIC',
+						order: 0,
+						selectedValue: '',
+						allSelected: true,
+					}),
+					env: createVariable({
+						name: 'env',
+						type: 'QUERY',
+						order: 1,
+						selectedValue: 'prod',
+					}),
+				},
+			});
+
+			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
+			expect(doAllVariablesHaveValuesSelected).toBe(true);
+		});
+
+		it('should treat DYNAMIC variable with allSelected=true and empty array selectedValue as having a value', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					dyn1: createVariable({
+						name: 'dyn1',
+						type: 'DYNAMIC',
+						order: 0,
+						selectedValue: [] as any,
+						allSelected: true,
+					}),
+					env: createVariable({
+						name: 'env',
+						type: 'QUERY',
+						order: 1,
+						selectedValue: 'prod',
+					}),
+				},
+			});
+
+			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
+			expect(doAllVariablesHaveValuesSelected).toBe(true);
+		});
+
 		it('should report false when a DYNAMIC variable has empty selectedValue and allSelected is not true', () => {
 			setDashboardVariablesStore({
 				dashboardId: 'dash-1',
