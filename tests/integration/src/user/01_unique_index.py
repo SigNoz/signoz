@@ -60,4 +60,4 @@ def test_duplicate_user_invite_rejected(
         json={"token": second_invite_token, "password": "password123Z$"},
         timeout=2,
     )
-    assert second_accept_response.status_code in HTTPStatus.CONFLICT
+    assert second_accept_response.status_code == HTTPStatus.CONFLICT
