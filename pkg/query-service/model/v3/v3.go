@@ -385,7 +385,7 @@ type AttributeKey struct {
 	DataType    AttributeKeyDataType `json:"dataType"`
 	Type        AttributeKeyType     `json:"type"`
 	IsColumn    bool                 `json:"isColumn"`
-	IsMonotonic bool                 `json:"is_monotonic"`
+	IsMonotonic bool                 `json:"isMonotonic"`
 	IsJSON      bool                 `json:"isJSON"`
 }
 
