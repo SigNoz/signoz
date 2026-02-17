@@ -7,7 +7,7 @@
 		padding: 16px;
 
 		.roles-settings-header-title {
-			color: var(--bg-base-white);
+			color: var(--text-vanilla-100);
 			font-family: Inter;
 			font-style: normal;
 			font-size: 18px;
@@ -17,7 +17,7 @@
 		}
 
 		.roles-settings-header-description {
-			color: var(--bg-vanilla-400);
+			color: var(--text-vanilla-400);
 			font-family: Inter;
 			font-style: normal;
 			font-size: 14px;
@@ -43,17 +43,17 @@
 			font-weight: 400;
 			line-height: 18px;
 			letter-spacing: -0.07px;
-			color: var(--bg-vanilla-400);
+			color: var(--text-vanilla-400);
 			outline: none;
 			height: 32px;
 
 			&::placeholder {
-				color: var(--bg-vanilla-400);
+				color: var(--text-vanilla-400);
 				opacity: 0.4;
 			}
 
 			&:focus {
-				border-color: var(--bg-slate-300, #2c3148);
+				border-color: var(--bg-slate-300);
 			}
 		}
 	}
@@ -82,6 +82,7 @@
 	display: flex;
 	align-items: center;
 	padding: 8px 16px;
+	gap: 24px;
 }
 
 .roles-table-header-cell {
@@ -90,7 +91,7 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.44px;
-	color: var(--bg-vanilla-400);
+	color: var(--text-vanilla-400);
 	line-height: 16px;
 
 	&--name {
@@ -103,12 +104,12 @@
 	}
 
 	&--created-at {
-		flex: 0 0 200px;
+		flex: 0 0 180px;
 		text-align: right;
 	}
 
 	&--updated-at {
-		flex: 0 0 200px;
+		flex: 0 0 180px;
 		text-align: right;
 	}
 }
@@ -125,8 +126,9 @@
 	font-family: Inter;
 	font-size: 12px;
 	font-weight: 400;
-	color: var(--bg-vanilla-400);
+	color: var(--text-vanilla-400);
 	line-height: 16px;
+	margin: 0; // Reset h3 default margin
 
 	&__count {
 		display: inline-flex;
@@ -139,7 +141,7 @@
 		background: var(--bg-slate-400);
 		font-size: 12px;
 		font-weight: 500;
-		color: var(--bg-vanilla-400);
+		color: var(--text-vanilla-400);
 		line-height: 1;
 	}
 }
@@ -150,13 +152,14 @@
 	padding: 8px 16px;
 	background: rgba(171, 189, 255, 0.02);
 	border-bottom: 1px solid var(--bg-slate-500);
+	gap: 24px;
 }
 
 .roles-table-cell {
 	font-family: Inter;
 	font-size: 14px;
 	font-weight: 400;
-	color: var(--bg-vanilla-400);
+	color: var(--text-vanilla-400);
 	line-height: 20px;
 
 	&--name {
@@ -171,13 +174,13 @@
 	}
 
 	&--created-at {
-		flex: 0 0 200px;
+		flex: 0 0 180px;
 		text-align: right;
 		white-space: nowrap;
 	}
 
 	&--updated-at {
-		flex: 0 0 200px;
+		flex: 0 0 180px;
 		text-align: right;
 		white-space: nowrap;
 	}
@@ -186,7 +189,7 @@
 .roles-table-empty {
 	padding: 24px 16px;
 	text-align: center;
-	color: var(--bg-vanilla-400);
+	color: var(--text-vanilla-400);
 	font-family: Inter;
 	font-size: 14px;
 	font-weight: 400;
@@ -204,13 +207,13 @@
 		.numbers {
 			font-family: Inter;
 			font-size: 12px;
-			color: var(--bg-vanilla-400);
+			color: var(--text-vanilla-400);
 		}
 
 		.total {
 			font-family: Inter;
 			font-size: 12px;
-			color: var(--bg-vanilla-400);
+			color: var(--text-vanilla-400);
 			opacity: 0.5;
 		}
 	}
@@ -220,22 +223,22 @@
 	.roles-settings {
 		.roles-settings-header {
 			.roles-settings-header-title {
-				color: var(--bg-base-black);
+				color: var(--text-ink-500);
 			}
 
 			.roles-settings-header-description {
-				color: var(--bg-ink-400);
+				color: var(--text-ink-400);
 			}
 		}
 
 		.roles-search-wrapper {
 			input {
-				background: var(--bg-vanilla-100, #fff);
+				background: var(--bg-vanilla-100);
 				border-color: var(--bg-vanilla-300);
-				color: var(--bg-ink-400);
+				color: var(--text-ink-400);
 
 				&::placeholder {
-					color: var(--bg-ink-300);
+					color: var(--text-ink-300);
 					opacity: 0.5;
 				}
 
@@ -247,18 +250,18 @@
 	}
 
 	.roles-table-header-cell {
-		color: var(--bg-ink-300);
+		color: var(--text-ink-300);
 	}
 
 	.roles-table-section-header {
 		background: rgba(0, 0, 0, 0.03);
 		border-top-color: var(--bg-vanilla-300);
 		border-bottom-color: var(--bg-vanilla-300);
-		color: var(--bg-ink-300);
+		color: var(--text-ink-300);
 
 		&__count {
 			background: var(--bg-vanilla-300);
-			color: var(--bg-ink-300);
+			color: var(--text-ink-300);
 		}
 	}
 
@@ -268,22 +271,22 @@
 	}
 
 	.roles-table-cell {
-		color: var(--bg-ink-300);
+		color: var(--text-ink-300);
 
 		&--name {
-			color: var(--bg-ink-400);
+			color: var(--text-ink-400);
 		}
 	}
 
 	.roles-table-empty {
-		color: var(--bg-ink-300);
+		color: var(--text-ink-300);
 	}
 
 	.roles-table-pagination {
 		.ant-pagination-total-text {
 			.numbers,
 			.total {
-				color: var(--bg-ink-300);
+				color: var(--text-ink-300);
 			}
 		}
 	}

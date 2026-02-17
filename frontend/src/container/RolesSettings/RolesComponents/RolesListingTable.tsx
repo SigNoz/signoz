@@ -1,36 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pagination, Skeleton, Typography } from 'antd';
+import { Pagination, Skeleton } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useListRoles } from 'api/generated/services/role';
 import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
+import { useTimezone } from 'providers/Timezone';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
 import '../RolesSettings.styles.scss';
 
 const PAGE_SIZE = 20;
-
-function formatTimestamp(date?: Date | string): string {
-	if (!date) {
-		return '—';
-	}
-	const d = new Date(date);
-
-	if (Number.isNaN(d.getTime())) {
-		return '—';
-	}
-
-	const hours = String(d.getHours()).padStart(2, '0');
-	const minutes = String(d.getMinutes()).padStart(2, '0');
-	const seconds = String(d.getSeconds()).padStart(2, '0');
-	const month = d.toLocaleString('en-US', { month: 'short' });
-	const day = d.getDate();
-	const year = d.getFullYear();
-	return `${hours}:${minutes}:${seconds} — ${month} ${day}, ${year}`;
-}
 
 function toAPIError(error: unknown): APIError {
 	try {
@@ -63,9 +46,23 @@ function RolesListingTable({
 	searchQuery,
 }: RolesListingTableProps): JSX.Element {
 	const { data, isLoading, isError, error } = useListRoles();
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const [currentPage, setCurrentPage] = useState(1);
 
 	const roles = useMemo(() => data?.data?.data ?? [], [data]);
+
+	const formatTimestamp = (date?: Date | string): string => {
+		if (!date) {
+			return '—';
+		}
+		const d = new Date(date);
+
+		if (Number.isNaN(d.getTime())) {
+			return '—';
+		}
+
+		return formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.DASH_DATETIME);
+	};
 
 	const filteredRoles = useMemo(() => {
 		if (!searchQuery.trim()) {
@@ -142,10 +139,10 @@ function RolesListingTable({
 
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 		<>
-			<Typography.Text className="numbers">
+			<span className="numbers">
 				{range[0]} &#8212; {range[1]}
-			</Typography.Text>
-			<Typography.Text className="total"> of {total}</Typography.Text>
+			</span>
+			<span className="total"> of {total}</span>
 		</>
 	);
 
@@ -216,15 +213,12 @@ function RolesListingTable({
 
 					{paginatedItems.map((item) =>
 						item.type === 'section' ? (
-							<div
-								key={`section-${item.label}`}
-								className="roles-table-section-header"
-							>
+							<h3 key={`section-${item.label}`} className="roles-table-section-header">
 								{item.label}
 								{item.count !== undefined && (
 									<span className="roles-table-section-header__count">{item.count}</span>
 								)}
-							</div>
+							</h3>
 						) : (
 							renderRow(item.role)
 						),
