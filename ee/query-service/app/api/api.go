@@ -45,7 +45,7 @@ type APIHandler struct {
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
+func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.Config) (*APIHandler, error) {
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		RuleManager:                   opts.RulesManager,
@@ -58,7 +58,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
-	})
+	}, config)
 
 	if err != nil {
 		return nil, err
