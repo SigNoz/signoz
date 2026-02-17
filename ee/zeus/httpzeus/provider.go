@@ -3,6 +3,7 @@ package httpzeus
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/client"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/tidwall/gjson"
 )
@@ -119,8 +121,13 @@ func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte
 	return err
 }
 
-func (provider *Provider) PutProfile(ctx context.Context, key string, body []byte) error {
-	_, err := provider.do(
+func (provider *Provider) PutProfile(ctx context.Context, key string, profile *zeustypes.PostableProfile) error {
+	body, err := json.Marshal(profile)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/profiles/me"),
 		http.MethodPut,
@@ -131,8 +138,13 @@ func (provider *Provider) PutProfile(ctx context.Context, key string, body []byt
 	return err
 }
 
-func (provider *Provider) PutHost(ctx context.Context, key string, body []byte) error {
-	_, err := provider.do(
+func (provider *Provider) PutHost(ctx context.Context, key string, host *zeustypes.PostableHost) error {
+	body, err := json.Marshal(host)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/deployments/me/hosts"),
 		http.MethodPut,
