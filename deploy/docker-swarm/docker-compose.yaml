@@ -58,7 +58,7 @@ x-db-depend: &db-depend
   !!merge <<: *common
   depends_on:
     - clickhouse
-    - schema-migrator
+    - telemetrystore-migrator
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -171,9 +171,9 @@ services:
       replicas: 3
     depends_on:
       - clickhouse
-      - schema-migrator
+      - telemetrystore-migrator
       - signoz
-  schema-migrator:
+  telemetrystore-migrator:
     !!merge <<: *common
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     entrypoint:
