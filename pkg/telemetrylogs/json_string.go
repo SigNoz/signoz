@@ -53,18 +53,23 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 		switch v := value.(type) {
 		case []any:
 			// take the first element and infer the type
+			var scalerType telemetrytypes.FieldDataType
 			if len(v) > 0 {
-				valueType, _ = closure(v[0], key)
+				scalerType, _ = closure(v[0], key)
 			}
-			// Between/NotBetween/In/NotIn: scalar key → compare field to multiple values (scalar type).
-			// Array path key → array membership (keep array type).
-			if operator.IsArrayOperator() {
-				if !(strings.HasSuffix(key.Name, telemetrytypes.ArrayAnyIndexSuffix) || strings.HasSuffix(key.Name, telemetrytypes.ArraySepSuffix)) {
-					return valueType, v
+
+			arrayType := telemetrytypes.ScalerFieldTypeToArrayFieldType[scalerType]
+			switch {
+			// decide on the field data type based on the key
+			case key.FieldDataType.IsArray():
+				return arrayType, v
+			default:
+				// TODO(Piyush): backward compatibility for the old String based JSON QB queries
+				if strings.HasSuffix(key.Name, telemetrytypes.ArrayAnyIndexSuffix) {
+					return arrayType, v
 				}
+				return scalerType, v
 			}
-			// convert the scaler type to the array type
-			return telemetrytypes.ScalerFieldTypeToArrayFieldType[valueType], v
 		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 			valueType = telemetrytypes.FieldDataTypeInt64
 		case float32, float64:
