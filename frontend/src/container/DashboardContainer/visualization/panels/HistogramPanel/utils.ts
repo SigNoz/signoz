@@ -197,7 +197,8 @@ export function prepareHistogramPanelConfig({
 			spanGaps: false,
 			barWidthFactor: 1,
 			pointSize: 5,
-			lineColor: '#4E74F8',
+			lineColor: '#3f5ecc',
+			fillColor: '#4E74F8',
 			isDarkMode,
 		});
 	} else {
