@@ -75,7 +75,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
-		// TODO: use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderFormula
+		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderFormula
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "formula spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid formula spec: %v", err)
 		}
@@ -83,7 +83,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeJoin:
 		var spec QueryBuilderJoin
-		// TODO: use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderJoin
+		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for QueryBuilderJoin
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "join spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid join spec: %v", err)
 		}
@@ -98,7 +98,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypePromQL:
 		var spec PromQuery
-		// TODO: use json.Unmarshal here after implementing custom unmarshaler for PromQuery
+		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for PromQuery
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "PromQL spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid PromQL spec: %v", err)
 		}
@@ -106,7 +106,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 
 	case QueryTypeClickHouseSQL:
 		var spec ClickHouseQuery
-		// TODO: use json.Unmarshal here after implementing custom unmarshaler for ClickHouseQuery
+		// TODO(srikanthccv): use json.Unmarshal here after implementing custom unmarshaler for ClickHouseQuery
 		if err := UnmarshalJSONWithContext(shadow.Spec, &spec, "ClickHouse SQL spec"); err != nil {
 			return wrapUnmarshalError(err, "invalid ClickHouse SQL spec: %v", err)
 		}
@@ -439,7 +439,7 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 		expr = strings.ToLower(expr)
 		// only pure additive/counting operations should default to zero,
 		// while statistical/analytical operations should show gaps when there's no data to analyze.
-		// TODO: use newExprVisitor for getting the function used in the expression
+		// TODO(srikanthccv): use newExprVisitor for getting the function used in the expression
 		if strings.HasPrefix(expr, "count(") ||
 			strings.HasPrefix(expr, "count_distinct(") ||
 			strings.HasPrefix(expr, "sum(") ||
