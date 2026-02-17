@@ -127,6 +127,34 @@
 		align-items: center;
 		padding: 8px;
 	}
+
+	.filters-info {
+		display: flex;
+		align-items: center;
+		padding: 6px 10px 0 10px;
+		color: var(--bg-vanilla-400);
+		gap: 6px;
+		flex-wrap: wrap;
+
+		.filters-info-toggle {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 0;
+			height: auto;
+			color: var(--bg-vanilla-400);
+
+			&:hover {
+				color: var(--bg-robin-500);
+			}
+		}
+
+		.filters-info-text {
+			color: var(--bg-vanilla-400);
+			font-size: 13px;
+			line-height: 16px;
+		}
+	}
 }
 
 .perilin-bg {
@@ -178,6 +206,22 @@
 						background-color: var(--bg-vanilla-200);
 					}
 				}
+			}
+		}
+
+		.filters-info {
+			color: var(--bg-ink-400);
+
+			.filters-info-toggle {
+				color: var(--bg-ink-400);
+
+				&:hover {
+					color: var(--bg-ink-300);
+				}
+			}
+
+			.filters-info-text {
+				color: var(--bg-ink-400);
 			}
 		}
 	}

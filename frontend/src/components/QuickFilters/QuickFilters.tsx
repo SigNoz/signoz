@@ -12,7 +12,7 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from '@signozhq/combobox';
-import { Skeleton, Switch, Tooltip, Typography } from 'antd';
+import { Button, Skeleton, Switch, Tooltip, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -23,7 +23,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
-import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
+import { Frown, Lightbulb, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
@@ -51,6 +51,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	} = props;
 	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const [isFiltersInfoOpen, setIsFiltersInfoOpen] = useState(false);
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
@@ -291,6 +292,21 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					/>
 				</div>
 			)}
+			<section className="filters-info">
+				<Button
+					type="link"
+					className="filters-info-toggle"
+					onClick={(): void => setIsFiltersInfoOpen((prev) => !prev)}
+				>
+					<Lightbulb size={15} />
+					{isFiltersInfoOpen ? 'Hide info' : 'Adaptive filters'}
+				</Button>
+				{isFiltersInfoOpen && (
+					<Typography.Text className="filters-info-text">
+						Filter values update automatically based on other selected filters
+					</Typography.Text>
+				)}
+			</section>
 			<section className="filters">
 				{filterConfig.map((filter) => {
 					switch (filter.type) {

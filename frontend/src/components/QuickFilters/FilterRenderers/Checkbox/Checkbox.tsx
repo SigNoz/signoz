@@ -226,7 +226,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		return false;
 	}, [keyValueSuggestions]);
 
-	const previousAttributeValuesRef = useRef<string[]>([]);
+	const previousUncheckedValuesRef = useRef<string[]>([]);
 
 	const attributeValues: string[] = useMemo(() => {
 		// const dataType = filter.attributeKey.dataType || DataTypes.String;
@@ -240,9 +240,17 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			const stringValues = values.stringValues || [];
 			const numberValues = values.numberValues || [];
 
-			// Use relatedValues if present (these are the checked/selected values)
-			// Otherwise fallback to stringValues
-			const valuesToUse = relatedValues.length > 0 ? relatedValues : stringValues;
+			// Combine relatedValues first, then unique stringValues
+			const valuesToUse = [
+				...relatedValues,
+				...stringValues.filter(
+					(value: string | null | undefined) =>
+						value !== null &&
+						value !== undefined &&
+						value !== '' &&
+						!relatedValues.includes(value),
+				),
+			];
 
 			// Generate options from string values - explicitly handle empty strings
 			const stringOptions = valuesToUse
@@ -260,23 +268,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				)
 				.map((value: number) => value.toString());
 
-			// Combine checked values with previously visible unchecked values
-			let finalValues = [...stringOptions, ...numberOptions];
-
-			// When we have search results (relatedValues or stringValues), preserve previously visible unchecked values
-			// Only update ref if we have actual valid data (not empty search results)
-			if (finalValues.length > 0) {
-				const previousValues = previousAttributeValuesRef.current || [];
-				// Keep values that were previously visible but not in new results
-				const preservedValues = previousValues.filter(
-					(val) => !finalValues.includes(val),
-				);
-				finalValues = Array.from(new Set([...finalValues, ...preservedValues]));
-				// Store current values for next refetch only if we have valid data
-				previousAttributeValuesRef.current = finalValues;
-			}
-
-			return finalValues;
+			const baseValues = [...stringOptions, ...numberOptions];
+			const previousUnchecked = previousUncheckedValuesRef.current || [];
+			const preservedUnchecked = previousUnchecked.filter(
+				(value) => !baseValues.includes(value),
+			);
+			return [...baseValues, ...preservedUnchecked];
 		}
 		return [];
 	}, [keyValueSuggestions]);
@@ -373,6 +370,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			hasMoreChecked: checkedValues.length > visibleChecked.length,
 		};
 	}, [attributeValues, currentFilterState, visibleItemsCount]);
+
+	useEffect(() => {
+		previousUncheckedValuesRef.current = uncheckedValues;
+	}, [uncheckedValues]);
 
 	const handleClearFilterAttribute = (): void => {
 		const preparedQuery: Query = {
@@ -711,7 +712,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					{!isEmptyStateWithDocsEnabled && (
 						<section className="search" ref={searchContainerRef}>
 							<Input
-								placeholder="Filter values"
+								placeholder="Search values"
 								onChange={(e): void => setSearchTextDebounced(e.target.value)}
 								disabled={isFilterDisabled}
 								ref={searchInputRef}
