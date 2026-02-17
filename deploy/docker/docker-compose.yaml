@@ -57,7 +57,7 @@ x-db-depend: &db-depend
   depends_on:
     clickhouse:
       condition: service_healthy
-    schema-migrator-sync:
+    schema-migrator:
       condition: service_completed_successfully
 services:
   init-clickhouse:
@@ -163,26 +163,20 @@ services:
     depends_on:
       signoz:
         condition: service_healthy
-  schema-migrator-sync:
+  schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.142.0}
-    container_name: schema-migrator-sync
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
+    container_name: schema-migrator
     command:
-      - sync
-      - --dsn=tcp://clickhouse:9000
-      - --up=
+    - /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000
+    - /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000
+    - /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
     depends_on:
       clickhouse:
         condition: service_healthy
-    restart: on-failure
-  schema-migrator-async:
-    !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.142.0}
-    container_name: schema-migrator-async
-    command:
-      - async
-      - --dsn=tcp://clickhouse:9000
-      - --up=
+    entrypoint:
+    - /bin/sh
+    - -c
     restart: on-failure
 networks:
   signoz-net:

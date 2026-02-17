@@ -232,17 +232,17 @@ services:
       - signoz
   schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:v0.142.0
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-    entrypoint: sh
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
+    entrypoint:
+    - /bin/sh
+    - -c
     command:
-      - -c
-      - "/signoz-schema-migrator sync --dsn=tcp://clickhouse:9000 --up= && /signoz-schema-migrator async --dsn=tcp://clickhouse:9000 --up="
+    - /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000
+    - /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000
+    - /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
     depends_on:
-      - clickhouse
+      clickhouse:
+        condition: service_healthy
 networks:
   signoz-net:
     name: signoz-net

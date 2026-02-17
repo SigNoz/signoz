@@ -41,31 +41,17 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-  schema-migrator-sync:
-    image: signoz/signoz-schema-migrator:v0.142.0
-    container_name: schema-migrator-sync
+  schema-migrator:
+    image: signoz/signoz-otel-collector:v0.142.0
+    container_name: schema-migrator
     command:
-      - sync
-      - --cluster-name=cluster
-      - --dsn=tcp://clickhouse:9000
-      - --replication=true
-      - --up=
+    - /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000
+    - /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000
+    - /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
     depends_on:
       clickhouse:
         condition: service_healthy
-    restart: on-failure
-  schema-migrator-async:
-    image: signoz/signoz-schema-migrator:v0.142.0
-    container_name: schema-migrator-async
-    command:
-      - async
-      - --cluster-name=cluster
-      - --dsn=tcp://clickhouse:9000
-      - --replication=true
-      - --up=
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-      schema-migrator-sync:
-        condition: service_completed_successfully
+    entrypoint:
+    - /bin/sh
+    - -c
     restart: on-failure
