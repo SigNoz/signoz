@@ -41,6 +41,22 @@ func NewOrganization(displayName string) *Organization {
 	}
 }
 
+func NewOrganizationWithName(name string) *Organization {
+	id := valuer.GenerateUUID()
+	return &Organization{
+		Identifiable: Identifiable{
+			ID: id,
+		},
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:        name,
+		DisplayName: name,
+		Key:         NewOrganizationKey(id),
+	}
+}
+
 func NewOrganizationKey(orgID valuer.UUID) uint32 {
 	hasher := fnv.New32a()
 
@@ -74,6 +90,7 @@ type TTLSetting struct {
 type OrganizationStore interface {
 	Create(context.Context, *Organization) error
 	Get(context.Context, valuer.UUID) (*Organization, error)
+	GetByName(context.Context, string) (*Organization, error)
 	GetAll(context.Context) ([]*Organization, error)
 	ListByKeyRange(context.Context, uint32, uint32) ([]*Organization, error)
 	Update(context.Context, *Organization) error
