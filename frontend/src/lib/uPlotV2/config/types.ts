@@ -176,6 +176,7 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	show?: boolean;
 	spanGaps?: boolean;
 	isDarkMode?: boolean;
+	stepInterval?: number;
 }
 
 export interface LegendItem {

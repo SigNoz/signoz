@@ -309,3 +309,14 @@ user:
       allow_self: true
       # The duration within which a user can reset their password.
       max_token_lifetime: 6h
+  root:
+    # Whether to enable the root user. When enabled, a root user is provisioned
+    # on startup using the email and password below. The root user cannot be
+    # deleted, updated, or have their password changed through the UI.
+    enabled: false
+    # The email address of the root user.
+    email: ""
+    # The password of the root user. Must meet password requirements.
+    password: ""
+    # The name of the organization to create or look up for the root user.
+    org_name: default

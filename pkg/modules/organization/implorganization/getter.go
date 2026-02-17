@@ -30,3 +30,7 @@ func (module *getter) ListByOwnedKeyRange(ctx context.Context) ([]*types.Organiz
 
 	return module.store.ListByKeyRange(ctx, start, end)
 }
+
+func (module *getter) GetByName(ctx context.Context, name string) (*types.Organization, error) {
+	return module.store.GetByName(ctx, name)
+}
