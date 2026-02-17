@@ -227,6 +227,7 @@ services:
     deploy:
       replicas: 3
     depends_on:
+      - clickhouse
       - signoz
   telemetrystore-migrator:
     !!merge <<: *common

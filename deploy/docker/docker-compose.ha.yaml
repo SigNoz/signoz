@@ -231,6 +231,8 @@ services:
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
     depends_on:
+      clickhouse:
+        condition: service_healthy
       signoz:
         condition: service_healthy
   telemetrystore-migrator:
