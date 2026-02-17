@@ -35,7 +35,7 @@ export interface HostRowData {
 }
 
 const HOSTNAME_DOCS_URL =
-	'https://signoz.io/docs/logs-management/guides/set-resource-attributes-for-logs/';
+	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
 
 export function HostnameCell({
 	hostName,
