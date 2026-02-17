@@ -1,7 +1,6 @@
 ---
 name: commit
 description: Create a conventional commit with staged changes
-disable-model-invocation: true
 allowed-tools: Bash(git:*)
 ---
 
@@ -16,7 +15,6 @@ Commit staged changes using conventional commit format: `type(scope): descriptio
 - `chore:` - Maintenance/refactor/tooling
 - `test:` - Tests only
 - `docs:` - Documentation
-- `tests:` - Tests
 
 ## Process
 
@@ -34,4 +32,5 @@ Commit staged changes using conventional commit format: `type(scope): descriptio
 ## Notes
 
 - Description: imperative mood, lowercase, no period
-- Body: explain WHY, not WHAT (code shows what). Keep it consice and brief.
+- Body: explain WHY, not WHAT (code shows what). Keep it concise and brief.
+- Do not include co-authored by claude in commit message, we want ownership and accountability to remain with the human contributor

@@ -1,3 +1,9 @@
+---
+name: review
+description: Review code changes for bugs, performance issues, and SigNoz convention compliance
+allowed-tools: Bash(git:*, gh:*), Read, Glob, Grep
+---
+
 # Review Command
 
 Perform a thorough code review following SigNoz's coding conventions and contributing guidelines and any potential bug introduced.
@@ -39,103 +45,64 @@ Invoke this command to review code changes, files, or pull requests with actiona
 
 4. **Review against SigNoz guidelines**:
    - **Frontend**: Check [Frontend Guidelines](../../frontend/CONTRIBUTIONS.md)
+   - **Backend/Architecture**: Check [CLAUDE.md](../CLAUDE.md) for provider pattern, error handling, SQL, REST, and linting conventions
    - **General**: Check [Contributing Guidelines](../../CONTRIBUTING.md)
    - **Commits**: Verify [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-   - **Architecture**: Reference relevant architecture docs if available
 
-5. **Review for any bugs**:
-   Review the change for the intent and if the feature or bug actually got fixed, ensure there is no edge case missed. Look for any performance impact and suggest alternative if available.
+5. **Verify feature intent**:
+   - Read the PR description, commit message, or linked issue to understand *what* the change claims to do
+   - Trace the code path end-to-end to confirm the change actually achieves its stated goal
+   - Check that the happy path works as described
+   - Identify any scenarios where the feature silently does nothing or produces wrong results
 
-5. **Provide actionable, concise feedback** in structured format
+6. **Review for bug introduction**:
+   - **Regressions**: Does the change break existing behavior? Check callers of modified functions/interfaces
+   - **Edge cases**: Empty inputs, nil/undefined values, boundary conditions, concurrent access
+   - **Error paths**: Are all error cases handled? Can errors be swallowed silently?
+   - **State management**: Are state transitions correct? Can state become inconsistent?
+   - **Race conditions**: Shared mutable state, async operations, missing locks or guards
+   - **Type mismatches**: Unsafe casts, implicit conversions, `any` usage hiding real types
+
+7. **Review for performance implications**:
+   - **Backend**: N+1 queries, missing indexes, unbounded result sets, large allocations in hot paths, unnecessary DB round-trips
+   - **Frontend**: Unnecessary re-renders from inline objects/functions as props, missing memoization on expensive computations, large bundle imports that should be lazy-loaded, unthrottled event handlers
+   - **General**: O(n²) or worse algorithms on potentially large datasets, unnecessary network calls, missing pagination or limits
+
+8. **Provide actionable, concise feedback** in structured format
 
 ## Review Checklist
 
-### Frontend (React/TypeScript)
+For coding conventions and style, refer to the linked guideline docs. This checklist focuses on **review-specific concerns** that guidelines alone don't catch.
 
-**Export & Imports**:
-- [ ] Components use default exports
-- [ ] Utilities/hooks/types use named exports
-- [ ] No `import React from 'react'` (React 18+)
-- [ ] Imports organized (simple-import-sort)
+### Correctness & Intent
+- [ ] Change achieves what the PR/commit/issue describes
+- [ ] Happy path works end-to-end
+- [ ] Edge cases handled (empty, nil, boundary, concurrent)
+- [ ] Error paths don't swallow failures silently
+- [ ] No regressions to existing callers of modified code
 
-**Component Design**:
-- [ ] Small, modular components (Single Responsibility)
-- [ ] No inline objects/functions as props
-- [ ] Proper use of `useMemo`/`useCallback` (not overused)
-- [ ] Functions <40 lines, descriptive names
-- [ ] Components in PascalCase, files/folders lowercase
-
-**API Integration**:
-- [ ] `useQuery` for fetching data
-- [ ] `useMutation` for updates
-- [ ] No business logic in API/service files
-- [ ] Proper error handling
-
-**Styling**:
-- [ ] No inline styles
-- [ ] Uses `rem` instead of `px`
-- [ ] Follows theme/design system
-
-**Code Quality**:
-- [ ] No hard-coded strings (internationalized)
-- [ ] No disabled ESLint/TS errors without justification
-- [ ] TypeScript types properly defined
-- [ ] Accessibility (ARIA, semantic HTML)
-- [ ] No complex nested conditionals
-
-### Backend (Go)
-
-**Error Handling**:
-- [ ] Uses `pkg/errors` package (not standard library)
-- [ ] Errors properly wrapped with context
-- [ ] Error codes defined for domain errors
-- [ ] All errors handled or propagated
-
-**Code Structure**:
-- [ ] Follows provider pattern where applicable
-- [ ] Context passed correctly
-- [ ] Functions are modular and well-named
-- [ ] No `fmt.Errorf` or `fmt.Print*` (use `pkg/errors`, `slog`)
-
-**Database**:
-- [ ] Uses Bun ORM via `sqlstore.BunDBCtx(ctx)`
-- [ ] Proper use of prepared statements
-- [ ] No SQL injection risks
-- [ ] Migrations are idempotent
-
-**Performance**:
-- [ ] Efficient queries
-- [ ] Proper indexing considered
-- [ ] No obvious bottlenecks
-
-**Testing**:
-- [ ] Unit tests for new functionality
-- [ ] Tests use race detector
-- [ ] Mock providers used correctly
-
-### General (All Code)
-
-**Security**:
+### Security
 - [ ] No exposed secrets, API keys, credentials
 - [ ] No sensitive data in logs
-- [ ] Input validation present
-- [ ] Authentication/authorization checked
+- [ ] Input validation at system boundaries
+- [ ] Authentication/authorization checked for new endpoints
+- [ ] No SQL injection or XSS risks
 
-**Documentation**:
-- [ ] Code is self-documenting
-- [ ] Comments only where needed (explain WHY, not WHAT)
-- [ ] Public APIs documented
-- [ ] Architecture decisions explained
+### Performance
+- [ ] No N+1 queries or unbounded result sets
+- [ ] No unnecessary re-renders (inline objects/functions as props, missing memoization)
+- [ ] No large imports that should be lazy-loaded
+- [ ] No O(n²) on potentially large datasets
+- [ ] Pagination/limits present where needed
 
-**Git/Commits**:
-- [ ] Commit messages follow `type(scope): description` where scope is optional
+### Testing
+- [ ] New functionality has tests
+- [ ] Edge cases and error paths tested
+- [ ] Tests are deterministic (no flakiness)
+
+### Git/Commits
+- [ ] Commit messages follow `type(scope): description` ([Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/))
 - [ ] Commits are atomic and logical
-
-**Performance & Quality**:
-- [ ] No obvious performance issues
-- [ ] Code is DRY (Don't Repeat Yourself)
-- [ ] Edge cases handled
-- [ ] Breaking changes documented
 
 ## Output Format
 
@@ -180,15 +147,13 @@ Provide feedback in this structured format:
 
 Use these categories for issues:
 
+- **Bug / Regression**: Logic errors, edge cases, race conditions, broken existing behavior
+- **Feature Gap**: Change doesn't fully achieve its stated intent
 - **Security Risk**: Authentication, authorization, data exposure, injection
-- **Performance Issue**: Inefficient queries, unnecessary re-renders, memory leaks
-- **Bug Risk**: Logic errors, edge cases, race conditions
-- **Code Quality**: Complexity, duplication, naming, structure
-- **Convention Violation**: Style, patterns, architectural guidelines
-- **Type Safety**: Missing types, any usage, unsafe casts
-- **Accessibility**: Missing ARIA, keyboard navigation, screen reader support
+- **Performance Issue**: Inefficient queries, unnecessary re-renders, memory leaks, unbounded data
+- **Convention Violation**: Style, patterns, architectural guidelines (link to relevant guideline doc)
+- **Code Quality**: Complexity, duplication, naming, type safety
 - **Testing**: Missing tests, inadequate coverage, flaky tests
-- **Documentation**: Missing docs, outdated comments, unclear code
 
 ## Example Review
 

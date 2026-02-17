@@ -1,7 +1,6 @@
 ---
 name: raise-pr
 description: Create a pull request with auto-filled template. Pass 'commit' to commit staged changes first.
-disable-model-invocation: true
 allowed-tools: Bash(gh:*, git:*), Read
 argument-hint: [commit?]
 ---
@@ -52,5 +51,5 @@ Create a PR with auto-filled template from commits after origin/main.
 
 - Analyze ALL commits messages from origin/main to HEAD
 - Fill template sections based on code analysis
-- Leave the sections of PR template as it is if you can't determine
+- Leave template sections as they are if you can't determine the content
 - Don't add the changes to git stage, only commit or push whatever user has already staged
