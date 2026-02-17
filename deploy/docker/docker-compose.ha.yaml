@@ -62,7 +62,7 @@ x-db-depend: &db-depend
   depends_on:
     clickhouse:
       condition: service_healthy
-    schema-migrator-sync:
+    schema-migrator:
       condition: service_completed_successfully
 services:
   init-clickhouse:
@@ -232,7 +232,7 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-      schema-migrator-sync:
+      schema-migrator:
         condition: service_completed_successfully
       signoz:
         condition: service_healthy

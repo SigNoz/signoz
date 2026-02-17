@@ -184,8 +184,7 @@ services:
     - /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000
     - /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
     depends_on:
-      clickhouse:
-        condition: service_healthy
+      - clickhouse
     restart: on-failure
 networks:
   signoz-net:
