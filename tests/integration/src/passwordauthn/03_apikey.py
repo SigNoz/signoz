@@ -4,10 +4,11 @@ from typing import Callable
 import requests
 
 from fixtures import types
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 
 def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/pats"),
@@ -28,7 +29,7 @@ def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
-        headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
+        headers={"SIGNOZ-API-KEY": f"{pat_response['data']['token']}"},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -38,14 +39,14 @@ def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> 
         (
             user
             for user in user_response["data"]
-            if user["email"] == "admin@integration.test"
+            if user["email"] == ROOT_USER_EMAIL
         ),
         None,
     )
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/pats"),
-        headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
+        headers={"SIGNOZ-API-KEY": f"{pat_response['data']['token']}"},
         timeout=2,
     )
 

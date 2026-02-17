@@ -4,7 +4,7 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -12,10 +12,9 @@ logger = setup_logger(__name__)
 
 def test_get_org_preference(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/org/preferences"),
@@ -29,10 +28,9 @@ def test_get_org_preference(
 
 def test_get_set_org_preference_by_name(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # preference does not exist
     response = requests.get(

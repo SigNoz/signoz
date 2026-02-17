@@ -3,16 +3,15 @@ from typing import Callable
 
 import requests
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.types import Operation, SigNoz
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
+from fixtures.types import SigNoz
 
 
 def test_create_and_get_domain(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get domains which should be an empty list
     response = requests.get(
@@ -91,10 +90,9 @@ def test_create_and_get_domain(
 
 def test_create_invalid(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a domain with type saml and body for oidc, this should fail because oidcConfig is not allowed for saml
     response = requests.post(
@@ -173,11 +171,10 @@ def test_create_invalid(
 
 def test_create_invalid_role_mapping(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """Test that invalid role mappings are rejected."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create domain with invalid defaultRole
     response = requests.post(

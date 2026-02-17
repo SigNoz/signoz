@@ -14,7 +14,7 @@ import pytest
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 
@@ -98,14 +98,6 @@ def verify_table_retention_expression(
         )
 
 
-@pytest.fixture(name="ttl_test_suite_setup", scope="package", autouse=True)
-def ttl_test_suite_setup(create_user_admin):  # pylint: disable=unused-argument
-    # This fixture creates a admin user for the entire ttl test suite
-    # The create_user_admin fixture is executed just by being a dependency
-    print("Setting up ttl test suite")
-    yield
-
-
 def test_set_ttl_traces_success(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -121,7 +113,7 @@ def test_set_ttl_traces_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -171,7 +163,7 @@ def test_set_ttl_traces_with_cold_storage(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -233,7 +225,7 @@ def test_set_ttl_metrics_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -285,7 +277,7 @@ def test_set_ttl_metrics_with_cold_storage(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -350,7 +342,7 @@ def test_set_ttl_invalid_type(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -382,7 +374,7 @@ def test_set_custom_retention_ttl_basic(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -444,7 +436,7 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -512,7 +504,7 @@ def test_set_custom_retention_ttl_basic_fallback(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -576,7 +568,7 @@ def test_set_custom_retention_ttl_basic_101_times(
         }
 
         headers = {
-            "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+            "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
         }
 
         response = requests.post(
@@ -628,7 +620,7 @@ def test_set_custom_retention_ttl_with_conditions(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -739,7 +731,7 @@ def test_set_custom_retention_ttl_with_invalid_cold_storage(
     insert_logs(logs)
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -783,7 +775,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -820,7 +812,7 @@ def test_set_custom_retention_ttl_invalid_condition(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -859,7 +851,7 @@ def test_get_custom_retention_ttl(
     insert_logs(logs)
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
     set_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -874,7 +866,7 @@ def test_get_custom_retention_ttl(
 
     # Now get the TTL configuration
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     get_response = requests.get(
@@ -912,7 +904,7 @@ def test_set_ttl_logs_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(
@@ -954,7 +946,7 @@ def test_get_ttl_traces_success(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     set_response = requests.post(
@@ -1024,7 +1016,7 @@ def test_large_ttl_conditions_list(
     }
 
     headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
+        "Authorization": f"Bearer {get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)}"
     }
 
     response = requests.post(

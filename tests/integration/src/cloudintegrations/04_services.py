@@ -5,7 +5,7 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
@@ -14,11 +14,10 @@ logger = setup_logger(__name__)
 
 def test_list_services_without_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test listing available services without specifying an account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "aws"
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -48,12 +47,11 @@ def test_list_services_without_account(
 
 def test_list_services_with_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test listing services for a specific connected account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -93,11 +91,10 @@ def test_list_services_with_account(
 
 def test_get_service_details_without_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test getting service details without specifying an account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "aws"
     # First get the list of services to get a valid service ID
@@ -139,12 +136,11 @@ def test_get_service_details_without_account(
 
 def test_get_service_details_with_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test getting service details for a specific connected account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -195,11 +191,10 @@ def test_get_service_details_with_account(
 
 def test_get_service_details_invalid_service(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test getting details for a non-existent service."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "aws"
     fake_service_id = "non-existent-service"
@@ -218,11 +213,10 @@ def test_get_service_details_invalid_service(
 
 def test_list_services_unsupported_provider(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test listing services for an unsupported cloud provider."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "gcp"  # Unsupported provider
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -240,12 +234,11 @@ def test_list_services_unsupported_provider(
 
 def test_update_service_config(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test updating service configuration for a connected account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -306,11 +299,10 @@ def test_update_service_config(
 
 def test_update_service_config_without_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test updating service config without a connected account should fail."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "aws"
 
@@ -352,12 +344,11 @@ def test_update_service_config_without_account(
 
 def test_update_service_config_invalid_service(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test updating config for a non-existent service should fail."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
@@ -396,12 +387,11 @@ def test_update_service_config_invalid_service(
 
 def test_update_service_config_disable_service(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test disabling a service by updating config with enabled=false."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"

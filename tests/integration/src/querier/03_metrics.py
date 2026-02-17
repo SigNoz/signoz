@@ -5,7 +5,7 @@ from typing import Callable, Dict, List
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     assert_minutely_bucket_values,
@@ -16,7 +16,6 @@ from fixtures.querier import (
 
 def test_metrics_fill_gaps(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -46,7 +45,7 @@ def test_metrics_fill_gaps(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -110,7 +109,6 @@ def test_metrics_fill_gaps(
 
 def test_metrics_fill_gaps_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -139,7 +137,7 @@ def test_metrics_fill_gaps_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -219,7 +217,6 @@ def test_metrics_fill_gaps_with_group_by(
 
 def test_metrics_fill_gaps_formula(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -249,7 +246,7 @@ def test_metrics_fill_gaps_formula(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -342,7 +339,6 @@ def test_metrics_fill_gaps_formula(
 
 def test_metrics_fill_gaps_formula_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -385,7 +381,7 @@ def test_metrics_fill_gaps_formula_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -498,7 +494,6 @@ def test_metrics_fill_gaps_formula_with_group_by(
 
 def test_metrics_fill_zero(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -520,7 +515,7 @@ def test_metrics_fill_zero(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -583,7 +578,6 @@ def test_metrics_fill_zero(
 
 def test_metrics_fill_zero_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -611,7 +605,7 @@ def test_metrics_fill_zero_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -691,7 +685,6 @@ def test_metrics_fill_zero_with_group_by(
 
 def test_metrics_fill_zero_formula(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -720,7 +713,7 @@ def test_metrics_fill_zero_formula(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -813,7 +806,6 @@ def test_metrics_fill_zero_formula(
 
 def test_metrics_fill_zero_formula_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -856,7 +848,7 @@ def test_metrics_fill_zero_formula_with_group_by(
     ]
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)

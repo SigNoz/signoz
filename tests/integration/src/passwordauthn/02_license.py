@@ -11,6 +11,7 @@ from wiremock.client import (
 )
 
 from fixtures import types
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 
 def test_apply_license(
@@ -56,7 +57,7 @@ def test_apply_license(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -119,7 +120,7 @@ def test_refresh_license(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.put(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -176,7 +177,7 @@ def test_license_checkout(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
@@ -227,7 +228,7 @@ def test_license_portal(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v1/portal"),

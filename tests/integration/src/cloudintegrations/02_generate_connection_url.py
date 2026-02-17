@@ -4,7 +4,7 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -12,13 +12,12 @@ logger = setup_logger(__name__)
 
 def test_generate_connection_url(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test to generate connection URL for AWS CloudFormation stack deployment."""
 
     # Get authentication token for admin user
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     cloud_provider = "aws"
     endpoint = (
         f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
@@ -101,12 +100,11 @@ def test_generate_connection_url(
 
 def test_generate_connection_url_unsupported_provider(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test that unsupported cloud providers return an error."""
     # Get authentication token for admin user
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     # Try with GCP (unsupported)
     cloud_provider = "gcp"
 

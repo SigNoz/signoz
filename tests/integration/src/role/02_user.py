@@ -5,22 +5,17 @@ import pytest
 import requests
 from sqlalchemy import sql
 
-from fixtures.auth import (
-    USER_ADMIN_EMAIL,
-    USER_ADMIN_PASSWORD,
-    USER_EDITOR_EMAIL,
-    USER_EDITOR_PASSWORD,
-)
-from fixtures.types import Operation, SigNoz
+from fixtures.auth import USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
+from fixtures.types import SigNoz
 
 
 def test_user_invite_accept_role_grant(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # invite a user as editor
     invite_payload = {
@@ -100,7 +95,6 @@ def test_user_invite_accept_role_grant(
 def test_user_update_role_grant(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     # Get the editor user's id
@@ -114,7 +108,7 @@ def test_user_update_role_grant(
     editor_id = user_me_response.json()["data"]["id"]
 
     # Get the role id for viewer
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     roles_response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/roles"),
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -177,7 +171,6 @@ def test_user_update_role_grant(
 def test_user_delete_role_revoke(
     request: pytest.FixtureRequest,
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     # login with editor to get the user_id and check if user exists
@@ -191,7 +184,7 @@ def test_user_delete_role_revoke(
     editor_id = user_me_response.json()["data"]["id"]
 
     # delete the editor user
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     delete_response = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v1/user/{editor_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},

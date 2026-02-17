@@ -6,13 +6,12 @@ from typing import Callable, List
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logs import Logs
 
 
 def test_logs_json_body_simple_searches(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -86,7 +85,7 @@ def test_logs_json_body_simple_searches(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Test 1: Search by body.message = "User logged in successfully"
     response = requests.post(
@@ -301,7 +300,6 @@ def test_logs_json_body_simple_searches(
 
 def test_logs_json_body_nested_keys(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -394,7 +392,7 @@ def test_logs_json_body_nested_keys(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Test 1: Search by body.user.name = "john_doe"
     response = requests.post(
@@ -571,7 +569,6 @@ def test_logs_json_body_nested_keys(
 
 def test_logs_json_body_array_membership(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -648,7 +645,7 @@ def test_logs_json_body_array_membership(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Test 1: Search by has(body.tags[*], "production")
     response = requests.post(
@@ -779,7 +776,6 @@ def test_logs_json_body_array_membership(
 
 def test_logs_json_body_listing(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -877,7 +873,7 @@ def test_logs_json_body_listing(
         ]
     )
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Test 1: List all logs with JSON bodies
     response = requests.post(

@@ -8,7 +8,7 @@ from http import HTTPStatus
 from typing import Any, Callable, List
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     build_builder_query,
@@ -23,7 +23,6 @@ CUMULATIVE_COUNTERS_FILE = os.path.join(TESTDATA_DIR, "cumulative_counters_1h.js
 
 def test_rate_with_steady_values_and_reset(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -39,7 +38,7 @@ def test_rate_with_steady_values_and_reset(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,
@@ -73,7 +72,6 @@ def test_rate_with_steady_values_and_reset(
 
 def test_rate_group_by_endpoint(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
@@ -89,7 +87,7 @@ def test_rate_group_by_endpoint(
     )
     insert_metrics(metrics)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     query = build_builder_query(
         "A",
         metric_name,

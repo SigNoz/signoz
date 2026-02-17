@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import requests
 
 from fixtures import querier, types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
@@ -210,14 +210,13 @@ def build_metrics_query(
 
 def test_logs_scalar_group_by_single_agg_no_order(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -238,14 +237,13 @@ def test_logs_scalar_group_by_single_agg_no_order(
 
 def test_logs_scalar_group_by_single_agg_order_by_agg_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -266,14 +264,13 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_asc(
 
 def test_logs_scalar_group_by_single_agg_order_by_agg_desc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -294,14 +291,13 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_desc(
 
 def test_logs_scalar_group_by_single_agg_order_by_grouping_key_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -326,14 +322,13 @@ def test_logs_scalar_group_by_single_agg_order_by_grouping_key_asc(
 
 def test_logs_scalar_group_by_single_agg_order_by_grouping_key_desc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -358,14 +353,13 @@ def test_logs_scalar_group_by_single_agg_order_by_grouping_key_desc(
 
 def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -390,14 +384,13 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
 
 def test_logs_scalar_group_by_multiple_aggs_order_by_second_agg_desc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -423,14 +416,13 @@ def test_logs_scalar_group_by_multiple_aggs_order_by_second_agg_desc(
 
 def test_logs_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -455,14 +447,13 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
 
 def test_logs_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -487,14 +478,13 @@ def test_logs_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
 
 def test_logs_scalar_group_by_order_by_grouping_key_asc_limit_2(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_logs(generate_logs_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -519,14 +509,13 @@ def test_logs_scalar_group_by_order_by_grouping_key_asc_limit_2(
 
 def test_traces_scalar_group_by_single_agg_no_order(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -547,14 +536,13 @@ def test_traces_scalar_group_by_single_agg_no_order(
 
 def test_traces_scalar_group_by_single_agg_order_by_agg_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -575,14 +563,13 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_asc(
 
 def test_traces_scalar_group_by_single_agg_order_by_agg_desc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -603,14 +590,13 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_desc(
 
 def test_traces_scalar_group_by_single_agg_order_by_grouping_key_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -635,14 +621,13 @@ def test_traces_scalar_group_by_single_agg_order_by_grouping_key_asc(
 
 def test_traces_scalar_group_by_single_agg_order_by_grouping_key_desc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -667,14 +652,13 @@ def test_traces_scalar_group_by_single_agg_order_by_grouping_key_desc(
 
 def test_traces_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -699,14 +683,13 @@ def test_traces_scalar_group_by_multiple_aggs_order_by_first_agg_asc(
 
 def test_traces_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -731,14 +714,13 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
 
 def test_traces_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -763,14 +745,13 @@ def test_traces_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
 
 def test_traces_scalar_group_by_order_by_grouping_key_asc_limit_2(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_traces(generate_traces_with_counts(now, log_or_trace_service_counts))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -795,14 +776,13 @@ def test_traces_scalar_group_by_order_by_grouping_key_asc_limit_2(
 
 def test_metrics_scalar_group_by_single_agg_no_order(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -828,14 +808,13 @@ def test_metrics_scalar_group_by_single_agg_no_order(
 
 def test_metrics_scalar_group_by_single_agg_order_by_agg_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -866,14 +845,13 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_asc(
 
 def test_metrics_scalar_group_by_single_agg_order_by_grouping_key_asc(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -904,14 +882,13 @@ def test_metrics_scalar_group_by_single_agg_order_by_grouping_key_asc(
 
 def test_metrics_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -938,14 +915,13 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_asc_limit_2(
 
 def test_metrics_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,
@@ -972,14 +948,13 @@ def test_metrics_scalar_group_by_single_agg_order_by_agg_desc_limit_3(
 
 def test_metrics_scalar_group_by_order_by_grouping_key_asc_limit_2(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     insert_metrics(generate_metrics_with_values(now, metric_values_for_test))
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     response = make_scalar_query_request(
         signoz,
         token,

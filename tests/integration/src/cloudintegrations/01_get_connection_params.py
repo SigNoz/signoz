@@ -11,21 +11,21 @@ from wiremock.client import (
 )
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import add_license
 from fixtures.logger import setup_logger
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 logger = setup_logger(__name__)
 
 
 def test_generate_connection_params(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test to generate connection parameters for AWS SigNoz cloud integration."""
     # Get authentication token for admin user
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     add_license(signoz, make_http_mocks, get_token)
 

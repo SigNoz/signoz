@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     assert_minutely_bucket_values,
@@ -19,7 +19,6 @@ from src.querier.util import assert_identical_query_response
 
 def test_logs_list(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -84,7 +83,7 @@ def test_logs_list(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
     response = requests.post(
@@ -401,7 +400,6 @@ def test_logs_list(
 
 def test_logs_list_with_corrupt_data(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -470,7 +468,7 @@ def test_logs_list_with_corrupt_data(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
     response = requests.post(
@@ -583,7 +581,6 @@ def test_logs_list_with_corrupt_data(
 )
 def test_logs_list_with_order_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
     order_by_context: str,
@@ -613,7 +610,7 @@ def test_logs_list_with_order_by(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     query = {
         "type": "builder_query",
@@ -685,7 +682,6 @@ def test_logs_list_with_order_by(
 
 def test_logs_time_series_count(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -788,7 +784,7 @@ def test_logs_time_series_count(
         )
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # count() of all logs for the last 5 minutes
     response = requests.post(
@@ -1226,7 +1222,6 @@ def test_logs_time_series_count(
 
 def test_datatype_collision(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -1332,7 +1327,7 @@ def test_datatype_collision(
 
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # count() of all logs for the where severity_number > '7'
     response = requests.post(
@@ -1661,7 +1656,6 @@ def test_datatype_collision(
 
 def test_logs_fill_gaps(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -1687,7 +1681,7 @@ def test_logs_fill_gaps(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1747,7 +1741,6 @@ def test_logs_fill_gaps(
 
 def test_logs_fill_gaps_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -1773,7 +1766,7 @@ def test_logs_fill_gaps_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1848,7 +1841,6 @@ def test_logs_fill_gaps_with_group_by(
 
 def test_logs_fill_gaps_formula(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -1874,7 +1866,7 @@ def test_logs_fill_gaps_formula(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -1955,7 +1947,6 @@ def test_logs_fill_gaps_formula(
 
 def test_logs_fill_gaps_formula_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -1981,7 +1972,7 @@ def test_logs_fill_gaps_formula_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -2083,7 +2074,6 @@ def test_logs_fill_gaps_formula_with_group_by(
 
 def test_logs_fill_zero(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -2102,7 +2092,7 @@ def test_logs_fill_zero(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -2159,7 +2149,6 @@ def test_logs_fill_zero(
 
 def test_logs_fill_zero_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -2185,7 +2174,7 @@ def test_logs_fill_zero_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -2259,7 +2248,6 @@ def test_logs_fill_zero_with_group_by(
 
 def test_logs_fill_zero_formula(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -2285,7 +2273,7 @@ def test_logs_fill_zero_formula(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
@@ -2367,7 +2355,6 @@ def test_logs_fill_zero_formula(
 
 def test_logs_fill_zero_formula_with_group_by(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
@@ -2393,7 +2380,7 @@ def test_logs_fill_zero_formula_with_group_by(
     ]
     insert_logs(logs)
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)

@@ -5,7 +5,7 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
@@ -14,11 +14,10 @@ logger = setup_logger(__name__)
 
 def test_list_connected_accounts_empty(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test listing connected accounts when there are none."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     cloud_provider = "aws"
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
 
@@ -43,12 +42,11 @@ def test_list_connected_accounts_empty(
 
 def test_list_connected_accounts_with_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test listing connected accounts after creating one."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account
     cloud_provider = "aws"
@@ -88,12 +86,11 @@ def test_list_connected_accounts_with_account(
 
 def test_get_account_status(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test getting the status of a specific account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     # Create a test account (no check-in needed for status check)
     cloud_provider = "aws"
     account_data = create_cloud_integration_account(admin_token, cloud_provider)
@@ -123,11 +120,10 @@ def test_get_account_status(
 
 def test_get_account_status_not_found(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test getting status for a non-existent account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
     cloud_provider = "aws"
     fake_account_id = "00000000-0000-0000-0000-000000000000"
 
@@ -147,12 +143,11 @@ def test_get_account_status_not_found(
 
 def test_update_account_config(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test updating account configuration."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account
     cloud_provider = "aws"
@@ -212,12 +207,11 @@ def test_update_account_config(
 
 def test_disconnect_account(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
     """Test disconnecting an account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a test account
     cloud_provider = "aws"
@@ -267,11 +261,10 @@ def test_disconnect_account(
 
 def test_disconnect_account_not_found(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test disconnecting a non-existent account."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "aws"
     fake_account_id = "00000000-0000-0000-0000-000000000000"
@@ -291,12 +284,11 @@ def test_disconnect_account_not_found(
 
 def test_list_accounts_unsupported_provider(
     signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     """Test listing accounts for an unsupported cloud provider."""
 
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     cloud_provider = "gcp"  # Unsupported provider
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"

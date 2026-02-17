@@ -6,6 +6,7 @@ from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.logger import setup_logger
+from fixtures.signoz import ROOT_USER_EMAIL, ROOT_USER_PASSWORD
 
 logger = setup_logger(__name__)
 
@@ -13,7 +14,7 @@ logger = setup_logger(__name__)
 def test_change_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create another admin user
     response = requests.post(
@@ -130,7 +131,7 @@ def test_change_password(
 def test_reset_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get the user id for admin+password@integration.test
     response = requests.get(
@@ -188,7 +189,7 @@ def test_reset_password(
 def test_reset_password_with_no_password(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get the user id for admin+password@integration.test
     response = requests.get(
@@ -253,7 +254,7 @@ def test_forgot_password_returns_204_for_nonexistent_email(
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
         params={
-            "email": "admin@integration.test",
+            "email": ROOT_USER_EMAIL,
             "ref": f"{signoz.self.host_configs['8080'].base()}",
         },
         timeout=5,
@@ -286,7 +287,7 @@ def test_forgot_password_creates_reset_token(
     3. Use the token to reset password
     4. Verify user can login with new password
     """
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Create a user specifically for testing forgot password
     response = requests.post(
@@ -418,7 +419,7 @@ def test_reset_password_with_expired_token(
     """
     Test that resetting password with an expired token fails.
     """
-    admin_token = get_token("admin@integration.test", "password123Z$")
+    admin_token = get_token(ROOT_USER_EMAIL, ROOT_USER_PASSWORD)
 
     # Get user ID for the forgot@integration.test user
     response = requests.get(
