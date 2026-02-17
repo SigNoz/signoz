@@ -41,7 +41,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { isArray } from 'lodash-es';
+import isArray from 'lodash-es/isArray';
 import {
 	ArrowUpRight,
 	Check,

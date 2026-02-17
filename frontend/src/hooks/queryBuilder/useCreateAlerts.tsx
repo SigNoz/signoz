@@ -15,7 +15,7 @@ import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariabl
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';

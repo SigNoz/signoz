@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash-es';
+import sortBy from 'lodash-es/sortBy';
 
 const MAX_QUERIES = 26;
 function GetQueryName(queries: { name: string }[] = []): string | null {

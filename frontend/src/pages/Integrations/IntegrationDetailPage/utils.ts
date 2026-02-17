@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
-import { isNull, isUndefined } from 'lodash-es';
+import isNull from 'lodash-es/isNull';
+import isUndefined from 'lodash-es/isUndefined';
 
 import { ConnectionStates } from './TestConnection';
 

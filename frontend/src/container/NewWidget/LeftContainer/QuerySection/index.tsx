@@ -20,7 +20,8 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo, isUndefined } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
+import isUndefined from 'lodash-es/isUndefined';
 import { Atom, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {

@@ -12,7 +12,7 @@ import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';

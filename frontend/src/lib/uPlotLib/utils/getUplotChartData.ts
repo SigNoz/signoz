@@ -1,6 +1,6 @@
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 

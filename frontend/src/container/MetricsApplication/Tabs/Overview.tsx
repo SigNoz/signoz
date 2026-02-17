@@ -23,7 +23,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import { useAppContext } from 'providers/App/App';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';

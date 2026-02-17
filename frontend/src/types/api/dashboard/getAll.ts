@@ -1,14 +1,14 @@
-import { ReactNode } from 'react';
-import { Layout } from 'react-grid-layout';
-import { PrecisionOption } from 'components/Graph/types';
-import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ReactNode } from 'react';
+import type { Layout } from 'react-grid-layout';
+import type { PrecisionOption } from 'components/Graph/precision';
+import type { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import type { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import type { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import type { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { IField } from '../logs/fields';
-import { TelemetryFieldKey } from '../v5/queryRange';
+import type { IField } from '../logs/fields';
+import type { TelemetryFieldKey } from '../v5/queryRange';
 
 export const VariableQueryTypeArr = [
 	'QUERY',

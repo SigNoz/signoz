@@ -1,5 +1,5 @@
 import { Col, Row, Typography } from 'antd';
-import { map } from 'lodash-es';
+import map from 'lodash-es/map';
 
 import DocCard from './DocCard';
 import { TGetStartedContentSection } from './types';

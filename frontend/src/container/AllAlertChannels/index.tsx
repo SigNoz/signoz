@@ -10,7 +10,7 @@ import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';

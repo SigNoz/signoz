@@ -10,7 +10,7 @@ import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useUpdateAccountConfig } from 'hooks/integration/aws/useUpdateAccountConfig';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import { AccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 

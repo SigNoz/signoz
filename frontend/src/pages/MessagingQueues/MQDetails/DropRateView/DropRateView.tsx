@@ -11,7 +11,7 @@ import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import { isNumber } from 'lodash-es';
+import isNumber from 'lodash-es/isNumber';
 import {
 	convertToTitleCase,
 	MessagingQueuesViewType,

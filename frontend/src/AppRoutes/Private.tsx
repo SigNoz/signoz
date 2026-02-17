@@ -10,7 +10,7 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';

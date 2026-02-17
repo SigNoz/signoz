@@ -14,7 +14,8 @@ import updateDowntimeSchedule, {
 import { showErrorNotification } from 'components/ExplorerCard/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { isEmpty, isEqual } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type DateTimeString = string | null | undefined;

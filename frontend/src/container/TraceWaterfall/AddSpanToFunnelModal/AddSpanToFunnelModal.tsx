@@ -8,7 +8,7 @@ import {
 	useFunnelDetails,
 	useFunnelsList,
 } from 'hooks/TracesFunnels/useFunnels';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import { ArrowLeft, Check, Plus, Search } from 'lucide-react';
 import FunnelConfiguration from 'pages/TracesFunnelDetails/components/FunnelConfiguration/FunnelConfiguration';
 import { TracesFunnelsContentRenderer } from 'pages/TracesFunnels';

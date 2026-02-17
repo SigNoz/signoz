@@ -36,7 +36,10 @@ import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
+import isArray from 'lodash-es/isArray';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
+import isObject from 'lodash-es/isObject';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import {

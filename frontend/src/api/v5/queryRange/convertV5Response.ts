@@ -1,4 +1,5 @@
-import { cloneDeep, isEmpty } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isEmpty from 'lodash-es/isEmpty';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {

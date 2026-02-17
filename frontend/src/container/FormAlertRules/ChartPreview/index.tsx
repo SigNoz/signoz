@@ -31,7 +31,7 @@ import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';

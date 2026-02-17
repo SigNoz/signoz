@@ -33,7 +33,7 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { AutoComplete, Input, Typography } from 'antd';
-import { find } from 'lodash-es';
+import find from 'lodash-es/find';
 
 import { flattenedCategories } from './dataFormatCategories';
 

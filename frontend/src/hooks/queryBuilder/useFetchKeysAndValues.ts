@@ -16,7 +16,10 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetMetricsListFilterKeys } from 'hooks/metricsExplorer/useGetMetricsListFilterKeys';
 import useDebounceValue from 'hooks/useDebounce';
-import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isEqual from 'lodash-es/isEqual';
+import uniqWith from 'lodash-es/uniqWith';
+import unset from 'lodash-es/unset';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
 	BaseAutocompleteData,

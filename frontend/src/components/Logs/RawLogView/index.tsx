@@ -18,7 +18,9 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isEmpty, isNumber, isUndefined } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isNumber from 'lodash-es/isNumber';
+import isUndefined from 'lodash-es/isUndefined';
 import { useTimezone } from 'providers/Timezone';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';

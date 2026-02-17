@@ -15,7 +15,8 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { isEmpty, isEqual } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
 import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
 

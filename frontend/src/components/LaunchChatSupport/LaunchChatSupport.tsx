@@ -8,7 +8,7 @@ import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import { CreditCard, HelpCircle, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';

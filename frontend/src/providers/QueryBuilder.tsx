@@ -41,7 +41,10 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
-import { cloneDeep, get, isEqual, set } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import get from 'lodash-es/get';
+import isEqual from 'lodash-es/isEqual';
+import set from 'lodash-es/set';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import {

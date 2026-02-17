@@ -1,5 +1,5 @@
 import axios from 'api';
-import { isNil } from 'lodash-es';
+import isNil from 'lodash-es/isNil';
 
 interface GetTopLevelOperationsProps {
 	service?: string;

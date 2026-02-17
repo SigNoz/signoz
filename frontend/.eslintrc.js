@@ -37,6 +37,7 @@ module.exports = {
 		'jsx-a11y', // Accessibility rules
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity
+		'lodash-specific-import', // Lodash rules
 		// TODO: Uncomment after running: yarn add -D eslint-plugin-spellcheck
 		// 'spellcheck', // Correct spellings
 	],
@@ -146,6 +147,8 @@ module.exports = {
 
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
+
+		'lodash-specific-import/no-global': 'error',
 	},
 	overrides: [
 		{

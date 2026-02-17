@@ -5,7 +5,7 @@ import { Card } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { Warning } from 'types/api';
 
 import { WidgetGraphContainerProps } from '../../types';

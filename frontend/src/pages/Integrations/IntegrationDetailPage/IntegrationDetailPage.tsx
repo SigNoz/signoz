@@ -6,7 +6,7 @@ import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
 
 import { handleContactSupport } from '../utils';

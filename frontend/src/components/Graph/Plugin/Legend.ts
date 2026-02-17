@@ -1,7 +1,7 @@
 import { Chart, ChartType, Plugin } from 'chart.js';
 import { Events } from 'constants/events';
 import { colors } from 'lib/getRandomColor';
-import { get } from 'lodash-es';
+import get from 'lodash-es/get';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 const getOrCreateLegendList = (
@@ -43,16 +43,8 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 		}
 
 		// Reuse the built-in legendItems generator
-		const items = get(chart, [
-			'options',
-			'plugins',
-			'legend',
-			'labels',
-			'generateLabels',
-		])
-			? get(chart, ['options', 'plugins', 'legend', 'labels', 'generateLabels'])(
-					chart,
-			  )
+		const items = get(chart, 'options.plugins.legend.labels.generateLabels')
+			? get(chart, 'options.plugins.legend.labels.generateLabels')?.(chart) || null
 			: null;
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

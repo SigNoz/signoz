@@ -5,7 +5,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';

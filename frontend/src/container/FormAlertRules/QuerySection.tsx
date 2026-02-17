@@ -12,7 +12,7 @@ import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { Atom, Terminal } from 'lucide-react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';

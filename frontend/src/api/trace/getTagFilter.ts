@@ -1,7 +1,7 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
-import { omitBy } from 'lodash-es';
+import omitBy from 'lodash-es/omitBy';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getTagFilters';
 import { TraceFilterEnum } from 'types/reducer/trace';

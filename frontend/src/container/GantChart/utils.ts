@@ -1,4 +1,4 @@
-import { set } from 'lodash-es';
+import set from 'lodash-es/set';
 import { ITraceForest, ITraceTree } from 'types/api/trace/getTraceItem';
 
 interface GetTraceMetaData {

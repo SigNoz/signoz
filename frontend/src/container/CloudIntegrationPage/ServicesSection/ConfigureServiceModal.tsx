@@ -8,7 +8,7 @@ import {
 	SupportedSignals,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 import logEvent from '../../../api/common/logEvent';
 import S3BucketsSelector from './S3BucketsSelector';

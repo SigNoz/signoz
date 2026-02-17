@@ -10,7 +10,7 @@ import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextM
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { isNaN } from 'lodash-es';
+import isNaN from 'lodash-es/isNaN';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';

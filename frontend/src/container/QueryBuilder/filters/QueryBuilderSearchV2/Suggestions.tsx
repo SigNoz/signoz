@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import { isEmpty, isObject } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isObject from 'lodash-es/isObject';
 import { Check, Zap } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 

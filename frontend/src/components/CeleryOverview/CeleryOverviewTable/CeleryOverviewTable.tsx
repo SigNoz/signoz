@@ -27,7 +27,7 @@ import { QueryParams } from 'constants/query';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumericValue } from 'utils/numericUtils';

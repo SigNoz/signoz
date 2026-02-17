@@ -1,7 +1,7 @@
 import { OptionData } from 'components/NewSelect/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import {
 	IDashboardVariables,
 	IDependencyData,

@@ -1,6 +1,7 @@
 import { Layout } from 'react-grid-layout';
 import { FORMULA_REGEXP } from 'constants/regExp';
-import { isEmpty, isEqual } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 

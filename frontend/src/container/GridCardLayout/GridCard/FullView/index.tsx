@@ -36,7 +36,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import GetMinMax from 'lib/getMinMax';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { AppState } from 'store/reducers';

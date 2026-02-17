@@ -3,7 +3,9 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 	removeKeysFromExpression,
 } from 'components/QueryBuilderV2/utils';
-import { cloneDeep, isArray, isEmpty } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isArray from 'lodash-es/isArray';
+import isEmpty from 'lodash-es/isEmpty';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
 	IBuilderQuery,

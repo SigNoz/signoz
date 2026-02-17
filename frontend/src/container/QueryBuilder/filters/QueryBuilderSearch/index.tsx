@@ -24,7 +24,8 @@ import {
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isEqual, isUndefined } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
+import isUndefined from 'lodash-es/isUndefined';
 import {
 	ArrowDown,
 	ArrowUp,

@@ -10,7 +10,8 @@ import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
-import { filter, map } from 'lodash-es';
+import filter from 'lodash-es/filter';
+import map from 'lodash-es/map';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 

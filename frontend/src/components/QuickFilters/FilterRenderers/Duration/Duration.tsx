@@ -9,7 +9,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isArray from 'lodash-es/isArray';
+import isEqual from 'lodash-es/isEqual';
+import isFunction from 'lodash-es/isFunction';
 import { DurationSection } from 'pages/TracesExplorer/Filter/DurationSection';
 import {
 	AllTraceFilterKeys,

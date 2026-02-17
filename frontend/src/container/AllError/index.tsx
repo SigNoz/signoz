@@ -34,7 +34,7 @@ import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter'
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';

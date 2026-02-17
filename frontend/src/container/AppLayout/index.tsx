@@ -47,7 +47,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
-import { isNull } from 'lodash-es';
+import isNull from 'lodash-es/isNull';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
 import { Dispatch } from 'redux';

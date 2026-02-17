@@ -3,15 +3,15 @@ import { formattedValueToString, getValueFormat } from '@grafana/data';
 import * as Sentry from '@sentry/react';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
-import { isNaN } from 'lodash-es';
+import isNaN from 'lodash-es/isNaN';
 
 import { formatUniversalUnit } from '../YAxisUnitSelector/formatter';
+import { formatDecimalWithLeadingZeros } from './formatters';
 import {
 	DEFAULT_SIGNIFICANT_DIGITS,
 	PrecisionOption,
 	PrecisionOptionsEnum,
-} from './types';
-import { formatDecimalWithLeadingZeros } from './utils';
+} from './precision';
 
 /**
  * Formats a Y-axis value based on a given format string.

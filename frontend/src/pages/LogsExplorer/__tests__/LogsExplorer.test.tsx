@@ -8,7 +8,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { noop } from 'lodash-es';
+import noop from 'lodash-es/noop';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';

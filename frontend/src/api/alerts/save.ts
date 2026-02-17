@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/alerts/save';
 

@@ -6,7 +6,9 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep, isEqual, sortBy } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isEqual from 'lodash-es/isEqual';
+import sortBy from 'lodash-es/sortBy';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {

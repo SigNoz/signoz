@@ -28,7 +28,10 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
+import isEmpty from 'lodash-es/isEmpty';
+import isEqual from 'lodash-es/isEqual';
+import isNull from 'lodash-es/isNull';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';

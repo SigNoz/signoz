@@ -1,8 +1,8 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { Dashboard, PayloadProps } from 'types/api/dashboard/getAll';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { Dashboard, PayloadProps } from 'types/api/dashboard/getAll';
 
 const getAll = async (): Promise<SuccessResponseV2<Dashboard[]>> => {
 	try {

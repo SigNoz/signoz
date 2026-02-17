@@ -20,7 +20,8 @@ import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
-import { isEmpty, map } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
+import map from 'lodash-es/map';
 import {
 	ArrowLeft,
 	Check,

@@ -6,7 +6,7 @@ import {
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { noop } from 'lodash-es';
+import noop from 'lodash-es/noop';
 import { screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';

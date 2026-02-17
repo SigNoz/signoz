@@ -1,4 +1,4 @@
-import { defaultTo } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
 import { ILog } from 'types/api/logs/log';
 
 export function FlatLogData(log: ILog): Record<string, string> {

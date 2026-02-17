@@ -6,7 +6,7 @@ import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
-import { isUndefined } from 'lodash-es';
+import isUndefined from 'lodash-es/isUndefined';
 
 import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import ListAlert from './ListAlert';

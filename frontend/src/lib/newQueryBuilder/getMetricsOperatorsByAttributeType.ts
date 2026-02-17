@@ -7,7 +7,7 @@ import {
 	metricsEmptyTimeAggregateOperatorOptions,
 	metricsUnknownTimeAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 

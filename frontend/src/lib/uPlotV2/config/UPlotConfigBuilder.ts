@@ -3,7 +3,7 @@ import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualiz
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
-import { merge } from 'lodash-es';
+import merge from 'lodash-es/merge';
 import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 

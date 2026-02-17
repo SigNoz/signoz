@@ -1,6 +1,6 @@
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { convertValue } from 'lib/getConvertedValue';
-import { isFinite } from 'lodash-es';
+import isFinite from 'lodash-es/isFinite';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 

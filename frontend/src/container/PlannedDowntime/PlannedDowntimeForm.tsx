@@ -30,7 +30,8 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo, isEmpty } from 'lodash-es';
+import defaultTo from 'lodash-es/defaultTo';
+import isEmpty from 'lodash-es/isEmpty';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import 'dayjs/locale/en';

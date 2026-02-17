@@ -1,4 +1,4 @@
-import { flattenDeep } from 'lodash-es';
+import flattenDeep from 'lodash-es/flattenDeep';
 
 import {
 	AccelerationFormats,

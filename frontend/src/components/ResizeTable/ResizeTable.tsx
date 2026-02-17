@@ -15,7 +15,8 @@ import { ColumnsType } from 'antd/lib/table';
 import cx from 'classnames';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
-import { debounce, set } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
+import set from 'lodash-es/set';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
 

@@ -2,7 +2,9 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { decode, encode } from 'js-base64';
-import { flattenDeep, map, uniqWith } from 'lodash-es';
+import flattenDeep from 'lodash-es/flattenDeep';
+import map from 'lodash-es/map';
+import uniqWith from 'lodash-es/uniqWith';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
