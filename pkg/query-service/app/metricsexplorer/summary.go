@@ -444,10 +444,6 @@ func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explore
 		Filters:    filters,
 	}
 
-	if scores.MetricType == v3.MetricTypeSum && !scores.IsMonotonic && scores.Temporality == v3.Cumulative {
-		scores.MetricType = v3.MetricTypeGauge
-	}
-
 	switch scores.MetricType {
 	case v3.MetricTypeGauge:
 		query.TimeAggregation = v3.TimeAggregationAvg
@@ -460,8 +456,9 @@ func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explore
 	}
 
 	query.AggregateAttribute = v3.AttributeKey{
-		Key:  metricName,
-		Type: v3.AttributeKeyType(scores.MetricType),
+		Key:         metricName,
+		Type:        v3.AttributeKeyType(scores.MetricType),
+		IsMonotonic: scores.IsMonotonic,
 	}
 
 	query.StepInterval = 60
@@ -552,9 +549,6 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 }
 
 func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {
-	if params.MetricType == v3.MetricTypeSum && !params.IsMonotonic && params.Temporality == v3.Cumulative {
-		params.MetricType = v3.MetricTypeGauge
-	}
 	metadata := model.UpdateMetricsMetadata{
 		MetricName:  params.MetricName,
 		MetricType:  params.MetricType,
