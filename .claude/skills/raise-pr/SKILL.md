@@ -21,7 +21,7 @@ Create a PR with auto-filled template from commits after origin/main.
     - Check for staged changes: `git diff --cached --stat`
     - If changes exist:
         - Review the changes: `git diff --cached`
-        - Create a short and clear commit message based on the changes
+        - Use commit skill for making the commit, i.e. follow conventional commit practices
         - Commit command: `git commit -m "message"`
 
 2. **Analyze commits since origin/main**:
@@ -53,3 +53,4 @@ Create a PR with auto-filled template from commits after origin/main.
 - Analyze ALL commits messages from origin/main to HEAD
 - Fill template sections based on code analysis
 - Leave the sections of PR template as it is if you can't determine
+- Don't add the changes to git stage, only commit or push whatever user has already staged

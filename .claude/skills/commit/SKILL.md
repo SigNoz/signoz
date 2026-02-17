@@ -16,6 +16,7 @@ Commit staged changes using conventional commit format: `type(scope): descriptio
 - `chore:` - Maintenance/refactor/tooling
 - `test:` - Tests only
 - `docs:` - Documentation
+- `tests:` - Tests
 
 ## Process
 
@@ -33,4 +34,4 @@ Commit staged changes using conventional commit format: `type(scope): descriptio
 ## Notes
 
 - Description: imperative mood, lowercase, no period
-- Body: explain WHY, not WHAT (code shows what)
+- Body: explain WHY, not WHAT (code shows what). Keep it consice and brief.
