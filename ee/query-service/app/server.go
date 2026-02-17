@@ -175,7 +175,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		GlobalConfig:                  config.Global,
 	}
 
-	apiHandler, err := api.NewAPIHandler(apiOpts, signoz)
+	apiHandler, err := api.NewAPIHandler(apiOpts, signoz, config)
 	if err != nil {
 		return nil, err
 	}
