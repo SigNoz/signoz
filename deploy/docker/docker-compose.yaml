@@ -57,8 +57,6 @@ x-db-depend: &db-depend
   depends_on:
     clickhouse:
       condition: service_healthy
-    telemetrystore-migrator:
-      condition: service_completed_successfully
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -142,6 +140,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    depends_on:
+      telemetrystore-migrator:
+        condition: service_completed_successfully
   otel-collector:
     !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}

@@ -61,7 +61,6 @@ x-db-depend: &db-depend
     - clickhouse
     - clickhouse-2
     - clickhouse-3
-    - telemetrystore-migrator
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -207,8 +206,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    depends_on:
+      - telemetrystore-migrator
   otel-collector:
-    !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:v0.142.0
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -227,8 +227,6 @@ services:
     deploy:
       replicas: 3
     depends_on:
-      - clickhouse
-      - telemetrystore-migrator
       - signoz
   telemetrystore-migrator:
     !!merge <<: *common
