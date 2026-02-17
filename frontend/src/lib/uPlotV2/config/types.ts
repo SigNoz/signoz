@@ -175,6 +175,7 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	pointsBuilder?: Series.Points.Show;
 	show?: boolean;
 	spanGaps?: boolean;
+	fillColor?: string;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 }

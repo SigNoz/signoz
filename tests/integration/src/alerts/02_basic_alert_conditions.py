@@ -14,10 +14,10 @@ from fixtures.alertutils import (
 from fixtures.logger import setup_logger
 from fixtures.utils import get_testdata_file_path
 
-# test cases for match type and compare operators have wait time of 30 seconds to verify the alert expectation.
-# we've poistioned the alert data to fire the alert on first eval of rule manager, the eval frequency
-# for most alert rules are set of 15s so considering this delay plus some delay from alert manager's
-# group_wait and group_interval, even in worst case most alerts should be triggered in about 30 seconds
+# Alert test cases use a 30-second wait time to verify expected alert firing.
+# Alert data is set up to trigger on the first rule manager evaluation.
+# With a 15-second eval frequency for most rules, plus alertmanager's
+# group_wait and group_interval delays, alerts should fire well within 30 seconds.
 TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     types.AlertTestCase(
         name="test_threshold_above_at_least_once",
@@ -25,6 +25,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         alert_data=[
             types.AlertData(
                 type="metrics",
+                # active requests dummy data
                 data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
@@ -115,30 +116,28 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    # TODO: @abhishekhugetech enable the test for matchType last, pylint: disable=W0511
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed
-    # types.AlertTestCase(
-    #     name="test_threshold_above_last",
-    #     rule_path="alerts/test_scenarios/threshold_above_last/rule.json",
-    #     alert_data=[
-    #         types.AlertData(
-    #             type="metrics",
-    #             data_path="alerts/test_scenarios/threshold_above_last/alert_data.jsonl",
-    #         ),
-    #     ],
-    #     alert_expectation=types.AlertExpectation(
-    #         should_alert=True,
-    #         wait_time_seconds=30,
-    #         expected_alerts=[
-    #             types.FiringAlert(
-    #                 labels={
-    #                     "alertname": "threshold_above_last",
-    #                     "threshold.name": "critical",
-    #                 }
-    #             ),
-    #         ],
-    #     ),
-    # ),
+    types.AlertTestCase(
+        name="test_threshold_above_last",
+        rule_path="alerts/test_scenarios/threshold_above_last/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_last/alert_data.jsonl",
+            ),
+        ],
+        alert_expectation=types.AlertExpectation(
+            should_alert=True,
+            wait_time_seconds=30,
+            expected_alerts=[
+                types.FiringAlert(
+                    labels={
+                        "alertname": "threshold_above_last",
+                        "threshold.name": "critical",
+                    }
+                ),
+            ],
+        ),
+    ),
     types.AlertTestCase(
         name="test_threshold_below_at_least_once",
         rule_path="alerts/test_scenarios/threshold_below_at_least_once/rule.json",
@@ -189,6 +188,7 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
         alert_data=[
             types.AlertData(
                 type="metrics",
+                # one rate ~5 + rest 0.01 so it remains in total below 10
                 data_path="alerts/test_scenarios/threshold_below_in_total/alert_data.jsonl",
             ),
         ],
@@ -227,30 +227,28 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    # TODO: @abhishekhugetech enable the test for matchType last,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed, pylint: disable=W0511
-    # types.AlertTestCase(
-    #     name="test_threshold_below_last",
-    #     rule_path="alerts/test_scenarios/threshold_below_last/rule.json",
-    #     alert_data=[
-    #         types.AlertData(
-    #             type="metrics",
-    #             data_path="alerts/test_scenarios/threshold_below_last/alert_data.jsonl",
-    #         ),
-    #     ],
-    #     alert_expectation=types.AlertExpectation(
-    #         should_alert=True,
-    #         wait_time_seconds=30,
-    #         expected_alerts=[
-    #             types.FiringAlert(
-    #                 labels={
-    #                     "alertname": "threshold_below_last",
-    #                     "threshold.name": "critical",
-    #                 }
-    #             ),
-    #         ],
-    #     ),
-    # ),
+    types.AlertTestCase(
+        name="test_threshold_below_last",
+        rule_path="alerts/test_scenarios/threshold_below_last/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_below_last/alert_data.jsonl",
+            ),
+        ],
+        alert_expectation=types.AlertExpectation(
+            should_alert=True,
+            wait_time_seconds=30,
+            expected_alerts=[
+                types.FiringAlert(
+                    labels={
+                        "alertname": "threshold_below_last",
+                        "threshold.name": "critical",
+                    }
+                ),
+            ],
+        ),
+    ),
     types.AlertTestCase(
         name="test_threshold_equal_to_at_least_once",
         rule_path="alerts/test_scenarios/threshold_equal_to_at_least_once/rule.json",
@@ -339,30 +337,28 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    # TODO: @abhishekhugetech enable the test for matchType last,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed, pylint: disable=W0511
-    # types.AlertTestCase(
-    #     name="test_threshold_equal_to_last",
-    #     rule_path="alerts/test_scenarios/threshold_equal_to_last/rule.json",
-    #     alert_data=[
-    #         types.AlertData(
-    #             type="metrics",
-    #             data_path="alerts/test_scenarios/threshold_equal_to_last/alert_data.jsonl",
-    #         ),
-    #     ],
-    #     alert_expectation=types.AlertExpectation(
-    #         should_alert=True,
-    #         wait_time_seconds=30,
-    #         expected_alerts=[
-    #             types.FiringAlert(
-    #                 labels={
-    #                     "alertname": "threshold_equal_to_last",
-    #                     "threshold.name": "critical",
-    #                 }
-    #             ),
-    #         ],
-    #     ),
-    # ),
+    types.AlertTestCase(
+        name="test_threshold_equal_to_last",
+        rule_path="alerts/test_scenarios/threshold_equal_to_last/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_equal_to_last/alert_data.jsonl",
+            ),
+        ],
+        alert_expectation=types.AlertExpectation(
+            should_alert=True,
+            wait_time_seconds=30,
+            expected_alerts=[
+                types.FiringAlert(
+                    labels={
+                        "alertname": "threshold_equal_to_last",
+                        "threshold.name": "critical",
+                    }
+                ),
+            ],
+        ),
+    ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_at_least_once",
         rule_path="alerts/test_scenarios/threshold_not_equal_to_at_least_once/rule.json",
@@ -451,30 +447,28 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
             ],
         ),
     ),
-    # TODO: @abhishekhugetech enable the test for matchType last,
-    # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3801) with matchType last is fixed, pylint: disable=W0511
-    # types.AlertTestCase(
-    #     name="test_threshold_not_equal_to_last",
-    #     rule_path="alerts/test_scenarios/threshold_not_equal_to_last/rule.json",
-    #     alert_data=[
-    #         types.AlertData(
-    #             type="metrics",
-    #             data_path="alerts/test_scenarios/threshold_not_equal_to_last/alert_data.jsonl",
-    #         ),
-    #     ],
-    #     alert_expectation=types.AlertExpectation(
-    #         should_alert=True,
-    #         wait_time_seconds=30,
-    #         expected_alerts=[
-    #             types.FiringAlert(
-    #                 labels={
-    #                     "alertname": "threshold_not_equal_to_last",
-    #                     "threshold.name": "critical",
-    #                 }
-    #             ),
-    #         ],
-    #     ),
-    # ),
+    types.AlertTestCase(
+        name="test_threshold_not_equal_to_last",
+        rule_path="alerts/test_scenarios/threshold_not_equal_to_last/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_not_equal_to_last/alert_data.jsonl",
+            ),
+        ],
+        alert_expectation=types.AlertExpectation(
+            should_alert=True,
+            wait_time_seconds=30,
+            expected_alerts=[
+                types.FiringAlert(
+                    labels={
+                        "alertname": "threshold_not_equal_to_last",
+                        "threshold.name": "critical",
+                    }
+                ),
+            ],
+        ),
+    ),
 ]
 
 # test cases unit conversion
