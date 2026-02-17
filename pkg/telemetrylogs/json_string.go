@@ -82,11 +82,6 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	return closure(value, key)
 }
 
-// isBodyJSONArrayPath reports whether the key denotes an array in body JSON (e.g. "user_names[*]" or "tags[]").
-func isBodyJSONArrayPath(key *telemetrytypes.TelemetryFieldKey) bool {
-	return key.KeyNameContainsArray() || strings.Contains(key.Name, "[*]")
-}
-
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
 	parts := strings.Split(key.Name, ".")
 	newParts := []string{}
