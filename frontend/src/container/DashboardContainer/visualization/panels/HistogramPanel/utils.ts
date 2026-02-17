@@ -195,9 +195,8 @@ export function prepareHistogramPanelConfig({
 			panelType: PANEL_TYPES.HISTOGRAM,
 			colorMapping: widget.customLegendColors ?? {},
 			spanGaps: false,
-			barWidthFactor: 0.9,
+			barWidthFactor: 1,
 			pointSize: 5,
-			fillColor: '#4E74F8',
 			lineColor: '#4E74F8',
 			isDarkMode,
 		});

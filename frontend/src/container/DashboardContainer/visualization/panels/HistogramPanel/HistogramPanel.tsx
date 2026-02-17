@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
+import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -27,23 +27,13 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 		onToggleModelHandler,
 	} = props;
 	const uPlotRef = useRef<uPlot | null>(null);
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
+	useScrollWidgetIntoView(widget.id, graphRef);
 
 	const config = useMemo(() => {
 		return prepareHistogramPanelConfig({
