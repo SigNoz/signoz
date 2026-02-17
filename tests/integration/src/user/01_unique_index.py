@@ -49,10 +49,7 @@ def test_duplicate_user_invite_rejected(
 
     # The invite creation itself may be rejected if the app checks for existing users.
     if second_invite_response.status_code != HTTPStatus.CREATED:
-        assert second_invite_response.status_code in (
-            HTTPStatus.CONFLICT,
-            HTTPStatus.BAD_REQUEST,
-        )
+        assert second_invite_response.status_code == HTTPStatus.CONFLICT
         return
 
     second_invite_token = second_invite_response.json()["data"]["token"]
@@ -63,8 +60,4 @@ def test_duplicate_user_invite_rejected(
         json={"token": second_invite_token, "password": "password123Z$"},
         timeout=2,
     )
-    assert second_accept_response.status_code in (
-        HTTPStatus.CONFLICT,
-        HTTPStatus.BAD_REQUEST,
-        HTTPStatus.INTERNAL_SERVER_ERROR,
-    )
+    assert second_accept_response.status_code in HTTPStatus.CONFLICT
