@@ -3311,17 +3311,13 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 			return nil, fmt.Errorf("error while scanning meter name: %s", err.Error())
 		}
 
-		// Non-monotonic cumulative sums are treated as gauges
-		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
-			typ = "Gauge"
-		}
-
 		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
 		key := v3.AttributeKey{
-			Key:      name,
-			DataType: v3.AttributeKeyDataTypeFloat64,
-			Type:     v3.AttributeKeyType(typ),
-			IsColumn: true,
+			Key:         name,
+			DataType:    v3.AttributeKeyDataTypeFloat64,
+			Type:        v3.AttributeKeyType(typ),
+			IsMonotonic: isMonotonic,
+			IsColumn:    true,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
