@@ -142,8 +142,8 @@ func bodyAliasExpression() string {
 func init() {
 	// body logical field is mapped to message field in the body context that too only with String data type
 	BodyLogicalFieldJSONMapping.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
-		BaseColumn:     "body_json",
-		PromotedColumn: "body_json_promoted",
+		BaseColumn:     "body_v2",
+		PromotedColumn: "body_promoted",
 	}, map[string][]telemetrytypes.JSONDataType{
 		"message": {telemetrytypes.String},
 	})

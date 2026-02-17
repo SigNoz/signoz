@@ -91,7 +91,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields
-		// Use body_json if feature flag is enabled
+		// Use body_v2 if feature flag is enabled
 		if querybuilder.BodyJSONQueryEnabled {
 			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
@@ -102,7 +102,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-				// Use body_json if feature flag is enabled and we have a body condition builder
+				// Use body_v2 if feature flag is enabled and we have a body condition builder
 				if querybuilder.BodyJSONQueryEnabled {
 					return logsV2Columns[LogsV2BodyV2Column], nil
 				}
@@ -257,7 +257,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 					"plan length is less than 2 for promoted path: %s", key.Name)
 			}
 
-			// promoted column first then body_json column
+			// promoted column first then body_v2 column
 			// TODO(Piyush): Change this in future for better performance
 			expr = fmt.Sprintf("coalesce(%s, %s)",
 				fmt.Sprintf("dynamicElement(%s, '%s')", plan[1].FieldPath(), plan[1].TerminalConfig.ElemType.StringValue()),

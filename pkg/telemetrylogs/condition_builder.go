@@ -181,10 +181,17 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), false), nil
-			} else {
+			switch key.FieldDataType {
+			case telemetrytypes.FieldDataTypeJSON:
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), false), nil
+				}
 				return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), true), nil
+			default:
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(tblFieldName), nil
+				}
+				return sb.IsNull(tblFieldName), nil
 			}
 		case schema.ColumnTypeEnumLowCardinality:
 			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
