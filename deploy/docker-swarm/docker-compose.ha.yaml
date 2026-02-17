@@ -209,6 +209,7 @@ services:
     depends_on:
       - telemetrystore-migrator
   otel-collector:
+    !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:v0.142.0
     command:
       - --config=/etc/otel-collector-config.yaml
