@@ -311,6 +311,15 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 }
 
 func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	user, err := module.store.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := user.ErrIfRoot(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
+	}
+
 	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
