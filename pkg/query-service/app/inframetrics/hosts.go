@@ -538,9 +538,6 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 	}
 	resp.Total = len(allHostGroups)
 	resp.Records = records
-	if len(records) == 0 {
-		resp.NoRecordsInSelectedTimeRangeAndFilters = true
-	}
 	resp.SortBy(req.OrderBy)
 
 	return resp, nil

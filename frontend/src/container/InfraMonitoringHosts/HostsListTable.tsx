@@ -28,7 +28,6 @@ function getEmptyOrLoadingView(viewState: {
 	isSendingIncorrectK8SAgentMetrics: boolean;
 	showEndTimeBeforeRetentionMessage: boolean;
 	showNoRecordsInSelectedTimeRangeMessage: boolean;
-	showNoFilteredHostsMessage: boolean;
 	showTableLoadingState: boolean;
 }): React.ReactNode {
 	const { isError, errorMessage } = viewState;
@@ -45,14 +44,23 @@ function getEmptyOrLoadingView(viewState: {
 	}
 	if (viewState.showEndTimeBeforeRetentionMessage) {
 		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={false}
-				incorrectData={false}
-				endTimeBeforeRetention
-			/>
+			<div className="hosts-empty-state-container">
+				<div className="hosts-empty-state-container-content">
+					<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+					<div className="no-hosts-message">
+						<Typography.Title level={5} className="no-hosts-message-title">
+							End time before retention
+						</Typography.Title>
+						<Typography.Text className="no-hosts-message-text">
+							Your requested end time is earlier than the earliest detected time of
+							host metrics data, please adjust your end time.
+						</Typography.Text>
+					</div>
+				</div>
+			</div>
 		);
 	}
-	if (viewState.showNoFilteredHostsMessage) {
+	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
 		return (
 			<div className="no-filtered-hosts-message-container">
 				<div className="no-filtered-hosts-message-content">
@@ -62,19 +70,11 @@ function getEmptyOrLoadingView(viewState: {
 						className="empty-state-svg"
 					/>
 					<Typography.Text className="no-filtered-hosts-message">
-						This query had no results. Edit your query and try again!
+						No host metrics in the selected time range and filters. Please adjust your
+						time range or filters.
 					</Typography.Text>
 				</div>
 			</div>
-		);
-	}
-	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
-		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={false}
-				incorrectData={false}
-				noRecordsInSelectedTimeRangeAndFilters
-			/>
 		);
 	}
 	if (viewState.showTableLoadingState) {
@@ -135,11 +135,6 @@ export default function HostsListTable({
 		[data],
 	);
 
-	const noRecordsInSelectedTimeRangeAndFilters = useMemo(
-		() => data?.payload?.data?.noRecordsInSelectedTimeRangeAndFilters || false,
-		[data],
-	);
-
 	const formattedHostMetricsData = useMemo(
 		() => formatDataForTable(hostMetricsData),
 		[hostMetricsData],
@@ -178,12 +173,6 @@ export default function HostsListTable({
 		});
 	};
 
-	const showNoFilteredHostsMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedHostMetricsData.length === 0 &&
-		filters.items.length > 0;
-
 	const showHostsEmptyState =
 		!isFetching &&
 		!isLoading &&
@@ -202,7 +191,8 @@ export default function HostsListTable({
 		!isFetching &&
 		!isLoading &&
 		formattedHostMetricsData.length === 0 &&
-		noRecordsInSelectedTimeRangeAndFilters;
+		!showEndTimeBeforeRetentionMessage &&
+		!showHostsEmptyState;
 
 	const showTableLoadingState =
 		(isLoading || isFetching) && formattedHostMetricsData.length === 0;
@@ -215,7 +205,6 @@ export default function HostsListTable({
 		isSendingIncorrectK8SAgentMetrics,
 		showEndTimeBeforeRetentionMessage,
 		showNoRecordsInSelectedTimeRangeMessage,
-		showNoFilteredHostsMessage,
 		showTableLoadingState,
 	});
 

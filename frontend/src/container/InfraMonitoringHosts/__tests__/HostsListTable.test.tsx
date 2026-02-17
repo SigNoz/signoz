@@ -110,11 +110,12 @@ describe('HostsListTable', () => {
 				hostMetricsData={[]}
 				tableData={createMockTableData({
 					records: [],
-					noRecordsInSelectedTimeRangeAndFilters: true,
 				})}
 			/>,
 		);
-		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
+		expect(
+			container.querySelector('.no-filtered-hosts-message-container'),
+		).toBeTruthy();
 	});
 
 	it('renders empty state if sentAnyHostMetricsData is false', () => {
@@ -174,12 +175,13 @@ describe('HostsListTable', () => {
 				tableData={createMockTableData({
 					sentAnyHostMetricsData: true,
 					isSendingK8SAgentMetrics: false,
-					noRecordsInSelectedTimeRangeAndFilters: true,
 					records: [],
 				})}
 			/>,
 		);
-		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
+		expect(
+			container.querySelector('.no-filtered-hosts-message-container'),
+		).toBeTruthy();
 		expect(
 			screen.getByText(/No host metrics in the selected time range and filters/),
 		).toBeInTheDocument();
@@ -209,13 +211,16 @@ describe('HostsListTable', () => {
 				tableData={createMockTableData({
 					sentAnyHostMetricsData: true,
 					isSendingK8SAgentMetrics: false,
-					noRecordsInSelectedTimeRangeAndFilters: true,
 					records: [],
 				})}
 			/>,
 		);
 		expect(container.querySelector('.no-filtered-hosts-message')).toBeTruthy();
-		expect(screen.getByText(/This query had no results/)).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/No host metrics in the selected time range and filters\. Please adjust your time range or filters\./,
+			),
+		).toBeInTheDocument();
 	});
 
 	it('renders table data', () => {
