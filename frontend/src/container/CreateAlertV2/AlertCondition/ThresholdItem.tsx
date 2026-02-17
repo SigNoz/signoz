@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Input, Select, Tooltip, Typography } from 'antd';
-import { CircleX, Trash } from 'lucide-react';
+import { ChartLine, CircleX, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 
 import { useCreateAlertState } from '../context';
@@ -22,6 +22,12 @@ function ThresholdItem({
 	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
+
+	useEffect(() => {
+		if (threshold.recoveryThresholdValue !== null) {
+			setShowRecoveryThreshold(true);
+		}
+	}, [threshold.recoveryThresholdValue]);
 
 	const yAxisUnitSelect = useMemo(() => {
 		let component = (
@@ -68,10 +74,10 @@ function ThresholdItem({
 		}
 	};
 
-	// const addRecoveryThreshold = (): void => {
-	// 	setShowRecoveryThreshold(true);
-	// 	updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
-	// };
+	const addRecoveryThreshold = (): void => {
+		setShowRecoveryThreshold(true);
+		updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
+	};
 
 	const removeRecoveryThreshold = (): void => {
 		setShowRecoveryThreshold(false);
@@ -175,7 +181,7 @@ function ThresholdItem({
 					)}
 					<Button.Group>
 						{/* TODO: Add recovery threshold back once the functionality is implemented */}
-						{/* {!showRecoveryThreshold && (
+						{!showRecoveryThreshold && (
 							<Tooltip title="Add recovery threshold">
 								<Button
 									type="default"
@@ -184,7 +190,7 @@ function ThresholdItem({
 									onClick={addRecoveryThreshold}
 								/>
 							</Tooltip>
-						)} */}
+						)}
 						{showRemoveButton && (
 							<Tooltip title="Remove threshold">
 								<Button
