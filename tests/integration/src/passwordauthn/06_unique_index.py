@@ -4,14 +4,13 @@ from typing import Callable
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.types import Operation, SigNoz
+from fixtures.types import SigNoz
 
 DUPLICATE_USER_EMAIL = "duplicate@integration.test"
 
 
 def test_duplicate_user_invite_rejected(
     signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """
