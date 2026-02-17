@@ -235,11 +235,12 @@ services:
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     entrypoint:
     - /bin/sh
-    - -c
     command:
-    - /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000
-    - /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000
-    - /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
+    - -c
+    - |
+      /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000 &&
+      /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000 &&
+      /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
     depends_on:
       - clickhouse
 networks:

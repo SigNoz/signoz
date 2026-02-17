@@ -241,15 +241,16 @@ services:
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     container_name: telemetrystore-migrator
     command:
-    - /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000
-    - /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000
-    - /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
+    - -c
+    - |
+      /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000 &&
+      /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000 &&
+      /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
     depends_on:
       clickhouse:
         condition: service_healthy
     entrypoint:
     - /bin/sh
-    - -c
     restart: on-failure
 networks:
   signoz-net:
