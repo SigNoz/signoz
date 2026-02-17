@@ -21,9 +21,9 @@ const (
 
 	IncreaseTmpl = `multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value, per_series_value - lagInFrame(per_series_value, 1) OVER rate_window)`
 
-	RateWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s / (ts - lagInFrame(ts, 1) OVER rate_window), (%s - lagInFrame(%s, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window))) AS per_series_value`
+	RateWithoutMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s / (ts - lagInFrame(ts, 1) OVER rate_window), (%s - lagInFrame(%s, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window))) AS per_series_value`
 
-	IncreaseWithoutNegativeMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s, (%s - lagInFrame(%s, 1) OVER rate_window))) AS per_series_value`
+	IncreaseWithoutMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s, (%s - lagInFrame(%s, 1) OVER rate_window))) AS per_series_value`
 
 	OthersMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
 )
@@ -480,14 +480,14 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		rateExpr := fmt.Sprintf(RateWithoutNegativeMultiTemporality,
+		rateExpr := fmt.Sprintf(RateWithoutMultiTemporality,
 			aggForDeltaTemporality,
 			aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality,
 			aggForCumulativeTemporality, aggForCumulativeTemporality,
 		)
 		sb.SelectMore(rateExpr)
 	case metrictypes.TimeAggregationIncrease:
-		increaseExpr := fmt.Sprintf(IncreaseWithoutNegativeMultiTemporality,
+		increaseExpr := fmt.Sprintf(IncreaseWithoutMultiTemporality,
 			aggForDeltaTemporality,
 			aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality,
 			aggForCumulativeTemporality, aggForCumulativeTemporality,
