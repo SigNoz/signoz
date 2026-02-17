@@ -317,7 +317,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	}
 
 	if err := user.ErrIfRoot(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot delete root user")
+		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
 	password, err := module.store.GetPasswordByUserID(ctx, userID)
