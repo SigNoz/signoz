@@ -386,6 +386,10 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		previousUncheckedValuesRef.current = uncheckedValues;
 	}, [uncheckedValues]);
 
+	useEffect(() => {
+		previousUncheckedValuesRef.current = uncheckedValues;
+	}, [uncheckedValues]);
+
 	const handleClearFilterAttribute = (): void => {
 		const preparedQuery: Query = {
 			...currentQuery,
