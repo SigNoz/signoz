@@ -15,10 +15,14 @@ type Config struct {
 }
 
 type RootConfig struct {
-	Enabled  bool         `mapstructure:"enabled"`
-	Email    valuer.Email `mapstructure:"email"`
-	Password string       `mapstructure:"password"`
-	OrgName  string       `mapstructure:"org_name"`
+	Enabled  bool          `mapstructure:"enabled"`
+	Email    valuer.Email  `mapstructure:"email"`
+	Password string        `mapstructure:"password"`
+	Org      RootOrgConfig `mapstructure:"org"`
+}
+
+type RootOrgConfig struct {
+	Name string `mapstructure:"name"`
 }
 
 type PasswordConfig struct {
@@ -44,7 +48,9 @@ func newConfig() factory.Config {
 		},
 		Root: RootConfig{
 			Enabled: false,
-			OrgName: "default",
+			Org: RootOrgConfig{
+				Name: "default",
+			},
 		},
 	}
 }
