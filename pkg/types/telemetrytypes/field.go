@@ -61,7 +61,7 @@ func (f *TelemetryFieldKey) ArrayParentPaths() []string {
 }
 
 func (f *TelemetryFieldKey) MustBuildJSONCondition() bool {
-	return f.FieldDataType != FieldDataTypeJSON && len(f.JSONPlan) > 0 && f.JSONDataType != nil
+	return f.FieldDataType != FieldDataTypeJSON && f.JSONDataType != nil
 }
 
 func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {

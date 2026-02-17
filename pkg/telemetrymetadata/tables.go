@@ -7,6 +7,6 @@ const (
 	AttributesMetadataTableName      = "distributed_attributes_metadata"
 	AttributesMetadataLocalTableName = "attributes_metadata"
 	PathTypesTableName               = otelcollectorconst.DistributedPathTypesTable
-	PromotedPathsTableName           = otelcollectorconst.DistributedPromotedPathsTable
+	PromotedPathsTableName           = "distributed_json_promoted_paths"
 	SkipIndexTableName               = "system.data_skipping_indices"
 )

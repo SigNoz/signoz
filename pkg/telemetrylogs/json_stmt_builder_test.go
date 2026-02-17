@@ -832,18 +832,11 @@ func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
 		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
-	jsonEnabled := telemetrytypes.TelemetryFieldKey{
-		Name:          "message",
-		Signal:        telemetrytypes.SignalLogs,
-		FieldContext:  telemetrytypes.FieldContextBody,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-		JSONDataType:  &telemetrytypes.String,
-	}
 
 	enable := func() {
 		querybuilder.BodyJSONQueryEnabled = true
-		DefaultFullTextColumn = &jsonEnabled
-		IntrinsicFields["body"] = jsonEnabled
+		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
+		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
 	}
 
 	disable := func() {
