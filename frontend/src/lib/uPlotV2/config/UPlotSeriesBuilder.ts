@@ -65,6 +65,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 
 		if (this.props.panelType === PANEL_TYPES.BAR) {
 			lineConfig.fill = resolvedLineColor;
+		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
+			lineConfig.fill = `${resolvedLineColor}40`;
 		}
 
 		return lineConfig;
@@ -147,6 +149,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			pointsConfig.show = false;
 		} else if (showPoints === VisibilityMode.Always) {
 			pointsConfig.show = true;
+		} else {
+			pointsConfig.show = false; // default to hidden
 		}
 
 		return pointsConfig;

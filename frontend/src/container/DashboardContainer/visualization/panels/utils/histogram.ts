@@ -8,20 +8,6 @@ import {
 } from 'container/PanelWrapper/constants';
 import { AlignedData } from 'uplot';
 
-export function incrRoundDn(num: number, incr: number): number {
-	return Math.floor(num / incr) * incr;
-}
-
-export function roundDecimals(val: number, dec = 0): number {
-	if (Number.isInteger(val)) {
-		return val;
-	}
-
-	const p = 10 ** dec;
-	const n = val * p * (1 + Number.EPSILON);
-	return Math.round(n) / p;
-}
-
 function nullExpand(
 	yVals: Array<number | null>,
 	nullIdxs: number[],

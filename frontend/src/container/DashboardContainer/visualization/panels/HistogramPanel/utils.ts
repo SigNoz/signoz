@@ -3,12 +3,12 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import { DrawStyle, VisibilityMode } from 'lib/uPlotV2/config/types';
+import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { incrRoundDn } from 'lib/uPlotV2/utils/scale';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { AlignedData } from 'uplot';
+import { incrRoundDn, roundDecimals } from 'utils/round';
 
 import { PanelMode } from '../types';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
@@ -17,7 +17,6 @@ import {
 	histogram,
 	join,
 	replaceUndefinedWithNull,
-	roundDecimals,
 } from '../utils/histogram';
 
 export interface PrepareHistogramPanelDataParams {
@@ -181,34 +180,50 @@ export function prepareHistogramPanelConfig({
 		scaleKey: 'y',
 		time: false,
 		auto: true,
+		min: 0,
 	});
 
 	const currentQuery = widget.query;
+	const mergeAllActiveQueries = widget?.mergeAllActiveQueries ?? false;
 
-	apiResponse.data.result.forEach((series) => {
-		const baseLabelName = getLabelName(
-			series.metric,
-			series.queryName || '', // query
-			series.legend || '',
-		);
-
-		const label = currentQuery
-			? getLegend(series, currentQuery, baseLabelName)
-			: baseLabelName;
-
+	// When merged, data has only one y column; add one series to match. Otherwise add one per result.
+	if (mergeAllActiveQueries) {
 		builder.addSeries({
-			label: label,
+			label: '',
 			scaleKey: 'y',
 			drawStyle: DrawStyle.Bar,
 			panelType: PANEL_TYPES.HISTOGRAM,
 			colorMapping: widget.customLegendColors ?? {},
 			spanGaps: false,
 			barWidthFactor: 1,
-			showPoints: VisibilityMode.Never,
 			pointSize: 5,
 			isDarkMode,
 		});
-	});
+	} else {
+		apiResponse.data.result.forEach((series) => {
+			const baseLabelName = getLabelName(
+				series.metric,
+				series.queryName || '', // query
+				series.legend || '',
+			);
+
+			const label = currentQuery
+				? getLegend(series, currentQuery, baseLabelName)
+				: baseLabelName;
+
+			builder.addSeries({
+				label: label,
+				scaleKey: 'y',
+				drawStyle: DrawStyle.Bar,
+				panelType: PANEL_TYPES.HISTOGRAM,
+				colorMapping: widget.customLegendColors ?? {},
+				spanGaps: false,
+				barWidthFactor: 1,
+				pointSize: 5,
+				isDarkMode,
+			});
+		});
+	}
 
 	return builder;
 }
