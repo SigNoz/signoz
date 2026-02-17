@@ -23,8 +23,10 @@ const (
 	// e.g., "body.status" where "body." is the prefix
 	BodyJSONStringSearchPrefix = "body."
 	ArraySep                   = jsontypeexporter.ArraySeparator
+	ArraySepSuffix             = "[]"
 	// TODO(Piyush): Remove once we've migrated to the new array syntax
-	ArrayAnyIndex = "[*]."
+	ArrayAnyIndex       = "[*]."
+	ArrayAnyIndexSuffix = "[*]"
 )
 
 type TelemetryFieldKey struct {

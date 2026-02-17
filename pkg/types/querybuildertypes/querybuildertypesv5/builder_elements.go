@@ -159,6 +159,17 @@ func (f FilterOperator) IsStringSearchOperator() bool {
 	}
 }
 
+// IsArrayOperator returns true if the operator works with array values only
+func (f FilterOperator) IsArrayOperator() bool {
+	switch f {
+	case FilterOperatorIn, FilterOperatorNotIn,
+		FilterOperatorBetween, FilterOperatorNotBetween:
+		return true
+	default:
+		return false
+	}
+}
+
 type OrderDirection struct {
 	valuer.String
 }

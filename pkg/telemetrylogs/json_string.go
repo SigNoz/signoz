@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -40,34 +41,50 @@ func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetryt
 }
 
 func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
-	// check if the value is a int, float, string, bool
-	valueType := telemetrytypes.FieldDataTypeUnspecified
-	switch v := value.(type) {
-	case []any:
-		// take the first element and infer the type
-		if len(v) > 0 {
-			valueType, _ = InferDataType(v[0], operator, key)
-		}
-		// Between/In/NotIn compare a scalar field to multiple values - use scalar type for the field expression.
-		// For array paths (key has [*] or []), In means array membership so keep array type.
-		if operator == qbtypes.FilterOperatorBetween || operator == qbtypes.FilterOperatorIn || operator == qbtypes.FilterOperatorNotIn {
-			if !strings.HasSuffix(key.Name, telemetrytypes.ArrayAnyIndex) && !strings.HasSuffix(key.Name, telemetrytypes.ArraySep) {
-				return valueType, v
-			}
-		}
-		// convert the scaler type to the array type
-		return telemetrytypes.ScalerFieldTypeToArrayFieldType[valueType], v
-	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-		valueType = telemetrytypes.FieldDataTypeInt64
-	case float32, float64:
-		valueType = telemetrytypes.FieldDataTypeFloat64
-	case string:
-		valueType, value = parseStrValue(v, operator)
-	case bool:
-		valueType = telemetrytypes.FieldDataTypeBool
+	if operator.IsArrayOperator() && reflect.ValueOf(value).Kind() != reflect.Slice {
+		value = []any{value}
 	}
 
-	return valueType, value
+	// closure to calculate the data type of the value
+	var closure func(value any, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any)
+	closure = func(value any, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
+		// check if the value is a int, float, string, bool
+		valueType := telemetrytypes.FieldDataTypeUnspecified
+		switch v := value.(type) {
+		case []any:
+			// take the first element and infer the type
+			if len(v) > 0 {
+				valueType, _ = closure(v[0], key)
+			}
+			// Between/NotBetween/In/NotIn: scalar key → compare field to multiple values (scalar type).
+			// Array path key → array membership (keep array type).
+			if operator.IsArrayOperator() {
+				if !(strings.HasSuffix(key.Name, telemetrytypes.ArrayAnyIndexSuffix) || strings.HasSuffix(key.Name, telemetrytypes.ArraySepSuffix)) {
+					return valueType, v
+				}
+			}
+			// convert the scaler type to the array type
+			return telemetrytypes.ScalerFieldTypeToArrayFieldType[valueType], v
+		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+			valueType = telemetrytypes.FieldDataTypeInt64
+		case float32, float64:
+			valueType = telemetrytypes.FieldDataTypeFloat64
+		case string:
+			valueType, value = parseStrValue(v, operator)
+		case bool:
+			valueType = telemetrytypes.FieldDataTypeBool
+		}
+
+		return valueType, value
+	}
+
+	// calculate the data type of the value
+	return closure(value, key)
+}
+
+// isBodyJSONArrayPath reports whether the key denotes an array in body JSON (e.g. "user_names[*]" or "tags[]").
+func isBodyJSONArrayPath(key *telemetrytypes.TelemetryFieldKey) bool {
+	return key.KeyNameContainsArray() || strings.Contains(key.Name, "[*]")
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
