@@ -152,7 +152,9 @@ func (f FilterOperator) IsStringSearchOperator() bool {
 		FilterOperatorILike,
 		FilterOperatorNotILike,
 		FilterOperatorLike,
-		FilterOperatorNotLike:
+		FilterOperatorNotLike,
+		FilterOperatorRegexp,
+		FilterOperatorNotRegexp:
 		return true
 	default:
 		return false
