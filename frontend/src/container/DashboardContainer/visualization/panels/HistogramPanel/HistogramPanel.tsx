@@ -62,7 +62,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	]);
 
 	const layoutChildren = useMemo(() => {
-		if (!isFullViewMode) {
+		if (!isFullViewMode || widget.mergeAllActiveQueries) {
 			return null;
 		}
 		return (
@@ -79,6 +79,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 		chartData,
 		widget.yAxisUnit,
 		onToggleModelHandler,
+		widget.mergeAllActiveQueries,
 	]);
 
 	return (
