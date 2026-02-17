@@ -69,7 +69,7 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			expect(screen.getByText(/welcome to signoz cloud/i)).toBeInTheDocument();
-			expect(screen.getByLabelText(/name of your company/i)).toBeInTheDocument();
+
 			expect(
 				screen.getByText(/which observability tool do you currently use/i),
 			).toBeInTheDocument();
@@ -86,15 +86,12 @@ describe('OnboardingQuestionaire Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
 
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
-
 			const datadogCheckbox = screen.getByLabelText(/datadog/i);
 			await user.click(datadogCheckbox);
 
 			const otelYes = screen.getByRole('radio', { name: /yes/i });
 			await user.click(otelYes);
+			await user.click(screen.getByLabelText(/just exploring/i));
 
 			const nextButton = await screen.findByRole('button', { name: /next/i });
 			expect(nextButton).not.toBeDisabled();
@@ -112,15 +109,38 @@ describe('OnboardingQuestionaire Component', () => {
 			).toBeInTheDocument();
 		});
 
+		it('shows migration timeline options only when specific observability tools are selected', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			render(<OnboardingQuestionaire />);
+
+			// Initially not visible
+			expect(
+				screen.queryByText(/What is your timeline for migrating to SigNoz/i),
+			).not.toBeInTheDocument();
+
+			const datadogCheckbox = screen.getByLabelText(/datadog/i);
+			await user.click(datadogCheckbox);
+
+			expect(
+				await screen.findByText(/What is your timeline for migrating to SigNoz/i),
+			).toBeInTheDocument();
+
+			// Not visible when None is selected
+			const noneCheckbox = screen.getByLabelText(/none\/starting fresh/i);
+			await user.click(noneCheckbox);
+
+			expect(
+				screen.queryByText(/What is your timeline for migrating to SigNoz/i),
+			).not.toBeInTheDocument();
+		});
+
 		it('proceeds to step 2 when next is clicked', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
 
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 
 			const nextButton = screen.getByRole('button', { name: /next/i });
 			await user.click(nextButton);
@@ -137,11 +157,10 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate to step 2
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
+
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			expect(
@@ -157,11 +176,10 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate to step 2
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
+
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await waitFor(() => {
@@ -175,11 +193,10 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate to step 2
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
+
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			expect(
@@ -203,11 +220,10 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate to step 2
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
+
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			expect(
@@ -232,11 +248,10 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate through steps 1 and 2
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
+
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			expect(
@@ -267,11 +282,10 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate to step 3
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
+
 			await user.click(screen.getByLabelText(/datadog/i));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			expect(
@@ -288,42 +302,6 @@ describe('OnboardingQuestionaire Component', () => {
 			expect(
 				await screen.findByRole('button', { name: /i'll do this later/i }),
 			).toBeInTheDocument();
-		});
-	});
-
-	describe('Error Handling', () => {
-		it('handles organization update error gracefully', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.put(EDIT_ORG_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(500),
-						ctx.json({
-							error: {
-								code: 'INTERNAL_ERROR',
-								message: 'Failed to update organization',
-							},
-						}),
-					),
-				),
-			);
-
-			render(<OnboardingQuestionaire />);
-
-			const orgNameInput = screen.getByLabelText(/name of your company/i);
-			await user.clear(orgNameInput);
-			await user.type(orgNameInput, 'Test Company');
-			await user.click(screen.getByLabelText(/datadog/i));
-			await user.click(screen.getByRole('radio', { name: /yes/i }));
-
-			const nextButton = screen.getByRole('button', { name: /next/i });
-			await user.click(nextButton);
-
-			// Component should still be functional
-			await waitFor(() => {
-				expect(nextButton).not.toBeDisabled();
-			});
 		});
 	});
 });
