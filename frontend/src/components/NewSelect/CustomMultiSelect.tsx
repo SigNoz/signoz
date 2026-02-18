@@ -36,6 +36,8 @@ import {
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
 } from './utils';
+import { highlightMatchedText } from './highlightMatchedText';
+import { CustomMultiSelectTag } from './CustomMultiSelectTag';
 
 import './styles.scss';
 
@@ -599,47 +601,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// ===== UI & Rendering Functions =====
 
-	/**
-	 * Highlights matched text in search results
-	 */
-	const highlightMatchedText = useCallback(
-		(text: string, searchQuery: string): React.ReactNode => {
-			if (!searchQuery || !highlightSearch) {
-				return text;
-			}
-
-			try {
-				const parts = text.split(
-					new RegExp(
-						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
-						'gi',
-					),
-				);
-				return (
-					<>
-						{parts.map((part, i) => {
-							// Create a unique key that doesn't rely on array index
-							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
-
-							return part.toLowerCase() === searchQuery.toLowerCase() ? (
-								<span key={uniqueKey} className="highlight-text">
-									{part}
-								</span>
-							) : (
-								part
-							);
-						})}
-					</>
-				);
-			} catch (error) {
-				// If regex fails, return the original text without highlighting
-				console.error('Error in text highlighting:', error);
-				return text;
-			}
-		},
-		[highlightSearch],
-	);
-
 	// Adjusted handleSelectAll for internal change handler
 	const handleSelectAll = useCallback((): void => {
 		if (!options) {
@@ -763,7 +724,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}}
 								className="option-label-text"
 							>
-								{highlightMatchedText(String(option.label || ''), searchText)}
+								{highlightMatchedText(String(option.label || ''), searchText, highlightSearch)}
 							</Typography.Text>
 							{(option.type === 'custom' || option.type === 'regex') && (
 								<div className="option-badge">{capitalize(option.type)}</div>
@@ -1908,43 +1869,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					return <div style={{ display: 'none' }} />;
 				}
 
-				const handleTagKeyDown = (e: React.KeyboardEvent): void => {
-					if (e.key === 'Enter' || e.key === SPACEKEY) {
-						e.stopPropagation();
-						e.preventDefault();
-						onClose(); // Default close action removes the specific tag
-					}
-				};
-
 				return (
-					<div
-						className={cx('ant-select-selection-item', {
-							'ant-select-selection-item-active': isActive,
-							'ant-select-selection-item-selected': isSelected,
-						})}
-						style={
-							isActive || isSelected
-								? {
-										borderColor: Color.BG_ROBIN_500,
-										backgroundColor: Color.BG_SLATE_400,
-								  }
-								: undefined
-						}
-					>
-						<span className="ant-select-selection-item-content">{label}</span>
-						{closable && (
-							<span
-								className="ant-select-selection-item-remove"
-								onClick={onClose} // Default Ant close handler
-								onKeyDown={handleTagKeyDown}
-								role="button"
-								tabIndex={0}
-								aria-label={`Remove tag ${label}`}
-							>
-								×
-							</span>
-						)}
-					</div>
+					<CustomMultiSelectTag
+						label={label}
+						closable={closable}
+						onClose={onClose}
+						isActive={isActive}
+						isSelected={isSelected}
+					/>
 				);
 			}
 
