@@ -14,9 +14,13 @@ import {
 	MetricsexplorertypesTreemapRequestDTO,
 	Querybuildertypesv5OrderByDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	convertExpressionToFilters,
+	convertFiltersToExpression,
+} from 'components/QueryBuilderV2/utils';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -31,7 +35,6 @@ import {
 	IS_INSPECT_MODAL_OPEN_KEY,
 	IS_METRIC_DETAILS_OPEN_KEY,
 	SELECTED_METRIC_NAME_KEY,
-	SUMMARY_FILTERS_KEY,
 } from './constants';
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
@@ -60,6 +63,11 @@ function Summary(): JSX.Element {
 		MetricsexplorertypesTreemapModeDTO.timeseries,
 	);
 
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const query = useMemo(() => currentQuery?.builder?.queryData[0], [
+		currentQuery,
+	]);
+
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(
 		() => searchParams.get(IS_METRIC_DETAILS_OPEN_KEY) === 'true' || false,
@@ -75,17 +83,6 @@ function Summary(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const queryFilters: TagFilter = useMemo(() => {
-		const encodedFilters = searchParams.get(SUMMARY_FILTERS_KEY);
-		if (encodedFilters) {
-			return JSON.parse(encodedFilters);
-		}
-		return {
-			items: [],
-			op: 'AND',
-		};
-	}, [searchParams]);
-
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
@@ -97,6 +94,11 @@ function Summary(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const queryFilterExpression = useMemo(() => {
+		const filters = query?.filters || { items: [], op: 'AND' };
+		return convertFiltersToExpression(filters);
+	}, [query?.filters]);
+
 	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(
 		() => ({
 			start: convertNanoToMilliseconds(minTime),
@@ -104,8 +106,9 @@ function Summary(): JSX.Element {
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
 			orderBy,
+			filter: queryFilterExpression,
 		}),
-		[minTime, maxTime, orderBy, pageSize, currentPage],
+		[minTime, maxTime, orderBy, pageSize, currentPage, queryFilterExpression],
 	);
 
 	const metricsTreemapQuery: MetricsexplorertypesTreemapRequestDTO = useMemo(
@@ -115,8 +118,9 @@ function Summary(): JSX.Element {
 			start: convertNanoToMilliseconds(minTime),
 			end: convertNanoToMilliseconds(maxTime),
 			mode: heatmapView,
+			filter: queryFilterExpression,
 		}),
-		[heatmapView, minTime, maxTime],
+		[heatmapView, minTime, maxTime, queryFilterExpression],
 	);
 
 	const {
@@ -156,27 +160,34 @@ function Summary(): JSX.Element {
 	);
 
 	const handleFilterChange = useCallback(
-		(value: TagFilter) => {
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[SUMMARY_FILTERS_KEY]: JSON.stringify(value),
+		(expression: string) => {
+			const newFilters: TagFilter = {
+				items: convertExpressionToFilters(expression),
+				op: 'AND',
+			};
+			redirectWithQueryBuilderData({
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: [
+						{
+							...currentQuery.builder.queryData[0],
+							filters: newFilters,
+							filter: {
+								expression,
+							},
+						},
+					],
+				},
 			});
 			setCurrentPage(1);
-			if (value.items.length > 0) {
+			if (expression) {
 				logEvent(MetricsExplorerEvents.FilterApplied, {
 					[MetricsExplorerEventKeys.Tab]: 'summary',
 				});
 			}
 		},
-		[setSearchParams, searchParams],
-	);
-
-	const searchQuery = useMemo(
-		() => ({
-			...initialQueriesMap.metrics.builder.queryData[0],
-			filters: queryFilters,
-		}),
-		[queryFilters],
+		[currentQuery, redirectWithQueryBuilderData],
 	);
 
 	const onPaginationChange = (page: number, pageSize: number): void => {
@@ -279,7 +290,7 @@ function Summary(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
-				<MetricsSearch query={searchQuery} onChange={handleFilterChange} />
+				<MetricsSearch query={query} onChange={handleFilterChange} />
 				{isGetMetricsStatsLoading || isGetMetricsTreemapLoading ? (
 					<MetricsLoading />
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
@@ -304,7 +315,8 @@ function Summary(): JSX.Element {
 							setOrderBy={handleSetOrderBy}
 							totalCount={metricsData?.data?.data?.total || 0}
 							openMetricDetails={openMetricDetails}
-							queryFilters={queryFilters}
+							queryFilterExpression={queryFilterExpression}
+							onFilterChange={handleFilterChange}
 						/>
 					</>
 				)}

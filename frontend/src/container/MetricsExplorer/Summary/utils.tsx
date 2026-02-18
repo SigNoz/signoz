@@ -12,6 +12,7 @@ import {
 	MetricsListPayload,
 	MetricType,
 } from 'api/metricsExplorer/getMetricsList';
+import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import {
 	BarChart,
@@ -20,21 +21,23 @@ import {
 	Diff,
 	Gauge,
 } from 'lucide-react';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { METRIC_TYPE_LABEL_MAP, METRIC_TYPE_LABEL_MAP_V2 } from './constants';
 import MetricNameSearch from './MetricNameSearch';
-import MetricTypeSearch from './MetricTypeSearch';
 import { MetricsListItemRowData, TreemapTile } from './types';
 
 export const getMetricsTableColumns = (
-	queryFilters: TagFilter,
+	queryFilterExpression: Filter,
+	onFilterChange: (expression: string) => void,
 ): ColumnType<MetricsListItemRowData>[] => [
 	{
 		title: (
 			<div className="metric-name-column-header">
 				<span className="metric-name-column-header-text">METRIC</span>
-				<MetricNameSearch queryFilters={queryFilters} />
+				<MetricNameSearch
+					queryFilterExpression={queryFilterExpression}
+					onFilterChange={onFilterChange}
+				/>
 			</div>
 		),
 		dataIndex: 'metric_name',
@@ -56,7 +59,11 @@ export const getMetricsTableColumns = (
 		title: (
 			<div className="metric-type-column-header">
 				<span className="metric-type-column-header-text">TYPE</span>
-				<MetricTypeSearch queryFilters={queryFilters} />
+				{/* TODO: Re-enable once API supports metric type filtering */}
+				{/* <MetricTypeSearch
+					queryFilters={queryFilters}
+					onFilterChange={onFilterChange}
+				/> */}
 			</div>
 		),
 		dataIndex: 'metric_type',
