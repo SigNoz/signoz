@@ -16,9 +16,7 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
@@ -27,7 +25,6 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -37,7 +34,6 @@ import {
 	FolderKanban,
 	Fullscreen,
 	Globe,
-	LayoutGrid,
 	LockKeyhole,
 	PenLine,
 	X,
@@ -51,6 +47,7 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
+import DashboardHeader from '../components/DashboardHeader/DashboardHeader';
 import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardSettings from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
@@ -71,7 +68,6 @@ interface DashboardDescriptionProps {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
 	const { handle } = props;
 	const {
 		selectedDashboard,
@@ -80,7 +76,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		layouts,
 		setLayouts,
 		isDashboardLocked,
-		listSortOrder,
 		setSelectedDashboard,
 		handleToggleDashboardSlider,
 		setSelectedRowWidgetId,
@@ -292,17 +287,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		});
 	}
 
-	function goToListPage(): void {
-		const urlParams = new URLSearchParams();
-		urlParams.set('columnKey', listSortOrder.columnKey as string);
-		urlParams.set('order', listSortOrder.order as string);
-		urlParams.set('page', listSortOrder.pagination as string);
-		urlParams.set('search', listSortOrder.search as string);
-
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
-		safeNavigate(generatedUrl);
-	}
-
 	const {
 		data: publicDashboardResponse,
 		isLoading: isLoadingPublicDashboardData,
@@ -351,32 +335,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	return (
 		<Card className="dashboard-description-container">
-			<div className="dashboard-header">
-				<section className="dashboard-breadcrumbs">
-					<Button
-						type="text"
-						icon={<LayoutGrid size={14} />}
-						className="dashboard-btn"
-						onClick={(): void => goToListPage()}
-					>
-						Dashboard /
-					</Button>
-					<Button type="text" className="id-btn dashboard-name-btn">
-						<img
-							src={image}
-							alt="dashboard-icon"
-							style={{ height: '14px', width: '14px' }}
-						/>
-						{title}
-					</Button>
-				</section>
-
-				<HeaderRightSection
-					enableAnnouncements={false}
-					enableShare
-					enableFeedback
-				/>
-			</div>
+			<DashboardHeader />
 			<section className="dashboard-details">
 				<div className="left-section">
 					<img src={image} alt="dashboard-img" className="dashboard-img" />
