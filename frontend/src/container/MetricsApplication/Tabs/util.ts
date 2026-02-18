@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
+import React, { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -42,7 +42,10 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
-	safeNavigate: (url: string) => void;
+	safeNavigate: (
+		url: string,
+		options?: { event?: React.MouseEvent | MouseEvent },
+	) => void;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -51,8 +54,10 @@ interface OnViewAPIMonitoringPopupClickProps {
 	stepInterval?: number;
 	domainName: string;
 	isError: boolean;
-
-	safeNavigate: (url: string) => void;
+	safeNavigate: (
+		url: string,
+		options?: { event?: React.MouseEvent | MouseEvent },
+	) => void;
 }
 
 export function generateExplorerPath(
@@ -93,8 +98,8 @@ export function onViewTracePopupClick({
 	isViewLogsClicked,
 	stepInterval,
 	safeNavigate,
-}: OnViewTracePopupClickProps): VoidFunction {
-	return (): void => {
+}: OnViewTracePopupClickProps): (e?: React.MouseEvent) => void {
+	return (e?: React.MouseEvent): void => {
 		const endTime = secondsToMilliseconds(timestamp);
 		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
 
@@ -118,7 +123,7 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		safeNavigate(newPath);
+		safeNavigate(newPath, { event: e });
 	};
 }
 
@@ -149,8 +154,8 @@ export function onViewAPIMonitoringPopupClick({
 	isError,
 	stepInterval,
 	safeNavigate,
-}: OnViewAPIMonitoringPopupClickProps): VoidFunction {
-	return (): void => {
+}: OnViewAPIMonitoringPopupClickProps): (e?: React.MouseEvent) => void {
+	return (e?: React.MouseEvent): void => {
 		const endTime = timestamp + (stepInterval || 60);
 		const startTime = timestamp - (stepInterval || 60);
 		const filters = {
@@ -190,7 +195,7 @@ export function onViewAPIMonitoringPopupClick({
 			filters,
 		);
 
-		safeNavigate(newPath);
+		safeNavigate(newPath, { event: e });
 	};
 }
 

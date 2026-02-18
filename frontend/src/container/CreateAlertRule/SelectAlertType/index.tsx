@@ -70,8 +70,8 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 								</Tag>
 							) : undefined
 						}
-						onClick={(): void => {
-							onSelect(option.selection);
+						onClick={(e): void => {
+							onSelect(option.selection, e);
 						}}
 						data-testid={`alert-type-card-${option.selection}`}
 					>
@@ -108,7 +108,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 }
 
 interface SelectAlertTypeProps {
-	onSelect: (typ: AlertTypes) => void;
+	onSelect: (type: AlertTypes, event?: React.MouseEvent) => void;
 }
 
 export default SelectAlertType;
