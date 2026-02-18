@@ -40,13 +40,13 @@ type BaseRule struct {
 	// evalWindow is the time window used for evaluating the rule
 	// i.e. each time we lookback from the current time, we look at data for the last
 	// evalWindow duration
-	evalWindow time.Duration
+	evalWindow valuer.TextDuration
 	// holdDuration is the duration for which the alert waits before firing
-	holdDuration time.Duration
+	holdDuration valuer.TextDuration
 
 	// evalDelay is the delay in evaluation of the rule
 	// this is useful in cases where the data is not available immediately
-	evalDelay time.Duration
+	evalDelay valuer.TextDuration
 
 	// holds the static set of labels and annotations for the rule
 	// these are the same for all alerts created for this rule
@@ -94,7 +94,7 @@ type BaseRule struct {
 	evaluation ruletypes.Evaluation
 
 	// newGroupEvalDelay is the grace period for new alert groups
-	newGroupEvalDelay *time.Duration
+	newGroupEvalDelay valuer.TextDuration
 
 	queryParser queryparser.QueryParser
 }
@@ -113,7 +113,7 @@ func WithSendUnmatched() RuleOption {
 	}
 }
 
-func WithEvalDelay(dur time.Duration) RuleOption {
+func WithEvalDelay(dur valuer.TextDuration) RuleOption {
 	return func(r *BaseRule) {
 		r.evalDelay = dur
 	}
@@ -163,7 +163,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		source:            p.Source,
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
-		evalWindow:        time.Duration(p.EvalWindow),
+		evalWindow:        p.EvalWindow,
 		labels:            qslabels.FromMap(p.Labels),
 		annotations:       qslabels.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
@@ -176,13 +176,12 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
-	if p.NotificationSettings != nil && p.NotificationSettings.NewGroupEvalDelay != nil {
-		newGroupEvalDelay := time.Duration(*p.NotificationSettings.NewGroupEvalDelay)
-		baseRule.newGroupEvalDelay = &newGroupEvalDelay
+	if p.NotificationSettings != nil {
+		baseRule.newGroupEvalDelay = p.NotificationSettings.NewGroupEvalDelay
 	}
 
-	if baseRule.evalWindow == 0 {
-		baseRule.evalWindow = 5 * time.Minute
+	if baseRule.evalWindow.IsZero() {
+		baseRule.evalWindow = valuer.MustParseTextDuration("5m")
 	}
 
 	for _, opt := range opts {
@@ -245,15 +244,15 @@ func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 	return activeAlerts
 }
 
-func (r *BaseRule) EvalDelay() time.Duration {
+func (r *BaseRule) EvalDelay() valuer.TextDuration {
 	return r.evalDelay
 }
 
-func (r *BaseRule) EvalWindow() time.Duration {
+func (r *BaseRule) EvalWindow() valuer.TextDuration {
 	return r.evalWindow
 }
 
-func (r *BaseRule) HoldDuration() time.Duration {
+func (r *BaseRule) HoldDuration() valuer.TextDuration {
 	return r.holdDuration
 }
 
@@ -281,7 +280,7 @@ func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
 	start := st.UnixMilli()
 	end := en.UnixMilli()
 
-	if r.evalDelay > 0 {
+	if r.evalDelay.IsPositive() {
 		start = start - r.evalDelay.Milliseconds()
 		end = end - r.evalDelay.Milliseconds()
 	}
@@ -552,7 +551,7 @@ func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, q
 
 // ShouldSkipNewGroups returns true if new group filtering should be applied
 func (r *BaseRule) ShouldSkipNewGroups() bool {
-	return r.newGroupEvalDelay != nil && *r.newGroupEvalDelay > 0
+	return r.newGroupEvalDelay.IsPositive()
 }
 
 // isFilterNewSeriesSupported checks if the query is supported for new series filtering

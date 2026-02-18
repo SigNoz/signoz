@@ -4631,6 +4631,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesSignal'
         unit:
           type: string
+      required:
+      - name
       type: object
     Querybuildertypesv5OrderDirection:
       enum:
@@ -5237,6 +5239,9 @@ components:
             type: array
           nullable: true
           type: object
+      required:
+      - keys
+      - complete
       type: object
     TelemetrytypesGettableFieldValues:
       properties:
@@ -5244,6 +5249,9 @@ components:
           type: boolean
         values:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+      required:
+      - values
+      - complete
       type: object
     TelemetrytypesSignal:
       enum:
@@ -5269,6 +5277,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesSignal'
         unit:
           type: string
+      required:
+      - name
       type: object
     TelemetrytypesTelemetryFieldValues:
       properties:
@@ -5488,6 +5498,8 @@ components:
           type: string
         id:
           type: string
+        isRoot:
+          type: boolean
         orgId:
           type: string
         role:

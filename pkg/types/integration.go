@@ -151,7 +151,8 @@ func (c *AccountConfig) Value() (driver.Value, error) {
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize cloud account config to JSON")
 	}
-	return serialized, nil
+	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytea
+	return string(serialized), nil
 }
 
 type AgentReport struct {
@@ -186,7 +187,8 @@ func (r *AgentReport) Value() (driver.Value, error) {
 			err, errors.CodeInternal, "couldn't serialize agent report to JSON",
 		)
 	}
-	return serialized, nil
+	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytea
+	return string(serialized), nil
 }
 
 type CloudIntegrationService struct {
@@ -240,5 +242,6 @@ func (c *CloudServiceConfig) Value() (driver.Value, error) {
 			err, errors.CodeInternal, "couldn't serialize cloud service config to JSON",
 		)
 	}
-	return serialized, nil
+	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytea
+	return string(serialized), nil
 }

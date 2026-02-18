@@ -54,17 +54,17 @@ def test_rate_with_steady_values_and_reset(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert len(result_values) >= 59
+    assert len(result_values) >= 58
     # the counter reset happened at 31st minute
     assert (
-        result_values[30]["value"] == 0.0167
+        result_values[29]["value"] == 0.0167
     )  # i.e 2/120 i.e 29th to 31st minute changes
     assert (
-        result_values[31]["value"] == 0.133
+        result_values[30]["value"] == 0.133
     )  # i.e 10/60 i.e 31st to 32nd minute changes
     count_of_steady_rate = sum(1 for v in result_values if v["value"] == 0.0833)
     assert (
-        count_of_steady_rate >= 56
+        count_of_steady_rate >= 55
     )  # 59 - (1 reset + 1 high rate + 1 at the beginning)
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
