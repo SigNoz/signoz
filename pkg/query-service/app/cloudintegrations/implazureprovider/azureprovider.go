@@ -7,6 +7,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,6 +17,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/maps"
 )
@@ -317,9 +321,297 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 		details.Config = cfg
 	}
 
-	// TODO: write logic for getting connection status
+	connectionStatus, err := a.getServiceConnectionStatus(
+		ctx,
+		*req.CloudAccountID,
+		req.OrgID,
+		&details.AzureServiceDefinition,
+		config,
+	)
+	if err != nil {
+		return nil, err
+	}
 
+	details.ConnectionStatus = connectionStatus
 	return details, nil
+}
+
+func (a *azureProvider) getServiceConnectionStatus(
+	ctx context.Context,
+	cloudAccountID string,
+	orgID string,
+	def *integrationstypes.AzureServiceDefinition,
+	serviceConfig *integrationstypes.AzureCloudServiceConfig,
+) (*integrationstypes.ServiceConnectionStatus, error) {
+	if def.Strategy == nil {
+		return nil, nil
+	}
+
+	resp := new(integrationstypes.ServiceConnectionStatus)
+
+	wg := sync.WaitGroup{}
+
+	if def.Strategy.AzureMetrics != nil {
+		enabled := false
+
+		for _, cfg := range serviceConfig.Metrics {
+			if cfg.Enabled {
+				enabled = true
+				break
+			}
+		}
+
+		if !enabled {
+			return resp, nil
+		}
+
+		wg.Add(1)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					a.logger.ErrorContext(
+						ctx, "panic while getting service metrics connection status",
+						"error", r,
+						"service", def.DefinitionMetadata.Id,
+					)
+				}
+			}()
+			defer wg.Done()
+			status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def)
+			resp.Metrics = status
+		}()
+	}
+
+	if def.Strategy.AzureLogs != nil {
+		enabled := false
+
+		for _, cfg := range serviceConfig.Logs {
+			if cfg.Enabled {
+				enabled = true
+				break
+			}
+		}
+
+		if !enabled {
+			return resp, nil
+		}
+
+		wg.Add(1)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					a.logger.ErrorContext(
+						ctx, "panic while getting service logs connection status",
+						"error", r,
+						"service", def.DefinitionMetadata.Id,
+					)
+				}
+			}()
+			defer wg.Done()
+			status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def)
+			resp.Logs = status
+		}()
+	}
+
+	wg.Wait()
+
+	return resp, nil
+}
+
+func (a *azureProvider) getServiceMetricsConnectionStatus(
+	ctx context.Context,
+	cloudAccountID string,
+	orgID string,
+	def *integrationstypes.AzureServiceDefinition,
+) ([]*integrationstypes.SignalConnectionStatus, error) {
+	if def.Strategy == nil ||
+		len(def.Strategy.AzureMetrics) < 1 ||
+		len(def.DataCollected.Metrics) < 1 {
+		return nil, nil
+	}
+
+	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
+
+	for _, metric := range def.IngestionStatusCheck.Metrics {
+		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+			CategoryID:          metric.Category,
+			CategoryDisplayName: metric.DisplayName,
+		})
+	}
+
+	for index, category := range def.IngestionStatusCheck.Metrics {
+		queries := make([]qbtypes.QueryEnvelope, 0)
+
+		for _, check := range category.Checks {
+			filterExpression := fmt.Sprintf(`cloud.provider="aws" AND cloud.account.id="%s"`, cloudAccountID)
+			f := ""
+			for _, attribute := range check.Attributes {
+				f = fmt.Sprintf("%s %s", attribute.Name, attribute.Operator)
+				if attribute.Value != "" {
+					f = fmt.Sprintf("%s '%s'", f, attribute.Value)
+				}
+
+				filterExpression = fmt.Sprintf("%s AND %s", filterExpression, f)
+			}
+
+			queries = append(queries, qbtypes.QueryEnvelope{
+				Type: qbtypes.QueryTypeBuilder,
+				Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Name:   valuer.GenerateUUID().String(),
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       check.Key,
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+					}},
+					Filter: &qbtypes.Filter{
+						Expression: filterExpression,
+					},
+				},
+			})
+		}
+
+		resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
+			SchemaVersion: "v5",
+			Start:         uint64(time.Now().Add(-time.Hour).UnixMilli()),
+			End:           uint64(time.Now().UnixMilli()),
+			RequestType:   qbtypes.RequestTypeScalar,
+			CompositeQuery: qbtypes.CompositeQuery{
+				Queries: queries,
+			},
+		})
+		if err != nil {
+			a.logger.DebugContext(ctx,
+				"error querying for service metrics connection status",
+				"error", err,
+				"service", def.DefinitionMetadata.Id,
+			)
+			continue
+		}
+
+		if resp != nil && len(resp.Data.Results) < 1 {
+			continue
+		}
+
+		queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+		if !ok {
+			continue
+		}
+
+		if queryResponse == nil ||
+			len(queryResponse.Aggregations) < 1 ||
+			len(queryResponse.Aggregations[0].Series) < 1 ||
+			len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
+			continue
+		}
+
+		statusResp[index] = &integrationstypes.SignalConnectionStatus{
+			CategoryID:           category.Category,
+			CategoryDisplayName:  category.DisplayName,
+			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
+			LastReceivedFrom:     "signoz-aws-integration",
+		}
+	}
+
+	return statusResp, nil
+}
+
+func (a *azureProvider) getServiceLogsConnectionStatus(
+	ctx context.Context,
+	cloudAccountID string,
+	orgID string,
+	def *integrationstypes.AzureServiceDefinition,
+) ([]*integrationstypes.SignalConnectionStatus, error) {
+	if def.Strategy == nil ||
+		len(def.Strategy.AzureLogs) < 1 ||
+		len(def.DataCollected.Logs) < 1 {
+		return nil, nil
+	}
+
+	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
+
+	for _, log := range def.IngestionStatusCheck.Logs {
+		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+			CategoryID:          log.Category,
+			CategoryDisplayName: log.DisplayName,
+		})
+	}
+
+	for index, category := range def.IngestionStatusCheck.Logs {
+		queries := make([]qbtypes.QueryEnvelope, 0)
+
+		for _, check := range category.Checks {
+			filterExpression := fmt.Sprintf(`cloud.account.id="%s"`, cloudAccountID)
+			f := ""
+			for _, attribute := range check.Attributes {
+				f = fmt.Sprintf("%s %s", attribute.Name, attribute.Operator)
+				if attribute.Value != "" {
+					f = fmt.Sprintf("%s '%s'", f, attribute.Value)
+				}
+
+				filterExpression = fmt.Sprintf("%s AND %s", filterExpression, f)
+			}
+
+			queries = append(queries, qbtypes.QueryEnvelope{
+				Type: qbtypes.QueryTypeBuilder,
+				Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+					Name:   valuer.GenerateUUID().String(),
+					Signal: telemetrytypes.SignalLogs,
+					Aggregations: []qbtypes.LogAggregation{{
+						Expression: "count()",
+					}},
+					Filter: &qbtypes.Filter{
+						Expression: filterExpression,
+					},
+					Limit:  10,
+					Offset: 0,
+				},
+			})
+		}
+
+		resp, err := a.querier.QueryRange(ctx, valuer.MustNewUUID(orgID), &qbtypes.QueryRangeRequest{
+			SchemaVersion: "v1",
+			Start:         uint64(time.Now().Add(-time.Hour * 1).UnixMilli()),
+			End:           uint64(time.Now().UnixMilli()),
+			RequestType:   qbtypes.RequestTypeTimeSeries,
+			CompositeQuery: qbtypes.CompositeQuery{
+				Queries: queries,
+			},
+		})
+		if err != nil {
+			a.logger.DebugContext(ctx,
+				"error querying for service logs connection status",
+				"error", err,
+				"service", def.DefinitionMetadata.Id,
+			)
+			continue
+		}
+
+		if resp != nil && len(resp.Data.Results) < 1 {
+			continue
+		}
+
+		queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+		if !ok {
+			continue
+		}
+
+		if queryResponse == nil ||
+			len(queryResponse.Aggregations) < 1 ||
+			len(queryResponse.Aggregations[0].Series) < 1 ||
+			len(queryResponse.Aggregations[0].Series[0].Values) < 1 {
+			continue
+		}
+
+		statusResp[index] = &integrationstypes.SignalConnectionStatus{
+			CategoryID:           category.Category,
+			CategoryDisplayName:  category.DisplayName,
+			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
+			LastReceivedFrom:     "signoz-aws-integration",
+		}
+	}
+
+	return statusResp, nil
 }
 
 func (a *azureProvider) getServiceConfig(

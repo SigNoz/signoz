@@ -7,6 +7,48 @@
     "metrics": true,
     "logs": true
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "overview",
+        "display_name": "Overview",
+        "checks": [
+          {
+            "key": "placeholder",
+            "attributes": []
+          }
+        ]
+      },
+      {
+        "category": "insights",
+        "display_name": "Blob Storage Insights",
+        "checks": [
+          {
+            "key": "placeholder",
+            "attributes": []
+          }
+        ]
+      }
+
+    ],
+    "logs": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "attributes": [
+              {
+                "name": "placeholder",
+                "operator": "ILIKE",
+                "value": "%/ecs/%"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics": [
       {

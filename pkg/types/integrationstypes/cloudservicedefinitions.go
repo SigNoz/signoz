@@ -102,6 +102,8 @@ type AzureServiceDefinition struct {
 	DataCollected DataCollected `json:"data_collected"`
 
 	Strategy *AzureCollectionStrategy `json:"telemetry_collection_strategy"`
+
+	IngestionStatusCheck *IngestionStatusCheck `json:"ingestion_status_check"`
 }
 
 func (def *AzureServiceDefinition) PopulateDashboardURLs(svcId string) {
