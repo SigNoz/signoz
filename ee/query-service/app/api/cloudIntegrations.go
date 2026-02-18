@@ -187,8 +187,7 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge
-		return "", errors.WrapInternalf(
-			err,
+		return "", errors.NewInternalf(
 			errors.CodeInternal,
 			"deployment info response not in expected shape. couldn't determine region dns and deployment name",
 		)
