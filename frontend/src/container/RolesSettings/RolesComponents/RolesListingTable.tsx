@@ -1,38 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Pagination, Skeleton } from 'antd';
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useListRoles } from 'api/generated/services/role';
 import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
-import { ErrorV2Resp } from 'types/api';
-import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 
 import '../RolesSettings.styles.scss';
 
 const PAGE_SIZE = 20;
-
-function toAPIError(error: unknown): APIError {
-	try {
-		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-	} catch (apiError) {
-		if (apiError instanceof APIError) {
-			return apiError;
-		}
-	}
-	return new APIError({
-		httpStatusCode: 500,
-		error: {
-			code: 'UNKNOWN_ERROR',
-			message: 'An unexpected error occurred while fetching roles.',
-			url: '',
-			errors: [],
-		},
-	});
-}
 
 type DisplayItem =
 	| { type: 'section'; label: string; count?: number }
@@ -47,7 +27,18 @@ function RolesListingTable({
 }: RolesListingTableProps): JSX.Element {
 	const { data, isLoading, isError, error } = useListRoles();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const [currentPage, setCurrentPage] = useState(1);
+	const history = useHistory();
+	const urlQuery = useUrlQuery();
+	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
+	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+
+	const setCurrentPage = useCallback(
+		(page: number): void => {
+			urlQuery.set('page', String(page));
+			history.replace({ search: urlQuery.toString() });
+		},
+		[history, urlQuery],
+	);
 
 	const roles = useMemo(() => data?.data?.data ?? [], [data]);
 
@@ -106,6 +97,17 @@ function RolesListingTable({
 
 	const totalRoleCount = managedRoles.length + customRoles.length;
 
+	// Ensure current page is valid; if out of bounds, redirect to last available page
+	useEffect(() => {
+		if (isLoading || totalRoleCount === 0) {
+			return;
+		}
+		const maxPage = Math.ceil(totalRoleCount / PAGE_SIZE);
+		if (currentPage > maxPage) {
+			setCurrentPage(maxPage);
+		}
+	}, [isLoading, totalRoleCount, currentPage, setCurrentPage]);
+
 	// Paginate: count only role items, but include section headers contextually
 	const paginatedItems = useMemo((): DisplayItem[] => {
 		const startRole = (currentPage - 1) * PAGE_SIZE;
@@ -132,11 +134,6 @@ function RolesListingTable({
 		return result;
 	}, [displayList, currentPage]);
 
-	// Reset page when search changes
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [searchQuery]);
-
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 		<>
 			<span className="numbers">
@@ -157,7 +154,12 @@ function RolesListingTable({
 	if (isError) {
 		return (
 			<div className="roles-listing-table">
-				<ErrorInPlace error={toAPIError(error)} />
+				<ErrorInPlace
+					error={toAPIError(
+						error,
+						'An unexpected error occurred while fetching roles.',
+					)}
+				/>
 			</div>
 		);
 	}
@@ -172,6 +174,7 @@ function RolesListingTable({
 		);
 	}
 
+	// todo: use table from periscope when its available for consumption
 	const renderRow = (role: RoletypesRoleDTO): JSX.Element => (
 		<div key={role.id} className="roles-table-row">
 			<div className="roles-table-cell roles-table-cell--name">
