@@ -4,7 +4,6 @@
 	.azure-account-title {
 		font-size: 24px;
 		font-weight: 600;
-		color: #000;
 	}
 
 	.azure-account-prerequisites-step {
@@ -20,7 +19,7 @@
 			gap: 16px;
 
 			.azure-account-prerequisites-step-description-item {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -32,7 +31,7 @@
 				gap: 8px;
 
 				.azure-account-prerequisites-step-description-item-bullet {
-					color: var(--Robin-500, #4e74f8);
+					color: var(--primary-color);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -52,12 +51,11 @@
 
 				padding: 8px 16px;
 
-				border: 1px solid var(--Slate-400, #1d212d);
+				border: 1px solid var(--l3-background);
 				border-radius: 4px;
 				border-bottom-left-radius: 0;
 				border-bottom-right-radius: 0;
-				background: var(--Ink-400, #121317);
-				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+				background: var(--l1-background);
 
 				.azure-account-prerequisites-step-how-it-works-title-icon {
 					display: flex;
@@ -66,11 +64,11 @@
 					width: 20px;
 					height: 20px;
 
-					color: var(--Vanilla-100, #fff);
+					color: var(--l1-foreground);
 				}
 
 				.azure-account-prerequisites-step-how-it-works-title-text {
-					color: var(--Vanilla-100, #fff);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -82,7 +80,7 @@
 
 			.azure-account-prerequisites-step-how-it-works-description {
 				padding: 16px;
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -90,13 +88,12 @@
 				line-height: 20px; /* 150% */
 				letter-spacing: -0.06px;
 
-				border: 1px solid var(--Slate-400, #1d212d);
+				border: 1px solid var(--l3-background);
 				border-top: none;
 				border-radius: 4px;
 				border-top-left-radius: 0;
 				border-top-right-radius: 0;
-				background: var(--Ink-400, #121317);
-				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+				background: var(--l1-background);
 
 				display: flex;
 				flex-direction: column;
@@ -121,7 +118,7 @@
 		padding: 16px 0px;
 
 		.azure-account-deploy-agent-step-subtitle {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 13px;
 			font-style: normal;
@@ -137,10 +134,8 @@
 			.azure-account-deploy-agent-step-commands-tabs {
 				width: 100%;
 				border-radius: 6px;
-				border: 1px solid var(--Slate-500, #161922);
-				background: var(--Ink-400, #121317);
-				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
-
+				border: 1px solid var(--l3-background);
+				background: var(--l1-background);
 				padding: 8px;
 
 				// attribute - role="tabpanel"
@@ -176,7 +171,7 @@
 			}
 
 			.azure-account-connection-status-close-disclosure {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -193,7 +188,7 @@
 			gap: 8px;
 
 			.azure-account-configure-agent-step-primary-region-title {
-				color: var(--Vanilla-100, #fff);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -215,7 +210,7 @@
 			gap: 8px;
 
 			.azure-account-configure-agent-step-resource-groups-title {
-				color: var(--Vanilla-100, #fff);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -242,33 +237,31 @@
 
 	.ant-select {
 		.ant-select-selector {
-			background: var(--Ink-400, #121317);
-			border: 1px solid var(--Slate-500, #161922);
+			background: var(--l1-background);
+			border: 1px solid var(--l3-background);
 			border-radius: 6px;
-			box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
 		}
 
 		.ant-select-selection-item {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 		}
 
 		.ant-select-arrow {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 		}
 
 		.ant-select-dropdown {
-			background: var(--Ink-400, #121317);
-			border: 1px solid var(--Slate-500, #161922);
+			background: var(--l1-background);
+			border: 1px solid var(--l3-background);
 			border-radius: 6px;
-			box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
 		}
 
 		.ant-select-item {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 		}
 
 		.ant-select-item-option-active {
-			background: var(--Ink-400, #121317);
+			background: var(--l1-background);
 		}
 	}
 
@@ -288,20 +281,19 @@
 		width: 480px;
 		min-height: 200px;
 		flex-shrink: 0;
-		background: var(--bg-ink-400);
-		color: var(--bg-vanilla-100);
-		border: 1px solid var(--bg-slate-500);
+		background: var(--l1-background);
+		color: var(--l1-foreground);
+		border: 1px solid var(--l3-background);
 		border-radius: 4px;
-		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		padding: 12px;
 	}
 
 	.ant-modal-header {
-		background: var(--bg-ink-400);
-		color: var(--bg-vanilla-100);
+		background: var(--l1-background);
+		color: var(--l1-foreground);
 
 		.ant-modal-title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 	}
 
@@ -310,17 +302,10 @@
 	}
 
 	.ant-modal-close {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 	}
 
 	.ant-modal-footer {
 		margin-top: 32px;
-	}
-}
-
-.lightMode {
-	.azure-account-disconnect-container {
-		border-color: var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
 	}
 }

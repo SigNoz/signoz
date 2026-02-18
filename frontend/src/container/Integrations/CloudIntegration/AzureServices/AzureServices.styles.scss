@@ -84,7 +84,7 @@
 				.azure-services-list-view-sidebar {
 					width: 240px;
 					height: 100%;
-					border-right: 1px solid var(--Slate-500, #161922);
+					border-right: 1px solid var(--l3-background);
 					padding: 12px;
 
 					.azure-services-list-view-sidebar-content {
@@ -104,7 +104,7 @@
 						}
 
 						.azure-services-list-view-sidebar-content-header {
-							color: var(--Slate-50, #62687c);
+							color: var(--l2-foreground);
 							font-family: Inter;
 							font-size: 11px;
 							font-style: normal;
@@ -130,7 +130,7 @@
 							}
 
 							.azure-services-list-view-sidebar-content-item-title {
-								color: var(--Vanilla-100, #fff);
+								color: var(--l1-foreground);
 								font-family: Inter;
 								font-size: 13px;
 								font-style: normal;
@@ -139,7 +139,7 @@
 							}
 
 							&:hover {
-								color: var(--Vanilla-100, #fff);
+								color: var(--l1-foreground);
 								font-family: Inter;
 								font-size: 13px;
 								font-style: normal;
@@ -148,14 +148,18 @@
 							}
 
 							&.active {
-								color: var(--Vanilla-100, #fff);
+								color: var(--l1-foreground);
 								font-family: Inter;
 								font-size: 13px;
 								font-style: normal;
 								font-weight: 400;
 								line-height: 18px; /* 128.571% */
 
-								background-color: var(--bg-slate-400);
+								background-color: var(--l3-background);
+
+								.azure-services-list-view-sidebar-content-item-title {
+									color: var(--l1-foreground);
+								}
 							}
 						}
 					}

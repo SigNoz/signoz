@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	border-bottom: 1px solid var(--bg-slate-500);
+	border-bottom: 1px solid var(--l3-background);
 
 	.cloud-integrations-header {
 		display: flex;
@@ -27,7 +27,7 @@
 					height: 40px;
 				}
 
-				color: var(--Vanilla-100, #fff);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 16px;
 				font-style: normal;
@@ -37,7 +37,7 @@
 			}
 
 			.cloud-integrations-description {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -45,18 +45,6 @@
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 			}
-		}
-	}
-}
-
-.lightMode {
-	.cloud-integrations-header {
-		.cloud-integrations-title {
-			color: var(--bg-vanilla-100);
-		}
-
-		.cloud-integrations-description {
-			color: var(--bg-vanilla-400);
 		}
 	}
 }

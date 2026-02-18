@@ -17,8 +17,8 @@
 			justify-content: space-between;
 
 			border-radius: 4px;
-			border: 1px solid var(--Slate-400, #1d212d);
-			background: var(--Ink-400, #121317);
+			border: 1px solid var(--l3-background);
+			background: var(--l1-background);
 
 			.selected-cloud-integration-account-section-header-title {
 				display: flex;
@@ -28,7 +28,8 @@
 
 				.selected-cloud-integration-account-status {
 					display: flex;
-					border-right: 1px solid var(--Slate-400, #1d212d);
+					border-right: 1px solid var(--l3-background);
+					border-radius: none;
 					width: 32px;
 					height: 32px;
 

@@ -24,7 +24,7 @@
 				align-items: center;
 				gap: 8px;
 
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 
 				/* Bifrost (Ancient)/Content/sm */
 				font-family: Inter;
@@ -46,8 +46,8 @@
 				flex-direction: column;
 
 				border-radius: 4px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-400, #121317);
+				border: 1px solid var(--l3-background);
+				background: var(--l1-background);
 
 				.azure-service-details-overview-configuration-title {
 					display: flex;
@@ -58,15 +58,14 @@
 					width: 100%;
 
 					border-radius: 4px 4px 0 0;
-					border-bottom: 1px solid var(--Slate-400, #1d212d);
-					background: rgba(171, 189, 255, 0.04);
+					border-bottom: 1px solid var(--l3-background);
 
 					padding: 8px 12px;
 
 					.azure-service-details-overview-configuration-title-text {
-						color: var(--Vanilla-100, #fff);
+						color: var(--l1-foreground);
 						font-family: Inter;
-						font-size: 14px;
+						font-size: 13px;
 						font-style: normal;
 						font-weight: 400;
 						line-height: 22px; /* 157.143% */
@@ -87,7 +86,7 @@
 					gap: 16px;
 
 					padding: 12px;
-					background: var(--Ink-400, #121317);
+					background: var(--l1-background);
 
 					.azure-service-details-overview-configuration-content-item {
 						display: flex;
@@ -105,12 +104,12 @@
 					gap: 8px;
 					padding: 8px 12px;
 
-					border-top: 1px solid var(--Slate-400, #1d212d);
-					background: var(--Ink-400, #121317);
+					border-top: 1px solid var(--l3-background);
+					background: var(--l1-background);
 				}
 
 				.azure-service-details-overview-configuration-title-text-select-all {
-					color: var(--Vanilla-400, #c0c1c3);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -128,9 +127,8 @@
 
 			.azure-service-dashboards {
 				border-radius: 6px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-400, #121317);
-				box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+				border: 1px solid var(--l3-background);
+				background: var(--l1-background);
 
 				.azure-service-dashboards-title {
 					display: flex;
@@ -138,16 +136,16 @@
 					align-items: center;
 					gap: 8px;
 
-					color: var(--Vanilla-400, #c0c1c3);
+					color: var(--l2-foreground);
 					font-family: Inter;
-					font-size: 14px;
+					font-size: 13px;
 					font-style: normal;
 					font-weight: 500;
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
 
 					padding: 8px 16px;
-					border-bottom: 1px solid var(--Slate-400, #1d212d);
+					border-bottom: 1px solid var(--l3-background);
 				}
 
 				.azure-service-dashboards-items {
@@ -164,14 +162,14 @@
 						&.azure-service-dashboard-item-clickable {
 							cursor: pointer;
 							&:hover {
-								background-color: var(--Slate-400, #1d212d);
+								background-color: var(--l1-background);
 							}
 						}
 
 						.azure-service-dashboard-item-title {
-							color: var(--Vanilla-100, #f0f1f2);
+							color: var(--l1-foreground);
 							font-family: Inter;
-							font-size: 14px;
+							font-size: 13px;
 							font-style: normal;
 							font-weight: 500;
 							line-height: 20px; /* 142.857% */
@@ -179,7 +177,7 @@
 						}
 
 						.azure-service-dashboard-item-description {
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;

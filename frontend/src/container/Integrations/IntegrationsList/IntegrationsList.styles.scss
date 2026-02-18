@@ -4,7 +4,7 @@
 	gap: 16px;
 
 	.integrations-list-title {
-		color: var(--Vanilla-400, #c0c1c3);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -17,8 +17,8 @@
 	.error-container {
 		display: flex;
 		border-radius: 6px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l3-background);
+		background: var(--l1-background);
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;
@@ -68,7 +68,7 @@
 		align-items: center;
 
 		.integrations-list-header-title {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 12px;
 			font-style: normal;
@@ -104,7 +104,7 @@
 			.integrations-list-header-column {
 				flex: 1;
 
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -156,7 +156,7 @@
 			}
 
 			&:nth-child(even) {
-				background: rgba(171, 189, 255, 0.02);
+				background: var(--l2-background);
 			}
 		}
 
@@ -207,76 +207,29 @@
 
 .integrations-list {
 	.error-container {
-		border: 1px solid rgba(53, 59, 76, 0.2);
-		background: var(--bg-vanilla-100);
+		background: var(--l1-background);
 	}
 
 	.integrations-list-item {
 		.list-item-image-container {
-			border: 1.111px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1.111px solid var(--l3-background);
+			background: var(--l1-background);
 		}
 
 		.list-item-details {
 			.heading {
-				color: var(--bg-ink-500);
+				color: var(--l1-foreground);
 			}
 
 			.description {
-				color: var(--bg-slate-200);
+				color: var(--l2-foreground);
 			}
 		}
 
 		.configure-btn {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-200);
-			color: var(--bg-ink-500);
-		}
-	}
-}
-
-.lightMode {
-	.integrations-list-container {
-		.integrations-list-title {
-			color: var(--bg-ink-400);
-		}
-
-		.error-container {
-			border: 1px solid var(--bg-slate-500);
-			background: var(--bg-ink-400);
-		}
-
-		.integrations-list-item {
-			.list-item-image-container {
-				border: 1.111px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-			}
-
-			.list-item-details {
-				.heading {
-					color: var(--bg-ink-500);
-				}
-
-				.description {
-					color: var(--bg-slate-200);
-				}
-			}
-
-			&:hover {
-				background: var(--bg-vanilla-100);
-			}
-
-			.configure-btn {
-				border: 1px solid rgba(53, 59, 76, 0.2);
-				background: var(--bg-vanilla-200);
-				color: var(--bg-ink-500);
-			}
-		}
-
-		.loading-container {
-			.skeleton-item {
-				background: var(--bg-vanilla-300);
-			}
+			border: 1px solid var(--l3-background);
+			background: var(--l1-background);
+			color: var(--l1-foreground);
 		}
 	}
 }

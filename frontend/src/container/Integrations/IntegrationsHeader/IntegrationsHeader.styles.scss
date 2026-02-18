@@ -45,6 +45,30 @@
 	}
 }
 
+.request-integration-dialog {
+	.request-integration-form {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.request-integration-form-title {
+		color: var(--l1-foreground);
+		font-family: Inter;
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+	}
+
+	.request-integration-form-footer {
+		margin-top: 16px;
+		display: flex;
+		justify-content: flex-end;
+		gap: 8px;
+	}
+}
+
 .lightMode {
 	.integrations-header {
 		.title {
