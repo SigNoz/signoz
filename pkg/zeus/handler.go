@@ -39,13 +39,13 @@ func (h *handler) PutProfile(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req zeustypes.PostableProfile
+	req := new(zeustypes.PostableProfile)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
 	}
 
-	if err := h.zeus.PutProfile(ctx, license.Key, &req); err != nil {
+	if err := h.zeus.PutProfile(ctx, license.Key, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -68,7 +68,7 @@ func (h *handler) PutHost(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req zeustypes.PostableHost
+	req := new(zeustypes.PostableHost)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -79,7 +79,7 @@ func (h *handler) PutHost(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.zeus.PutHost(ctx, license.Key, &req); err != nil {
+	if err := h.zeus.PutHost(ctx, license.Key, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
