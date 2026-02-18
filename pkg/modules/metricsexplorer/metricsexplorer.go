@@ -10,6 +10,7 @@ import (
 
 // Handler exposes HTTP handlers for the metrics module.
 type Handler interface {
+	ListMetrics(http.ResponseWriter, *http.Request)
 	GetStats(http.ResponseWriter, *http.Request)
 	GetTreemap(http.ResponseWriter, *http.Request)
 	GetMetricMetadata(http.ResponseWriter, *http.Request)
@@ -22,6 +23,7 @@ type Handler interface {
 
 // Module represents the metrics module interface.
 type Module interface {
+	ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error)
 	GetStats(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.StatsRequest) (*metricsexplorertypes.StatsResponse, error)
 	GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error)
 	GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error)
