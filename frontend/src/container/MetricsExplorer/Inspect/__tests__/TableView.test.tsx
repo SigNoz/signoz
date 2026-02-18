@@ -49,7 +49,7 @@ describe('TableView', () => {
 		inspectMetricsTimeSeries: mockTimeSeries,
 		setShowExpandedView: jest.fn(),
 		setExpandedViewOptions: jest.fn(),
-		metricInspectionOptions: {
+		appliedMetricInspectionOptions: {
 			timeAggregationInterval: 60,
 			timeAggregationOption: TimeAggregationOptions.MAX,
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,

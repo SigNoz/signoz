@@ -54,7 +54,7 @@ describe('GraphView', () => {
 		setExpandedViewOptions: jest.fn(),
 		resetInspection: jest.fn(),
 		showExpandedView: false,
-		metricInspectionOptions: {
+		appliedMetricInspectionOptions: {
 			timeAggregationInterval: 60,
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 			spaceAggregationLabels: ['host_name'],

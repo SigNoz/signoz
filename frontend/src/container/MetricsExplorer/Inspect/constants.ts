@@ -72,13 +72,25 @@ export const SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW: Record<
 };
 
 export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionOptions = {
-	timeAggregationOption: undefined,
-	timeAggregationInterval: undefined,
-	spaceAggregationOption: undefined,
-	spaceAggregationLabels: [],
-	filters: {
-		items: [],
-		op: 'AND',
+	currentOptions: {
+		timeAggregationOption: undefined,
+		timeAggregationInterval: undefined,
+		spaceAggregationOption: undefined,
+		spaceAggregationLabels: [],
+		filters: {
+			items: [],
+			op: 'AND',
+		},
+	},
+	appliedOptions: {
+		timeAggregationOption: undefined,
+		timeAggregationInterval: undefined,
+		spaceAggregationOption: undefined,
+		spaceAggregationLabels: [],
+		filters: {
+			items: [],
+			op: 'AND',
+		},
 	},
 };
 
