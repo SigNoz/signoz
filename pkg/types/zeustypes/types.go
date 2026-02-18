@@ -1,7 +1,7 @@
 package zeustypes
 
 type PostableHost struct {
-	Name string `json:"name"`
+	Name string `json:"name" required:"true"`
 }
 
 type PostableProfile struct {
