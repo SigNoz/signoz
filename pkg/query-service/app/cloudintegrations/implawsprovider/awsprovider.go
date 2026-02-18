@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	integrationstore "github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/store"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -311,15 +312,14 @@ func (a *awsProvider) getServiceConnectionStatus(
 	if def.Strategy.Metrics != nil && serviceConfig.Metrics.Enabled {
 		wg.Add(1)
 		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					a.logger.ErrorContext(
-						ctx, "panic while getting service metrics connection status",
-						"error", r,
-						"service", def.DefinitionMetadata.Id,
-					)
-				}
-			}()
+			defer utils.RecoverPanic(func(err interface{}, stack []byte) {
+				a.logger.ErrorContext(
+					ctx, "panic while getting service metrics connection status",
+					"service", def.DefinitionMetadata.Id,
+					"error", err,
+					"stack", string(stack),
+				)
+			})
 			defer wg.Done()
 			status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def)
 			resp.Metrics = status
@@ -329,15 +329,14 @@ func (a *awsProvider) getServiceConnectionStatus(
 	if def.Strategy.Logs != nil && serviceConfig.Logs.Enabled {
 		wg.Add(1)
 		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					a.logger.ErrorContext(
-						ctx, "panic while getting service logs connection status",
-						"error", r,
-						"service", def.DefinitionMetadata.Id,
-					)
-				}
-			}()
+			defer utils.RecoverPanic(func(err interface{}, stack []byte) {
+				a.logger.ErrorContext(
+					ctx, "panic while getting service logs connection status",
+					"service", def.DefinitionMetadata.Id,
+					"error", err,
+					"stack", string(stack),
+				)
+			})
 			defer wg.Done()
 			status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def)
 			resp.Logs = status
