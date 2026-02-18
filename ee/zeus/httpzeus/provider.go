@@ -146,7 +146,7 @@ func (provider *Provider) PutHost(ctx context.Context, key string, host *zeustyp
 
 	_, err = provider.do(
 		ctx,
-		provider.config.URL.JoinPath("/v2/deployments/me/hosts"),
+		provider.config.URL.JoinPath("/v2/deployments/me/host"),
 		http.MethodPut,
 		key,
 		body,
