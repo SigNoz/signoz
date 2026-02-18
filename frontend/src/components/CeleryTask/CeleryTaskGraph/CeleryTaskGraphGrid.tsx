@@ -14,13 +14,13 @@ import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import { useCeleryFilterOptions } from '../useCeleryFilterOptions';
 import CeleryTaskBar from './CeleryTaskBar';
 import CeleryTaskGraph from './CeleryTaskGraph';
+import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
 import {
 	celeryActiveTasksWidgetData,
 	celeryErrorByWorkerWidgetData,
 	celeryLatencyByWorkerWidgetData,
 	celeryTasksByWorkerWidgetData,
-} from './CeleryTaskGraphUtils';
-import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
+} from './CeleryTaskGraphWorkerWidgets';
 
 import './CeleryTaskGraph.style.scss';
 

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { getStepInterval } from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphUtils';
+import { getStepInterval } from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphTimeUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
