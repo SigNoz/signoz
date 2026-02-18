@@ -4,7 +4,6 @@ import { useQuery } from 'react-query';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -51,9 +50,7 @@ function EntityLogs({
 		selectedTab,
 		handleSetActiveLog,
 		handleCloseLogDetail,
-	} = useLogDetailHandlers({
-		defaultTab: VIEW_TYPES.OVERVIEW,
-	});
+	} = useLogDetailHandlers();
 
 	const basePayload = getEntityEventsOrLogsQueryPayload(
 		timeRange.startTime,
