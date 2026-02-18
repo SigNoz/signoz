@@ -723,7 +723,6 @@ components:
       type: object
     MetrictypesSpaceAggregation:
       enum:
-      - ""
       - sum
       - avg
       - min
@@ -743,7 +742,6 @@ components:
       type: string
     MetrictypesTimeAggregation:
       enum:
-      - ""
       - latest
       - sum
       - avg
