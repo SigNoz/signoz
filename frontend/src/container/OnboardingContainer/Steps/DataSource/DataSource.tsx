@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -23,6 +23,7 @@ import {
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Blocks, Check } from 'lucide-react';
+import { navigateToPage } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import './DataSource.styles.scss';
@@ -141,13 +142,13 @@ export default function DataSource(): JSX.Element {
 		}
 	};
 
-	const goToIntegrationsPage = (): void => {
+	const goToIntegrationsPage = (e?: React.MouseEvent): void => {
 		logEvent('Onboarding V2: Go to integrations', {
 			module: selectedModule?.id,
 			dataSource: selectedDataSource?.name,
 			framework: selectedFramework,
 		});
-		history.push(ROUTES.INTEGRATIONS);
+		navigateToPage(ROUTES.INTEGRATIONS, history.push, e);
 	};
 
 	return (
@@ -249,7 +250,7 @@ export default function DataSource(): JSX.Element {
 								page which allows more sources of sending data
 							</Typography.Text>
 							<Button
-								onClick={goToIntegrationsPage}
+								onClick={(e): void => goToIntegrationsPage(e)}
 								icon={<Blocks size={14} />}
 								className="navigate-integrations-page-btn"
 							>

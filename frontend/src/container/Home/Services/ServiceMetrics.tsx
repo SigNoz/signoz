@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -116,7 +116,7 @@ const ServicesListTable = memo(
 		onRowClick,
 	}: {
 		services: ServicesList[];
-		onRowClick: (record: ServicesList) => void;
+		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
 		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
@@ -125,8 +125,8 @@ const ServicesListTable = memo(
 					dataSource={services}
 					pagination={false}
 					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => onRowClick(record),
+					onRow={(record: ServicesList): Record<string, unknown> => ({
+						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>
 			</div>
@@ -284,11 +284,11 @@ function ServiceMetrics({
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const handleRowClick = useCallback(
-		(record: ServicesList) => {
+		(record: ServicesList, event: React.MouseEvent) => {
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, { event });
 		},
 		[safeNavigate],
 	);

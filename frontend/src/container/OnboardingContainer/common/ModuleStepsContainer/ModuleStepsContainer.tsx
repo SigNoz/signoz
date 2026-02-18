@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/jsx-no-comment-textnodes */
 /* eslint-disable sonarjs/prefer-single-boolean-return */
-import { SetStateAction, useState } from 'react';
+import React, { SetStateAction, useState } from 'react';
 import {
 	ArrowLeftOutlined,
 	ArrowRightOutlined,
@@ -19,6 +19,7 @@ import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUti
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
 import { UserPlus } from 'lucide-react';
+import { navigateToPage } from 'utils/navigation';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
@@ -142,7 +143,7 @@ export default function ModuleStepsContainer({
 		return true;
 	};
 
-	const redirectToModules = (): void => {
+	const redirectToModules = (event?: React.MouseEvent): void => {
 		logEvent('Onboarding V2 Complete', {
 			module: selectedModule.id,
 			dataSource: selectedDataSource?.id,
@@ -152,26 +153,28 @@ export default function ModuleStepsContainer({
 			serviceName,
 		});
 
+		let targetPath: string;
 		if (selectedModule.id === ModulesMap.APM) {
-			history.push(ROUTES.APPLICATION);
+			targetPath = ROUTES.APPLICATION;
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
-			history.push(ROUTES.LOGS_EXPLORER);
+			targetPath = ROUTES.LOGS_EXPLORER;
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
-			history.push(ROUTES.APPLICATION);
+			targetPath = ROUTES.APPLICATION;
 		} else if (selectedModule.id === ModulesMap.AwsMonitoring) {
-			history.push(ROUTES.APPLICATION);
+			targetPath = ROUTES.APPLICATION;
 		} else {
-			history.push(ROUTES.APPLICATION);
+			targetPath = ROUTES.APPLICATION;
 		}
+		navigateToPage(targetPath, history.push, event);
 	};
 
-	const handleNext = (): void => {
+	const handleNext = (event?: React.MouseEvent): void => {
 		const isValid = isValidForm();
 
 		if (isValid) {
 			if (current === lastStepIndex) {
 				resetProgress();
-				redirectToModules();
+				redirectToModules(event);
 				return;
 			}
 
@@ -379,8 +382,8 @@ export default function ModuleStepsContainer({
 		}
 	};
 
-	const handleLogoClick = (): void => {
-		history.push('/home');
+	const handleLogoClick = (e: React.MouseEvent): void => {
+		navigateToPage('/home', history.push, e);
 	};
 
 	return (
@@ -400,7 +403,7 @@ export default function ModuleStepsContainer({
 							style={{ display: 'flex', alignItems: 'center' }}
 							type="default"
 							icon={<LeftCircleOutlined />}
-							onClick={onReselectModule}
+							onClick={(e): void => onReselectModule(e)}
 						>
 							{selectedModule.title}
 						</Button>
@@ -470,7 +473,11 @@ export default function ModuleStepsContainer({
 					>
 						Back
 					</Button>
-					<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
+					<Button
+						onClick={(e): void => handleNext(e)}
+						type="primary"
+						icon={<ArrowRightOutlined />}
+					>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>
 					<LaunchChatSupport

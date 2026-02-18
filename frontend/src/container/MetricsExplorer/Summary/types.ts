@@ -14,7 +14,11 @@ export interface MetricsTableProps {
 	onPaginationChange: (page: number, pageSize: number) => void;
 	setOrderBy: (orderBy: OrderByPayload) => void;
 	totalCount: number;
-	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	openMetricDetails: (
+		metricName: string,
+		view: 'list' | 'treemap',
+		event?: React.MouseEvent,
+	) => void;
 	queryFilters: TagFilter;
 }
 
@@ -28,7 +32,11 @@ export interface MetricsTreemapProps {
 	isLoading: boolean;
 	isError: boolean;
 	viewType: TreemapViewType;
-	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	openMetricDetails: (
+		metricName: string,
+		view: 'list' | 'treemap',
+		event?: React.MouseEvent,
+	) => void;
 	setHeatmapView: (value: TreemapViewType) => void;
 }
 

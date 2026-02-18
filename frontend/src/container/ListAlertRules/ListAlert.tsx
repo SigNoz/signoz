@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { PlusOutlined } from '@ant-design/icons';
@@ -100,16 +100,22 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}, [notificationsApi, t]);
 
-	const onClickNewAlertHandler = useCallback(() => {
-		logEvent('Alert: New alert button clicked', {
-			number: allAlertRules?.length,
-			layout: 'new',
-		});
-		safeNavigate(ROUTES.ALERT_TYPE_SELECTION);
+	const onClickNewAlertHandler = useCallback(
+		(e: React.MouseEvent): void => {
+			logEvent('Alert: New alert button clicked', {
+				number: allAlertRules?.length,
+				layout: 'new',
+			});
+			safeNavigate(ROUTES.ALERT_TYPE_SELECTION, { event: e });
+		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		[],
+	);
 
-	const onEditHandler = (record: GettableAlert, openInNewTab: boolean): void => {
+	const onEditHandler = (
+		record: GettableAlert,
+		options?: { event?: React.MouseEvent; newTab?: boolean },
+	): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
 			mapQueryDataFromApi(record.condition.compositeQuery),
 			record.alertType as AlertTypes,
@@ -125,11 +131,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 		setEditLoader(false);
 
-		if (openInNewTab) {
-			window.open(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, '_blank');
-		} else {
-			safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-		}
+		safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, {
+			event: options?.event,
+			newTab: options?.newTab,
+		});
 	};
 
 	const onCloneHandler = (
@@ -266,7 +271,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				const onClickHandler = (e: React.MouseEvent<HTMLElement>): void => {
 					e.stopPropagation();
 					e.preventDefault();
-					onEditHandler(record, e.metaKey || e.ctrlKey);
+					onEditHandler(record, { event: e });
 				};
 
 				return <Typography.Link onClick={onClickHandler}>{value}</Typography.Link>;
@@ -331,7 +336,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							/>,
 							<ColumnButton
 								key="2"
-								onClick={(): void => onEditHandler(record, false)}
+								onClick={(e: React.MouseEvent): void =>
+									onEditHandler(record, { event: e })
+								}
 								type="link"
 								loading={editLoader}
 							>
@@ -339,7 +346,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							</ColumnButton>,
 							<ColumnButton
 								key="3"
-								onClick={(): void => onEditHandler(record, true)}
+								onClick={(): void => onEditHandler(record, { newTab: true })}
 								type="link"
 								loading={editLoader}
 							>

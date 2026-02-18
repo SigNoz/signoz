@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -214,7 +214,7 @@ function LogDetailInner({
 	};
 
 	// Go to logs explorer page with the log data
-	const handleOpenInExplorer = (): void => {
+	const handleOpenInExplorer = (e?: React.MouseEvent): void => {
 		const queryParams = {
 			[QueryParams.activeLogId]: `"${log?.id}"`,
 			[QueryParams.startTime]: minTime?.toString() || '',
@@ -227,7 +227,9 @@ function LogDetailInner({
 				),
 			),
 		};
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`, {
+			event: e,
+		});
 	};
 
 	const handleQueryExpressionChange = useCallback(

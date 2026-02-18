@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -25,6 +25,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
@@ -428,7 +429,16 @@ function K8sJobsList({
 		return jobsData.find((job) => job.jobName === selectedJobUID) || null;
 	}, [selectedJobUID, groupBy.length, jobsData, nestedJobsData]);
 
-	const handleRowClick = (record: K8sJobsRowData): void => {
+	const handleRowClick = (
+		record: K8sJobsRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			const newParams = new URLSearchParams(searchParams);
+			newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID, record.jobUID);
+			openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+			return;
+		}
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedJobUID(record.jobUID);
@@ -492,8 +502,16 @@ function K8sJobsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
-						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
+						onRow={(
+							record,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (event && isModifierKeyPressed(event)) {
+									const newParams = new URLSearchParams(searchParams);
+									newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID, record.jobUID);
+									openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+									return;
+								}
 								setselectedJobUID(record.jobUID);
 							},
 							className: 'expanded-clickable-row',
@@ -684,8 +702,10 @@ function K8sJobsList({
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
+				onRow={(
+					record,
+				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}
 				expandable={{

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';
@@ -172,13 +172,13 @@ export default function ServiceTraces({
 						dataSource={top5Services}
 						pagination={false}
 						className="services-table"
-						onRow={(record): { onClick: () => void } => ({
-							onClick: (): void => {
+						onRow={(record: ServicesList): Record<string, unknown> => ({
+							onClick: (event: React.MouseEvent): void => {
 								logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
-								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, { event });
 							},
 						})}
 					/>

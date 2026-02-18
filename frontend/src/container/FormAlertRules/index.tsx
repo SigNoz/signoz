@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -329,13 +329,18 @@ function FormAlertRules({
 		}
 	}, [alertDef, currentQuery?.queryType, queryOptions]);
 
-	const onCancelHandler = useCallback(() => {
-		urlQuery.delete(QueryParams.compositeQuery);
-		urlQuery.delete(QueryParams.panelTypes);
-		urlQuery.delete(QueryParams.ruleId);
-		urlQuery.delete(QueryParams.relativeTime);
-		safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
-	}, [safeNavigate, urlQuery]);
+	const onCancelHandler = useCallback(
+		(e?: React.MouseEvent) => {
+			urlQuery.delete(QueryParams.compositeQuery);
+			urlQuery.delete(QueryParams.panelTypes);
+			urlQuery.delete(QueryParams.ruleId);
+			urlQuery.delete(QueryParams.relativeTime);
+			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`, {
+				event: e,
+			});
+		},
+		[safeNavigate, urlQuery],
+	);
 
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
