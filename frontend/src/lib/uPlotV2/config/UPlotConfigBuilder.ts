@@ -7,11 +7,10 @@ import { merge } from 'lodash-es';
 import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
+import { DEFAULT_CURSOR_CONFIG, DEFAULT_PLOT_CONFIG } from '../constants';
 import {
 	ConfigBuilder,
 	ConfigBuilderProps,
-	DEFAULT_CURSOR_CONFIG,
-	DEFAULT_PLOT_CONFIG,
 	LegendItem,
 	SelectionPreferencesSource,
 } from './types';

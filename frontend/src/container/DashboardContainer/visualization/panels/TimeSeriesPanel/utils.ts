@@ -67,7 +67,17 @@ export const prepareUPlotConfig = ({
 		maxTimeScale,
 	});
 
-	apiResponse.data?.result?.forEach((series) => {
+	const seriesList = apiResponse.data?.result || [];
+
+	if (seriesList.length === 1) {
+		builder.setCursor({
+			focus: {
+				prox: 1e3,
+			},
+		});
+	}
+
+	seriesList.forEach((series) => {
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query
