@@ -1,4 +1,4 @@
-package integrationstypes
+package integrationtypes
 
 import (
 	"database/sql/driver"

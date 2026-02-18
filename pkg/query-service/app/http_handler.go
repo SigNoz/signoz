@@ -33,7 +33,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 
@@ -113,7 +113,7 @@ type APIHandler struct {
 
 	IntegrationsController *integrations.Controller
 
-	cloudIntegrationsRegistry map[integrationstypes.CloudProviderType]integrationstypes.CloudProvider
+	cloudIntegrationsRegistry map[integrationtypes.CloudProviderType]integrationtypes.CloudProvider
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -1222,14 +1222,14 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboard := new(dashboardtypes.Dashboard)
-	if integrationstypes.IsCloudIntegrationDashboardUuid(id) {
-		cloudProvider, err := integrationstypes.GetCloudProviderFromDashboardID(id)
+	if integrationtypes.IsCloudIntegrationDashboardUuid(id) {
+		cloudProvider, err := integrationtypes.GetCloudProviderFromDashboardID(id)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		integrationDashboard, err := aH.cloudIntegrationsRegistry[cloudProvider].GetDashboard(ctx, &integrationstypes.GettableDashboard{
+		integrationDashboard, err := aH.cloudIntegrationsRegistry[cloudProvider].GetDashboard(ctx, &integrationtypes.GettableDashboard{
 			ID:    id,
 			OrgID: orgID,
 		})
@@ -3547,7 +3547,7 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *mi
 func (aH *APIHandler) CloudIntegrationsGenerateConnectionArtifact(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3565,7 +3565,7 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionArtifact(w http.Respons
 		return
 	}
 
-	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GenerateConnectionArtifact(r.Context(), &integrationstypes.PostableConnectionArtifact{
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GenerateConnectionArtifact(r.Context(), &integrationtypes.PostableConnectionArtifact{
 		OrgID: claims.OrgID,
 		Data:  reqBody,
 	})
@@ -3591,7 +3591,7 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(w http.ResponseWrit
 		return
 	}
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3609,7 +3609,7 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(w http.ResponseWrit
 func (aH *APIHandler) CloudIntegrationsGetAccountStatus(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3635,13 +3635,13 @@ func (aH *APIHandler) CloudIntegrationsGetAccountStatus(w http.ResponseWriter, r
 func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	req := new(integrationstypes.PostableAgentCheckInPayload)
+	req := new(integrationtypes.PostableAgentCheckInPayload)
 	if err = json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -3667,7 +3667,7 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(w http.ResponseWriter, r *ht
 func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3687,7 +3687,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter
 		return
 	}
 
-	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateAccountConfig(r.Context(), &integrationstypes.PatchableAccountConfig{
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateAccountConfig(r.Context(), &integrationtypes.PatchableAccountConfig{
 		OrgID:     claims.OrgID,
 		AccountId: accountId,
 		Data:      reqBody,
@@ -3704,7 +3704,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter
 func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3730,7 +3730,7 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, 
 func (aH *APIHandler) CloudIntegrationsListServices(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3772,7 +3772,7 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3787,7 +3787,7 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 		cloudAccountId = &cloudAccountIdQP
 	}
 
-	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GetServiceDetails(r.Context(), &integrationstypes.GetServiceDetailsReq{
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].GetServiceDetails(r.Context(), &integrationtypes.GetServiceDetailsReq{
 		OrgID:          orgID,
 		ServiceId:      serviceId,
 		CloudAccountID: cloudAccountId,
@@ -3804,7 +3804,7 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter, r *http.Request) {
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3828,7 +3828,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter
 	}
 
 	result, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateServiceConfig(
-		r.Context(), &integrationstypes.PatchableServiceConfig{
+		r.Context(), &integrationtypes.PatchableServiceConfig{
 			OrgID:     claims.OrgID,
 			ServiceId: serviceId,
 			Config:    reqBody,

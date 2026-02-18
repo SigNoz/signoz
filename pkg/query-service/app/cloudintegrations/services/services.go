@@ -11,7 +11,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	koanfJson "github.com/knadh/koanf/parsers/json"
 )
@@ -22,15 +22,15 @@ var (
 
 type (
 	AWSServicesProvider struct {
-		definitions map[string]*integrationstypes.AWSServiceDefinition
+		definitions map[string]*integrationtypes.AWSDefinition
 	}
 )
 
-func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationstypes.AWSServiceDefinition, error) {
+func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationtypes.AWSDefinition, error) {
 	return a.definitions, nil
 }
 
-func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationstypes.AWSServiceDefinition, error) {
+func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationtypes.AWSDefinition, error) {
 	def, ok := a.definitions[serviceName]
 	if !ok {
 		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "aws service definition not found: %s", serviceName)
@@ -40,14 +40,14 @@ func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceN
 }
 
 func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
-	definitions, err := readAllServiceDefinitions(integrationstypes.CloudProviderAWS)
+	definitions, err := readAllServiceDefinitions(integrationtypes.CloudProviderAWS)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceDefinitions := make(map[string]*integrationstypes.AWSServiceDefinition)
+	serviceDefinitions := make(map[string]*integrationtypes.AWSDefinition)
 	for id, def := range definitions {
-		typedDef, ok := def.(*integrationstypes.AWSServiceDefinition)
+		typedDef, ok := def.(*integrationtypes.AWSDefinition)
 		if !ok {
 			return nil, fmt.Errorf("invalid type for AWS service definition %s", id)
 		}
@@ -108,7 +108,7 @@ func readServiceDefinitionsFromDir(cloudProvider valuer.String, cloudProviderDir
 	return svcDefs, nil
 }
 
-func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (integrationstypes.Definition, error) {
+func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (integrationtypes.Definition, error) {
 	integrationJsonPath := path.Join(svcDirpath, "integration.json")
 
 	serializedSpec, err := definitionFiles.ReadFile(integrationJsonPath)
@@ -127,11 +127,11 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (inte
 	}
 	hydratedSpec := hydrated.(map[string]any)
 
-	var serviceDef integrationstypes.Definition
+	var serviceDef integrationtypes.Definition
 
 	switch cloudProvider {
-	case integrationstypes.CloudProviderAWS:
-		serviceDef = &integrationstypes.AWSServiceDefinition{}
+	case integrationtypes.CloudProviderAWS:
+		serviceDef = &integrationtypes.AWSDefinition{}
 	default:
 		// ideally this shouldn't happen hence throwing internal error
 		return nil, errors.NewInternalf(errors.CodeInternal, "unsupported cloud provider: %s", cloudProvider)

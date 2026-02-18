@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	integrationstore "github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/store"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -41,7 +41,7 @@ func NewAWSCloudProvider(
 	accountsRepo integrationstore.CloudProviderAccountsRepository,
 	serviceConfigRepo integrationstore.ServiceConfigDatabase,
 	querier querier.Querier,
-) integrationstypes.CloudProvider {
+) integrationtypes.CloudProvider {
 	awsServiceDefinitions, err := services.NewAWSCloudProviderServices()
 	if err != nil {
 		panic("failed to initialize AWS service definitions: " + err.Error())
@@ -56,36 +56,36 @@ func NewAWSCloudProvider(
 	}
 }
 
-func (a *awsProvider) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationstypes.GettableAccountStatus, error) {
+func (a *awsProvider) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationtypes.GettableAccountStatus, error) {
 	accountRecord, err := a.accountsRepo.Get(ctx, orgID, a.GetName().String(), accountID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &integrationstypes.GettableAccountStatus{
+	return &integrationtypes.GettableAccountStatus{
 		Id:             accountRecord.ID.String(),
 		CloudAccountId: accountRecord.AccountID,
 		Status:         accountRecord.Status(),
 	}, nil
 }
 
-func (a *awsProvider) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationstypes.GettableConnectedAccountsList, error) {
+func (a *awsProvider) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationtypes.GettableConnectedAccountsList, error) {
 	accountRecords, err := a.accountsRepo.ListConnected(ctx, orgID, a.GetName().String())
 	if err != nil {
 		return nil, err
 	}
 
-	connectedAccounts := make([]*integrationstypes.Account, 0, len(accountRecords))
+	connectedAccounts := make([]*integrationtypes.Account, 0, len(accountRecords))
 	for _, r := range accountRecords {
 		connectedAccounts = append(connectedAccounts, r.Account(a.GetName()))
 	}
 
-	return &integrationstypes.GettableConnectedAccountsList{
+	return &integrationtypes.GettableConnectedAccountsList{
 		Accounts: connectedAccounts,
 	}, nil
 }
 
-func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.PostableAgentCheckInPayload) (any, error) {
+func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationtypes.PostableAgentCheckInPayload) (any, error) {
 	// agent can't check in unless the account is already created
 	existingAccount, err := a.accountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.ID)
 	if err != nil {
@@ -105,7 +105,7 @@ func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.P
 			a.GetName().String(), req.AccountID, req.ID, existingAccount.ID.StringValue())
 	}
 
-	agentReport := integrationstypes.AgentReport{
+	agentReport := integrationtypes.AgentReport{
 		TimestampMillis: time.Now().UnixMilli(),
 		Data:            req.Data,
 	}
@@ -122,7 +122,7 @@ func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.P
 		return nil, err
 	}
 
-	return &integrationstypes.GettableAWSAgentCheckIn{
+	return &integrationtypes.GettableAWSAgentCheckIn{
 		AccountId:         account.ID.StringValue(),
 		CloudAccountId:    *account.AccountID,
 		RemovedAt:         account.RemovedAt,
@@ -130,20 +130,19 @@ func (a *awsProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.P
 	}, nil
 }
 
-func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integrationstypes.CloudIntegration) (*integrationstypes.AWSAgentIntegrationConfig, error) {
+func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integrationtypes.CloudIntegration) (*integrationtypes.AWSAgentIntegrationConfig, error) {
 	// prepare and return integration config to be consumed by agent
-	agentConfig := &integrationstypes.AWSAgentIntegrationConfig{
+	agentConfig := &integrationtypes.AWSAgentIntegrationConfig{
 		EnabledRegions: []string{},
-		TelemetryCollectionStrategy: &integrationstypes.AWSCollectionStrategy{
-			Provider:   a.GetName(),
-			AWSMetrics: &integrationstypes.AWSMetricsStrategy{},
-			AWSLogs:    &integrationstypes.AWSLogsStrategy{},
-			S3Buckets:  map[string][]string{},
+		TelemetryCollectionStrategy: &integrationtypes.AWSCollectionStrategy{
+			Metrics:   &integrationtypes.AWSMetricsStrategy{},
+			Logs:      &integrationtypes.AWSLogsStrategy{},
+			S3Buckets: map[string][]string{},
 		},
 	}
 
-	accountConfig := new(integrationstypes.AWSAccountConfig)
-	err := accountConfig.Unmarshal([]byte(account.Config))
+	accountConfig := new(integrationtypes.AWSAccountConfig)
+	err := integrationtypes.UnmarshalJSON([]byte(account.Config), accountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -170,29 +169,29 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 		}
 		config := svcConfigs[svcType]
 
-		serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-		err = serviceConfig.Unmarshal(config)
+		serviceConfig := new(integrationtypes.AWSCloudServiceConfig)
+		err = integrationtypes.UnmarshalJSON([]byte(config), serviceConfig)
 		if err != nil {
 			continue
 		}
 
 		if serviceConfig.Logs != nil && serviceConfig.Logs.Enabled {
-			if svcType == integrationstypes.S3Sync {
+			if svcType == integrationtypes.S3Sync {
 				// S3 bucket sync; No cloudwatch logs are appended for this service type;
 				// Though definition is populated with a custom cloudwatch group that helps in calculating logs connection status
 				agentConfig.TelemetryCollectionStrategy.S3Buckets = serviceConfig.Logs.S3Buckets
-			} else if definition.Strategy.AWSLogs != nil { // services that includes a logs subscription
-				agentConfig.TelemetryCollectionStrategy.AWSLogs.Subscriptions = append(
-					agentConfig.TelemetryCollectionStrategy.AWSLogs.Subscriptions,
-					definition.Strategy.AWSLogs.Subscriptions...,
+			} else if definition.Strategy.Logs != nil { // services that includes a logs subscription
+				agentConfig.TelemetryCollectionStrategy.Logs.Subscriptions = append(
+					agentConfig.TelemetryCollectionStrategy.Logs.Subscriptions,
+					definition.Strategy.Logs.Subscriptions...,
 				)
 			}
 		}
 
-		if serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled && definition.Strategy.AWSMetrics != nil {
-			agentConfig.TelemetryCollectionStrategy.AWSMetrics.StreamFilters = append(
-				agentConfig.TelemetryCollectionStrategy.AWSMetrics.StreamFilters,
-				definition.Strategy.AWSMetrics.StreamFilters...,
+		if serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled && definition.Strategy.Metrics != nil {
+			agentConfig.TelemetryCollectionStrategy.Metrics.StreamFilters = append(
+				agentConfig.TelemetryCollectionStrategy.Metrics.StreamFilters,
+				definition.Strategy.Metrics.StreamFilters...,
 			)
 		}
 	}
@@ -200,12 +199,12 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 	return agentConfig, nil
 }
 
-func (a *awsProvider) GetName() integrationstypes.CloudProviderType {
-	return integrationstypes.CloudProviderAWS
+func (a *awsProvider) GetName() integrationtypes.CloudProviderType {
+	return integrationtypes.CloudProviderAWS
 }
 
 func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccountID *string) (any, error) {
-	svcConfigs := make(map[string]*integrationstypes.AWSCloudServiceConfig)
+	svcConfigs := make(map[string]*integrationtypes.AWSCloudServiceConfig)
 	if cloudAccountID != nil {
 		activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), *cloudAccountID)
 		if err != nil {
@@ -218,8 +217,8 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 		}
 
 		for svcType, config := range serviceConfigs {
-			serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-			err = serviceConfig.Unmarshal(config)
+			serviceConfig := new(integrationtypes.AWSCloudServiceConfig)
+			err = integrationtypes.UnmarshalJSON([]byte(config), serviceConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -227,7 +226,7 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 		}
 	}
 
-	summaries := make([]integrationstypes.AWSServiceSummary, 0)
+	summaries := make([]integrationtypes.AWSServiceSummary, 0)
 
 	definitions, err := a.awsServiceDefinitions.ListServiceDefinitions(ctx)
 	if err != nil {
@@ -235,7 +234,7 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 	}
 
 	for _, def := range definitions {
-		summary := integrationstypes.AWSServiceSummary{
+		summary := integrationtypes.AWSServiceSummary{
 			DefinitionMetadata: def.DefinitionMetadata,
 			Config:             nil,
 		}
@@ -249,26 +248,25 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 		return summaries[i].DefinitionMetadata.Title < summaries[j].DefinitionMetadata.Title
 	})
 
-	return &integrationstypes.GettableAWSServices{
+	return &integrationtypes.GettableAWSServices{
 		Services: summaries,
 	}, nil
 }
 
-func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationstypes.GetServiceDetailsReq) (any, error) {
-	details := new(integrationstypes.GettableAWSServiceDetails)
+func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationtypes.GetServiceDetailsReq) (any, error) {
+	details := new(integrationtypes.GettableAWSServiceDetails)
 
 	awsDefinition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
 		return nil, err
 	}
 
-	details.AWSServiceDefinition = *awsDefinition
-	details.Strategy.Provider = a.GetName()
+	details.AWSDefinition = *awsDefinition
 	if req.CloudAccountID == nil {
 		return details, nil
 	}
 
-	config, err := a.getServiceConfig(ctx, &details.AWSServiceDefinition, req.OrgID, a.GetName().String(), req.ServiceId, *req.CloudAccountID)
+	config, err := a.getServiceConfig(ctx, &details.AWSDefinition, req.OrgID, a.GetName().String(), req.ServiceId, *req.CloudAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +281,7 @@ func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationsty
 		ctx,
 		*req.CloudAccountID,
 		req.OrgID,
-		&details.AWSServiceDefinition,
+		&details.AWSDefinition,
 		config,
 	)
 	if err != nil {
@@ -299,18 +297,18 @@ func (a *awsProvider) getServiceConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AWSServiceDefinition,
-	serviceConfig *integrationstypes.AWSCloudServiceConfig,
-) (*integrationstypes.ServiceConnectionStatus, error) {
+	def *integrationtypes.AWSDefinition,
+	serviceConfig *integrationtypes.AWSCloudServiceConfig,
+) (*integrationtypes.ServiceConnectionStatus, error) {
 	if def.Strategy == nil {
 		return nil, nil
 	}
 
-	resp := new(integrationstypes.ServiceConnectionStatus)
+	resp := new(integrationtypes.ServiceConnectionStatus)
 
 	wg := sync.WaitGroup{}
 
-	if def.Strategy.AWSMetrics != nil && serviceConfig.Metrics.Enabled {
+	if def.Strategy.Metrics != nil && serviceConfig.Metrics.Enabled {
 		wg.Add(1)
 		go func() {
 			defer func() {
@@ -328,7 +326,7 @@ func (a *awsProvider) getServiceConnectionStatus(
 		}()
 	}
 
-	if def.Strategy.AWSLogs != nil && serviceConfig.Logs.Enabled {
+	if def.Strategy.Logs != nil && serviceConfig.Logs.Enabled {
 		wg.Add(1)
 		go func() {
 			defer func() {
@@ -355,18 +353,18 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AWSServiceDefinition,
-) ([]*integrationstypes.SignalConnectionStatus, error) {
+	def *integrationtypes.AWSDefinition,
+) ([]*integrationtypes.SignalConnectionStatus, error) {
 	if def.Strategy == nil ||
-		len(def.Strategy.AWSMetrics.StreamFilters) < 1 ||
+		len(def.Strategy.Metrics.StreamFilters) < 1 ||
 		len(def.DataCollected.Metrics) < 1 {
 		return nil, nil
 	}
 
-	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
+	statusResp := make([]*integrationtypes.SignalConnectionStatus, 0)
 
 	for _, metric := range def.IngestionStatusCheck.Metrics {
-		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+		statusResp = append(statusResp, &integrationtypes.SignalConnectionStatus{
 			CategoryID:          metric.Category,
 			CategoryDisplayName: metric.DisplayName,
 		})
@@ -438,7 +436,7 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 			continue
 		}
 
-		statusResp[index] = &integrationstypes.SignalConnectionStatus{
+		statusResp[index] = &integrationtypes.SignalConnectionStatus{
 			CategoryID:           category.Category,
 			CategoryDisplayName:  category.DisplayName,
 			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
@@ -453,18 +451,18 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AWSServiceDefinition,
-) ([]*integrationstypes.SignalConnectionStatus, error) {
+	def *integrationtypes.AWSDefinition,
+) ([]*integrationtypes.SignalConnectionStatus, error) {
 	if def.Strategy == nil ||
-		len(def.Strategy.AWSLogs.Subscriptions) < 1 ||
+		len(def.Strategy.Logs.Subscriptions) < 1 ||
 		len(def.DataCollected.Logs) < 1 {
 		return nil, nil
 	}
 
-	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
+	statusResp := make([]*integrationtypes.SignalConnectionStatus, 0)
 
 	for _, log := range def.IngestionStatusCheck.Logs {
-		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+		statusResp = append(statusResp, &integrationtypes.SignalConnectionStatus{
 			CategoryID:          log.Category,
 			CategoryDisplayName: log.DisplayName,
 		})
@@ -536,7 +534,7 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 			continue
 		}
 
-		statusResp[index] = &integrationstypes.SignalConnectionStatus{
+		statusResp[index] = &integrationtypes.SignalConnectionStatus{
 			CategoryID:           category.Category,
 			CategoryDisplayName:  category.DisplayName,
 			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
@@ -548,8 +546,8 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 }
 
 func (a *awsProvider) getServiceConfig(ctx context.Context,
-	def *integrationstypes.AWSServiceDefinition, orgID valuer.UUID, cloudProvider, serviceId, cloudAccountId string,
-) (*integrationstypes.AWSCloudServiceConfig, error) {
+	def *integrationtypes.AWSDefinition, orgID valuer.UUID, cloudProvider, serviceId, cloudAccountId string,
+) (*integrationtypes.AWSCloudServiceConfig, error) {
 	activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID.String(), cloudProvider, cloudAccountId)
 	if err != nil {
 		return nil, err
@@ -564,14 +562,14 @@ func (a *awsProvider) getServiceConfig(ctx context.Context,
 		return nil, err
 	}
 
-	serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-	err = serviceConfig.Unmarshal(config)
+	serviceConfig := new(integrationtypes.AWSCloudServiceConfig)
+	err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	if config != nil && serviceConfig.Metrics != nil && serviceConfig.Metrics.Enabled {
-		def.PopulateDashboardURLs(serviceId)
+		def.PopulateDashboardURLs(a.GetName(), serviceId)
 	}
 
 	return serviceConfig, nil
@@ -594,8 +592,8 @@ func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.U
 			}
 
 			for svcId, config := range configsBySvcId {
-				serviceConfig := new(integrationstypes.AWSCloudServiceConfig)
-				err = serviceConfig.Unmarshal(config)
+				serviceConfig := new(integrationtypes.AWSCloudServiceConfig)
+				err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 				if err != nil {
 					return nil, err
 				}
@@ -617,7 +615,7 @@ func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.U
 	for _, svc := range allServices {
 		serviceDashboardsCreatedAt, ok := servicesWithAvailableMetrics[svc.Id]
 		if ok {
-			svcDashboards = integrationstypes.GetDashboardsFromAssets(svc.Id, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)
+			svcDashboards = integrationtypes.GetDashboardsFromAssets(svc.Id, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)
 			servicesWithAvailableMetrics[svc.Id] = nil
 		}
 	}
@@ -625,7 +623,7 @@ func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.U
 	return svcDashboards, nil
 }
 
-func (a *awsProvider) GetDashboard(ctx context.Context, req *integrationstypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
+func (a *awsProvider) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
 	allDashboards, err := a.GetAvailableDashboards(ctx, req.OrgID)
 	if err != nil {
 		return nil, err
@@ -640,17 +638,17 @@ func (a *awsProvider) GetDashboard(ctx context.Context, req *integrationstypes.G
 	return nil, errors.NewNotFoundf(CodeDashboardNotFound, "dashboard with id %s not found", req.ID)
 }
 
-func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationstypes.PostableConnectionArtifact) (any, error) {
-	connection := new(integrationstypes.PostableAWSConnectionUrl)
+func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationtypes.PostableConnectionArtifact) (any, error) {
+	connection := new(integrationtypes.PostableAWSConnectionUrl)
 
-	err := connection.Unmarshal(req.Data)
+	err := integrationtypes.UnmarshalJSON(req.Data, connection)
 	if err != nil {
 		return nil, err
 	}
 
 	if connection.AccountConfig != nil {
 		for _, region := range connection.AccountConfig.EnabledRegions {
-			if integrationstypes.ValidAWSRegions[region] {
+			if integrationtypes.ValidAWSRegions[region] {
 				continue
 			}
 
@@ -658,13 +656,13 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 		}
 	}
 
-	config, err := connection.AccountConfig.Marshal()
+	config, err := integrationtypes.MarshalJSON(connection.AccountConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	account, err := a.accountsRepo.Upsert(
-		ctx, req.OrgID, integrationstypes.CloudProviderAWS.String(), nil, config,
+		ctx, req.OrgID, integrationtypes.CloudProviderAWS.String(), nil, config,
 		nil, nil, nil,
 	)
 	if err != nil {
@@ -696,20 +694,20 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 	q.Set("param_IngestionUrl", connection.AgentConfig.IngestionUrl)
 	q.Set("param_IngestionKey", connection.AgentConfig.IngestionKey)
 
-	return &integrationstypes.GettableAWSConnectionUrl{
+	return &integrationtypes.GettableAWSConnectionUrl{
 		AccountId:     account.ID.StringValue(),
 		ConnectionUrl: u.String() + "?&" + q.Encode(), // this format is required by AWS
 	}, nil
 }
 
-func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrationstypes.PatchableServiceConfig) (any, error) {
+func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrationtypes.PatchableServiceConfig) (any, error) {
 	definition, err := a.awsServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceConfig := new(integrationstypes.PatchableAWSCloudServiceConfig)
-	err = serviceConfig.Unmarshal(req.Config)
+	serviceConfig := new(integrationtypes.UpdatableAWSCloudServiceConfig)
+	err = integrationtypes.UnmarshalJSON(req.Config, serviceConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -726,7 +724,7 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 		return nil, err
 	}
 
-	serviceConfigBytes, err := serviceConfig.Config.Marshal()
+	serviceConfigBytes, err := integrationtypes.MarshalJSON(serviceConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -738,20 +736,21 @@ func (a *awsProvider) UpdateServiceConfig(ctx context.Context, req *integrations
 		return nil, err
 	}
 
-	if err = serviceConfig.Config.Unmarshal(updatedConfig); err != nil {
+	err = integrationtypes.UnmarshalJSON(updatedConfig, serviceConfig)
+	if err != nil {
 		return nil, err
 	}
 
-	return &integrationstypes.PatchServiceConfigResponse{
+	return &integrationtypes.PatchServiceConfigResponse{
 		ServiceId: req.ServiceId,
 		Config:    serviceConfig.Config,
 	}, nil
 }
 
-func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrationstypes.PatchableAccountConfig) (any, error) {
-	config := new(integrationstypes.PatchableAWSAccountConfig)
+func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrationtypes.PatchableAccountConfig) (any, error) {
+	config := new(integrationtypes.PatchableAWSAccountConfig)
 
-	err := config.Unmarshal(req.Data)
+	err := integrationtypes.UnmarshalJSON(req.Data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -761,14 +760,14 @@ func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrations
 	}
 
 	for _, region := range config.Config.EnabledRegions {
-		if integrationstypes.ValidAWSRegions[region] {
+		if integrationtypes.ValidAWSRegions[region] {
 			continue
 		}
 
 		return nil, errors.NewInvalidInputf(CodeInvalidAWSRegion, "invalid aws region: %s", region)
 	}
 
-	configBytes, err := config.Config.Marshal()
+	configBytes, err := integrationtypes.MarshalJSON(config.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -789,7 +788,7 @@ func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrations
 	return accountRecord.Account(a.GetName()), nil
 }
 
-func (a *awsProvider) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationstypes.CloudIntegration, error) {
+func (a *awsProvider) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationtypes.CloudIntegration, error) {
 	account, err := a.accountsRepo.Get(ctx, orgID, a.GetName().String(), accountID)
 	if err != nil {
 		return nil, err

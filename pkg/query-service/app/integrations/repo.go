@@ -4,22 +4,22 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 )
 
 type InstalledIntegrationsRepo interface {
-	list(ctx context.Context, orgId string) ([]integrationstypes.InstalledIntegration, *model.ApiError)
+	list(ctx context.Context, orgId string) ([]integrationtypes.InstalledIntegration, *model.ApiError)
 
 	get(
 		ctx context.Context, orgId string, integrationTypes []string,
-	) (map[string]integrationstypes.InstalledIntegration, *model.ApiError)
+	) (map[string]integrationtypes.InstalledIntegration, *model.ApiError)
 
 	upsert(
 		ctx context.Context,
 		orgId string,
 		integrationType string,
-		config integrationstypes.InstalledIntegrationConfig,
-	) (*integrationstypes.InstalledIntegration, *model.ApiError)
+		config integrationtypes.InstalledIntegrationConfig,
+	) (*integrationtypes.InstalledIntegration, *model.ApiError)
 
 	delete(ctx context.Context, orgId string, integrationType string) *model.ApiError
 }
