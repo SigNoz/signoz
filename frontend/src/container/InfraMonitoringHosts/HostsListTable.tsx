@@ -69,6 +69,9 @@ function getEmptyOrLoadingView(viewState: {
 						alt="thinking-emoji"
 						className="empty-state-svg"
 					/>
+					<Typography.Title level={5} className="no-filtered-hosts-title">
+						No host metrics found
+					</Typography.Title>
 					<Typography.Text className="no-filtered-hosts-message">
 						No host metrics in the selected time range and filters. Please adjust your
 						time range or filters.
