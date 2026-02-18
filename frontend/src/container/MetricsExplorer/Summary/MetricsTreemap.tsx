@@ -64,21 +64,21 @@ function MetricsTreemap({
 			);
 		}
 
-		if (!data || !data?.[viewType]?.length) {
-			return (
-				<Empty
-					description="No metrics found"
-					data-testid="metrics-treemap-empty-state"
-					style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
-				/>
-			);
-		}
-
 		if (isError) {
 			return (
 				<Empty
 					description="Error fetching metrics. If the problem persists, please contact support."
 					data-testid="metrics-treemap-error-state"
+					style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+				/>
+			);
+		}
+
+		if (!data || !data?.[viewType]?.length) {
+			return (
+				<Empty
+					description="No metrics found"
+					data-testid="metrics-treemap-empty-state"
 					style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 				/>
 			);
