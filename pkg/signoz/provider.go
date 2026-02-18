@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
+	"github.com/SigNoz/signoz/pkg/modules/identity"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
@@ -169,6 +170,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
 		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddIdentityFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateUserIdentity(sqlstore, sqlschema),
+		sqlmigration.NewMigrateUserRolesFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -220,9 +224,9 @@ func NewSharderProviderFactories() factory.NamedMap[factory.ProviderFactory[shar
 	)
 }
 
-func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
+func NewStatsReporterProviderFactories(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, identityModule identity.Module, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.NamedMap[factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config]] {
 	return factory.MustNewNamedMap(
-		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig),
+		analyticsstatsreporter.NewFactory(telemetryStore, collectors, orgGetter, userGetter, identityModule, tokenizer, build, analyticsConfig),
 		noopstatsreporter.NewFactory(),
 	)
 }

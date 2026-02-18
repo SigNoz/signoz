@@ -287,3 +287,17 @@ func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
 
 	return managedRole
 }
+
+// GetRoleFromManagedRoleName converts a managed role name back to the legacy role type
+func GetRoleFromManagedRoleName(managedRoleName string) types.Role {
+	switch managedRoleName {
+	case SigNozAdminRoleName:
+		return types.RoleAdmin
+	case SigNozEditorRoleName:
+		return types.RoleEditor
+	case SigNozViewerRoleName:
+		return types.RoleViewer
+	default:
+		return types.RoleViewer // default to viewer for unknown roles
+	}
+}

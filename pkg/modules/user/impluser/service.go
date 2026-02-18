@@ -2,11 +2,13 @@ package impluser
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/identity"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -21,6 +23,7 @@ type service struct {
 	module    user.Module
 	orgGetter organization.Getter
 	authz     authz.AuthZ
+	identity  identity.Module
 	config    user.RootConfig
 	stopC     chan struct{}
 }
@@ -31,6 +34,7 @@ func NewService(
 	module user.Module,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
+	identity identity.Module,
 	config user.RootConfig,
 ) user.Service {
 	return &service{
@@ -39,6 +43,7 @@ func NewService(
 		module:    module,
 		orgGetter: orgGetter,
 		authz:     authz,
+		identity:  identity,
 		config:    config,
 		stopC:     make(chan struct{}),
 	}
@@ -112,20 +117,39 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		oldRole := existingUser.Role
+		// Get user's current roles from identity module
+		userRoles, err := s.identity.GetRoles(ctx, existingUser.IdentityID)
+		if err != nil {
+			return err
+		}
 
 		existingUser.PromoteToRoot()
 		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return err
 		}
 
-		if oldRole != types.RoleAdmin {
-			if err := s.authz.ModifyGrant(ctx,
-				orgID,
-				roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole),
-				roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin),
-				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
-			); err != nil {
+		// If user doesn't have admin role, modify the grant and update identity roles
+		if !slices.Contains(userRoles, types.RoleAdmin) {
+			// Update authz grants and identity roles
+			for _, oldRole := range userRoles {
+				// Update authz grant
+				if err := s.authz.ModifyGrant(ctx,
+					orgID,
+					roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole),
+					roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin),
+					authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+				); err != nil {
+					return err
+				}
+
+				// Update identity role
+				if err := s.identity.RemoveRole(ctx, existingUser.IdentityID, orgID, oldRole); err != nil {
+					return err
+				}
+			}
+
+			// Add admin role to identity
+			if err := s.identity.AddRole(ctx, existingUser.IdentityID, orgID, types.RoleAdmin); err != nil {
 				return err
 			}
 		}
@@ -144,7 +168,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
-	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
+	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRole(types.RoleAdmin))
 }
 
 func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {

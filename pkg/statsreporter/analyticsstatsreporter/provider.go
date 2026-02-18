@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/identity"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -39,6 +40,9 @@ type provider struct {
 	// used to get users
 	userGetter user.Getter
 
+	// used to get identity roles
+	identity identity.Module
+
 	// used to get tokenizer
 	tokenizer tokenizer.Tokenizer
 
@@ -55,9 +59,9 @@ type provider struct {
 	stopC chan struct{}
 }
 
-func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, collectors []statsreporter.StatsCollector, orgGetter organization.Getter, userGetter user.Getter, identity identity.Module, tokenizer tokenizer.Tokenizer, build version.Build, analyticsConfig analytics.Config) factory.ProviderFactory[statsreporter.StatsReporter, statsreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("analytics"), func(ctx context.Context, settings factory.ProviderSettings, config statsreporter.Config) (statsreporter.StatsReporter, error) {
-		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, tokenizer, build, analyticsConfig)
+		return New(ctx, settings, config, telemetryStore, collectors, orgGetter, userGetter, identity, tokenizer, build, analyticsConfig)
 	})
 }
 
@@ -69,6 +73,7 @@ func New(
 	collectors []statsreporter.StatsCollector,
 	orgGetter organization.Getter,
 	userGetter user.Getter,
+	identity identity.Module,
 	tokenizer tokenizer.Tokenizer,
 	build version.Build,
 	analyticsConfig analytics.Config,
@@ -87,6 +92,7 @@ func New(
 		collectors:     collectors,
 		orgGetter:      orgGetter,
 		userGetter:     userGetter,
+		identity:       identity,
 		analytics:      analytics,
 		tokenizer:      tokenizer,
 		build:          build,
@@ -166,6 +172,17 @@ func (provider *provider) Report(ctx context.Context) error {
 			continue
 		}
 
+		// Get roles for all users in batch
+		identityIDs := make([]valuer.UUID, len(users))
+		for i, user := range users {
+			identityIDs[i] = user.IdentityID
+		}
+		rolesMap, err := provider.identity.GetRolesForIdentities(ctx, identityIDs)
+		if err != nil {
+			provider.settings.Logger().WarnContext(ctx, "failed to get roles", "error", err, "org_id", org.ID)
+			rolesMap = make(map[valuer.UUID][]types.Role)
+		}
+
 		maxLastObservedAtPerUserID, err := provider.tokenizer.ListMaxLastObservedAtByOrgID(ctx, org.ID)
 		if err != nil {
 			provider.settings.Logger().WarnContext(ctx, "failed to list max last observed at per user id", "error", err, "org_id", org.ID)
@@ -173,7 +190,8 @@ func (provider *provider) Report(ctx context.Context) error {
 		}
 
 		for _, user := range users {
-			traits := types.NewTraitsFromUser(user)
+			roles := rolesMap[user.IdentityID]
+			traits := types.NewTraitsFromUser(user, roles)
 			if maxLastObservedAt, ok := maxLastObservedAtPerUserID[user.ID]; ok {
 				traits["auth_token.last_observed_at.max.time"] = maxLastObservedAt.UTC()
 				traits["auth_token.last_observed_at.max.time_unix"] = maxLastObservedAt.Unix()

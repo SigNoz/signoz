@@ -7,6 +7,7 @@ import (
 
 type createUserOptions struct {
 	FactorPassword *types.FactorPassword
+	Role           types.Role
 }
 
 type CreateUserOption func(*createUserOptions)
@@ -17,9 +18,16 @@ func WithFactorPassword(factorPassword *types.FactorPassword) CreateUserOption {
 	}
 }
 
+func WithRole(role types.Role) CreateUserOption {
+	return func(o *createUserOptions) {
+		o.Role = role
+	}
+}
+
 func NewCreateUserOptions(opts ...CreateUserOption) *createUserOptions {
 	o := &createUserOptions{
 		FactorPassword: nil,
+		Role:           types.RoleViewer, // default role
 	}
 
 	for _, opt := range opts {
