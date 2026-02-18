@@ -21,7 +21,9 @@ import (
 // specific structures.
 func ExtractFilterExprTree(expr string) (*qbtypes.FilterExprNode, error) {
 	if strings.TrimSpace(expr) == "" {
-		return nil, nil
+		return &qbtypes.FilterExprNode{
+			Op: qbtypes.LogicalOpLeaf,
+		}, nil
 	}
 
 	// Setup the ANTLR parsing pipeline (same grammar as PrepareWhereClause).

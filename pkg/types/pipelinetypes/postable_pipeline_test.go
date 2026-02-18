@@ -9,7 +9,7 @@ import (
 
 func TestIsValidPostablePipeline(t *testing.T) {
 	validPipelineFilter := &qbtypes.Filter{
-		Expression: `attributes.method = "GET"`,
+		Expression: `attribute.method = "GET"`,
 	}
 
 	var correctQueriesTest = []struct {
