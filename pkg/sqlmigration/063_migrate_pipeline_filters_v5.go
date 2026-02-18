@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/transition"
@@ -88,9 +89,14 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 			continue
 		}
 
+		var filterSet v3.FilterSet
+		if err := json.Unmarshal([]byte(raw), &filterSet); err != nil {
+			return err
+		}
+
 		// Attempt to treat the existing JSON as a v3 FilterSet and build a v5
 		// expression from it, using the normalized payload.
-		expr, migrated, err := transition.BuildFilterExpressionFromFilterSet(ctx, migration.logger, "logs", raw)
+		expr, migrated, err := transition.BuildFilterExpressionFromFilterSet(ctx, migration.logger, "logs", &filterSet)
 		if err != nil || !migrated || strings.TrimSpace(expr) == "" {
 			return err
 		}
