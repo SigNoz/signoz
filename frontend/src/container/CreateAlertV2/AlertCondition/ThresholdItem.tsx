@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Button, Input, Select, Tooltip, Typography } from 'antd';
 import { ChartLine, CircleX, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -21,12 +21,9 @@ function ThresholdItem({
 }: ThresholdItemProps): JSX.Element {
 	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
-	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
-	useEffect(() => {
-		if (threshold.recoveryThresholdValue !== null) {
-			setShowRecoveryThreshold(true);
-		}
+	const showRecoveryThreshold = useMemo(() => {
+		return threshold.recoveryThresholdValue !== null;
 	}, [threshold.recoveryThresholdValue]);
 
 	const yAxisUnitSelect = useMemo(() => {
@@ -75,12 +72,10 @@ function ThresholdItem({
 	};
 
 	const addRecoveryThreshold = (): void => {
-		setShowRecoveryThreshold(true);
 		updateThreshold(threshold.id, 'recoveryThresholdValue', 0);
 	};
 
 	const removeRecoveryThreshold = (): void => {
-		setShowRecoveryThreshold(false);
 		updateThreshold(threshold.id, 'recoveryThresholdValue', null);
 	};
 
