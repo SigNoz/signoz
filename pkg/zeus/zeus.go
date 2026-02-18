@@ -24,7 +24,7 @@ type Zeus interface {
 	GetPortalURL(context.Context, string, []byte) ([]byte, error)
 
 	// Returns the deployment for the given license key.
-	GetDeployment(context.Context, string) ([]byte, error)
+	GetDeployment(context.Context, string) (*zeustypes.GettableDeployment, error)
 
 	// Puts the meters for the given license key.
 	PutMeters(context.Context, string, []byte) error
@@ -39,6 +39,9 @@ type Zeus interface {
 type Handler interface {
 	// API level handler for PutProfile
 	PutProfile(http.ResponseWriter, *http.Request)
+
+	// API level handler for GetDeployment
+	GetDeployment(http.ResponseWriter, *http.Request)
 
 	// API level handler for PutHost
 	PutHost(http.ResponseWriter, *http.Request)

@@ -33,7 +33,7 @@ func (provider *provider) GetPortalURL(_ context.Context, _ string, _ []byte) ([
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting the portal url is not supported")
 }
 
-func (provider *provider) GetDeployment(_ context.Context, _ string) ([]byte, error) {
+func (provider *provider) GetDeployment(_ context.Context, _ string) (*zeustypes.GettableDeployment, error) {
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "getting the deployment is not supported")
 }
 

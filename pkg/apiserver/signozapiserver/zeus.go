@@ -27,6 +27,23 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/zeus/deployments", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutProfile), handler.OpenAPIDef{
+		ID:                  "GetDeploymentsFromZeus",
+		Tags:                []string{"zeus"},
+		Summary:             "Get deployments from Zeus.",
+		Description:         "This endpoint gets the deployment info from zeus.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(zeustypes.GettableDeployment),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutHost), handler.OpenAPIDef{
 		ID:                  "PutHostInZeus",
 		Tags:                []string{"zeus"},

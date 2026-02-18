@@ -53,6 +53,30 @@ func (h *handler) PutProfile(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+func (h *handler) GetDeployment(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	license, err := h.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	response, err := h.zeus.GetDeployment(ctx, license.Key)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, response)
+}
+
 func (h *handler) PutHost(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

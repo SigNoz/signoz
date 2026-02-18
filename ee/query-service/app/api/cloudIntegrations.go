@@ -188,34 +188,15 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
 	string, *basemodel.ApiError,
 ) {
-	// TODO: remove this struct from here
-	type deploymentResponse struct {
-		Name        string `json:"name"`
-		ClusterInfo struct {
-			Region struct {
-				DNS string `json:"dns"`
-			} `json:"region"`
-		} `json:"cluster"`
-	}
-
-	respBytes, err := ah.Signoz.Zeus.GetDeployment(ctx, licenseKey)
+	deployment, err := ah.Signoz.Zeus.GetDeployment(ctx, licenseKey)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't query for deployment info: error: %w", err,
 		))
 	}
 
-	resp := new(deploymentResponse)
-
-	err = json.Unmarshal(respBytes, resp)
-	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't unmarshal deployment info response: error: %w", err,
-		))
-	}
-
-	regionDns := resp.ClusterInfo.Region.DNS
-	deploymentName := resp.Name
+	regionDns := deployment.Cluster.Region.DNS
+	deploymentName := deployment.Name
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge

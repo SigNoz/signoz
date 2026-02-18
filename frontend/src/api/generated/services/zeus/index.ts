@@ -5,14 +5,21 @@
  * SigNoz
  */
 import type {
+	InvalidateOptions,
 	MutationFunction,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
 	UseMutationOptions,
 	UseMutationResult,
+	UseQueryOptions,
+	UseQueryResult,
 } from 'react-query';
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
 import { GeneratedAPIInstance } from '../../../index';
 import type {
+	GetDeploymentsFromZeus200,
 	RenderErrorResponseDTO,
 	ZeustypesPostableHostDTO,
 	ZeustypesPostableProfileDTO,
@@ -21,6 +28,92 @@ import type {
 type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
+
+/**
+ * This endpoint gets the deployment info from zeus.
+ * @summary Get deployments from Zeus.
+ */
+export const getDeploymentsFromZeus = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetDeploymentsFromZeus200>({
+		url: `/api/v2/zeus/deployments`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetDeploymentsFromZeusQueryKey = () => {
+	return ['getDeploymentsFromZeus'] as const;
+};
+
+export const getGetDeploymentsFromZeusQueryOptions = <
+	TData = Awaited<ReturnType<typeof getDeploymentsFromZeus>>,
+	TError = RenderErrorResponseDTO
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getDeploymentsFromZeus>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetDeploymentsFromZeusQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getDeploymentsFromZeus>>
+	> = ({ signal }) => getDeploymentsFromZeus(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getDeploymentsFromZeus>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetDeploymentsFromZeusQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getDeploymentsFromZeus>>
+>;
+export type GetDeploymentsFromZeusQueryError = RenderErrorResponseDTO;
+
+/**
+ * @summary Get deployments from Zeus.
+ */
+
+export function useGetDeploymentsFromZeus<
+	TData = Awaited<ReturnType<typeof getDeploymentsFromZeus>>,
+	TError = RenderErrorResponseDTO
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getDeploymentsFromZeus>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetDeploymentsFromZeusQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get deployments from Zeus.
+ */
+export const invalidateGetDeploymentsFromZeus = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetDeploymentsFromZeusQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
 
 /**
  * This endpoint saves the host of a deployment to zeus.
