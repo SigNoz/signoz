@@ -1,5 +1,6 @@
 import axios from 'api';
 import { AxiosResponse } from 'axios';
+import store from 'store';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
@@ -15,9 +16,13 @@ export const getKeySuggestions = (
 		fieldContext = '',
 		fieldDataType = '',
 		signalSource = '',
-		startUnixMilli = '',
-		endUnixMilli = '',
 	} = props;
+
+	const { globalTime } = store.getState();
+	const resolvedTimeRange = {
+		startUnixMilli: Math.floor(globalTime.minTime / 1000000),
+		endUnixMilli: Math.floor(globalTime.maxTime / 1000000),
+	};
 
 	const encodedSignal = encodeURIComponent(signal);
 	const encodedSearchText = encodeURIComponent(searchText);
@@ -28,11 +33,11 @@ export const getKeySuggestions = (
 
 	let url = `/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}&source=${encodedSource}`;
 
-	if (startUnixMilli !== undefined) {
-		url += `&startUnixMilli=${startUnixMilli}`;
+	if (resolvedTimeRange.startUnixMilli !== undefined) {
+		url += `&startUnixMilli=${resolvedTimeRange.startUnixMilli}`;
 	}
-	if (endUnixMilli !== undefined) {
-		url += `&endUnixMilli=${endUnixMilli}`;
+	if (resolvedTimeRange.endUnixMilli !== undefined) {
+		url += `&endUnixMilli=${resolvedTimeRange.endUnixMilli}`;
 	}
 
 	return axios.get(url);

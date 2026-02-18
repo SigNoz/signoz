@@ -29,8 +29,6 @@ export interface QueryKeyRequestProps {
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	metricName?: string;
 	signalSource?: 'meter' | '';
-	startUnixMilli?: number;
-	endUnixMilli?: number;
 }
 
 export interface QueryKeyValueSuggestionsProps {

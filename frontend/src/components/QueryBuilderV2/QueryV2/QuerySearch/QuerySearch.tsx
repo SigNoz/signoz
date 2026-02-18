@@ -34,7 +34,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { Info, TriangleAlert } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { AppState } from 'store/reducers';
 import {
 	IDetailedError,
@@ -288,8 +287,6 @@ function QuerySearch({
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
-				startUnixMilli: timeRange.startUnixMilli,
-				endUnixMilli: timeRange.endUnixMilli,
 			});
 			if (response.data.data) {
 				const { keys } = response.data.data;
@@ -320,8 +317,6 @@ function QuerySearch({
 			queryData.aggregateAttribute?.key,
 			signalSource,
 			hardcodedAttributeKeys,
-			timeRange.startUnixMilli,
-			timeRange.endUnixMilli,
 		],
 	);
 
