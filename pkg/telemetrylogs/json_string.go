@@ -55,6 +55,11 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 			// take the first element and infer the type
 			var scalerType telemetrytypes.FieldDataType
 			if len(v) > 0 {
+				// Note: [[...]] Slices inside Slices are not handled yet
+				if reflect.ValueOf(v[0]).Kind() == reflect.Slice {
+					return telemetrytypes.FieldDataTypeUnspecified, value
+				}
+
 				scalerType, _ = closure(v[0], key)
 			}
 
