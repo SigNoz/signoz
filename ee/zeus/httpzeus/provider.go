@@ -195,6 +195,8 @@ func (provider *Provider) errFromStatusCode(statusCode int) error {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "forbidden")
 	case http.StatusNotFound:
 		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "not found")
+	case http.StatusConflict:
+		return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "already exists")
 	}
 
 	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "internal")
