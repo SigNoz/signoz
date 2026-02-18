@@ -172,7 +172,6 @@ var (
 
 func (TimeAggregation) Enum() []any {
 	return []any{
-		TimeAggregationUnspecified,
 		TimeAggregationLatest,
 		TimeAggregationSum,
 		TimeAggregationAvg,
@@ -205,7 +204,6 @@ var (
 
 func (SpaceAggregation) Enum() []any {
 	return []any{
-		SpaceAggregationUnspecified,
 		SpaceAggregationSum,
 		SpaceAggregationAvg,
 		SpaceAggregationMin,

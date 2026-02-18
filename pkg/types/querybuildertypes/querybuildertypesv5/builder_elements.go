@@ -10,9 +10,34 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Step struct{ time.Duration }
+
+var _ jsonschema.Exposer = Step{}
+
+// JSONSchema returns a custom schema for Step that accepts either a duration string or a number (seconds).
+func (Step) JSONSchema() (jsonschema.Schema, error) {
+	s := jsonschema.Schema{}
+	s.WithDescription("Step interval. Accepts a Go duration string (e.g., \"60s\", \"1m\", \"1h\") or a number representing seconds (e.g., 60).")
+
+	strSchema := jsonschema.Schema{}
+	strSchema.WithType(jsonschema.String.Type())
+	strSchema.WithExamples("60s", "5m", "1h")
+	strSchema.WithDescription("Duration string (e.g., \"60s\", \"5m\", \"1h\").")
+
+	numSchema := jsonschema.Schema{}
+	numSchema.WithType(jsonschema.Number.Type())
+	numSchema.WithExamples(60, 300, 3600)
+	numSchema.WithDescription("Duration in seconds.")
+
+	s.OneOf = []jsonschema.SchemaOrBool{
+		strSchema.ToSchemaOrBool(),
+		numSchema.ToSchemaOrBool(),
+	}
+	return s, nil
+}
 
 func (s *Step) UnmarshalJSON(b []byte) error {
 	if len(b) == 0 {
@@ -161,6 +186,17 @@ func (f FilterOperator) IsStringSearchOperator() bool {
 	}
 }
 
+// IsArrayOperator returns true if the operator works with array values only
+func (f FilterOperator) IsArrayOperator() bool {
+	switch f {
+	case FilterOperatorIn, FilterOperatorNotIn,
+		FilterOperatorBetween, FilterOperatorNotBetween:
+		return true
+	default:
+		return false
+	}
+}
+
 type OrderDirection struct {
 	valuer.String
 }
@@ -169,6 +205,14 @@ var (
 	OrderDirectionAsc  = OrderDirection{valuer.NewString("asc")}
 	OrderDirectionDesc = OrderDirection{valuer.NewString("desc")}
 )
+
+// Enum returns the acceptable values for OrderDirection.
+func (OrderDirection) Enum() []any {
+	return []any{
+		OrderDirectionAsc,
+		OrderDirectionDesc,
+	}
+}
 
 var (
 	OrderDirectionMap = map[string]OrderDirection{
@@ -191,6 +235,19 @@ var (
 	ReduceToLast    = ReduceTo{valuer.NewString("last")}
 	ReduceToMedian  = ReduceTo{valuer.NewString("median")}
 )
+
+// Enum returns the acceptable values for ReduceTo.
+func (ReduceTo) Enum() []any {
+	return []any{
+		ReduceToSum,
+		ReduceToCount,
+		ReduceToAvg,
+		ReduceToMin,
+		ReduceToMax,
+		ReduceToLast,
+		ReduceToMedian,
+	}
+}
 
 // FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value
 // reduceTo can be one of: last, sum, avg, min, max, count, median
