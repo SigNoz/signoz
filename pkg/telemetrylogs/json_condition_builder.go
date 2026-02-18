@@ -32,7 +32,6 @@ func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType te
 
 // BuildCondition builds the full WHERE condition for body_json JSON paths
 func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-
 	conditions := []string{}
 	for _, node := range c.key.JSONPlan {
 		condition, err := c.emitPlannedCondition(node, operator, value, sb)
@@ -73,9 +72,9 @@ func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONA
 
 			// switch operator for array membership checks
 			switch operator {
-			case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorIn:
+			case qbtypes.FilterOperatorContains:
 				operator = qbtypes.FilterOperatorEqual
-			case qbtypes.FilterOperatorNotContains, qbtypes.FilterOperatorNotIn:
+			case qbtypes.FilterOperatorNotContains:
 				operator = qbtypes.FilterOperatorNotEqual
 			}
 		}
@@ -191,13 +190,14 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 		arrayExpr = typedArrayExpr()
 	}
 
-	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, "x", operator)
+	key := "x"
+	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, key, operator)
 	op, err := c.applyOperator(sb, fieldExpr, operator, value)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("arrayExists(%s -> %s, %s)", fieldExpr, op, arrayExpr), nil
+	return fmt.Sprintf("arrayExists(%s -> %s, %s)", key, op, arrayExpr), nil
 }
 
 // recurseArrayHops recursively builds array traversal conditions
@@ -279,27 +279,31 @@ func (c *jsonConditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, field
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(fieldExpr, fmt.Sprintf("%%%v%%", value)), nil
 	case qbtypes.FilterOperatorIn, qbtypes.FilterOperatorNotIn:
-		// emulate IN/NOT IN using OR/AND over equals to leverage indexes consistently
 		values, ok := value.([]any)
 		if !ok {
 			values = []any{value}
 		}
-		conds := []string{}
-		for _, v := range values {
-			if operator == qbtypes.FilterOperatorIn {
-				conds = append(conds, sb.E(fieldExpr, v))
-			} else {
-				conds = append(conds, sb.NE(fieldExpr, v))
-			}
-		}
 		if operator == qbtypes.FilterOperatorIn {
-			return sb.Or(conds...), nil
+			return sb.In(fieldExpr, values...), nil
 		}
-		return sb.And(conds...), nil
+		return sb.NotIn(fieldExpr, values...), nil
 	case qbtypes.FilterOperatorExists:
 		return fmt.Sprintf("%s IS NOT NULL", fieldExpr), nil
 	case qbtypes.FilterOperatorNotExists:
 		return fmt.Sprintf("%s IS NULL", fieldExpr), nil
+	// between and not between
+	case qbtypes.FilterOperatorBetween, qbtypes.FilterOperatorNotBetween:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrBetweenValues
+		}
+		if len(values) != 2 {
+			return "", qbtypes.ErrBetweenValues
+		}
+		if operator == qbtypes.FilterOperatorBetween {
+			return sb.Between(fieldExpr, values[0], values[1]), nil
+		}
+		return sb.NotBetween(fieldExpr, values[0], values[1]), nil
 	default:
 		return "", qbtypes.ErrUnsupportedOperator
 	}
