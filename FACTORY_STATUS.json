@@ -1,4 +1,4 @@
 {
-  "last_processed_violation": null,
-  "completed_prs": []
+  "last_processed_violation": "God Class: frontend/src/components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphUtils.ts",
+  "completed_prs": ["https://github.com/SigNoz/signoz/pull/10347"]
 }
