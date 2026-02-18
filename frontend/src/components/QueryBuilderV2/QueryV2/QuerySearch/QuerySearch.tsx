@@ -49,34 +49,11 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { queryExamples } from './constants';
+import { stopEventsExtension } from './querySearchExtensions';
 
 import './QuerySearch.styles.scss';
 
 const { Panel } = Collapse;
-
-// Custom extension to stop events
-const stopEventsExtension = EditorView.domEventHandlers({
-	keydown: (event) => {
-		// Stop all keyboard events from propagating to global shortcuts
-		event.stopPropagation();
-		event.stopImmediatePropagation();
-		return false; // Important for CM to know you handled it
-	},
-	input: (event) => {
-		event.stopPropagation();
-		return false;
-	},
-	focus: (event) => {
-		// Ensure focus events don't interfere with global shortcuts
-		event.stopPropagation();
-		return false;
-	},
-	blur: (event) => {
-		// Ensure blur events don't interfere with global shortcuts
-		event.stopPropagation();
-		return false;
-	},
-});
 
 interface QuerySearchProps {
 	placeholder?: string;
