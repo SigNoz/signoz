@@ -40,7 +40,7 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 	// Test basic AlertOnAbsent functionality (without AbsentFor grace period)
 
 	baseTime := time.Unix(1700000000, 0)
-	evalWindow := 5 * time.Minute
+	evalWindow := valuer.MustParseTextDuration("5m")
 	evalTime := baseTime.Add(5 * time.Minute)
 
 	target := 500.0
@@ -50,8 +50,8 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(evalWindow),
-			Frequency:  ruletypes.Duration(1 * time.Minute),
+			EvalWindow: evalWindow,
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp: ruletypes.ValueIsAbove,
@@ -147,7 +147,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 	// 3. Alert fires only if t2 - t1 > AbsentFor
 
 	baseTime := time.Unix(1700000000, 0)
-	evalWindow := 5 * time.Minute
+	evalWindow := valuer.MustParseTextDuration("5m")
 
 	// Set target higher than test data so regular threshold alerts don't fire
 	target := 500.0
@@ -157,8 +157,8 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
-			EvalWindow: ruletypes.Duration(evalWindow),
-			Frequency:  ruletypes.Duration(time.Minute),
+			EvalWindow: evalWindow,
+			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
 			CompareOp:     ruletypes.ValueIsAbove,

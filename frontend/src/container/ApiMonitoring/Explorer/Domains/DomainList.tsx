@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, Table, Typography } from 'antd';
+import { Spin, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -14,11 +14,13 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
+import { MoveUpRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import DOCLINKS from 'utils/docLinks';
 
 import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
@@ -125,51 +127,67 @@ function DomainList(): JSX.Element {
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
 			</div>
-			<Table
-				className={cx('api-monitoring-domain-list-table')}
-				dataSource={isFetching || isLoading ? [] : formattedDataForTable}
-				columns={columnsConfig}
-				loading={{
-					spinning: isFetching || isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-domains-message-container">
-								<div className="no-filtered-domains-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+			{!isFetching && !isLoading && formattedDataForTable.length === 0 && (
+				<div className="no-filtered-domains-message-container">
+					<div className="no-filtered-domains-message-content">
+						<img
+							src="/Icons/emptyState.svg"
+							alt="thinking-emoji"
+							className="empty-state-svg"
+						/>
 
-									<Typography.Text className="no-filtered-domains-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
-								</div>
+						<div className="no-filtered-domains-message">
+							<div className="no-domain-title">
+								No External API calls detected with applied filters.
 							</div>
-						),
-				}}
-				scroll={{ x: true }}
-				tableLayout="fixed"
-				onRow={(record, index): { onClick: () => void; className: string } => ({
-					onClick: (): void => {
-						if (index !== undefined) {
-							const dataIndex = formattedDataForTable.findIndex(
-								(item) => item.key === record.key,
-							);
-							setSelectedDomainIndex(dataIndex);
-							setParams({ selectedDomain: record.domainName });
-							logEvent('API Monitoring: Domain name row clicked', {});
-						}
-					},
-					className: 'expanded-clickable-row',
-				})}
-				rowClassName={(_, index): string =>
-					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
-				}
-			/>
+							<div className="no-domain-subtitle">
+								Ensure all HTTP client spans are being sent with kind as{' '}
+								<span className="attribute">Client</span> and url set in{' '}
+								<span className="attribute">url.full</span> or{' '}
+								<span className="attribute">http.url</span> attribute.
+							</div>
+							<a
+								href={DOCLINKS.EXTERNAL_API_MONITORING}
+								target="_blank"
+								rel="noreferrer"
+								className="external-api-doc-link"
+							>
+								Learn how External API monitoring works in SigNoz{' '}
+								<MoveUpRight size={14} />
+							</a>
+						</div>
+					</div>
+				</div>
+			)}
+			{(isFetching || isLoading || formattedDataForTable.length > 0) && (
+				<Table
+					className="api-monitoring-domain-list-table"
+					dataSource={isFetching || isLoading ? [] : formattedDataForTable}
+					columns={columnsConfig}
+					loading={{
+						spinning: isFetching || isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					scroll={{ x: true }}
+					tableLayout="fixed"
+					onRow={(record, index): { onClick: () => void; className: string } => ({
+						onClick: (): void => {
+							if (index !== undefined) {
+								const dataIndex = formattedDataForTable.findIndex(
+									(item) => item.key === record.key,
+								);
+								setSelectedDomainIndex(dataIndex);
+								setParams({ selectedDomain: record.domainName });
+								logEvent('API Monitoring: Domain name row clicked', {});
+							}
+						},
+						className: 'expanded-clickable-row',
+					})}
+					rowClassName={(_, index): string =>
+						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
+					}
+				/>
+			)}
 			{selectedDomainIndex !== -1 && (
 				<DomainDetails
 					domainData={formattedDataForTable[selectedDomainIndex]}

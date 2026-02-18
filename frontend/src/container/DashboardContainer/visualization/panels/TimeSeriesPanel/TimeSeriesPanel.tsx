@@ -2,13 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
+import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { LineInterpolation } from 'lib/uPlotV2/config/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -27,7 +26,6 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		isFullViewMode,
 		onToggleModelHandler,
 	} = props;
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -36,16 +34,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
+	useScrollWidgetIntoView(widget.id, graphRef);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -73,55 +62,28 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	}, [queryResponse?.data?.payload]);
 
 	const config = useMemo(() => {
-		const tzDate = (timestamp: number): Date =>
-			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value);
-
 		return prepareUPlotConfig({
-			widgetId: widget.id || '',
-			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
-			tzDate,
-			minTimeScale: minTimeScale,
-			maxTimeScale: maxTimeScale,
-			isLogScale: widget?.isLogScale ?? false,
-			thresholds: {
-				scaleKey: 'y',
-				thresholds: (widget.thresholds || []).map((threshold) => ({
-					thresholdValue: threshold.thresholdValue ?? 0,
-					thresholdColor: threshold.thresholdColor,
-					thresholdUnit: threshold.thresholdUnit,
-					thresholdLabel: threshold.thresholdLabel,
-				})),
-				yAxisUnit: widget.yAxisUnit,
-			},
-			yAxisUnit: widget.yAxisUnit || '',
-			softMin: widget.softMin === undefined ? null : widget.softMin,
-			softMax: widget.softMax === undefined ? null : widget.softMax,
-			spanGaps: false,
-			colorMapping: widget.customLegendColors ?? {},
-			lineInterpolation: LineInterpolation.Spline,
+			widget,
 			isDarkMode,
+			currentQuery: widget.query,
 			onClick: clickHandlerWithContextMenu,
 			onDragSelect,
-			currentQuery: widget.query,
+			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
+			timezone,
 			panelMode,
+			minTimeScale: minTimeScale,
+			maxTimeScale: maxTimeScale,
 		});
 	}, [
-		widget.id,
-		maxTimeScale,
-		minTimeScale,
-		timezone.value,
-		widget.customLegendColors,
-		widget.isLogScale,
-		widget.softMax,
-		widget.softMin,
+		widget,
 		isDarkMode,
-		queryResponse?.data?.payload,
-		widget.query,
-		widget.thresholds,
-		widget.yAxisUnit,
-		panelMode,
 		clickHandlerWithContextMenu,
 		onDragSelect,
+		queryResponse?.data?.payload,
+		panelMode,
+		minTimeScale,
+		maxTimeScale,
+		timezone,
 	]);
 
 	const layoutChildren = useMemo(() => {
