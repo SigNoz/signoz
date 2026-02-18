@@ -87,7 +87,7 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 }
 
 func (m *module) listPromotedPaths(ctx context.Context) ([]string, error) {
-	paths, err := m.metadataStore.ListPromotedPaths(ctx)
+	paths, err := m.metadataStore.GetPromotedPaths(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (m *module) PromoteAndIndexPaths(
 		pathsStr = append(pathsStr, path.Path)
 	}
 
-	existingPromotedPaths, err := m.metadataStore.ListPromotedPaths(ctx, pathsStr...)
+	existingPromotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, pathsStr...)
 	if err != nil {
 		return err
 	}
