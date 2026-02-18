@@ -133,16 +133,16 @@ function LogsExplorerList({
 				</div>
 			);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
+			options.format,
+			options.fontSize,
+			options.maxLines,
 			activeLog,
-			handleChangeSelectedView,
+			selectedFields,
 			onAddToQuery,
 			handleSetActiveLog,
-			options.fontSize,
-			options.format,
-			options.maxLines,
-			selectedFields,
+			handleChangeSelectedView,
+			handleCloseLogDetail,
 		],
 	);
 
