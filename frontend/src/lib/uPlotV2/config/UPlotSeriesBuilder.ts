@@ -49,7 +49,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor } = this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
 			width: lineWidth ?? 2,
@@ -63,8 +63,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineConfig.cap = lineCap;
 		}
 
-		if (this.props.panelType === PANEL_TYPES.BAR) {
+		if (fillColor) {
+			lineConfig.fill = fillColor;
+		} else if (this.props.panelType === PANEL_TYPES.BAR) {
 			lineConfig.fill = resolvedLineColor;
+		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
+			lineConfig.fill = `${resolvedLineColor}40`;
 		}
 
 		return lineConfig;
@@ -81,6 +85,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			barAlignment,
 			barMaxWidth,
 			barWidthFactor,
+			stepInterval,
 		} = this.props;
 		if (pathBuilder) {
 			return { paths: pathBuilder };
@@ -104,6 +109,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 						barAlignment,
 						barMaxWidth,
 						barWidthFactor,
+						stepInterval,
 					});
 
 					return pathsBuilder(self, seriesIdx, idx0, idx1);
@@ -145,6 +151,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			pointsConfig.show = false;
 		} else if (showPoints === VisibilityMode.Always) {
 			pointsConfig.show = true;
+		} else {
+			pointsConfig.show = false; // default to hidden
 		}
 
 		return pointsConfig;
@@ -209,12 +217,14 @@ function getPathBuilder({
 	barAlignment = BarAlignment.Center,
 	barWidthFactor = 0.6,
 	barMaxWidth = 200,
+	stepInterval,
 }: {
 	drawStyle: DrawStyle;
 	lineInterpolation?: LineInterpolation;
 	barAlignment?: BarAlignment;
 	barMaxWidth?: number;
 	barWidthFactor?: number;
+	stepInterval?: number;
 }): Series.PathBuilder {
 	if (!builders) {
 		throw new Error('Required uPlot path builders are not available');
@@ -222,14 +232,13 @@ function getPathBuilder({
 
 	if (drawStyle === DrawStyle.Bar) {
 		const pathBuilders = uPlot.paths;
-		const barsConfigKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
-		if (!builders[barsConfigKey] && pathBuilders.bars) {
-			builders[barsConfigKey] = pathBuilders.bars({
-				size: [barWidthFactor, barMaxWidth],
-				align: barAlignment,
-			});
-		}
-		return builders[barsConfigKey];
+		return getBarPathBuilder({
+			pathBuilders,
+			barAlignment,
+			barWidthFactor,
+			barMaxWidth,
+			stepInterval,
+		});
 	}
 
 	if (drawStyle === DrawStyle.Line) {
@@ -245,6 +254,83 @@ function getPathBuilder({
 	}
 
 	return builders.spline;
+}
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function getBarPathBuilder({
+	pathBuilders,
+	barAlignment,
+	barWidthFactor,
+	barMaxWidth,
+	stepInterval,
+}: {
+	pathBuilders: typeof uPlot.paths;
+	barAlignment: BarAlignment;
+	barWidthFactor: number;
+	barMaxWidth: number;
+	stepInterval?: number;
+}): Series.PathBuilder {
+	if (!builders) {
+		throw new Error('Required uPlot path builders are not available');
+	}
+
+	const barsPathBuilderFactory = pathBuilders.bars;
+
+	// When a stepInterval is provided (in seconds), cap the maximum bar width
+	// so that a single bar never visually spans more than stepInterval worth
+	// of time on the x-scale.
+	if (
+		typeof stepInterval === 'number' &&
+		stepInterval > 0 &&
+		barsPathBuilderFactory
+	) {
+		return (
+			self: uPlot,
+			seriesIdx: number,
+			idx0: number,
+			idx1: number,
+		): Series.Paths | null => {
+			let effectiveBarMaxWidth = barMaxWidth;
+
+			const xScale = self.scales.x as uPlot.Scale | undefined;
+			if (xScale && typeof xScale.min === 'number') {
+				const start = xScale.min as number;
+				const end = start + stepInterval;
+				const startPx = self.valToPos(start, 'x');
+				const endPx = self.valToPos(end, 'x');
+				const intervalPx = Math.abs(endPx - startPx);
+
+				if (intervalPx > 0) {
+					effectiveBarMaxWidth =
+						typeof barMaxWidth === 'number'
+							? Math.min(barMaxWidth, intervalPx)
+							: intervalPx;
+				}
+			}
+
+			const barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${effectiveBarMaxWidth}`;
+			if (builders && !builders[barsCfgKey]) {
+				builders[barsCfgKey] = barsPathBuilderFactory({
+					size: [barWidthFactor, effectiveBarMaxWidth],
+					align: barAlignment,
+				});
+			}
+
+			return builders && builders[barsCfgKey]
+				? builders[barsCfgKey](self, seriesIdx, idx0, idx1)
+				: null;
+		};
+	}
+
+	const barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
+	if (!builders[barsCfgKey] && barsPathBuilderFactory) {
+		builders[barsCfgKey] = barsPathBuilderFactory({
+			size: [barWidthFactor, barMaxWidth],
+			align: barAlignment,
+		});
+	}
+
+	return builders[barsCfgKey];
 }
 
 export type { SeriesProps };

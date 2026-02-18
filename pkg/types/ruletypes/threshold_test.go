@@ -255,6 +255,46 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 			ruleUnit:    "",
 			shouldAlert: true,
 		},
+		// bytes and Gibibytes,
+		// rule will only fire if target is converted to bytes so that the sample value becomes lower than the target 100GiBy
+		{
+			name: "bytes to Gibibytes - should alert",
+			threshold: BasicRuleThreshold{
+				Name:        CriticalThresholdName,
+				TargetValue: &target, // 100 Gibibytes
+				TargetUnit:  "GiBy",
+				MatchType:   AtleastOnce,
+				CompareOp:   ValueIsBelow,
+			},
+			series: v3.Series{
+				Labels: map[string]string{"service": "test"},
+				Points: []v3.Point{
+					{Value: 70 * 1024 * 1024 * 1024, Timestamp: 1000}, // 70 Gibibytes
+				},
+			},
+			ruleUnit:    "bytes",
+			shouldAlert: true,
+		},
+		// data Rate conversion - bytes per second to MiB per second
+		// rule will only fire if target is converted to bytes so that the sample value becomes lower than the target 100 MiB/s
+		{
+			name: "bytes per second to MiB per second - should alert",
+			threshold: BasicRuleThreshold{
+				Name:        CriticalThresholdName,
+				TargetValue: &target, // 100 MiB/s
+				TargetUnit:  "MiBy/s",
+				MatchType:   AtleastOnce,
+				CompareOp:   ValueIsBelow,
+			},
+			series: v3.Series{
+				Labels: map[string]string{"service": "test"},
+				Points: []v3.Point{
+					{Value: 30 * 1024 * 1024, Timestamp: 1000}, // 30 MiB/s
+				},
+			},
+			ruleUnit:    "By/s",
+			shouldAlert: true,
+		},
 	}
 
 	for _, tt := range tests {

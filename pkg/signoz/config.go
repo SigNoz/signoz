@@ -375,13 +375,6 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		config.Flagger.Config.Boolean[flagger.FeatureKafkaSpanEval.String()] = os.Getenv("KAFKA_SPAN_EVAL") == "true"
 	}
 
-	if os.Getenv("INTERPOLATION_ENABLED") != "" {
-		logger.WarnContext(ctx, "[Deprecated] env INTERPOLATION_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_INTERPOLATION__ENABLED instead.")
-		if config.Flagger.Config.Boolean == nil {
-			config.Flagger.Config.Boolean = make(map[string]bool)
-		}
-		config.Flagger.Config.Boolean[flagger.FeatureInterpolationEnabled.String()] = os.Getenv("INTERPOLATION_ENABLED") == "true"
-	}
 }
 
 func (config Config) Collect(_ context.Context, _ valuer.UUID) (map[string]any, error) {
