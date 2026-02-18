@@ -262,8 +262,10 @@
 				.completed-checklist-container {
 					margin-left: 20px;
 
-					.completed-checklist-item {
-						.completed-checklist-item-title {
+					.completed-checklist-item,
+					.whats-next-checklist-item {
+						.completed-checklist-item-title,
+						.whats-next-checklist-item-title {
 							display: flex;
 							align-items: center;
 							gap: 4px;
