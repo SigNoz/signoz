@@ -1,7 +1,10 @@
 package signoz
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"net/http"
 	"os"
 	"reflect"
 
@@ -22,10 +25,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/gorilla/mux"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
+	"gopkg.in/yaml.v2"
 )
 
 type OpenAPI struct {
@@ -56,6 +62,10 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 	if err != nil {
 		return nil, err
 	}
+
+	// Register routes that live outside the APIServer modules
+	// so they are discovered by the OpenAPI walker.
+	registerQueryRoutes(apiserver.Router())
 
 	reflector := openapi3.NewReflector()
 	reflector.JSONSchemaReflector().DefaultOptions = append(reflector.JSONSchemaReflector().DefaultOptions, jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
@@ -90,10 +100,67 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 		return err
 	}
 
-	spec, err := openapi.reflector.Spec.MarshalYAML()
+	// The library's MarshalYAML does a JSON round-trip that converts all numbers
+	// to float64, causing large integers (e.g. epoch millisecond timestamps) to
+	// render in scientific notation (1.6409952e+12).
+	jsonData, err := openapi.reflector.Spec.MarshalJSON()
+	if err != nil {
+		return err
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(jsonData))
+	dec.UseNumber()
+
+	var v any
+	if err := dec.Decode(&v); err != nil {
+		return err
+	}
+
+	convertJSONNumbers(v)
+
+	spec, err := yaml.Marshal(v)
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile(path, spec, 0o600)
+}
+
+// convertJSONNumbers recursively walks a decoded JSON structure and converts
+// json.Number values to int64 (preferred) or float64 so that YAML marshaling
+// renders them as plain numbers instead of quoted strings.
+func convertJSONNumbers(v interface{}) {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		for k, elem := range val {
+			if n, ok := elem.(json.Number); ok {
+				if i, err := n.Int64(); err == nil {
+					val[k] = i
+				} else if f, err := n.Float64(); err == nil {
+					val[k] = f
+				}
+			} else {
+				convertJSONNumbers(elem)
+			}
+		}
+	case []interface{}:
+		for i, elem := range val {
+			if n, ok := elem.(json.Number); ok {
+				if i64, err := n.Int64(); err == nil {
+					val[i] = i64
+				} else if f, err := n.Float64(); err == nil {
+					val[i] = f
+				}
+			} else {
+				convertJSONNumbers(elem)
+			}
+		}
+	}
+}
+
+func registerQueryRoutes(router *mux.Router) {
+	router.Handle("/api/v5/query_range", handler.New(
+		func(http.ResponseWriter, *http.Request) {},
+		querier.QueryRangeV5OpenAPIDef,
+	)).Methods(http.MethodPost)
 }

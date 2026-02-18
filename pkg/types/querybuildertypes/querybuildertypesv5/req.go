@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type QueryEnvelope struct {
@@ -16,6 +17,71 @@ type QueryEnvelope struct {
 	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
 	// Spec is the deferred decoding of the query if any.
 	Spec any `json:"spec"`
+}
+
+// queryEnvelopeBuilderTrace is the OpenAPI schema for a QueryEnvelope with type=builder_query and signal=traces.
+type queryEnvelopeBuilderTrace struct {
+	Type QueryType                           `json:"type" description:"The type of the query."`
+	Spec QueryBuilderQuery[TraceAggregation] `json:"spec" description:"The trace builder query specification."`
+}
+
+// queryEnvelopeBuilderLog is the OpenAPI schema for a QueryEnvelope with type=builder_query and signal=logs.
+type queryEnvelopeBuilderLog struct {
+	Type QueryType                         `json:"type" description:"The type of the query."`
+	Spec QueryBuilderQuery[LogAggregation] `json:"spec" description:"The log builder query specification."`
+}
+
+// queryEnvelopeBuilderMetric is the OpenAPI schema for a QueryEnvelope with type=builder_query and signal=metrics.
+type queryEnvelopeBuilderMetric struct {
+	Type QueryType                            `json:"type" description:"The type of the query."`
+	Spec QueryBuilderQuery[MetricAggregation] `json:"spec" description:"The metric builder query specification."`
+}
+
+// queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
+type queryEnvelopeFormula struct {
+	Type QueryType           `json:"type" description:"The type of the query."`
+	Spec QueryBuilderFormula `json:"spec" description:"The formula specification."`
+}
+
+// queryEnvelopeJoin is the OpenAPI schema for a QueryEnvelope with type=builder_join.
+// type queryEnvelopeJoin struct {
+// 	Type QueryType        `json:"type" description:"The type of the query."`
+// 	Spec QueryBuilderJoin `json:"spec" description:"The join specification."`
+// }
+
+// queryEnvelopeTraceOperator is the OpenAPI schema for a QueryEnvelope with type=builder_trace_operator.
+type queryEnvelopeTraceOperator struct {
+	Type QueryType                 `json:"type" description:"The type of the query."`
+	Spec QueryBuilderTraceOperator `json:"spec" description:"The trace operator specification."`
+}
+
+// queryEnvelopePromQL is the OpenAPI schema for a QueryEnvelope with type=promql.
+type queryEnvelopePromQL struct {
+	Type QueryType `json:"type" description:"The type of the query."`
+	Spec PromQuery `json:"spec" description:"The PromQL query specification."`
+}
+
+// queryEnvelopeClickHouseSQL is the OpenAPI schema for a QueryEnvelope with type=clickhouse_sql.
+type queryEnvelopeClickHouseSQL struct {
+	Type QueryType       `json:"type" description:"The type of the query."`
+	Spec ClickHouseQuery `json:"spec" description:"The ClickHouse SQL query specification."`
+}
+
+var _ jsonschema.OneOfExposer = QueryEnvelope{}
+
+// JSONSchemaOneOf returns the oneOf variants for the QueryEnvelope discriminated union.
+// Each variant represents a different query type with its corresponding spec schema.
+func (QueryEnvelope) JSONSchemaOneOf() []any {
+	return []any{
+		queryEnvelopeBuilderTrace{},
+		queryEnvelopeBuilderLog{},
+		queryEnvelopeBuilderMetric{},
+		queryEnvelopeFormula{},
+		// queryEnvelopeJoin{},
+		queryEnvelopeTraceOperator{},
+		queryEnvelopePromQL{},
+		queryEnvelopeClickHouseSQL{},
+	}
 }
 
 // implement custom json unmarshaler for the QueryEnvelope
@@ -130,6 +196,12 @@ type CompositeQuery struct {
 	Queries []QueryEnvelope `json:"queries"`
 }
 
+// PrepareJSONSchema adds description to the CompositeQuery schema.
+func (c *CompositeQuery) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Composite query containing one or more query envelopes. Each query envelope specifies its type and corresponding spec.")
+	return nil
+}
+
 // UnmarshalJSON implements custom JSON unmarshaling to provide better error messages
 func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 	type Alias CompositeQuery
@@ -192,6 +264,16 @@ var (
 	TextBoxVariableType = VariableType{valuer.NewString("text")}
 )
 
+// Enum returns the acceptable values for VariableType.
+func (VariableType) Enum() []any {
+	return []any{
+		QueryVariableType,
+		DynamicVariableType,
+		CustomVariableType,
+		TextBoxVariableType,
+	}
+}
+
 type VariableItem struct {
 	Type  VariableType `json:"type"`
 	Value any          `json:"value"`
@@ -215,6 +297,12 @@ type QueryRangeRequest struct {
 	NoCache bool `json:"noCache,omitempty"`
 
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
+}
+
+// PrepareJSONSchema adds description to the QueryRangeRequest schema.
+func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.")
+	return nil
 }
 
 func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
