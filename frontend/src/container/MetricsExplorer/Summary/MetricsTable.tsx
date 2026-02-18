@@ -24,7 +24,8 @@ function MetricsTable({
 	setOrderBy,
 	totalCount,
 	openMetricDetails,
-	queryFilters,
+	queryFilterExpression,
+	onFilterChange,
 }: MetricsTableProps): JSX.Element {
 	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
 		(
@@ -79,7 +80,7 @@ function MetricsTable({
 					),
 				}}
 				dataSource={data}
-				columns={getMetricsTableColumns(queryFilters)}
+				columns={getMetricsTableColumns(queryFilterExpression, onFilterChange)}
 				locale={{
 					emptyText: isLoading ? null : (
 						<div

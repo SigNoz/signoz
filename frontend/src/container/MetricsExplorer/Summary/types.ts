@@ -4,10 +4,8 @@ import {
 	MetricsexplorertypesTreemapResponseDTO,
 	Querybuildertypesv5OrderByDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	IBuilderQuery,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { Filter } from 'api/v5/v5';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface MetricsTableProps {
 	isLoading: boolean;
@@ -19,12 +17,13 @@ export interface MetricsTableProps {
 	setOrderBy: (orderBy: Querybuildertypesv5OrderByDTO) => void;
 	totalCount: number;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
-	queryFilters: TagFilter;
+	queryFilterExpression: Filter;
+	onFilterChange: (expression: string) => void;
 }
 
 export interface MetricsSearchProps {
 	query: IBuilderQuery;
-	onChange: (value: TagFilter) => void;
+	onChange: (expression: string) => void;
 }
 
 export interface MetricsTreemapProps {

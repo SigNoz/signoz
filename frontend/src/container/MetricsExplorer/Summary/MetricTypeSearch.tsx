@@ -1,23 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Button, Menu, Popover, Tooltip } from 'antd';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { Search } from 'lucide-react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	METRIC_TYPE_LABEL_MAP,
-	METRIC_TYPE_VALUES_MAP,
-	SUMMARY_FILTERS_KEY,
-} from './constants';
+import { METRIC_TYPE_LABEL_MAP_V2 } from './constants';
 
 function MetricTypeSearch({
 	queryFilters,
+	onFilterChange,
 }: {
 	queryFilters: TagFilter;
+	onFilterChange: (expression: string) => void;
 }): JSX.Element {
-	const [searchParams, setSearchParams] = useSearchParams();
-
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const menuItems = useMemo(
@@ -26,9 +22,9 @@ function MetricTypeSearch({
 				key: 'all',
 				value: 'All',
 			},
-			...Object.keys(METRIC_TYPE_LABEL_MAP).map((key) => ({
-				key: METRIC_TYPE_VALUES_MAP[key as MetricType],
-				value: METRIC_TYPE_LABEL_MAP[key as MetricType],
+			...Object.keys(METRIC_TYPE_LABEL_MAP_V2).map((key) => ({
+				key: METRIC_TYPE_LABEL_MAP_V2[key as MetrictypesTypeDTO],
+				value: METRIC_TYPE_LABEL_MAP_V2[key as MetrictypesTypeDTO],
 			})),
 		],
 		[],
@@ -36,16 +32,17 @@ function MetricTypeSearch({
 
 	const handleSelect = useCallback(
 		(selectedMetricType: string): void => {
+			let newFilters;
 			if (selectedMetricType !== 'all') {
-				const newFilters = {
+				newFilters = {
 					items: [
 						...queryFilters.items,
 						{
-							id: 'metric_type',
+							id: 'ttype',
 							op: '=',
 							key: {
-								id: 'metric_type',
-								key: 'metric_type',
+								id: 'type',
+								key: 'type',
 								type: 'tag',
 							},
 							value: selectedMetricType,
@@ -53,23 +50,17 @@ function MetricTypeSearch({
 					],
 					op: 'AND',
 				};
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[SUMMARY_FILTERS_KEY]: JSON.stringify(newFilters),
-				});
 			} else {
-				const newFilters = {
-					items: queryFilters.items.filter((item) => item.id !== 'metric_type'),
+				newFilters = {
+					items: queryFilters.items.filter((item) => item.id !== 'type'),
 					op: 'AND',
 				};
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[SUMMARY_FILTERS_KEY]: JSON.stringify(newFilters),
-				});
 			}
+			const newFilterExpression = convertFiltersToExpression(newFilters);
+			onFilterChange(newFilterExpression.expression);
 			setIsPopoverOpen(false);
 		},
-		[queryFilters.items, setSearchParams, searchParams],
+		[queryFilters.items, onFilterChange],
 	);
 
 	const menu = (

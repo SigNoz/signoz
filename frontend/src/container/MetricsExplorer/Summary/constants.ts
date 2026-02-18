@@ -56,4 +56,3 @@ export const METRIC_TYPE_VIEW_VALUES_MAP: Record<MetrictypesTypeDTO, string> = {
 export const IS_METRIC_DETAILS_OPEN_KEY = 'isMetricDetailsOpen';
 export const IS_INSPECT_MODAL_OPEN_KEY = 'isInspectModalOpen';
 export const SELECTED_METRIC_NAME_KEY = 'selectedMetricName';
-export const SUMMARY_FILTERS_KEY = 'summaryFilters';
