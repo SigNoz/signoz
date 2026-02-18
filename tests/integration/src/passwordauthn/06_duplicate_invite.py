@@ -31,12 +31,12 @@ def test_duplicate_user_invite_rejected(
     initial_invite_token = invite_response.json()["data"]["token"]
 
     # Step 2: Accept the invite to create the user.
-    accept_response = requests.post(
+    initial_accept_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
         json={"token": initial_invite_token, "password": "password123Z$"},
         timeout=2,
     )
-    assert accept_response.status_code == HTTPStatus.CREATED
+    assert initial_accept_response.status_code == HTTPStatus.CREATED
 
     # Step 3: Invite the same email again.
     duplicate_invite_response = requests.post(
