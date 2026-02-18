@@ -169,3 +169,19 @@ func (f FieldDataType) TagDataType() string {
 		return "string"
 	}
 }
+
+// Enum returns the acceptable values for FieldDataType.
+func (FieldDataType) Enum() []any {
+	return []any{
+		FieldDataTypeString,
+		FieldDataTypeBool,
+		FieldDataTypeFloat64,
+		FieldDataTypeInt64,
+		FieldDataTypeNumber,
+		// FieldDataTypeArrayString,
+		// FieldDataTypeArrayFloat64,
+		// FieldDataTypeArrayBool,
+		// FieldDataTypeArrayInt64,
+		// FieldDataTypeArrayNumber,
+	}
+}

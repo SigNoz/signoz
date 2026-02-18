@@ -23,8 +23,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/gorilla/mux"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
@@ -108,21 +108,7 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 func registerQueryRoutes(router *mux.Router) {
 	router.Handle("/api/v5/query_range", handler.New(
 		func(http.ResponseWriter, *http.Request) {},
-		handler.OpenAPIDef{
-			ID:                  "QueryRangeV5",
-			Tags:                []string{"query"},
-			Summary:             "Query range",
-			Description:         "Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL.",
-			Request:             new(qbtypes.QueryRangeRequest),
-			RequestContentType:  "application/json",
-			Response:            new(qbtypes.QueryRangeResponse),
-			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			SecuritySchemes: []handler.OpenAPISecurityScheme{
-				{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{"VIEWER"}},
-				{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{"VIEWER"}},
-			},
-		},
+		querier.QueryRangeV5OpenAPIDef,
 	)).Methods(http.MethodPost)
 }
+

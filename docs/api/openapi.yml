@@ -4471,6 +4471,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesSignal'
         unit:
           type: string
+      required:
+      - name
       type: object
     Querybuildertypesv5ColumnType:
       enum:
@@ -4568,6 +4570,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesSignal'
         unit:
           type: string
+      required:
+      - name
       type: object
     Querybuildertypesv5Having:
       properties:

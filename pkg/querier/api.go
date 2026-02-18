@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -20,6 +21,24 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/variables"
 )
+
+// QueryRangeV5OpenAPIDef is the OpenAPI definition for the /api/v5/query_range endpoint.
+var QueryRangeV5OpenAPIDef = handler.OpenAPIDef{
+	ID:                  "QueryRangeV5",
+	Tags:                []string{"query"},
+	Summary:             "Query range",
+	Description:         "Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL.",
+	Request:             new(qbtypes.QueryRangeRequest),
+	RequestContentType:  "application/json",
+	Response:            new(qbtypes.QueryRangeResponse),
+	ResponseContentType: "application/json",
+	SuccessStatusCode:   http.StatusOK,
+	ErrorStatusCodes:    []int{http.StatusBadRequest},
+	SecuritySchemes: []handler.OpenAPISecurityScheme{
+		{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{"VIEWER"}},
+		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{"VIEWER"}},
+	},
+}
 
 type API struct {
 	set       factory.ProviderSettings
