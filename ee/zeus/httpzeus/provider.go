@@ -181,23 +181,28 @@ func (provider *Provider) do(ctx context.Context, url *url.URL, method string, k
 		return body, nil
 	}
 
-	return nil, provider.errFromStatusCode(response.StatusCode)
+	errorMessage := gjson.GetBytes(body, "error").String()
+	if errorMessage == "" {
+		errorMessage = "an unknown error occurred"
+	}
+
+	return nil, provider.errFromStatusCode(response.StatusCode, errorMessage)
 }
 
 // This can be taken down to the client package
-func (provider *Provider) errFromStatusCode(statusCode int) error {
+func (provider *Provider) errFromStatusCode(statusCode int, errorMessage string) error {
 	switch statusCode {
 	case http.StatusBadRequest:
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "bad request")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, errorMessage)
 	case http.StatusUnauthorized:
-		return errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, errorMessage)
 	case http.StatusForbidden:
-		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "forbidden")
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, errorMessage)
 	case http.StatusNotFound:
-		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "not found")
+		return errors.New(errors.TypeNotFound, errors.CodeNotFound, errorMessage)
 	case http.StatusConflict:
-		return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "already exists")
+		return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, errorMessage)
 	}
 
-	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "internal")
+	return errors.New(errors.TypeInternal, errors.CodeInternal, errorMessage)
 }

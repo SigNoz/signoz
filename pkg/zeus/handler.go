@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -40,7 +41,7 @@ func (h *handler) PutProfile(rw http.ResponseWriter, r *http.Request) {
 
 	var req zeustypes.PostableProfile
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, err)
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
 	}
 
@@ -69,7 +70,12 @@ func (h *handler) PutHost(rw http.ResponseWriter, r *http.Request) {
 
 	var req zeustypes.PostableHost
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, err)
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	if req.Name == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is required"))
 		return
 	}
 
