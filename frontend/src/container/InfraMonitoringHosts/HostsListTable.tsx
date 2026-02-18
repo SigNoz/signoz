@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -11,6 +11,7 @@ import {
 import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {
@@ -76,7 +77,16 @@ export default function HostsListTable({
 		[],
 	);
 
-	const handleRowClick = (record: HostRowData): void => {
+	const handleRowClick = (
+		record: HostRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (isModifierKeyPressed(event)) {
+			const params = new URLSearchParams(window.location.search);
+			params.set('hostName', record.hostName);
+			openInNewTab(`${window.location.pathname}?${params.toString()}`);
+			return;
+		}
 		onHostClick(record.hostName);
 		logEvent(InfraMonitoringEvents.ItemClicked, {
 			entity: InfraMonitoringEvents.HostEntity,
@@ -180,8 +190,8 @@ export default function HostsListTable({
 			tableLayout="fixed"
 			rowKey={(record): string => record.hostName}
 			onChange={handleTableChange}
-			onRow={(record): { onClick: () => void; className: string } => ({
-				onClick: (): void => handleRowClick(record),
+			onRow={(record: HostRowData): Record<string, unknown> => ({
+				onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 				className: 'clickable-row',
 			})}
 		/>

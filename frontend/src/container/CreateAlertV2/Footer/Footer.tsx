@@ -33,9 +33,9 @@ function Footer(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 
-	const handleDiscard = (): void => {
+	const handleDiscard = (e: React.MouseEvent): void => {
 		discardAlertRule();
-		safeNavigate('/alerts');
+		safeNavigate('/alerts', { event: e });
 	};
 
 	const alertValidationMessage = useMemo(

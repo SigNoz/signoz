@@ -8,6 +8,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { Bell, Grid } from 'lucide-react';
+import { navigateToPage } from 'utils/navigation';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 
@@ -25,9 +26,10 @@ function DashboardsAndAlertsPopover({
 				label: (
 					<Typography.Link
 						key={alert.alert_id}
-						onClick={(): void => {
+						onClick={(e): void => {
 							params.set(QueryParams.ruleId, alert.alert_id);
-							history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+							const path = `${ROUTES.ALERT_OVERVIEW}?${params.toString()}`;
+							navigateToPage(path, history.push, e);
 						}}
 						className="dashboards-popover-content-item"
 					>
@@ -55,11 +57,12 @@ function DashboardsAndAlertsPopover({
 				label: (
 					<Typography.Link
 						key={dashboard.dashboard_id}
-						onClick={(): void => {
+						onClick={(e): void => {
 							safeNavigate(
 								generatePath(ROUTES.DASHBOARD, {
 									dashboardId: dashboard.dashboard_id,
 								}),
+								{ event: e },
 							);
 						}}
 						className="dashboards-popover-content-item"

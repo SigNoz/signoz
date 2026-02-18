@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
@@ -27,6 +27,7 @@ import { CircleArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { navigateToPage } from 'utils/navigation';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -133,10 +134,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 		});
 	};
 
-	const handleViewBilling = (): void => {
+	const handleViewBilling = (e?: React.MouseEvent): void => {
 		logEvent('Workspace Blocked: User Clicked View Billing', {});
 
-		history.push(ROUTES.BILLING);
+		navigateToPage(ROUTES.BILLING, history.push, e);
 	};
 
 	const renderCustomerStories = (
@@ -296,7 +297,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										type="link"
 										size="small"
 										role="button"
-										onClick={handleViewBilling}
+										onClick={(e): void => handleViewBilling(e)}
 									>
 										View Billing
 									</Button>

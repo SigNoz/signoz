@@ -10,6 +10,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import {
 	KAFKA_SETUP_DOC_LINK,
@@ -23,26 +24,40 @@ function MessagingQueues(): JSX.Element {
 	const history = useHistory();
 	const { t } = useTranslation('messagingQueuesKafkaOverview');
 
-	const redirectToDetailsPage = (callerView?: string): void => {
+	const redirectToDetailsPage = (
+		callerView?: string,
+		event?: React.MouseEvent,
+	): void => {
 		logEvent('Messaging Queues: View details clicked', {
 			page: 'Messaging Queues Overview',
 			source: callerView,
 		});
 
-		history.push(
-			`${ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL}?${QueryParams.mqServiceView}=${callerView}`,
-		);
+		const path = `${ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL}?${QueryParams.mqServiceView}=${callerView}`;
+		if (event && isModifierKeyPressed(event)) {
+			openInNewTab(path);
+		} else {
+			history.push(path);
+		}
 	};
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const getStartedRedirect = (link: string, sourceCard: string): void => {
+	const getStartedRedirect = (
+		link: string,
+		sourceCard: string,
+		event?: React.MouseEvent,
+	): void => {
 		logEvent('Messaging Queues: Get started clicked', {
 			source: sourceCard,
 			link: isCloudUserVal ? link : KAFKA_SETUP_DOC_LINK,
 		});
 		if (isCloudUserVal) {
-			history.push(link);
+			if (event && isModifierKeyPressed(event)) {
+				openInNewTab(link);
+			} else {
+				history.push(link);
+			}
 		} else {
 			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
 		}
@@ -79,10 +94,11 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
+								onClick={(e): void =>
 									getStartedRedirect(
 										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`,
 										'Configure Consumer',
+										e,
 									)
 								}
 							>
@@ -98,10 +114,11 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
+								onClick={(e): void =>
 									getStartedRedirect(
 										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`,
 										'Configure Producer',
+										e,
 									)
 								}
 							>
@@ -117,10 +134,11 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
+								onClick={(e): void =>
 									getStartedRedirect(
 										`${ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`,
 										'Monitor kafka',
+										e,
 									)
 								}
 							>
@@ -143,8 +161,8 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
-									redirectToDetailsPage(MessagingQueuesViewType.consumerLag.value)
+								onClick={(e): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.consumerLag.value, e)
 								}
 							>
 								{t('summarySection.viewDetailsButton')}
@@ -161,8 +179,8 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
-									redirectToDetailsPage(MessagingQueuesViewType.producerLatency.value)
+								onClick={(e): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.producerLatency.value, e)
 								}
 							>
 								{t('summarySection.viewDetailsButton')}
@@ -179,8 +197,11 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
-									redirectToDetailsPage(MessagingQueuesViewType.partitionLatency.value)
+								onClick={(e): void =>
+									redirectToDetailsPage(
+										MessagingQueuesViewType.partitionLatency.value,
+										e,
+									)
 								}
 							>
 								{t('summarySection.viewDetailsButton')}
@@ -197,8 +218,8 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
-									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value)
+								onClick={(e): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value, e)
 								}
 							>
 								{t('summarySection.viewDetailsButton')}
@@ -215,8 +236,8 @@ function MessagingQueues(): JSX.Element {
 						<div className="button-grp">
 							<Button
 								type="default"
-								onClick={(): void =>
-									redirectToDetailsPage(MessagingQueuesViewType.metricPage.value)
+								onClick={(e): void =>
+									redirectToDetailsPage(MessagingQueuesViewType.metricPage.value, e)
 								}
 							>
 								{t('summarySection.viewDetailsButton')}
