@@ -231,3 +231,8 @@ pyrightconfig.json
 
 # cursor files
 frontend/.cursor/
+
+# internal tooling / PR factory (do not commit)
+MISSION_CONTROL.md
+FACTORY_STATUS.json
+.archdrift/
