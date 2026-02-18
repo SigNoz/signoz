@@ -26,6 +26,12 @@ type FilterExprNode struct {
 	Children   []*FilterExprNode
 }
 
+func NewEmptyFilterExprNode() *FilterExprNode {
+	return &FilterExprNode{
+		Op: LogicalOpLeaf,
+	}
+}
+
 func (f *FilterExprNode) Flatten() []FilterCondition {
 	var conditions []FilterCondition
 	var walk func(node *FilterExprNode)

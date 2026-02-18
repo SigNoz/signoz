@@ -138,7 +138,7 @@ func Parse(filter *qbtypes.Filter) (string, error) {
 	if filter == nil || strings.TrimSpace(filter.Expression) == "" {
 		return "", nil
 	}
-	node, err := querybuilder.ExtractFilterExprTree(filter.Expression)
+	node, err := querybuilder.ParseFilterExpr(filter.Expression)
 	if err != nil {
 		return "", err
 	}

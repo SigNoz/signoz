@@ -12,18 +12,16 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// ExtractFilterExprTree parses a v5 filter expression and returns a logical
+// ParseFilterExpr parses a v5 filter expression and returns a logical
 // tree that preserves full boolean structure (AND/OR, parentheses, NOT) as
 // well as the individual conditions (keys, operator, values).
 //
 // This can be reused by callers that need deeper introspection into the logic
 // of the filter expression without constructing any SQL or query-engine
 // specific structures.
-func ExtractFilterExprTree(expr string) (*qbtypes.FilterExprNode, error) {
+func ParseFilterExpr(expr string) (*qbtypes.FilterExprNode, error) {
 	if strings.TrimSpace(expr) == "" {
-		return &qbtypes.FilterExprNode{
-			Op: qbtypes.LogicalOpLeaf,
-		}, nil
+		return qbtypes.NewEmptyFilterExprNode(), nil
 	}
 
 	// Setup the ANTLR parsing pipeline (same grammar as PrepareWhereClause).

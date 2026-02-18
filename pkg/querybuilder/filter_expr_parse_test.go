@@ -14,7 +14,7 @@ func fk(_ *testing.T, name string) *telemetrytypes.TelemetryFieldKey {
 	return &key
 }
 
-func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
+func TestParseFilterExpr_NestedConditions(t *testing.T) {
 	tests := []struct {
 		name    string
 		expr    string
@@ -24,7 +24,7 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 		{
 			name: "empty expression returns nil",
 			expr: "   ",
-			want: nil,
+			want: qbtypes.NewEmptyFilterExprNode(),
 		},
 		{
 			name:    "invalid expression returns error",
@@ -326,15 +326,16 @@ func TestExtractFilterExprTree_NestedConditions(t *testing.T) {
 			},
 		},
 		{
-			name: "random test",
-			expr: "attributes.status, attributes.status_code = 200",
+			name:    "random test",
+			expr:    "attributes.status, attributes.status_code = 200",
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ExtractFilterExprTree(tt.expr)
+			got, err := ParseFilterExpr(tt.expr)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatalf("expected error, got nil")
