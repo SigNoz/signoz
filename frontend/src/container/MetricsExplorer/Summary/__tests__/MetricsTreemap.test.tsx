@@ -1,10 +1,10 @@
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import store from 'store';
 
 import MetricsTreemap from '../MetricsTreemap';
-import { TreemapViewType } from '../types';
 
 jest.mock('d3-hierarchy', () => ({
 	stratify: jest.fn().mockReturnValue({
@@ -27,14 +27,14 @@ jest.mock('react-use', () => ({
 
 const mockData = [
 	{
-		metric_name: 'Metric 1',
+		metricName: 'Metric 1',
 		percentage: 0.5,
-		total_value: 15,
+		totalValue: 15,
 	},
 	{
-		metric_name: 'Metric 2',
+		metricName: 'Metric 2',
 		percentage: 0.6,
-		total_value: 10,
+		totalValue: 10,
 	},
 ];
 
@@ -47,14 +47,11 @@ describe('MetricsTreemap', () => {
 						isLoading={false}
 						isError={false}
 						data={{
-							status: 'success',
-							data: {
-								timeseries: [mockData[0]],
-								samples: [mockData[1]],
-							},
+							timeseries: [mockData[0]],
+							samples: [mockData[1]],
 						}}
 						openMetricDetails={jest.fn()}
-						viewType={TreemapViewType.SAMPLES}
+						viewType={MetricsexplorertypesTreemapModeDTO.samples}
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
@@ -72,14 +69,11 @@ describe('MetricsTreemap', () => {
 						isLoading
 						isError={false}
 						data={{
-							status: 'success',
-							data: {
-								timeseries: [mockData[0]],
-								samples: [mockData[1]],
-							},
+							timeseries: [mockData[0]],
+							samples: [mockData[1]],
 						}}
 						openMetricDetails={jest.fn()}
-						viewType={TreemapViewType.SAMPLES}
+						viewType={MetricsexplorertypesTreemapModeDTO.samples}
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
@@ -99,14 +93,11 @@ describe('MetricsTreemap', () => {
 						isLoading={false}
 						isError
 						data={{
-							status: 'success',
-							data: {
-								timeseries: [mockData[0]],
-								samples: [mockData[1]],
-							},
+							timeseries: [mockData[0]],
+							samples: [mockData[1]],
 						}}
 						openMetricDetails={jest.fn()}
-						viewType={TreemapViewType.SAMPLES}
+						viewType={MetricsexplorertypesTreemapModeDTO.samples}
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
@@ -130,7 +121,7 @@ describe('MetricsTreemap', () => {
 						isError={false}
 						data={null}
 						openMetricDetails={jest.fn()}
-						viewType={TreemapViewType.SAMPLES}
+						viewType={MetricsexplorertypesTreemapModeDTO.samples}
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
