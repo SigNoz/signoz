@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -19,7 +19,7 @@ export default function Tooltip({
 	showTooltipHeader = true,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-
+	const [listHeight, setListHeight] = useState(0);
 	const tooltipContent = content ?? [];
 
 	const headerTitle = useMemo(() => {
@@ -41,6 +41,14 @@ export default function Tooltip({
 		showTooltipHeader,
 	]);
 
+	const virtuosoHeight =
+		listHeight > 0
+			? Math.min(listHeight + 10, TOOLTIP_LIST_MAX_HEIGHT)
+			: Math.min(
+					tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
+					TOOLTIP_LIST_MAX_HEIGHT,
+			  );
+
 	return (
 		<div
 			className={cx(
@@ -55,18 +63,18 @@ export default function Tooltip({
 			)}
 			<div
 				style={{
-					height: Math.min(
-						tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
-						TOOLTIP_LIST_MAX_HEIGHT,
-					),
-					minHeight: 0,
+					maxHeight: TOOLTIP_LIST_MAX_HEIGHT,
 				}}
 			>
 				{tooltipContent.length > 0 ? (
 					<Virtuoso
 						className="uplot-tooltip-list"
 						data={tooltipContent}
-						defaultItemHeight={TOOLTIP_ITEM_HEIGHT}
+						style={{
+							height: virtuosoHeight,
+							width: '100%',
+						}}
+						totalListHeightChanged={setListHeight}
 						itemContent={(_, item): JSX.Element => (
 							<div className="uplot-tooltip-item">
 								<div
