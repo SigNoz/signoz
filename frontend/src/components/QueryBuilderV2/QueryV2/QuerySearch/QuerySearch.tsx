@@ -85,7 +85,7 @@ interface QuerySearchProps {
 	signalSource?: string;
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
-	isMetricsExplorer?: boolean;
+	showFilterSuggestionsWithoutMetric?: boolean;
 }
 
 function QuerySearch({
@@ -96,7 +96,7 @@ function QuerySearch({
 	onRun,
 	signalSource,
 	hardcodedAttributeKeys,
-	isMetricsExplorer,
+	showFilterSuggestionsWithoutMetric,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -254,7 +254,7 @@ function QuerySearch({
 			if (
 				dataSource === DataSource.METRICS &&
 				!queryData.aggregateAttribute?.key &&
-				!isMetricsExplorer
+				!showFilterSuggestionsWithoutMetric
 			) {
 				setKeySuggestions([]);
 				return;
@@ -303,7 +303,7 @@ function QuerySearch({
 			queryData.aggregateAttribute?.key,
 			signalSource,
 			hardcodedAttributeKeys,
-			isMetricsExplorer,
+			showFilterSuggestionsWithoutMetric,
 		],
 	);
 
@@ -1560,7 +1560,7 @@ QuerySearch.defaultProps = {
 	hardcodedAttributeKeys: undefined,
 	placeholder:
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
-	isMetricsExplorer: false,
+	showFilterSuggestionsWithoutMetric: false,
 };
 
 export default QuerySearch;

@@ -287,11 +287,25 @@ function Summary(): JSX.Element {
 		[treeMapData?.data?.data, heatmapView, isGetMetricsTreemapLoading],
 	);
 
+	const showFullScreenLoading = useMemo(
+		() =>
+			(isGetMetricsStatsLoading || isGetMetricsTreemapLoading) &&
+			formattedMetricsData.length === 0 &&
+			!treeMapData?.data?.data?.[heatmapView]?.length,
+		[
+			isGetMetricsStatsLoading,
+			isGetMetricsTreemapLoading,
+			formattedMetricsData,
+			treeMapData,
+			heatmapView,
+		],
+	);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
 				<MetricsSearch query={query} onChange={handleFilterChange} />
-				{isGetMetricsStatsLoading || isGetMetricsTreemapLoading ? (
+				{showFullScreenLoading ? (
 					<MetricsLoading />
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
 					<NoLogs dataSource={DataSource.METRICS} />
