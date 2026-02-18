@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addZeusRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/zeus/deployments/profile", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutProfile), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/profiles", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutProfile), handler.OpenAPIDef{
 		ID:                  "PutProfileInZeus",
 		Tags:                []string{"zeus"},
 		Summary:             "Put profile in Zeus for a deployment.",
@@ -27,7 +27,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/deployments/host", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutHost), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutHost), handler.OpenAPIDef{
 		ID:                  "PutHostInZeus",
 		Tags:                []string{"zeus"},
 		Summary:             "Put host in Zeus for a deployment.",
