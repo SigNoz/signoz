@@ -300,7 +300,7 @@ type ListMetricsParams struct {
 	Start  *int64 `query:"start"`
 	End    *int64 `query:"end"`
 	Limit  int    `query:"limit"`
-	Search string `query:"search"`
+	Search string `query:"searchText"`
 }
 
 // Validate ensures ListMetricsParams contains acceptable values.

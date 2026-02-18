@@ -10,7 +10,6 @@ import (
 )
 
 func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
-	// List metrics (collection endpoint, registered before {metric_name} routes)
 	if err := router.Handle("/api/v2/metrics", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.ListMetrics),
 		handler.OpenAPIDef{

@@ -72,7 +72,6 @@ func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *met
 		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
 	}
 
-	sb.Where("NOT startsWith(metric_name, 'signoz')")
 	sb.Where(sb.E("__normalized", false))
 
 	if params.Search != "" {

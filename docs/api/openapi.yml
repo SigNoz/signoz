@@ -4790,7 +4790,7 @@ paths:
         schema:
           type: integer
       - in: query
-        name: search
+        name: searchText
         schema:
           type: string
       responses:
