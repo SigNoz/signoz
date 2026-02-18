@@ -94,7 +94,7 @@ func (provider *Provider) GetPortalURL(ctx context.Context, key string, body []b
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
-func (provider *Provider) GetDeployment(ctx context.Context, key string) (*zeustypes.GettableDeployment, error) {
+func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte, error) {
 	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/deployments/me"),
@@ -106,12 +106,7 @@ func (provider *Provider) GetDeployment(ctx context.Context, key string) (*zeust
 		return nil, err
 	}
 
-	gettableDeployment := new(zeustypes.GettableDeployment)
-	if err := json.Unmarshal([]byte(gjson.GetBytes(response, "data").String()), &gettableDeployment); err != nil {
-		return nil, err
-	}
-
-	return gettableDeployment, nil
+	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
 func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte) error {

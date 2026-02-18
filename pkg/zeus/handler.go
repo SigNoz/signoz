@@ -53,7 +53,7 @@ func (h *handler) PutProfile(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (h *handler) GetDeployment(rw http.ResponseWriter, r *http.Request) {
+func (h *handler) GetHostFromZeus(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -68,11 +68,13 @@ func (h *handler) GetDeployment(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.zeus.GetDeployment(ctx, license.Key)
+	deploymentBytes, err := h.zeus.GetDeployment(ctx, license.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
+
+	response := zeustypes.NewGettableZeusHost(deploymentBytes)
 
 	render.Success(rw, http.StatusOK, response)
 }
