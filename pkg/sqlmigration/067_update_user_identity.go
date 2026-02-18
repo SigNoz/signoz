@@ -2,11 +2,12 @@ package sqlmigration
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/identitytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
@@ -60,16 +61,21 @@ func (migration *updateUserIdentity) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// 3. Create identity records for each user
-	now := time.Now()
+	identities := make([]*identitytypes.StorableIdentity, 0, len(users))
 	for _, user := range users {
-		if _, err := tx.NewInsert().
-			Table("identity").
-			Value("id", "?", user.ID).
-			Value("status", "?", "active").
-			Value("org_id", "?", user.OrgID).
-			Value("created_at", "?", now).
-			Value("updated_at", "?", now).
-			Exec(ctx); err != nil {
+		identityID, err := valuer.NewUUID(user.ID)
+		if err != nil {
+			return err
+		}
+		orgID, err := valuer.NewUUID(user.OrgID)
+		if err != nil {
+			return err
+		}
+		identities = append(identities, identitytypes.NewStorableIdentity(identityID, orgID))
+	}
+
+	if len(identities) > 0 {
+		if _, err := tx.NewInsert().Model(&identities).Exec(ctx); err != nil {
 			return err
 		}
 	}

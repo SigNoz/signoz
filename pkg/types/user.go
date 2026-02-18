@@ -31,6 +31,7 @@ type User struct {
 	Identifiable
 	DisplayName string       `bun:"display_name" json:"displayName"`
 	Email       valuer.Email `bun:"email" json:"email"`
+	Role        Role         `bun:"role" json:"role"`
 	IdentityID  valuer.UUID  `bun:"identity_id" json:"identityId"`
 	OrgID       valuer.UUID  `bun:"org_id" json:"orgId"`
 	IsRoot      bool         `bun:"is_root" json:"isRoot"`
@@ -45,9 +46,13 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, orgID valuer.UUID) (*User, error) {
+func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
+	}
+
+	if role == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
 	}
 
 	if orgID.IsZero() {
@@ -98,18 +103,21 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 }
 
 // Update applies mutable fields from the input to the user. Immutable fields
-// (email, is_root, org_id, id, identity_id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string) {
+// (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
+func (u *User) Update(displayName string, role Role) {
 	if displayName != "" {
 		u.DisplayName = displayName
+	}
+	if role != "" {
+		u.Role = role
 	}
 	u.UpdatedAt = time.Now()
 }
 
-// PromoteToRoot promotes the user to a root user.
-// Note: The actual role assignment is handled via identity module.
+// PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
+	u.Role = RoleAdmin
 	u.UpdatedAt = time.Now()
 }
 
@@ -128,10 +136,10 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
-func NewTraitsFromUser(user *User, roles []Role) map[string]any {
+func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
-		"roles":        roles,
+		"role":         user.Role,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
 		"created_at":   user.CreatedAt,
@@ -180,6 +188,9 @@ type UserStore interface {
 
 	// Get users by email.
 	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
+
+	// Get users by role and org.
+	GetUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
 
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)

@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/modules/identity/implidentity"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -79,9 +78,8 @@ func TestNewProviderFactories(t *testing.T) {
 		sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
 		userGetter := impluser.NewGetter(impluser.NewStore(sqlStore, instrumentationtest.New().ToProviderSettings()))
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlStore), nil)
-		identityModule := implidentity.NewModule(sqlStore)
 		telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherEqual)
-		NewStatsReporterProviderFactories(telemetryStore, []statsreporter.StatsCollector{}, orgGetter, userGetter, identityModule, tokenizertest.NewMockTokenizer(t), version.Build{}, analytics.Config{Enabled: true})
+		NewStatsReporterProviderFactories(telemetryStore, []statsreporter.StatsCollector{}, orgGetter, userGetter, tokenizertest.NewMockTokenizer(t), version.Build{}, analytics.Config{Enabled: true})
 	})
 
 	assert.NotPanics(t, func() {

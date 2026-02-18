@@ -2,7 +2,6 @@ package impluser
 
 import (
 	"context"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -117,39 +116,20 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		// Get user's current roles from identity module
-		userRoles, err := s.identity.GetRoles(ctx, existingUser.IdentityID)
-		if err != nil {
-			return err
-		}
+		oldRole := existingUser.Role
 
 		existingUser.PromoteToRoot()
 		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return err
 		}
 
-		// If user doesn't have admin role, modify the grant and update identity roles
-		if !slices.Contains(userRoles, types.RoleAdmin) {
-			// Update authz grants and identity roles
-			for _, oldRole := range userRoles {
-				// Update authz grant
-				if err := s.authz.ModifyGrant(ctx,
-					orgID,
-					roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole),
-					roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin),
-					authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
-				); err != nil {
-					return err
-				}
-
-				// Update identity role
-				if err := s.identity.RemoveRole(ctx, existingUser.IdentityID, orgID, oldRole); err != nil {
-					return err
-				}
-			}
-
-			// Add admin role to identity
-			if err := s.identity.AddRole(ctx, existingUser.IdentityID, orgID, types.RoleAdmin); err != nil {
+		if oldRole != types.RoleAdmin {
+			if err := s.authz.ModifyGrant(ctx,
+				orgID,
+				roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole),
+				roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin),
+				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+			); err != nil {
 				return err
 			}
 		}
@@ -168,7 +148,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
-	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRole(types.RoleAdmin))
+	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
 }
 
 func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {

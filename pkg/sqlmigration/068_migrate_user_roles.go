@@ -2,11 +2,11 @@ package sqlmigration
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/identitytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -42,11 +42,6 @@ func (migration *migrateUserRoles) Register(migrations *migrate.Migrations) erro
 }
 
 func (migration *migrateUserRoles) Up(ctx context.Context, db *bun.DB) error {
-	// 1. Disable FK enforcement
-	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
-		return err
-	}
-
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -56,7 +51,6 @@ func (migration *migrateUserRoles) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	// 2. Fetch existing users with their roles
 	type existingUser struct {
 		bun.BaseModel `bun:"table:users"`
 		ID            string `bun:"id"`
@@ -67,34 +61,21 @@ func (migration *migrateUserRoles) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// 3. Create identity_role records for each user using role_name directly
-	now := time.Now()
+	identityRoles := make([]*identitytypes.StorableIdentityRole, 0, len(users))
 	for _, user := range users {
 		roleName := existingRoleToManagedRole[user.Role]
-
-		if _, err := tx.NewInsert().
-			Table("identity_role").
-			Value("id", "?", valuer.GenerateUUID().StringValue()).
-			Value("identity_id", "?", user.ID).
-			Value("role_name", "?", roleName).
-			Value("created_at", "?", now).
-			Value("updated_at", "?", now).
-			Exec(ctx); err != nil {
+		identityID, err := valuer.NewUUID(user.ID)
+		if err != nil {
 			return err
 		}
+		identityRoles = append(identityRoles, identitytypes.NewStorableIdentityRole(
+			identityID,
+			roleName,
+		))
 	}
 
-	// 4. Get current table structure
-	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("users"))
-	if err != nil {
-		return err
-	}
-
-	// 5. Drop role column
-	roleColumn := &sqlschema.Column{Name: "role"}
-	dropColumnSQLs := migration.sqlschema.Operator().DropColumn(table, roleColumn)
-	for _, sql := range dropColumnSQLs {
-		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+	if len(identityRoles) > 0 {
+		if _, err := tx.NewInsert().Model(&identityRoles).Exec(ctx); err != nil {
 			return err
 		}
 	}
@@ -103,8 +84,7 @@ func (migration *migrateUserRoles) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// 6. Re-enable FK enforcement
-	return migration.sqlschema.ToggleFKEnforcement(ctx, db, true)
+	return nil
 }
 
 func (migration *migrateUserRoles) Down(context.Context, *bun.DB) error {

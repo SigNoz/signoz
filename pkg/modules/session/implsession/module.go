@@ -144,33 +144,21 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
 	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
 
-	newUser, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, callbackIdentity.OrgID)
+	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID)
 	if err != nil {
 		return "", err
 	}
 
-	createdUser, err := module.user.GetOrCreateUser(ctx, newUser, user.WithRole(role))
+	user, err = module.user.GetOrCreateUser(ctx, user)
 	if err != nil {
 		return "", err
 	}
 
-	if err := createdUser.ErrIfRoot(); err != nil {
+	if err := user.ErrIfRoot(); err != nil {
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	// Get roles from identity module
-	userRoles, err := module.identity.GetRoles(ctx, createdUser.IdentityID)
-	if err != nil {
-		return "", err
-	}
-
-	// Use first role for token creation (backward compatibility with current token system)
-	var primaryRole types.Role
-	if len(userRoles) > 0 {
-		primaryRole = userRoles[0]
-	}
-
-	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(createdUser.ID, createdUser.OrgID, createdUser.Email, primaryRole), map[string]string{})
+	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role), map[string]string{})
 	if err != nil {
 		return "", err
 	}

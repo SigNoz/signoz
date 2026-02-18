@@ -192,6 +192,24 @@ func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email valuer.Ema
 	return user, nil
 }
 
+func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
+	var users []*types.User
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
+		Where("org_id = ?", orgID).
+		Where("role = ?", role).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
 	_, err := store.
 		sqlstore.
@@ -200,6 +218,7 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Model(user).
 		Column("display_name").
 		Column("email").
+		Column("role").
 		Column("is_root").
 		Column("updated_at").
 		Where("org_id = ?", orgID).
