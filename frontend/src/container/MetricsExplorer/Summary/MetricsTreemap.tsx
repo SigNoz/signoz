@@ -55,58 +55,36 @@ function MetricsTreemap({
 	const xMax = treemapWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT;
 	const yMax = TREEMAP_HEIGHT - TREEMAP_MARGINS.TOP - TREEMAP_MARGINS.BOTTOM;
 
-	if (isLoading) {
-		return (
-			<div data-testid="metrics-treemap-loading-state">
-				<Skeleton
-					style={{ width: treemapWidth, height: TREEMAP_HEIGHT + 55 }}
-					active
-				/>
-			</div>
-		);
-	}
-
-	if (!data || !data?.[viewType]?.length) {
-		return (
-			<Empty
-				description="No metrics found"
-				data-testid="metrics-treemap-empty-state"
-				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
-			/>
-		);
-	}
-
-	if (isError) {
-		return (
-			<Empty
-				description="Error fetching metrics. If the problem persists, please contact support."
-				data-testid="metrics-treemap-error-state"
-				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
-			/>
-		);
-	}
-
-	return (
-		<div
-			className="metrics-treemap-container"
-			data-testid="metrics-treemap-container"
-		>
-			<div className="metrics-treemap-title">
-				<div className="metrics-treemap-title-left">
-					<Typography.Title level={4}>Proportion View</Typography.Title>
-					<Tooltip
-						title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
-						placement="right"
-					>
-						<Info size={16} />
-					</Tooltip>
+	const treemapContent = useMemo(() => {
+		if (isLoading) {
+			return (
+				<div data-testid="metrics-treemap-loading-state">
+					<Skeleton style={{ width: treemapWidth, height: TREEMAP_HEIGHT }} active />
 				</div>
-				<Select
-					options={TREEMAP_VIEW_OPTIONS}
-					value={viewType}
-					onChange={setHeatmapView}
+			);
+		}
+
+		if (!data || !data?.[viewType]?.length) {
+			return (
+				<Empty
+					description="No metrics found"
+					data-testid="metrics-treemap-empty-state"
+					style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 				/>
-			</div>
+			);
+		}
+
+		if (isError) {
+			return (
+				<Empty
+					description="Error fetching metrics. If the problem persists, please contact support."
+					data-testid="metrics-treemap-error-state"
+					style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+				/>
+			);
+		}
+
+		return (
 			<svg
 				width={treemapWidth}
 				height={TREEMAP_HEIGHT}
@@ -171,6 +149,42 @@ function MetricsTreemap({
 					)}
 				</Treemap>
 			</svg>
+		);
+	}, [
+		data,
+		isError,
+		isLoading,
+		openMetricDetails,
+		transformedTreemapData,
+		treemapWidth,
+		viewType,
+		xMax,
+		yMax,
+	]);
+
+	return (
+		<div
+			className="metrics-treemap-container"
+			data-testid="metrics-treemap-container"
+		>
+			<div className="metrics-treemap-title">
+				<div className="metrics-treemap-title-left">
+					<Typography.Title level={4}>Proportion View</Typography.Title>
+					<Tooltip
+						title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
+						placement="right"
+					>
+						<Info size={16} />
+					</Tooltip>
+				</div>
+				<Select
+					options={TREEMAP_VIEW_OPTIONS}
+					value={viewType}
+					onChange={setHeatmapView}
+					disabled={isLoading}
+				/>
+			</div>
+			{treemapContent}
 		</div>
 	);
 }

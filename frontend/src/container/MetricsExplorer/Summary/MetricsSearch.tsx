@@ -43,7 +43,7 @@ function MetricsSearch({ query, onChange }: MetricsSearchProps): JSX.Element {
 						},
 					}}
 					onRun={handleOnChange}
-					isMetricsExplorer
+					showFilterSuggestionsWithoutMetric
 				/>
 			</div>
 			<Button
