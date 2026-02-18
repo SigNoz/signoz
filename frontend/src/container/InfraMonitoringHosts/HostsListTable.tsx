@@ -49,7 +49,7 @@ function getEmptyOrLoadingView(viewState: {
 					<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
 					<div className="no-hosts-message">
 						<Typography.Title level={5} className="no-hosts-message-title">
-							End time before retention
+							Queried time range is before earliest host metrics
 						</Typography.Title>
 						<Typography.Text className="no-hosts-message-text">
 							Your requested end time is earlier than the earliest detected time of
