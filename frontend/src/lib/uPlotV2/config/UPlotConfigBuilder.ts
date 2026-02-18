@@ -387,7 +387,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		} = this.getVisibilityResolutionState();
 
 		config.series = [
-			{ value: (): string => '' }, // Base series for timestamp
+			{ value: (): string => '', label: 'Timestamp' }, // Base series for timestamp
 			...this.series.map((s) => {
 				const series = s.getConfig();
 				// Stored visibility[0] is x-axis/time; data series start at visibility[1]
