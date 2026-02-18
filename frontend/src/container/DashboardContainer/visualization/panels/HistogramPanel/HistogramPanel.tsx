@@ -1,34 +1,33 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
-import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
-import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
+import { useMemo, useRef } from 'react';
 import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { ContextMenu } from 'periscope/components/ContextMenu';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { useTimezone } from 'providers/Timezone';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
-import { getTimeRange } from 'utils/getTimeRange';
 
-import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
+import Histogram from '../../charts/Histogram/Histogram';
+import ChartManager from '../../components/ChartManager/ChartManager';
+import {
+	prepareHistogramPanelConfig,
+	prepareHistogramPanelData,
+} from './utils';
 
 import '../Panel.styles.scss';
 
-function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
+function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	const {
 		panelMode,
 		queryResponse,
 		widget,
-		onDragSelect,
 		isFullViewMode,
 		onToggleModelHandler,
 	} = props;
+	const uPlotRef = useRef<uPlot | null>(null);
 	const graphRef = useRef<HTMLDivElement>(null);
-	const [minTimeScale, setMinTimeScale] = useState<number>();
-	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const isDarkMode = useIsDarkMode();
@@ -36,58 +35,34 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 
 	useScrollWidgetIntoView(widget.id, graphRef);
 
-	useEffect((): void => {
-		const { startTime, endTime } = getTimeRange(queryResponse);
-
-		setMinTimeScale(startTime);
-		setMaxTimeScale(endTime);
-	}, [queryResponse]);
-
-	const {
-		coordinates,
-		popoverPosition,
-		onClose,
-		menuItemsConfig,
-		clickHandlerWithContextMenu,
-	} = usePanelContextMenu({
-		widget,
-		queryResponse,
-	});
+	const config = useMemo(() => {
+		return prepareHistogramPanelConfig({
+			widget,
+			isDarkMode,
+			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
+			panelMode,
+		});
+	}, [widget, isDarkMode, queryResponse?.data?.payload, panelMode]);
 
 	const chartData = useMemo(() => {
 		if (!queryResponse?.data?.payload) {
 			return [];
 		}
-		return prepareChartData(queryResponse?.data?.payload);
-	}, [queryResponse?.data?.payload]);
-
-	const config = useMemo(() => {
-		return prepareUPlotConfig({
-			widget,
-			isDarkMode,
-			currentQuery: widget.query,
-			onClick: clickHandlerWithContextMenu,
-			onDragSelect,
+		return prepareHistogramPanelData({
 			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
-			timezone,
-			panelMode,
-			minTimeScale: minTimeScale,
-			maxTimeScale: maxTimeScale,
+			bucketWidth: widget?.bucketWidth,
+			bucketCount: widget?.bucketCount,
+			mergeAllActiveQueries: widget?.mergeAllActiveQueries,
 		});
 	}, [
-		widget,
-		isDarkMode,
-		clickHandlerWithContextMenu,
-		onDragSelect,
 		queryResponse?.data?.payload,
-		panelMode,
-		minTimeScale,
-		maxTimeScale,
-		timezone,
+		widget?.bucketWidth,
+		widget?.bucketCount,
+		widget?.mergeAllActiveQueries,
 	]);
 
 	const layoutChildren = useMemo(() => {
-		if (!isFullViewMode) {
+		if (!isFullViewMode || widget.mergeAllActiveQueries) {
 			return null;
 		}
 		return (
@@ -104,35 +79,36 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		chartData,
 		widget.yAxisUnit,
 		onToggleModelHandler,
+		widget.mergeAllActiveQueries,
 	]);
 
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
-				<TimeSeries
+				<Histogram
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					plotRef={(plot: uPlot | null): void => {
+						uPlotRef.current = plot;
+					}}
+					onDestroy={(): void => {
+						uPlotRef.current = null;
+					}}
+					isQueriesMerged={widget.mergeAllActiveQueries}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
+					syncMode={DashboardCursorSync.Crosshair}
 					timezone={timezone.value}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
-				>
-					<ContextMenu
-						coordinates={coordinates}
-						popoverPosition={popoverPosition}
-						title={menuItemsConfig.header as string}
-						items={menuItemsConfig.items}
-						onClose={onClose}
-					/>
-				</TimeSeries>
+				/>
 			)}
 		</div>
 	);
 }
 
-export default TimeSeriesPanel;
+export default HistogramPanel;
