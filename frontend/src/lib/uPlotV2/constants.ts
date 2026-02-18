@@ -3,7 +3,7 @@ import { Cursor, Options } from 'uplot';
 const POINTS_FILL_COLOR = '#FFFFFF';
 
 export const DEFAULT_HOVER_PROX_VALUE = 30; // only snap if within 30px horizontally
-export const DEFAULT_FOCUS_PROX_VALUE = 30; // enable focus when the cursor is within 30px of the series
+export const DEFAULT_FOCUS_PROX_VALUE = 1e6;
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 	focus: {

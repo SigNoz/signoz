@@ -69,14 +69,6 @@ export const prepareUPlotConfig = ({
 
 	const seriesList = apiResponse.data?.result || [];
 
-	if (seriesList.length === 1) {
-		builder.setCursor({
-			focus: {
-				prox: 1e3,
-			},
-		});
-	}
-
 	seriesList.forEach((series) => {
 		const baseLabelName = getLabelName(
 			series.metric,

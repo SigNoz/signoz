@@ -67,12 +67,6 @@ export function prepareBarPanelConfig({
 		maxTimeScale,
 	});
 
-	builder.setCursor({
-		focus: {
-			prox: 1e3,
-		},
-	});
-
 	if (widget.stackedBarChart) {
 		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
