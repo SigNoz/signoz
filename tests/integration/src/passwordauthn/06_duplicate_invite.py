@@ -28,7 +28,7 @@ def test_duplicate_user_invite_rejected(
         timeout=2,
     )
     assert initial_invite_response.status_code == HTTPStatus.CREATED
-    initial_invite_token = invite_response.json()["data"]["token"]
+    initial_invite_token = initial_invite_response.json()["data"]["token"]
 
     # Step 2: Accept the invite to create the user.
     initial_accept_response = requests.post(
