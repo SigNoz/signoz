@@ -130,13 +130,11 @@ export function MetricFilters({
 			className="inspect-metrics-input-group metric-filters"
 		>
 			<Typography.Text>Where</Typography.Text>
-			{currentQuery && (
-				<QuerySearch
-					queryData={currentQuery}
-					onChange={handleOnChange}
-					dataSource={DataSource.METRICS}
-				/>
-			)}
+			<QuerySearch
+				queryData={currentQuery}
+				onChange={handleOnChange}
+				dataSource={DataSource.METRICS}
+			/>
 		</div>
 	);
 }
