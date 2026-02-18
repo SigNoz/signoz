@@ -47,6 +47,7 @@ const TEST_CONSTANTS = {
 	ENTER_THRESHOLD_NAME: 'Enter threshold name',
 	ENTER_THRESHOLD_VALUE: 'Enter threshold value',
 	ENTER_RECOVERY_THRESHOLD_VALUE: 'Enter recovery threshold value',
+	REMOVE_RECOVERY_THRESHOLD_ID: 'remove-threshold-button',
 } as const;
 
 const mockThreshold = {
@@ -103,10 +104,10 @@ const verifySelectorWidth = (
 };
 
 // TODO: Unskip this when recovery threshold is implemented
-// const showRecoveryThreshold = (): void => {
-// 	const recoveryButton = screen.getByRole('button', { name: '' });
-// 	fireEvent.click(recoveryButton);
-// };
+const showRecoveryThreshold = (): void => {
+	const recoveryButton = screen.getByRole('button', { name: '' });
+	fireEvent.click(recoveryButton);
+};
 
 const verifyComponentRendersWithLoading = (): void => {
 	expect(
@@ -229,15 +230,15 @@ describe('ThresholdItem', () => {
 
 		// The remove button is the second button (with circle-x icon)
 		const buttons = screen.getAllByRole('button');
-		expect(buttons).toHaveLength(1); // remove button
+		expect(buttons).toHaveLength(2); // remove button
 	});
 
 	it('does not show remove button when showRemoveButton is false', () => {
 		renderThresholdItem({ showRemoveButton: false });
 
-		// No buttons should be present
+		// Only Add recovery threshold buttons should be present
 		const buttons = screen.queryAllByRole('button');
-		expect(buttons).toHaveLength(0);
+		expect(buttons).toHaveLength(1);
 	});
 
 	it('calls removeThreshold when remove button is clicked', () => {
@@ -245,15 +246,16 @@ describe('ThresholdItem', () => {
 		renderThresholdItem({ showRemoveButton: true, removeThreshold });
 
 		// The remove button is the first button (with circle-x icon)
-		const buttons = screen.getAllByRole('button');
-		const removeButton = buttons[0];
+		const removeButton = screen.getByTestId(
+			TEST_CONSTANTS.REMOVE_RECOVERY_THRESHOLD_ID,
+		);
 		fireEvent.click(removeButton);
 
 		expect(removeThreshold).toHaveBeenCalledWith(TEST_CONSTANTS.THRESHOLD_ID);
 	});
 
 	// TODO: Unskip this when recovery threshold is implemented
-	it.skip('shows recovery threshold inputs when recovery button is clicked', () => {
+	it('shows recovery threshold inputs when recovery button is clicked', () => {
 		renderThresholdItem();
 
 		// The recovery button is the first button (with chart-line icon)
@@ -270,7 +272,7 @@ describe('ThresholdItem', () => {
 	});
 
 	// TODO: Unskip this when recovery threshold is implemented
-	it.skip('updates recovery threshold value when input changes', () => {
+	it('updates recovery threshold value when input changes', () => {
 		const updateThreshold = jest.fn();
 		renderThresholdItem({ updateThreshold });
 
@@ -347,9 +349,9 @@ describe('ThresholdItem', () => {
 		verifyComponentRendersWithLoading();
 	});
 
-	it.skip('renders recovery threshold with correct initial value', () => {
+	it('renders recovery threshold with correct initial value', () => {
 		renderThresholdItem();
-		// showRecoveryThreshold();
+		showRecoveryThreshold();
 
 		const recoveryValueInput = screen.getByPlaceholderText(
 			TEST_CONSTANTS.ENTER_RECOVERY_THRESHOLD_VALUE,

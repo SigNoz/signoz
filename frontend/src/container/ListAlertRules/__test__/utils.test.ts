@@ -48,6 +48,17 @@ describe('filterAlerts', () => {
 				environment: 'production',
 			},
 		} as GettableAlert,
+		{
+			...mockAlertBase,
+			id: '4',
+			alert: 'Memory Leak Detected',
+			alertType: 'metrics',
+			labels: {
+				severity: 'critical',
+				status: 'recovering',
+				environment: 'staging',
+			},
+		} as GettableAlert,
 	];
 
 	it('should return all alerts when filter is empty', () => {
@@ -74,7 +85,7 @@ describe('filterAlerts', () => {
 
 	it('should filter alerts by label key', () => {
 		const result = filterAlerts(mockAlerts, 'environment');
-		expect(result).toHaveLength(3); // All alerts have environment label
+		expect(result).toHaveLength(4); // All alerts have environment label
 	});
 
 	it('should filter alerts by label value', () => {
@@ -93,8 +104,14 @@ describe('filterAlerts', () => {
 
 	it('should handle partial matches', () => {
 		const result = filterAlerts(mockAlerts, 'mem');
-		expect(result).toHaveLength(1);
+		expect(result).toHaveLength(2);
 		expect(result[0].alert).toBe('Memory Leak Detected');
+	});
+
+	it('should filter alerts by recovering status', () => {
+		const result = filterAlerts(mockAlerts, 'recovering');
+		expect(result).toHaveLength(1);
+		expect(result[0].labels?.status).toBe('recovering');
 	});
 
 	it('should handle alerts with missing labels', () => {
