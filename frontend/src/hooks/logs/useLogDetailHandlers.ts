@@ -1,33 +1,37 @@
 import { useCallback, useState } from 'react';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import type { UseActiveLog } from 'hooks/logs/types';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { ILog } from 'types/api/logs/log';
 
 type SelectedTab = typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined;
 
 type UseLogDetailHandlersParams = {
-	onSetActiveLog: (log: ILog) => void;
-	onClearActiveLog: () => void;
-	activeLogId?: string;
 	defaultTab?: SelectedTab;
 };
 
 type UseLogDetailHandlersResult = {
+	activeLog: UseActiveLog['activeLog'];
+	onAddToQuery: UseActiveLog['onAddToQuery'];
 	selectedTab: SelectedTab;
 	handleSetActiveLog: (log: ILog, selectedTab?: SelectedTab) => void;
 	handleCloseLogDetail: () => void;
 };
 
 function useLogDetailHandlers({
-	onSetActiveLog,
-	onClearActiveLog,
-	activeLogId,
 	defaultTab = VIEW_TYPES.OVERVIEW,
-}: UseLogDetailHandlersParams): UseLogDetailHandlersResult {
+}: UseLogDetailHandlersParams = {}): UseLogDetailHandlersResult {
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
 	const [selectedTab, setSelectedTab] = useState<SelectedTab>(defaultTab);
 
 	const handleSetActiveLog = useCallback(
 		(log: ILog, nextTab: SelectedTab = defaultTab): void => {
-			if (activeLogId === log.id) {
+			if (activeLog?.id === log.id) {
 				onClearActiveLog();
 				setSelectedTab(undefined);
 				return;
@@ -35,7 +39,7 @@ function useLogDetailHandlers({
 			onSetActiveLog(log);
 			setSelectedTab(nextTab ?? defaultTab);
 		},
-		[activeLogId, defaultTab, onClearActiveLog, onSetActiveLog],
+		[activeLog?.id, defaultTab, onClearActiveLog, onSetActiveLog],
 	);
 
 	const handleCloseLogDetail = useCallback((): void => {
@@ -44,6 +48,8 @@ function useLogDetailHandlers({
 	}, [onClearActiveLog]);
 
 	return {
+		activeLog,
+		onAddToQuery,
 		selectedTab,
 		handleSetActiveLog,
 		handleCloseLogDetail,

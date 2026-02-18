@@ -13,7 +13,6 @@ import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -48,18 +47,11 @@ function EntityLogs({
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 	const {
 		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
 		onAddToQuery,
-	} = useActiveLog();
-	const {
 		selectedTab,
 		handleSetActiveLog,
 		handleCloseLogDetail,
 	} = useLogDetailHandlers({
-		onSetActiveLog,
-		onClearActiveLog,
-		activeLogId: activeLog?.id,
 		defaultTab: VIEW_TYPES.OVERVIEW,
 	});
 

@@ -15,7 +15,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -83,23 +82,13 @@ function LogsPanelComponent({
 		() => logs.map((log) => FlatLogData(log) as RowData),
 		[logs],
 	);
-
 	const {
 		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
 		onAddToQuery,
-	} = useActiveLog();
-
-	const {
 		selectedTab,
 		handleSetActiveLog,
 		handleCloseLogDetail,
-	} = useLogDetailHandlers({
-		onSetActiveLog,
-		onClearActiveLog,
-		activeLogId: activeLog?.id,
-	});
+	} = useLogDetailHandlers();
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({

@@ -13,7 +13,6 @@ import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
@@ -39,20 +38,11 @@ function LiveLogsList({
 
 	const {
 		activeLog,
-		onClearActiveLog,
 		onAddToQuery,
-		onSetActiveLog,
-	} = useActiveLog();
-
-	const {
 		selectedTab,
 		handleSetActiveLog,
 		handleCloseLogDetail,
-	} = useLogDetailHandlers({
-		onSetActiveLog,
-		onClearActiveLog,
-		activeLogId: activeLog?.id,
-	});
+	} = useLogDetailHandlers();
 
 	// get only data from the logs object
 	const formattedLogs: ILog[] = useMemo(

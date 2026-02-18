@@ -15,7 +15,6 @@ import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
@@ -56,20 +55,11 @@ function LogsExplorerList({
 
 	const {
 		activeLog,
-		onClearActiveLog,
 		onAddToQuery,
-		onSetActiveLog,
-	} = useActiveLog();
-
-	const {
 		selectedTab,
 		handleSetActiveLog,
 		handleCloseLogDetail,
-	} = useLogDetailHandlers({
-		onSetActiveLog,
-		onClearActiveLog,
-		activeLogId: activeLog?.id,
-	});
+	} = useLogDetailHandlers();
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -148,7 +138,6 @@ function LogsExplorerList({
 			activeLog,
 			handleChangeSelectedView,
 			onAddToQuery,
-			onSetActiveLog,
 			handleSetActiveLog,
 			options.fontSize,
 			options.format,
