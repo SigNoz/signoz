@@ -158,7 +158,13 @@ func GetCloudIntegrationDashboardID(cloudProvider valuer.String, svcId, dashboar
 	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
 }
 
-func GetDashboardsFromAssets(svcId string, cloudProvider CloudProviderType, createdAt *time.Time, assets Assets) []*dashboardtypes.Dashboard {
+func GetDashboardsFromAssets(
+	svcId string,
+	orgID valuer.UUID,
+	cloudProvider CloudProviderType,
+	createdAt *time.Time,
+	assets Assets,
+) []*dashboardtypes.Dashboard {
 	dashboards := make([]*dashboardtypes.Dashboard, 0)
 
 	for _, d := range assets.Dashboards {
@@ -166,6 +172,7 @@ func GetDashboardsFromAssets(svcId string, cloudProvider CloudProviderType, crea
 		dashboards = append(dashboards, &dashboardtypes.Dashboard{
 			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcId, d.Id),
 			Locked: true,
+			OrgID:  orgID,
 			Data:   *d.Definition,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: *createdAt,

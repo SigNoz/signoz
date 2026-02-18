@@ -567,7 +567,7 @@ func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.U
 		if ok {
 			svcDashboards = append(
 				svcDashboards,
-				integrationtypes.GetDashboardsFromAssets(svc.Id, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)...,
+				integrationtypes.GetDashboardsFromAssets(svc.Id, orgID, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)...,
 			)
 			servicesWithAvailableMetrics[svc.Id] = nil
 		}
