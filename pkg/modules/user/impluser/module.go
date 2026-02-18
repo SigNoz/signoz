@@ -265,10 +265,10 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		// Wrap identity_role sync and user update in a transaction
 		if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 			// Sync identity_role: revoke old role and grant new role
-			if err := m.identity.RevokeRole(ctx, existingUser.IdentityID, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)); err != nil {
+			if err := m.identity.RevokeRole(ctx, existingUser.IdentityID, roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)); err != nil {
 				return err
 			}
-			if err := m.identity.GrantRole(ctx, existingUser.IdentityID, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(newRole)); err != nil {
+			if err := m.identity.GrantRole(ctx, existingUser.IdentityID, roletypes.MustGetSigNozManagedRoleFromExistingRole(newRole)); err != nil {
 				return err
 			}
 			// Update user
@@ -336,7 +336,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 
 	// Check if user has admin role
 	adminRoleName := roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)
-	hasAdminRole := slices.ContainsFunc(userRoles, func(r roletypes.Role) bool {
+	hasAdminRole := slices.ContainsFunc(userRoles, func(r *roletypes.Role) bool {
 		return r.Name == adminRoleName
 	})
 

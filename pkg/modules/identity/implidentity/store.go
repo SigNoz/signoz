@@ -6,15 +6,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/identitytypes"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 )
 
 type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func newStore(sqlstore sqlstore.SQLStore) *store {
+func NewStore(sqlstore sqlstore.SQLStore) identitytypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
@@ -87,46 +87,20 @@ func (s *store) DeleteIdentity(ctx context.Context, identityID valuer.UUID) erro
 	return nil
 }
 
-func (s *store) GetRolesByIdentityID(ctx context.Context, identityID valuer.UUID) ([]string, error) {
-	var roleNames []string
+func (s *store) GetRolesByIdentityID(ctx context.Context, identityID valuer.UUID) ([]*roletypes.StorableRole, error) {
+	var roles []*roletypes.StorableRole
 	err := s.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model((*identitytypes.StorableIdentityRole)(nil)).
-		Column("role_name").
-		Where("identity_id = ?", identityID).
-		Scan(ctx, &roleNames)
+		Model(&roles).
+		Join("JOIN identity_role ON identity_role.role_name = role.name").
+		Where("identity_role.identity_id = ?", identityID).
+		Scan(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get roles for identity %s", identityID)
 	}
-	return roleNames, nil
-}
-
-func (s *store) GetRolesForIdentityIDs(ctx context.Context, identityIDs []valuer.UUID) (map[string][]string, error) {
-	if len(identityIDs) == 0 {
-		return map[string][]string{}, nil
-	}
-
-	var results []identitytypes.StorableIdentityRole
-	err := s.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(&results).
-		Column("identity_id", "role_name").
-		Where("identity_id IN (?)", bun.In(identityIDs)).
-		Scan(ctx)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get roles for identities")
-	}
-
-	roleMap := make(map[string][]string)
-	for _, r := range results {
-		roleMap[r.IdentityID.StringValue()] = append(roleMap[r.IdentityID.StringValue()], r.RoleName)
-	}
-
-	return roleMap, nil
+	return roles, nil
 }
 
 func (s *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
