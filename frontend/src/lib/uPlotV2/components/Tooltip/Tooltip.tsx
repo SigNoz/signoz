@@ -11,6 +11,7 @@ import './Tooltip.styles.scss';
 
 const TOOLTIP_LIST_MAX_HEIGHT = 330;
 const TOOLTIP_ITEM_HEIGHT = 38;
+const TOOLTIP_LIST_PADDING = 10;
 
 export default function Tooltip({
 	uPlotInstance,
@@ -41,13 +42,14 @@ export default function Tooltip({
 		showTooltipHeader,
 	]);
 
-	const virtuosoHeight =
-		listHeight > 0
-			? Math.min(listHeight + 10, TOOLTIP_LIST_MAX_HEIGHT)
+	const virtuosoHeight = useMemo(() => {
+		return listHeight > 0
+			? Math.min(listHeight + TOOLTIP_LIST_PADDING, TOOLTIP_LIST_MAX_HEIGHT)
 			: Math.min(
 					tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
 					TOOLTIP_LIST_MAX_HEIGHT,
 			  );
+	}, [listHeight, tooltipContent.length]);
 
 	return (
 		<div
