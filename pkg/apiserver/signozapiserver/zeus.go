@@ -27,7 +27,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/deployments", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutProfile), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/deployments", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.GetDeployment), handler.OpenAPIDef{
 		ID:                  "GetDeploymentsFromZeus",
 		Tags:                []string{"zeus"},
 		Summary:             "Get deployments from Zeus.",
