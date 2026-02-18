@@ -1,6 +1,6 @@
 package zeustypes
 
-import "encoding/json"
+import "github.com/tidwall/gjson"
 
 type PostableHost struct {
 	Name string `json:"name" required:"true"`
@@ -22,52 +22,33 @@ type GettableZeusHost struct {
 	Name  string `json:"name"`
 	State string `json:"state"`
 	Tier  string `json:"tier"`
-	Hosts []struct {
-		Name      string `json:"name"`
-		IsDefault bool   `json:"is_default"`
-		URL       string `json:"url"`
-	} `json:"hosts"`
+	Hosts []Host `json:"hosts"`
+}
+
+type Host struct {
+	Name      string `json:"name"`
+	IsDefault bool   `json:"is_default"`
+	URL       string `json:"url"`
 }
 
 func NewGettableZeusHost(data []byte) *GettableZeusHost {
-	type zeusDeploymentResponse struct {
-		Name  string `json:"name"`
-		State string `json:"state"`
-		Tier  string `json:"tier"`
-		Hosts []struct {
-			Name      string `json:"name"`
-			IsDefault bool   `json:"is_default"`
-		} `json:"hosts"`
-		Cluster struct {
-			Region struct {
-				DNS string `json:"dns"`
-			} `json:"region"`
-		} `json:"cluster"`
-	}
-	
-	deployment := new(zeusDeploymentResponse)
-	if err := json.Unmarshal(data, deployment); err != nil {
-		return nil
-	}
+	parsed := gjson.ParseBytes(data)
+	dns := parsed.Get("cluster.region.dns").String()
 
-	dns := deployment.Cluster.Region.DNS
+	hostResults := parsed.Get("hosts").Array()
+	hosts := make([]Host, len(hostResults))
 
-	hosts := make([]struct {
-		Name      string `json:"name"`
-		IsDefault bool   `json:"is_default"`
-		URL       string `json:"url"`
-	}, len(deployment.Hosts))
-
-	for i, h := range deployment.Hosts {
-		hosts[i].Name = h.Name
-		hosts[i].IsDefault = h.IsDefault
-		hosts[i].URL = h.Name + "." + dns
+	for i, h := range hostResults {
+		name := h.Get("name").String()
+		hosts[i].Name = name
+		hosts[i].IsDefault = h.Get("is_default").Bool()
+		hosts[i].URL = name + "." + dns
 	}
 
 	return &GettableZeusHost{
-		Name:  deployment.Name,
-		State: deployment.State,
-		Tier:  deployment.Tier,
+		Name:  parsed.Get("name").String(),
+		State: parsed.Get("state").String(),
+		Tier:  parsed.Get("tier").String(),
 		Hosts: hosts,
 	}
 }
