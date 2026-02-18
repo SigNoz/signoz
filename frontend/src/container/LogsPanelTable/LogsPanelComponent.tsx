@@ -8,7 +8,6 @@ import {
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -17,6 +16,7 @@ import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -24,7 +24,6 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
@@ -92,23 +91,26 @@ function LogsPanelComponent({
 		onAddToQuery,
 	} = useActiveLog();
 
-	const handleSetActiveLog = useCallback(
-		(log: ILog) => {
-			onSetActiveLog(log);
-		},
-		[onSetActiveLog],
-	);
+	const {
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers({
+		onSetActiveLog,
+		onClearActiveLog,
+		activeLogId: activeLog?.id,
+	});
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (): void => {
 				const log = logs.find((item) => item.id === record.id);
 				if (log) {
-					onSetActiveLog(log);
+					handleSetActiveLog(log);
 				}
 			},
 		}),
-		[logs, onSetActiveLog],
+		[handleSetActiveLog, logs],
 	);
 
 	const handleRequestData = (newOffset: number): void => {
@@ -174,17 +176,19 @@ function LogsPanelComponent({
 					</div>
 				)}
 			</div>
-			<LogDetail
-				selectedTab={VIEW_TYPES.OVERVIEW}
-				log={activeLog}
-				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-				isListViewPanel
-				listViewPanelSelectedFields={widget?.selectedLogFields}
-				logs={logs}
-				onNavigateLog={handleSetActiveLog}
-			/>
+			{selectedTab && activeLog && (
+				<LogDetail
+					selectedTab={selectedTab}
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+					isListViewPanel
+					listViewPanelSelectedFields={widget?.selectedLogFields}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+				/>
+			)}
 		</>
 	);
 }

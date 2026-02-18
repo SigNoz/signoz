@@ -1,8 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -16,6 +15,8 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useEventSource } from 'providers/EventSource';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -31,7 +32,6 @@ function LiveLogsList({
 	handleChangeSelectedView,
 }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-	const logRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 
 	const { isConnectionLoading } = useEventSource();
 
@@ -44,9 +44,15 @@ function LiveLogsList({
 		onSetActiveLog,
 	} = useActiveLog();
 
-	const [selectedTab, setSelectedTab] = useState<
-		typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined
-	>();
+	const {
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers({
+		onSetActiveLog,
+		onClearActiveLog,
+		activeLogId: activeLog?.id,
+	});
 
 	// get only data from the logs object
 	const formattedLogs: ILog[] = useMemo(
@@ -70,54 +76,16 @@ function LiveLogsList({
 		...options.selectColumns,
 	]);
 
-	const handleSetActiveLog = useCallback(
-		(
-			log: ILog,
-			selectedTab: typeof VIEW_TYPES[keyof typeof VIEW_TYPES] = VIEW_TYPES.OVERVIEW,
-		) => {
-			onSetActiveLog(log);
-			setSelectedTab(selectedTab);
-		},
-		[onSetActiveLog],
-	);
-
-	const handleCloseLogDetail = useCallback(() => {
-		onClearActiveLog();
-		setSelectedTab(undefined);
-	}, [onClearActiveLog]);
-
-	const handleScrollToLog = useCallback((logId: string): void => {
-		const logElement = logRefsMap.current.get(logId);
-		if (logElement) {
-			logElement.scrollIntoView({
-				behavior: 'smooth',
-				block: 'nearest',
-			});
-		} else {
-			// If element is not in viewport, wait a bit for virtualization to render it
-			setTimeout(() => {
-				const element = logRefsMap.current.get(logId);
-				if (element) {
-					element.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest',
-					});
-				}
-			}, 100);
-		}
-	}, []);
+	const handleScrollToLog = useScrollToLog({
+		logs: formattedLogs,
+		virtuosoRef: ref,
+	});
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
-			const getItemRef = (element: HTMLElement | null): void => {
-				if (element) {
-					logRefsMap.current.set(log.id, element);
-				}
-			};
-
 			if (options.format === 'raw') {
 				return (
-					<div key={log.id} ref={getItemRef}>
+					<div key={log.id}>
 						<RawLogView
 							data={log}
 							isActiveLog={activeLog?.id === log.id}
@@ -133,7 +101,7 @@ function LiveLogsList({
 			}
 
 			return (
-				<div key={log.id} ref={getItemRef}>
+				<div key={log.id}>
 					<ListLogView
 						logData={log}
 						isActiveLog={activeLog?.id === log.id}
@@ -158,7 +126,6 @@ function LiveLogsList({
 			handleSetActiveLog,
 			handleCloseLogDetail,
 			handleChangeSelectedView,
-			logRefsMap,
 		],
 	);
 
@@ -173,22 +140,6 @@ function LiveLogsList({
 			behavior: 'smooth',
 		});
 	}, [activeLogId, activeLogIndex]);
-
-	// Clean up stale refs when logs change
-	useEffect(() => {
-		const logIds = new Set(formattedLogs.map((log) => log.id));
-		const refsToDelete: string[] = [];
-
-		logRefsMap.current.forEach((_, logId) => {
-			if (!logIds.has(logId)) {
-				refsToDelete.push(logId);
-			}
-		});
-
-		refsToDelete.forEach((logId) => {
-			logRefsMap.current.delete(logId);
-		});
-	}, [formattedLogs]);
 
 	const isLoadingList = isConnectionLoading && formattedLogs.length === 0;
 
@@ -234,7 +185,6 @@ function LiveLogsList({
 							onSetActiveLog={handleSetActiveLog}
 							onClearActiveLog={handleCloseLogDetail}
 							activeLog={activeLog}
-							logRefsMap={logRefsMap}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>

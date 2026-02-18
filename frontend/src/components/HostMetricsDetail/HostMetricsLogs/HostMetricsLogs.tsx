@@ -1,10 +1,9 @@
 /* eslint-disable no-nested-ternary */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -13,6 +12,8 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { ILog } from 'types/api/logs/log';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -32,16 +33,21 @@ interface Props {
 
 function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
-	const logRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 	const {
 		activeLog,
 		onSetActiveLog,
 		onClearActiveLog,
 		onAddToQuery,
 	} = useActiveLog();
-	const [selectedTab, setSelectedTab] = useState<
-		typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined
-	>();
+	const {
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers({
+		onSetActiveLog,
+		onClearActiveLog,
+		activeLogId: activeLog?.id,
+	});
 
 	const basePayload = getHostLogsQueryPayload(
 		timeRange.startTime,
@@ -87,88 +93,15 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		setIsPaginating(false);
 	}, [data, setIsPaginating]);
 
-	// Clean up stale refs when logs change
-	useEffect(() => {
-		const logIds = new Set(logs.map((log) => log.id));
-		const refsToDelete: string[] = [];
-
-		logRefsMap.current.forEach((_, logId) => {
-			if (!logIds.has(logId)) {
-				refsToDelete.push(logId);
-			}
-		});
-
-		refsToDelete.forEach((logId) => {
-			logRefsMap.current.delete(logId);
-		});
-	}, [logs]);
-
-	const handleSetActiveLog = useCallback(
-		(
-			log: ILog,
-			selectedTab: typeof VIEW_TYPES[keyof typeof VIEW_TYPES] = VIEW_TYPES.OVERVIEW,
-		) => {
-			if (activeLog?.id === log.id) {
-				onClearActiveLog();
-				setSelectedTab(undefined);
-				return;
-			}
-			onSetActiveLog(log);
-			setSelectedTab(selectedTab);
-		},
-		[activeLog?.id, onClearActiveLog, onSetActiveLog],
-	);
-
-	const handleCloseLogDetail = useCallback((): void => {
-		onClearActiveLog();
-		setSelectedTab(undefined);
-	}, [onClearActiveLog]);
-
-	const handleScrollToLog = useCallback(
-		(logId: string): void => {
-			const logIndex = logs.findIndex(({ id }) => id === logId);
-			if (logIndex !== -1 && virtuosoRef.current) {
-				virtuosoRef.current.scrollToIndex({
-					index: logIndex,
-					align: 'center',
-					behavior: 'smooth',
-				});
-				return;
-			}
-
-			const logElement = logRefsMap.current.get(logId);
-			if (logElement) {
-				logElement.scrollIntoView({
-					behavior: 'smooth',
-					block: 'nearest',
-				});
-				return;
-			}
-
-			// If element is not in viewport, wait a bit for virtualization to render it
-			setTimeout(() => {
-				const element = logRefsMap.current.get(logId);
-				if (element) {
-					element.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest',
-					});
-				}
-			}, 100);
-		},
-		[logs],
-	);
+	const handleScrollToLog = useScrollToLog({
+		logs,
+		virtuosoRef,
+	});
 
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => {
-			const getItemRef = (element: HTMLElement | null): void => {
-				if (element) {
-					logRefsMap.current.set(logToRender.id, element);
-				}
-			};
-
 			return (
-				<div key={logToRender.id} ref={getItemRef}>
+				<div key={logToRender.id}>
 					<RawLogView
 						isTextOverflowEllipsisDisabled
 						data={logToRender}
@@ -193,7 +126,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 				</div>
 			);
 		},
-		[activeLog, handleSetActiveLog, handleCloseLogDetail, logRefsMap],
+		[activeLog, handleSetActiveLog, handleCloseLogDetail],
 	);
 
 	const renderFooter = useCallback(

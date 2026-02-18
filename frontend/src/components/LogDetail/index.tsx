@@ -79,9 +79,6 @@ function LogDetailInner({
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
-	const [activeTooltip, setActiveTooltip] = useState<'prev' | 'next' | null>(
-		null,
-	);
 	const { stagedQuery, updateAllQueriesOperators } = useQueryBuilder();
 
 	// Handle clicks outside to close drawer, except on explicitly ignored regions
@@ -98,13 +95,9 @@ function LogDetailInner({
 			onClose?.(e as any);
 		};
 
-		// Add listener after a small delay to avoid immediate closure
-		const timeoutId = setTimeout(() => {
-			document.addEventListener('mousedown', handleClickOutside);
-		}, 100);
+		document.addEventListener('mousedown', handleClickOutside);
 
 		return (): void => {
-			clearTimeout(timeoutId);
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
 	}, [onClose]);
@@ -322,15 +315,11 @@ function LogDetailInner({
 		logs.length === 0 ||
 		currentLogIndex === logs.length - 1;
 
-	const handleNavigateLog = (
-		logs: LogDetailInnerProps['logs'],
-		log: LogDetailInnerProps['log'],
-		onNavigateLog: LogDetailInnerProps['onNavigateLog'],
-		onScrollToLog: LogDetailInnerProps['onScrollToLog'],
-		direction: 'next' | 'previous',
-		// eslint-disable-next-line max-params
-	): void => {
-		setActiveTooltip(null);
+	type HandleNavigateLogParams = {
+		direction: 'next' | 'previous';
+	};
+
+	const handleNavigateLog = ({ direction }: HandleNavigateLogParams): void => {
 		if (!logs || !onNavigateLog || currentLogIndex === -1) {
 			return;
 		}
@@ -362,34 +351,24 @@ function LogDetailInner({
 								title={isPrevDisabled ? '' : 'Move to previous log'}
 								placement="top"
 								mouseLeaveDelay={0}
-								open={isPrevDisabled ? false : activeTooltip === 'prev'}
 							>
 								<Button
 									icon={<ChevronUp size={14} />}
 									className="log-arrow-btn log-arrow-btn-up"
 									disabled={isPrevDisabled}
-									onMouseEnter={(): void => setActiveTooltip('prev')}
-									onMouseLeave={(): void => setActiveTooltip(null)}
-									onClick={(): void =>
-										handleNavigateLog(logs, log, onNavigateLog, onScrollToLog, 'previous')
-									}
+									onClick={(): void => handleNavigateLog({ direction: 'previous' })}
 								/>
 							</Tooltip>
 							<Tooltip
 								title={isNextDisabled ? '' : 'Move to next log'}
 								placement="top"
 								mouseLeaveDelay={0}
-								open={isNextDisabled ? false : activeTooltip === 'next'}
 							>
 								<Button
 									icon={<ChevronDown size={14} />}
 									className="log-arrow-btn log-arrow-btn-down"
 									disabled={isNextDisabled}
-									onMouseEnter={(): void => setActiveTooltip('next')}
-									onMouseLeave={(): void => setActiveTooltip(null)}
-									onClick={(): void =>
-										handleNavigateLog(logs, log, onNavigateLog, onScrollToLog, 'next')
-									}
+									onClick={(): void => handleNavigateLog({ direction: 'next' })}
 								/>
 							</Tooltip>
 						</div>

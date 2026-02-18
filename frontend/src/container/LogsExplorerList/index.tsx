@@ -1,10 +1,9 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -18,6 +17,8 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import APIError from 'types/api/error';
 // interfaces
@@ -51,7 +52,6 @@ function LogsExplorerList({
 	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-	const logRefsMap = useRef<Map<string, HTMLElement>>(new Map());
 	const { activeLogId } = useCopyLogLink();
 
 	const {
@@ -61,9 +61,15 @@ function LogsExplorerList({
 		onSetActiveLog,
 	} = useActiveLog();
 
-	const [selectedTab, setSelectedTab] = useState<
-		typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined
-	>();
+	const {
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers({
+		onSetActiveLog,
+		onClearActiveLog,
+		activeLogId: activeLog?.id,
+	});
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -88,56 +94,10 @@ function LogsExplorerList({
 		[options],
 	);
 
-	const handleSetActiveLog = useCallback(
-		(
-			log: ILog,
-			selectedTab: typeof VIEW_TYPES[keyof typeof VIEW_TYPES] = VIEW_TYPES.OVERVIEW,
-		) => {
-			onSetActiveLog(log);
-			setSelectedTab(selectedTab);
-		},
-		[onSetActiveLog],
-	);
-
-	const handleCloseLogDetail = useCallback(() => {
-		onClearActiveLog();
-		setSelectedTab(undefined);
-	}, [onClearActiveLog]);
-
-	const handleScrollToLog = useCallback(
-		(logId: string): void => {
-			const logIndex = logs.findIndex(({ id }) => id === logId);
-			if (logIndex !== -1 && ref.current) {
-				ref.current.scrollToIndex({
-					index: logIndex,
-					align: 'center',
-					behavior: 'smooth',
-				});
-				return;
-			}
-
-			const logElement = logRefsMap.current.get(logId);
-			if (logElement) {
-				logElement.scrollIntoView({
-					behavior: 'smooth',
-					block: 'nearest',
-				});
-				return;
-			}
-
-			// If element is not in viewport, wait a bit for virtualization to render it
-			setTimeout(() => {
-				const element = logRefsMap.current.get(logId);
-				if (element) {
-					element.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest',
-					});
-				}
-			}, 100);
-		},
-		[logs],
-	);
+	const handleScrollToLog = useScrollToLog({
+		logs,
+		virtuosoRef: ref,
+	});
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && logs.length !== 0) {
@@ -147,33 +107,11 @@ function LogsExplorerList({
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
 
-	// Clean up stale refs when logs change
-	useEffect(() => {
-		const logIds = new Set(logs.map((log) => log.id));
-		const refsToDelete: string[] = [];
-
-		logRefsMap.current.forEach((_, logId) => {
-			if (!logIds.has(logId)) {
-				refsToDelete.push(logId);
-			}
-		});
-
-		refsToDelete.forEach((logId) => {
-			logRefsMap.current.delete(logId);
-		});
-	}, [logs]);
-
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
-			const getItemRef = (element: HTMLElement | null): void => {
-				if (element) {
-					logRefsMap.current.set(log.id, element);
-				}
-			};
-
 			if (options.format === 'raw') {
 				return (
-					<div key={log.id} ref={getItemRef}>
+					<div key={log.id}>
 						<RawLogView
 							data={log}
 							isActiveLog={activeLog?.id === log.id}
@@ -189,7 +127,7 @@ function LogsExplorerList({
 			}
 
 			return (
-				<div key={log.id} ref={getItemRef}>
+				<div key={log.id}>
 					<ListLogView
 						logData={log}
 						isActiveLog={activeLog?.id === log.id}
@@ -245,7 +183,6 @@ function LogsExplorerList({
 					onSetActiveLog={handleSetActiveLog}
 					onClearActiveLog={handleCloseLogDetail}
 					activeLog={activeLog}
-					logRefsMap={logRefsMap}
 				/>
 			);
 		}
