@@ -426,7 +426,10 @@ func (a *awsProvider) getServiceMetricsConnectionStatus(
 
 		queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
 		if !ok {
-			continue
+			a.logger.ErrorContext(ctx, "unexpected query response type for service metrics connection status",
+				"service", def.DefinitionMetadata.Id,
+			)
+			return nil, errors.NewInternalf(errors.CodeInternal, "unexpected query response type: %T", resp.Data.Results[0])
 		}
 
 		if queryResponse == nil ||
@@ -524,7 +527,10 @@ func (a *awsProvider) getServiceLogsConnectionStatus(
 
 		queryResponse, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
 		if !ok {
-			continue
+			a.logger.ErrorContext(ctx, "unexpected query response type for service logs connection status",
+				"service", def.DefinitionMetadata.Id,
+			)
+			return nil, errors.NewInternalf(errors.CodeInternal, "unexpected query response type: %T", resp.Data.Results[0])
 		}
 
 		if queryResponse == nil ||
