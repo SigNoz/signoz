@@ -7,4 +7,5 @@ export interface UpdateProfileProps {
 	number_of_services: number;
 	number_of_hosts: number;
 	where_did_you_discover_signoz: string;
+	timeline_for_migrating_to_signoz: string;
 }

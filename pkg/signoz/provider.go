@@ -167,6 +167,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateRbacToAuthzFactory(sqlstore),
 		sqlmigration.NewMigratePublicDashboardsFactory(sqlstore),
 		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
+		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
 	)
 }
 

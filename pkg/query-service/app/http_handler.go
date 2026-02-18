@@ -182,7 +182,7 @@ type APIHandlerOpts struct {
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
+func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, error) {
 	querierOpts := querier.QuerierOptions{
 		Reader:       opts.Reader,
 		Cache:        opts.Signoz.Cache,
@@ -267,6 +267,11 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		if count > 0 {
 			aH.SetupCompleted = true
 		}
+	}
+
+	// If the root user is enabled, the setup is complete
+	if config.User.Root.Enabled {
+		aH.SetupCompleted = true
 	}
 
 	aH.Upgrader = &websocket.Upgrader{
@@ -2055,7 +2060,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	organization := types.NewOrganization(req.OrgDisplayName)
+	organization := types.NewOrganization(req.OrgDisplayName, req.OrgName)
 	user, errv2 := aH.Signoz.Modules.User.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
 	if errv2 != nil {
 		render.Error(w, errv2)

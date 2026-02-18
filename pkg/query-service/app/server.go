@@ -132,7 +132,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
-	})
+	}, config)
 	if err != nil {
 		return nil, err
 	}

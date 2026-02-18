@@ -389,6 +389,8 @@ func New(
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard)
 
+	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
+
 	// Initialize all handlers for the modules
 	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, gateway, telemetryMetadataStore, authz)
 
@@ -438,6 +440,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
+		factory.NewNamedService(factory.MustNewName("user"), userService),
 	)
 	if err != nil {
 		return nil, err
