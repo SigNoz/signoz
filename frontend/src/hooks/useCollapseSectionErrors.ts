@@ -16,6 +16,7 @@ export function useCollapseSectionErrors(
 	specificFields?: string[][],
 ): CollapseSectionErrors {
 	const form = Form.useFormInstance();
+	// Refer: https://github.com/SigNoz/signoz/pull/10276#discussion_r2819372174
 	Form.useWatch([], form);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity

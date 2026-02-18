@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/button';
+import { Trash2, X } from '@signozhq/icons';
+import { Modal, Typography } from 'antd';
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
@@ -24,6 +26,7 @@ import CreateEdit from './CreateEdit/CreateEdit';
 import Toggle from './Toggle';
 
 import './AuthDomain.styles.scss';
+import '../../IngestionSettings/IngestionSettings.styles.scss';
 
 export const SSOType = new Map<string, string>([
 	['google_auth', 'Google Auth'],
@@ -35,6 +38,11 @@ export const SSOType = new Map<string, string>([
 function AuthDomain(): JSX.Element {
 	const [record, setRecord] = useState<AuthtypesGettableAuthDomainDTO>();
 	const [addDomain, setAddDomain] = useState<boolean>(false);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [
+		activeDomain,
+		setActiveDomain,
+	] = useState<AuthtypesGettableAuthDomainDTO | null>(null);
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
@@ -46,38 +54,55 @@ function AuthDomain(): JSX.Element {
 		refetch: refetchAuthDomainListResponse,
 	} = useListAuthDomains();
 
-	const { mutate: deleteAuthDomain } = useDeleteAuthDomain<
+	const { mutate: deleteAuthDomain, isLoading } = useDeleteAuthDomain<
 		AxiosError<RenderErrorResponseDTO>
 	>();
 
-	const handleDeleteDomain = useCallback(
-		(id: string): void => {
-			deleteAuthDomain(
-				{ pathParams: { id } },
-				{
-					onSuccess: () => {
-						notifications.success({
-							message: 'Domain deleted successfully',
-						});
-						refetchAuthDomainListResponse();
-					},
-					onError: (error) => {
-						try {
-							ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-						} catch (apiError) {
-							showErrorModal(apiError as APIError);
-						}
-					},
-				},
-			);
+	const showDeleteModal = useCallback(
+		(domain: AuthtypesGettableAuthDomainDTO): void => {
+			setActiveDomain(domain);
+			setIsDeleteModalOpen(true);
 		},
-		[
-			deleteAuthDomain,
-			notifications,
-			refetchAuthDomainListResponse,
-			showErrorModal,
-		],
+		[],
 	);
+
+	const hideDeleteModal = useCallback((): void => {
+		setIsDeleteModalOpen(false);
+		setActiveDomain(null);
+	}, []);
+
+	const handleDeleteDomain = useCallback((): void => {
+		if (!activeDomain?.id) {
+			return;
+		}
+
+		deleteAuthDomain(
+			{ pathParams: { id: activeDomain.id } },
+			{
+				onSuccess: () => {
+					notifications.success({
+						message: 'Domain deleted successfully',
+					});
+					refetchAuthDomainListResponse();
+					hideDeleteModal();
+				},
+				onError: (error) => {
+					try {
+						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+					} catch (apiError) {
+						showErrorModal(apiError as APIError);
+					}
+				},
+			},
+		);
+	}, [
+		activeDomain,
+		deleteAuthDomain,
+		hideDeleteModal,
+		notifications,
+		refetchAuthDomainListResponse,
+		showErrorModal,
+	]);
 
 	const formattedError = useMemo(() => {
 		if (!errorFetchingAuthDomainListResponse) {
@@ -145,11 +170,7 @@ function AuthDomain(): JSX.Element {
 						</Button>
 						<Button
 							className="auth-domain-list-action-link delete"
-							onClick={(): void => {
-								if (record.id) {
-									handleDeleteDomain(record.id);
-								}
-							}}
+							onClick={(): void => showDeleteModal(record)}
 							variant="link"
 						>
 							Delete
@@ -158,7 +179,7 @@ function AuthDomain(): JSX.Element {
 				),
 			},
 		],
-		[handleDeleteDomain],
+		[showDeleteModal],
 	);
 
 	return (
@@ -201,6 +222,39 @@ function AuthDomain(): JSX.Element {
 					}}
 				/>
 			)}
+
+			<Modal
+				className="delete-ingestion-key-modal"
+				title={<span className="title">Delete Domain</span>}
+				open={isDeleteModalOpen}
+				closable
+				onCancel={hideDeleteModal}
+				destroyOnClose
+				footer={[
+					<Button
+						key="cancel"
+						onClick={hideDeleteModal}
+						className="cancel-btn"
+						prefixIcon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						prefixIcon={<Trash2 size={16} />}
+						onClick={handleDeleteDomain}
+						className="delete-btn"
+						loading={isLoading}
+					>
+						Delete Domain
+					</Button>,
+				]}
+			>
+				<Typography.Text className="delete-text">
+					Are you sure you want to delete the domain{' '}
+					<strong>{activeDomain?.name}</strong>? This action cannot be undone.
+				</Typography.Text>
+			</Modal>
 		</div>
 	);
 }
