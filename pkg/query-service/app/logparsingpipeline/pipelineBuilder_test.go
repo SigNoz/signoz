@@ -700,7 +700,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 }
 
 func TestContainsFilterIsCaseInsensitive(t *testing.T) {
-	// The contains and ncontains query builder filters are case insensitive when querying logs.
+	// The CONTAINS and NOT CONTAINS query builder filters are case insensitive when querying logs.
 	// Pipeline filter should also behave in the same way.
 	require := require.New(t)
 
@@ -742,7 +742,7 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 			Enabled: true,
 		},
 		Filter: &qbtypes.Filter{
-			Expression: "body NCONTAINS 'ecom'",
+			Expression: "body NOT CONTAINS 'ecom'",
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
