@@ -352,19 +352,6 @@ func (a *azureProvider) getServiceConnectionStatus(
 	wg := sync.WaitGroup{}
 
 	if def.Strategy.AzureMetrics != nil {
-		enabled := false
-
-		for _, cfg := range serviceConfig.Metrics {
-			if cfg.Enabled {
-				enabled = true
-				break
-			}
-		}
-
-		if !enabled {
-			return resp, nil
-		}
-
 		wg.Add(1)
 		go func() {
 			defer func() {
@@ -377,25 +364,26 @@ func (a *azureProvider) getServiceConnectionStatus(
 				}
 			}()
 			defer wg.Done()
+
+			enabled := false
+
+			for _, cfg := range serviceConfig.Metrics {
+				if cfg.Enabled {
+					enabled = true
+					break
+				}
+			}
+
+			if !enabled {
+				return
+			}
+
 			status, _ := a.getServiceMetricsConnectionStatus(ctx, cloudAccountID, orgID, def)
 			resp.Metrics = status
 		}()
 	}
 
 	if def.Strategy.AzureLogs != nil {
-		enabled := false
-
-		for _, cfg := range serviceConfig.Logs {
-			if cfg.Enabled {
-				enabled = true
-				break
-			}
-		}
-
-		if !enabled {
-			return resp, nil
-		}
-
 		wg.Add(1)
 		go func() {
 			defer func() {
@@ -408,6 +396,20 @@ func (a *azureProvider) getServiceConnectionStatus(
 				}
 			}()
 			defer wg.Done()
+
+			enabled := false
+
+			for _, cfg := range serviceConfig.Logs {
+				if cfg.Enabled {
+					enabled = true
+					break
+				}
+			}
+
+			if !enabled {
+				return
+			}
+
 			status, _ := a.getServiceLogsConnectionStatus(ctx, cloudAccountID, orgID, def)
 			resp.Logs = status
 		}()
