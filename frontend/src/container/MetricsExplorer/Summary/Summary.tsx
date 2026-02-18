@@ -99,17 +99,25 @@ function Summary(): JSX.Element {
 		return convertFiltersToExpression(filters);
 	}, [query?.filters]);
 
-	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(
-		() => ({
+	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(() => {
+		return {
 			start: convertNanoToMilliseconds(minTime),
 			end: convertNanoToMilliseconds(maxTime),
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
 			orderBy,
-			filter: queryFilterExpression,
-		}),
-		[minTime, maxTime, orderBy, pageSize, currentPage, queryFilterExpression],
-	);
+			filter: {
+				expression: queryFilterExpression.expression,
+			},
+		};
+	}, [
+		minTime,
+		maxTime,
+		orderBy,
+		pageSize,
+		currentPage,
+		queryFilterExpression.expression,
+	]);
 
 	const metricsTreemapQuery: MetricsexplorertypesTreemapRequestDTO = useMemo(
 		() => ({
@@ -118,9 +126,11 @@ function Summary(): JSX.Element {
 			start: convertNanoToMilliseconds(minTime),
 			end: convertNanoToMilliseconds(maxTime),
 			mode: heatmapView,
-			filter: queryFilterExpression,
+			filter: {
+				expression: queryFilterExpression.expression,
+			},
 		}),
-		[heatmapView, minTime, maxTime, queryFilterExpression],
+		[heatmapView, minTime, maxTime, queryFilterExpression.expression],
 	);
 
 	const {
@@ -129,12 +139,6 @@ function Summary(): JSX.Element {
 		isLoading: isGetMetricsStatsLoading,
 		isError: isGetMetricsStatsError,
 	} = useGetMetricsStats();
-
-	useEffect(() => {
-		getMetricsStats({
-			data: metricsListQuery,
-		});
-	}, [metricsListQuery, getMetricsStats]);
 
 	const isListViewError = useMemo(
 		() => isGetMetricsStatsError || metricsData?.status !== 200,
@@ -149,10 +153,18 @@ function Summary(): JSX.Element {
 	} = useGetMetricsTreemap();
 
 	useEffect(() => {
+		getMetricsStats({
+			data: metricsListQuery,
+		});
 		getMetricsTreemap({
 			data: metricsTreemapQuery,
 		});
-	}, [metricsTreemapQuery, getMetricsTreemap]);
+	}, [
+		metricsTreemapQuery,
+		metricsListQuery,
+		getMetricsTreemap,
+		getMetricsStats,
+	]);
 
 	const isProportionViewError = useMemo(
 		() => isGetMetricsTreemapError || treeMapData?.status !== 200,
