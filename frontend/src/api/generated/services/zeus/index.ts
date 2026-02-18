@@ -35,7 +35,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  */
 export const getDeploymentsFromZeus = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<GetDeploymentsFromZeus200>({
-		url: `/api/v2/zeus/deployments`,
+		url: `/api/v2/zeus/hosts`,
 		method: 'GET',
 		signal,
 	});

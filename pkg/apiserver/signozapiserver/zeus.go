@@ -27,11 +27,11 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/deployments", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.GetHostFromZeus), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.GetHostFromZeus), handler.OpenAPIDef{
 		ID:                  "GetDeploymentsFromZeus",
 		Tags:                []string{"zeus"},
-		Summary:             "Get deployments from Zeus.",
-		Description:         "This endpoint gets the deployment info from zeus.",
+		Summary:             "Get host info from Zeus.",
+		Description:         "This endpoint gets the host info from zeus.",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(zeustypes.GettableZeusHost),
