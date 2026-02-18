@@ -28,18 +28,18 @@ def test_duplicate_user_invite_rejected(
         timeout=2,
     )
     assert invite_response.status_code == HTTPStatus.CREATED
-    first_invite_token = invite_response.json()["data"]["token"]
+    initial_invite_token = invite_response.json()["data"]["token"]
 
     # Step 2: Accept the invite to create the user.
     accept_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={"token": first_invite_token, "password": "password123Z$"},
+        json={"token": initial_invite_token, "password": "password123Z$"},
         timeout=2,
     )
     assert accept_response.status_code == HTTPStatus.CREATED
 
     # Step 3: Invite the same email again.
-    second_invite_response = requests.post(
+    duplicate_invite_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": DUPLICATE_USER_EMAIL, "role": "VIEWER"},
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -47,16 +47,16 @@ def test_duplicate_user_invite_rejected(
     )
 
     # The invite creation itself may be rejected if the app checks for existing users.
-    if second_invite_response.status_code != HTTPStatus.CREATED:
-        assert second_invite_response.status_code == HTTPStatus.CONFLICT
+    if duplicate_invite_response.status_code != HTTPStatus.CREATED:
+        assert duplicate_invite_response.status_code == HTTPStatus.CONFLICT
         return
 
-    second_invite_token = second_invite_response.json()["data"]["token"]
+    duplicate_invite_token = duplicate_invite_response.json()["data"]["token"]
 
-    # Step 4: Accept the second invite — should fail due to unique constraint.
-    second_accept_response = requests.post(
+    # Step 4: Accept the duplicate invite — should fail due to unique constraint.
+    duplicate_accept_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={"token": second_invite_token, "password": "password123Z$"},
+        json={"token": duplicate_invite_token, "password": "password123Z$"},
         timeout=2,
     )
-    assert second_accept_response.status_code == HTTPStatus.CONFLICT
+    assert duplicate_accept_response.status_code == HTTPStatus.CONFLICT
