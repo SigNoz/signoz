@@ -2402,141 +2402,7 @@ export interface TypesUserDTO {
 	updatedAt?: Date;
 }
 
-export interface ZeustypesClusterResponseModelDTO {
-	/**
-	 * @type string
-	 */
-	address?: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	buffer?: number;
-	/**
-	 * @type string
-	 */
-	ca?: string;
-	/**
-	 * @type string
-	 */
-	cloud_account_id?: string;
-	/**
-	 * @type string
-	 */
-	cloud_provider?: string;
-	/**
-	 * @type string
-	 */
-	cloud_region?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	created_at?: Date;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	region?: ZeustypesRegionModelDTO;
-	/**
-	 * @type string
-	 */
-	region_id?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updated_at?: Date;
-}
-
-export interface ZeustypesDeploymentHistoryModelDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	created_at?: Date;
-	/**
-	 * @type string
-	 */
-	deployment_id?: string;
-	/**
-	 * @type string
-	 */
-	event?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	state_after?: string;
-	/**
-	 * @type string
-	 */
-	state_before?: string;
-}
-
-export interface ZeustypesGettableDeploymentDTO {
-	cluster?: ZeustypesClusterResponseModelDTO;
-	/**
-	 * @type string
-	 */
-	cluster_id?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	created_at?: Date;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	histories?: ZeustypesDeploymentHistoryModelDTO[] | null;
-	/**
-	 * @type array
-	 */
-	hosts?: ZeustypesHostModelDTO[];
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	license_id?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-	/**
-	 * @type string
-	 */
-	state?: string;
-	/**
-	 * @type string
-	 */
-	tier?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updated_at?: Date;
-	/**
-	 * @type string
-	 */
-	user?: string;
-}
-
-export interface ZeustypesHostModelDTO {
+export type ZeustypesGettableZeusHostDTOHostsItem = {
 	/**
 	 * @type boolean
 	 */
@@ -2545,6 +2411,30 @@ export interface ZeustypesHostModelDTO {
 	 * @type string
 	 */
 	name?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+};
+
+export interface ZeustypesGettableZeusHostDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	hosts?: ZeustypesGettableZeusHostDTOHostsItem[] | null;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	state?: string;
+	/**
+	 * @type string
+	 */
+	tier?: string;
 }
 
 export interface ZeustypesPostableHostDTO {
@@ -2595,35 +2485,6 @@ export interface ZeustypesPostableProfileDTO {
 	 * @type string
 	 */
 	where_did_you_discover_signoz?: string;
-}
-
-export interface ZeustypesRegionModelDTO {
-	/**
-	 * @type string
-	 */
-	category?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	created_at?: Date;
-	/**
-	 * @type string
-	 */
-	dns?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updated_at?: Date;
 }
 
 export type ChangePasswordPathParameters = {
