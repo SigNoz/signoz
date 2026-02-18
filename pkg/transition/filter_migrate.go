@@ -44,6 +44,7 @@ func BuildFilterExpressionFromFilterSet(
 	}
 
 	mc := NewMigrateCommon(logger)
+	// add keys with type into ambiguity set to preserve context in generated expression
 	for _, item := range filterSet.Items {
 		if item.Key.Type == v3.AttributeKeyTypeUnspecified {
 			continue
