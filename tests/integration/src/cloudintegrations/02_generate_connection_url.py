@@ -139,5 +139,5 @@ def test_generate_connection_url_unsupported_provider(
     response_data = response.json()
     assert "error" in response_data, "Response should contain 'error' field"
     assert (
-        "unsupported cloud provider" in response_data["error"].lower()
+        "invalid cloud provider: gcp" in response_data["error"]["message"]
     ), "Error message should indicate unsupported provider"

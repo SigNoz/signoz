@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -30,13 +30,13 @@ type APIHandlerOptions struct {
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
 	IntegrationsController        *integrations.Controller
-	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
 	// Querier Influx Interval
 	FluxInterval time.Duration
 	GlobalConfig global.Config
+	Logger       *slog.Logger // this is present in Signoz.Instrumentation but adding for quick access
 }
 
 type APIHandler struct {
@@ -50,7 +50,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		Reader:                        opts.DataConnector,
 		RuleManager:                   opts.RulesManager,
 		IntegrationsController:        opts.IntegrationsController,
-		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
@@ -58,6 +57,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		Signoz:                        signoz,
 		QuerierAPI:                    querierAPI.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.Querier, signoz.Analytics),
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
+		Logger:                        opts.Logger,
 	})
 
 	if err != nil {
@@ -118,14 +118,12 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 }
 
 func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
-
 	ah.APIHandler.RegisterCloudIntegrationsRoutes(router, am)
 
 	router.HandleFunc(
 		"/api/v1/cloud-integrations/{cloudProvider}/accounts/generate-connection-params",
 		am.EditAccess(ah.CloudIntegrationsGenerateConnectionParams),
 	).Methods(http.MethodGet)
-
 }
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {

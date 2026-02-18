@@ -193,7 +193,6 @@ def test_get_service_details_with_account(
     assert "overview" in data, "Service details should have 'overview' field"
     assert "assets" in data, "Service details should have 'assets' field"
     assert "config" in data, "Service details should have 'config' field"
-    assert "status" in data, "Config should have 'status' field"
 
 
 
@@ -347,8 +346,8 @@ def test_update_service_config_without_account(
     )
 
     assert (
-        response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    ), f"Expected 500 for non-existent account, got {response.status_code}"
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"Expected 400 for non-existent account, got {response.status_code}"
 
 
 

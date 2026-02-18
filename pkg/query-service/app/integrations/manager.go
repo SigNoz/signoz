@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -107,7 +108,7 @@ type IntegrationsListItem struct {
 
 type Integration struct {
 	IntegrationDetails
-	Installation *types.InstalledIntegration `json:"installation"`
+	Installation *integrationtypes.InstalledIntegration `json:"installation"`
 }
 
 type Manager struct {
@@ -223,7 +224,7 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	orgId string,
 	integrationId string,
-	config types.InstalledIntegrationConfig,
+	config integrationtypes.InstalledIntegrationConfig,
 ) (*IntegrationsListItem, *model.ApiError) {
 	integrationDetails, apiErr := m.getIntegrationDetails(ctx, integrationId)
 	if apiErr != nil {
@@ -429,7 +430,7 @@ func (m *Manager) getInstalledIntegration(
 	ctx context.Context,
 	orgId string,
 	integrationId string,
-) (*types.InstalledIntegration, *model.ApiError) {
+) (*integrationtypes.InstalledIntegration, *model.ApiError) {
 	iis, apiErr := m.installedIntegrationsRepo.get(
 		ctx, orgId, []string{integrationId},
 	)
@@ -457,7 +458,7 @@ func (m *Manager) getInstalledIntegrations(
 		return nil, apiErr
 	}
 
-	installedTypes := utils.MapSlice(installations, func(i types.InstalledIntegration) string {
+	installedTypes := utils.MapSlice(installations, func(i integrationtypes.InstalledIntegration) string {
 		return i.Type
 	})
 	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, installedTypes)

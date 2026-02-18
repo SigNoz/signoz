@@ -148,6 +148,146 @@
         "name": "aws_ApiGateway_Latency_sum",
         "unit": "Milliseconds",
         "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4xx_sum",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4xx_max",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4xx_min",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4xx_count",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5xx_sum",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5xx_max",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5xx_min",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5xx_count",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_DataProcessed_sum",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_DataProcessed_max",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_DataProcessed_min",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_DataProcessed_count",
+        "unit": "Bytes",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ExecutionError_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ExecutionError_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ExecutionError_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ExecutionError_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ClientError_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ClientError_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ClientError_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ClientError_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationError_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationError_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationError_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationError_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ConnectCount_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ConnectCount_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ConnectCount_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_ConnectCount_count",
+        "unit": "Count",
+        "type": "Gauge"
       }
     ],
     "logs": [

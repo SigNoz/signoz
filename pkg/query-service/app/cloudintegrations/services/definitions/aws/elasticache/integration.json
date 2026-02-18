@@ -1928,7 +1928,7 @@
         "unit": "Percent",
         "type": "Gauge",
         "description": ""
-      }                      
+      }
     ]
   },
   "telemetry_collection_strategy": {
