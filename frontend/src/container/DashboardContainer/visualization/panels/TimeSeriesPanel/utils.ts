@@ -18,6 +18,7 @@ import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 import { PanelMode } from '../types';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
@@ -32,13 +33,11 @@ export const prepareChartData = (
 	return [timestampArr, ...yAxisValuesArr];
 };
 
-function hasSingleVisiblePointForSeries(series: {
-	values?: [number, string][];
-}): boolean {
+function hasSingleVisiblePointForSeries(series: QueryData): boolean {
 	const rawValues = series.values ?? [];
 	let validPointCount = 0;
 
-	for (const [, rawValue] of rawValues as [number, string][]) {
+	for (const [, rawValue] of rawValues) {
 		if (!isInvalidPlotValue(rawValue)) {
 			validPointCount += 1;
 			if (validPointCount > 1) {
