@@ -119,7 +119,6 @@ def test_export_traces_csv(
     params = {
         "start": start_ns,
         "end": end_ns,
-        "format": "csv",
         "source": "traces",
         "limit": 1000,
     }
@@ -127,7 +126,6 @@ def test_export_traces_csv(
     # Export traces as CSV (GET for simple queries)
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
-        timeout=10,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -438,164 +436,62 @@ def test_export_traces_with_limit(
     assert len(rows) == 3, f"Expected 3 rows (limited), got {len(rows)}"
 
 
-def test_export_traces_with_multiple_composite_queries(
+def test_export_traces_multiple_queries_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     """
-    Setup:
-    Insert traces with different service names and attributes.
-
     Tests:
-    1. Export traces using multiple composite queries
-    2. Verify all queries are executed and results are combined
+    1. POST with multiple builder queries but no trace operator is rejected
+    2. Verify 400 error is returned
     """
-    service_a_trace_id = TraceIdGenerator.trace_id()
-    service_a_span_id = TraceIdGenerator.span_id()
-    service_b_trace_id = TraceIdGenerator.trace_id()
-    service_b_span_id = TraceIdGenerator.span_id()
-    service_c_trace_id = TraceIdGenerator.trace_id()
-    service_c_span_id = TraceIdGenerator.span_id()
-
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-
-    insert_traces(
-        [
-            Traces(
-                timestamp=now - timedelta(seconds=10),
-                duration=timedelta(seconds=1),
-                trace_id=service_a_trace_id,
-                span_id=service_a_span_id,
-                parent_span_id="",
-                name="operation-a",
-                kind=TracesKind.SPAN_KIND_SERVER,
-                status_code=TracesStatusCode.STATUS_CODE_OK,
-                status_message="",
-                resources={
-                    "service.name": "service-a",
-                },
-                attributes={
-                    "http.status_code": "200",
-                },
-            ),
-            Traces(
-                timestamp=now - timedelta(seconds=8),
-                duration=timedelta(seconds=1),
-                trace_id=service_b_trace_id,
-                span_id=service_b_span_id,
-                parent_span_id="",
-                name="operation-b",
-                kind=TracesKind.SPAN_KIND_SERVER,
-                status_code=TracesStatusCode.STATUS_CODE_ERROR,
-                status_message="",
-                resources={
-                    "service.name": "service-b",
-                },
-                attributes={
-                    "http.status_code": "500",
-                },
-            ),
-            Traces(
-                timestamp=now - timedelta(seconds=5),
-                duration=timedelta(seconds=1),
-                trace_id=service_c_trace_id,
-                span_id=service_c_span_id,
-                parent_span_id="",
-                name="operation-c",
-                kind=TracesKind.SPAN_KIND_SERVER,
-                status_code=TracesStatusCode.STATUS_CODE_OK,
-                status_message="",
-                resources={
-                    "service.name": "service-c",
-                },
-                attributes={
-                    "http.status_code": "200",
-                },
-            ),
-        ]
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # Calculate timestamps in nanoseconds
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    # Build first composite query - filter for service-a
-    composite_query_1 = {
-        "type": "builder_query",
-        "spec": {
-            "signal": "traces",
-            "name": "A",
-            "limit": 1000,
-            "filter": {
-                "expression": "service.name = 'service-a'"
-            }
-        }
-    }
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Build second composite query - filter for service-b
-    composite_query_2 = {
-        "type": "builder_query",
-        "spec": {
-            "signal": "traces",
-            "name": "B",
-            "limit": 1000,
-            "filter": {
-                "expression": "service.name = 'service-b'"
-            }
-        }
-    }
-
-    # Multiple composite queries require POST with JSON body
     body = {
         "start": start_ns,
         "end": end_ns,
-        "format": "jsonl",
-        "source": "traces",
-        "composite_query": [composite_query_1, composite_query_2],
+        "compositeQuery": {
+            "queries": [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "signal": "traces",
+                        "name": "A",
+                        "limit": 1000,
+                        "filter": {"expression": "service.name = 'service-a'"},
+                    },
+                },
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "signal": "traces",
+                        "name": "B",
+                        "limit": 1000,
+                        "filter": {"expression": "service.name = 'service-b'"},
+                    },
+                },
+            ]
+        },
     }
 
-    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data")
+    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     response = requests.post(
         url,
         json=body,
-        timeout=30,
+        timeout=10,
         headers={
             "authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         },
     )
 
-    assert response.status_code == HTTPStatus.OK
-    assert response.headers["Content-Type"] == "application/x-ndjson"
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    # Parse JSONL content
-    # With multiple queries, we should get results from both queries
-    jsonl_lines = response.text.strip().split("\n")
-    assert len(jsonl_lines) >= 1, f"Expected at least 1 line, got {len(jsonl_lines)}"
-
-    # Verify the result
-    json_objects = [json.loads(line) for line in jsonl_lines]
-
-    # Check that we got results
-    assert len(json_objects) > 0
-
-    # Verify we got traces from both service-a and service-b (or at least one of them)
-    # Multiple queries return combined results from all queries
-    trace_ids_in_results = [obj.get("trace_id") for obj in json_objects]
-
-    # We should have at least service-a or service-b (depending on query execution)
-    assert service_a_trace_id in trace_ids_in_results or service_b_trace_id in trace_ids_in_results
-
-    # Count how many from each service we got
-    service_a_count = trace_ids_in_results.count(service_a_trace_id)
-    service_b_count = trace_ids_in_results.count(service_b_trace_id)
-
-    # At least one query should have returned results
-    assert service_a_count > 0 or service_b_count > 0
 
 def test_export_traces_with_composite_query_trace_operator(
     signoz: types.SigNoz,
@@ -608,7 +504,7 @@ def test_export_traces_with_composite_query_trace_operator(
     Insert multiple traces with parent-child relationships.
 
     Tests:
-    1. Export traces using trace operator in composite query
+    1. Export traces using trace operator in composite query (POST)
     2. Verify trace operator query works correctly
     """
     parent_trace_id = TraceIdGenerator.trace_id()
@@ -680,52 +576,50 @@ def test_export_traces_with_composite_query_trace_operator(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    # Build first composite query - filter for parent
-    composite_query_1 = {
+    # A: spans with operation.type = 'parent'
+    query_a = {
         "type": "builder_query",
         "spec": {
             "signal": "traces",
             "name": "A",
             "limit": 1000,
-            "filter": {
-                "expression": "operation.type = 'parent'"
-            }
-        }
+            "filter": {"expression": "operation.type = 'parent'"},
+        },
     }
 
-    # Build second composite query - filter for child
-    composite_query_2 = {
+    # B: spans with operation.type = 'child'
+    query_b = {
         "type": "builder_query",
         "spec": {
             "signal": "traces",
             "name": "B",
             "limit": 1000,
-            "filter": {
-                "expression": "operation.type = 'child'"
-            }
-        }
+            "filter": {"expression": "operation.type = 'child'"},
+        },
     }
 
-    # Build composite query using trace operator (A => B)
-    composite_query = {
+    # Trace operator: find traces where A has a direct descendant B
+    query_c = {
         "type": "builder_trace_operator",
         "spec": {
             "name": "C",
             "expression": "A => B",
-            "limit": 1000
-        }
+            "returnSpansFrom": "A",
+            "limit": 1000,
+            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}]
+        },
     }
 
-    # Trace operator requires POST with JSON body
     body = {
         "start": start_ns,
         "end": end_ns,
-        "format": "jsonl",
-        "source": "traces",
-        "composite_query": [composite_query_1, composite_query_2, composite_query],
+        "requestType": "raw",
+        "compositeQuery": {
+            "queries": [query_a, query_b, query_c],
+        },
     }
 
-    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data")
+    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     response = requests.post(
         url,
         json=body,
@@ -736,22 +630,23 @@ def test_export_traces_with_composite_query_trace_operator(
         },
     )
 
+    print(response.text)
     assert response.status_code == HTTPStatus.OK
     assert response.headers["Content-Type"] == "application/x-ndjson"
 
     # Parse JSONL content
     jsonl_lines = response.text.strip().split("\n")
+    assert len(jsonl_lines) == 1, f"Expected at least 1 line, got {len(jsonl_lines)}"
 
-    assert len(jsonl_lines) == 2, f"Expected 2 lines, got {len(jsonl_lines)}"
-
-    # Verify all traces are from the same trace
+    # Verify all returned spans belong to the matched trace
     json_objects = [json.loads(line) for line in jsonl_lines]
     trace_ids = [obj.get("trace_id") for obj in json_objects]
     assert all(tid == parent_trace_id for tid in trace_ids)
 
-    # Verify span names
+    # Verify the parent span (returnSpansFrom = "A") is present
     span_names = [obj.get("name") for obj in json_objects]
     assert "parent-operation" in span_names
+
 
 def test_export_traces_with_select_fields(
     signoz: types.SigNoz,
@@ -764,7 +659,7 @@ def test_export_traces_with_select_fields(
     Insert traces with various attributes.
 
     Tests:
-    1. Export traces with specific select fields
+    1. Export traces with specific select fields via POST
     2. Verify only specified fields are returned in the output
     """
     trace_id = TraceIdGenerator.trace_id()
@@ -804,51 +699,51 @@ def test_export_traces_with_select_fields(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    # Build composite query with specific select fields (requires POST for complex spec)
     body = {
         "start": start_ns,
         "end": end_ns,
-        "format": "jsonl",
-        "source": "traces",
-        "composite_query": [
-            {
-                "type": "builder_query",
-                "spec": {
-                    "signal": "traces",
-                    "name": "A",
-                    "limit": 1000,
-                    "selectFields": [
-                        {
-                            "name": "trace_id",
-                            "fieldDataType": "string",
-                            "fieldContext": "span",
-                            "signal": "traces"
-                        },
-                        {
-                            "name": "span_id",
-                            "fieldDataType": "string",
-                            "fieldContext": "span",
-                            "signal": "traces"
-                        },
-                        {
-                            "name": "name",
-                            "fieldDataType": "string",
-                            "fieldContext": "span",
-                            "signal": "traces"
-                        },
-                        {
-                            "name": "service.name",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                            "signal": "traces"
-                        }
-                    ]
+        "requestType": "raw",
+        "compositeQuery": {
+            "queries": [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "signal": "traces",
+                        "name": "A",
+                        "limit": 1000,
+                        "selectFields": [
+                            {
+                                "name": "trace_id",
+                                "fieldDataType": "string",
+                                "fieldContext": "span",
+                                "signal": "traces",
+                            },
+                            {
+                                "name": "span_id",
+                                "fieldDataType": "string",
+                                "fieldContext": "span",
+                                "signal": "traces",
+                            },
+                            {
+                                "name": "name",
+                                "fieldDataType": "string",
+                                "fieldContext": "span",
+                                "signal": "traces",
+                            },
+                            {
+                                "name": "service.name",
+                                "fieldDataType": "string",
+                                "fieldContext": "resource",
+                                "signal": "traces",
+                            },
+                        ],
+                    },
                 }
-            }
-        ],
+            ]
+        },
     }
 
-    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data")
+    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     response = requests.post(
         url,
         json=body,

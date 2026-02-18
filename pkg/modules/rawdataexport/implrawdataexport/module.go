@@ -35,6 +35,15 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 		}
 	}
 
+	// If the trace operator query is present, mark the queries other than trace operator as disabled
+	if isTraceOperatorQueryPresent {
+		for idx := range len(queries) {
+			if idx != traceOperatorQueryIndex {
+				queries[idx].SetDisabled(true)
+			}
+		}
+	}
+
 	rowChan := make(chan *qbtypes.RawRow, 1)
 	errChan := make(chan error, 1)
 
@@ -47,16 +56,12 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 		defer close(errChan)
 		defer close(rowChan)
 
-		compositeQueries := rangeRequest.CompositeQuery.Queries
-
-		appendQueryName := len(compositeQueries) > 1
-
 		if isTraceOperatorQueryPresent {
 			// If the trace operator query is present, we need to export the data for the trace operator query only
-			exportRawDataForSingleQuery(m.querier, contextWithTimeout, orgID, rangeRequest, rowChan, errChan, doneChan, appendQueryName, traceOperatorQueryIndex)
+			exportRawDataForSingleQuery(m.querier, contextWithTimeout, orgID, rangeRequest, rowChan, errChan, doneChan, traceOperatorQueryIndex)
 		} else {
 			// If the trace operator query is not present, we need to export the data for the first query only
-			exportRawDataForSingleQuery(m.querier, contextWithTimeout, orgID, rangeRequest, rowChan, errChan, doneChan, appendQueryName, 0)
+			exportRawDataForSingleQuery(m.querier, contextWithTimeout, orgID, rangeRequest, rowChan, errChan, doneChan, 0)
 		}
 	}()
 
@@ -64,14 +69,15 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 
 }
 
-func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, rowChan chan *qbtypes.RawRow, errChan chan error, doneChan chan any, appendQueryName bool, queryIndex int) {
+func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, rowChan chan *qbtypes.RawRow, errChan chan error, doneChan chan any, queryIndex int) {
 
 	query := rangeRequest.CompositeQuery.Queries[queryIndex]
 	rowCountLimit := query.GetLimit()
 	rowCount := 0
 
 	for rowCount < rowCountLimit {
-		query.SetLimit(min(ChunkSize, rowCountLimit-rowCount))
+		chunkSize := min(ChunkSize, rowCountLimit-rowCount)
+		query.SetLimit(chunkSize)
 		query.SetOffset(rowCount)
 
 		response, err := querier.QueryRange(ctx, orgID, rangeRequest)
@@ -90,9 +96,6 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 
 			newRowsCount += len(resultData.Rows)
 			for _, row := range resultData.Rows {
-				if appendQueryName {
-					row.Data["__query_name"] = query.GetQueryName()
-				}
 				select {
 				case rowChan <- row:
 				case <-doneChan:
@@ -104,11 +107,11 @@ func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, o
 			}
 		}
 
-		// Break if we did not receive any new rows
-		if newRowsCount == 0 {
+		rowCount += newRowsCount
+
+		// Stop if we received fewer rows than requested — no more data available
+		if newRowsCount < chunkSize {
 			return
 		}
-
-		rowCount += newRowsCount
 	}
 }

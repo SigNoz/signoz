@@ -25,11 +25,14 @@ func (provider *provider) addRawDataExportRoutes(router *mux.Router) error {
 		return err
 	}
 	if err := router.Handle("/api/v1/export_raw_data", handler.New(provider.authZ.ViewAccess(provider.rawDataExportHandler.ExportRawData), handler.OpenAPIDef{
-		ID:                  "HandleExportRawDataPOST",
-		Tags:                []string{"logs", "traces"},
-		Summary:             "Export raw data",
-		Description:         "This endpoints allows complex query exporting raw data for traces and logs",
-		Request:             new(v5.QueryRangeRequest),
+		ID:          "HandleExportRawDataPOST",
+		Tags:        []string{"logs", "traces"},
+		Summary:     "Export raw data",
+		Description: "This endpoints allows complex query exporting raw data for traces and logs",
+		Request: new(struct {
+			v5.QueryRangeRequest
+			types.ExportRawDataFormatQueryParam
+		}),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "application/json",

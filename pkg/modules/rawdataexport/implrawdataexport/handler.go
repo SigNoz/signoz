@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,8 +14,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -88,14 +89,28 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 //	  Body: {"start":1693612800000000000,"end":1693699199000000000,"composite_query":{"queries":[...]}}
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	var queryRangeRequest qbtypes.QueryRangeRequest
+	var format string
+
 	if r.Method == http.MethodGet {
+		var params types.ExportRawDataQueryParams
+		if err := binding.Query.BindQuery(r.URL.Query(), &params); err != nil {
+			render.Error(rw, err)
+			return
+		}
+		format = params.Format
 		var err error
-		queryRangeRequest, err = getQueryRangeRequestFromQueryParams(r)
+		queryRangeRequest, err = buildQueryRangeRequest(&params)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 	} else {
+		var formatParam types.ExportRawDataFormatQueryParam
+		if err := binding.Query.BindQuery(r.URL.Query(), &formatParam); err != nil {
+			render.Error(rw, err)
+			return
+		}
+		format = formatParam.Format
 		if err := json.NewDecoder(r.Body).Decode(&queryRangeRequest); err != nil {
 			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request body: %v", err))
 			return
@@ -103,12 +118,6 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validateAndApplyExportLimits(&queryRangeRequest); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	format, err := getExportQueryFormat(r.URL.Query())
-	if err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -142,24 +151,13 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 // validateAndApplyExportLimits validates query types and applies default/max limits to all queries.
 func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 	isTraceOperatorQueryPresent := false
-	traceOperatorQueryIndex := -1
 
 	// Check if the trace operator query is present
 	queries := req.CompositeQuery.Queries
 	for idx := range len(queries) {
 		if _, ok := queries[idx].Spec.(qbtypes.QueryBuilderTraceOperator); ok {
 			isTraceOperatorQueryPresent = true
-			traceOperatorQueryIndex = idx
 			break
-		}
-	}
-
-	// If the trace operator query is present, mark the queries other than trace operator as disabled
-	if isTraceOperatorQueryPresent {
-		for idx := range len(queries) {
-			if idx != traceOperatorQueryIndex {
-				queries[idx].SetDisabled(true)
-			}
 		}
 	}
 
@@ -173,9 +171,13 @@ func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 			qbtypes.QueryBuilderTraceOperator:
-			limit, err := validateExportLimitValue(queries[idx].GetLimit())
-			if err != nil {
-				return err
+			limit := queries[idx].GetLimit()
+			if limit == 0 {
+				limit = DefaultExportRowCountLimit
+			} else if limit < 0 {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
+			} else if limit > MaxExportRowCountLimit {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
 			}
 			queries[idx].SetLimit(limit)
 		default:
@@ -185,46 +187,29 @@ func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 	return nil
 }
 
-// getQueryRangeRequestFromQueryParams builds a QueryRangeRequest from GET query parameters.
-func getQueryRangeRequestFromQueryParams(r *http.Request) (qbtypes.QueryRangeRequest, error) {
-	queryParams := r.URL.Query()
-
-	source, err := getExportQuerySource(queryParams)
+// buildQueryRangeRequest builds a QueryRangeRequest from already-bound and validated GET query params.
+func buildQueryRangeRequest(params *types.ExportRawDataQueryParams) (qbtypes.QueryRangeRequest, error) {
+	orderBy, err := parseExportQueryOrderBy(params.OrderBy)
 	if err != nil {
 		return qbtypes.QueryRangeRequest{}, err
 	}
 
-	startTime, endTime, err := getExportQueryTimeRange(queryParams)
-	if err != nil {
-		return qbtypes.QueryRangeRequest{}, err
-	}
-
-	limit, err := getExportQueryLimit(queryParams)
-	if err != nil {
-		return qbtypes.QueryRangeRequest{}, err
-	}
-
-	columns := getExportQueryColumns(queryParams)
-
-	orderBy, err := getExportQueryOrderBy(queryParams)
-	if err != nil {
-		return qbtypes.QueryRangeRequest{}, err
-	}
+	columns := parseExportQueryColumns(params.Columns)
 
 	var filter *qbtypes.Filter
-	if filterExpr := queryParams.Get("filter"); filterExpr != "" {
-		filter = &qbtypes.Filter{Expression: filterExpr}
+	if params.Filter != "" {
+		filter = &qbtypes.Filter{Expression: params.Filter}
 	}
 
 	var query qbtypes.QueryEnvelope
-	switch source {
+	switch params.Source {
 	case "logs":
 		query = qbtypes.QueryEnvelope{
 			Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal:       telemetrytypes.SignalLogs,
 				Filter:       filter,
-				Limit:        limit,
+				Limit:        params.Limit,
 				Order:        orderBy,
 				SelectFields: columns,
 			},
@@ -235,7 +220,7 @@ func getQueryRangeRequestFromQueryParams(r *http.Request) (qbtypes.QueryRangeReq
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal:       telemetrytypes.SignalTraces,
 				Filter:       filter,
-				Limit:        limit,
+				Limit:        params.Limit,
 				Order:        orderBy,
 				SelectFields: columns,
 			},
@@ -243,8 +228,8 @@ func getQueryRangeRequestFromQueryParams(r *http.Request) (qbtypes.QueryRangeReq
 	}
 
 	return qbtypes.QueryRangeRequest{
-		Start:       startTime,
-		End:         endTime,
+		Start:       params.Start,
+		End:         params.End,
 		RequestType: qbtypes.RequestTypeRaw,
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: []qbtypes.QueryEnvelope{query},
@@ -354,77 +339,6 @@ func (handler *handler) exportRawDataJSONL(rowChan <-chan *qbtypes.RawRow, errCh
 	}
 }
 
-func getExportQuerySource(queryParams url.Values) (string, error) {
-	switch queryParams.Get("source") {
-	case "logs", "":
-		return "logs", nil
-	case "metrics":
-		return "metrics", errors.NewInvalidInputf(errors.CodeInvalidInput, "metrics export not yet supported")
-	case "traces":
-		return "traces", nil
-	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid source: must be logs, metrics or traces")
-	}
-}
-
-func getExportQueryFormat(queryParams url.Values) (string, error) {
-	switch queryParams.Get("format") {
-	case "csv", "":
-		return "csv", nil
-	case "jsonl":
-		return "jsonl", nil
-	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid format: must be csv or jsonl")
-	}
-}
-
-func getExportQueryLimit(queryParams url.Values) (int, error) {
-
-	limitStr := queryParams.Get("limit")
-	if limitStr == "" {
-		return DefaultExportRowCountLimit, nil
-	}
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid limit format: %s", err.Error())
-	}
-	return validateExportLimitValue(limit)
-}
-
-// validateExportLimitValue validates a limit value for export queries.
-// Returns DefaultExportRowCountLimit when limit is 0, or an error if limit exceeds MaxExportRowCountLimit.
-func validateExportLimitValue(limit int) (int, error) {
-	if limit == 0 {
-		return DefaultExportRowCountLimit, nil
-	}
-	if limit < 0 {
-		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
-	}
-	if limit > MaxExportRowCountLimit {
-		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
-	}
-	return limit, nil
-}
-
-func getExportQueryTimeRange(queryParams url.Values) (uint64, uint64, error) {
-
-	startTimeStr := queryParams.Get("start")
-	endTimeStr := queryParams.Get("end")
-
-	if startTimeStr == "" || endTimeStr == "" {
-		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end time are required")
-	}
-	startTime, err := strconv.ParseUint(startTimeStr, 10, 64)
-	if err != nil {
-		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid start time format: %s", err.Error())
-	}
-	endTime, err := strconv.ParseUint(endTimeStr, 10, 64)
-	if err != nil {
-		return 0, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid end time format: %s", err.Error())
-	}
-	return startTime, endTime, nil
-}
-
 func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 	header := make([]string, 0, len(data))
 	for key := range data {
@@ -504,23 +418,17 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 	return record
 }
 
-// getExportQueryColumns parses the "columns" query parameters and returns a slice of TelemetryFieldKey structs.
-// Each column should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
-func getExportQueryColumns(queryParams url.Values) []telemetrytypes.TelemetryFieldKey {
-	columnParams := queryParams["columns"]
-
+// parseExportQueryColumns converts bound column strings to TelemetryFieldKey structs.
+// Each column should be in the format "context.field:type" or "context.field" or "field"
+func parseExportQueryColumns(columnParams []string) []telemetrytypes.TelemetryFieldKey {
 	columns := make([]telemetrytypes.TelemetryFieldKey, 0, len(columnParams))
-
 	for _, columnStr := range columnParams {
-		// Skip empty strings
 		columnStr = strings.TrimSpace(columnStr)
 		if columnStr == "" {
 			continue
 		}
-
 		columns = append(columns, telemetrytypes.GetFieldKeyFromKeyText(columnStr))
 	}
-
 	return columns
 }
 
@@ -532,38 +440,24 @@ func getsizeOfStringSlice(slice []string) uint64 {
 	return totalBytes
 }
 
-// getExportQueryOrderBy parses the "order_by" query parameters and returns a slice of OrderBy structs.
-// Each "order_by" parameter should be in the format "column:direction"
-// Each "column" should be a valid telemetry field key in the format "context.field:type" or "context.field" or "field"
-func getExportQueryOrderBy(queryParams url.Values) ([]qbtypes.OrderBy, error) {
-	orderByParam := queryParams.Get("order_by")
-
+// parseExportQueryOrderBy converts a bound order_by string to an OrderBy slice.
+// The string should be in the format "column:direction" and is assumed already validated.
+func parseExportQueryOrderBy(orderByParam string) ([]qbtypes.OrderBy, error) {
 	orderByParam = strings.TrimSpace(orderByParam)
 	if orderByParam == "" {
 		return []qbtypes.OrderBy{}, nil
 	}
 
 	parts := strings.Split(orderByParam, ":")
-	if len(parts) != 2 && len(parts) != 3 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by format: %s, should be <column>:<direction>", orderByParam)
-	}
-
 	column := strings.Join(parts[:len(parts)-1], ":")
 	direction := parts[len(parts)-1]
-
-	orderDirection, ok := qbtypes.OrderDirectionMap[direction]
-	if !ok {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order_by direction: %s, should be one of %s, %s", direction, qbtypes.OrderDirectionAsc, qbtypes.OrderDirectionDesc)
-	}
-
-	orderByKey := telemetrytypes.GetFieldKeyFromKeyText(column)
 
 	return []qbtypes.OrderBy{
 		{
 			Key: qbtypes.OrderByKey{
-				TelemetryFieldKey: orderByKey,
+				TelemetryFieldKey: telemetrytypes.GetFieldKeyFromKeyText(column),
 			},
-			Direction: orderDirection,
+			Direction: qbtypes.OrderDirectionMap[direction],
 		},
 	}, nil
 }

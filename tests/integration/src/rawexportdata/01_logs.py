@@ -88,14 +88,11 @@ def test_export_logs_csv(
     params = {
         "start": start_ns,
         "end": end_ns,
-        "format": "csv",
-        "source": "logs",
     }
 
     # Export logs as CSV (default format, no source needed)
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
-        timeout=10,
         headers={
             "authorization": f"Bearer {token}",
         },
