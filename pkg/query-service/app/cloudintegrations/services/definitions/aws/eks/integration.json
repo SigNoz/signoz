@@ -7,6 +7,53 @@
     "metrics": true,
     "logs": true
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "apiserver",
+        "display_name": "Api Server",
+        "checks": [
+          {
+            "key": "aws_EKS_apiserver_request_total_max",
+            "attributes": []
+          }
+        ]
+      },
+      {
+        "category": "container_insights",
+        "display_name": "Container Insights",
+        "checks": [
+          {
+            "key": "aws_ContainerInsights_pod_memory_utilization_max",
+            "attributes": [
+              {
+                "name": "PodName",
+                "operator": "EXISTS",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "logs": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "attributes": [
+              {
+                "name": "aws.cloudwatch.log_group_name",
+                "operator": "CONTAINS",
+                "value": "/aws/eks/"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics": [
       {

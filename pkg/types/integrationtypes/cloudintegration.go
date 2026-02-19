@@ -330,8 +330,8 @@ type GettableAWSServiceDetails struct {
 }
 
 type ServiceConnectionStatus struct {
-	Logs    *SignalConnectionStatus `json:"logs"`
-	Metrics *SignalConnectionStatus `json:"metrics"`
+	Logs    []*SignalConnectionStatus `json:"logs"`
+	Metrics []*SignalConnectionStatus `json:"metrics"`
 }
 
 type SignalConnectionStatus struct {

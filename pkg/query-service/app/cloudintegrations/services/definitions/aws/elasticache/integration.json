@@ -7,6 +7,20 @@
     "metrics": true,
     "logs": false
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "key": "aws_ElastiCache_CacheHitRate_max",
+            "attributes": []
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics":[
       {

@@ -217,8 +217,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(
 		opts.Logger,
 		opts.Signoz.SQLStore,
-		opts.Reader,
-		querier,
+		opts.Signoz.Querier,
 	)
 
 	aH := &APIHandler{
