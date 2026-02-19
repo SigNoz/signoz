@@ -646,6 +646,35 @@ export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	tags?: string[] | null;
 }
 
+export interface MetricsexplorertypesListMetricDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type boolean
+	 */
+	isMonotonic: boolean;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
+	/**
+	 * @type string
+	 */
+	unit: string;
+}
+
+export interface MetricsexplorertypesListMetricsResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	metrics: MetricsexplorertypesListMetricDTO[] | null;
+}
+
 export interface MetricsexplorertypesMetricAlertDTO {
 	/**
 	 * @type string
@@ -680,23 +709,6 @@ export interface MetricsexplorertypesMetricAttributeDTO {
 	 * @nullable true
 	 */
 	values: string[] | null;
-}
-
-export interface MetricsexplorertypesMetricAttributesRequestDTO {
-	/**
-	 * @type integer
-	 * @nullable true
-	 */
-	end?: number | null;
-	/**
-	 * @type string
-	 */
-	metricName: string;
-	/**
-	 * @type integer
-	 * @nullable true
-	 */
-	start?: number | null;
 }
 
 export interface MetricsexplorertypesMetricAttributesResponseDTO {
@@ -3048,14 +3060,42 @@ export type SearchIngestionKeys200 = {
 	status?: string;
 };
 
-export type GetMetricAlertsParams = {
+export type ListMetricsParams = {
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	start?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	end?: number | null;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
 	/**
 	 * @type string
 	 * @description undefined
 	 */
-	metricName: string;
+	searchText?: string;
 };
 
+export type ListMetrics200 = {
+	data?: MetricsexplorertypesListMetricsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetMetricAlertsPathParameters = {
+	metricName: string;
+};
 export type GetMetricAlerts200 = {
 	data?: MetricsexplorertypesMetricAlertsResponseDTO;
 	/**
@@ -3064,14 +3104,35 @@ export type GetMetricAlerts200 = {
 	status?: string;
 };
 
-export type GetMetricDashboardsParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
+export type GetMetricAttributesPathParameters = {
 	metricName: string;
 };
+export type GetMetricAttributesParams = {
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	start?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	end?: number | null;
+};
 
+export type GetMetricAttributes200 = {
+	data?: MetricsexplorertypesMetricAttributesResponseDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetMetricDashboardsPathParameters = {
+	metricName: string;
+};
 export type GetMetricDashboards200 = {
 	data?: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
@@ -3080,16 +3141,22 @@ export type GetMetricDashboards200 = {
 	status?: string;
 };
 
-export type GetMetricHighlightsParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
+export type GetMetricHighlightsPathParameters = {
 	metricName: string;
 };
-
 export type GetMetricHighlights200 = {
 	data?: MetricsexplorertypesMetricHighlightsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type GetMetricMetadataPathParameters = {
+	metricName: string;
+};
+export type GetMetricMetadata200 = {
+	data?: MetricsexplorertypesMetricMetadataDTO;
 	/**
 	 * @type string
 	 */
@@ -3099,30 +3166,6 @@ export type GetMetricHighlights200 = {
 export type UpdateMetricMetadataPathParameters = {
 	metricName: string;
 };
-export type GetMetricAttributes200 = {
-	data?: MetricsexplorertypesMetricAttributesResponseDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-};
-
-export type GetMetricMetadataParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	metricName: string;
-};
-
-export type GetMetricMetadata200 = {
-	data?: MetricsexplorertypesMetricMetadataDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-};
-
 export type GetMetricsStats200 = {
 	data?: MetricsexplorertypesStatsResponseDTO;
 	/**
