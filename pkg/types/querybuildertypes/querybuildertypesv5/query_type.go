@@ -16,3 +16,17 @@ var (
 	QueryTypeClickHouseSQL = QueryType{valuer.NewString("clickhouse_sql")}
 	QueryTypePromQL        = QueryType{valuer.NewString("promql")}
 )
+
+// Enum returns the acceptable values for QueryType.
+func (QueryType) Enum() []any {
+	return []any{
+		QueryTypeBuilder,
+		QueryTypeFormula,
+		// Not yet supported.
+		// QueryTypeSubQuery,
+		// QueryTypeJoin,
+		QueryTypeTraceOperator,
+		QueryTypeClickHouseSQL,
+		QueryTypePromQL,
+	}
+}

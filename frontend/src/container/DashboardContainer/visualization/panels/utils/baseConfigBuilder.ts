@@ -19,13 +19,14 @@ export interface BaseConfigBuilderProps {
 	widget: Widgets;
 	apiResponse: MetricRangePayloadProps;
 	isDarkMode: boolean;
-	onClick: OnClickPluginOpts['onClick'];
-	onDragSelect: (startTime: number, endTime: number) => void;
-	timezone: Timezone;
+	onClick?: OnClickPluginOpts['onClick'];
+	onDragSelect?: (startTime: number, endTime: number) => void;
+	timezone?: Timezone;
 	panelMode: PanelMode;
 	panelType: PANEL_TYPES;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	stepInterval?: number;
 }
 
 export function buildBaseConfig({
@@ -39,9 +40,12 @@ export function buildBaseConfig({
 	panelType,
 	minTimeScale,
 	maxTimeScale,
+	stepInterval,
 }: BaseConfigBuilderProps): UPlotConfigBuilder {
-	const tzDate = (timestamp: number): Date =>
-		uPlot.tzDate(new Date(timestamp * 1e3), timezone.value);
+	const tzDate = timezone
+		? (timestamp: number): Date =>
+				uPlot.tzDate(new Date(timestamp * 1e3), timezone.value)
+		: undefined;
 
 	const builder = new UPlotConfigBuilder({
 		onDragSelect,
@@ -54,6 +58,7 @@ export function buildBaseConfig({
 		].includes(panelMode)
 			? SelectionPreferencesSource.LOCAL_STORAGE
 			: SelectionPreferencesSource.IN_MEMORY,
+		stepInterval,
 	});
 
 	const thresholdOptions: ThresholdsDrawHookOptions = {

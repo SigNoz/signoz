@@ -25,23 +25,7 @@ type Organization struct {
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
-func NewOrganization(displayName string) *Organization {
-	id := valuer.GenerateUUID()
-	return &Organization{
-		Identifiable: Identifiable{
-			ID: id,
-		},
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		// Name: "default/main", TODO: take the call and uncomment this later
-		DisplayName: displayName,
-		Key:         NewOrganizationKey(id),
-	}
-}
-
-func NewOrganizationWithName(name string) *Organization {
+func NewOrganization(displayName string, name string) *Organization {
 	id := valuer.GenerateUUID()
 	return &Organization{
 		Identifiable: Identifiable{
@@ -52,7 +36,7 @@ func NewOrganizationWithName(name string) *Organization {
 			UpdatedAt: time.Now(),
 		},
 		Name:        name,
-		DisplayName: name,
+		DisplayName: displayName,
 		Key:         NewOrganizationKey(id),
 	}
 }

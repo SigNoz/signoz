@@ -1,0 +1,74 @@
+---
+description: Core testing conventions - imports, rendering, MSW, interactions, queries
+globs: **/*.test.{ts,tsx}
+alwaysApply: false
+---
+
+# Testing Conventions
+
+## Imports
+
+Always import from the test harness, never directly from `@testing-library/react`:
+
+```ts
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { server, rest } from 'mocks-server/server';
+```
+
+## Router
+
+Use the built-in router in `render`:
+
+```ts
+render(<Page />, undefined, { initialRoute: '/traces-explorer' });
+```
+
+Only mock `useLocation` / `useParams` if the test depends on their values.
+
+## MSW
+
+Global MSW server runs automatically. Override per-test:
+
+```ts
+server.use(
+  rest.get('*/api/v1/foo', (_req, res, ctx) =>
+    res(ctx.status(200), ctx.json({ ok: true })))
+);
+```
+
+Keep large response fixtures in `mocks-server/__mockdata_`.
+
+## Interactions
+
+- Prefer `userEvent` for real user interactions (click, type, select, tab).
+- Use `fireEvent` only for low-level events not covered by `userEvent` (e.g., scroll, resize). Wrap in `act(...)` if needed.
+- Always `await` interactions:
+
+```ts
+const user = userEvent.setup({ pointerEventsCheck: 0 });
+await user.click(screen.getByRole('button', { name: /save/i }));
+```
+
+## Timers
+
+No global fake timers. Per-test only, for debounce/throttle:
+
+```ts
+jest.useFakeTimers();
+const user = userEvent.setup({ advanceTimers: (ms) => jest.advanceTimersByTime(ms) });
+await user.type(screen.getByRole('textbox'), 'query');
+jest.advanceTimersByTime(400);
+jest.useRealTimers();
+```
+
+## Queries
+
+Prefer accessible queries: `getByRole` > `findByRole` > `getByLabelText` > visible text > `data-testid` (last resort).
+
+## Anti-patterns
+
+- Never import from `@testing-library/react` directly
+- Never use global fake timers
+- Never wrap `render` in `act(...)`
+- Never mock infra dependencies locally (router, react-query)
+- Limit to 3-5 focused tests per file

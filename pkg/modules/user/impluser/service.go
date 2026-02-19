@@ -78,10 +78,10 @@ func (s *service) Stop(ctx context.Context) error {
 }
 
 func (s *service) reconcile(ctx context.Context) error {
-	org, err := s.orgGetter.GetByName(ctx, s.config.OrgName)
+	org, err := s.orgGetter.GetByName(ctx, s.config.Org.Name)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
-			newOrg := types.NewOrganizationWithName(s.config.OrgName)
+			newOrg := types.NewOrganization(s.config.Org.Name, s.config.Org.Name)
 			_, err := s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
 			return err
 		}
