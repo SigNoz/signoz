@@ -87,24 +87,6 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 	return remote.FromQueryResult(sortSeries, res), nil
 }
 
-func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sortSeries bool) (storage.SeriesSet, error) {
-	if len(queries) == 0 {
-		return storage.EmptySeriesSet(), nil
-	}
-	if len(queries) == 1 {
-		return c.Read(ctx, queries[0], sortSeries)
-	}
-	sets := make([]storage.SeriesSet, 0, len(queries))
-	for _, q := range queries {
-		ss, err := c.Read(ctx, q, sortSeries)
-		if err != nil {
-			return nil, err
-		}
-		sets = append(sets, ss)
-	}
-	return storage.NewMergeSeriesSet(sets, 0, storage.ChainedSeriesMerge), nil
-}
-
 func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
 	var clickHouseQuery string
 	var conditions []string
