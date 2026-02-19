@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/grammar/havingexpression"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 )
 
@@ -57,25 +58,28 @@ func (v *havingExpressionSemanticValidator) Visit(tree antlr.ParseTree) {
 // visitFunctionCall reports any remaining function call as invalid.
 // After rewriting, all valid function-call references (e.g. "sum(bytes)") have
 // already been replaced with SQL column names, so any function call seen here
-// was not in the column map. Each component token is reported individually.
+// was not in the column map. Report the function name as invalid; for args,
+// only report those that are not valid column references (e.g. sum(__result_0)
+// should report only "sum", since __result_0 is a valid column).
 func (v *havingExpressionSemanticValidator) visitFunctionCall(ctx *grammar.FunctionCallContext) {
 	funcName := ctx.IDENTIFIER().GetText()
-
-	var argTexts []string
-	if ctx.FunctionArgs() != nil {
-		for _, arg := range ctx.FunctionArgs().AllFunctionArg() {
-			argTexts = append(argTexts, arg.IDENTIFIER().GetText())
-		}
-	}
 
 	if !v.seen[funcName] {
 		v.invalid = append(v.invalid, funcName)
 		v.seen[funcName] = true
 	}
-	for _, arg := range argTexts {
-		if !v.seen[arg] {
-			v.invalid = append(v.invalid, arg)
-			v.seen[arg] = true
+
+	if ctx.FunctionArgs() != nil {
+		for _, arg := range ctx.FunctionArgs().AllFunctionArg() {
+			argText := arg.IDENTIFIER().GetText()
+			// Only report args that are not valid column references
+			if v.validColumns[argText] {
+				continue
+			}
+			if !v.seen[argText] {
+				v.invalid = append(v.invalid, argText)
+				v.seen[argText] = true
+			}
 		}
 	}
 }
@@ -166,6 +170,20 @@ func (r *HavingExpressionRewriter) validateWithANTLR(expression string) error {
 
 	if len(sv.invalid) > 0 {
 		sort.Strings(sv.invalid)
+		hasAggFunc := false
+		for _, ref := range sv.invalid {
+			if _, isAgg := AggreFuncMap[valuer.NewString(ref)]; isAgg {
+				hasAggFunc = true
+				break
+			}
+		}
+		if hasAggFunc {
+			// At least one invalid ref is an aggregation function — use tailored message
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"aggregation functions are not allowed in HAVING expression",
+			)
+		}
 		validKeys := make([]string, 0, len(r.columnMap))
 		for k := range r.columnMap {
 			validKeys = append(validKeys, k)
