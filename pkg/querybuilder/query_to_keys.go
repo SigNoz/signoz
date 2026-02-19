@@ -1,7 +1,7 @@
 package querybuilder
 
 import (
-	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
+	grammar "github.com/SigNoz/signoz/pkg/parser/grammar/filterquery"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
 )

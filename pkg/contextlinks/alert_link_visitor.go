@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	parser "github.com/SigNoz/signoz/pkg/parser/grammar"
+	parser "github.com/SigNoz/signoz/pkg/parser/grammar/filterquery"
 	"github.com/antlr4-go/antlr/v4"
 	"golang.org/x/exp/maps"
 

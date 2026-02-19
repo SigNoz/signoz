@@ -27,6 +27,24 @@ func TestRewriteForLogs(t *testing.T) {
 			wantExpression: "__result_0 > 1000",
 		},
 		{
+			name:       "urinary expression alias",
+			expression: "total_logs",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr: true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "urinary expression alias",
+			expression: "count()",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr: true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
 			name:       "expression reference (function call)",
 			expression: "sum(bytes) > 1024000",
 			aggregations: []qbtypes.LogAggregation{
@@ -103,6 +121,61 @@ func TestRewriteForLogs(t *testing.T) {
 			},
 			wantExpression: "__result_0 > 0",
 		},
+		// logical correctness
+		{
+			name:       "bare operand without comparison",
+			expression: "total_logs",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "unclosed parenthesis",
+			expression: "(total_logs > 100 AND count() < 500",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "unexpected closing parenthesis",
+			expression: "total_logs > 100)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "dangling AND at end",
+			expression: "total_logs > 100 AND",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "dangling OR at start",
+			expression: "OR total_logs > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "consecutive boolean operators",
+			expression: "total_logs > 100 AND AND count() < 500",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
 		{
 			name:       "string literal as comparison value",
 			expression: "sum(bytes) = 'xyz'",
@@ -111,6 +184,15 @@ func TestRewriteForLogs(t *testing.T) {
 			},
 			wantErr:    true,
 			wantErrMsg: "HAVING expression cannot contain string literals",
+		},
+		{
+			name:       "string literal without quotes as comparison value",
+			expression: "sum(bytes) = xyz",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(bytes)"},
+			},
+			wantErr:    true,
+			wantErrMsg: "invalid references in HAVING expression: [xyz]",
 		},
 		{
 			name:       "double-quoted string literal",
@@ -137,7 +219,7 @@ func TestRewriteForLogs(t *testing.T) {
 				{Expression: "count()"},
 			},
 			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [sum, missing_field]",
+			wantErrMsg: "invalid references in HAVING expression: [missing_field, sum]",
 		},
 		{
 			name:       "one valid one invalid reference",
@@ -147,6 +229,194 @@ func TestRewriteForLogs(t *testing.T) {
 			},
 			wantErr:    true,
 			wantErrMsg: "invalid references in HAVING expression: [ghost]",
+		},
+		{
+			name:       "reserved keyword as alias reference",
+			expression: "sum > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "sum"},
+			},
+			wantExpression: "__result_0 > 100",
+		},
+		// operator variants
+		{
+			name:       "not-equals operator (!=)",
+			expression: "total_logs != 0",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantExpression: "__result_0 != 0",
+		},
+		{
+			name:       "alternate not-equals operator (<>)",
+			expression: "count() <> 0",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 <> 0",
+		},
+		{
+			name:       "double-equals operator (==)",
+			expression: "total == 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "__result_0 == 100",
+		},
+		// numeric literal variants
+		{
+			name:       "negative number threshold",
+			expression: "count() > -10",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 > -10",
+		},
+		{
+			name:       "float threshold",
+			expression: "avg_latency > 500.5",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "avg(duration)", Alias: "avg_latency"},
+			},
+			wantExpression: "__result_0 > 500.5",
+		},
+		{
+			name:       "scientific notation threshold",
+			expression: "total > 1e6",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "__result_0 > 1e6",
+		},
+		// boolean operator case variants
+		{
+			name:       "lowercase and",
+			expression: "total > 100 and error_count < 10",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+				{Expression: "sum(errors)", Alias: "error_count"},
+			},
+			wantExpression: "__result_0 > 100 and __result_1 < 10",
+		},
+		{
+			name:       "lowercase or",
+			expression: "total < 10 or error_count > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+				{Expression: "sum(errors)", Alias: "error_count"},
+			},
+			wantExpression: "__result_0 < 10 or __result_1 > 100",
+		},
+		// arithmetic operand expressions
+		{
+			name:       "division arithmetic between aggregations",
+			expression: "errors / total > 0.05",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(errors)", Alias: "errors"},
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "__result_0 / __result_1 > 0.05",
+		},
+		{
+			name:       "comparison between two aggregations",
+			expression: "error_count > warn_count",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(errors)", Alias: "error_count"},
+				{Expression: "sum(warnings)", Alias: "warn_count"},
+			},
+			wantExpression: "__result_0 > __result_1",
+		},
+		{
+			name:       "multiplication of aggregation by constant",
+			expression: "count() * 2 > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 * 2 > 100",
+		},
+		{
+			name:       "three-way AND with three aggregations",
+			expression: "req_count > 10 AND avg_dur < 100 AND err_count != 0",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "req_count"},
+				{Expression: "avg(duration)", Alias: "avg_dur"},
+				{Expression: "sum(errors)", Alias: "err_count"},
+			},
+			wantExpression: "__result_0 > 10 AND __result_1 < 100 AND __result_2 != 0",
+		},
+		{
+			name:       "arithmetic grouping with division",
+			expression: "(sum_a + sum_b) / 2 > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(a)", Alias: "sum_a"},
+				{Expression: "sum(b)", Alias: "sum_b"},
+			},
+			wantExpression: "(__result_0 + __result_1) / 2 > 100",
+		},
+		// additional error cases
+		{
+			name:       "__result ambiguous with multiple aggregations",
+			expression: "__result > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+				{Expression: "sum(bytes)"},
+			},
+			wantErr:    true,
+			wantErrMsg: "invalid references in HAVING expression: [__result]",
+		},
+		{
+			name:       "NOT without parentheses",
+			expression: "NOT count() > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "empty expression",
+			expression: "",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "two comparisons without boolean connector",
+			expression: "total > 100 count() < 500",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "out-of-range __result_N index",
+			expression: "__result_9 > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:    true,
+			wantErrMsg: "invalid references in HAVING expression: [__result_9]",
+		},
+		{
+			name:       "boolean literal as comparison value",
+			expression: "count() > true",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
+		},
+		{
+			name:       "double NOT without valid grouping",
+			expression: "NOT NOT (count() > 100)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:    true,
+			wantErrMsg: "syntax error in HAVING expression",
 		},
 	}
 
@@ -224,6 +494,42 @@ func TestRewriteForTraces(t *testing.T) {
 			},
 			wantErr:    true,
 			wantErrMsg: "invalid references in HAVING expression: [typo_alias]",
+		},
+		{
+			name:       "float threshold",
+			expression: "p99_latency < 999.99",
+			aggregations: []qbtypes.TraceAggregation{
+				{Expression: "p99(duration_nano)", Alias: "p99_latency"},
+			},
+			wantExpression: "__result_0 < 999.99",
+		},
+		{
+			name:       "alternate not-equals operator (<>)",
+			expression: "count() <> 0",
+			aggregations: []qbtypes.TraceAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 <> 0",
+		},
+		{
+			name:       "three aggregations referenced",
+			expression: "span_count > 10 AND avg_dur < 5000 AND p99_ns < 1000000",
+			aggregations: []qbtypes.TraceAggregation{
+				{Expression: "count()", Alias: "span_count"},
+				{Expression: "avg(duration_nano)", Alias: "avg_dur"},
+				{Expression: "p99(duration_nano)", Alias: "p99_ns"},
+			},
+			wantExpression: "__result_0 > 10 AND __result_1 < 5000 AND __result_2 < 1000000",
+		},
+		{
+			name:       "__result ambiguous with multiple aggregations",
+			expression: "__result > 100",
+			aggregations: []qbtypes.TraceAggregation{
+				{Expression: "count()", Alias: "span_count"},
+				{Expression: "avg(duration_nano)", Alias: "avg_dur"},
+			},
+			wantErr:    true,
+			wantErrMsg: "invalid references in HAVING expression: [__result]",
 		},
 	}
 
@@ -323,6 +629,30 @@ func TestRewriteForMetrics(t *testing.T) {
 			},
 			wantErr:    true,
 			wantErrMsg: "invalid references in HAVING expression: [wrong_metric]",
+		},
+		{
+			name:       "__result0 indexed reference",
+			expression: "__result0 > 70",
+			aggregations: []qbtypes.MetricAggregation{
+				{
+					MetricName:       "cpu_usage",
+					TimeAggregation:  metrictypes.TimeAggregationSum,
+					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
+				},
+			},
+			wantExpression: "value > 70",
+		},
+		{
+			name:       "combined space and time aggregation expression reference",
+			expression: "avg(sum(cpu_usage)) > 50",
+			aggregations: []qbtypes.MetricAggregation{
+				{
+					MetricName:       "cpu_usage",
+					TimeAggregation:  metrictypes.TimeAggregationSum,
+					SpaceAggregation: metrictypes.SpaceAggregationAvg,
+				},
+			},
+			wantExpression: "value > 50",
 		},
 	}
 
