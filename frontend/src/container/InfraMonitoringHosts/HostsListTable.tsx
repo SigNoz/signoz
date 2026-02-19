@@ -26,7 +26,7 @@ function EmptyOrLoadingView(
 ): React.ReactNode {
 	const { isError, errorMessage } = viewState;
 	if (isError) {
-		return <Typography>{errorMessage}</Typography>;
+		return <Typography>{errorMessage || 'Something went wrong'}</Typography>;
 	}
 	if (viewState.showHostsEmptyState) {
 		return (
@@ -196,7 +196,7 @@ export default function HostsListTable({
 
 	const emptyOrLoadingView = EmptyOrLoadingView({
 		isError,
-		errorMessage: data?.error || 'Something went wrong',
+		errorMessage: data?.error ?? '',
 		showHostsEmptyState,
 		sentAnyHostMetricsData,
 		isSendingIncorrectK8SAgentMetrics,

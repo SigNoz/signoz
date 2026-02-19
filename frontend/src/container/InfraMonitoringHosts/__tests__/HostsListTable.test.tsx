@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { render, screen } from '@testing-library/react';
 import { HostData, HostListResponse } from 'api/infraMonitoring/getHostLists';
-import { SuccessResponse } from 'types/api';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import HostsListTable from '../HostsListTable';
@@ -102,6 +102,43 @@ describe('HostsListTable', () => {
 	it('renders error state if isError is true', () => {
 		render(<HostsListTable {...mockProps} isError />);
 		expect(screen.getByText('Something went wrong')).toBeTruthy();
+	});
+
+	it('renders "Something went wrong" fallback when isError is true and error message is empty', () => {
+		const tableDataWithEmptyError: ErrorResponse = {
+			statusCode: 500,
+			payload: null,
+			error: '',
+			message: null,
+		};
+		render(
+			<HostsListTable
+				{...mockProps}
+				isError
+				hostMetricsData={[]}
+				tableData={tableDataWithEmptyError}
+			/>,
+		);
+		expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+	});
+
+	it('renders custom error message when isError is true and error message is provided', () => {
+		const customErrorMessage = 'Failed to fetch host metrics';
+		const tableDataWithError: ErrorResponse = {
+			statusCode: 500,
+			payload: null,
+			error: customErrorMessage,
+			message: null,
+		};
+		render(
+			<HostsListTable
+				{...mockProps}
+				isError
+				hostMetricsData={[]}
+				tableData={tableDataWithError}
+			/>,
+		);
+		expect(screen.getByText(customErrorMessage)).toBeInTheDocument();
 	});
 
 	it('renders empty state if no hosts are found', () => {
