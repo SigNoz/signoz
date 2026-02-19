@@ -15,6 +15,7 @@ import {
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	rolesSettings,
 } from './config';
 
 export const getRoutes = (
@@ -64,6 +65,10 @@ export const getRoutes = (
 
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
 		settings.push(...customDomainSettings(t), ...billingSettings(t));
+	}
+
+	if (isAdmin) {
+		settings.push(...rolesSettings(t));
 	}
 
 	settings.push(
