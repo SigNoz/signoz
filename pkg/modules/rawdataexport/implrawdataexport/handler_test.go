@@ -103,8 +103,8 @@ func TestValidateAndApplyExportLimits(t *testing.T) {
 			name: "trace operator with other queries — non-operator disabled",
 			req:  makeRequest(logQuery(500), traceOperatorQuery(1000)),
 			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
-				assert.True(t, q[0].GetDisabled(), "log query should be disabled")
-				assert.False(t, q[1].GetDisabled(), "trace operator should stay enabled")
+				assert.True(t, q[0].IsDisabled(), "log query should be disabled")
+				assert.False(t, q[1].IsDisabled(), "trace operator should stay enabled")
 				assert.Equal(t, 1000, q[1].GetLimit())
 			},
 		},

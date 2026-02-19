@@ -425,7 +425,7 @@ func (r *QueryRangeRequest) Validate() error {
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
-		if !envelope.GetDisabled() {
+		if !envelope.IsDisabled() {
 			return nil
 		}
 	}

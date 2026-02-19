@@ -136,8 +136,8 @@ func (q *QueryEnvelope) GetQueryName() string {
 	panic("unsupported spec type")
 }
 
-// GetDisabled returns whether the spec is disabled.
-func (q *QueryEnvelope) GetDisabled() bool {
+// IsDisabled returns whether the spec is disabled.
+func (q *QueryEnvelope) IsDisabled() bool {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
 		return spec.Disabled
