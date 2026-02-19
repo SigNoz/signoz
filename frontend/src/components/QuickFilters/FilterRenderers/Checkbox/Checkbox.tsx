@@ -10,7 +10,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { Button, Checkbox, Input, InputRef, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
@@ -27,10 +26,8 @@ import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQue
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import { AppState } from 'store/reducers';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
@@ -72,15 +69,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		redirectWithQueryBuilderData,
 		panelType,
 	} = useQueryBuilder();
-
-	// Get time range from Redux global state
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	// Convert nanoseconds to milliseconds
-	const startUnixMilli = useMemo(() => Math.floor(minTime / 1000000), [minTime]);
-	const endUnixMilli = useMemo(() => Math.floor(maxTime / 1000000), [maxTime]);
 
 	// Determine if we're in ListView mode
 	const isListView = panelType === PANEL_TYPES.LIST;
@@ -140,8 +128,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		key: filter.attributeKey.key,
 		signal: filter.dataSource || DataSource.LOGS,
 		signalSource: source === QuickFiltersSource.METER_EXPLORER ? 'meter' : '',
-		startUnixMilli,
-		endUnixMilli,
 		searchText: searchText || '',
 		existingQuery: currentFilterExpression,
 		options: {

@@ -461,10 +461,9 @@ function QuerySearch({
 					signal: dataSource,
 					signalSource: signalSource as 'meter' | '',
 					metricName: debouncedMetricName ?? undefined,
-					startUnixMilli: timeRange.startUnixMilli,
-					endUnixMilli: timeRange.endUnixMilli,
 					existingQuery,
 				}); // Skip updates if component unmounted or key changed
+
 				if (
 					!isMountedRef.current ||
 					lastKeyRef.current !== key ||
@@ -479,7 +478,9 @@ function QuerySearch({
 				const relatedValues = values.relatedValues || [];
 				const stringValues =
 					relatedValues.length > 0 ? relatedValues : values.stringValues || [];
-				const numberValues = values.numberValues || []; // Generate options from string values - explicitly handle empty strings
+				const numberValues = values.numberValues || [];
+
+				// Generate options from string values - explicitly handle empty strings
 				const stringOptions = stringValues
 					// Strict filtering for empty string - we'll handle it as a special case if needed
 					.filter(

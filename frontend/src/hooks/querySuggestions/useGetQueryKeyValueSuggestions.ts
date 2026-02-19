@@ -9,8 +9,6 @@ export const useGetQueryKeyValueSuggestions = ({
 	searchText,
 	signalSource,
 	metricName,
-	startUnixMilli,
-	endUnixMilli,
 	existingQuery,
 	options,
 }: {
@@ -23,8 +21,6 @@ export const useGetQueryKeyValueSuggestions = ({
 		AxiosError
 	>;
 	metricName?: string;
-	startUnixMilli?: number;
-	endUnixMilli?: number;
 	existingQuery?: string;
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
@@ -46,8 +42,6 @@ export const useGetQueryKeyValueSuggestions = ({
 				searchText: searchText || '',
 				signalSource: signalSource as 'meter' | '',
 				metricName: metricName || '',
-				startUnixMilli,
-				endUnixMilli,
 				existingQuery,
 			}),
 		...options,

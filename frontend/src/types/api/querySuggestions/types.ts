@@ -47,8 +47,6 @@ export interface QueryKeyValueRequestProps {
 	searchText: string;
 	signalSource?: 'meter' | '';
 	metricName?: string;
-	startUnixMilli?: number;
-	endUnixMilli?: number;
 	existingQuery?: string;
 }
 
