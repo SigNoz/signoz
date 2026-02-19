@@ -50,6 +50,10 @@
 	}
 
 	.variable-select {
+		.ant-select-selector {
+			overflow-y: hidden !important;
+		}
+
 		.ant-select-item {
 			display: flex;
 			align-items: center;
