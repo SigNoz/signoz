@@ -151,7 +151,7 @@ func filterScalarDataIPs(columns []*qbtypes.ColumnDescriptor, data [][]any) [][]
 	// Find column indices for server address fields
 	serverColIndices := make([]int, 0)
 	for i, col := range columns {
-		if col.Name == serverAddressKeyLegacy || col.Name == serverAddressKey {
+		if col.Name == derivedKeyHTTPHost {
 			serverColIndices = append(serverColIndices, i)
 		}
 	}

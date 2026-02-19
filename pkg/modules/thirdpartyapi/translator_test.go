@@ -127,7 +127,7 @@ func TestFilterResponse(t *testing.T) {
 								QueryName: "endpoints",
 								Columns: []*qbtypes.ColumnDescriptor{
 									{
-										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: derivedKeyHTTPHost},
 										Type:              qbtypes.ColumnTypeGroup,
 									},
 									{
@@ -153,7 +153,7 @@ func TestFilterResponse(t *testing.T) {
 								QueryName: "endpoints",
 								Columns: []*qbtypes.ColumnDescriptor{
 									{
-										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+										TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: derivedKeyHTTPHost},
 										Type:              qbtypes.ColumnTypeGroup,
 									},
 									{
