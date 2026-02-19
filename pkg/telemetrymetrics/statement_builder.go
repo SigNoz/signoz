@@ -123,8 +123,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	origTimeAgg := query.Aggregations[0].TimeAggregation
 	origGroupBy := slices.Clone(query.GroupBy)
 
-	if (query.Aggregations[0].SpaceAggregation.IsPercentile() || query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount) &&
-		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
+	if query.Aggregations[0].Type == metrictypes.HistogramType {
 		// add le in the group by if doesn't exist
 		leExists := false
 		for _, g := range query.GroupBy {
