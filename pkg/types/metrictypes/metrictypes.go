@@ -271,10 +271,10 @@ func (_ NoSpaceAggregationParam) StringValue() string {
 }
 
 type ComparisonSpaceAggregationParam struct {
-	Operater string  `json:"operator"`
-	Limit    float64 `json:"limit"`
+	Operater  string  `json:"operator"`
+	Threshold float64 `json:"limit"`
 }
 
 func (cso ComparisonSpaceAggregationParam) StringValue() string {
-	return fmt.Sprintf("{\"operator\": \"%s\", \"limit\": \"%f\"}", cso.Operater, cso.Limit)
+	return fmt.Sprintf("{\"operator\": \"%s\", \"limit\": \"%f\"}", cso.Operater, cso.Threshold)
 }

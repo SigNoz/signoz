@@ -311,13 +311,13 @@ func AggregationColumnForSamplesTable(
 }
 
 func AggregationQueryForHistogramCount(params metrictypes.ComparisonSpaceAggregationParam) (string, error) {
-	histogramCountLimit := params.Limit
+	histogramCountThreshold := params.Threshold
 
 	switch params.Operater {
 	case "<=":
-		return fmt.Sprintf("argMaxIf(value, toFloat64(le), toFloat64(le) <= %f) + (argMinIf(value, toFloat64(le), toFloat64(le) > %f) - argMaxIf(value, toFloat64(le), toFloat64(le) <= %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) <= %f)) / (minIf(toFloat64(le), toFloat64(le) > %f) - maxIf(toFloat64(le), toFloat64(le) <= %f)) AS value", histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit), nil
+		return fmt.Sprintf("argMaxIf(value, toFloat64(le), toFloat64(le) <= %f) + (argMinIf(value, toFloat64(le), toFloat64(le) > %f) - argMaxIf(value, toFloat64(le), toFloat64(le) <= %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) <= %f)) / (minIf(toFloat64(le), toFloat64(le) > %f) - maxIf(toFloat64(le), toFloat64(le) <= %f)) AS value", histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold), nil
 	case ">":
-		return fmt.Sprintf("argMax(value, toFloat64(le)) - (argMaxIf(value, toFloat64(le), toFloat64(le) < %f) + (argMinIf(value, toFloat64(le), toFloat64(le) >= %f) - argMaxIf(value, toFloat64(le), toFloat64(le) < %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) < %f)) / (minIf(toFloat64(le), toFloat64(le) >= %f) - maxIf(toFloat64(le), toFloat64(le) <= %f))) AS value", histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit, histogramCountLimit), nil
+		return fmt.Sprintf("argMax(value, toFloat64(le)) - (argMaxIf(value, toFloat64(le), toFloat64(le) < %f) + (argMinIf(value, toFloat64(le), toFloat64(le) >= %f) - argMaxIf(value, toFloat64(le), toFloat64(le) < %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) < %f)) / (minIf(toFloat64(le), toFloat64(le) >= %f) - maxIf(toFloat64(le), toFloat64(le) <= %f))) AS value", histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold), nil
 	default:
 		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid space aggregation operator, should be one of the following: [`<=`, `>`]")
 	}
