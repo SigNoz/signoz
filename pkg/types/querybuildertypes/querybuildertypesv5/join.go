@@ -16,6 +16,17 @@ var (
 	JoinTypeCross = JoinType{valuer.NewString("cross")}
 )
 
+// Enum returns the acceptable values for JoinType.
+func (JoinType) Enum() []any {
+	return []any{
+		JoinTypeInner,
+		JoinTypeLeft,
+		JoinTypeRight,
+		JoinTypeFull,
+		JoinTypeCross,
+	}
+}
+
 type QueryRef struct {
 	Name string `json:"name"`
 }
