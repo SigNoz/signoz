@@ -7,7 +7,7 @@
 		padding: 16px;
 
 		.roles-settings-header-title {
-			color: var(--text-vanilla-100);
+			color: var(--text-base-white);
 			font-family: Inter;
 			font-style: normal;
 			font-size: 18px;
@@ -17,7 +17,7 @@
 		}
 
 		.roles-settings-header-description {
-			color: var(--text-vanilla-400);
+			color: var(--foreground);
 			font-family: Inter;
 			font-style: normal;
 			font-size: 14px;
@@ -35,8 +35,8 @@
 	.roles-search-wrapper {
 		input {
 			width: 100%;
-			background: var(--bg-ink-300);
-			border: 1px solid var(--bg-slate-400);
+			background: var(--l3-background);
+			border: 1px solid var(--l3-border);
 			border-radius: 2px;
 			padding: 6px 6px 6px 8px;
 			font-family: Inter;
@@ -44,17 +44,16 @@
 			font-weight: 400;
 			line-height: 18px;
 			letter-spacing: -0.07px;
-			color: var(--text-vanilla-400);
+			color: var(--l1-foreground);
 			outline: none;
 			height: 32px;
 
 			&::placeholder {
-				color: var(--text-vanilla-400);
-				opacity: 0.4;
+				color: var(--l3-foreground);
 			}
 
 			&:focus {
-				border-color: var(--bg-slate-300);
+				border-color: var(--input);
 			}
 		}
 	}
@@ -92,7 +91,7 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.44px;
-	color: var(--text-vanilla-400);
+	color: var(--foreground);
 	line-height: 16px;
 
 	&--name {
@@ -122,14 +121,14 @@
 	height: 32px;
 	padding: 0 16px;
 	background: rgba(171, 189, 255, 0.04);
-	border-top: 1px solid var(--bg-slate-500);
-	border-bottom: 1px solid var(--bg-slate-500);
+	border-top: 1px solid var(--secondary);
+	border-bottom: 1px solid var(--secondary);
 	font-family: Inter;
 	font-size: 12px;
 	font-weight: 400;
-	color: var(--text-vanilla-400);
+	color: var(--foreground);
 	line-height: 16px;
-	margin: 0; // Reset h3 default margin
+	margin: 0;
 
 	&__count {
 		display: inline-flex;
@@ -139,10 +138,10 @@
 		height: 18px;
 		padding: 0 6px;
 		border-radius: 9px;
-		background: var(--bg-slate-400);
+		background: var(--l3-background);
 		font-size: 12px;
 		font-weight: 500;
-		color: var(--text-vanilla-400);
+		color: var(--foreground);
 		line-height: 1;
 	}
 }
@@ -152,7 +151,7 @@
 	align-items: center;
 	padding: 8px 16px;
 	background: rgba(171, 189, 255, 0.02);
-	border-bottom: 1px solid var(--bg-slate-500);
+	border-bottom: 1px solid var(--secondary);
 	gap: 24px;
 }
 
@@ -160,7 +159,7 @@
 	font-family: Inter;
 	font-size: 14px;
 	font-weight: 400;
-	color: var(--text-vanilla-400);
+	color: var(--foreground);
 	line-height: 20px;
 
 	&--name {
@@ -190,7 +189,7 @@
 .roles-table-empty {
 	padding: 24px 16px;
 	text-align: center;
-	color: var(--text-vanilla-400);
+	color: var(--foreground);
 	font-family: Inter;
 	font-size: 14px;
 	font-weight: 400;
@@ -208,13 +207,13 @@
 		.numbers {
 			font-family: Inter;
 			font-size: 12px;
-			color: var(--text-vanilla-400);
+			color: var(--foreground);
 		}
 
 		.total {
 			font-family: Inter;
 			font-size: 12px;
-			color: var(--text-vanilla-400);
+			color: var(--foreground);
 			opacity: 0.5;
 		}
 	}
@@ -224,71 +223,16 @@
 	.roles-settings {
 		.roles-settings-header {
 			.roles-settings-header-title {
-				color: var(--text-ink-500);
-			}
-
-			.roles-settings-header-description {
-				color: var(--text-ink-400);
+				color: var(--text-base-black);
 			}
 		}
-
-		.roles-search-wrapper {
-			input {
-				background: var(--bg-vanilla-100);
-				border-color: var(--bg-vanilla-300);
-				color: var(--text-ink-400);
-
-				&::placeholder {
-					color: var(--text-ink-300);
-					opacity: 0.5;
-				}
-
-				&:focus {
-					border-color: var(--bg-vanilla-400);
-				}
-			}
-		}
-	}
-
-	.roles-table-header-cell {
-		color: var(--text-ink-300);
 	}
 
 	.roles-table-section-header {
 		background: rgba(0, 0, 0, 0.03);
-		border-top-color: var(--bg-vanilla-300);
-		border-bottom-color: var(--bg-vanilla-300);
-		color: var(--text-ink-300);
-
-		&__count {
-			background: var(--bg-vanilla-300);
-			color: var(--text-ink-300);
-		}
 	}
 
 	.roles-table-row {
 		background: rgba(0, 0, 0, 0.01);
-		border-bottom-color: var(--bg-vanilla-300);
-	}
-
-	.roles-table-cell {
-		color: var(--text-ink-300);
-
-		&--name {
-			color: var(--text-ink-400);
-		}
-	}
-
-	.roles-table-empty {
-		color: var(--text-ink-300);
-	}
-
-	.roles-table-pagination {
-		.ant-pagination-total-text {
-			.numbers,
-			.total {
-				color: var(--text-ink-300);
-			}
-		}
 	}
 }
