@@ -23,10 +23,10 @@ type PostableProfile struct {
 }
 
 type GettableHost struct {
-	Name  string `json:"name"`
-	State string `json:"state"`
-	Tier  string `json:"tier"`
-	Hosts []Host `json:"hosts"`
+	Name  string `json:"name" required:"true"`
+	State string `json:"state" required:"true"`
+	Tier  string `json:"tier" required:"true"`
+	Hosts []Host `json:"hosts" required:"true"`
 }
 
 type Host struct {

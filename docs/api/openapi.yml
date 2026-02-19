@@ -1942,6 +1942,11 @@ components:
           type: string
         tier:
           type: string
+      required:
+      - name
+      - state
+      - tier
+      - hosts
       type: object
     ZeustypesHost:
       properties:

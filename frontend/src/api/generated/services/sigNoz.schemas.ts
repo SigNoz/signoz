@@ -2419,19 +2419,19 @@ export interface ZeustypesGettableHostDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	hosts?: ZeustypesHostDTO[] | null;
+	hosts: ZeustypesHostDTO[] | null;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	state?: string;
+	state: string;
 	/**
 	 * @type string
 	 */
-	tier?: string;
+	tier: string;
 }
 
 export interface ZeustypesHostDTO {
