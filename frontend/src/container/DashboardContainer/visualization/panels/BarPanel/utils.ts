@@ -1,3 +1,4 @@
+import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
@@ -54,6 +55,13 @@ export function prepareBarPanelConfig({
 	minTimeScale?: number;
 	maxTimeScale?: number;
 }): UPlotConfigBuilder {
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+	const minStepInterval = Math.min(...Object.values(stepIntervals));
+
 	const builder = buildBaseConfig({
 		widget,
 		isDarkMode,
@@ -65,24 +73,13 @@ export function prepareBarPanelConfig({
 		panelType: PANEL_TYPES.BAR,
 		minTimeScale,
 		maxTimeScale,
-	});
-
-	builder.setCursor({
-		focus: {
-			prox: 1e3,
-		},
+		stepInterval: minStepInterval,
 	});
 
 	if (widget.stackedBarChart) {
 		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
 	}
-
-	const stepIntervals: Record<string, number> = get(
-		apiResponse,
-		'data.newResult.meta.stepIntervals',
-		{},
-	);
 
 	const seriesList: QueryData[] = apiResponse?.data?.result || [];
 	seriesList.forEach((series) => {
