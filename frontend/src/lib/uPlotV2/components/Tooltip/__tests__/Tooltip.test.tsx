@@ -15,6 +15,7 @@ type MockVirtuosoProps = {
 	className?: string;
 	style?: React.CSSProperties;
 	totalListHeightChanged?: (height: number) => void;
+	'data-testid'?: string;
 };
 
 let mockTotalListHeight = 200;
@@ -30,6 +31,7 @@ jest.mock('react-virtuoso', () => {
 			className,
 			style,
 			totalListHeightChanged,
+			'data-testid': dataTestId,
 		}: MockVirtuosoProps): JSX.Element => {
 			if (totalListHeightChanged) {
 				// Simulate Virtuoso reporting total list height
@@ -37,7 +39,7 @@ jest.mock('react-virtuoso', () => {
 			}
 
 			return (
-				<div className={className} style={style}>
+				<div className={className} style={style} data-testid={dataTestId}>
 					{data.map((item, index) => (
 						<div key={item.label ?? index.toString()}>{itemContent(index, item)}</div>
 					))}
@@ -136,9 +138,7 @@ describe('Tooltip', () => {
 
 		renderTooltip({ uPlotInstance });
 
-		const container = document.querySelector(
-			'.uplot-tooltip-container',
-		) as HTMLElement;
+		const container = screen.getByTestId('uplot-tooltip-container');
 
 		expect(container).toHaveClass('lightMode');
 		expect(container).not.toHaveClass('darkMode');
@@ -150,9 +150,7 @@ describe('Tooltip', () => {
 
 		renderTooltip({ uPlotInstance });
 
-		const container = document.querySelector(
-			'.uplot-tooltip-container',
-		) as HTMLElement;
+		const container = screen.getByTestId('uplot-tooltip-container');
 
 		expect(container).toHaveClass('darkMode');
 		expect(container).not.toHaveClass('lightMode');
@@ -164,18 +162,12 @@ describe('Tooltip', () => {
 
 		renderTooltip({ uPlotInstance, content });
 
-		const list = document.querySelector(
-			'.uplot-tooltip-list',
-		) as HTMLElement | null;
+		const list = screen.queryByTestId('uplot-tooltip-list');
 
 		expect(list).not.toBeNull();
 
-		const marker = document.querySelector(
-			'.uplot-tooltip-item-marker',
-		) as HTMLElement;
-		const itemContent = document.querySelector(
-			'.uplot-tooltip-item-content',
-		) as HTMLElement;
+		const marker = screen.getByTestId('uplot-tooltip-item-marker');
+		const itemContent = screen.getByTestId('uplot-tooltip-item-content');
 
 		expect(marker).toHaveStyle({ borderColor: '#ff0000' });
 		expect(itemContent).toHaveStyle({ color: '#ff0000', fontWeight: '700' });
@@ -187,9 +179,7 @@ describe('Tooltip', () => {
 
 		renderTooltip({ uPlotInstance, content: [] });
 
-		const list = document.querySelector(
-			'.uplot-tooltip-list',
-		) as HTMLElement | null;
+		const list = screen.queryByTestId('uplot-tooltip-list');
 
 		expect(list).toBeNull();
 	});
@@ -200,7 +190,7 @@ describe('Tooltip', () => {
 
 		renderTooltip({ uPlotInstance, content });
 
-		const list = document.querySelector('.uplot-tooltip-list') as HTMLElement;
+		const list = screen.getByTestId('uplot-tooltip-list');
 		expect(list).toHaveStyle({ height: '210px' });
 	});
 
@@ -211,7 +201,7 @@ describe('Tooltip', () => {
 
 		renderTooltip({ uPlotInstance, content });
 
-		const list = document.querySelector('.uplot-tooltip-list') as HTMLElement;
+		const list = screen.getByTestId('uplot-tooltip-list');
 		// Falls back to content length: 2 items * 38px = 76px
 		expect(list).toHaveStyle({ height: '76px' });
 	});

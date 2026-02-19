@@ -42,13 +42,17 @@ export default function Tooltip({
 		showTooltipHeader,
 	]);
 
-	const virtuosoHeight = useMemo(() => {
-		return listHeight > 0
-			? Math.min(listHeight + TOOLTIP_LIST_PADDING, TOOLTIP_LIST_MAX_HEIGHT)
-			: Math.min(
-					tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
-					TOOLTIP_LIST_MAX_HEIGHT,
-			  );
+	const virtuosoStyle = useMemo(() => {
+		return {
+			height:
+				listHeight > 0
+					? Math.min(listHeight + TOOLTIP_LIST_PADDING, TOOLTIP_LIST_MAX_HEIGHT)
+					: Math.min(
+							tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
+							TOOLTIP_LIST_MAX_HEIGHT,
+					  ),
+			width: '100%',
+		};
 	}, [listHeight, tooltipContent.length]);
 
 	return (
@@ -64,20 +68,13 @@ export default function Tooltip({
 					<span>{headerTitle}</span>
 				</div>
 			)}
-			<div
-				style={{
-					maxHeight: TOOLTIP_LIST_MAX_HEIGHT,
-				}}
-				data-testid="uplot-tooltip-list"
-			>
+			<div className="uplot-tooltip-list-container">
 				{tooltipContent.length > 0 ? (
 					<Virtuoso
 						className="uplot-tooltip-list"
+						data-testid="uplot-tooltip-list"
 						data={tooltipContent}
-						style={{
-							height: virtuosoHeight,
-							width: '100%',
-						}}
+						style={virtuosoStyle}
 						totalListHeightChanged={setListHeight}
 						itemContent={(_, item): JSX.Element => (
 							<div className="uplot-tooltip-item" data-testid="uplot-tooltip-item">
@@ -85,10 +82,12 @@ export default function Tooltip({
 									className="uplot-tooltip-item-marker"
 									style={{ borderColor: item.color }}
 									data-is-legend-marker={true}
+									data-testid="uplot-tooltip-item-marker"
 								/>
 								<div
 									className="uplot-tooltip-item-content"
 									style={{ color: item.color, fontWeight: item.isActive ? 700 : 400 }}
+									data-testid="uplot-tooltip-item-content"
 								>
 									{item.label}: {item.tooltipValue}
 								</div>
