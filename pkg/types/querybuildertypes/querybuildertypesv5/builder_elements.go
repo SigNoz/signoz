@@ -446,12 +446,48 @@ type MetricAggregation struct {
 	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
 	// space aggregation to apply to the query
 	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation"`
+	// param for space aggregation if needed
+	SpaceAggregationParam metrictypes.SpaceAggregationParam `json:"spaceAggregationParam"`
 	// table hints to use for the query
 	TableHints *metrictypes.MetricTableHints `json:"-"`
 	// value filter to apply to the query
 	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
 	// reduce to operator for metric scalar requests
 	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
+}
+
+func (m *MetricAggregation) UnmarshalJSON(data []byte) error {
+	type Alias MetricAggregation
+	aux := &struct {
+		SpaceAggregationParam json.RawMessage `json:"spaceAggregationParam"`
+		*Alias
+	}{
+		Alias: (*Alias)(m),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// If no param provided
+	if len(aux.SpaceAggregationParam) == 0 || string(aux.SpaceAggregationParam) == "null" {
+		m.SpaceAggregationParam = metrictypes.NoSpaceAggregationParam{}
+		return nil
+	}
+
+	switch m.SpaceAggregation {
+	case metrictypes.SpaceAggregationHistogramCount:
+		var p metrictypes.ComparisionSpaceAggregationParam
+		if err := json.Unmarshal(aux.SpaceAggregationParam, &p); err != nil {
+			return err
+		}
+		m.SpaceAggregationParam = p
+
+	default:
+		m.SpaceAggregationParam = metrictypes.NoSpaceAggregationParam{}
+	}
+
+	return nil
 }
 
 // Copy creates a deep copy of MetricAggregation

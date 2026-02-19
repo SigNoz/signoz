@@ -123,7 +123,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	origTimeAgg := query.Aggregations[0].TimeAggregation
 	origGroupBy := slices.Clone(query.GroupBy)
 
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
+	if (query.Aggregations[0].SpaceAggregation.IsPercentile() || query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount) &&
 		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
 		// add le in the group by if doesn't exist
 		leExists := false
@@ -154,7 +154,11 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 
 		// make the time aggregation rate and space aggregation sum
-		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+		if query.Aggregations[0].SpaceAggregation.IsPercentile() {
+			query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+		} else {
+			query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+		}
 		query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
 	}
 
@@ -524,7 +528,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`, `histogram_count`]",
 		)
 	}
 	sb := sqlbuilder.NewSelectBuilder()
@@ -577,6 +581,34 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		sb.From("__spatial_aggregation_cte")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		sb.GroupBy("ts")
+		if query.Having != nil && query.Having.Expression != "" {
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
+		}
+	} else if query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount {
+		sb.Select("ts")
+
+		for _, g := range query.GroupBy {
+			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+
+		switch query.Aggregations[0].SpaceAggregationParam.(type) {
+		case metrictypes.ComparisionSpaceAggregationParam:
+			aggQuery, err := AggregationQueryForHistogramCount(query.Aggregations[0].SpaceAggregationParam.(metrictypes.ComparisionSpaceAggregationParam))
+			if err != nil {
+				return nil, err
+			}
+			sb.SelectMore(aggQuery)
+		default:
+			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no aggregation param provided for histogram count")
+		}
+
+		sb.From("__spatial_aggregation_cte")
+
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy("ts")
+
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
