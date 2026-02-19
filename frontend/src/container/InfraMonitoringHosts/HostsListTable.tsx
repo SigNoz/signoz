@@ -14,22 +14,16 @@ import { InfraMonitoringEvents } from 'constants/events';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {
+	EmptyOrLoadingViewProps,
 	formatDataForTable,
 	getHostsListColumns,
 	HostRowData,
 	HostsListTableProps,
 } from './utils';
 
-function getEmptyOrLoadingView(viewState: {
-	isError: boolean;
-	errorMessage: string;
-	showHostsEmptyState: boolean;
-	sentAnyHostMetricsData: boolean;
-	isSendingIncorrectK8SAgentMetrics: boolean;
-	showEndTimeBeforeRetentionMessage: boolean;
-	showNoRecordsInSelectedTimeRangeMessage: boolean;
-	showTableLoadingState: boolean;
-}): React.ReactNode {
+function EmptyOrLoadingView(
+	viewState: EmptyOrLoadingViewProps,
+): React.ReactNode {
 	const { isError, errorMessage } = viewState;
 	if (isError) {
 		return <Typography>{errorMessage}</Typography>;
@@ -200,7 +194,7 @@ export default function HostsListTable({
 	const showTableLoadingState =
 		(isLoading || isFetching) && formattedHostMetricsData.length === 0;
 
-	const emptyOrLoadingView = getEmptyOrLoadingView({
+	const emptyOrLoadingView = EmptyOrLoadingView({
 		isError,
 		errorMessage: data?.error || 'Something went wrong',
 		showHostsEmptyState,

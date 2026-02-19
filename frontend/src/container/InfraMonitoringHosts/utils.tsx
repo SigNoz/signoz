@@ -52,6 +52,17 @@ export interface HostsListTableProps {
 	setPageSize: (pageSize: number) => void;
 }
 
+export interface EmptyOrLoadingViewProps {
+	isError: boolean;
+	errorMessage: string;
+	showHostsEmptyState: boolean;
+	sentAnyHostMetricsData: boolean;
+	isSendingIncorrectK8SAgentMetrics: boolean;
+	showEndTimeBeforeRetentionMessage: boolean;
+	showNoRecordsInSelectedTimeRangeMessage: boolean;
+	showTableLoadingState: boolean;
+}
+
 export const getHostListsQuery = (): HostListPayload => ({
 	filters: {
 		items: [],

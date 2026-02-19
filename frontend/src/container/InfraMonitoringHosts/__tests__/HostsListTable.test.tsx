@@ -41,6 +41,7 @@ const createMockTableData = (
 				total: 1,
 				sentAnyHostMetricsData: true,
 				isSendingK8SAgentMetrics: false,
+				endTimeBeforeRetention: false,
 				...overrides,
 			},
 		},
