@@ -39,6 +39,7 @@ export interface ConfigBuilderProps {
 	tzDate?: uPlot.LocalDateFromUnix;
 	selectionPreferencesSource?: SelectionPreferencesSource;
 	shouldSaveSelectionPreference?: boolean;
+	stepInterval?: number;
 }
 
 /**
