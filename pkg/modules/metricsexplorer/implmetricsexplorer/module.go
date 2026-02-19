@@ -56,6 +56,88 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 	}
 }
 
+func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT metric_name")
+
+	if params.Start != nil && params.End != nil {
+		start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), nil)
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+		sb.Where(sb.Between("unix_milli", start, end))
+	} else {
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
+	}
+
+	sb.Where(sb.E("__normalized", false))
+
+	if params.Search != "" {
+		searchLower := strings.ToLower(params.Search)
+		searchLower = strings.ReplaceAll(searchLower, "%", "\\%")
+		searchLower = strings.ReplaceAll(searchLower, "_", "\\_")
+		sb.Where(sb.Like("lower(metric_name)", fmt.Sprintf("%%%s%%", searchLower)))
+	}
+
+	sb.OrderBy("metric_name ASC")
+	sb.Limit(params.Limit)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(valueCtx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list metrics")
+	}
+	defer rows.Close()
+
+	metricNames := make([]string, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric name")
+		}
+		metricNames = append(metricNames, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric names")
+	}
+
+	if len(metricNames) == 0 {
+		return &metricsexplorertypes.ListMetricsResponse{
+			Metrics: []metricsexplorertypes.ListMetric{},
+		}, nil
+	}
+
+	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics := make([]metricsexplorertypes.ListMetric, 0, len(metricNames))
+	for _, name := range metricNames {
+		metric := metricsexplorertypes.ListMetric{
+			MetricName: name,
+		}
+		if meta, ok := metadata[name]; ok && meta != nil {
+			metric.Description = meta.Description
+			metric.MetricType = meta.MetricType
+			metric.MetricUnit = meta.MetricUnit
+			metric.Temporality = meta.Temporality
+			metric.IsMonotonic = meta.IsMonotonic
+		}
+		metrics = append(metrics, metric)
+	}
+
+	return &metricsexplorertypes.ListMetricsResponse{
+		Metrics: metrics,
+	}, nil
+}
+
 func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.StatsRequest) (*metricsexplorertypes.StatsResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err

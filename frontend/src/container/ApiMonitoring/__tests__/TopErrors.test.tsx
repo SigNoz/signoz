@@ -4,6 +4,7 @@ import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import TopErrors from '../Explorer/Domains/DomainDetails/TopErrors';
 import { getTopErrorsQueryPayload } from '../utils';
 
@@ -215,7 +216,7 @@ describe('TopErrors', () => {
 					value: 'true',
 				}),
 				expect.objectContaining({
-					key: expect.objectContaining({ key: 'net.peer.name' }),
+					key: expect.objectContaining({ key: SPAN_ATTRIBUTES.SERVER_NAME }),
 					op: '=',
 					value: 'test-domain',
 				}),
