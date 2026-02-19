@@ -2,7 +2,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot from 'uplot';
 
 import {
-	DEFAULT_HOVER_PROX_VALUE,
+	DEFAULT_HOVER_PROXIMITY_VALUE,
 	STEP_INTERVAL_MULTIPLIER,
 } from '../../constants';
 import type { SeriesProps } from '../types';
@@ -407,16 +407,16 @@ describe('UPlotConfigBuilder', () => {
 			const cursorConfig = builder.getCursorConfig();
 
 			expect(cursorConfig.drag?.setScale).toBe(false);
-			expect(cursorConfig.hover?.prox).toBe(DEFAULT_HOVER_PROX_VALUE);
+			expect(cursorConfig.hover?.prox).toBe(DEFAULT_HOVER_PROXIMITY_VALUE);
 			expect(cursorConfig.points).toBeDefined();
 		});
 
-		it('returns hover prox as DEFAULT_HOVER_PROX_VALUE when stepInterval is not set', () => {
+		it('returns hover prox as DEFAULT_HOVER_PROXIMITY_VALUE when stepInterval is not set', () => {
 			const builder = new UPlotConfigBuilder();
 
 			const cursorConfig = builder.getCursorConfig();
 
-			expect(cursorConfig.hover?.prox).toBe(DEFAULT_HOVER_PROX_VALUE);
+			expect(cursorConfig.hover?.prox).toBe(DEFAULT_HOVER_PROXIMITY_VALUE);
 		});
 
 		it('returns hover prox as function when stepInterval is set, computing width * multiplier', () => {

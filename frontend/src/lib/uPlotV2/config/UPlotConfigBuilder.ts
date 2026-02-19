@@ -9,7 +9,7 @@ import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
 	DEFAULT_CURSOR_CONFIG,
-	DEFAULT_HOVER_PROX_VALUE,
+	DEFAULT_HOVER_PROXIMITY_VALUE,
 	DEFAULT_PLOT_CONFIG,
 	STEP_INTERVAL_MULTIPLIER,
 } from '../constants';
@@ -401,10 +401,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 								});
 								return width * STEP_INTERVAL_MULTIPLIER;
 						  }
-						: DEFAULT_HOVER_PROX_VALUE,
+						: DEFAULT_HOVER_PROXIMITY_VALUE,
 				},
 			};
-			return merge({}, DEFAULT_CURSOR_CONFIG, cursorConfig);
+			return merge({}, DEFAULT_CURSOR_CONFIG, cursorConfig, this.cursor);
 		}
 		return merge({}, DEFAULT_CURSOR_CONFIG, this.cursor);
 	}

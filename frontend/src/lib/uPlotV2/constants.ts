@@ -2,8 +2,8 @@ import { Cursor, Options } from 'uplot';
 
 const POINTS_FILL_COLOR = '#FFFFFF';
 
-export const DEFAULT_HOVER_PROX_VALUE = 30; // only snap if within 30px horizontally
-export const DEFAULT_FOCUS_PROX_VALUE = 1e6;
+export const DEFAULT_HOVER_PROXIMITY_VALUE = 30; // only snap if within 30px horizontally
+export const DEFAULT_FOCUS_PROXIMITY_VALUE = 1e6;
 export const STEP_INTERVAL_MULTIPLIER = 3; // multiply the width computed by STEP_INTERVAL_MULTIPLIER to get the hover prox value
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
@@ -39,10 +39,10 @@ export const DEFAULT_CURSOR_CONFIG: Cursor = {
 		fill: (): string => POINTS_FILL_COLOR,
 	},
 	focus: {
-		prox: DEFAULT_FOCUS_PROX_VALUE,
+		prox: DEFAULT_FOCUS_PROXIMITY_VALUE,
 	},
 	hover: {
-		prox: DEFAULT_HOVER_PROX_VALUE,
+		prox: DEFAULT_HOVER_PROXIMITY_VALUE,
 		bias: 0,
 	},
 };

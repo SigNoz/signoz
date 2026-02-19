@@ -1,3 +1,4 @@
+import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
@@ -54,7 +55,7 @@ export function prepareBarPanelConfig({
 	minTimeScale?: number;
 	maxTimeScale?: number;
 }): UPlotConfigBuilder {
-	const stepIntervals: Record<string, number> = get(
+	const stepIntervals: ExecStats['stepIntervals'] = get(
 		apiResponse,
 		'data.newResult.meta.stepIntervals',
 		{},
