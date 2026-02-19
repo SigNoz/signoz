@@ -594,8 +594,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		}
 
 		switch query.Aggregations[0].SpaceAggregationParam.(type) {
-		case metrictypes.ComparisionSpaceAggregationParam:
-			aggQuery, err := AggregationQueryForHistogramCount(query.Aggregations[0].SpaceAggregationParam.(metrictypes.ComparisionSpaceAggregationParam))
+		case metrictypes.ComparisonSpaceAggregationParam:
+			aggQuery, err := AggregationQueryForHistogramCount(query.Aggregations[0].SpaceAggregationParam.(metrictypes.ComparisonSpaceAggregationParam))
 			if err != nil {
 				return nil, err
 			}

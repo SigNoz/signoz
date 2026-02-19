@@ -477,7 +477,7 @@ func (m *MetricAggregation) UnmarshalJSON(data []byte) error {
 
 	switch m.SpaceAggregation {
 	case metrictypes.SpaceAggregationHistogramCount:
-		var p metrictypes.ComparisionSpaceAggregationParam
+		var p metrictypes.ComparisonSpaceAggregationParam
 		if err := json.Unmarshal(aux.SpaceAggregationParam, &p); err != nil {
 			return err
 		}
