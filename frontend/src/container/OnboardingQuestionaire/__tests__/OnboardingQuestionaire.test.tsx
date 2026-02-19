@@ -277,6 +277,46 @@ describe('OnboardingQuestionaire Component', () => {
 			).toBeInTheDocument();
 		});
 
+		it('fires PUT to /zeus/profiles and advances to step 4 on success', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let profilePutCalled = false;
+
+			server.use(
+				rest.put(UPDATE_PROFILE_ENDPOINT, (_, res, ctx) => {
+					profilePutCalled = true;
+					return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+				}),
+			);
+
+			render(<OnboardingQuestionaire />);
+
+			// Navigate to step 3
+			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('button', { name: /next/i }));
+
+			await user.type(
+				await screen.findByPlaceholderText(/e\.g\., googling/i),
+				'Found via Google',
+			);
+			await user.click(screen.getByLabelText(/lowering observability costs/i));
+			await user.click(screen.getByRole('button', { name: /next/i }));
+
+			// Click "I'll do this later" on step 3 — triggers PUT /zeus/profiles
+			await user.click(
+				await screen.findByRole('button', { name: /i'll do this later/i }),
+			);
+
+			await waitFor(() => {
+				expect(profilePutCalled).toBe(true);
+				// Step 3 content is gone — successfully advanced to step 4
+				expect(
+					screen.queryByText(/what does your scale approximately look like/i),
+				).not.toBeInTheDocument();
+			});
+		});
+
 		it('shows do later button', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
