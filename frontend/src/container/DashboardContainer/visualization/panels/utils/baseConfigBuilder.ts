@@ -26,6 +26,7 @@ export interface BaseConfigBuilderProps {
 	panelType: PANEL_TYPES;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	stepInterval?: number;
 }
 
 export function buildBaseConfig({
@@ -39,6 +40,7 @@ export function buildBaseConfig({
 	panelType,
 	minTimeScale,
 	maxTimeScale,
+	stepInterval,
 }: BaseConfigBuilderProps): UPlotConfigBuilder {
 	const tzDate = timezone
 		? (timestamp: number): Date =>
@@ -56,6 +58,7 @@ export function buildBaseConfig({
 		].includes(panelMode)
 			? SelectionPreferencesSource.LOCAL_STORAGE
 			: SelectionPreferencesSource.IN_MEMORY,
+		stepInterval,
 	});
 
 	const thresholdOptions: ThresholdsDrawHookOptions = {
