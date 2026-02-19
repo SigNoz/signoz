@@ -44,15 +44,20 @@ services:
   telemetrystore-migrator:
     image: signoz/signoz-otel-collector:v0.142.0
     container_name: telemetrystore-migrator
+    environment:
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
+    entrypoint:
+      - /bin/sh
     command:
-    - -c
+    - -c 
     - |
-      /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000 &&
-      /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000 &&
-      /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
+      /signoz-otel-collector migrate bootstrap &&
+      /signoz-otel-collector migrate sync up &&
+      /signoz-otel-collector migrate async up
     depends_on:
       clickhouse:
         condition: service_healthy
-    entrypoint:
-    - /bin/sh
     restart: on-failure

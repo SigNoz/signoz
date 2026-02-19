@@ -52,11 +52,6 @@ x-zookeeper-defaults: &zookeeper-defaults
     interval: 30s
     timeout: 5s
     retries: 3
-x-db-depend: &db-depend
-  !!merge <<: *common
-  depends_on:
-    clickhouse:
-      condition: service_healthy
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -108,27 +103,17 @@ services:
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
-    !!merge <<: *db-depend
+    !!merge <<: *common
     image: signoz/signoz:${VERSION:-v0.111.0}
     container_name: signoz
-    command:
-      - --config=/root/config/prometheus.yml
     ports:
       - "8080:8080" # signoz port
-    #   - "6060:6060"     # pprof port
     volumes:
-      - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
-      - ../common/dashboards:/root/config/dashboards
       - sqlite:/var/lib/signoz/
     environment:
       - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
       - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
-      - DASHBOARDS_PATH=/root/config/dashboards
-      - STORAGE=clickhouse
-      - GODEBUG=netdns=go
-      - TELEMETRY_ENABLED=true
-      - DEPLOYMENT_TYPE=docker-standalone-amd
       - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
@@ -141,44 +126,56 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      telemetrystore-migrator:
-        condition: service_completed_successfully
+      clickhouse:
+        condition: service_healthy
   otel-collector:
-    !!merge <<: *db-depend
+    !!merge <<: *common
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     container_name: signoz-otel-collector
+    entrypoint:
+    - /bin/sh
     command:
-      - --config=/etc/otel-collector-config.yaml
-      - --manager-config=/etc/manager-config.yaml
-      - --copy-path=/var/tmp/collector-config.yaml
+      - -c
+      - |
+        /signoz-otel-collector migrate sync check &&
+        /signoz-otel-collector --config=/etc/otel-collector-config.yaml --manager-config=/etc/manager-config.yaml --copy-path=/var/tmp/collector-config.yaml
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ../common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
     depends_on:
-      signoz:
+      clickhouse:
         condition: service_healthy
   telemetrystore-migrator:
     !!merge <<: *common
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     container_name: telemetrystore-migrator
+    environment:
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
+    entrypoint:
+      - /bin/sh
     command:
     - -c 
     - |
-      /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000 &&
-      /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000 &&
-      /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
+      /signoz-otel-collector migrate bootstrap &&
+      /signoz-otel-collector migrate sync up &&
+      /signoz-otel-collector migrate async up
     depends_on:
       clickhouse:
         condition: service_healthy
-    entrypoint:
-    - /bin/sh
     restart: on-failure
 networks:
   signoz-net:

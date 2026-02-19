@@ -54,10 +54,6 @@ x-zookeeper-defaults: &zookeeper-defaults
     interval: 30s
     timeout: 5s
     retries: 3
-x-db-depend: &db-depend
-  !!merge <<: *common
-  depends_on:
-    - clickhouse
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -115,27 +111,16 @@ services:
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
-    !!merge <<: *db-depend
+    !!merge <<: *common
     image: signoz/signoz:v0.111.0
-    command:
-      - --config=/root/config/prometheus.yml
     ports:
       - "8080:8080" # signoz port
-    #   - "6060:6060"     # pprof port
     volumes:
       - sqlite:/var/lib/signoz/
-    configs:
-      - source: signoz-prometheus-config
-        target: /root/config/prometheus.yml
     environment:
       - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
       - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
-      - DASHBOARDS_PATH=/root/config/dashboards
-      - STORAGE=clickhouse
-      - GODEBUG=netdns=go
-      - TELEMETRY_ENABLED=true
-      - DEPLOYMENT_TYPE=docker-swarm
       - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
@@ -148,14 +133,17 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      - telemetrystore-migrator
+      - clickhouse
   otel-collector:
-    !!merge <<: *db-depend
+    !!merge <<: *common
     image: signoz/signoz-otel-collector:v0.142.0
+    entrypoint:
+    - /bin/sh
     command:
-      - --config=/etc/otel-collector-config.yaml
-      - --manager-config=/etc/manager-config.yaml
-      - --copy-path=/var/tmp/collector-config.yaml
+      - -c
+      - |
+        /signoz-otel-collector migrate sync check &&
+        /signoz-otel-collector --config=/etc/otel-collector-config.yaml --manager-config=/etc/manager-config.yaml --copy-path=/var/tmp/collector-config.yaml
     configs:
       - source: otel-collector-config
         target: /etc/otel-collector-config.yaml
@@ -164,6 +152,10 @@ services:
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317" # OTLP gRPC receiver
@@ -172,18 +164,22 @@ services:
       replicas: 3
     depends_on:
       - clickhouse
-      - signoz
   telemetrystore-migrator:
     !!merge <<: *common
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
+    environment:
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
     entrypoint:
-    - /bin/sh
+      - /bin/sh
     command:
-    - -c
+    - -c 
     - |
-      /signoz-otel-collector migrate bootstrap --clickhouse-dsn tcp://clickhouse:9000 &&
-      /signoz-otel-collector migrate sync up --clickhouse-dsn tcp://clickhouse:9000 &&
-      /signoz-otel-collector migrate async up --clickhouse-dsn tcp://clickhouse:9000
+      /signoz-otel-collector migrate bootstrap &&
+      /signoz-otel-collector migrate sync up &&
+      /signoz-otel-collector migrate async up    
     depends_on:
       - clickhouse
     restart: on-failure
@@ -206,14 +202,6 @@ configs:
     file: ../common/clickhouse/custom-function.xml
   clickhouse-cluster:
     file: ../common/clickhouse/cluster.xml
-  signoz-prometheus-config:
-    file: ../common/signoz/prometheus.yml
-  # If you have multiple dashboard files, you can list them individually:
-  # dashboard-foo:
-  #   file: ../common/dashboards/foo.json
-  # dashboard-bar:
-  #   file: ../common/dashboards/bar.json
-
   otel-collector-config:
     file: ./otel-collector-config.yaml
   otel-manager-config:
