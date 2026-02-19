@@ -1,3 +1,4 @@
+import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -15,6 +16,7 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
+import get from 'lodash-es/get';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -72,6 +74,13 @@ export const prepareUPlotConfig = ({
 	minTimeScale?: number;
 	maxTimeScale?: number;
 }): UPlotConfigBuilder => {
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+	const minStepInterval = Math.min(...Object.values(stepIntervals));
+
 	const builder = buildBaseConfig({
 		widget,
 		isDarkMode,
@@ -83,6 +92,7 @@ export const prepareUPlotConfig = ({
 		panelType: PANEL_TYPES.TIME_SERIES,
 		minTimeScale,
 		maxTimeScale,
+		stepInterval: minStepInterval,
 	});
 
 	apiResponse.data?.result?.forEach((series) => {
