@@ -1543,6 +1543,10 @@ export interface TypesUserDTO {
 	 */
 	id?: string;
 	/**
+	 * @type string
+	 */
+	identityId?: string;
+	/**
 	 * @type boolean
 	 */
 	isRoot?: boolean;

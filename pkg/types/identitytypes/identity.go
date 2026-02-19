@@ -3,8 +3,14 @@ package identitytypes
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+)
+
+var (
+	ErrCodeIdentityAlreadyExists     = errors.MustNewCode("identity_already_exists")
+	ErrCodeIdentityRoleAlreadyExists = errors.MustNewCode("identity_role_already_exists")
 )
 
 var (

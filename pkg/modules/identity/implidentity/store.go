@@ -26,7 +26,7 @@ func (s *store) CreateIdentity(ctx context.Context, identity *identitytypes.Stor
 		Model(identity).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create identity")
+		return s.sqlstore.WrapAlreadyExistsErrf(err, identitytypes.ErrCodeIdentityAlreadyExists, "identity with id %s already exists", identity.ID)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (s *store) CreateIdentityRole(ctx context.Context, identityRole *identityty
 		Model(identityRole).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create identity role")
+		return s.sqlstore.WrapAlreadyExistsErrf(err, identitytypes.ErrCodeIdentityRoleAlreadyExists, "identity role %s already exists for identity %s", identityRole.RoleName, identityRole.IdentityID)
 	}
 	return nil
 }
