@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -106,7 +107,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	// v5
-	router.HandleFunc("/api/v5/query_range", am.ViewAccess(ah.queryRangeV5)).Methods(http.MethodPost)
+	router.Handle("/api/v5/query_range", handler.New(
+		am.ViewAccess(ah.queryRangeV5),
+		querierAPI.QueryRangeV5OpenAPIDef,
+	)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v5/substitute_vars", am.ViewAccess(ah.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 

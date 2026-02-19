@@ -1,6 +1,10 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot from 'uplot';
 
+import {
+	DEFAULT_HOVER_PROXIMITY_VALUE,
+	STEP_INTERVAL_MULTIPLIER,
+} from '../../constants';
 import type { SeriesProps } from '../types';
 import { DrawStyle, SelectionPreferencesSource } from '../types';
 import { UPlotConfigBuilder } from '../UPlotConfigBuilder';
@@ -12,6 +16,14 @@ jest.mock(
 		getStoredSeriesVisibility: jest.fn(),
 	}),
 );
+
+jest.mock('lib/uPlotV2/utils', () => ({
+	calculateWidthBasedOnStepInterval: jest.fn(),
+}));
+
+const calculateWidthBasedOnStepIntervalMock = jest.requireMock(
+	'lib/uPlotV2/utils',
+).calculateWidthBasedOnStepInterval as jest.Mock;
 
 const getStoredSeriesVisibilityMock = jest.requireMock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
@@ -382,6 +394,52 @@ describe('UPlotConfigBuilder', () => {
 		expect(config.cursor?.drag?.setScale).toBe(false);
 		// Points configuration from DEFAULT_CURSOR_CONFIG should still be present
 		expect(config.cursor?.points).toBeDefined();
+	});
+
+	describe('getCursorConfig', () => {
+		it('returns default cursor merged with custom cursor when no stepInterval', () => {
+			const builder = new UPlotConfigBuilder();
+
+			builder.setCursor({
+				drag: { setScale: false },
+			});
+
+			const cursorConfig = builder.getCursorConfig();
+
+			expect(cursorConfig.drag?.setScale).toBe(false);
+			expect(cursorConfig.hover?.prox).toBe(DEFAULT_HOVER_PROXIMITY_VALUE);
+			expect(cursorConfig.points).toBeDefined();
+		});
+
+		it('returns hover prox as DEFAULT_HOVER_PROXIMITY_VALUE when stepInterval is not set', () => {
+			const builder = new UPlotConfigBuilder();
+
+			const cursorConfig = builder.getCursorConfig();
+
+			expect(cursorConfig.hover?.prox).toBe(DEFAULT_HOVER_PROXIMITY_VALUE);
+		});
+
+		it('returns hover prox as function when stepInterval is set, computing width * multiplier', () => {
+			const stepInterval = 60;
+			const mockWidth = 100;
+			calculateWidthBasedOnStepIntervalMock.mockReturnValue(mockWidth);
+
+			const builder = new UPlotConfigBuilder({ stepInterval });
+			const cursorConfig = builder.getCursorConfig();
+
+			expect(typeof cursorConfig.hover?.prox).toBe('function');
+
+			const uPlotInstance = {} as uPlot;
+			const proxResult = (cursorConfig.hover!.prox as (u: uPlot) => number)(
+				uPlotInstance,
+			);
+
+			expect(calculateWidthBasedOnStepIntervalMock).toHaveBeenCalledWith({
+				uPlotInstance,
+				stepInterval,
+			});
+			expect(proxResult).toBe(mockWidth * STEP_INTERVAL_MULTIPLIER);
+		});
 	});
 
 	it('adds plugins and includes them in config', () => {

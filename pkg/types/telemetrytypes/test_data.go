@@ -65,6 +65,7 @@ func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
 		"interests[].entities[].reviews[].entries[].metadata[].positions[].unit":     {String},
 		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings":  {ArrayInt64, ArrayString},
 		"message": {String},
+		"tags":    {ArrayString},
 	}
 
 	return types, nil

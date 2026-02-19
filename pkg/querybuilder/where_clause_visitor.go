@@ -485,6 +485,22 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		value1 := v.Visit(values[0])
 		value2 := v.Visit(values[1])
 
+		switch value1.(type) {
+		case float64:
+			if _, ok := value2.(float64); !ok {
+				v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: expected number for both operands", keys[0].Name))
+				return ""
+			}
+		case string:
+			if _, ok := value2.(string); !ok {
+				v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: expected string for both operands", keys[0].Name))
+				return ""
+			}
+		default:
+			v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: operands must be number or string", keys[0].Name))
+			return ""
+		}
+
 		var conds []string
 		for _, key := range keys {
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)

@@ -2050,7 +2050,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	organization := types.NewOrganization(req.OrgDisplayName)
+	organization := types.NewOrganization(req.OrgDisplayName, req.OrgName)
 	user, errv2 := aH.Signoz.Modules.User.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
 	if errv2 != nil {
 		render.Error(w, errv2)
@@ -5001,7 +5001,6 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = thirdpartyapi.MergeSemconvColumns(result)
 	result = thirdpartyapi.FilterIntermediateColumns(result)
 
 	// Filter IP addresses if ShowIp is false
@@ -5058,7 +5057,6 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = thirdpartyapi.MergeSemconvColumns(result)
 	result = thirdpartyapi.FilterIntermediateColumns(result)
 
 	// Filter IP addresses if ShowIp is false

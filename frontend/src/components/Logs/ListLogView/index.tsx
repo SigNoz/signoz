@@ -2,13 +2,11 @@ import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
 import { Typography } from 'antd';
 import cx from 'classnames';
-import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
@@ -104,12 +102,17 @@ function LogSelectedField({
 type ListLogViewProps = {
 	logData: ILog;
 	selectedFields: IField[];
-	onSetActiveLog: (log: ILog) => void;
+	onSetActiveLog: (
+		log: ILog,
+		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+	) => void;
 	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
 	activeLog?: ILog | null;
 	linesPerRow: number;
 	fontSize: FontSize;
 	handleChangeSelectedView?: ChangeViewFunctionType;
+	isActiveLog?: boolean;
+	onClearActiveLog?: () => void;
 };
 
 function ListLogView({
@@ -120,7 +123,8 @@ function ListLogView({
 	activeLog,
 	linesPerRow,
 	fontSize,
-	handleChangeSelectedView,
+	isActiveLog,
+	onClearActiveLog,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -129,35 +133,24 @@ function ListLogView({
 	);
 	const isReadOnlyLog = !isLogsExplorerPage;
 
-	const {
-		activeLog: activeContextLog,
-		onAddToQuery: handleAddToQuery,
-		onSetActiveLog: handleSetActiveContextLog,
-		onClearActiveLog: handleClearActiveContextLog,
-	} = useActiveLog();
-
 	const isDarkMode = useIsDarkMode();
 
-	const handlerClearActiveContextLog = useCallback(
-		(event: React.MouseEvent | React.KeyboardEvent) => {
-			event.preventDefault();
-			event.stopPropagation();
-			handleClearActiveContextLog();
-		},
-		[handleClearActiveContextLog],
-	);
-
 	const handleDetailedView = useCallback(() => {
+		if (isActiveLog) {
+			onClearActiveLog?.();
+			return;
+		}
+
 		onSetActiveLog(logData);
-	}, [logData, onSetActiveLog]);
+	}, [logData, onSetActiveLog, isActiveLog, onClearActiveLog]);
 
 	const handleShowContext = useCallback(
 		(event: React.MouseEvent) => {
 			event.preventDefault();
 			event.stopPropagation();
-			handleSetActiveContextLog(logData);
+			onSetActiveLog(logData, VIEW_TYPES.CONTEXT);
 		},
-		[logData, handleSetActiveContextLog],
+		[logData, onSetActiveLog],
 	);
 
 	const updatedSelecedFields = useMemo(
@@ -186,11 +179,7 @@ function ListLogView({
 	return (
 		<>
 			<Container
-				$isActiveLog={
-					isHighlighted ||
-					activeLog?.id === logData.id ||
-					activeContextLog?.id === logData.id
-				}
+				$isActiveLog={isHighlighted || activeLog?.id === logData.id}
 				$isDarkMode={isDarkMode}
 				$logType={logType}
 				onClick={handleDetailedView}
@@ -251,15 +240,6 @@ function ListLogView({
 					/>
 				)}
 			</Container>
-			{activeContextLog && (
-				<LogDetail
-					log={activeContextLog}
-					onAddToQuery={handleAddToQuery}
-					selectedTab={VIEW_TYPES.CONTEXT}
-					onClose={handlerClearActiveContextLog}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
-			)}
 		</>
 	);
 }

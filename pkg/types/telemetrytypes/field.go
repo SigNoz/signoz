@@ -23,8 +23,10 @@ const (
 	// e.g., "body.status" where "body." is the prefix
 	BodyJSONStringSearchPrefix = "body."
 	ArraySep                   = jsontypeexporter.ArraySeparator
+	ArraySepSuffix             = "[]"
 	// TODO(Piyush): Remove once we've migrated to the new array syntax
-	ArrayAnyIndex = "[*]."
+	ArrayAnyIndex       = "[*]."
+	ArrayAnyIndexSuffix = "[*]"
 )
 
 type TelemetryFieldKey struct {
@@ -82,18 +84,18 @@ func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
 
 func (f TelemetryFieldKey) String() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("name=%s", f.Name))
+	fmt.Fprintf(&sb, "name=%s", f.Name)
 	if f.FieldContext != FieldContextUnspecified {
-		sb.WriteString(fmt.Sprintf(",context=%s", f.FieldContext.String))
+		fmt.Fprintf(&sb, ",context=%s", f.FieldContext.String)
 	}
 	if f.FieldDataType != FieldDataTypeUnspecified {
-		sb.WriteString(fmt.Sprintf(",datatype=%s", f.FieldDataType.StringValue()))
+		fmt.Fprintf(&sb, ",datatype=%s", f.FieldDataType.StringValue())
 	}
 	if f.Materialized {
 		sb.WriteString(",materialized=true")
 	}
 	if f.JSONDataType != nil {
-		sb.WriteString(fmt.Sprintf(",jsondatatype=%s", f.JSONDataType.StringValue()))
+		fmt.Fprintf(&sb, ",jsondatatype=%s", f.JSONDataType.StringValue())
 	}
 	if len(f.Indexes) > 0 {
 		sb.WriteString(",indexes=[")
@@ -101,7 +103,7 @@ func (f TelemetryFieldKey) String() string {
 			if i > 0 {
 				sb.WriteString("; ")
 			}
-			sb.WriteString(fmt.Sprintf("{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression))
+			fmt.Fprintf(&sb, "{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression)
 		}
 		sb.WriteString("]")
 	}
@@ -110,6 +112,17 @@ func (f TelemetryFieldKey) String() string {
 
 func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
+}
+
+// OverrideMetadataFrom copies the resolved metadata fields from src into f.
+// This is used when adjusting user-provided keys to match known field definitions.
+func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
+	f.FieldContext = src.FieldContext
+	f.FieldDataType = src.FieldDataType
+	f.JSONDataType = src.JSONDataType
+	f.Indexes = src.Indexes
+	f.Materialized = src.Materialized
+	f.JSONPlan = src.JSONPlan
 }
 
 func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
@@ -229,11 +242,19 @@ func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s`", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("`%s_%s_%s`",
+		key.FieldContext.String,
+		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
+		strings.ReplaceAll(key.Name, ".", "$$"),
+	)
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s_exists`", key.FieldContext.String, fieldDataTypes[key.FieldDataType.StringValue()].StringValue(), strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("`%s_%s_%s_exists`",
+		key.FieldContext.String,
+		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
+		strings.ReplaceAll(key.Name, ".", "$$"),
+	)
 }
 
 type TelemetryFieldValues struct {

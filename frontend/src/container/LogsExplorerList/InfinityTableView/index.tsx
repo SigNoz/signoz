@@ -4,7 +4,6 @@ import {
 	TableVirtuoso,
 	TableVirtuosoHandle,
 } from 'react-virtuoso';
-import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
@@ -58,26 +57,40 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{ isLoading, tableViewProps, infitiyTableProps, handleChangeSelectedView },
-		ref,
-	): JSX.Element | null {
-		const {
-			activeLog: activeContextLog,
-			onSetActiveLog: handleSetActiveContextLog,
-			onClearActiveLog: handleClearActiveContextLog,
-			onAddToQuery: handleAddToQuery,
-		} = useActiveLog();
-		const {
-			activeLog,
+		{
+			isLoading,
+			tableViewProps,
+			infitiyTableProps,
 			onSetActiveLog,
 			onClearActiveLog,
-			onAddToQuery,
-		} = useActiveLog();
+			activeLog,
+		},
+		ref,
+	): JSX.Element | null {
+		const { activeLog: activeContextLog } = useActiveLog();
+
+		const onSetActiveLogExpand = useCallback(
+			(log: ILog) => {
+				onSetActiveLog?.(log);
+			},
+			[onSetActiveLog],
+		);
+
+		const onSetActiveLogContext = useCallback(
+			(log: ILog) => {
+				onSetActiveLog?.(log, VIEW_TYPES.CONTEXT);
+			},
+			[onSetActiveLog],
+		);
+
+		const onCloseActiveLog = useCallback(() => {
+			onClearActiveLog?.();
+		}, [onClearActiveLog]);
 
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
-			onClickExpand: onSetActiveLog,
-			onOpenLogsContext: handleSetActiveContextLog,
+			onClickExpand: onSetActiveLogExpand,
+			onOpenLogsContext: onSetActiveLogContext,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
@@ -98,27 +111,32 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 
 		const itemContent = useCallback(
-			(index: number, log: Record<string, unknown>): JSX.Element => (
-				<TableRow
-					tableColumns={tableColumns}
-					index={index}
-					log={log}
-					handleSetActiveContextLog={handleSetActiveContextLog}
-					logs={tableViewProps.logs}
-					hasActions
-					fontSize={tableViewProps.fontSize}
-					onShowLogDetails={onSetActiveLog}
-				/>
-			),
+			(index: number, log: Record<string, unknown>): JSX.Element => {
+				return (
+					<div key={log.id as string}>
+						<TableRow
+							tableColumns={tableColumns}
+							index={index}
+							log={log}
+							logs={tableViewProps.logs}
+							hasActions
+							fontSize={tableViewProps.fontSize}
+							onShowLogDetails={onSetActiveLog}
+							isActiveLog={activeLog?.id === log.id}
+							onClearActiveLog={onCloseActiveLog}
+						/>
+					</div>
+				);
+			},
 			[
-				handleSetActiveContextLog,
 				tableColumns,
-				tableViewProps.fontSize,
-				tableViewProps.logs,
 				onSetActiveLog,
+				tableViewProps.logs,
+				tableViewProps.fontSize,
+				activeLog?.id,
+				onCloseActiveLog,
 			],
 		);
-
 		const tableHeader = useCallback(
 			() => (
 				<tr>
@@ -178,24 +196,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
-				/>
-
-				{activeContextLog && (
-					<LogDetail
-						log={activeContextLog}
-						onClose={handleClearActiveContextLog}
-						onAddToQuery={handleAddToQuery}
-						selectedTab={VIEW_TYPES.CONTEXT}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
-				)}
-				<LogDetail
-					selectedTab={VIEW_TYPES.OVERVIEW}
-					log={activeLog}
-					onClose={onClearActiveLog}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			</>
 		);
