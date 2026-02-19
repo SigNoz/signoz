@@ -2402,7 +2402,7 @@ export interface TypesUserDTO {
 	updatedAt?: Date;
 }
 
-export interface ZeustypesGettableZeusHostDTO {
+export interface ZeustypesGettableHostDTO {
 	/**
 	 * @type array
 	 * @nullable true
@@ -3171,8 +3171,8 @@ export type RotateSession200 = {
 	status?: string;
 };
 
-export type GetDeploymentsFromZeus200 = {
-	data?: ZeustypesGettableZeusHostDTO;
+export type GetHosts200 = {
+	data?: ZeustypesGettableHostDTO;
 	/**
 	 * @type string
 	 */

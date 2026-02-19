@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addZeusRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/zeus/profiles", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutProfile), handler.OpenAPIDef{
-		ID:                  "PutProfileInZeus",
+		ID:                  "PutProfile",
 		Tags:                []string{"zeus"},
 		Summary:             "Put profile in Zeus for a deployment.",
 		Description:         "This endpoint saves the profile of a deployment to zeus.",
@@ -27,14 +27,14 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.GetHostFromZeus), handler.OpenAPIDef{
-		ID:                  "GetDeploymentsFromZeus",
+	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.GetHosts), handler.OpenAPIDef{
+		ID:                  "GetHosts",
 		Tags:                []string{"zeus"},
 		Summary:             "Get host info from Zeus.",
 		Description:         "This endpoint gets the host info from zeus.",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(zeustypes.GettableZeusHost),
+		Response:            new(zeustypes.GettableHost),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
@@ -45,7 +45,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.PutHost), handler.OpenAPIDef{
-		ID:                  "PutHostInZeus",
+		ID:                  "PutHost",
 		Tags:                []string{"zeus"},
 		Summary:             "Put host in Zeus for a deployment.",
 		Description:         "This endpoint saves the host of a deployment to zeus.",

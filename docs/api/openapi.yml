@@ -1901,7 +1901,7 @@ components:
           format: date-time
           type: string
       type: object
-    ZeustypesGettableZeusHost:
+    ZeustypesGettableHost:
       properties:
         hosts:
           items:
@@ -5501,7 +5501,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint gets the host info from zeus.
-      operationId: GetDeploymentsFromZeus
+      operationId: GetHosts
       responses:
         "200":
           content:
@@ -5509,7 +5509,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/ZeustypesGettableZeusHost'
+                    $ref: '#/components/schemas/ZeustypesGettableHost'
                   status:
                     type: string
                 type: object
@@ -5555,7 +5555,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint saves the host of a deployment to zeus.
-      operationId: PutHostInZeus
+      operationId: PutHost
       requestBody:
         content:
           application/json:
@@ -5612,7 +5612,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint saves the profile of a deployment to zeus.
-      operationId: PutProfileInZeus
+      operationId: PutProfile
       requestBody:
         content:
           application/json:

@@ -1,6 +1,10 @@
 package zeustypes
 
-import "github.com/tidwall/gjson"
+import (
+	"net/url"
+
+	"github.com/tidwall/gjson"
+)
 
 type PostableHost struct {
 	Name string `json:"name" required:"true"`
@@ -18,7 +22,7 @@ type PostableProfile struct {
 	TimelineForMigratingToSigNoz string   `json:"timeline_for_migrating_to_signoz"`
 }
 
-type GettableZeusHost struct {
+type GettableHost struct {
 	Name  string `json:"name"`
 	State string `json:"state"`
 	Tier  string `json:"tier"`
@@ -31,7 +35,7 @@ type Host struct {
 	URL       string `json:"url"`
 }
 
-func NewGettableZeusHost(data []byte) *GettableZeusHost {
+func NewGettableHost(data []byte) *GettableHost {
 	parsed := gjson.ParseBytes(data)
 	dns := parsed.Get("cluster.region.dns").String()
 
@@ -42,10 +46,10 @@ func NewGettableZeusHost(data []byte) *GettableZeusHost {
 		name := h.Get("name").String()
 		hosts[i].Name = name
 		hosts[i].IsDefault = h.Get("is_default").Bool()
-		hosts[i].URL = name + "." + dns
+		hosts[i].URL = (&url.URL{Scheme: "https", Host: name + "." + dns}).String()
 	}
 
-	return &GettableZeusHost{
+	return &GettableHost{
 		Name:  parsed.Get("name").String(),
 		State: parsed.Get("state").String(),
 		Tier:  parsed.Get("tier").String(),
