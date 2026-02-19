@@ -1920,6 +1920,63 @@ components:
           format: date-time
           type: string
       type: object
+    ZeustypesGettableHost:
+      properties:
+        hosts:
+          items:
+            $ref: '#/components/schemas/ZeustypesHost'
+          nullable: true
+          type: array
+        name:
+          type: string
+        state:
+          type: string
+        tier:
+          type: string
+      type: object
+    ZeustypesHost:
+      properties:
+        is_default:
+          type: boolean
+        name:
+          type: string
+        url:
+          type: string
+      type: object
+    ZeustypesPostableHost:
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
+    ZeustypesPostableProfile:
+      properties:
+        existing_observability_tool:
+          type: string
+        has_existing_observability_tool:
+          type: boolean
+        logs_scale_per_day_in_gb:
+          format: int64
+          type: integer
+        number_of_hosts:
+          format: int64
+          type: integer
+        number_of_services:
+          format: int64
+          type: integer
+        reasons_for_interest_in_signoz:
+          items:
+            type: string
+          nullable: true
+          type: array
+        timeline_for_migrating_to_signoz:
+          type: string
+        uses_otel:
+          type: boolean
+        where_did_you_discover_signoz:
+          type: string
+      type: object
   securitySchemes:
     api_key:
       description: API Keys
@@ -5538,6 +5595,174 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v2/zeus/hosts:
+    get:
+      deprecated: false
+      description: This endpoint gets the host info from zeus.
+      operationId: GetHosts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ZeustypesGettableHost'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get host info from Zeus.
+      tags:
+      - zeus
+    put:
+      deprecated: false
+      description: This endpoint saves the host of a deployment to zeus.
+      operationId: PutHost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZeustypesPostableHost'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Put host in Zeus for a deployment.
+      tags:
+      - zeus
+  /api/v2/zeus/profiles:
+    put:
+      deprecated: false
+      description: This endpoint saves the profile of a deployment to zeus.
+      operationId: PutProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZeustypesPostableProfile'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Put profile in Zeus for a deployment.
+      tags:
+      - zeus
   /api/v5/query_range:
     post:
       deprecated: false
