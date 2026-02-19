@@ -2521,6 +2521,149 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    get:
+      deprecated: false
+      description: This endpoints allows simple query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataGET
+      parameters:
+      - in: query
+        name: format
+        schema:
+          default: csv
+          enum:
+          - csv
+          - jsonl
+          type: string
+      - in: query
+        name: source
+        schema:
+          default: logs
+          enum:
+          - logs
+          - traces
+          type: string
+      - in: query
+        name: start
+        schema:
+          minimum: 0
+          type: integer
+      - in: query
+        name: end
+        schema:
+          minimum: 0
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          default: 10000
+          maximum: 50000
+          minimum: 1
+          type: integer
+      - in: query
+        name: filter
+        schema:
+          type: string
+      - in: query
+        name: columns
+        schema:
+          items:
+            type: string
+          type: array
+      - in: query
+        name: order_by
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
+    post:
+      deprecated: false
+      description: This endpoints allows complex query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataPOST
+      parameters:
+      - in: query
+        name: format
+        schema:
+          default: csv
+          enum:
+          - csv
+          - jsonl
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: Request body for the v5 query range endpoint. Supports
+                builder queries (traces, logs, metrics), formulas, joins, trace operators,
+                PromQL, and ClickHouse SQL queries.
+              properties:
+                compositeQuery:
+                  $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+                end:
+                  minimum: 0
+                  type: integer
+                formatOptions:
+                  $ref: '#/components/schemas/Querybuildertypesv5FormatOptions'
+                noCache:
+                  type: boolean
+                requestType:
+                  $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+                schemaVersion:
+                  type: string
+                start:
+                  minimum: 0
+                  type: integer
+                variables:
+                  additionalProperties:
+                    $ref: '#/components/schemas/Querybuildertypesv5VariableItem'
+                  type: object
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
   /api/v1/fields/keys:
     get:
       deprecated: false

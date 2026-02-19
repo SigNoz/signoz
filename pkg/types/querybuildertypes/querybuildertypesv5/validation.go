@@ -10,55 +10,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// queryName returns the name from any query envelope spec type.
-func (e QueryEnvelope) queryName() string {
-	switch spec := e.Spec.(type) {
-	case QueryBuilderQuery[TraceAggregation]:
-		return spec.Name
-	case QueryBuilderQuery[LogAggregation]:
-		return spec.Name
-	case QueryBuilderQuery[MetricAggregation]:
-		return spec.Name
-	case QueryBuilderFormula:
-		return spec.Name
-	case QueryBuilderTraceOperator:
-		return spec.Name
-	case QueryBuilderJoin:
-		return spec.Name
-	case PromQuery:
-		return spec.Name
-	case ClickHouseQuery:
-		return spec.Name
-	}
-	return ""
-}
-
-// isDisabled returns the disabled status from any query envelope spec type.
-func (e QueryEnvelope) isDisabled() bool {
-	switch spec := e.Spec.(type) {
-	case QueryBuilderQuery[TraceAggregation]:
-		return spec.Disabled
-	case QueryBuilderQuery[LogAggregation]:
-		return spec.Disabled
-	case QueryBuilderQuery[MetricAggregation]:
-		return spec.Disabled
-	case QueryBuilderFormula:
-		return spec.Disabled
-	case QueryBuilderTraceOperator:
-		return spec.Disabled
-	case QueryBuilderJoin:
-		return spec.Disabled
-	case PromQuery:
-		return spec.Disabled
-	case ClickHouseQuery:
-		return spec.Disabled
-	}
-	return false
-}
-
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
-	name := envelope.queryName()
+	name := envelope.GetQueryName()
 
 	var typeLabel string
 	switch envelope.Type {
@@ -471,7 +425,7 @@ func (r *QueryRangeRequest) Validate() error {
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
-		if !envelope.isDisabled() {
+		if !envelope.IsDisabled() {
 			return nil
 		}
 	}
@@ -506,7 +460,7 @@ func (c *CompositeQuery) Validate(requestType RequestType) error {
 
 		// Check name uniqueness for builder queries
 		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
-			name := envelope.queryName()
+			name := envelope.GetQueryName()
 			if name != "" {
 				if queryNames[name] {
 					return errors.NewInvalidInputf(

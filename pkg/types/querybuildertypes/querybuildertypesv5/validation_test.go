@@ -816,7 +816,7 @@ func TestQueryEnvelope_Helpers(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				got := tt.envelope.queryName()
+				got := tt.envelope.GetQueryName()
 				if got != tt.want {
 					t.Errorf("queryName() = %q, want %q", got, tt.want)
 				}
@@ -868,7 +868,7 @@ func TestQueryEnvelope_Helpers(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				got := tt.envelope.isDisabled()
+				got := tt.envelope.IsDisabled()
 				if got != tt.want {
 					t.Errorf("isDisabled() = %v, want %v", got, tt.want)
 				}
