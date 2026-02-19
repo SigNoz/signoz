@@ -384,6 +384,9 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		return this.widgetId;
 	}
 
+	/**
+	 * Get cursor configuration
+	 */
 	getCursorConfig(): Cursor {
 		if (this.stepInterval) {
 			const cursorConfig = {
