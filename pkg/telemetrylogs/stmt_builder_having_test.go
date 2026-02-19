@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHavingExpressionRewriter_LogQueries(t *testing.T) {
@@ -14,6 +15,7 @@ func TestHavingExpressionRewriter_LogQueries(t *testing.T) {
 		havingExpression   string
 		aggregations       []qbtypes.LogAggregation
 		expectedExpression string
+		wantErr            bool
 	}{
 		{
 			name:             "single aggregation with alias",
@@ -66,13 +68,34 @@ func TestHavingExpressionRewriter_LogQueries(t *testing.T) {
 			},
 			expectedExpression: "__result_1 > 10 AND __result_0 < 1000",
 		},
+		{
+			name:             "string literal in having expression",
+			havingExpression: "count() > 'threshold'",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: ""},
+			},
+			wantErr: true,
+		},
+		{
+			name:             "unknown reference",
+			havingExpression: "no_such_alias > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			result := rewriter.RewriteForLogs(tt.havingExpression, tt.aggregations)
-			assert.Equal(t, tt.expectedExpression, result)
+			result, err := rewriter.RewriteForLogs(tt.havingExpression, tt.aggregations)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedExpression, result)
+			}
 		})
 	}
 }

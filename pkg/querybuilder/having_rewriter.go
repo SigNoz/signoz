@@ -3,8 +3,10 @@ package querybuilder
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -19,19 +21,22 @@ func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 	}
 }
 
-func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) (string, error) {
 	r.buildTraceColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	expression = r.rewriteExpression(expression)
+	return expression, r.validateExpression(expression)
 }
 
-func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) (string, error) {
 	r.buildLogColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	expression = r.rewriteExpression(expression)
+	return expression, r.validateExpression(expression)
 }
 
-func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) (string, error) {
 	r.buildMetricColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	expression = r.rewriteExpression(expression)
+	return expression, r.validateExpression(expression)
 }
 
 func (r *HavingExpressionRewriter) buildTraceColumnMap(aggregations []qbtypes.TraceAggregation) {
@@ -150,4 +155,59 @@ func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
 	}
 
 	return expression
+}
+
+// validateExpression checks that every identifier-like token in the rewritten
+// expression is a known SQL column (a value from columnMap) or a boolean keyword.
+// It is always called after rewriteExpression, so all valid references have
+// already been replaced with their SQL column names (e.g. __result_0, value).
+func (r *HavingExpressionRewriter) validateExpression(expression string) error {
+
+	// Build the set of valid SQL column names (the 'to' side of columnMap).
+	validColumns := make(map[string]bool, len(r.columnMap))
+	for _, col := range r.columnMap {
+		validColumns[col] = true
+	}
+
+	// Reject quoted string literals — HAVING expressions compare aggregate
+	// results which are always numeric; string values make no semantic sense.
+	quotePattern := regexp.MustCompile(`'[^']*'|"[^"]*"`)
+	if quotePattern.MatchString(expression) {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"HAVING expression cannot contain string literals; aggregate results are numeric",
+		)
+	}
+	cleaned := expression
+
+	boolKeywords := map[string]bool{"AND": true, "OR": true, "NOT": true}
+
+	identPattern := regexp.MustCompile(`\b([a-zA-Z_][a-zA-Z0-9_]*)\b`)
+	var invalid []string
+	seen := map[string]bool{}
+	for _, m := range identPattern.FindAllString(cleaned, -1) {
+		if boolKeywords[strings.ToUpper(m)] || validColumns[m] {
+			continue
+		}
+		if !seen[m] {
+			invalid = append(invalid, m)
+			seen[m] = true
+		}
+	}
+
+	if len(invalid) > 0 {
+		validKeys := make([]string, 0, len(r.columnMap))
+		for k := range r.columnMap {
+			validKeys = append(validKeys, k)
+		}
+		sort.Strings(validKeys)
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid references in HAVING expression: [%s]. Valid references are: [%s]",
+			strings.Join(invalid, ", "),
+			strings.Join(validKeys, ", "),
+		)
+	}
+
+	return nil
 }

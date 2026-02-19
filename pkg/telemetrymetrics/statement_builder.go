@@ -647,7 +647,10 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		sb.GroupBy("ts")
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 	} else {
@@ -655,7 +658,10 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		sb.From("__spatial_aggregation_cte")
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Where(rewrittenExpr)
 		}
 	}
