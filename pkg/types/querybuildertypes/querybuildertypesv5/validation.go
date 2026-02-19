@@ -426,48 +426,7 @@ func (q *QueryBuilderQuery[T]) validateHaving() error {
 		)
 	}
 
-	validExpressions := []string{}
-	// ensure that having expression uses aggregation expressions or alias
-	for _, agg := range q.Aggregations {
-		switch v := any(agg).(type) {
-		case TraceAggregation:
-			if strings.Contains(q.Having.Expression, v.Expression) {
-				return nil
-			} else {
-				validExpressions = append(validExpressions, v.Expression)
-			}
-			if v.Alias != "" {
-				if strings.Contains(q.Having.Expression, v.Alias) {
-					return nil
-				} else {
-					validExpressions = append(validExpressions, v.Alias)
-				}
-			}
-		case LogAggregation:
-			if strings.Contains(q.Having.Expression, v.Expression) {
-				return nil
-			} else {
-				validExpressions = append(validExpressions, v.Expression)
-			}
-			if v.Alias != "" {
-				if strings.Contains(q.Having.Expression, v.Alias) {
-					return nil
-				} else {
-					validExpressions = append(validExpressions, v.Alias)
-				}
-			}
-		case MetricAggregation:
-			// TODO: (@srikanthccv) validate having expression for metric aggregations
-			return nil
-		}
-	}
-
-	return errors.NewInvalidInputf(
-		errors.CodeInvalidInput,
-		"Having expression is not using valid identifiers",
-	).WithAdditional(
-		fmt.Sprintf("Having expression can only reference aggregation aliases/expressions. Valid keys are: %s", strings.Join(validExpressions, ", ")),
-	)
+	return nil
 }
 
 // ValidateQueryRangeRequest validates the entire query range request
