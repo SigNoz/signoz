@@ -733,7 +733,9 @@ components:
       - p90
       - p95
       - p99
+      - histogram_count
       type: string
+    MetrictypesSpaceAggregationParam: {}
     MetrictypesTemporality:
       enum:
       - delta
@@ -1023,6 +1025,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5ReduceTo'
         spaceAggregation:
           $ref: '#/components/schemas/MetrictypesSpaceAggregation'
+        spaceAggregationParam:
+          $ref: '#/components/schemas/MetrictypesSpaceAggregationParam'
         temporality:
           $ref: '#/components/schemas/MetrictypesTemporality'
         timeAggregation:
