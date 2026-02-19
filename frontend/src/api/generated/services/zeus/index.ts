@@ -30,8 +30,8 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 /**
- * This endpoint gets the deployment info from zeus.
- * @summary Get deployments from Zeus.
+ * This endpoint gets the host info from zeus.
+ * @summary Get host info from Zeus.
  */
 export const getDeploymentsFromZeus = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<GetDeploymentsFromZeus200>({
@@ -76,7 +76,7 @@ export type GetDeploymentsFromZeusQueryResult = NonNullable<
 export type GetDeploymentsFromZeusQueryError = RenderErrorResponseDTO;
 
 /**
- * @summary Get deployments from Zeus.
+ * @summary Get host info from Zeus.
  */
 
 export function useGetDeploymentsFromZeus<
@@ -101,7 +101,7 @@ export function useGetDeploymentsFromZeus<
 }
 
 /**
- * @summary Get deployments from Zeus.
+ * @summary Get host info from Zeus.
  */
 export const invalidateGetDeploymentsFromZeus = async (
 	queryClient: QueryClient,
