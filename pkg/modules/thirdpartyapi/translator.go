@@ -81,8 +81,10 @@ func FilterIntermediateColumns(result *qbtypes.QueryRangeResponse) *qbtypes.Quer
 		// Filter out columns for intermediate queries used only in formulas
 		filteredColumns := make([]*qbtypes.ColumnDescriptor, 0)
 		intermediateQueryNames := map[string]bool{
-			"error":      true,
-			"total_span": true,
+			"error":             true,
+			"total_span":        true,
+			"endpoints_current": true,
+			"endpoints_legacy":  true,
 		}
 
 		columnIndices := make([]int, 0)
@@ -296,15 +298,15 @@ func BuildDomainList(req *thirdpartyapitypes.ThirdPartyApiRequest) (*qbtypes.Que
 		return nil, err
 	}
 
-	queries := []qbtypes.QueryEnvelope{
-		buildEndpointsQuery(req),
+	queries := buildEndpointsQueries(req)
+	queries = append(queries,
 		buildLastSeenQuery(req),
 		buildRpsQuery(req),
 		buildErrorQuery(req),
 		buildTotalSpanQuery(req),
 		buildP99Query(req),
 		buildErrorRateFormula(),
-	}
+	)
 
 	return &qbtypes.QueryRangeRequest{
 		SchemaVersion: "v5",
@@ -346,20 +348,58 @@ func BuildDomainInfo(req *thirdpartyapitypes.ThirdPartyApiRequest) (*qbtypes.Que
 	}, nil
 }
 
-func buildEndpointsQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
-	return qbtypes.QueryEnvelope{
+// buildEndpointsQueries returns queries for counting distinct URLs with semconv fallback.
+// It uses two queries with mutually exclusive filters:
+// - endpoints_current: count_distinct(url.full) WHERE url.full EXISTS
+// - endpoints_legacy: count_distinct(http.url) WHERE url.full NOT EXISTS
+// And a formula to combine them: endpoints_current + endpoints_legacy
+func buildEndpointsQueries(req *thirdpartyapitypes.ThirdPartyApiRequest) []qbtypes.QueryEnvelope {
+	// Query for current semconv (url.full)
+	currentFilter := buildBaseFilter(req.Filter)
+	currentFilter.Expression = fmt.Sprintf("(%s) AND %s EXISTS", currentFilter.Expression, urlPathKey)
+
+	endpointsCurrent := qbtypes.QueryEnvelope{
 		Type: qbtypes.QueryTypeBuilder,
 		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Name:         "endpoints",
+			Name:         "endpoints_current",
 			Signal:       telemetrytypes.SignalTraces,
 			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
 			Aggregations: []qbtypes.TraceAggregation{
-				{Expression: "count_distinct(http.url)"},
+				{Expression: fmt.Sprintf("count_distinct(%s)", urlPathKey)},
 			},
-			Filter:  buildBaseFilter(req.Filter),
+			Filter:  currentFilter,
 			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
 		},
 	}
+
+	// Query for legacy semconv (http.url) - only when url.full doesn't exist
+	legacyFilter := buildBaseFilter(req.Filter)
+	legacyFilter.Expression = fmt.Sprintf("(%s) AND %s NOT EXISTS", legacyFilter.Expression, urlPathKey)
+
+	endpointsLegacy := qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:         "endpoints_legacy",
+			Signal:       telemetrytypes.SignalTraces,
+			StepInterval: qbtypes.Step{Duration: defaultStepInterval},
+			Aggregations: []qbtypes.TraceAggregation{
+				{Expression: fmt.Sprintf("count_distinct(%s)", urlPathKeyLegacy)},
+			},
+			Filter:  legacyFilter,
+			GroupBy: mergeGroupBy(dualSemconvGroupByKeys["server"], req.GroupBy),
+		},
+	}
+
+	// Formula to combine both counts
+	endpointsFormula := qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeFormula,
+		Spec: qbtypes.QueryBuilderFormula{
+			Name:       "endpoints",
+			Expression: "endpoints_current + endpoints_legacy",
+		},
+	}
+
+	return []qbtypes.QueryEnvelope{endpointsCurrent, endpointsLegacy, endpointsFormula}
 }
 
 func buildLastSeenQuery(req *thirdpartyapitypes.ThirdPartyApiRequest) qbtypes.QueryEnvelope {
