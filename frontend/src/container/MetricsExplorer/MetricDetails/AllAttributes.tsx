@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import {
 	Button,
@@ -130,18 +130,9 @@ function AllAttributes({
 		data: attributesData,
 		isLoading: isLoadingAttributes,
 		isError: isErrorAttributes,
-		mutate: getMetricAttributes,
-	} = useGetMetricAttributes();
-
-	useEffect(() => {
-		if (metricName) {
-			getMetricAttributes({
-				data: {
-					metricName,
-				},
-			});
-		}
-	}, [getMetricAttributes, metricName]);
+	} = useGetMetricAttributes({
+		metricName,
+	});
 
 	const attributes = useMemo(
 		() => attributesData?.data?.data?.attributes ?? [],

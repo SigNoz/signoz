@@ -35,13 +35,10 @@ const useGetMetricAttributesMock = jest.spyOn(
 	'useGetMetricAttributes',
 );
 
-const mockUseGetMetricAttributes = jest.fn();
-
 describe('AllAttributes', () => {
 	beforeEach(() => {
 		useGetMetricAttributesMock.mockReturnValue({
 			...getMockMetricAttributesData(),
-			mutate: mockUseGetMetricAttributes,
 		});
 	});
 
@@ -85,7 +82,6 @@ describe('AllAttributes', () => {
 					totalKeys: 0,
 				},
 			}),
-			mutate: mockUseGetMetricAttributes,
 		});
 		render(
 			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
