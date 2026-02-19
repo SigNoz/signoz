@@ -69,10 +69,14 @@ export default function CustomDomainSettings(): JSX.Element {
 		isLoading: isLoadingUpdateCustomDomain,
 	} = usePutHost<AxiosError<RenderErrorResponseDTO>>();
 
+	const stripProtocol = (url: string): string => {
+		return url?.split('://')[1] ?? url;
+	};
+
 	const dnsSuffix = useMemo(() => {
 		const defaultHost = hosts?.find((h) => h.is_default);
 		return defaultHost?.url && defaultHost?.name
-			? defaultHost.url.replace(`${defaultHost.name}.`, '')
+			? defaultHost.url.split(`${defaultHost.name}.`)[1] || ''
 			: '';
 	}, [hosts]);
 
@@ -137,7 +141,7 @@ export default function CustomDomainSettings(): JSX.Element {
 	};
 
 	const onCopyUrlHandler = (url: string): void => {
-		setCopyUrl(url);
+		setCopyUrl(stripProtocol(url));
 		notifications.success({
 			message: 'Copied to clipboard',
 		});
@@ -171,7 +175,7 @@ export default function CustomDomainSettings(): JSX.Element {
 										key={host.name}
 										onClick={(): void => onCopyUrlHandler(host.url || '')}
 									>
-										<Link2 size={12} /> {host.url}
+										<Link2 size={12} /> {stripProtocol(host.url || '')}
 										{host.is_default && <Tag color={Color.BG_ROBIN_500}>Default</Tag>}
 									</div>
 								))}
