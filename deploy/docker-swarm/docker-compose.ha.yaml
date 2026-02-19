@@ -224,8 +224,6 @@ services:
       - "4318:4318" # OTLP HTTP receiver
     deploy:
       replicas: 3
-    depends_on:
-      - clickhouse
   telemetrystore-migrator:
     !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}

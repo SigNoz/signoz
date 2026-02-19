@@ -52,6 +52,11 @@ x-zookeeper-defaults: &zookeeper-defaults
     interval: 30s
     timeout: 5s
     retries: 3
+x-db-depend: &db-depend
+  !!merge <<: *common
+  depends_on:
+    clickhouse:
+      condition: service_healthy
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -103,7 +108,7 @@ services:
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
-    !!merge <<: *common
+    !!merge <<: *db-depend
     image: signoz/signoz:${VERSION:-v0.111.0}
     container_name: signoz
     ports:
@@ -125,11 +130,8 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    depends_on:
-      clickhouse:
-        condition: service_healthy
   otel-collector:
-    !!merge <<: *common
+    !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     container_name: signoz-otel-collector
     entrypoint:
@@ -153,9 +155,6 @@ services:
       # - "1777:1777"     # pprof extension
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
-    depends_on:
-      clickhouse:
-        condition: service_healthy
   telemetrystore-migrator:
     !!merge <<: *common
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
