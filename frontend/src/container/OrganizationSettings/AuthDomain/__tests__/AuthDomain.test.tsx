@@ -9,15 +9,11 @@ import {
 	mockErrorResponse,
 } from './mocks';
 
-const successNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
-	__esModule: true,
-	useNotifications: jest.fn(() => ({
-		notifications: {
-			success: successNotification,
-			error: jest.fn(),
-		},
-	})),
+jest.mock('@signozhq/sonner', () => ({
+	toast: {
+		success: jest.fn(),
+		error: jest.fn(),
+	},
 }));
 
 describe('AuthDomain', () => {

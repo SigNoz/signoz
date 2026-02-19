@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Color } from '@signozhq/design-tokens';
+import { Color, Style } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -13,11 +13,8 @@ import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 import './AttributeMappingSection.styles.scss';
 
 interface AttributeMappingSectionProps {
-	/** The form field name prefix for the attribute mapping configuration */
 	fieldNamePrefix: string[];
-	/** Whether the section is expanded (controlled mode) */
 	isExpanded?: boolean;
-	/** Callback when expand/collapse is toggled */
 	onExpandChange?: (expanded: boolean) => void;
 }
 
@@ -77,11 +74,11 @@ function AttributeMappingSection({
 							{!expanded && hasErrors && (
 								<Tooltip
 									title={
-										<div>
+										<>
 											{errorMessages.map((msg) => (
 												<div key={msg}>{msg}</div>
 											))}
-										</div>
+										</>
 									}
 								>
 									<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
@@ -101,10 +98,7 @@ function AttributeMappingSection({
 							>
 								Email Attribute
 								<Tooltip title="The SAML attribute key that contains the user's email. Default: 'email'">
-									<CircleHelp
-										size={14}
-										className="attribute-mapping-section__label-icon"
-									/>
+									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -123,10 +117,7 @@ function AttributeMappingSection({
 							>
 								Name Attribute
 								<Tooltip title="The SAML attribute key that contains the user's display name. Default: 'name'">
-									<CircleHelp
-										size={14}
-										className="attribute-mapping-section__label-icon"
-									/>
+									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -145,10 +136,7 @@ function AttributeMappingSection({
 							>
 								Groups Attribute
 								<Tooltip title="The SAML attribute key that contains the user's group memberships. Used for role mapping. Default: 'groups'">
-									<CircleHelp
-										size={14}
-										className="attribute-mapping-section__label-icon"
-									/>
+									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -167,10 +155,7 @@ function AttributeMappingSection({
 							>
 								Role Attribute
 								<Tooltip title="The SAML attribute key that contains the user's role directly from the IDP. Default: 'role'">
-									<CircleHelp
-										size={14}
-										className="attribute-mapping-section__label-icon"
-									/>
+									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item

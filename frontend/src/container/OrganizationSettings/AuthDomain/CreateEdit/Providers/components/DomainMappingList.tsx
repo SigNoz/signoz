@@ -18,7 +18,6 @@ const validateEmail = (_: unknown, value: string): Promise<void> => {
 };
 
 interface DomainMappingListProps {
-	/** The form field name prefix for the domain mapping list */
 	fieldNamePrefix: string[];
 }
 

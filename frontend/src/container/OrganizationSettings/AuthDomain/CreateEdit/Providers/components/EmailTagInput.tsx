@@ -6,11 +6,8 @@ import './EmailTagInput.styles.scss';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface EmailTagInputProps {
-	/** Current value (array of email strings) */
 	value?: string[];
-	/** Change handler */
 	onChange?: (value: string[]) => void;
-	/** Placeholder text */
 	placeholder?: string;
 }
 

@@ -97,12 +97,6 @@
 		color: var(--l1-foreground);
 	}
 
-	&__label-icon {
-		color: var(--l3-foreground);
-		cursor: help;
-		flex-shrink: 0;
-	}
-
 	&__form-item {
 		margin-bottom: 0 !important;
 	}
@@ -126,7 +120,7 @@
 
 		&:focus,
 		&:focus-visible {
-			border-color: var(--bg-robin-500) !important;
+			border-color: var(--primary) !important;
 			box-shadow: none !important;
 			outline: none;
 		}

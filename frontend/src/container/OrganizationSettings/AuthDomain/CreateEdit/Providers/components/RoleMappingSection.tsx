@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
-import { Color } from '@signozhq/design-tokens';
+import { Color, Style } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -23,11 +23,8 @@ const ROLE_OPTIONS = [
 ];
 
 interface RoleMappingSectionProps {
-	/** The form field name prefix for the role mapping configuration */
 	fieldNamePrefix: string[];
-	/** Whether the section is expanded (controlled mode) */
 	isExpanded?: boolean;
-	/** Callback when expand/collapse is toggled */
 	onExpandChange?: (expanded: boolean) => void;
 }
 
@@ -94,11 +91,11 @@ function RoleMappingSection({
 							{!expanded && hasErrors && (
 								<Tooltip
 									title={
-										<div>
+										<>
 											{errorMessages.map((msg) => (
 												<div key={msg}>{msg}</div>
 											))}
-										</div>
+										</>
 									}
 								>
 									<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
@@ -108,12 +105,11 @@ function RoleMappingSection({
 					}
 				>
 					<div id="role-mapping-content" className="role-mapping-section__content">
-						{/* Default Role */}
 						<div className="role-mapping-section__field-group">
 							<label className="role-mapping-section__label" htmlFor="default-role">
 								Default Role
 								<Tooltip title='The default role assigned to new SSO users if no other role mapping applies. Default: "VIEWER"'>
-									<CircleHelp size={14} className="role-mapping-section__label-icon" />
+									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -129,7 +125,6 @@ function RoleMappingSection({
 							</Form.Item>
 						</div>
 
-						{/* Use Role Attribute */}
 						<div className="role-mapping-section__checkbox-row">
 							<Form.Item
 								name={[...fieldNamePrefix, 'useRoleAttribute']}
@@ -145,11 +140,10 @@ function RoleMappingSection({
 								/>
 							</Form.Item>
 							<Tooltip title="If enabled, the role claim/attribute from the IDP will be used directly instead of group mappings. The role value must match a SigNoz role (VIEWER, EDITOR, or ADMIN).">
-								<CircleHelp size={14} className="role-mapping-section__label-icon" />
+								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 							</Tooltip>
 						</div>
 
-						{/* Group to Role Mappings - only show when useRoleAttribute is false */}
 						{!useRoleAttribute && (
 							<div className="role-mapping-section__group-mappings">
 								<div className="role-mapping-section__group-header">

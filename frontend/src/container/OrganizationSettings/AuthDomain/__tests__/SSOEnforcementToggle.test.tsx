@@ -1,7 +1,7 @@
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-import Toggle from '../Toggle';
+import SSOEnforcementToggle from '../SSOEnforcementToggle';
 import {
 	AUTH_DOMAINS_UPDATE_ENDPOINT,
 	mockErrorResponse,
@@ -9,7 +9,7 @@ import {
 	mockUpdateSuccessResponse,
 } from './mocks';
 
-describe('Toggle', () => {
+describe('SSOEnforcementToggle', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
@@ -19,7 +19,12 @@ describe('Toggle', () => {
 	});
 
 	it('renders switch with correct initial state', () => {
-		render(<Toggle isDefaultChecked={true} record={mockGoogleAuthDomain} />);
+		render(
+			<SSOEnforcementToggle
+				isDefaultChecked={true}
+				record={mockGoogleAuthDomain}
+			/>,
+		);
 
 		const switchElement = screen.getByRole('switch');
 		expect(switchElement).toBeChecked();
@@ -27,7 +32,7 @@ describe('Toggle', () => {
 
 	it('renders unchecked switch when SSO is disabled', () => {
 		render(
-			<Toggle
+			<SSOEnforcementToggle
 				isDefaultChecked={false}
 				record={{ ...mockGoogleAuthDomain, ssoEnabled: false }}
 			/>,
@@ -49,7 +54,12 @@ describe('Toggle', () => {
 			}),
 		);
 
-		render(<Toggle isDefaultChecked={true} record={mockGoogleAuthDomain} />);
+		render(
+			<SSOEnforcementToggle
+				isDefaultChecked={true}
+				record={mockGoogleAuthDomain}
+			/>,
+		);
 
 		const switchElement = screen.getByRole('switch');
 		await user.click(switchElement);
@@ -77,7 +87,12 @@ describe('Toggle', () => {
 			),
 		);
 
-		render(<Toggle isDefaultChecked={true} record={mockGoogleAuthDomain} />);
+		render(
+			<SSOEnforcementToggle
+				isDefaultChecked={true}
+				record={mockGoogleAuthDomain}
+			/>,
+		);
 
 		const switchElement = screen.getByRole('switch');
 		await user.click(switchElement);
@@ -99,7 +114,7 @@ describe('Toggle', () => {
 		);
 
 		render(
-			<Toggle
+			<SSOEnforcementToggle
 				isDefaultChecked={true}
 				record={{ ...mockGoogleAuthDomain, id: undefined }}
 			/>,

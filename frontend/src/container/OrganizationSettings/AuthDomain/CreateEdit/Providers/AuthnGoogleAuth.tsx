@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Callout } from '@signozhq/callout';
 import { Checkbox } from '@signozhq/checkbox';
-import { Color } from '@signozhq/design-tokens';
+import { Color, Style } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -82,7 +82,7 @@ function ConfigureGoogleAuthAuthnProvider({
 						<label className="authn-provider__label" htmlFor="google-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
-								<CircleHelp size={14} className="authn-provider__label-icon" />
+								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -100,7 +100,7 @@ function ConfigureGoogleAuthAuthnProvider({
 						<label className="authn-provider__label" htmlFor="google-client-id">
 							Client ID
 							<Tooltip title="ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.">
-								<CircleHelp size={14} className="authn-provider__label-icon" />
+								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -118,7 +118,7 @@ function ConfigureGoogleAuthAuthnProvider({
 						<label className="authn-provider__label" htmlFor="google-client-secret">
 							Client Secret
 							<Tooltip title="It is the application's secret.">
-								<CircleHelp size={14} className="authn-provider__label-icon" />
+								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -154,7 +154,7 @@ function ConfigureGoogleAuthAuthnProvider({
 							/>
 						</Form.Item>
 						<Tooltip title='Whether to skip email verification. Defaults to "false"'>
-							<CircleHelp size={14} className="authn-provider__label-icon" />
+							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 						</Tooltip>
 					</div>
 
@@ -228,7 +228,7 @@ function ConfigureGoogleAuthAuthnProvider({
 										/>
 									</Form.Item>
 									<Tooltip title="Enable fetching Google Workspace groups for the user. Requires service account configuration.">
-										<CircleHelp size={14} className="authn-provider__label-icon" />
+										<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 									</Tooltip>
 								</div>
 
@@ -241,7 +241,7 @@ function ConfigureGoogleAuthAuthnProvider({
 											>
 												Service Account JSON
 												<Tooltip title="The JSON content of the Google Service Account credentials file. Required for group fetching.">
-													<CircleHelp size={14} className="authn-provider__label-icon" />
+													<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 												</Tooltip>
 											</label>
 											<Form.Item
@@ -279,7 +279,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												/>
 											</Form.Item>
 											<Tooltip title="If enabled, recursively fetch groups that contain other groups (transitive membership).">
-												<CircleHelp size={14} className="authn-provider__label-icon" />
+												<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 											</Tooltip>
 										</div>
 
@@ -290,7 +290,7 @@ function ConfigureGoogleAuthAuthnProvider({
 											>
 												Allowed Groups
 												<Tooltip title="Optional list of allowed groups. If configured, only users belonging to one of these groups will be allowed to login.">
-													<CircleHelp size={14} className="authn-provider__label-icon" />
+													<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 												</Tooltip>
 											</label>
 											<Form.Item

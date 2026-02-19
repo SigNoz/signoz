@@ -2,7 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/button';
 import { Trash2, X } from '@signozhq/icons';
-import { Modal, Typography } from 'antd';
+import { toast } from '@signozhq/sonner';
+import { Modal } from 'antd';
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
@@ -16,14 +17,13 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
-import { useNotifications } from 'hooks/useNotifications';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
 import CreateEdit from './CreateEdit/CreateEdit';
-import Toggle from './Toggle';
+import SSOEnforcementToggle from './SSOEnforcementToggle';
 
 import './AuthDomain.styles.scss';
 import '../../IngestionSettings/IngestionSettings.styles.scss';
@@ -43,7 +43,7 @@ function AuthDomain(): JSX.Element {
 		activeDomain,
 		setActiveDomain,
 	] = useState<AuthtypesGettableAuthDomainDTO | null>(null);
-	const { notifications } = useNotifications();
+
 	const { showErrorModal } = useErrorModal();
 
 	const {
@@ -80,9 +80,7 @@ function AuthDomain(): JSX.Element {
 			{ pathParams: { id: activeDomain.id } },
 			{
 				onSuccess: () => {
-					notifications.success({
-						message: 'Domain deleted successfully',
-					});
+					toast.success('Domain deleted successfully');
 					refetchAuthDomainListResponse();
 					hideDeleteModal();
 				},
@@ -99,7 +97,7 @@ function AuthDomain(): JSX.Element {
 		activeDomain,
 		deleteAuthDomain,
 		hideDeleteModal,
-		notifications,
+
 		refetchAuthDomainListResponse,
 		showErrorModal,
 	]);
@@ -137,7 +135,9 @@ function AuthDomain(): JSX.Element {
 				render: (
 					value: boolean,
 					record: AuthtypesGettableAuthDomainDTO,
-				): JSX.Element => <Toggle isDefaultChecked={value} record={record} />,
+				): JSX.Element => (
+					<SSOEnforcementToggle isDefaultChecked={value} record={record} />
+				),
 			},
 			{
 				title: 'IDP Initiated SSO URL',
@@ -250,10 +250,10 @@ function AuthDomain(): JSX.Element {
 					</Button>,
 				]}
 			>
-				<Typography.Text className="delete-text">
+				<p className="delete-text">
 					Are you sure you want to delete the domain{' '}
 					<strong>{activeDomain?.name}</strong>? This action cannot be undone.
-				</Typography.Text>
+				</p>
 			</Modal>
 		</div>
 	);

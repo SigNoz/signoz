@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Button, Form, Modal } from 'antd';
+import { Button } from '@signozhq/button';
+import { toast } from '@signozhq/sonner';
+import { Form, Modal } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
 	useCreateAuthDomain,
@@ -13,7 +15,6 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
-import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -61,7 +62,6 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		record?.ssoType || '',
 	);
 
-	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
 
@@ -110,9 +110,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		};
 	}, [form]);
 
-	/**
-	 * Prepares role mapping for API payload
-	 */
+	// Prepares role mapping for API payload
 	const getRoleMapping = useCallback((): AuthtypesRoleMappingDTO | undefined => {
 		const roleMapping = form.getFieldValue('roleMapping');
 		if (!roleMapping) {
@@ -168,9 +166,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				},
 				{
 					onSuccess: () => {
-						notifications.success({
-							message: 'Domain created successfully',
-						});
+						toast.success('Domain created successfully');
 						onClose();
 					},
 					onError: handleError,
@@ -197,9 +193,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				},
 				{
 					onSuccess: () => {
-						notifications.success({
-							message: 'Domain updated successfully',
-						});
+						toast.success('Domain updated successfully');
 						onClose();
 					},
 					onError: handleError,
@@ -214,7 +208,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		getRoleMapping,
 		handleError,
 		isCreate,
-		notifications,
+
 		onClose,
 		record,
 		updateAuthDomain,
@@ -252,11 +246,20 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 					<div className="auth-domain-configure">
 						{configureAuthnProvider(authnProvider, isCreate)}
 						<section className="action-buttons">
-							{isCreate && <Button onClick={onBackHandler}>Back</Button>}
-							{!isCreate && <Button onClick={onClose}>Cancel</Button>}
+							{isCreate && (
+								<Button onClick={onBackHandler} variant="solid" color="secondary">
+									Back
+								</Button>
+							)}
+							{!isCreate && (
+								<Button onClick={onClose} variant="solid" color="secondary">
+									Cancel
+								</Button>
+							)}
 							<Button
 								onClick={onSubmitHandler}
-								type="primary"
+								variant="solid"
+								color="primary"
 								loading={isCreating || isUpdating}
 							>
 								Save Changes

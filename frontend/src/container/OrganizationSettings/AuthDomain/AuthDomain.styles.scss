@@ -24,7 +24,7 @@
 
 		.auth-domain-list-action-link {
 			cursor: pointer;
-			color: var(--bg-robin-500);
+			color: var(--primary);
 			transition: color 0.3s;
 			border: none;
 			background: none;
@@ -37,7 +37,7 @@
 			}
 
 			&.delete {
-				color: var(--bg-cherry-500);
+				color: var(--destructive);
 			}
 		}
 	}
@@ -45,5 +45,12 @@
 	.auth-domain-list-na {
 		padding-left: 6px;
 		color: var(--text-secondary);
+	}
+}
+
+.delete-ingestion-key-modal {
+	.delete-text {
+		color: var(--text);
+		margin: 0;
 	}
 }

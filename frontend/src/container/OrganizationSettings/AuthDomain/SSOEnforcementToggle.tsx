@@ -11,12 +11,15 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
-interface ToggleProps {
+interface SSOEnforcementToggleProps {
 	isDefaultChecked: boolean;
 	record: AuthtypesGettableAuthDomainDTO;
 }
 
-function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
+function SSOEnforcementToggle({
+	isDefaultChecked,
+	record,
+}: SSOEnforcementToggleProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState<boolean>(isDefaultChecked);
 	const { showErrorModal } = useErrorModal();
 
@@ -71,4 +74,4 @@ function Toggle({ isDefaultChecked, record }: ToggleProps): JSX.Element {
 	);
 }
 
-export default Toggle;
+export default SSOEnforcementToggle;

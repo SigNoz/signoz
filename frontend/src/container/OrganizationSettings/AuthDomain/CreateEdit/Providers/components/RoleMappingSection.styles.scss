@@ -98,12 +98,6 @@
 		color: var(--l1-foreground);
 	}
 
-	&__label-icon {
-		color: var(--l3-foreground);
-		cursor: help;
-		flex-shrink: 0;
-	}
-
 	&__form-item {
 		margin-bottom: 0 !important;
 	}
@@ -135,7 +129,7 @@
 			}
 
 			&.ant-select-focused .ant-select-selector {
-				border-color: var(--bg-robin-500) !important;
+				border-color: var(--primary) !important;
 				box-shadow: none !important;
 			}
 
@@ -204,7 +198,7 @@
 		border: none !important;
 		border-radius: 2px !important;
 		background: transparent !important;
-		color: var(--bg-cherry-500) !important;
+		color: var(--destructive) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
 		transition: background-color 0.2s, opacity 0.2s;
@@ -214,7 +208,7 @@
 		justify-content: center;
 
 		svg {
-			color: var(--bg-cherry-500) !important;
+			color: var(--destructive) !important;
 			width: 12px !important;
 			height: 12px !important;
 		}
@@ -222,10 +216,10 @@
 		&:hover {
 			background: rgba(229, 72, 77, 0.1) !important;
 			opacity: 0.9 !important;
-			color: var(--bg-cherry-500) !important;
+			color: var(--destructive) !important;
 
 			svg {
-				color: var(--bg-cherry-500) !important;
+				color: var(--destructive) !important;
 			}
 		}
 
@@ -262,8 +256,8 @@
 		border-radius: 2px;
 
 		&[data-state='checked'] {
-			background-color: var(--bg-robin-500) !important;
-			border-color: var(--bg-robin-500) !important;
+			background-color: var(--primary) !important;
+			border-color: var(--primary) !important;
 		}
 	}
 
@@ -286,7 +280,7 @@
 
 		&:focus,
 		&:focus-visible {
-			border-color: var(--bg-robin-500) !important;
+			border-color: var(--primary) !important;
 			box-shadow: none !important;
 			outline: none;
 		}
