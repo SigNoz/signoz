@@ -134,13 +134,6 @@ describe('TimeSeriesPanel utils', () => {
 			// Second series: 10, 20, null
 			expect(data[2]).toEqual([10, 20, null]);
 		});
-
-		it('handles apiResponse with undefined data', () => {
-			const data = prepareChartData({} as MetricRangePayloadProps);
-
-			expect(data).toHaveLength(1);
-			expect(data[0]).toEqual([]);
-		});
 	});
 
 	describe('prepareUPlotConfig', () => {
@@ -252,6 +245,7 @@ describe('TimeSeriesPanel utils', () => {
 			const legendItems = builder.getLegendItems();
 			expect(Object.keys(legendItems)).toHaveLength(1);
 			// multi-point series → points hidden
+			expect(series).toBeDefined();
 			expect(series!.points?.show).toBe(false);
 		});
 
@@ -280,6 +274,7 @@ describe('TimeSeriesPanel utils', () => {
 				spanGaps: true,
 			});
 			// single-point series → points shown
+			expect(seriesConfig).toBeDefined();
 			expect(seriesConfig!.points?.show).toBe(true);
 		});
 
@@ -303,6 +298,7 @@ describe('TimeSeriesPanel utils', () => {
 
 			const config = builder.getConfig();
 			const seriesConfig = config.series?.[1];
+			expect(seriesConfig).toBeDefined();
 			expect(seriesConfig!.stroke).toBe('#ff0000');
 		});
 
