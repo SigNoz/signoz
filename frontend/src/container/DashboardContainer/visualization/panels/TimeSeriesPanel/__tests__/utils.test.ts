@@ -211,7 +211,12 @@ describe('TimeSeriesPanel utils', () => {
 			});
 
 			expect(getLegendMock).toHaveBeenCalledWith(
-				expect.any(Object),
+				{
+					legend: 'L1',
+					metric: {},
+					queryName: 'Q1',
+					values: [[1000, '1']],
+				},
 				{},
 				'baseLabel',
 			);

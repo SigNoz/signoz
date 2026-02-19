@@ -96,7 +96,7 @@ export const prepareUPlotConfig = ({
 	});
 
 	apiResponse.data?.result?.forEach((series) => {
-		const hasSingleVisiblePoint = hasSingleVisiblePointForSeries(series);
+		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query
@@ -109,13 +109,13 @@ export const prepareUPlotConfig = ({
 
 		builder.addSeries({
 			scaleKey: 'y',
-			drawStyle: hasSingleVisiblePoint ? DrawStyle.Points : DrawStyle.Line,
+			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
 			spanGaps: true,
 			lineStyle: LineStyle.Solid,
 			lineInterpolation: LineInterpolation.Spline,
-			showPoints: hasSingleVisiblePoint
+			showPoints: hasSingleValidPoint
 				? VisibilityMode.Always
 				: VisibilityMode.Never,
 			pointSize: 5,
