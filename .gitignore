@@ -229,5 +229,3 @@ cython_debug/
 pyrightconfig.json
 
 
-# cursor files
-frontend/.cursor/
