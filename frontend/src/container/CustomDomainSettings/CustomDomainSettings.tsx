@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -15,14 +14,16 @@ import {
 	Tag,
 	Typography,
 } from 'antd';
-import updateSubDomainAPI from 'api/customDomain/updateSubDomain';
+import {
+	RenderErrorResponseDTO,
+	ZeustypesHostDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { useGetHosts, usePutHost } from 'api/generated/services/zeus';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useNotifications } from 'hooks/useNotifications';
 import { InfoIcon, Link2, Pencil } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { HostsProps } from 'types/api/customDomain/types';
 
 import './CustomDomainSettings.styles.scss';
 
@@ -35,7 +36,7 @@ export default function CustomDomainSettings(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
-	const [hosts, setHosts] = useState<HostsProps[] | null>(null);
+	const [hosts, setHosts] = useState<ZeustypesHostDTO[] | null>(null);
 
 	const [updateDomainError, setUpdateDomainError] = useState<AxiosError | null>(
 		null,
@@ -57,36 +58,33 @@ export default function CustomDomainSettings(): JSX.Element {
 	};
 
 	const {
-		data: deploymentsData,
-		isLoading: isLoadingDeploymentsData,
-		isFetching: isFetchingDeploymentsData,
-		refetch: refetchDeploymentsData,
-	} = useGetDeploymentsData(true);
+		data: hostsData,
+		isLoading: isLoadingHosts,
+		isFetching: isFetchingHosts,
+		refetch: refetchHosts,
+	} = useGetHosts();
 
 	const {
 		mutate: updateSubDomain,
 		isLoading: isLoadingUpdateCustomDomain,
-	} = useMutation(updateSubDomainAPI, {
-		onSuccess: () => {
-			setIsPollingEnabled(true);
-			refetchDeploymentsData();
-			setIsEditModalOpen(false);
-		},
-		onError: (error: AxiosError) => {
-			setUpdateDomainError(error);
-			setIsPollingEnabled(false);
-		},
-	});
+	} = usePutHost<AxiosError<RenderErrorResponseDTO>>();
+
+	const dnsSuffix = useMemo(() => {
+		const defaultHost = hosts?.find((h) => h.is_default);
+		return defaultHost?.url && defaultHost?.name
+			? defaultHost.url.replace(`${defaultHost.name}.`, '')
+			: '';
+	}, [hosts]);
 
 	useEffect(() => {
-		if (isFetchingDeploymentsData) {
+		if (isFetchingHosts) {
 			return;
 		}
 
-		if (deploymentsData?.data?.status === 'success') {
-			setHosts(deploymentsData.data.data.hosts);
+		if (hostsData?.data?.status === 'success') {
+			setHosts(hostsData.data.data?.hosts ?? null);
 
-			const activeCustomDomain = deploymentsData.data.data.hosts.find(
+			const activeCustomDomain = hostsData.data.data?.hosts?.find(
 				(host) => !host.is_default,
 			);
 
@@ -97,32 +95,36 @@ export default function CustomDomainSettings(): JSX.Element {
 			}
 		}
 
-		if (deploymentsData?.data?.data?.state !== 'HEALTHY' && isPollingEnabled) {
+		if (hostsData?.data?.data?.state !== 'HEALTHY' && isPollingEnabled) {
 			setTimeout(() => {
-				refetchDeploymentsData();
+				refetchHosts();
 			}, 3000);
 		}
 
-		if (deploymentsData?.data?.data.state === 'HEALTHY') {
+		if (hostsData?.data?.data?.state === 'HEALTHY') {
 			setIsPollingEnabled(false);
 		}
-	}, [
-		deploymentsData,
-		refetchDeploymentsData,
-		isPollingEnabled,
-		isFetchingDeploymentsData,
-	]);
+	}, [hostsData, refetchHosts, isPollingEnabled, isFetchingHosts]);
 
 	const onUpdateCustomDomainSettings = (): void => {
 		editForm
 			.validateFields()
 			.then((values) => {
 				if (values.subdomain) {
-					updateSubDomain({
-						data: {
-							name: values.subdomain,
+					updateSubDomain(
+						{ data: { name: values.subdomain } },
+						{
+							onSuccess: () => {
+								setIsPollingEnabled(true);
+								refetchHosts();
+								setIsEditModalOpen(false);
+							},
+							onError: (error: AxiosError<RenderErrorResponseDTO>) => {
+								setUpdateDomainError(error as AxiosError);
+								setIsPollingEnabled(false);
+							},
 						},
-					});
+					);
 
 					setCustomDomainDetails({
 						subdomain: values.subdomain,
@@ -134,9 +136,7 @@ export default function CustomDomainSettings(): JSX.Element {
 			});
 	};
 
-	const onCopyUrlHandler = (host: string): void => {
-		const url = `${host}.${deploymentsData?.data.data.cluster.region.dns}`;
-
+	const onCopyUrlHandler = (url: string): void => {
 		setCopyUrl(url);
 		notifications.success({
 			message: 'Copied to clipboard',
@@ -157,7 +157,7 @@ export default function CustomDomainSettings(): JSX.Element {
 			</div>
 
 			<div className="custom-domain-settings-content">
-				{!isLoadingDeploymentsData && (
+				{!isLoadingHosts && (
 					<Card className="custom-domain-settings-card">
 						<div className="custom-domain-settings-content-header">
 							Team {org?.[0]?.displayName} Information
@@ -169,10 +169,9 @@ export default function CustomDomainSettings(): JSX.Element {
 									<div
 										className="custom-domain-url"
 										key={host.name}
-										onClick={(): void => onCopyUrlHandler(host.name)}
+										onClick={(): void => onCopyUrlHandler(host.url || '')}
 									>
-										<Link2 size={12} /> {host.name}.
-										{deploymentsData?.data.data.cluster.region.dns}
+										<Link2 size={12} /> {host.url}
 										{host.is_default && <Tag color={Color.BG_ROBIN_500}>Default</Tag>}
 									</div>
 								))}
@@ -181,11 +180,7 @@ export default function CustomDomainSettings(): JSX.Element {
 							<div className="custom-domain-url-edit-btn">
 								<Button
 									className="periscope-btn"
-									disabled={
-										isLoadingDeploymentsData ||
-										isFetchingDeploymentsData ||
-										isPollingEnabled
-									}
+									disabled={isLoadingHosts || isFetchingHosts || isPollingEnabled}
 									type="default"
 									icon={<Pencil size={10} />}
 									onClick={(): void => setIsEditModalOpen(true)}
@@ -198,7 +193,7 @@ export default function CustomDomainSettings(): JSX.Element {
 						{isPollingEnabled && (
 							<Alert
 								className="custom-domain-update-status"
-								message={`Updating your URL to ⎯ ${customDomainDetails?.subdomain}.${deploymentsData?.data.data.cluster.region.dns}. This may take a few mins.`}
+								message={`Updating your URL to ⎯ ${customDomainDetails?.subdomain}.${dnsSuffix}. This may take a few mins.`}
 								type="info"
 								icon={<InfoIcon size={12} />}
 							/>
@@ -206,7 +201,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					</Card>
 				)}
 
-				{isLoadingDeploymentsData && (
+				{isLoadingHosts && (
 					<Card className="custom-domain-settings-card">
 						<Skeleton
 							className="custom-domain-settings-skeleton"
@@ -255,7 +250,7 @@ export default function CustomDomainSettings(): JSX.Element {
 									addonBefore={updateDomainError && <InfoIcon size={12} color="red" />}
 									placeholder="Enter Domain"
 									onChange={(): void => setUpdateDomainError(null)}
-									addonAfter={deploymentsData?.data.data.cluster.region.dns}
+									addonAfter={dnsSuffix}
 									autoFocus
 								/>
 							</Form.Item>
