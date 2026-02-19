@@ -86,9 +86,9 @@ export default function CustomDomainSettings(): JSX.Element {
 		}
 
 		if (hostsData?.data?.status === 'success') {
-			setHosts(hostsData.data.data?.hosts ?? null);
+			setHosts(hostsData?.data?.data?.hosts ?? null);
 
-			const activeCustomDomain = hostsData.data.data?.hosts?.find(
+			const activeCustomDomain = hostsData?.data?.data?.hosts?.find(
 				(host) => !host.is_default,
 			);
 
@@ -266,7 +266,8 @@ export default function CustomDomainSettings(): JSX.Element {
 							{updateDomainError.status === 409 ? (
 								<Alert
 									message={
-										(updateDomainError?.response?.data as { error?: string })?.error ||
+										(updateDomainError?.response?.data as RenderErrorResponseDTO)?.error
+											?.message ||
 										'You’ve already updated the custom domain once today. To make further changes, please contact our support team for assistance.'
 									}
 									type="warning"
@@ -274,7 +275,10 @@ export default function CustomDomainSettings(): JSX.Element {
 								/>
 							) : (
 								<Typography.Text type="danger">
-									{(updateDomainError.response?.data as { error: string })?.error}
+									{
+										(updateDomainError?.response?.data as RenderErrorResponseDTO)?.error
+											?.message
+									}
 								</Typography.Text>
 							)}
 						</div>
