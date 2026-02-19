@@ -1,32 +1,38 @@
 import { useQueries, UseQueryOptions, UseQueryResult } from 'react-query';
-import { getMetricMetadata } from 'api/metricsExplorer/v2/getMetricMetadata';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { SuccessResponseV2 } from 'types/api';
-import { MetricMetadataResponse } from 'types/api/metricsExplorer/v2/getMetricMetadata';
+import {
+	getGetMetricMetadataQueryKey,
+	getMetricMetadata,
+} from 'api/generated/services/metrics';
+import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import { AxiosResponse } from 'axios';
 
-type QueryResult = UseQueryResult<
-	SuccessResponseV2<MetricMetadataResponse>,
-	Error
->;
+type QueryResult = UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>;
 
 type UseGetMultipleMetrics = (
 	metricNames: string[],
-	options?: UseQueryOptions<SuccessResponseV2<MetricMetadataResponse>, Error>,
+	options?: UseQueryOptions<AxiosResponse<GetMetricMetadata200>, Error>,
 	headers?: Record<string, string>,
 ) => QueryResult[];
 
 export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 	metricNames,
 	options,
-	headers,
 ) =>
 	useQueries(
 		metricNames.map(
 			(metricName) =>
 				({
-					queryKey: [REACT_QUERY_KEY.GET_METRIC_METADATA, metricName],
-					queryFn: ({ signal }) => getMetricMetadata(metricName, signal, headers),
+					queryKey: getGetMetricMetadataQueryKey({
+						metricName,
+					}),
+					queryFn: ({ signal }) =>
+						getMetricMetadata(
+							{
+								metricName,
+							},
+							signal,
+						),
 					...options,
-				} as UseQueryOptions<SuccessResponseV2<MetricMetadataResponse>, Error>),
+				} as UseQueryOptions<AxiosResponse<GetMetricMetadata200>, Error>),
 		),
 	);

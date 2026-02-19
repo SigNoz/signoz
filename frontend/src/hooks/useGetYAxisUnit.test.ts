@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
+import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { useGetMetrics } from 'container/MetricsExplorer/Explorer/utils';
-import { MetricMetadata } from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
@@ -24,13 +24,13 @@ const mockUseGetMetrics = useGetMetrics as jest.MockedFunction<
 
 const MOCK_METRIC_1 = {
 	unit: UniversalYAxisUnit.BYTES,
-} as MetricMetadata;
+} as MetricsexplorertypesMetricMetadataDTO;
 const MOCK_METRIC_2 = {
 	unit: UniversalYAxisUnit.SECONDS,
-} as MetricMetadata;
+} as MetricsexplorertypesMetricMetadataDTO;
 const MOCK_METRIC_3 = {
 	unit: '',
-} as MetricMetadata;
+} as MetricsexplorertypesMetricMetadataDTO;
 
 function createMockCurrentQuery(
 	queryType: EQueryType,

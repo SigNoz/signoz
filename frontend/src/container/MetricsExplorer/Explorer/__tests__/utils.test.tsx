@@ -1,14 +1,14 @@
 import { UseQueryResult } from 'react-query';
 import { renderHook } from '@testing-library/react';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import {
+	GetMetricMetadata200,
+	MetricsexplorertypesMetricMetadataDTO,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosResponse } from 'axios';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
-import { SuccessResponseV2 } from 'types/api';
-import {
-	MetricMetadata,
-	MetricMetadataResponse,
-} from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
@@ -91,11 +91,11 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 	});
 });
 
-const MOCK_METRIC_METADATA: MetricMetadata = {
+const MOCK_METRIC_METADATA: MetricsexplorertypesMetricMetadataDTO = {
 	description: 'Metric 1 description',
 	unit: 'unit1',
-	type: MetricType.GAUGE,
-	temporality: Temporality.DELTA,
+	type: MetrictypesTypeDTO.gauge,
+	temporality: MetrictypesTemporalityDTO.delta,
 	isMonotonic: true,
 };
 
@@ -104,19 +104,16 @@ describe('useGetMetrics', () => {
 		jest
 			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
 			.mockReturnValue([
-				({
+				{
 					isLoading: false,
 					isError: false,
 					data: {
-						httpStatusCode: 200,
 						data: {
-							status: 'success',
 							data: MOCK_METRIC_METADATA,
+							status: 'success',
 						},
 					},
-				} as Partial<
-					UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>
-				>) as UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>,
+				} as UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>,
 			]);
 	});
 
@@ -133,12 +130,11 @@ describe('useGetMetrics', () => {
 		jest
 			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
 			.mockReturnValue([
-				({
+				{
 					isLoading: true,
 					isError: false,
-				} as Partial<
-					UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>
-				>) as UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>,
+					data: undefined,
+				} as UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>,
 			]);
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
