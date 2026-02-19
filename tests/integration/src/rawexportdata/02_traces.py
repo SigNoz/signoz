@@ -1,10 +1,10 @@
+import csv
+import io
+import json
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
 from urllib.parse import urlencode
-import csv
-import io
-import json
 
 import requests
 
@@ -125,7 +125,10 @@ def test_export_traces_csv(
 
     # Export traces as CSV (GET for simple queries)
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
+        timeout=30,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -236,7 +239,9 @@ def test_export_traces_jsonl(
 
     # Export traces as JSONL (GET for simple queries)
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -344,7 +349,9 @@ def test_export_traces_with_filter(
 
     # Export traces with filter (GET supports filter param)
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -418,7 +425,9 @@ def test_export_traces_with_limit(
 
     # Export traces with limit (GET supports limit param)
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -606,7 +615,7 @@ def test_export_traces_with_composite_query_trace_operator(
             "expression": "A => B",
             "returnSpansFrom": "A",
             "limit": 1000,
-            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}]
+            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
         },
     }
 

@@ -1,10 +1,10 @@
+import csv
+import io
+import json
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
 from urllib.parse import urlencode
-import csv
-import io
-import json
 
 import requests
 
@@ -92,7 +92,10 @@ def test_export_logs_csv(
 
     # Export logs as CSV (default format, no source needed)
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
+        timeout=30,
         headers={
             "authorization": f"Bearer {token}",
         },
@@ -186,7 +189,9 @@ def test_export_logs_jsonl(
 
     # Export logs as JSONL
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -281,7 +286,9 @@ def test_export_logs_with_filter(
 
     # Export logs with filter
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -352,7 +359,9 @@ def test_export_logs_with_limit(
 
     # Export logs with limit
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -421,7 +430,9 @@ def test_export_logs_with_columns(
 
     # Export logs with specific columns
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params, doseq=True)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params, doseq=True)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -511,7 +522,9 @@ def test_export_logs_with_order_by(
 
     # Export logs with ascending order
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -597,7 +610,9 @@ def test_export_logs_with_complex_filter(
 
     # Export logs with complex filter
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/export_raw_data?{urlencode(params)}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/export_raw_data?{urlencode(params)}"
+        ),
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
@@ -609,7 +624,9 @@ def test_export_logs_with_complex_filter(
 
     # Parse JSONL content
     jsonl_lines = response.text.strip().split("\n")
-    assert len(jsonl_lines) == 1, f"Expected 1 line (complex filter), got {len(jsonl_lines)}"
+    assert (
+        len(jsonl_lines) == 1
+    ), f"Expected 1 line (complex filter), got {len(jsonl_lines)}"
 
     # Verify the filtered log
     filtered_obj = json.loads(jsonl_lines[0])
