@@ -1,6 +1,6 @@
 import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import DataSourceInfo from '../DataSourceInfo';
 
@@ -39,9 +39,7 @@ describe('DataSourceInfo', () => {
 
 		render(<DataSourceInfo dataSentToSigNoz={false} isLoading={false} />);
 
-		expect(
-			await screen.findByText('accepted-starfish.test.cloud'),
-		).toBeInTheDocument();
+		await screen.findByText(/accepted-starfish\.test\.cloud/i);
 	});
 
 	it('does not render workspace URL when GET /zeus/hosts fails', async () => {
@@ -53,9 +51,8 @@ describe('DataSourceInfo', () => {
 
 		render(<DataSourceInfo dataSentToSigNoz={false} isLoading={false} />);
 
-		await waitFor(() => {
-			expect(screen.queryByText(/signoz\.cloud/i)).not.toBeInTheDocument();
-		});
+		await screen.findByText(/Your workspace is ready/i);
+		expect(screen.queryByText(/signoz\.cloud/i)).not.toBeInTheDocument();
 	});
 
 	it('renders workspace URL in the data-received view when telemetry is flowing', async () => {
@@ -67,8 +64,6 @@ describe('DataSourceInfo', () => {
 
 		render(<DataSourceInfo dataSentToSigNoz={true} isLoading={false} />);
 
-		expect(
-			await screen.findByText('accepted-starfish.test.cloud'),
-		).toBeInTheDocument();
+		await screen.findByText(/accepted-starfish\.test\.cloud/i);
 	});
 });

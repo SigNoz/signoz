@@ -28,35 +28,36 @@ const mockHostsResponse: GetHosts200 = {
 };
 
 describe('CustomDomainSettings', () => {
-	beforeEach(() => {
+	afterEach(() => server.resetHandlers());
+
+	it('renders host URLs with protocol stripped and marks the default host', async () => {
 		server.use(
 			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(mockHostsResponse)),
 			),
-			rest.put(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({})),
-			),
 		);
-	});
 
-	afterEach(() => server.resetHandlers());
-
-	it('renders host URLs with protocol stripped and marks the default host', async () => {
 		render(<CustomDomainSettings />);
 
-		expect(
-			await screen.findByText('accepted-starfish.test.cloud'),
-		).toBeInTheDocument();
-		expect(await screen.findByText('custom-host.test.cloud')).toBeInTheDocument();
+		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		await screen.findByText(/custom-host\.test\.cloud/i);
 		expect(screen.getByText('Default')).toBeInTheDocument();
 	});
 
 	it('opens edit modal with DNS suffix derived from the default host', async () => {
+		server.use(
+			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockHostsResponse)),
+			),
+		);
+
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
+		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+
 		await user.click(
-			await screen.findByRole('button', { name: /customize team['’]s url/i }),
+			screen.getByRole('button', { name: /customize team['’]s url/i }),
 		);
 
 		expect(
@@ -67,20 +68,24 @@ describe('CustomDomainSettings', () => {
 	});
 
 	it('submits PUT to /zeus/hosts with the entered subdomain as the payload', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		let capturedBody: Record<string, unknown> = {};
 
 		server.use(
+			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockHostsResponse)),
+			),
 			rest.put(ZEUS_HOSTS_ENDPOINT, async (req, res, ctx) => {
 				capturedBody = await req.json<Record<string, unknown>>();
 				return res(ctx.status(200), ctx.json({}));
 			}),
 		);
 
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
+		await screen.findByText(/accepted-starfish\.test\.cloud/i);
 		await user.click(
-			await screen.findByRole('button', { name: /customize team['’]s url/i }),
+			screen.getByRole('button', { name: /customize team['’]s url/i }),
 		);
 
 		const input = screen.getByPlaceholderText(/enter domain/i);
@@ -94,9 +99,10 @@ describe('CustomDomainSettings', () => {
 	});
 
 	it('shows contact support option when domain update returns 409', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		server.use(
+			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockHostsResponse)),
+			),
 			rest.put(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(
 					ctx.status(409),
@@ -105,10 +111,12 @@ describe('CustomDomainSettings', () => {
 			),
 		);
 
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
+		await screen.findByText(/accepted-starfish\.test\.cloud/i);
 		await user.click(
-			await screen.findByRole('button', { name: /customize team['’]s url/i }),
+			screen.getByRole('button', { name: /customize team['’]s url/i }),
 		);
 		await user.type(screen.getByPlaceholderText(/enter domain/i), 'myteam');
 		await user.click(screen.getByRole('button', { name: /apply changes/i }));
