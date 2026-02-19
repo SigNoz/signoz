@@ -160,7 +160,7 @@ WHERE timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}
   AND ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp
 ```
 
-The `- 1800` on the start ensures spans at bucket boundaries are not missed.
+Since the ts_bucket_start is rounded down to 30m, the `- 1800` is required to avoid filtering out the bucket with start timestamp.
 
 ### 3. Use Indexed Columns Over Map Access
 
@@ -178,7 +178,7 @@ The naming convention: replace `.` with `$$` in the attribute name and prefix wi
 
 ### 4. Use Pre-extracted Columns
 
-These top-level columns are faster than map access:
+These top-level columns are faster than map access and are derived from different similar attributes:
 - `http_method`, `http_url`, `http_host`
 - `db_name`, `db_operation`
 - `has_error`, `duration_nano`, `name`, `kind`
@@ -188,24 +188,10 @@ These top-level columns are faster than map access:
 
 ## Attribute Access Syntax
 
-### Standard (non-indexed) attributes
-```sql
-attributes_string['http.status_code']
-attributes_number['response_time']
-attributes_bool['is_error']
-```
-
-### Selected (indexed) attributes — direct column names
-```sql
-attribute_string_http$$route       -- for http.route
-attribute_number_response$$time    -- for response.time
-attribute_bool_is$$error           -- for is.error
-```
-
 ### Resource attributes in SELECT / GROUP BY
 ```sql
 resource.service.name::String
-resource.environment::String
+resource.namespace::String
 ```
 
 ### Resource attributes in WHERE (via CTE)
@@ -448,13 +434,10 @@ These template variables are automatically replaced by SigNoz when the query run
 
 Before finalizing any query, verify:
 
-- [ ] **Resource filter CTE** is present when filtering by resource attributes (service.name, environment, etc.)
+- [ ] **Resource filter CTE** is present when filtering by resource attributes (service.name, deployment.environment, etc.)
 - [ ] **`ts_bucket_start`** filter is included alongside `timestamp` filter, with `- 1800` on start
 - [ ] **`GLOBAL IN`** is used (not just `IN`) for the resource fingerprint subquery
-- [ ] **Indexed columns** are used over map access where available (e.g., `http_method` over `attributes_string['http.method']`)
-- [ ] **Pre-extracted columns** are used where available (`has_error`, `duration_nano`, `http_method`, `db_name`, etc.)
+- [ ] **Indexed columns** are used over map access where available (e.g., `attribute_string_http$$route']` over `attributes_string['http.route']`)
+- [ ] **Pre-extracted columns** are used where available (`has_error`, `duration_nano`, `http_method`, `db_name`, `http_host`, etc.)
 - [ ] **`seen_at_ts_bucket_start`** filter is included in the resource CTE
-- [ ] Aggregation results are cast with `toFloat64()` for dashboard compatibility
 - [ ] For timeseries: results are ordered by time column ASC
-- [ ] For table panels: `now() as ts` is used instead of time intervals
-- [ ] For value panels: outer query uses `avg(value)` / `any(ts)` pattern
