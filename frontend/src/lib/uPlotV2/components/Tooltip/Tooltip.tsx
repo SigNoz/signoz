@@ -57,9 +57,10 @@ export default function Tooltip({
 				'uplot-tooltip-container',
 				isDarkMode ? 'darkMode' : 'lightMode',
 			)}
+			data-testid="uplot-tooltip-container"
 		>
 			{showTooltipHeader && (
-				<div className="uplot-tooltip-header">
+				<div className="uplot-tooltip-header" data-testid="uplot-tooltip-header">
 					<span>{headerTitle}</span>
 				</div>
 			)}
@@ -67,6 +68,7 @@ export default function Tooltip({
 				style={{
 					maxHeight: TOOLTIP_LIST_MAX_HEIGHT,
 				}}
+				data-testid="uplot-tooltip-list"
 			>
 				{tooltipContent.length > 0 ? (
 					<Virtuoso
@@ -78,7 +80,7 @@ export default function Tooltip({
 						}}
 						totalListHeightChanged={setListHeight}
 						itemContent={(_, item): JSX.Element => (
-							<div className="uplot-tooltip-item">
+							<div className="uplot-tooltip-item" data-testid="uplot-tooltip-item">
 								<div
 									className="uplot-tooltip-item-marker"
 									style={{ borderColor: item.color }}
