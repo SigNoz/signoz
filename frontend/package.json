@@ -19,7 +19,7 @@
 		"commitlint": "commitlint --edit $1",
 		"test": "jest",
 		"test:changedsince": "jest --changedSince=main --coverage --silent",
-		"generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh && prettier --write src/api/generated && (eslint --fix src/api/generated || true)"
+		"generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -52,8 +52,10 @@
 		"@signozhq/combobox": "0.0.2",
 		"@signozhq/command": "0.0.0",
 		"@signozhq/design-tokens": "2.1.1",
+		"@signozhq/icons": "0.1.0",
 		"@signozhq/input": "0.0.2",
 		"@signozhq/popover": "0.0.0",
+		"@signozhq/radio-group": "0.0.2",
 		"@signozhq/resizable": "0.0.0",
 		"@signozhq/sonner": "0.1.0",
 		"@signozhq/table": "0.3.7",

@@ -64,8 +64,7 @@ var (
 	}
 )
 
-type fieldMapper struct {
-}
+type fieldMapper struct{}
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
@@ -131,7 +130,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 //   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
-func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64, fieldName string) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
+func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
 
 	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
 	copy(sortedEvolutions, evolutions)
@@ -238,7 +237,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 	var evolutionsEntries []*telemetrytypes.EvolutionEntry
 	if len(key.Evolutions) > 0 {
 		// we will use the corresponding column and its evolution entry for the query
-		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd, key.Name)
+		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
 		if err != nil {
 			return "", err
 		}
@@ -399,12 +398,27 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 					"plan length is less than 2 for promoted path: %s", key.Name)
 			}
 
-			// promoted column first then body_json column
-			// TODO(Piyush): Change this in future for better performance
-			expr = fmt.Sprintf("coalesce(%s, %s)",
-				fmt.Sprintf("dynamicElement(%s, '%s')", plan[1].FieldPath(), plan[1].TerminalConfig.ElemType.StringValue()),
-				expr,
+			node := plan[1]
+			promotedExpr := fmt.Sprintf(
+				"dynamicElement(%s, '%s')",
+				node.FieldPath(),
+				node.TerminalConfig.ElemType.StringValue(),
 			)
+
+			// dynamicElement returns NULL for scalar types or an empty array for array types.
+			if node.TerminalConfig.ElemType.IsArray {
+				expr = fmt.Sprintf(
+					"if(length(%s) > 0, %s, %s)",
+					promotedExpr,
+					promotedExpr,
+					expr,
+				)
+			} else {
+				// promoted column first then body_json column
+				// TODO(Piyush): Change this in future for better performance
+				expr = fmt.Sprintf("coalesce(%s, %s)", promotedExpr, expr)
+			}
+
 		}
 
 		return expr, nil
@@ -426,8 +440,7 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 	}
 
 	// Build arrayMap expressions for ALL available branches at the root level.
-	// Iterate branches in deterministic order (JSON then Dynamic) so generated SQL
-	// is stable across environments; map iteration order is random in Go.
+	// Iterate branches in deterministic order (JSON then Dynamic)
 	var arrayMapExpressions []string
 	for _, node := range plan {
 		for _, branchType := range node.BranchesInOrder() {

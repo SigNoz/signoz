@@ -37,13 +37,7 @@ func (c *conditionBuilder) conditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	switch operator {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
+	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
 

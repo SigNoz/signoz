@@ -87,7 +87,7 @@ export function shouldShowTooltipForSync(
 export function shouldShowTooltipForInteraction(
 	controller: TooltipControllerState,
 ): boolean {
-	return controller.focusedSeriesIndex != null || controller.isAnySeriesActive;
+	return controller.focusedSeriesIndex != null;
 }
 
 export function updateHoverState(

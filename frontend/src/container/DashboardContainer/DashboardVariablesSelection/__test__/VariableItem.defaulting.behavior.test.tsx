@@ -8,14 +8,6 @@ import '@testing-library/jest-dom/extend-expect';
 import VariableItem from '../VariableItem';
 
 const mockOnValueUpdate = jest.fn();
-const mockSetVariablesToGetUpdated = jest.fn();
-
-const baseDependencyData = {
-	order: [],
-	graph: {},
-	parentDependencyGraph: {},
-	hasCycle: false,
-};
 
 const TEST_VARIABLE_ID = 'test_variable';
 const VARIABLE_SELECT_TESTID = 'variable-select';
@@ -31,9 +23,6 @@ const renderVariableItem = (
 				variableData={variableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				variablesToGetUpdated={[]}
-				setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-				dependencyData={baseDependencyData}
 			/>
 		</MockQueryClientProvider>,
 	);
@@ -63,10 +52,10 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('option1')).toBeInTheDocument();
+			expect(await screen.findByText('option1')).toBeInTheDocument();
 		});
 
-		test('should show placeholder when no previous and no default', async () => {
+		test('should auto-select first option when no previous and no default', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -85,7 +74,8 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('Select value')).toBeInTheDocument();
+			// With the new variable select strategy, the first option is auto-selected
+			expect(await screen.findByText('option1')).toBeInTheDocument();
 		});
 	});
 
@@ -110,7 +100,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('ALL')).toBeInTheDocument();
+			expect(await screen.findByText('ALL')).toBeInTheDocument();
 		});
 	});
 
@@ -134,7 +124,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('Select value')).toBeInTheDocument();
+			expect(await screen.findByText('Select value')).toBeInTheDocument();
 		});
 	});
 });

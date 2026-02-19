@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/role"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -22,8 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 type Module struct {
@@ -32,13 +30,13 @@ type Module struct {
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
 	orgSetter organization.Setter
-	granter   role.Granter
+	authz     authz.AuthZ
 	analytics analytics.Analytics
 	config    user.Config
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, granter role.Granter, analytics analytics.Analytics, config user.Config) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -47,7 +45,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		settings:  settings,
 		orgSetter: orgSetter,
 		analytics: analytics,
-		granter:   granter,
+		authz:     authz,
 		config:    config,
 	}
 }
@@ -106,6 +104,12 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		}
 
 		if existingUser != nil {
+			if err := existingUser.ErrIfRoot(); err != nil {
+				return nil, errors.WithAdditionalf(err, "cannot send invite to root user")
+			}
+		}
+
+		if existingUser != nil {
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
 		}
 
@@ -146,11 +150,9 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			continue
 		}
 
-		if err := m.emailing.SendHTML(ctx, invites[i].Email.String(), "You are invited to join a team in SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
-			"CustomerName": invites[i].Name,
-			"InviterName":  creator.DisplayName,
-			"InviterEmail": creator.Email,
-			"Link":         fmt.Sprintf("%s/signup?token=%s", bulkInvites.Invites[i].FrontendBaseUrl, invites[i].Token),
+		if err := m.emailing.SendHTML(ctx, invites[i].Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+			"inviter_email": creator.Email,
+			"link":          fmt.Sprintf("%s/signup?token=%s", bulkInvites.Invites[i].FrontendBaseUrl, invites[i].Token),
 		}); err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
 		}
@@ -172,7 +174,7 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
-	err := module.granter.Grant(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	err := module.authz.Grant(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
 	if err != nil {
 		return err
 	}
@@ -206,27 +208,21 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, err
 	}
 
+	if err := existingUser.ErrIfRoot(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot update root user")
+	}
+
 	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err
 	}
 
-	// only displayName, role can be updated
-	if user.DisplayName == "" {
-		user.DisplayName = existingUser.DisplayName
-	}
-
-	if user.Role == "" {
-		user.Role = existingUser.Role
-	}
-
-	if user.Role != existingUser.Role && requestor.Role != types.RoleAdmin {
+	if user.Role != "" && user.Role != existingUser.Role && requestor.Role != types.RoleAdmin {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
-	// Make sure that th e request is not demoting the last admin user.
-	// also an admin user can only change role of their own or other user
-	if user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin {
+	// Make sure that the request is not demoting the last admin user.
+	if user.Role != "" && user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin {
 		adminUsers, err := m.store.GetUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
 		if err != nil {
 			return nil, err
@@ -237,8 +233,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	if user.Role != existingUser.Role {
-		err = m.granter.ModifyGrant(ctx,
+	if user.Role != "" && user.Role != existingUser.Role {
+		err = m.authz.ModifyGrant(ctx,
 			orgID,
 			roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role),
 			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
@@ -249,41 +245,38 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	user.UpdatedAt = time.Now()
-	updatedUser, err := m.store.UpdateUser(ctx, orgID, id, user)
-	if err != nil {
+	existingUser.Update(user.DisplayName, user.Role)
+	if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 		return nil, err
 	}
 
-	traits := types.NewTraitsFromUser(updatedUser)
-	m.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
+	return existingUser, nil
+}
 
-	traits["updated_by"] = updatedBy
-	m.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
-
-	// if the role is updated then send an email
-	if existingUser.Role != updatedUser.Role {
-		if err := m.emailing.SendHTML(ctx, existingUser.Email.String(), "Your Role Has Been Updated in SigNoz", emailtypes.TemplateNameUpdateRole, map[string]any{
-			"CustomerName":   existingUser.DisplayName,
-			"UpdatedByEmail": requestor.Email,
-			"OldRole":        cases.Title(language.English).String(strings.ToLower(existingUser.Role.String())),
-			"NewRole":        cases.Title(language.English).String(strings.ToLower(updatedUser.Role.String())),
-		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
-		}
+func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+		return err
 	}
 
-	if err := m.tokenizer.DeleteIdentity(ctx, valuer.MustNewUUID(id)); err != nil {
-		return nil, err
+	traits := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
+
+	if err := module.tokenizer.DeleteIdentity(ctx, user.ID); err != nil {
+		return err
 	}
 
-	return updatedUser, nil
+	return nil
 }
 
 func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
 	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
+	}
+
+	if err := user.ErrIfRoot(); err != nil {
+		return errors.WithAdditionalf(err, "cannot delete root user")
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email.String())) {
@@ -301,7 +294,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
-	err = module.granter.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -318,6 +311,15 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 }
 
 func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	user, err := module.store.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := user.ErrIfRoot(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
+	}
+
 	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
@@ -369,7 +371,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
 	if !module.config.Password.Reset.AllowSelf {
-		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "users are not allowed to reset their password themselves, please contact an admin to reset your password")
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "Users are not allowed to reset their password themselves, please contact an admin to reset your password.")
 	}
 
 	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
@@ -378,6 +380,10 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 			return nil // for security reasons
 		}
 		return err
+	}
+
+	if err := user.ErrIfRoot(); err != nil {
+		return errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
 	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
@@ -394,10 +400,9 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	if err := module.emailing.SendHTML(
 		ctx,
 		user.Email.String(),
-		"Reset your SigNoz password",
+		"A Password Reset Was Requested for SigNoz",
 		emailtypes.TemplateNameResetPassword,
 		map[string]any{
-			"Name":   user.DisplayName,
 			"Link":   resetLink,
 			"Expiry": humanizedTokenLifetime,
 		},
@@ -424,6 +429,15 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
+	if err != nil {
+		return err
+	}
+
+	if err := user.ErrIfRoot(); err != nil {
+		return errors.WithAdditionalf(err, "cannot reset password for root user")
+	}
+
 	if err := password.Update(passwd); err != nil {
 		return err
 	}
@@ -432,6 +446,15 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 }
 
 func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
+	user, err := module.store.GetUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if err := user.ErrIfRoot(); err != nil {
+		return errors.WithAdditionalf(err, "cannot change password for root user")
+	}
+
 	password, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
 		return err
@@ -493,7 +516,7 @@ func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UU
 }
 
 func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
-	user, err := types.NewUser(name, email, types.RoleAdmin, organization.ID)
+	user, err := types.NewRootUser(name, email, organization.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -504,14 +527,14 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	}
 
 	managedRoles := roletypes.NewManagedRoles(organization.ID)
-	err = module.granter.Grant(ctx, organization.ID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil))
+	err = module.authz.CreateManagedUserRoleTransactions(ctx, organization.ID, user.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	if err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		err = module.orgSetter.Create(ctx, organization, func(ctx context.Context, orgID valuer.UUID) error {
-			err = module.granter.CreateManagedRoles(ctx, orgID, managedRoles)
+			err = module.authz.CreateManagedRoles(ctx, orgID, managedRoles)
 			if err != nil {
 				return err
 			}

@@ -539,7 +539,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		evolutions      []*telemetrytypes.EvolutionEntry
 		tsStart         uint64
 		tsEnd           uint64
-		fieldName       string
 		expectedColumns []string // column names
 		expectedEvols   []string // evolution column names
 		expectedError   bool
@@ -571,7 +570,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resource", "resources_string"}, // sorted by ReleaseTime desc
@@ -595,7 +593,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string"},
@@ -627,7 +624,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 2, 25, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string"},
@@ -647,7 +643,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{},
@@ -689,7 +684,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resource"},
@@ -730,7 +724,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string", "resource"},
@@ -760,7 +753,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC), // exactly at tsEnd
 				},
 			},
-			fieldName:       "service.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"resources_string"}, // resource excluded because After(tsEnd) is true
@@ -790,7 +782,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "user.name",
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn}, // sorted by ReleaseTime desc (newest first)
@@ -820,7 +811,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 					ReleaseTime:  time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			fieldName:       "user.name",
 			tsStart:         uint64(time.Date(2024, 2, 3, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{LogsV2BodyPromotedColumn},
@@ -830,7 +820,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resultColumns, resultEvols, err := selectEvolutionsForColumns(tc.columns, tc.evolutions, tc.tsStart, tc.tsEnd, tc.fieldName)
+			resultColumns, resultEvols, err := selectEvolutionsForColumns(tc.columns, tc.evolutions, tc.tsStart, tc.tsEnd)
 
 			if tc.expectedError {
 				assert.Contains(t, err.Error(), tc.errorStr)

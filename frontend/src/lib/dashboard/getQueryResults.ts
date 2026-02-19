@@ -19,7 +19,11 @@ import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
 import { SuccessResponse, SuccessResponseV2, Warning } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import {
+	MetricQueryRangeSuccessResponse,
+	MetricRangePayloadProps,
+} from 'types/api/metrics/getQueryRange';
+import { ExecStats, MetricRangePayloadV5 } from 'types/api/v5/queryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -205,13 +209,13 @@ export async function GetMetricQueryRange(
 		widgetIndex: number;
 		publicDashboardId: string;
 	},
-): Promise<SuccessResponse<MetricRangePayloadProps> & { warning?: Warning }> {
+): Promise<MetricQueryRangeSuccessResponse> {
 	let legendMap: Record<string, string>;
 	let response:
-		| SuccessResponse<MetricRangePayloadProps>
-		| SuccessResponseV2<MetricRangePayloadV5>
-		| (SuccessResponse<MetricRangePayloadProps> & { warning?: Warning });
+		| MetricQueryRangeSuccessResponse
+		| SuccessResponseV2<MetricRangePayloadV5>;
 	let warning: Warning | undefined;
+	let meta: ExecStats | undefined;
 
 	const panelType = props.originalGraphType || props.graphType;
 
@@ -299,6 +303,7 @@ export async function GetMetricQueryRange(
 			);
 
 			warning = response.payload.warning || undefined;
+			meta = response.payload.meta || undefined;
 		} else {
 			const v5Response = await getQueryRangeV5(
 				v5Result.queryPayload,
@@ -318,6 +323,7 @@ export async function GetMetricQueryRange(
 			);
 
 			warning = response.payload.warning || undefined;
+			meta = response.payload.meta || undefined;
 		}
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
@@ -384,6 +390,7 @@ export async function GetMetricQueryRange(
 	return {
 		...response,
 		warning,
+		meta,
 	};
 }
 

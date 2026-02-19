@@ -181,7 +181,7 @@ func (c *conditionBuilder) conditionFor(
 		column := columns[0]
 		if len(key.Evolutions) > 0 {
 			// we will use the corresponding column and its evolution entry for the query
-			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs, key.Name)
+			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
 			if err != nil {
 				return "", err
 			}

@@ -31,19 +31,25 @@ func (c *conditionBuilder) conditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	switch operator {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
+	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
 
 	tblFieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
+	}
+
+	// TODO(srikanthccv): use the same data type collision handling when metrics schemas are updated
+	switch v := value.(type) {
+	case float64:
+		tblFieldName = fmt.Sprintf("toFloat64OrNull(%s)", tblFieldName)
+	case []any:
+		if len(v) > 0 && (operator == qbtypes.FilterOperatorBetween || operator == qbtypes.FilterOperatorNotBetween) {
+			if _, ok := v[0].(float64); ok {
+				tblFieldName = fmt.Sprintf("toFloat64OrNull(%s)", tblFieldName)
+			}
+		}
 	}
 
 	switch operator {

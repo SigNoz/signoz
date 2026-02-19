@@ -1,8 +1,9 @@
 package thirdpartyapi
 
 import (
-	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 	"testing"
+
+	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -28,7 +29,7 @@ func TestFilterResponse(t *testing.T) {
 											{
 												Labels: []*qbtypes.Label{
 													{
-														Key:   telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Key:   telemetrytypes.TelemetryFieldKey{Name: derivedKeyHTTPHost},
 														Value: "192.168.1.1",
 													},
 												},
@@ -36,7 +37,7 @@ func TestFilterResponse(t *testing.T) {
 											{
 												Labels: []*qbtypes.Label{
 													{
-														Key:   telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Key:   telemetrytypes.TelemetryFieldKey{Name: derivedKeyHTTPHost},
 														Value: "example.com",
 													},
 												},
@@ -60,7 +61,7 @@ func TestFilterResponse(t *testing.T) {
 											{
 												Labels: []*qbtypes.Label{
 													{
-														Key:   telemetrytypes.TelemetryFieldKey{Name: "net.peer.name"},
+														Key:   telemetrytypes.TelemetryFieldKey{Name: derivedKeyHTTPHost},
 														Value: "example.com",
 													},
 												},
@@ -84,12 +85,12 @@ func TestFilterResponse(t *testing.T) {
 								Rows: []*qbtypes.RawRow{
 									{
 										Data: map[string]any{
-											"net.peer.name": "192.168.1.1",
+											derivedKeyHTTPHost: "192.168.1.1",
 										},
 									},
 									{
 										Data: map[string]any{
-											"net.peer.name": "example.com",
+											derivedKeyHTTPHost: "example.com",
 										},
 									},
 								},
@@ -106,7 +107,7 @@ func TestFilterResponse(t *testing.T) {
 								Rows: []*qbtypes.RawRow{
 									{
 										Data: map[string]any{
-											"net.peer.name": "example.com",
+											derivedKeyHTTPHost: "example.com",
 										},
 									},
 								},
