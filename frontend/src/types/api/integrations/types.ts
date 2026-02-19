@@ -19,6 +19,20 @@ export interface AllIntegrationsProps {
 	};
 }
 
+export interface AzureAccountConfig {
+	config: {
+		deployment_region: string;
+		resource_groups: string[];
+	};
+}
+
+export interface ConnectionParams {
+	ingestion_url?: string;
+	ingestion_key?: string;
+	signoz_api_url?: string;
+	signoz_api_key?: string;
+}
+
 export interface IntegrationDetailedProps {
 	description: string;
 	id: string;
@@ -101,4 +115,23 @@ export interface UninstallIntegrationProps {
 
 export interface UninstallIntegrationSuccessResponse {
 	data: any;
+}
+
+export interface IAzureDeploymentCommands {
+	account_id: string;
+	az_shell_connection_command: string;
+	az_cli_connection_command: string;
+}
+
+export interface AccountStatusResponse {
+	status: 'success';
+	data: {
+		id: string;
+		cloud_account_id: string;
+		status: {
+			integration: {
+				last_heartbeat_ts_ms: number | null;
+			};
+		};
+	};
 }

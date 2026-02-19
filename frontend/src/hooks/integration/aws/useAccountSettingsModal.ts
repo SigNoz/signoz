@@ -8,10 +8,10 @@ import {
 } from 'react';
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
-import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { useUpdateAccountConfig } from 'hooks/integration/aws/useUpdateAccountConfig';
+import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import { useUpdateAWSAccountConfig } from 'hooks/integration/aws/useUpdateAWSAccountConfig';
 import { isEqual } from 'lodash-es';
-import { AccountConfigPayload } from 'types/api/integrations/aws';
+import { AWSAccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
@@ -56,7 +56,7 @@ export function useAccountSettingsModal({
 	setActiveAccount,
 }: UseAccountSettingsModalProps): UseAccountSettingsModal {
 	const [form] = Form.useForm();
-	const { mutate: updateConfig, isLoading } = useUpdateAccountConfig();
+	const { mutate: updateConfig, isLoading } = useUpdateAWSAccountConfig();
 	const accountRegions = useMemo(() => account?.config?.regions || [], [
 		account?.config?.regions,
 	]);
@@ -78,7 +78,7 @@ export function useAccountSettingsModal({
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
-			const payload: AccountConfigPayload = {
+			const payload: AWSAccountConfigPayload = {
 				config: {
 					regions: selectedRegions,
 				},

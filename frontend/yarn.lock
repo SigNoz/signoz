@@ -4142,7 +4142,7 @@
     aria-hidden "^1.1.1"
     react-remove-scroll "2.5.4"
 
-"@radix-ui/react-dialog@^1.1.11", "@radix-ui/react-dialog@^1.1.6":
+"@radix-ui/react-dialog@^1.1.1", "@radix-ui/react-dialog@^1.1.11", "@radix-ui/react-dialog@^1.1.6":
   version "1.1.15"
   resolved "https://registry.yarnpkg.com/@radix-ui/react-dialog/-/react-dialog-1.1.15.tgz#1de3d7a7e9a17a9874d29c07f5940a18a119b632"
   integrity sha512-TCglVRtzlffRNxRMEyR36DGBLJpeusFcgMVD9PZEzAKnUs1lKCgX5u9BmC2Yg+LL9MgZDugFFs1Vl+Jp4t/PGw==
@@ -4493,6 +4493,20 @@
     "@radix-ui/react-primitive" "1.0.3"
     "@radix-ui/react-roving-focus" "1.0.4"
     "@radix-ui/react-use-controllable-state" "1.0.1"
+
+"@radix-ui/react-tabs@^1.1.3":
+  version "1.1.13"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-tabs/-/react-tabs-1.1.13.tgz#3537ce379d7e7ff4eeb6b67a0973e139c2ac1f15"
+  integrity sha512-7xdcatg7/U+7+Udyoj2zodtI9H/IIopqo+YOIcZOq1nJwXWBZ9p8xiu5llXlekDbZkca79a/fozEYQXIA4sW6A==
+  dependencies:
+    "@radix-ui/primitive" "1.1.3"
+    "@radix-ui/react-context" "1.1.2"
+    "@radix-ui/react-direction" "1.1.1"
+    "@radix-ui/react-id" "1.1.1"
+    "@radix-ui/react-presence" "1.1.5"
+    "@radix-ui/react-primitive" "2.1.3"
+    "@radix-ui/react-roving-focus" "1.1.11"
+    "@radix-ui/react-use-controllable-state" "1.2.2"
 
 "@radix-ui/react-tooltip@1.0.7":
   version "1.0.7"
@@ -5084,6 +5098,35 @@
   resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.1.tgz#9c36d433fd264410713cc0c5ebdd75ce0ebecba3"
   integrity sha512-SdziCHg5Lwj+6oY6IRUPplaKZ+kTHjbrlhNj//UoAJ8aQLnRdR2F/miPzfSi4vrYw88LtXxNA9J9iJyacCp37A==
 
+"@signozhq/dialog@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/dialog/-/dialog-0.0.2.tgz#55bd8e693f76325fda9aabe3197350e0adc163c4"
+  integrity sha512-YT5t3oZpGkAuWptTqhCgVtLjxsRQrEIrQHFoXpP9elM1+O4TS9WHr+07BLQutOVg6u9n9pCvW3OYf0SCETkDVQ==
+  dependencies:
+    "@radix-ui/react-dialog" "^1.1.11"
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/drawer@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/drawer/-/drawer-0.0.4.tgz#7c6e6779602113f55df8a55076e68b9cc13c7d79"
+  integrity sha512-m/shStl5yVPjHjrhDAh3EeKqqTtMmZUBVlgJPUGgoNV3sFsuN6JNaaAtEJI8cQBWkbEEiHLWKVkL/vhbQ7YrUg==
+  dependencies:
+    "@radix-ui/react-dialog" "^1.1.11"
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+    vaul "^1.1.2"
+
 "@signozhq/icons@0.1.0", "@signozhq/icons@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@signozhq/icons/-/icons-0.1.0.tgz#00dfb430dbac423bfff715876f91a7b8a72509e4"
@@ -5178,6 +5221,21 @@
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lodash-es "^4.17.21"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/tabs@0.0.11":
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/@signozhq/tabs/-/tabs-0.0.11.tgz#655732486d1df0581008f4612100b7ba0860c9d6"
+  integrity sha512-Ry3KXao5IJckx5xKoQirCqBfmm7a1O6kcGIWZ10LdYBpaiW2rpolT1AH/fQThUlOZeifkNNpUQVNnr3YIVk3lg==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    "@radix-ui/react-tabs" "^1.1.3"
+    "@signozhq/tooltip" "0.0.2"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
     lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
@@ -6530,6 +6588,13 @@
   dependencies:
     "@uiw/codemirror-themes" "4.23.11"
 
+"@uiw/codemirror-theme-dracula@4.25.4":
+  version "4.25.4"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-dracula/-/codemirror-theme-dracula-4.25.4.tgz#e96b6fab6ccb727dbab743966ed21f25da9b9fe9"
+  integrity sha512-ejmDA9cXVLWDJGlgxCjz4vVMn2fnFexMX3QxoH8d/pbunIFy//lyqmEO6zzKC9+ltc0PaKvZYYx668qqip/pDA==
+  dependencies:
+    "@uiw/codemirror-themes" "4.25.4"
+
 "@uiw/codemirror-theme-github@4.24.1":
   version "4.24.1"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-github/-/codemirror-theme-github-4.24.1.tgz#80a6e735ed9bb97d66d7914b951b8243f974634f"
@@ -6550,6 +6615,15 @@
   version "4.24.1"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.24.1.tgz#f27075079b5a899d99716d035b58f38d62fffa12"
   integrity sha512-hduBbFNiWNW6nYa2/giKQ9YpzhWNw87BGpCjC+cXYMZ7bCD6q5DC6Hw+7z7ZwSzEaOQvV91lmirOjJ8hn9+pkg==
+  dependencies:
+    "@codemirror/language" "^6.0.0"
+    "@codemirror/state" "^6.0.0"
+    "@codemirror/view" "^6.0.0"
+
+"@uiw/codemirror-themes@4.25.4":
+  version "4.25.4"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.25.4.tgz#caa0df8b19368dfee6494f08c4983d1e36199500"
+  integrity sha512-2SLktItgcZC4p0+PfFusEbAHwbuAWe3bOOntCevVgHtrWGtGZX3IPv2k8IKZMgOXtAHyGKpJvT9/nspPn/uCQg==
   dependencies:
     "@codemirror/language" "^6.0.0"
     "@codemirror/state" "^6.0.0"
@@ -20178,6 +20252,13 @@ vary@~1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz"
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
+
+vaul@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/vaul/-/vaul-1.1.2.tgz#c959f8b9dc2ed4f7d99366caee433fbef91f5ba9"
+  integrity sha512-ZFkClGpWyI2WUQjdLJ/BaGuV6AVQiJ3uELGk3OYtP+B6yCO7Cmn9vPFXVJkRaGkOJu3m8bQMgtyzNHixULceQA==
+  dependencies:
+    "@radix-ui/react-dialog" "^1.1.1"
 
 vfile-location@^4.0.0:
   version "4.1.0"

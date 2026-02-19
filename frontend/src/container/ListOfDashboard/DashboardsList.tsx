@@ -44,6 +44,9 @@ import {
 	sanitizeDashboardData,
 } from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
+// see more: https://github.com/lucide-icons/lucide/issues/94
+import { handleContactSupport } from 'container/Integrations/utils';
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -72,9 +75,6 @@ import {
 	Search,
 	SquareArrowOutUpRight,
 } from 'lucide-react';
-// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
-// see more: https://github.com/lucide-icons/lucide/issues/94
-import { handleContactSupport } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';

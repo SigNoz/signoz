@@ -1,0 +1,124 @@
+---
+description: Core Jest/React Testing Library conventions - harness, MSW, interactions, timers
+globs:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/__tests__/**/*.ts"
+  - "**/__tests__/**/*.tsx"
+alwaysApply: false
+---
+
+# Jest Test Conventions
+
+Expert developer with Jest, React Testing Library, MSW, and TypeScript. Focus on critical functionality, mock dependencies before imports, test multiple scenarios, write maintainable tests.
+
+**Auto-detect TypeScript**: Check for TypeScript in the project through tsconfig.json or package.json dependencies. Adjust syntax based on this detection.
+
+## Imports
+
+Always import from our harness:
+```ts
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+```
+For API mocks:
+```ts
+import { server, rest } from 'mocks-server/server';
+```
+❌ Do not import directly from `@testing-library/react`.
+
+## Router
+
+Use the router built into render:
+```ts
+render(<Page />, undefined, { initialRoute: '/traces-explorer' });
+```
+Only mock `useLocation` / `useParams` if the test depends on them.
+
+## Hook Mocks
+
+```ts
+import useFoo from 'hooks/useFoo';
+jest.mock('hooks/useFoo');
+const mockUseFoo = jest.mocked(useFoo);
+mockUseFoo.mockReturnValue(/* minimal shape */ as any);
+```
+Prefer helpers (`rqSuccess`, `rqLoading`, `rqError`) for React Query results.
+
+## MSW
+
+Global MSW server runs automatically. Override per-test:
+```ts
+server.use(
+  rest.get('*/api/v1/foo', (_req, res, ctx) => res(ctx.status(200), ctx.json({ ok: true })))
+);
+```
+Keep large responses in `mocks-server/__mockdata__/`.
+
+## Interactions
+
+- Prefer `userEvent` for real user interactions (click, type, select, tab).
+- Use `fireEvent` only for low-level/programmatic events not covered by `userEvent` (e.g., scroll, resize, setting `element.scrollTop` for virtualization). Wrap in `act(...)` if needed.
+- Always await interactions:
+```ts
+const user = userEvent.setup({ pointerEventsCheck: 0 });
+await user.click(screen.getByRole('button', { name: /save/i }));
+```
+
+```ts
+// Example: virtualized list scroll (no userEvent helper)
+const scroller = container.querySelector('[data-test-id="virtuoso-scroller"]') as HTMLElement;
+scroller.scrollTop = targetScrollTop;
+act(() => { fireEvent.scroll(scroller); });
+```
+
+## Timers
+
+❌ No global fake timers. ✅ Per-test only:
+```ts
+jest.useFakeTimers();
+const user = userEvent.setup({ advanceTimers: (ms) => jest.advanceTimersByTime(ms) });
+await user.type(screen.getByRole('textbox'), 'query');
+jest.advanceTimersByTime(400);
+jest.useRealTimers();
+```
+
+## Queries
+
+Prefer accessible queries (`getByRole`, `findByRole`, `getByLabelText`). Fallback: visible text. Last resort: `data-testid`.
+
+## Best Practices
+
+- **Critical Functionality**: Prioritize testing business logic and utilities
+- **Dependency Mocking**: Global mocks for infra, local mocks for business logic
+- **Data Scenarios**: Always test valid, invalid, and edge cases
+- **Descriptive Names**: Make test intent clear
+- **Organization**: Group related tests in describe
+- **Consistency**: Match repo conventions
+- **Edge Cases**: Test null, undefined, unexpected values
+- **Limit Scope**: 3–5 focused tests per file
+- **Use Helpers**: `rqSuccess`, `makeUser`, etc.
+- **No Any**: Enforce type safety
+
+## Anti-patterns
+
+❌ Importing RTL directly | ❌ Global fake timers | ❌ Wrapping render in `act(...)` | ❌ Mocking infra locally
+✅ Use harness | ✅ MSW for API | ✅ userEvent + await | ✅ Pin time only for relative-date tests
+
+## Example
+
+```ts
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { server, rest } from 'mocks-server/server';
+import MyComponent from '../MyComponent';
+
+describe('MyComponent', () => {
+  it('renders and interacts', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    server.use(rest.get('*/api/v1/example', (_req, res, ctx) => res(ctx.status(200), ctx.json({ value: 42 }))));
+    render(<MyComponent />, undefined, { initialRoute: '/foo' });
+    expect(await screen.findByText(/value: 42/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /refresh/i }));
+    await waitFor(() => expect(screen.getByText(/loading/i)).toBeInTheDocument());
+  });
+});
+```

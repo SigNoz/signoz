@@ -5,8 +5,8 @@ import { toast } from '@signozhq/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
+import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { handleContactSupport } from 'pages/Integrations/utils';
 
 import FeedbackModal from '../FeedbackModal';
 
@@ -31,7 +31,7 @@ jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(),
 }));
 
-jest.mock('pages/Integrations/utils', () => ({
+jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 
