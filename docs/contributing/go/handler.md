@@ -190,43 +190,44 @@ type OpenAPIExample struct {
 }
 ```
 
-For reference, see `pkg/querier/openapi.go` which defines some examples for the `/api/v5/query_range` endpoint:
+For reference, see `pkg/apiserver/signozapiserver/querier.go` which defines examples inline for the `/api/v5/query_range` endpoint:
 
 ```go
-var QueryRangeV5OpenAPIDef = handler.OpenAPIDef{
-    ID:              "QueryRangeV5",
-    Tags:            []string{"query"},
-    Summary:         "Query range",
-    Description:     "Execute a composite query over a time range.",
-    Request:         new(qbtypes.QueryRangeRequest),
-    RequestExamples: queryRangeV5Examples, // []handler.OpenAPIExample
-    // ...
-}
-
-var queryRangeV5Examples = []handler.OpenAPIExample{
-    {
-        Name:    "traces_time_series",
-        Summary: "Time series: count spans grouped by service",
-        Value: map[string]any{
-            "schemaVersion": "v1",
-            "start":         1640995200000,
-            "end":           1640998800000,
-            "requestType":   "time_series",
-            "compositeQuery": map[string]any{
-                "queries": []any{
-                    map[string]any{
-                        "type": "builder_query",
-                        "spec": map[string]any{
-                            "name":   "A",
-                            "signal": "traces",
-                            // ...
+if err := router.Handle("/api/v5/query_range", handler.New(provider.authZ.ViewAccess(provider.querierHandler.QueryRange), handler.OpenAPIDef{
+    ID:                 "QueryRangeV5",
+    Tags:               []string{"querier"},
+    Summary:            "Query range",
+    Description:        "Execute a composite query over a time range.",
+    Request:            new(qbtypes.QueryRangeRequest),
+    RequestContentType: "application/json",
+    RequestExamples: []handler.OpenAPIExample{
+        {
+            Name:    "traces_time_series",
+            Summary: "Time series: count spans grouped by service",
+            Value: map[string]any{
+                "schemaVersion": "v1",
+                "start":         1640995200000,
+                "end":           1640998800000,
+                "requestType":   "time_series",
+                "compositeQuery": map[string]any{
+                    "queries": []any{
+                        map[string]any{
+                            "type": "builder_query",
+                            "spec": map[string]any{
+                                "name":   "A",
+                                "signal": "traces",
+                                // ...
+                            },
                         },
                     },
                 },
             },
         },
+        // ... more examples
     },
-    // ... more examples
+    // ...
+})).Methods(http.MethodPost).GetError(); err != nil {
+    return err
 }
 ```
 
@@ -338,4 +339,4 @@ func (Step) JSONSchema() (jsonschema.Schema, error) {
 - **Add `required:"true"`** on fields where the key must be present in the JSON (this is about key presence, not about the zero value).
 - **Add `nullable:"true"`** on fields that can be `null`. Pay special attention to slices and maps -- in Go these default to `nil` which serializes to `null`. If the field should always be an array, initialize it and do not mark it nullable.
 - **Implement `Enum()`** on every type that has a fixed set of acceptable values so the JSON schema generates proper `enum` constraints.
-- **Add request examples** via `RequestExamples` in `OpenAPIDef` for any non-trivial endpoint. See `pkg/querier/openapi.go` for reference.
+- **Add request examples** via `RequestExamples` in `OpenAPIDef` for any non-trivial endpoint. See `pkg/apiserver/signozapiserver/querier.go` for reference.

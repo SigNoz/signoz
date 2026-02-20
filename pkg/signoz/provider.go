@@ -253,6 +253,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.Fields,
 			handlers.AuthzHandler,
 			handlers.ZeusHandler,
+			handlers.QuerierHandler,
 		),
 	)
 }

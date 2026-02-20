@@ -21,18 +21,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
-type API struct {
+type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
 	querier   Querier
 }
 
-func NewAPI(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) *API {
-	return &API{set: set, querier: querier, analytics: analytics}
+func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) Handler {
+	return &handler{set: set, querier: querier, analytics: analytics}
 }
 
-func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
-
+func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -53,7 +52,7 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 
 			queryJSON, _ := json.Marshal(queryRangeRequest)
 
-			a.set.Logger.ErrorContext(ctx, "panic in QueryRange",
+			handler.set.Logger.ErrorContext(ctx, "panic in QueryRange",
 				"error", r,
 				"user", claims.UserID,
 				"payload", string(queryJSON),
@@ -79,17 +78,17 @@ func (a *API) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	queryRangeResponse, err := a.querier.QueryRange(ctx, orgID, &queryRangeRequest)
+	queryRangeResponse, err := handler.querier.QueryRange(ctx, orgID, &queryRangeRequest)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	a.logEvent(req.Context(), req.Header.Get("Referer"), queryRangeResponse.QBEvent)
+	handler.logEvent(req.Context(), req.Header.Get("Referer"), queryRangeResponse.QBEvent)
 
 	render.Success(rw, http.StatusOK, queryRangeResponse)
 }
-func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	// get the param from url and add it to body
@@ -153,7 +152,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 
 			queryJSON, _ := json.Marshal(queryRangeRequest)
 
-			a.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
+			handler.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
 				"error", r,
 				"user", claims.UserID,
 				"payload", string(queryJSON),
@@ -193,7 +192,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	flusher.Flush()
 
 	client := &qbtypes.RawStream{Name: req.RemoteAddr, Logs: make(chan *qbtypes.RawRow, 1000), Done: make(chan *bool), Error: make(chan error)}
-	go a.querier.QueryRawStream(ctx, orgID, &queryRangeRequest, client)
+	go handler.querier.QueryRawStream(ctx, orgID, &queryRangeRequest, client)
 
 	for {
 		select {
@@ -220,7 +219,7 @@ func (a *API) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 
 // TODO(srikanthccv): everything done here can be done on frontend as well
 // For the time being I am adding a helper function
-func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
 	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
@@ -272,7 +271,7 @@ func (a *API) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, queryRangeRequest)
 }
 
-func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEvent) {
+func (handler *handler) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEvent) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return
@@ -305,8 +304,9 @@ func (a *API) logEvent(ctx context.Context, referrer string, event *qbtypes.QBEv
 	}
 
 	if !event.HasData {
-		a.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		handler.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
 		return
 	}
-	a.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+
+	handler.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
 }
