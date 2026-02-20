@@ -181,8 +181,6 @@ services:
       /signoz-otel-collector migrate bootstrap &&
       /signoz-otel-collector migrate sync up &&
       /signoz-otel-collector migrate async up    
-    depends_on:
-      - clickhouse
 networks:
   signoz-net:
     name: signoz-net
