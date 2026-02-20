@@ -29,12 +29,12 @@ FILE = get_testdata_file_path("histogram_data_1h.jsonl")
         (100, "<=", 1.1, 6.9),
         (7500, "<=", 16.75, 74.75),
         (8000, "<=", 17, 75),
-        (80000, "<=", 17, 75), ## cuz we don't now the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
+        (80000, "<=", 17, 75), ## cuz we don't know the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
         (1000, ">", 7, 7),
         (100, ">", 16.9, 69.1),
         (7500, ">", 1.25, 1.25),
         (8000, ">", 1, 1),
-        (80000, ">", 1, 1), ## cuz we don't now the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
+        (80000, ">", 1, 1), ## cuz we don't know the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
     ],
 )
 def test_histogram_count_for_one_endpoint(
@@ -88,12 +88,12 @@ def test_histogram_count_for_one_endpoint(
         (100, "<=", 2.2, 13.8),
         (7500, "<=", 33.5, 149.5),
         (8000, "<=", 34, 150),
-        (80000, "<=", 34, 150), ## cuz we don't now the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
+        (80000, "<=", 34, 150), ## cuz we don't know the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
         (1000, ">", 14, 14),
         (100, ">", 33.8, 138.2),
         (7500, ">", 2.5, 2.5),
         (8000, ">", 2, 2),
-        (80000, ">", 2, 2), ## cuz we don't now the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
+        (80000, ">", 2, 2), ## cuz we don't know the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
     ],
 )
 def test_histogram_count_for_one_service(
@@ -147,12 +147,12 @@ def test_histogram_count_for_one_service(
         (100, "<=", 1.1, 6.9),
         (7500, "<=", 16.75, 74.75),
         (8000, "<=", 17, 75),
-        (80000, "<=", 17, 75), ## cuz we don't now the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
+        (80000, "<=", 17, 75), ## cuz we don't know the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
         (1000, ">", 7, 7),
         (100, ">", 16.9, 69.1),
         (7500, ">", 1.25, 1.25),
         (8000, ">", 1, 1),
-        (80000, ">", 1, 1), ## cuz we don't now the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
+        (80000, ">", 1, 1), ## cuz we don't know the max value in infinity, all numbers beyond the biggest finite bucket will report the same answer
     ],
 )
 def test_histogram_count_for_delta_service(
