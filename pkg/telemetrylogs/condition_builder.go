@@ -45,8 +45,8 @@ func (c *conditionBuilder) conditionFor(
 			}
 			return cond, nil
 		} else if key.FieldDataType == telemetrytypes.FieldDataTypeJSON && !operator.IsOpValidForJSON() {
-			// Skip building condition for invalid operators on JSON columns
-			return "", nil
+			// throw error for invalid operators on JSON columns
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid operator")
 		}
 	}
 

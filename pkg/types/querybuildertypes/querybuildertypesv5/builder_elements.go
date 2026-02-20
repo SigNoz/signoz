@@ -199,7 +199,9 @@ func (f FilterOperator) IsArrayOperator() bool {
 
 func (f FilterOperator) IsOpValidForJSON() bool {
 	switch f {
-	case FilterOperatorExists, FilterOperatorNotExists, FilterOperatorContains, FilterOperatorNotContains:
+	case FilterOperatorExists, FilterOperatorNotExists,
+		FilterOperatorContains, FilterOperatorNotContains,
+		FilterOperatorRegexp, FilterOperatorNotRegexp:
 		return true
 	default:
 		return false

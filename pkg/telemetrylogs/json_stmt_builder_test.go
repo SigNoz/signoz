@@ -881,7 +881,7 @@ func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilde
 	}
 }
 
-func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
+func jsonQueryTestUtil(t *testing.T) (func(), func()) {
 	querybuilder.BodyJSONQueryEnabled = true
 	base := telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
@@ -892,14 +892,16 @@ func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
 
 	enable := func() {
 		querybuilder.BodyJSONQueryEnabled = true
-		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
-		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
+		err := enrichIntrinsicFields()
+		require.NoError(t, err)
 	}
 
 	disable := func() {
 		querybuilder.BodyJSONQueryEnabled = false
 		DefaultFullTextColumn = &base
 		IntrinsicFields["body"] = base
+		err := enrichIntrinsicFields()
+		require.NoError(t, err)
 	}
 
 	return enable, disable

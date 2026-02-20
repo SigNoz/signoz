@@ -40,7 +40,9 @@ const (
 	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
 	MessageSubColumn         = "message"
+	ftsBodyFieldKey          = "object(body)"
 	bodySearchDefaultWarning = "When you search on `body` (full text or by field), Query Builder uses body.message:string by default. Check that this matches what you want to search."
+	ftsBodyFieldWarning      = "Avoid using `object(body)` in queries. It performs a full scan and can severely slow queries. Use explicit fields instead (for example, `body.response.status_code` or `response.status_code`). Only use `object(body)` for temporary schema exploration. We do not recommend its usage elsewhere."
 )
 
 var (
@@ -142,7 +144,7 @@ func bodyAliasExpression() string {
 	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
 }
 
-func init() {
+func enrichIntrinsicFields() error {
 	// body logical field is mapped to message field in the body context that too only with String data type
 	err := BodyLogicalFieldJSONMapping.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
 		BaseColumn:     LogsV2BodyV2Column,
@@ -151,11 +153,26 @@ func init() {
 		MessageSubColumn: {telemetrytypes.String},
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if querybuilder.BodyJSONQueryEnabled {
 		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
 		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
+		IntrinsicFields[ftsBodyFieldKey] = telemetrytypes.TelemetryFieldKey{
+			Name:          "body_v2",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeJSON,
+			Warnings:      []string{ftsBodyFieldWarning},
+		}
+	}
+	return nil
+}
+
+func init() {
+	err := enrichIntrinsicFields()
+	if err != nil {
+		panic(err)
 	}
 }
