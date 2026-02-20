@@ -42,6 +42,7 @@
 		display: flex;
 		flex-direction: column;
 		padding: 16px;
+		padding-bottom: 0;
 	}
 
 	.title {
@@ -190,7 +191,7 @@
 		padding: 0px;
 	}
 	.log-detail-drawer__footer-hint {
-		position: absolute;
+		position: sticky;
 		bottom: 0;
 		left: 0;
 		right: 0;
@@ -366,7 +367,7 @@
 	}
 
 	.log-detail-drawer__footer-hint {
-		position: absolute;
+		position: sticky;
 		bottom: 0;
 		left: 0;
 		right: 0;

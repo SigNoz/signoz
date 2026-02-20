@@ -31,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
 type Handlers struct {
@@ -48,6 +49,7 @@ type Handlers struct {
 	GatewayHandler  gateway.Handler
 	Fields          fields.Handler
 	AuthzHandler    authz.Handler
+	ZeusHandler     zeus.Handler
 }
 
 func NewHandlers(
@@ -60,6 +62,7 @@ func NewHandlers(
 	gatewayService gateway.Gateway,
 	telemetryMetadataStore telemetrytypes.MetadataStore,
 	authz authz.AuthZ,
+	zeusService zeus.Zeus,
 ) Handlers {
 	return Handlers{
 		SavedView:       implsavedview.NewHandler(modules.SavedView),
@@ -76,5 +79,6 @@ func NewHandlers(
 		GatewayHandler:  gateway.NewHandler(gatewayService),
 		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore),
 		AuthzHandler:    signozauthzapi.NewHandler(authz),
+		ZeusHandler:     zeus.NewHandler(zeusService, licensing),
 	}
 }
