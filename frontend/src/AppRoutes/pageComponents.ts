@@ -308,3 +308,15 @@ export const PublicDashboardPage = Loadable(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
 		),
 );
+
+export const AlertTypeSelectionPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Alert Type Selection Page" */ 'pages/AlertTypeSelection'
+		),
+);
+
+export const MeterExplorerPage = Loadable(
+	() =>
+		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
+);
