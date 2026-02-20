@@ -1,6 +1,7 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
+import type { InputRef } from 'antd';
 import {
 	Button,
 	Collapse,
@@ -46,11 +47,17 @@ function Overview({
 	handleChangeSelectedView,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
-	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
+	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
 	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
 		true,
 	);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
+
+	const searchInputRef = useCallback((node: InputRef | null) => {
+		if (node) {
+			setTimeout(() => node.focus(), 100);
+		}
+	}, []);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -196,7 +203,7 @@ function Overview({
 							<>
 								{isSearchVisible && (
 									<Input
-										autoFocus
+										ref={searchInputRef}
 										placeholder="Search for a field..."
 										className="search-input"
 										value={fieldSearchInput}
