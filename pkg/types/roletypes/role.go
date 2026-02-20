@@ -76,7 +76,7 @@ type Role struct {
 }
 
 type PostableRole struct {
-	Name        string `json:"name"`
+	Name        string `json:"name" required:"true"`
 	Description string `json:"description"`
 }
 
@@ -85,8 +85,13 @@ type PatchableRole struct {
 }
 
 type PatchableObjects struct {
-	Additions []*authtypes.Object `json:"additions"`
-	Deletions []*authtypes.Object `json:"deletions"`
+	Additions []*authtypes.Object `json:"additions" required:"true"`
+	Deletions []*authtypes.Object `json:"deletions" required:"true"`
+}
+
+type GettableResources struct {
+	Resources []*authtypes.Resource                   `json:"resources"`
+	Relations map[authtypes.Type][]authtypes.Relation `json:"relations"`
 }
 
 func NewStorableRoleFromRole(role *Role) *StorableRole {
@@ -135,6 +140,13 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID),
 	}
 
+}
+
+func NewGettableResources(resources []*authtypes.Resource) *GettableResources {
+	return &GettableResources{
+		Resources: resources,
+		Relations: authtypes.TypeableRelations,
+	}
 }
 
 func (role *Role) PatchMetadata(description *string) error {

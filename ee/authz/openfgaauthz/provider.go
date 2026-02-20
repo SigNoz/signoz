@@ -62,10 +62,6 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return provider.openfgaServer.Stop(ctx)
 }
 
-func (provider *provider) Check(ctx context.Context, tuple *openfgav1.TupleKey) error {
-	return provider.openfgaServer.Check(ctx, tuple)
-}
-
 func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
@@ -74,8 +70,8 @@ func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Contex
 	return provider.openfgaServer.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) BatchCheck(ctx context.Context, tuples []*openfgav1.TupleKey) error {
-	return provider.openfgaServer.BatchCheck(ctx, tuples)
+func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error) {
+	return provider.openfgaServer.BatchCheck(ctx, tupleReq)
 }
 
 func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {

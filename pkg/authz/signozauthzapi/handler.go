@@ -112,17 +112,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	resources := handler.authz.GetResources(ctx)
-
-	var resourceRelations = struct {
-		Resources []*authtypes.Resource                   `json:"resources"`
-		Relations map[authtypes.Type][]authtypes.Relation `json:"relations"`
-	}{
-		Resources: resources,
-		Relations: authtypes.TypeableRelations,
-	}
-	render.Success(rw, http.StatusOK, resourceRelations)
+	render.Success(rw, http.StatusOK, roletypes.NewGettableResources(handler.authz.GetResources(r.Context())))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -227,7 +217,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusAccepted, nil)
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
@@ -251,4 +241,40 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	transactions := make([]*authtypes.Transaction, 0)
+	if err := binding.JSON.BindBody(r.Body, &transactions); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	tuples, err := authtypes.NewTuplesFromTransactions(transactions, subject, orgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	results, err := handler.authz.BatchCheck(ctx, tuples)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTransaction(transactions, results))
 }
