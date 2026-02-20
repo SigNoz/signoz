@@ -135,12 +135,17 @@ services:
     #   - "9000:9000"
     #   - "8123:8123"
     #   - "9181:9181"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.ha.xml
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ./clickhouse-setup/data/clickhouse/:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-2:
@@ -150,12 +155,17 @@ services:
     #   - "9001:9000"
     #   - "8124:8123"
     #   - "9182:9181"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.ha.xml
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ./clickhouse-setup/data/clickhouse-2/:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-3:
@@ -165,12 +175,17 @@ services:
     #   - "9002:9000"
     #   - "8125:8123"
     #   - "9183:9181"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.ha.xml
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ./clickhouse-setup/data/clickhouse-3/:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
@@ -241,7 +256,6 @@ services:
       /signoz-otel-collector migrate bootstrap &&
       /signoz-otel-collector migrate sync up &&
       /signoz-otel-collector migrate async up
-    restart: on-failure
 networks:
   signoz-net:
     name: signoz-net
@@ -260,3 +274,16 @@ volumes:
     name: signoz-zookeeper-2
   zookeeper-3:
     name: signoz-zookeeper-3
+configs:
+  clickhouse-config:
+    file: ../common/clickhouse/config.xml
+  clickhouse-users:
+    file: ../common/clickhouse/users.xml
+  clickhouse-custom-function:
+    file: ../common/clickhouse/custom-function.xml
+  clickhouse-cluster:
+    file: ../common/clickhouse/cluster.ha.xml
+  otel-collector-config:
+    file: ./otel-collector-config.yaml
+  otel-manager-config:
+    file: ../common/signoz/otel-collector-opamp-config.yaml

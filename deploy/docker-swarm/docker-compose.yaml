@@ -113,6 +113,7 @@ services:
         target: /etc/clickhouse-server/config.d/cluster.xml
     volumes:
       - clickhouse:/var/lib/clickhouse/
+      - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
@@ -182,7 +183,6 @@ services:
       /signoz-otel-collector migrate async up    
     depends_on:
       - clickhouse
-    restart: on-failure
 networks:
   signoz-net:
     name: signoz-net
