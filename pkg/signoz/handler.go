@@ -1,6 +1,7 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/authz/signozauthzapi"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -50,12 +51,14 @@ type Handlers struct {
 	Fields          fields.Handler
 	AuthzHandler    authz.Handler
 	ZeusHandler     zeus.Handler
+	QuerierHandler  querier.Handler
 }
 
 func NewHandlers(
 	modules Modules,
 	providerSettings factory.ProviderSettings,
-	querier querier.Querier,
+	analytics analytics.Analytics,
+	querierHandler querier.Handler,
 	licensing licensing.Licensing,
 	global global.Global,
 	flaggerService flagger.Flagger,
@@ -80,5 +83,6 @@ func NewHandlers(
 		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore),
 		AuthzHandler:    signozauthzapi.NewHandler(authz),
 		ZeusHandler:     zeus.NewHandler(zeusService, licensing),
+		QuerierHandler:  querierHandler,
 	}
 }

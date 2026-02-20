@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -46,6 +47,7 @@ type provider struct {
 	fieldsHandler          fields.Handler
 	authzHandler           authz.Handler
 	zeusHandler            zeus.Handler
+	querierHandler         querier.Handler
 }
 
 func NewFactory(
@@ -66,6 +68,7 @@ func NewFactory(
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
 	zeusHandler zeus.Handler,
+	querierHandler querier.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -89,6 +92,7 @@ func NewFactory(
 			fieldsHandler,
 			authzHandler,
 			zeusHandler,
+			querierHandler,
 		)
 	})
 }
@@ -114,6 +118,7 @@ func newProvider(
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
 	zeusHandler zeus.Handler,
+	querierHandler querier.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -137,6 +142,7 @@ func newProvider(
 		fieldsHandler:          fieldsHandler,
 		authzHandler:           authzHandler,
 		zeusHandler:            zeusHandler,
+		querierHandler:         querierHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -206,6 +212,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addZeusRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addQuerierRoutes(router); err != nil {
 		return err
 	}
 

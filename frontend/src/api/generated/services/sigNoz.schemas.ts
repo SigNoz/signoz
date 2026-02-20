@@ -453,18 +453,18 @@ export interface GatewaytypesGettableCreatedIngestionKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
-	value?: string;
+	value: string;
 }
 
 export interface GatewaytypesGettableCreatedIngestionKeyLimitDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 }
 
 export interface GatewaytypesGettableIngestionKeysDTO {
@@ -616,7 +616,7 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type array
 	 * @nullable true
@@ -638,7 +638,7 @@ export interface GatewaytypesPostableIngestionKeyLimitDTO {
 }
 
 export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
-	config?: GatewaytypesLimitConfigDTO;
+	config: GatewaytypesLimitConfigDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -2419,34 +2419,34 @@ export interface ZeustypesGettableHostDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	hosts?: ZeustypesHostDTO[] | null;
+	hosts: ZeustypesHostDTO[] | null;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	state?: string;
+	state: string;
 	/**
 	 * @type string
 	 */
-	tier?: string;
+	tier: string;
 }
 
 export interface ZeustypesHostDTO {
 	/**
 	 * @type boolean
 	 */
-	is_default?: boolean;
+	is_default: boolean;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	url?: string;
+	url: string;
 }
 
 export interface ZeustypesPostableHostDTO {
@@ -2460,43 +2460,43 @@ export interface ZeustypesPostableProfileDTO {
 	/**
 	 * @type string
 	 */
-	existing_observability_tool?: string;
+	existing_observability_tool: string;
 	/**
 	 * @type boolean
 	 */
-	has_existing_observability_tool?: boolean;
+	has_existing_observability_tool: boolean;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	logs_scale_per_day_in_gb?: number;
+	logs_scale_per_day_in_gb: number;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	number_of_hosts?: number;
+	number_of_hosts: number;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	number_of_services?: number;
+	number_of_services: number;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	reasons_for_interest_in_signoz?: string[] | null;
+	reasons_for_interest_in_signoz: string[] | null;
 	/**
 	 * @type string
 	 */
-	timeline_for_migrating_to_signoz?: string;
+	timeline_for_migrating_to_signoz: string;
 	/**
 	 * @type boolean
 	 */
-	uses_otel?: boolean;
+	uses_otel: boolean;
 	/**
 	 * @type string
 	 */
-	where_did_you_discover_signoz?: string;
+	where_did_you_discover_signoz: string;
 }
 
 export type ChangePasswordPathParameters = {
@@ -3039,7 +3039,7 @@ export type SearchIngestionKeysParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -3224,6 +3224,14 @@ export type GetHosts200 = {
 
 export type QueryRangeV5200 = {
 	data?: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type ReplaceVariables200 = {
+	data?: Querybuildertypesv5QueryRangeRequestDTO;
 	/**
 	 * @type string
 	 */
