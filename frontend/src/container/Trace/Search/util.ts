@@ -1,4 +1,4 @@
-import { AllMenu } from 'container/Trace/Search/AllTags/Tag';
+import { AllMenu } from 'container/Trace/Search/AllTags/Tag/constants';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { extractTagType, TagValueTypes } from './AllTags/Tag/utils';

@@ -1,48 +1,15 @@
 import cx from 'classnames';
 import { FontSize } from 'container/OptionsMenu/types';
 
-import { getLogTypeBySeverityNumber } from './utils';
+import {
+	getLogTypeBySeverityNumber,
+	LogType,
+	SEVERITY_TEXT_TYPE,
+} from './utils';
 
 import './LogStateIndicator.styles.scss';
 
-export const SEVERITY_TEXT_TYPE = {
-	TRACE: 'TRACE',
-	TRACE2: 'TRACE2',
-	TRACE3: 'TRACE3',
-	TRACE4: 'TRACE4',
-	DEBUG: 'DEBUG',
-	DEBUG2: 'DEBUG2',
-	DEBUG3: 'DEBUG3',
-	DEBUG4: 'DEBUG4',
-	INFO: 'INFO',
-	INFO2: 'INFO2',
-	INFO3: 'INFO3',
-	INFO4: 'INFO4',
-	WARN: 'WARN',
-	WARN2: 'WARN2',
-	WARN3: 'WARN3',
-	WARN4: 'WARN4',
-	WARNING: 'WARNING',
-	ERROR: 'ERROR',
-	ERROR2: 'ERROR2',
-	ERROR3: 'ERROR3',
-	ERROR4: 'ERROR4',
-	FATAL: 'FATAL',
-	FATAL2: 'FATAL2',
-	FATAL3: 'FATAL3',
-	FATAL4: 'FATAL4',
-	UNKNOWN: 'UNKNOWN',
-} as const;
-
-export const LogType = {
-	TRACE: 'TRACE',
-	DEBUG: 'DEBUG',
-	INFO: 'INFO',
-	WARN: 'WARN',
-	ERROR: 'ERROR',
-	FATAL: 'FATAL',
-	UNKNOWN: 'UNKNOWN',
-} as const;
+export { LogType, SEVERITY_TEXT_TYPE };
 
 // Severity variant mapping to CSS classes
 const SEVERITY_VARIANT_CLASSES: Record<string, string> = {

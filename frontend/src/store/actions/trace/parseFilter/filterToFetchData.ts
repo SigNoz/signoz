@@ -1,6 +1,6 @@
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
-import { ParsedUrl } from '../util';
+import { ParsedUrl } from '../shared';
 
 export const parseFilterToFetchData = (
 	query: string,

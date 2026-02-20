@@ -27,13 +27,18 @@ import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
-import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
 
 import './CustomTimePicker.styles.scss';
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
+
+export enum CustomTimePickerInputStatus {
+	SUCCESS = 'success',
+	ERROR = 'error',
+	UNSET = '',
+}
 
 export type DateRange = {
 	from: Date | undefined;

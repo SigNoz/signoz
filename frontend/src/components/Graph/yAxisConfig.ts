@@ -6,12 +6,12 @@ import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { isNaN } from 'lodash-es';
 
 import { formatUniversalUnit } from '../YAxisUnitSelector/formatter';
+import { formatDecimalWithLeadingZeros } from './formatDecimal';
 import {
 	DEFAULT_SIGNIFICANT_DIGITS,
 	PrecisionOption,
 	PrecisionOptionsEnum,
 } from './types';
-import { formatDecimalWithLeadingZeros } from './utils';
 
 /**
  * Formats a Y-axis value based on a given format string.

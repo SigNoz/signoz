@@ -48,7 +48,7 @@ import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { AlertDetectionTypes } from '..';
+import { AlertDetectionTypes } from '../constants';
 import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 

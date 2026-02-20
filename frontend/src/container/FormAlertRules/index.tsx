@@ -47,6 +47,7 @@ import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelo
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
+import { AlertDetectionTypes } from './constants';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
 import {
@@ -60,11 +61,6 @@ import { usePrefillAlertConditions } from './usePrefillAlertConditions';
 import { getSelectedQueryOptions } from './utils';
 
 import './FormAlertRules.styles.scss';
-
-export enum AlertDetectionTypes {
-	THRESHOLD_ALERT = 'threshold_rule',
-	ANOMALY_DETECTION_ALERT = 'anomaly_rule',
-}
 
 const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
 	[AlertTypes.METRICS_BASED_ALERT]:
@@ -980,3 +976,5 @@ interface FormAlertRuleProps {
 }
 
 export default FormAlertRules;
+
+export { AlertDetectionTypes } from './constants';

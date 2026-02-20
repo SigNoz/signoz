@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from 'antd';
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
-import { HavingFilterTag } from 'container/QueryBuilder/components';
+import { HavingFilterTag } from 'container/QueryBuilder/shared';
 import { useTagValidation } from 'hooks/queryBuilder/useTagValidation';
 import {
 	transformFromStringToHaving,

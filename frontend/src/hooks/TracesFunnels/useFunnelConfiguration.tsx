@@ -7,10 +7,10 @@ import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
 import { useUpdateFunnelSteps } from './useFunnels';
+import { normalizeSteps } from './utils';
 
 interface UseFunnelConfiguration {
 	isPopoverOpen: boolean;
@@ -19,34 +19,6 @@ interface UseFunnelConfiguration {
 	isSaving: boolean;
 }
 
-// Add this helper function
-export const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
-	if (steps.some((step) => !step.filters)) {
-		return steps;
-	}
-
-	return steps.map((step) => ({
-		...step,
-		filters: {
-			...step.filters,
-			items: step.filters.items.map((item) => {
-				const {
-					id: _unusedId,
-					isIndexed: _isIndexed,
-					...keyObj
-				} = item.key as BaseAutocompleteData;
-				return {
-					id: '',
-					key: keyObj,
-					value: item.value,
-					op: item.op,
-				};
-			}),
-		},
-	}));
-};
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({
 	funnel,
 	triggerAutoSave = false,

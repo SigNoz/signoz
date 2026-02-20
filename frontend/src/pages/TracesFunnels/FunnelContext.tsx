@@ -1,7 +1,5 @@
 import {
 	createContext,
-	Dispatch,
-	SetStateAction,
 	useCallback,
 	useContext,
 	useMemo,
@@ -10,14 +8,9 @@ import {
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
-import { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
-import { normalizeSteps } from 'hooks/TracesFunnels/useFunnelConfiguration';
-import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
+import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useValidateFunnelSteps';
+import { normalizeSteps } from 'hooks/TracesFunnels/utils';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { isEqual } from 'lodash-es';
 import {
@@ -25,45 +18,11 @@ import {
 	createSingleStepData,
 } from 'pages/TracesFunnelDetails/constants';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
-interface FunnelContextType {
-	startTime: number;
-	endTime: number;
-	selectedTime: CustomTimeType | Time;
-	validTracesCount: number;
-	funnelId: string;
-	steps: FunnelStepData[];
-	setSteps: Dispatch<SetStateAction<FunnelStepData[]>>;
-	initialSteps: FunnelStepData[];
-	handleAddStep: () => boolean;
-	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
-	handleStepRemoval: (index: number) => void;
-	handleRunFunnel: () => void;
-	handleSaveFunnel: () => void;
-	triggerSave: boolean;
-	hasUnsavedChanges: boolean;
-	validationResponse:
-		| SuccessResponse<ValidateFunnelResponse>
-		| ErrorResponse
-		| undefined;
-	isValidateStepsLoading: boolean;
-	hasIncompleteStepFields: boolean;
-	hasAllEmptyStepFields: boolean;
-	handleReplaceStep: (
-		index: number,
-		serviceName: string,
-		spanName: string,
-	) => void;
-	handleRestoreSteps: (oldSteps: FunnelStepData[]) => void;
-	isUpdatingFunnel: boolean;
-	setIsUpdatingFunnel: Dispatch<SetStateAction<boolean>>;
-	lastUpdatedSteps: FunnelStepData[];
-	setLastUpdatedSteps: Dispatch<SetStateAction<FunnelStepData[]>>;
-}
+import { FunnelContextType } from './funnelShared';
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
 

@@ -1,4 +1,4 @@
-import { HavingFilterTagProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
+import { HavingFilterTagProps } from 'container/QueryBuilder/shared';
 import {
 	Having,
 	IBuilderFormula,

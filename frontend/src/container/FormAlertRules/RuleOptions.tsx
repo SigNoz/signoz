@@ -27,7 +27,7 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { AlertDetectionTypes } from '.';
+import { AlertDetectionTypes } from './constants';
 import {
 	FormContainer,
 	InlineSelect,

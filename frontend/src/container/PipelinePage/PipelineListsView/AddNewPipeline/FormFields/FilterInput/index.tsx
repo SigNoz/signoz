@@ -6,7 +6,7 @@ import isEqual from 'lodash-es/isEqual';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ProcessorFormField } from '../../../AddNewProcessor/config';
-import { formValidationRules } from '../../../config';
+import { formValidationRules } from '../../../constants';
 import LogsFilterPreview from '../../../Preview/LogsFilterPreview';
 import { FormLabelStyle } from '../../styles';
 

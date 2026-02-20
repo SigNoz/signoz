@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag, Tooltip } from 'antd';
+import { Progress, Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	HostData,
@@ -12,14 +12,10 @@ import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
-import TabLabel from 'components/TabLabel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-
-import HostsList from './HostsList';
 
 import './InfraMonitoring.styles.scss';
 
@@ -60,14 +56,6 @@ export const getHostListsQuery = (): HostListPayload => ({
 	groupBy: [],
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
-
-export const getTabsItems = (): TabsProps['items'] => [
-	{
-		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
-		key: PANEL_TYPES.LIST,
-		children: <HostsList />,
-	},
-];
 
 export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 	{

@@ -5,8 +5,10 @@ import { Select } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
-import { HavingFilterTag } from 'container/QueryBuilder/components';
-import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
+import {
+	HavingFilterTag,
+	HavingTagRenderProps,
+} from 'container/QueryBuilder/shared';
 // ** Hooks
 import { useTagValidation } from 'hooks/queryBuilder/useTagValidation';
 import {

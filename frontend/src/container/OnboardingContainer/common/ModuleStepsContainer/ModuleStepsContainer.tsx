@@ -14,7 +14,7 @@ import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { onboardingHelpMessage } from 'components/LaunchChatSupport/util';
 import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
-import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
+import { DataSourceType } from 'container/OnboardingContainer/types';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
@@ -26,7 +26,7 @@ import {
 	ModulesMap,
 	SelectedModuleStepProps,
 	useCases,
-} from '../../OnboardingContainer';
+} from '../../types';
 
 import './ModuleStepsContainer.styles.scss';
 

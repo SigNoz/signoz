@@ -1,5 +1,8 @@
 // ** Helpers
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
+
+import { idDivider, selectValueDivider } from './queryBuilderDividers';
+export { idDivider, selectValueDivider };
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
@@ -52,9 +55,6 @@ export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
 
 export const TRACE_OPERATOR_QUERY_NAME = 'Trace Operator';
-
-export const idDivider = '--';
-export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,

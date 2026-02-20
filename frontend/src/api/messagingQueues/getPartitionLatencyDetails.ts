@@ -1,11 +1,17 @@
 import axios from 'api';
-import { MessagingQueueServiceDetailType } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';
+
+export enum MessagingQueueServiceDetailType {
+	ConsumerDetails = 'consumer-details',
+	ProducerDetails = 'producer-details',
+	NetworkLatency = 'network-latency',
+	PartitionHostMetrics = 'partition-host-metric',
+}
 
 export const getPartitionLatencyDetails = async (
 	props: MessagingQueueServicePayload,

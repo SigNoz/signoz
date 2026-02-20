@@ -10,6 +10,9 @@ import DeploymentTime from '../Layouts/ChangeHistory/DeploymentTime';
 import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea';
 import FilterInput from './AddNewPipeline/FormFields/FilterInput';
 import NameInput from './AddNewPipeline/FormFields/NameInput';
+import { formValidationRules } from './constants';
+
+export { formValidationRules };
 
 export const pipelineFields = [
 	{
@@ -118,12 +121,6 @@ export const changeHistoryColumns: Array<
 		key: 'createdByName',
 		title: 'Edited by',
 		dataIndex: 'createdByName',
-	},
-];
-
-export const formValidationRules = [
-	{
-		required: true,
 	},
 ];
 
