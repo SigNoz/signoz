@@ -1,4 +1,9 @@
 .trace-explorer-header {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background: var(--bg-ink-500);
+
 	.trace-explorer-run-query {
 		display: flex;
 		flex-direction: row-reverse;
@@ -69,14 +74,16 @@
 
 	.filter {
 		width: 260px;
-		height: 100%;
-		min-height: 100vh;
+		height: 100vh;
+		position: sticky;
+		top: 0;
+		overflow-y: auto;
 
 		border-right: 0px;
 		border: 1px solid var(--bg-slate-400);
 		background-color: var(--bg-ink-500);
 
-		> .ant-card-body {
+		>.ant-card-body {
 			padding: 0;
 			width: 258px;
 		}
@@ -86,12 +93,13 @@
 		width: 100%;
 		background: var(--bg-ink-500);
 
-		> .ant-card-body {
+		>.ant-card-body {
 			padding: 0;
 		}
 
 		border-color: var(--bg-slate-400);
 	}
+
 	.trace-explorer.filters-expanded {
 		width: calc(100% - 260px);
 	}
@@ -109,7 +117,7 @@
 			border-left: 1px solid var(--bg-vanilla-200);
 			background: var(--bg-vanilla-200);
 
-			> .ant-card-body {
+			>.ant-card-body {
 				padding: 8px 8px;
 			}
 
@@ -118,6 +126,8 @@
 	}
 
 	.trace-explorer-header {
+		background: var(--bg-vanilla-100);
+
 		.filter-outlined-btn {
 			border-radius: 0px 2px 2px 0px;
 			border-top: 1px solid var(--bg-vanilla-200);
