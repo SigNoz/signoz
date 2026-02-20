@@ -47,8 +47,8 @@ type HavingExpressionListener interface {
 	// EnterFunctionArgs is called when entering the functionArgs production.
 	EnterFunctionArgs(c *FunctionArgsContext)
 
-	// EnterFunctionArgName is called when entering the functionArgName production.
-	EnterFunctionArgName(c *FunctionArgNameContext)
+	// EnterFunctionArg is called when entering the functionArg production.
+	EnterFunctionArg(c *FunctionArgContext)
 
 	// EnterIdentifier is called when entering the identifier production.
 	EnterIdentifier(c *IdentifierContext)
@@ -92,8 +92,8 @@ type HavingExpressionListener interface {
 	// ExitFunctionArgs is called when exiting the functionArgs production.
 	ExitFunctionArgs(c *FunctionArgsContext)
 
-	// ExitFunctionArgName is called when exiting the functionArgName production.
-	ExitFunctionArgName(c *FunctionArgNameContext)
+	// ExitFunctionArg is called when exiting the functionArg production.
+	ExitFunctionArg(c *FunctionArgContext)
 
 	// ExitIdentifier is called when exiting the identifier production.
 	ExitIdentifier(c *IdentifierContext)

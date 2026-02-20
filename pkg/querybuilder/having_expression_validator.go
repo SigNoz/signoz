@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/grammar/havingexpression"
+	grammar "github.com/SigNoz/signoz/pkg/parser/havingexpression/grammar"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 )

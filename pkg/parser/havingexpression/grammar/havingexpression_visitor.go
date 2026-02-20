@@ -47,8 +47,8 @@ type HavingExpressionVisitor interface {
 	// Visit a parse tree produced by HavingExpressionParser#functionArgs.
 	VisitFunctionArgs(ctx *FunctionArgsContext) interface{}
 
-	// Visit a parse tree produced by HavingExpressionParser#functionArgName.
-	VisitFunctionArgName(ctx *FunctionArgNameContext) interface{}
+	// Visit a parse tree produced by HavingExpressionParser#functionArg.
+	VisitFunctionArg(ctx *FunctionArgContext) interface{}
 
 	// Visit a parse tree produced by HavingExpressionParser#identifier.
 	VisitIdentifier(ctx *IdentifierContext) interface{}

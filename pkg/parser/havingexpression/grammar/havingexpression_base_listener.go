@@ -99,11 +99,11 @@ func (s *BaseHavingExpressionListener) EnterFunctionArgs(ctx *FunctionArgsContex
 // ExitFunctionArgs is called when production functionArgs is exited.
 func (s *BaseHavingExpressionListener) ExitFunctionArgs(ctx *FunctionArgsContext) {}
 
-// EnterFunctionArgName is called when production functionArgName is entered.
-func (s *BaseHavingExpressionListener) EnterFunctionArgName(ctx *FunctionArgNameContext) {}
+// EnterFunctionArg is called when production functionArg is entered.
+func (s *BaseHavingExpressionListener) EnterFunctionArg(ctx *FunctionArgContext) {}
 
-// ExitFunctionArgName is called when production functionArgName is exited.
-func (s *BaseHavingExpressionListener) ExitFunctionArgName(ctx *FunctionArgNameContext) {}
+// ExitFunctionArg is called when production functionArg is exited.
+func (s *BaseHavingExpressionListener) ExitFunctionArg(ctx *FunctionArgContext) {}
 
 // EnterIdentifier is called when production identifier is entered.
 func (s *BaseHavingExpressionListener) EnterIdentifier(ctx *IdentifierContext) {}

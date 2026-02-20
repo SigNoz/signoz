@@ -39,16 +39,16 @@ func havingexpressionParserInit() {
 	staticData.SymbolicNames = []string{
 		"", "LPAREN", "RPAREN", "COMMA", "EQUALS", "NOT_EQUALS", "NEQ", "LT",
 		"LE", "GT", "GE", "PLUS", "MINUS", "STAR", "SLASH", "PERCENT", "NOT",
-		"AND", "OR", "BOOL", "NUMBER", "IDENTIFIER", "WS",
+		"AND", "OR", "BOOL", "NUMBER", "QUOTED_TEXT", "IDENTIFIER", "WS",
 	}
 	staticData.RuleNames = []string{
 		"query", "expression", "orExpression", "andExpression", "primary", "comparison",
 		"compOp", "operand", "term", "factor", "atom", "functionCall", "functionArgs",
-		"functionArgName", "identifier",
+		"functionArg", "identifier",
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 22, 121, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 23, 121, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 1, 0, 1, 0,
 		1, 0, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 5, 2, 39, 8, 2, 10, 2, 12, 2, 42, 9,
@@ -88,13 +88,13 @@ func havingexpressionParserInit() {
 		20, 10, 0, 94, 89, 1, 0, 0, 0, 94, 93, 1, 0, 0, 0, 95, 19, 1, 0, 0, 0,
 		96, 100, 3, 22, 11, 0, 97, 100, 3, 28, 14, 0, 98, 100, 5, 20, 0, 0, 99,
 		96, 1, 0, 0, 0, 99, 97, 1, 0, 0, 0, 99, 98, 1, 0, 0, 0, 100, 21, 1, 0,
-		0, 0, 101, 102, 5, 21, 0, 0, 102, 104, 5, 1, 0, 0, 103, 105, 3, 24, 12,
+		0, 0, 101, 102, 5, 22, 0, 0, 102, 104, 5, 1, 0, 0, 103, 105, 3, 24, 12,
 		0, 104, 103, 1, 0, 0, 0, 104, 105, 1, 0, 0, 0, 105, 106, 1, 0, 0, 0, 106,
 		107, 5, 2, 0, 0, 107, 23, 1, 0, 0, 0, 108, 113, 3, 26, 13, 0, 109, 110,
 		5, 3, 0, 0, 110, 112, 3, 26, 13, 0, 111, 109, 1, 0, 0, 0, 112, 115, 1,
 		0, 0, 0, 113, 111, 1, 0, 0, 0, 113, 114, 1, 0, 0, 0, 114, 25, 1, 0, 0,
-		0, 115, 113, 1, 0, 0, 0, 116, 117, 5, 21, 0, 0, 117, 27, 1, 0, 0, 0, 118,
-		119, 5, 21, 0, 0, 119, 29, 1, 0, 0, 0, 10, 40, 48, 52, 59, 75, 86, 94,
+		0, 115, 113, 1, 0, 0, 0, 116, 117, 5, 22, 0, 0, 117, 27, 1, 0, 0, 0, 118,
+		119, 5, 22, 0, 0, 119, 29, 1, 0, 0, 0, 10, 40, 48, 52, 59, 75, 86, 94,
 		99, 104, 113,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
@@ -133,48 +133,49 @@ func NewHavingExpressionParser(input antlr.TokenStream) *HavingExpressionParser 
 
 // HavingExpressionParser tokens.
 const (
-	HavingExpressionParserEOF        = antlr.TokenEOF
-	HavingExpressionParserLPAREN     = 1
-	HavingExpressionParserRPAREN     = 2
-	HavingExpressionParserCOMMA      = 3
-	HavingExpressionParserEQUALS     = 4
-	HavingExpressionParserNOT_EQUALS = 5
-	HavingExpressionParserNEQ        = 6
-	HavingExpressionParserLT         = 7
-	HavingExpressionParserLE         = 8
-	HavingExpressionParserGT         = 9
-	HavingExpressionParserGE         = 10
-	HavingExpressionParserPLUS       = 11
-	HavingExpressionParserMINUS      = 12
-	HavingExpressionParserSTAR       = 13
-	HavingExpressionParserSLASH      = 14
-	HavingExpressionParserPERCENT    = 15
-	HavingExpressionParserNOT        = 16
-	HavingExpressionParserAND        = 17
-	HavingExpressionParserOR         = 18
-	HavingExpressionParserBOOL       = 19
-	HavingExpressionParserNUMBER     = 20
-	HavingExpressionParserIDENTIFIER = 21
-	HavingExpressionParserWS         = 22
+	HavingExpressionParserEOF         = antlr.TokenEOF
+	HavingExpressionParserLPAREN      = 1
+	HavingExpressionParserRPAREN      = 2
+	HavingExpressionParserCOMMA       = 3
+	HavingExpressionParserEQUALS      = 4
+	HavingExpressionParserNOT_EQUALS  = 5
+	HavingExpressionParserNEQ         = 6
+	HavingExpressionParserLT          = 7
+	HavingExpressionParserLE          = 8
+	HavingExpressionParserGT          = 9
+	HavingExpressionParserGE          = 10
+	HavingExpressionParserPLUS        = 11
+	HavingExpressionParserMINUS       = 12
+	HavingExpressionParserSTAR        = 13
+	HavingExpressionParserSLASH       = 14
+	HavingExpressionParserPERCENT     = 15
+	HavingExpressionParserNOT         = 16
+	HavingExpressionParserAND         = 17
+	HavingExpressionParserOR          = 18
+	HavingExpressionParserBOOL        = 19
+	HavingExpressionParserNUMBER      = 20
+	HavingExpressionParserQUOTED_TEXT = 21
+	HavingExpressionParserIDENTIFIER  = 22
+	HavingExpressionParserWS          = 23
 )
 
 // HavingExpressionParser rules.
 const (
-	HavingExpressionParserRULE_query           = 0
-	HavingExpressionParserRULE_expression      = 1
-	HavingExpressionParserRULE_orExpression    = 2
-	HavingExpressionParserRULE_andExpression   = 3
-	HavingExpressionParserRULE_primary         = 4
-	HavingExpressionParserRULE_comparison      = 5
-	HavingExpressionParserRULE_compOp          = 6
-	HavingExpressionParserRULE_operand         = 7
-	HavingExpressionParserRULE_term            = 8
-	HavingExpressionParserRULE_factor          = 9
-	HavingExpressionParserRULE_atom            = 10
-	HavingExpressionParserRULE_functionCall    = 11
-	HavingExpressionParserRULE_functionArgs    = 12
-	HavingExpressionParserRULE_functionArgName = 13
-	HavingExpressionParserRULE_identifier      = 14
+	HavingExpressionParserRULE_query         = 0
+	HavingExpressionParserRULE_expression    = 1
+	HavingExpressionParserRULE_orExpression  = 2
+	HavingExpressionParserRULE_andExpression = 3
+	HavingExpressionParserRULE_primary       = 4
+	HavingExpressionParserRULE_comparison    = 5
+	HavingExpressionParserRULE_compOp        = 6
+	HavingExpressionParserRULE_operand       = 7
+	HavingExpressionParserRULE_term          = 8
+	HavingExpressionParserRULE_factor        = 9
+	HavingExpressionParserRULE_atom          = 10
+	HavingExpressionParserRULE_functionCall  = 11
+	HavingExpressionParserRULE_functionArgs  = 12
+	HavingExpressionParserRULE_functionArg   = 13
+	HavingExpressionParserRULE_identifier    = 14
 )
 
 // IQueryContext is an interface to support dynamic dispatch.
@@ -2220,8 +2221,8 @@ type IFunctionArgsContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	AllFunctionArgName() []IFunctionArgNameContext
-	FunctionArgName(i int) IFunctionArgNameContext
+	AllFunctionArg() []IFunctionArgContext
+	FunctionArg(i int) IFunctionArgContext
 	AllCOMMA() []antlr.TerminalNode
 	COMMA(i int) antlr.TerminalNode
 
@@ -2261,20 +2262,20 @@ func NewFunctionArgsContext(parser antlr.Parser, parent antlr.ParserRuleContext,
 
 func (s *FunctionArgsContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FunctionArgsContext) AllFunctionArgName() []IFunctionArgNameContext {
+func (s *FunctionArgsContext) AllFunctionArg() []IFunctionArgContext {
 	children := s.GetChildren()
 	len := 0
 	for _, ctx := range children {
-		if _, ok := ctx.(IFunctionArgNameContext); ok {
+		if _, ok := ctx.(IFunctionArgContext); ok {
 			len++
 		}
 	}
 
-	tst := make([]IFunctionArgNameContext, len)
+	tst := make([]IFunctionArgContext, len)
 	i := 0
 	for _, ctx := range children {
-		if t, ok := ctx.(IFunctionArgNameContext); ok {
-			tst[i] = t.(IFunctionArgNameContext)
+		if t, ok := ctx.(IFunctionArgContext); ok {
+			tst[i] = t.(IFunctionArgContext)
 			i++
 		}
 	}
@@ -2282,11 +2283,11 @@ func (s *FunctionArgsContext) AllFunctionArgName() []IFunctionArgNameContext {
 	return tst
 }
 
-func (s *FunctionArgsContext) FunctionArgName(i int) IFunctionArgNameContext {
+func (s *FunctionArgsContext) FunctionArg(i int) IFunctionArgContext {
 	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IFunctionArgNameContext); ok {
+		if _, ok := ctx.(IFunctionArgContext); ok {
 			if j == i {
 				t = ctx.(antlr.RuleContext)
 				break
@@ -2299,7 +2300,7 @@ func (s *FunctionArgsContext) FunctionArgName(i int) IFunctionArgNameContext {
 		return nil
 	}
 
-	return t.(IFunctionArgNameContext)
+	return t.(IFunctionArgContext)
 }
 
 func (s *FunctionArgsContext) AllCOMMA() []antlr.TerminalNode {
@@ -2348,7 +2349,7 @@ func (p *HavingExpressionParser) FunctionArgs() (localctx IFunctionArgsContext) 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(108)
-		p.FunctionArgName()
+		p.FunctionArg()
 	}
 	p.SetState(113)
 	p.GetErrorHandler().Sync(p)
@@ -2368,7 +2369,7 @@ func (p *HavingExpressionParser) FunctionArgs() (localctx IFunctionArgsContext) 
 		}
 		{
 			p.SetState(110)
-			p.FunctionArgName()
+			p.FunctionArg()
 		}
 
 		p.SetState(115)
@@ -2392,8 +2393,8 @@ errorExit:
 	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
-// IFunctionArgNameContext is an interface to support dynamic dispatch.
-type IFunctionArgNameContext interface {
+// IFunctionArgContext is an interface to support dynamic dispatch.
+type IFunctionArgContext interface {
 	antlr.ParserRuleContext
 
 	// GetParser returns the parser.
@@ -2402,79 +2403,79 @@ type IFunctionArgNameContext interface {
 	// Getter signatures
 	IDENTIFIER() antlr.TerminalNode
 
-	// IsFunctionArgNameContext differentiates from other interfaces.
-	IsFunctionArgNameContext()
+	// IsFunctionArgContext differentiates from other interfaces.
+	IsFunctionArgContext()
 }
 
-type FunctionArgNameContext struct {
+type FunctionArgContext struct {
 	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
-func NewEmptyFunctionArgNameContext() *FunctionArgNameContext {
-	var p = new(FunctionArgNameContext)
+func NewEmptyFunctionArgContext() *FunctionArgContext {
+	var p = new(FunctionArgContext)
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = HavingExpressionParserRULE_functionArgName
+	p.RuleIndex = HavingExpressionParserRULE_functionArg
 	return p
 }
 
-func InitEmptyFunctionArgNameContext(p *FunctionArgNameContext) {
+func InitEmptyFunctionArgContext(p *FunctionArgContext) {
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = HavingExpressionParserRULE_functionArgName
+	p.RuleIndex = HavingExpressionParserRULE_functionArg
 }
 
-func (*FunctionArgNameContext) IsFunctionArgNameContext() {}
+func (*FunctionArgContext) IsFunctionArgContext() {}
 
-func NewFunctionArgNameContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FunctionArgNameContext {
-	var p = new(FunctionArgNameContext)
+func NewFunctionArgContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FunctionArgContext {
+	var p = new(FunctionArgContext)
 
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
-	p.RuleIndex = HavingExpressionParserRULE_functionArgName
+	p.RuleIndex = HavingExpressionParserRULE_functionArg
 
 	return p
 }
 
-func (s *FunctionArgNameContext) GetParser() antlr.Parser { return s.parser }
+func (s *FunctionArgContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FunctionArgNameContext) IDENTIFIER() antlr.TerminalNode {
+func (s *FunctionArgContext) IDENTIFIER() antlr.TerminalNode {
 	return s.GetToken(HavingExpressionParserIDENTIFIER, 0)
 }
 
-func (s *FunctionArgNameContext) GetRuleContext() antlr.RuleContext {
+func (s *FunctionArgContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
 
-func (s *FunctionArgNameContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+func (s *FunctionArgContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-func (s *FunctionArgNameContext) EnterRule(listener antlr.ParseTreeListener) {
+func (s *FunctionArgContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(HavingExpressionListener); ok {
-		listenerT.EnterFunctionArgName(s)
+		listenerT.EnterFunctionArg(s)
 	}
 }
 
-func (s *FunctionArgNameContext) ExitRule(listener antlr.ParseTreeListener) {
+func (s *FunctionArgContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(HavingExpressionListener); ok {
-		listenerT.ExitFunctionArgName(s)
+		listenerT.ExitFunctionArg(s)
 	}
 }
 
-func (s *FunctionArgNameContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+func (s *FunctionArgContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 	switch t := visitor.(type) {
 	case HavingExpressionVisitor:
-		return t.VisitFunctionArgName(s)
+		return t.VisitFunctionArg(s)
 
 	default:
 		return t.VisitChildren(s)
 	}
 }
 
-func (p *HavingExpressionParser) FunctionArgName() (localctx IFunctionArgNameContext) {
-	localctx = NewFunctionArgNameContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 26, HavingExpressionParserRULE_functionArgName)
+func (p *HavingExpressionParser) FunctionArg() (localctx IFunctionArgContext) {
+	localctx = NewFunctionArgContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 26, HavingExpressionParserRULE_functionArg)
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(116)

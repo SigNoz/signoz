@@ -60,7 +60,7 @@ func (v *BaseHavingExpressionVisitor) VisitFunctionArgs(ctx *FunctionArgsContext
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseHavingExpressionVisitor) VisitFunctionArgName(ctx *FunctionArgNameContext) interface{} {
+func (v *BaseHavingExpressionVisitor) VisitFunctionArg(ctx *FunctionArgContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
