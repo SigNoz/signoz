@@ -44,12 +44,14 @@ const (
 
 var (
 	// mapping for body logical field to message sub column
+	// TODO(Piyush): Add description for detailed explanation of remapping of body to message
 	BodyLogicalFieldJSONMapping = &telemetrytypes.TelemetryFieldKey{
 		Name:          MessageSubColumn,
 		Signal:        telemetrytypes.SignalLogs,
 		FieldContext:  telemetrytypes.FieldContextBody,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 		JSONDataType:  &telemetrytypes.String,
+		Warnings:      []string{"When you search on `body` (full text or by field), Query Builder uses body.message:string by default. Check that this matches what you want to search."},
 	}
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
