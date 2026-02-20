@@ -97,10 +97,14 @@ const (
 
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
-	minTimespanForProgressiveSearch        = time.Hour
-	minTimespanForProgressiveSearchMargin  = time.Minute
-	maxProgressiveSteps                    = 4
-	charset                                = "abcdefghijklmnopqrstuvwxyz" +
+
+	signozMetricsMetadataLocalTable = "metadata"
+	signozMetricsMetadataTable      = "distributed_metadata"
+
+	minTimespanForProgressiveSearch       = time.Hour
+	minTimespanForProgressiveSearchMargin = time.Minute
+	maxProgressiveSteps                   = 4
+	charset                               = "abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	NANOSECOND = 1000000000
 )
@@ -3452,8 +3456,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 
 func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.UUID, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
 
-	unixMilli := common.PastDayRoundOff()
-
 	// 1. Fetch metadata from cache/db using unified function
 	metadataMap, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricName)
 	if apiError != nil {
@@ -3492,13 +3494,21 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 			SELECT JSONExtractString(labels, 'le') AS le
 			FROM %s.%s
 			WHERE metric_name = $1
-				AND unix_milli >= $2
+				AND unix_milli >= (
+					SELECT toUnixTimestamp(toStartOfDay(toDateTime(last_reported_unix_milli / 1000))) * 1000
+					FROM %s.%s
+					WHERE metric_name = $2
+						AND type = 'Histogram'
+						AND attr_string_value = $3
+					ORDER BY last_reported_unix_milli DESC
+					LIMIT 1
+				)
 				AND type = 'Histogram'
-				AND (JSONExtractString(labels, 'service_name') = $3 OR JSONExtractString(labels, 'service.name') = $4)
+				AND (JSONExtractString(labels, 'service_name') = $4 OR JSONExtractString(labels, 'service.name') = $5)
 			GROUP BY le
-			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day)
+			ORDER BY le`, signozMetricDBName, signozTSTableNameV41Day, signozMetricDBName, signozMetricsMetadataTable)
 
-		rows, err := r.db.Query(ctx, query, metricName, unixMilli, serviceName, serviceName)
+		rows, err := r.db.Query(ctx, query, metricName, metricName, serviceName, serviceName, serviceName)
 		if err != nil {
 			zap.L().Error("Error while querying histogram buckets", zap.Error(err))
 			return nil, fmt.Errorf("error while querying histogram buckets: %s", err.Error())
