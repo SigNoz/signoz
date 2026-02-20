@@ -19,19 +19,40 @@ func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 	}
 }
 
-func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildTraceColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
-func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildLogColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
-func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildMetricColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
 func (r *HavingExpressionRewriter) buildTraceColumnMap(aggregations []qbtypes.TraceAggregation) {

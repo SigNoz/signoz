@@ -237,6 +237,12 @@ func (q *QueryBuilderQuery[T]) validateAggregations(requestType RequestType) err
 				}
 				aliases[v.Alias] = true
 			}
+			if strings.Contains(strings.ToLower(v.Expression), " as ") {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"aliasing is not allowed in expression. Use `alias` field instead",
+				)
+			}
 		case LogAggregation:
 			if v.Expression == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
@@ -258,6 +264,12 @@ func (q *QueryBuilderQuery[T]) validateAggregations(requestType RequestType) err
 					)
 				}
 				aliases[v.Alias] = true
+			}
+			if strings.Contains(strings.ToLower(v.Expression), " as ") {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"aliasing is not allowed in expression. Use `alias` field instead",
+				)
 			}
 		}
 	}
