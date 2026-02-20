@@ -131,12 +131,12 @@ export interface AuthtypesGettableTransactionDTO {
 	/**
 	 * @type boolean
 	 */
-	authorized?: boolean;
-	object?: AuthtypesObjectDTO;
+	authorized: boolean;
+	object: AuthtypesObjectDTO;
 	/**
 	 * @type string
 	 */
-	relation?: string;
+	relation: string;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -2004,12 +2004,12 @@ export interface RoletypesGettableResourcesDTO {
 	 * @type object
 	 * @nullable true
 	 */
-	relations?: RoletypesGettableResourcesDTORelations;
+	relations: RoletypesGettableResourcesDTORelations;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	resources?: AuthtypesResourceDTO[] | null;
+	resources: AuthtypesResourceDTO[] | null;
 }
 
 export interface RoletypesPatchableObjectsDTO {
@@ -2028,9 +2028,8 @@ export interface RoletypesPatchableObjectsDTO {
 export interface RoletypesPatchableRoleDTO {
 	/**
 	 * @type string
-	 * @nullable true
 	 */
-	description?: string | null;
+	description: string;
 }
 
 export interface RoletypesPostableRoleDTO {
@@ -2053,7 +2052,7 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type string
 	 */
@@ -2061,15 +2060,15 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	orgId: string;
 	/**
 	 * @type string
 	 */
-	type?: string;
+	type: string;
 	/**
 	 * @type string
 	 * @format date-time

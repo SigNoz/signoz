@@ -26,9 +26,9 @@ type Transaction struct {
 }
 
 type GettableTransaction struct {
-	Relation   Relation `json:"relation"`
-	Object     Object   `json:"object"`
-	Authorized bool     `json:"authorized"`
+	Relation   Relation `json:"relation" required:"true"`
+	Object     Object   `json:"object" required:"true"`
+	Authorized bool     `json:"authorized" required:"true"`
 }
 
 func NewObject(resource Resource, selector Selector) (*Object, error) {

@@ -100,6 +100,10 @@ components:
           $ref: '#/components/schemas/AuthtypesObject'
         relation:
           type: string
+      required:
+      - relation
+      - object
+      - authorized
       type: object
     AuthtypesGoogleConfig:
       properties:
@@ -1672,6 +1676,9 @@ components:
             $ref: '#/components/schemas/AuthtypesResource'
           nullable: true
           type: array
+      required:
+      - resources
+      - relations
       type: object
     RoletypesPatchableObjects:
       properties:
@@ -1692,8 +1699,9 @@ components:
     RoletypesPatchableRole:
       properties:
         description:
-          nullable: true
           type: string
+      required:
+      - description
       type: object
     RoletypesPostableRole:
       properties:
@@ -1722,6 +1730,11 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - name
+      - description
+      - type
+      - orgId
       type: object
     TelemetrytypesFieldContext:
       enum:
