@@ -16,6 +16,7 @@ import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	QueryRangeV5200,
 	RenderErrorResponseDTO,
+	ReplaceVariables200,
 } from '../sigNoz.schemas';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -102,6 +103,89 @@ export const useQueryRangeV5 = <
 	TContext
 > => {
 	const mutationOptions = getQueryRangeV5MutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Replace variables in a query
+ * @summary Replace variables
+ */
+export const replaceVariables = (
+	querybuildertypesv5QueryRangeRequestDTO: Querybuildertypesv5QueryRangeRequestDTO,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ReplaceVariables200>({
+		url: `/api/v5/substitute_vars`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: querybuildertypesv5QueryRangeRequestDTO,
+		signal,
+	});
+};
+
+export const getReplaceVariablesMutationOptions = <
+	TError = RenderErrorResponseDTO,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof replaceVariables>>,
+		TError,
+		{ data: Querybuildertypesv5QueryRangeRequestDTO },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof replaceVariables>>,
+	TError,
+	{ data: Querybuildertypesv5QueryRangeRequestDTO },
+	TContext
+> => {
+	const mutationKey = ['replaceVariables'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof replaceVariables>>,
+		{ data: Querybuildertypesv5QueryRangeRequestDTO }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return replaceVariables(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ReplaceVariablesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof replaceVariables>>
+>;
+export type ReplaceVariablesMutationBody = Querybuildertypesv5QueryRangeRequestDTO;
+export type ReplaceVariablesMutationError = RenderErrorResponseDTO;
+
+/**
+ * @summary Replace variables
+ */
+export const useReplaceVariables = <
+	TError = RenderErrorResponseDTO,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof replaceVariables>>,
+		TError,
+		{ data: Querybuildertypesv5QueryRangeRequestDTO },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof replaceVariables>>,
+	TError,
+	{ data: Querybuildertypesv5QueryRangeRequestDTO },
+	TContext
+> => {
+	const mutationOptions = getReplaceVariablesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

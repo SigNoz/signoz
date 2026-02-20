@@ -26,7 +26,7 @@ jest.mock('lib/history', () => ({
 // API Endpoints
 const ORG_PREFERENCES_ENDPOINT = '*/api/v1/org/preferences/list';
 const UPDATE_ORG_PREFERENCE_ENDPOINT = '*/api/v1/org/preferences/name/update';
-const UPDATE_PROFILE_ENDPOINT = '*/api/gateway/v2/profiles/me';
+const UPDATE_PROFILE_ENDPOINT = '*/api/v2/zeus/profiles';
 const EDIT_ORG_ENDPOINT = '*/api/v2/orgs/me';
 const INVITE_USERS_ENDPOINT = '*/api/v1/invite/bulk/create';
 
@@ -275,6 +275,46 @@ describe('OnboardingQuestionaire Component', () => {
 			expect(
 				await screen.findByText(/number of services/i, {}),
 			).toBeInTheDocument();
+		});
+
+		it('fires PUT to /zeus/profiles and advances to step 4 on success', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let profilePutCalled = false;
+
+			server.use(
+				rest.put(UPDATE_PROFILE_ENDPOINT, (_, res, ctx) => {
+					profilePutCalled = true;
+					return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+				}),
+			);
+
+			render(<OnboardingQuestionaire />);
+
+			// Navigate to step 3
+			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /yes/i }));
+			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('button', { name: /next/i }));
+
+			await user.type(
+				await screen.findByPlaceholderText(/e\.g\., googling/i),
+				'Found via Google',
+			);
+			await user.click(screen.getByLabelText(/lowering observability costs/i));
+			await user.click(screen.getByRole('button', { name: /next/i }));
+
+			// Click "I'll do this later" on step 3 — triggers PUT /zeus/profiles
+			await user.click(
+				await screen.findByRole('button', { name: /i'll do this later/i }),
+			);
+
+			await waitFor(() => {
+				expect(profilePutCalled).toBe(true);
+				// Step 3 content is gone — successfully advanced to step 4
+				expect(
+					screen.queryByText(/what does your scale approximately look like/i),
+				).not.toBeInTheDocument();
+			});
 		});
 
 		it('shows do later button', async () => {
