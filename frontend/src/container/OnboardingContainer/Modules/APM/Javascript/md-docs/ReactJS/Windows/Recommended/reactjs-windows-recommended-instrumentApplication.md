@@ -23,12 +23,12 @@ import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 
 const provider = new WebTracerProvider({
     resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: '{{MYAPP}}',
+        [ATTR_SERVICE_NAME]: '{{MYAPP}}',
     }),
 });
 const exporter = new OTLPTraceExporter({
