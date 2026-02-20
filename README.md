@@ -175,7 +175,7 @@ You can find our entire documentation [here](https://signoz.io/docs/introduction
 
 ### SigNoz vs Prometheus
 
-Prometheus is good if you want to do just metrics. But if you want to have a seamless experience between metrics, logs and traces, then current experience of stitching together Prometheus & other tools is not great.
+[Prometheus](https://github.com/prometheus/prometheus) is good if you want to do just metrics. But if you want to have a seamless experience between metrics, logs and traces, then current experience of stitching together Prometheus & other tools is not great.
 
 SigNoz is a one-stop solution for metrics and other telemetry signals. And because you will use the same standard(OpenTelemetry) to collect all telemetry signals, you can also correlate these signals to troubleshoot quickly.
 
@@ -185,7 +185,7 @@ For example, if you see that there are issues with infrastructure metrics of you
 
 ### SigNoz vs Jaeger
 
-Jaeger only does distributed tracing. SigNoz supports metrics, traces and logs - all the 3 pillars of observability.
+[Jaeger](https://github.com/jaegertracing/jaeger) only does distributed tracing. SigNoz supports metrics, traces and logs - all the 3 pillars of observability.
 
 Moreover, SigNoz has few more advanced features wrt Jaeger:
 
@@ -195,7 +195,9 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 <p>&nbsp  </p>
 
-### SigNoz vs Elastic 
+### SigNoz vs Elastic
+
+[Elastic](https://github.com/elastic) provides a full-stack observability solution but is resource-intensive and lacks some performance optimizations in logs management.
 
 - SigNoz Logs management are based on ClickHouse, a columnar OLAP datastore which makes aggregate log analytics queries much more efficient
 - 50% lower resource requirement compared to Elastic during ingestion
@@ -205,6 +207,8 @@ We have published benchmarks comparing Elastic with SigNoz. Check it out [here](
 <p>&nbsp  </p>
 
 ### SigNoz vs Loki
+
+[Loki](https://github.com/grafana/loki) is focused mainly on logs and lacks the aggregation and indexing features that SigNoz offers for high-cardinality data.
 
 - SigNoz supports aggregations on high-cardinality data over a huge volume while loki doesn’t.
 - SigNoz supports indexes over high cardinality data and has no limitations on the number of indexes, while Loki reaches max streams with a few indexes added to it.
