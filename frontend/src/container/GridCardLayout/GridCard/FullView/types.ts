@@ -22,7 +22,21 @@ export interface DataSetProps {
 
 export interface LegendEntryProps {
 	label: string;
-	show: boolean;
+	show?: boolean;
+}
+
+export interface SavedLegendGraph {
+	name: string;
+	inverted: boolean;
+	dataIndex: SavedLegendEntry[];
+}
+
+export interface SavedLegendEntry {
+	label: string;
+	/**
+	 * @deprecated Only available for backward compatibility
+	 */
+	show?: boolean;
 }
 
 export type ExtendedChartDataset = uPlot.Series & {
