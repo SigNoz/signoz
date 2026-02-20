@@ -322,6 +322,7 @@ $custom-border-color: #2c3044;
 	.navigation-text {
 		color: var(--bg-vanilla-400);
 		font-size: 12px;
+        white-space: pre-wrap;
 	}
 
 	.navigation-text-incomplete {

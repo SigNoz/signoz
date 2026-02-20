@@ -201,6 +201,24 @@ function QueryVariableInput({
 						message =
 							'Please make sure query is valid and dependent variables are selected';
 					}
+					if (
+						(details.error ?? '')
+							.toString()
+							.includes('Unknown expression or function identifier')
+					) {
+						const missingIdentifier = details.error
+							?.toString()
+							?.match(/`([^`]+)`/)?.[1];
+
+						if (
+							missingIdentifier?.startsWith('$') &&
+							!existingVariables[missingIdentifier?.slice(1)]
+						) {
+							message = `Failed to run the query, please make sure the variable "${missingIdentifier}" have any value selected to be used in the query.`;
+						} else if (!missingIdentifier?.startsWith('$')) {
+							message = `Please make sure query is valid. The identifier "${missingIdentifier}" supposed to be a variable? If so, rewrite it to be "$${missingIdentifier}".\nMore details: ${details.error}`;
+						}
+					}
 					setErrorMessage(message);
 				}
 				settleVariableFetch(variableData.name, 'failure');
