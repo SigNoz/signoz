@@ -248,8 +248,8 @@ wait_for_containers_start() {
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/api/v1/health?live=1" || true)"
-        if [[ status_code -eq 200 ]]; then
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" "$health_check_url" || true)"
+        if [[ $status_code -eq 200 ]]; then
             break
         else
             echo -ne "Waiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
@@ -364,6 +364,48 @@ else
 fi
 
 setup_type='clickhouse'
+
+# Default base URL for health checks and messages. Can be overridden via --baseUrl
+base_url="http://localhost:8080"
+
+# Parse command line args for base URL (support --baseUrl)
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --baseUrl=*)
+            base_url="${1#*=}"
+            shift
+            ;;
+        --baseUrl)
+            shift
+            if [[ $# -gt 0 ]]; then
+                base_url="$1"
+                shift
+            else
+                echo "+++++++++++ ERROR ++++++++++++++++++++++"
+                echo "Missing value for --baseUrl/--check_url; provide http(s)://hostname"
+                echo "Example: ./deploy/install.sh --baseUrl=\"https://signoz.example.com\""
+                echo "+++++++++++++++++++++++++++++++++++++++"
+                exit 1
+            fi
+            ;;
+        *)
+            # preserve other args
+            shift
+            ;;
+    esac
+done
+
+# Basic validation: require scheme + hostname (no whitespace-only URLs)
+if ! [[ "$base_url" =~ ^https?://(\[[0-9a-fA-F:]+\]|[-[:alnum:]_.%]+)(:[0-9]+)?([/?#].*)?$ ]]; then
+    echo "+++++++++++ ERROR ++++++++++++++++++++++"
+    echo "Invalid --baseUrl/--check_url: provide http(s):// plus a hostname (optionally with port/path)"
+    echo "Example: ./deploy/install.sh --baseUrl=\"https://signoz.example.com\""
+    echo "+++++++++++++++++++++++++++++++++++++++"
+    exit 1
+fi
+
+# health check URL built from base_url (ensure no trailing slash)
+health_check_url="${base_url%/}/api/v1/health?live=1"
 
 # Run bye if failure happens
 trap bye EXIT
@@ -533,7 +575,7 @@ else
     echo ""
     echo "🟢 Your installation is complete!"
     echo ""
-    echo -e "🟢 SigNoz is running on http://localhost:8080"
+    echo -e "🟢 SigNoz is running on ${base_url}"
     echo ""
     echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics."
     echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"
