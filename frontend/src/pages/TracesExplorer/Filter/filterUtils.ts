@@ -2,6 +2,7 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
+import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -31,7 +32,7 @@ export const AllTraceFilterKeyValue: Record<string, string> = {
 	httpRoute: 'HTTP Route',
 	'http.route': 'HTTP Route',
 	httpUrl: 'HTTP URL',
-	'http.url': 'HTTP URL',
+	[SPAN_ATTRIBUTES.HTTP_URL]: 'HTTP URL',
 	traceID: 'Trace ID',
 	trace_id: 'Trace ID',
 } as const;
