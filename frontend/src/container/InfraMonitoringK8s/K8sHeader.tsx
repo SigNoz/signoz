@@ -58,8 +58,9 @@ function K8sHeader({
 		const urlFilters = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS);
 		let { filters } = currentQuery.builder.queryData[0];
 		if (urlFilters) {
-			const decoded = decodeURIComponent(urlFilters);
-			const parsed = JSON.parse(decoded);
+			// searchParams.get() already returns decoded values - no decodeURIComponent needed.
+			// Using decodeURIComponent on values containing '%' (e.g. LIKE 'open%') causes "URI malformed".
+			const parsed = JSON.parse(urlFilters);
 			filters = parsed;
 		}
 		return {

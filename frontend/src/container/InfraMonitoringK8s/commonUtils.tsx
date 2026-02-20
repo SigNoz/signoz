@@ -271,8 +271,8 @@ export const getOrderByFromParams = (
 		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
 	);
 	if (orderByFromParams) {
-		const decoded = decodeURIComponent(orderByFromParams);
-		const parsed = JSON.parse(decoded);
+		// searchParams.get() already returns decoded values - no decodeURIComponent needed.
+		const parsed = JSON.parse(orderByFromParams);
 		return parsed as { columnName: string; order: 'asc' | 'desc' };
 	}
 	if (returnNullAsDefault) {
@@ -288,8 +288,8 @@ export const getFiltersFromParams = (
 	const filtersFromParams = searchParams.get(queryKey);
 	if (filtersFromParams) {
 		try {
-			const decoded = decodeURIComponent(filtersFromParams);
-			const parsed = JSON.parse(decoded);
+			// searchParams.get() already returns decoded values - no decodeURIComponent needed.
+			const parsed = JSON.parse(filtersFromParams);
 			return parsed as IBuilderQuery['filters'];
 		} catch (error) {
 			return null;
