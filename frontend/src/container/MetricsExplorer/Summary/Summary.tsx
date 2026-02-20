@@ -13,6 +13,7 @@ import {
 	MetricsexplorertypesTreemapModeDTO,
 	MetricsexplorertypesTreemapRequestDTO,
 	Querybuildertypesv5OrderByDTO,
+	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	convertExpressionToFilters,
@@ -47,7 +48,7 @@ const DEFAULT_ORDER_BY: Querybuildertypesv5OrderByDTO = {
 	key: {
 		name: 'samples',
 	},
-	direction: 'desc',
+	direction: Querybuildertypesv5OrderDirectionDTO.desc,
 };
 
 function Summary(): JSX.Element {
@@ -82,6 +83,11 @@ function Summary(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const [
+		currentQueryFilterExpression,
+		setCurrentQueryFilterExpression,
+	] = useState<string>(query?.filter?.expression || '');
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
@@ -192,6 +198,7 @@ function Summary(): JSX.Element {
 					],
 				},
 			});
+			setCurrentQueryFilterExpression(expression);
 			setCurrentPage(1);
 			if (expression) {
 				logEvent(MetricsExplorerEvents.FilterApplied, {
@@ -287,36 +294,27 @@ function Summary(): JSX.Element {
 		});
 	};
 
-	const isMetricsListDataEmpty = useMemo(
-		() => formattedMetricsData.length === 0 && !isGetMetricsStatsLoading,
-		[formattedMetricsData, isGetMetricsStatsLoading],
-	);
+	const isMetricsListDataEmpty =
+		formattedMetricsData.length === 0 && !isGetMetricsStatsLoading;
 
-	const isMetricsTreeMapDataEmpty = useMemo(
-		() =>
-			!treeMapData?.data?.data?.[heatmapView]?.length &&
-			!isGetMetricsTreemapLoading,
-		[treeMapData?.data?.data, heatmapView, isGetMetricsTreemapLoading],
-	);
+	const isMetricsTreeMapDataEmpty =
+		!treeMapData?.data?.data?.[heatmapView]?.length &&
+		!isGetMetricsTreemapLoading;
 
-	const showFullScreenLoading = useMemo(
-		() =>
-			(isGetMetricsStatsLoading || isGetMetricsTreemapLoading) &&
-			formattedMetricsData.length === 0 &&
-			!treeMapData?.data?.data?.[heatmapView]?.length,
-		[
-			isGetMetricsStatsLoading,
-			isGetMetricsTreemapLoading,
-			formattedMetricsData,
-			treeMapData,
-			heatmapView,
-		],
-	);
+	const showFullScreenLoading =
+		(isGetMetricsStatsLoading || isGetMetricsTreemapLoading) &&
+		formattedMetricsData.length === 0 &&
+		!treeMapData?.data?.data?.[heatmapView]?.length;
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
-				<MetricsSearch query={query} onChange={handleFilterChange} />
+				<MetricsSearch
+					query={query}
+					onChange={handleFilterChange}
+					currentQueryFilterExpression={currentQueryFilterExpression}
+					setCurrentQueryFilterExpression={setCurrentQueryFilterExpression}
+				/>
 				{showFullScreenLoading ? (
 					<MetricsLoading />
 				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (

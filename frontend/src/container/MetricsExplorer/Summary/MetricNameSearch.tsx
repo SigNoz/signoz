@@ -69,7 +69,7 @@ function MetricNameSearch({
 	const handleSelect = useCallback(
 		(selectedMetricName: string): void => {
 			const queryFilters = convertExpressionToFilters(
-				queryFilterExpression?.expression,
+				queryFilterExpression.expression,
 			);
 			const newFilters = {
 				items: [

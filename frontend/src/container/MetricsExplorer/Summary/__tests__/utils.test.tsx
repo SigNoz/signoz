@@ -1,16 +1,10 @@
-import { Color } from '@signozhq/design-tokens';
 import { render } from '@testing-library/react';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
 import { TreemapViewType } from '../types';
-import {
-	formatDataForMetricsTable,
-	getMetricsTableColumns,
-	MetricTypeRenderer,
-} from '../utils';
+import { formatDataForMetricsTable, getMetricsTableColumns } from '../utils';
 
 const mockQueryExpression: Filter = {
 	expression: '',
@@ -82,53 +76,6 @@ describe('metricsTableColumns', () => {
 		expect(
 			getMetricsTableColumns(mockQueryExpression, mockOnChange)[5].sorter,
 		).toBe(true);
-	});
-
-	describe('MetricTypeRenderer', () => {
-		it('should render correct icon and color for each metric type', () => {
-			const types = [
-				{
-					type: MetricType.SUM,
-					color: Color.BG_ROBIN_500,
-				},
-				{
-					type: MetricType.GAUGE,
-					color: Color.BG_SAKURA_500,
-				},
-				{
-					type: MetricType.HISTOGRAM,
-					color: Color.BG_SIENNA_500,
-				},
-				{
-					type: MetricType.SUMMARY,
-					color: Color.BG_FOREST_500,
-				},
-				{
-					type: MetricType.EXPONENTIAL_HISTOGRAM,
-					color: Color.BG_AQUA_500,
-				},
-			];
-
-			types.forEach(({ type, color }) => {
-				const { container } = render(<MetricTypeRenderer type={type} />);
-				const rendererDiv = container.firstChild as HTMLElement;
-
-				expect(rendererDiv).toHaveStyle({
-					backgroundColor: `${color}33`,
-					border: `1px solid ${color}`,
-					color,
-				});
-			});
-		});
-
-		it('should return empty icon and color for unknown metric type', () => {
-			const { container } = render(
-				<MetricTypeRenderer type={'UNKNOWN' as MetricType} />,
-			);
-			const rendererDiv = container.firstChild as HTMLElement;
-
-			expect(rendererDiv.querySelector('svg')).toBeNull();
-		});
 	});
 });
 

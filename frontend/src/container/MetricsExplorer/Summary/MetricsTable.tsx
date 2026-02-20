@@ -9,6 +9,7 @@ import {
 	Typography,
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
 import { Info } from 'lucide-react';
 
 import { MetricsListItemRowData, MetricsTableProps } from './types';
@@ -40,14 +41,17 @@ function MetricsTable({
 					key: {
 						name: sorter.field as string,
 					},
-					direction: sorter.order === 'ascend' ? 'asc' : 'desc',
+					direction:
+						sorter.order === 'ascend'
+							? Querybuildertypesv5OrderDirectionDTO.asc
+							: Querybuildertypesv5OrderDirectionDTO.desc,
 				});
 			} else {
 				setOrderBy({
 					key: {
 						name: 'samples',
 					},
-					direction: 'desc',
+					direction: Querybuildertypesv5OrderDirectionDTO.desc,
 				});
 			}
 		},

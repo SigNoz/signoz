@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -7,21 +6,18 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsSearchProps } from './types';
 
-function MetricsSearch({ query, onChange }: MetricsSearchProps): JSX.Element {
-	const [currentExpression, setCurrentExpression] = useState<string>(
-		query?.filter?.expression || '',
-	);
-
-	useEffect(() => {
-		const expression = query?.filter?.expression || '';
-		setCurrentExpression(expression);
-	}, [query?.filter?.expression]);
-
+function MetricsSearch({
+	query,
+	onChange,
+	currentQueryFilterExpression,
+	setCurrentQueryFilterExpression,
+}: MetricsSearchProps): JSX.Element {
 	const handleOnChange = (expression: string): void => {
-		setCurrentExpression(expression);
+		setCurrentQueryFilterExpression(expression);
 	};
 
-	const handleStageAndRunQuery = (): void => onChange(currentExpression);
+	const handleStageAndRunQuery = (): void =>
+		onChange(currentQueryFilterExpression);
 
 	return (
 		<div className="metrics-search-container">
@@ -39,7 +35,7 @@ function MetricsSearch({ query, onChange }: MetricsSearchProps): JSX.Element {
 						...query,
 						filter: {
 							...query?.filter,
-							expression: currentExpression,
+							expression: currentQueryFilterExpression,
 						},
 					}}
 					onRun={handleOnChange}

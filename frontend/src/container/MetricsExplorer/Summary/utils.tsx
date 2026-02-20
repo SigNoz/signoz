@@ -1,29 +1,17 @@
-import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
 	MetricsexplorertypesTreemapModeDTO,
-	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	MetricsListPayload,
-	MetricType,
-} from 'api/metricsExplorer/getMetricsList';
+import { MetricsListPayload } from 'api/metricsExplorer/getMetricsList';
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
-import {
-	BarChart,
-	BarChart2,
-	BarChartHorizontal,
-	Diff,
-	Gauge,
-} from 'lucide-react';
 
-import { METRIC_TYPE_LABEL_MAP, METRIC_TYPE_LABEL_MAP_V2 } from './constants';
 import MetricNameSearch from './MetricNameSearch';
+import MetricTypeRendererV2 from './MetricTypeRendererV2';
 import { MetricsListItemRowData, TreemapTile } from './types';
 
 export const getMetricsTableColumns = (
@@ -96,114 +84,6 @@ export const getMetricsListQuery = (): MetricsListPayload => ({
 	},
 	orderBy: { columnName: 'metric_name', order: 'asc' },
 });
-
-export function MetricTypeRenderer({
-	type,
-}: {
-	type: MetricType;
-}): JSX.Element {
-	const [icon, color] = useMemo(() => {
-		switch (type) {
-			case MetricType.SUM:
-				return [
-					<Diff key={type} size={12} color={Color.BG_ROBIN_500} />,
-					Color.BG_ROBIN_500,
-				];
-			case MetricType.GAUGE:
-				return [
-					<Gauge key={type} size={12} color={Color.BG_SAKURA_500} />,
-					Color.BG_SAKURA_500,
-				];
-			case MetricType.HISTOGRAM:
-				return [
-					<BarChart2 key={type} size={12} color={Color.BG_SIENNA_500} />,
-					Color.BG_SIENNA_500,
-				];
-			case MetricType.SUMMARY:
-				return [
-					<BarChartHorizontal key={type} size={12} color={Color.BG_FOREST_500} />,
-					Color.BG_FOREST_500,
-				];
-			case MetricType.EXPONENTIAL_HISTOGRAM:
-				return [
-					<BarChart key={type} size={12} color={Color.BG_AQUA_500} />,
-					Color.BG_AQUA_500,
-				];
-			default:
-				return [null, ''];
-		}
-	}, [type]);
-
-	return (
-		<div
-			className="metric-type-renderer"
-			style={{
-				backgroundColor: `${color}33`,
-				border: `1px solid ${color}`,
-				color,
-			}}
-		>
-			{icon}
-			<Typography.Text style={{ color, fontSize: 12 }}>
-				{METRIC_TYPE_LABEL_MAP[type]}
-			</Typography.Text>
-		</div>
-	);
-}
-
-export function MetricTypeRendererV2({
-	type,
-}: {
-	type: MetrictypesTypeDTO;
-}): JSX.Element {
-	const [icon, color] = useMemo(() => {
-		switch (type) {
-			case MetrictypesTypeDTO.sum:
-				return [
-					<Diff key={type} size={12} color={Color.BG_ROBIN_500} />,
-					Color.BG_ROBIN_500,
-				];
-			case MetrictypesTypeDTO.gauge:
-				return [
-					<Gauge key={type} size={12} color={Color.BG_SAKURA_500} />,
-					Color.BG_SAKURA_500,
-				];
-			case MetrictypesTypeDTO.histogram:
-				return [
-					<BarChart2 key={type} size={12} color={Color.BG_SIENNA_500} />,
-					Color.BG_SIENNA_500,
-				];
-			case MetrictypesTypeDTO.summary:
-				return [
-					<BarChartHorizontal key={type} size={12} color={Color.BG_FOREST_500} />,
-					Color.BG_FOREST_500,
-				];
-			case MetrictypesTypeDTO.exponentialhistogram:
-				return [
-					<BarChart key={type} size={12} color={Color.BG_AQUA_500} />,
-					Color.BG_AQUA_500,
-				];
-			default:
-				return [null, ''];
-		}
-	}, [type]);
-
-	return (
-		<div
-			className="metric-type-renderer"
-			style={{
-				backgroundColor: `${color}33`,
-				border: `1px solid ${color}`,
-				color,
-			}}
-		>
-			{icon}
-			<Typography.Text style={{ color, fontSize: 12 }}>
-				{METRIC_TYPE_LABEL_MAP_V2[type]}
-			</Typography.Text>
-		</div>
-	);
-}
 
 function ValidateRowValueWrapper({
 	value,
