@@ -88,7 +88,12 @@ function InviteTeamMembers({
 		setTeamMembersToInvite((prev) => (prev || []).filter((m) => m.id !== id));
 	};
 
-	// Validation function to check all users
+	// A row is "touched" if the user has entered an email or selected a role
+	const isMemberTouched = (member: TeamMember): boolean =>
+		member.email.trim() !== '' ||
+		Boolean(member.role && member.role.trim() !== '');
+
+	// Validation function — only validates rows the user has touched
 	const validateAllUsers = (): boolean => {
 		let isValid = true;
 		let hasEmailErrors = false;
@@ -96,7 +101,10 @@ function InviteTeamMembers({
 
 		const updatedEmailValidity: Record<string, boolean> = {};
 
-		teamMembersToInvite?.forEach((member) => {
+		// Only consider rows the user has interacted with
+		const touchedMembers = teamMembersToInvite?.filter(isMemberTouched) ?? [];
+
+		touchedMembers?.forEach((member) => {
 			const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email);
 			const roleValid = Boolean(member.role && member.role.trim() !== '');
 
@@ -150,12 +158,12 @@ function InviteTeamMembers({
 
 	const handleNext = (): void => {
 		if (validateAllUsers()) {
-			setTeamMembers(teamMembersToInvite || []);
+			setTeamMembers(teamMembersToInvite?.filter(isMemberTouched) ?? []);
 			setHasInvalidEmails(false);
 			setHasInvalidRoles(false);
 			setInviteError(null);
 			sendInvites({
-				invites: teamMembersToInvite || [],
+				invites: teamMembersToInvite?.filter(isMemberTouched) ?? [],
 			});
 		}
 	};
@@ -230,12 +238,12 @@ function InviteTeamMembers({
 
 	const getValidationErrorMessage = (): string => {
 		if (hasInvalidEmails && hasInvalidRoles) {
-			return 'Please enter valid emails and select roles for all team members';
+			return 'Please enter valid emails and select roles for team members';
 		}
 		if (hasInvalidEmails) {
-			return 'Please enter valid emails for all team members';
+			return 'Please enter valid emails for team members';
 		}
-		return 'Please select roles for all team members';
+		return 'Please select roles for team members';
 	};
 
 	const handleDoLater = (): void => {
