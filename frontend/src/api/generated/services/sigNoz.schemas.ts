@@ -3229,3 +3229,11 @@ export type QueryRangeV5200 = {
 	 */
 	status?: string;
 };
+
+export type ReplaceVariables200 = {
+	data?: Querybuildertypesv5QueryRangeRequestDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
