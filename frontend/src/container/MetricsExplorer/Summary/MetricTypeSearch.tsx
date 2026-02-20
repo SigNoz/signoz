@@ -38,7 +38,7 @@ function MetricTypeSearch({
 					items: [
 						...queryFilters.items,
 						{
-							id: 'ttype',
+							id: 'type',
 							op: '=',
 							key: {
 								id: 'type',

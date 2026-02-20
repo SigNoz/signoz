@@ -24,6 +24,8 @@ export interface MetricsTableProps {
 export interface MetricsSearchProps {
 	query: IBuilderQuery;
 	onChange: (expression: string) => void;
+	currentQueryFilterExpression: string;
+	setCurrentQueryFilterExpression: (expression: string) => void;
 }
 
 export interface MetricsTreemapProps {
@@ -33,6 +35,14 @@ export interface MetricsTreemapProps {
 	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 	setHeatmapView: (value: MetricsexplorertypesTreemapModeDTO) => void;
+}
+
+export interface TreemapContentProps {
+	isLoading: boolean;
+	isError: boolean;
+	data: MetricsexplorertypesTreemapResponseDTO | null | undefined;
+	viewType: MetricsexplorertypesTreemapModeDTO;
+	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 }
 
 export interface OrderByPayload {
