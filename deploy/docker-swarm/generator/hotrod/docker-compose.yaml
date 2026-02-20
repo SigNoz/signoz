@@ -13,13 +13,13 @@ x-common: &common
       condition: on-failure
 services:
   hotrod:
-    <<: *common
+    !!merge <<: *common
     image: jaegertracing/example-hotrod:1.61.0
-    command: [ "all" ]
+    command: ["all"]
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318  #
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318 #
   load-hotrod:
-    <<: *common
+    !!merge <<: *common
     image: "signoz/locust:1.2.3"
     environment:
       ATTACKED_HOST: http://hotrod:8080

@@ -226,10 +226,21 @@ install_docker_compose() {
     fi
 }
 
+detect_mac_docker_runner() {
+    which colima >/dev/null 2>&1 && colima start >/dev/null 2>&1 && return
+    which orb >/dev/null 2>&1 && orb start >/dev/null 2>&1 && return
+    open --background -a Docker 2>/dev/null
+}
+
 start_docker() {
     echo -e "🐳 Starting Docker ...\n"
     if [[ $os == "Mac" ]]; then
-        open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
+        # Only start if not already running
+        docker info >/dev/null 2>&1 || detect_mac_docker_runner
+        # Wait for Docker with simple timeout loop
+        timeout=30; while ! docker info >/dev/null 2>&1 && [ $timeout -gt 0 ]; do sleep 1; ((timeout--)); done
+        # Final check
+        docker info >/dev/null 2>&1 || { echo "⚠️  Docker failed to start. Please start it manually."; exit 1; }
     else
         if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
@@ -316,17 +327,6 @@ echo ""
 echo -e "👋 Thank you for trying out SigNoz! "
 echo ""
 
-sudo_cmd=""
-docker_compose_cmd=""
-
-# Check sudo permissions
-if (( $EUID != 0 )); then
-    echo "🟡 Running installer with non-sudo permissions."
-    echo "   In case of any failure or prompt, please consider running the script with sudo privileges."
-    echo ""
-else
-    sudo_cmd="sudo"
-fi
 
 # Checking OS and assigning package manager
 desired_os=0
