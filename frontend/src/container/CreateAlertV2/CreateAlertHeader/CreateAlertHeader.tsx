@@ -23,7 +23,7 @@ function CreateAlertHeader(): JSX.Element {
 	const urlQuery = useUrlQuery();
 
 	const groupByLabels = useMemo(() => {
-		const labels = new Array<string>();
+		const labels: string[] = [];
 		currentQuery.builder.queryData.forEach((query) => {
 			query.groupBy.forEach((groupBy) => {
 				labels.push(groupBy.key);

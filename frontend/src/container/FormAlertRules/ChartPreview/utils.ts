@@ -95,7 +95,7 @@ export const getThresholds = (
 	optionName: string,
 	yAxisUnit: string,
 ): ThresholdProps[] => {
-	const thresholdsToReturn = new Array<ThresholdProps>();
+	const thresholdsToReturn: ThresholdProps[] = [];
 
 	thresholds.forEach((threshold, index) => {
 		// Push main threshold

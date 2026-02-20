@@ -124,7 +124,7 @@ export const parseQuery = (queryString) => {
 		spaceSplittedQUery.forEach((q) => {
 			generateQuery(q);
 		});
-	} catch (e: Error) {
+	} catch (e: unknown) {
 		if (e instanceof ErrorInvalidQueryPair) {
 			//
 		} else if (e instanceof ErrorConvertToFullText) {

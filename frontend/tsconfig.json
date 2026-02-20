@@ -39,7 +39,6 @@
 		"src/**/*.d.ts",
 		"./babel.config.js",
 		"./jest.config.ts",
-		"./.eslintrc.js",
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
