@@ -3,24 +3,13 @@ package pipelinetypes
 import (
 	"testing"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	. "github.com/smartystreets/goconvey/convey"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsValidPostablePipeline(t *testing.T) {
-	validPipelineFilterSet := &v3.FilterSet{
-		Operator: "AND",
-		Items: []v3.FilterItem{
-			{
-				Key: v3.AttributeKey{
-					Key:      "method",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-				},
-				Operator: "=",
-				Value:    "GET",
-			},
-		},
+	validPipelineFilter := &qbtypes.Filter{
+		Expression: `attribute.method = "GET"`,
 	}
 
 	var correctQueriesTest = []struct {
@@ -34,7 +23,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  validPipelineFilterSet,
+				Filter:  validPipelineFilter,
 				Config:  []PipelineOperator{},
 			},
 			IsValid: false,
@@ -46,7 +35,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  validPipelineFilterSet,
+				Filter:  validPipelineFilter,
 				Config:  []PipelineOperator{},
 			},
 			IsValid: false,
@@ -58,7 +47,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  validPipelineFilterSet,
+				Filter:  validPipelineFilter,
 				Config:  []PipelineOperator{},
 			},
 			IsValid: true,
@@ -70,19 +59,21 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter: &v3.FilterSet{
-					Operator: "AND",
-					Items: []v3.FilterItem{
-						{
-							Key: v3.AttributeKey{
-								Key:      "method",
-								DataType: v3.AttributeKeyDataTypeString,
-								Type:     v3.AttributeKeyTypeUnspecified,
-							},
-							Operator: "regex",
-							Value:    "[0-9A-Z*",
-						},
-					},
+				Filter: &qbtypes.Filter{
+					Expression: "",
+				},
+			},
+			IsValid: false,
+		},
+		{
+			Name: "Filter without context prefix on field",
+			Pipeline: PostablePipeline{
+				OrderID: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter: &qbtypes.Filter{
+					Expression: `method = "GET"`,
 				},
 			},
 			IsValid: false,
@@ -94,19 +85,19 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  validPipelineFilterSet,
+				Filter:  validPipelineFilter,
 			},
 			IsValid: true,
 		},
 	}
 
 	for _, test := range correctQueriesTest {
-		Convey(test.Name, t, func() {
+		t.Run(test.Name, func(t *testing.T) {
 			err := test.Pipeline.IsValid()
 			if test.IsValid {
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 			} else {
-				So(err, ShouldBeError)
+				assert.Error(t, err)
 			}
 		})
 	}
@@ -365,12 +356,12 @@ var operatorTest = []struct {
 
 func TestValidOperator(t *testing.T) {
 	for _, test := range operatorTest {
-		Convey(test.Name, t, func() {
+		t.Run(test.Name, func(t *testing.T) {
 			err := isValidOperator(test.Operator)
 			if test.IsValid {
-				So(err, ShouldBeNil)
+				assert.NoError(t, err)
 			} else {
-				So(err, ShouldBeError)
+				assert.Error(t, err)
 			}
 		})
 	}

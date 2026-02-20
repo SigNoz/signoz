@@ -11,13 +11,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 
@@ -140,15 +140,8 @@ func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.G
 				Alias:   "NormalizeBodyDefault",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key: "body",
-						},
-						Operator: v3.FilterOperatorExists,
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "body EXISTS",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{

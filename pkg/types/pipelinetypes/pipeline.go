@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/types"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/uptrace/bun"
 )
 
@@ -57,7 +57,7 @@ type StoreablePipeline struct {
 
 type GettablePipeline struct {
 	StoreablePipeline
-	Filter *v3.FilterSet      `json:"filter"`
+	Filter *qbtypes.Filter    `json:"filter"`
 	Config []PipelineOperator `json:"config"`
 }
 
@@ -72,7 +72,7 @@ func (i *GettablePipeline) ParseRawConfig() error {
 }
 
 func (i *GettablePipeline) ParseFilter() error {
-	f := v3.FilterSet{}
+	f := qbtypes.Filter{}
 	err := json.Unmarshal([]byte(i.FilterString), &f)
 	if err != nil {
 		return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse filter")
@@ -200,7 +200,7 @@ type PostablePipeline struct {
 	Alias       string             `json:"alias"`
 	Description string             `json:"description"`
 	Enabled     bool               `json:"enabled"`
-	Filter      *v3.FilterSet      `json:"filter"`
+	Filter      *qbtypes.Filter    `json:"filter"`
 	Config      []PipelineOperator `json:"config"`
 }
 
@@ -218,6 +218,14 @@ func (p *PostablePipeline) IsValid() error {
 	}
 
 	// check the filter
+	if p.Filter == nil || strings.TrimSpace(p.Filter.Expression) == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "filter.expression is required")
+	}
+
+	// Validate that every field in the expression has an explicit context
+	// (attribute., resource., body., etc) so later pipeline processing does not
+	// need to guess. We do not validate that the field actually
+	// exists – only that the context is specified.
 	_, err := queryBuilderToExpr.Parse(p.Filter)
 	if err != nil {
 		return err

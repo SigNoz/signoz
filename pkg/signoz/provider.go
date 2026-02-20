@@ -169,6 +169,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
 		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigratePipelineFiltersV5Factory(sqlstore),
 	)
 }
 
