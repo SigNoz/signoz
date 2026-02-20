@@ -16,18 +16,18 @@ import (
 )
 
 var (
-	metricToUseForDaemonSets = GetDotMetrics("k8s_pod_cpu_usage")
-	k8sDaemonSetNameAttrKey  = GetDotMetrics("k8s_daemonset_name")
+	metricToUseForDaemonSets = MetricKey("k8s_pod_cpu_usage")
+	k8sDaemonSetNameAttrKey  = MetricKey("k8s_daemonset_name")
 
 	metricNamesForDaemonSets = map[string]string{
-		"desired_nodes":   GetDotMetrics("k8s_daemonset_desired_scheduled_nodes"),
-		"available_nodes": GetDotMetrics("k8s_daemonset_current_scheduled_nodes"),
+		"desired_nodes":   MetricKey("k8s_daemonset_desired_scheduled_nodes"),
+		"available_nodes": MetricKey("k8s_daemonset_current_scheduled_nodes"),
 	}
 
 	daemonSetAttrsToEnrich = []string{
-		GetDotMetrics("k8s_daemonset_name"),
-		GetDotMetrics("k8s_namespace_name"),
-		GetDotMetrics("k8s_cluster_name"),
+		MetricKey("k8s_daemonset_name"),
+		MetricKey("k8s_namespace_name"),
+		MetricKey("k8s_cluster_name"),
 	}
 
 	queryNamesForDaemonSets = map[string][]string{

@@ -85,14 +85,11 @@ export enum WidgetKeys {
 	HasError = 'hasError',
 	Address = 'address',
 	DurationNano = 'durationNano',
-	StatusCodeNorm = 'status_code',
 	StatusCode = 'status.code',
 	Operation = 'operation',
 	OperationName = 'operationName',
-	Service_name_norm = 'service_name',
-	Service_name = 'service.name',
+	OTelServiceName = 'service.name',
 	ServiceName = 'serviceName',
-	SignozLatencyCountNorm = 'signoz_latency_count',
 	SignozLatencyCount = 'signoz_latency.count',
 	SignozDBLatencyCount = 'signoz_db_latency_count',
 	DatabaseCallCount = 'signoz_database_call_count',
@@ -101,10 +98,8 @@ export enum WidgetKeys {
 	SignozCallsTotal = 'signoz_calls_total',
 	SignozExternalCallLatencyCount = 'signoz_external_call_latency_count',
 	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
-	Signoz_latency_bucket_norm = 'signoz_latency_bucket',
-	Signoz_latency_bucket = 'signoz_latency.bucket',
-	Db_system = 'db.system',
-	Db_system_norm = 'db_system',
+	SignozLatencyBucket = 'signoz_latency.bucket',
+	DbSystem = 'db.system',
 }
 
 export const topOperationMetricsDownloadOptions: DownloadOptions = {

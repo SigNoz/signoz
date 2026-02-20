@@ -54,7 +54,7 @@
       "multiSelect": false,
       "name": "Account",
       "order": 0,
-      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud_account_id') AS cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_ECS_MemoryUtilization_max' GROUP BY cloud_account_id",
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.account.id') AS `cloud.account.id`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_ECS_MemoryUtilization_max' GROUP BY `cloud.account.id`",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
@@ -70,7 +70,7 @@
       "multiSelect": false,
       "name": "Region",
       "order": 1,
-      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud_region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_ECS_MemoryUtilization_max' AND JSONExtractString(labels, 'cloud_account_id') IN {{.Account}} GROUP BY region",
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud.region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_ECS_MemoryUtilization_max' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}} GROUP BY region",
       "showALLOption": false,
       "sort": "ASC",
       "textboxValue": "",
@@ -86,7 +86,7 @@
       "multiSelect": true,
       "name": "Cluster",
       "order": 2,
-      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'ClusterName') AS cluster\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_ECS_MemoryUtilization_max' AND JSONExtractString(labels, 'cloud_account_id') IN {{.Account}} AND JSONExtractString(labels, 'cloud_region') IN {{.Region}}\nGROUP BY cluster",
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'ClusterName') AS cluster\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_ECS_MemoryUtilization_max' AND JSONExtractString(labels, 'cloud.account.id') IN {{.Account}} AND JSONExtractString(labels, 'cloud.region') IN {{.Region}}\nGROUP BY cluster",
       "showALLOption": true,
       "sort": "ASC",
       "textboxValue": "",
@@ -130,10 +130,10 @@
                     "id": "26ac617d",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -143,10 +143,10 @@
                     "id": "57172ed9",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -318,10 +318,10 @@
                     "id": "cd4b8848",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -331,10 +331,10 @@
                     "id": "aa5115c6",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -506,10 +506,10 @@
                     "id": "2c13c8ee",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -519,10 +519,10 @@
                     "id": "f489f6a8",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",
@@ -694,10 +694,10 @@
                     "id": "758ba906",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_region--string--tag--false",
+                      "id": "cloud.region--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_region",
+                      "key": "cloud.region",
                       "type": "tag"
                     },
                     "op": "=",
@@ -707,10 +707,10 @@
                     "id": "4ffe6bf7",
                     "key": {
                       "dataType": "string",
-                      "id": "cloud_account_id--string--tag--false",
+                      "id": "cloud.account.id--string--tag--false",
                       "isColumn": false,
                       "isJSON": false,
-                      "key": "cloud_account_id",
+                      "key": "cloud.account.id",
                       "type": "tag"
                     },
                     "op": "=",

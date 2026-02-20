@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	metricToUseForNodes = GetDotMetrics("k8s_node_cpu_usage")
+	metricToUseForNodes = MetricKey("k8s_node_cpu_usage")
 
-	nodeAttrsToEnrich = []string{GetDotMetrics("k8s_node_name"), GetDotMetrics("k8s_node_uid"), GetDotMetrics("k8s_cluster_name")}
+	nodeAttrsToEnrich = []string{MetricKey("k8s_node_name"), MetricKey("k8s_node_uid"), MetricKey("k8s_cluster_name")}
 
-	k8sNodeGroupAttrKey = GetDotMetrics("k8s_node_name")
+	k8sNodeGroupAttrKey = MetricKey("k8s_node_name")
 
 	queryNamesForNodes = map[string][]string{
 		"cpu":                {"A"},
@@ -34,11 +34,11 @@ var (
 	nodeQueryNames = []string{"A", "B", "C", "D", "E", "F"}
 
 	metricNamesForNodes = map[string]string{
-		"cpu":                GetDotMetrics("k8s_node_cpu_usage"),
-		"cpu_allocatable":    GetDotMetrics("k8s_node_allocatable_cpu"),
-		"memory":             GetDotMetrics("k8s_node_memory_working_set"),
-		"memory_allocatable": GetDotMetrics("k8s_node_allocatable_memory"),
-		"node_condition":     GetDotMetrics("k8s_node_condition_ready"),
+		"cpu":                MetricKey("k8s_node_cpu_usage"),
+		"cpu_allocatable":    MetricKey("k8s_node_allocatable_cpu"),
+		"memory":             MetricKey("k8s_node_memory_working_set"),
+		"memory_allocatable": MetricKey("k8s_node_allocatable_memory"),
+		"node_condition":     MetricKey("k8s_node_condition_ready"),
 	}
 )
 

@@ -38,54 +38,25 @@ export const getStatefulSetMetricsQueryPayload = (
 	statefulSet: K8sStatefulSetsData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sStatefulSetNameKey = dotMetricsEnabled
-		? 'k8s.statefulset.name'
-		: 'k8s_statefulset_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
+	const k8sStatefulSetNameKey = 'k8s.statefulset.name';
+	const k8sNamespaceNameKey = 'k8s.namespace.name';
+	const k8sPodNameKey = 'k8s.pod.name';
 
-	const k8sPodCpuUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const k8sContainerCpuRequestKey = dotMetricsEnabled
-		? 'k8s.container.cpu_request'
-		: 'k8s_container_cpu_request';
-	const k8sContainerCpuLimitKey = dotMetricsEnabled
-		? 'k8s.container.cpu_limit'
-		: 'k8s_container_cpu_limit';
-	const k8sPodCpuReqUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu_request_utilization'
-		: 'k8s_pod_cpu_request_utilization';
-	const k8sPodCpuLimitUtilKey = dotMetricsEnabled
-		? 'k8s.pod.cpu_limit_utilization'
-		: 'k8s_pod_cpu_limit_utilization';
+	const k8sPodCpuUtilKey = 'k8s.pod.cpu.usage';
+	const k8sContainerCpuRequestKey = 'k8s.container.cpu_request';
+	const k8sContainerCpuLimitKey = 'k8s.container.cpu_limit';
+	const k8sPodCpuReqUtilKey = 'k8s.pod.cpu_request_utilization';
+	const k8sPodCpuLimitUtilKey = 'k8s.pod.cpu_limit_utilization';
 
-	const k8sPodMemUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-	const k8sContainerMemRequestKey = dotMetricsEnabled
-		? 'k8s.container.memory_request'
-		: 'k8s_container_memory_request';
-	const k8sContainerMemLimitKey = dotMetricsEnabled
-		? 'k8s.container.memory_limit'
-		: 'k8s_container_memory_limit';
-	const k8sPodMemReqUtilKey = dotMetricsEnabled
-		? 'k8s.pod.memory_request_utilization'
-		: 'k8s_pod_memory_request_utilization';
-	const k8sPodMemLimitUtilKey = dotMetricsEnabled
-		? 'k8s.pod.memory_limit_utilization'
-		: 'k8s_pod_memory_limit_utilization';
+	const k8sPodMemUsageKey = 'k8s.pod.memory.usage';
+	const k8sContainerMemRequestKey = 'k8s.container.memory_request';
+	const k8sContainerMemLimitKey = 'k8s.container.memory_limit';
+	const k8sPodMemReqUtilKey = 'k8s.pod.memory_request_utilization';
+	const k8sPodMemLimitUtilKey = 'k8s.pod.memory_limit_utilization';
 
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
+	const k8sPodNetworkIoKey = 'k8s.pod.network.io';
+	const k8sPodNetworkErrorsKey = 'k8s.pod.network.errors';
 
 	return [
 		{

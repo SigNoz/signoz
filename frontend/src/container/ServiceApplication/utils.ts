@@ -26,7 +26,6 @@ export function getSeriesValue(
 export const getQueryRangeRequestData = ({
 	topLevelOperations,
 	globalSelectedInterval,
-	dotMetricsEnabled,
 }: GetQueryRangeRequestDataProps): GetQueryResultsProps[] => {
 	const requestData: GetQueryResultsProps[] = [];
 	topLevelOperations.forEach((operation) => {
@@ -34,7 +33,7 @@ export const getQueryRangeRequestData = ({
 			query: {
 				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				builder: serviceMetricsQuery(operation, dotMetricsEnabled),
+				builder: serviceMetricsQuery(operation),
 				clickhouse_sql: [],
 				id: uuid(),
 			},

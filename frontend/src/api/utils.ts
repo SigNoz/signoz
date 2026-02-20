@@ -25,7 +25,7 @@ export const Logout = async (): Promise<void> => {
 	history.push(ROUTES.LOGIN);
 };
 
-export const UnderscoreToDotMap: Record<string, string> = {
+export const AttributeKeyMap: Record<string, string> = {
 	k8s_cluster_name: 'k8s.cluster.name',
 	k8s_cluster_uid: 'k8s.cluster.uid',
 	k8s_namespace_name: 'k8s.namespace.name',

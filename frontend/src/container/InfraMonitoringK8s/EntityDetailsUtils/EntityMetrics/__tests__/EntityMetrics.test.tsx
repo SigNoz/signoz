@@ -97,12 +97,7 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 			plan_version: 'test-plan-version',
 		},
 	},
-	featureFlags: [
-		{
-			name: 'DOT_METRICS_ENABLED',
-			active: false,
-		},
-	],
+	featureFlags: [],
 } as any);
 
 const mockEntity = {
@@ -385,7 +380,6 @@ describe('EntityMetrics', () => {
 			mockEntity,
 			mockTimeRange.startTime,
 			mockTimeRange.endTime,
-			false,
 		);
 	});
 });

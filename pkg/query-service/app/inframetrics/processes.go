@@ -21,15 +21,15 @@ var (
 		"memory": {"C"},
 	}
 
-	processPIDAttrKey       = GetDotMetrics("process_pid")
+	processPIDAttrKey       = MetricKey("process_pid")
 	metricNamesForProcesses = map[string]string{
-		"cpu":    GetDotMetrics("process_cpu_time"),
-		"memory": GetDotMetrics("process_memory_usage"),
+		"cpu":    MetricKey("process_cpu_time"),
+		"memory": MetricKey("process_memory_usage"),
 	}
-	metricToUseForProcessAttributes = GetDotMetrics("process_memory_usage")
-	processNameAttrKey              = GetDotMetrics("process_executable_name")
-	processCMDAttrKey               = GetDotMetrics("process_command")
-	processCMDLineAttrKey           = GetDotMetrics("process_command_line")
+	metricToUseForProcessAttributes = MetricKey("process_memory_usage")
+	processNameAttrKey              = MetricKey("process_executable_name")
+	processCMDAttrKey               = MetricKey("process_command")
+	processCMDLineAttrKey           = MetricKey("process_command_line")
 )
 
 type ProcessesRepo struct {
@@ -44,7 +44,7 @@ func NewProcessesRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *P
 func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
+	req.AggregateAttribute = MetricKey("process_memory_usage")
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -69,7 +69,7 @@ func (p *ProcessesRepo) GetProcessAttributeKeys(ctx context.Context, req v3.Filt
 
 func (p *ProcessesRepo) GetProcessAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	req.DataSource = v3.DataSourceMetrics
-	req.AggregateAttribute = GetDotMetrics("process_memory_usage")
+	req.AggregateAttribute = MetricKey("process_memory_usage")
 	if req.Limit == 0 {
 		req.Limit = 50
 	}
@@ -85,7 +85,7 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 	req model.ProcessListRequest) (map[string]map[string]string, error) {
 	processAttrs := map[string]map[string]string{}
 
-	keysToAdd := []string{GetDotMetrics("process_pid"), GetDotMetrics("process_executable_name"), GetDotMetrics("process_command"), GetDotMetrics("process_command_line")}
+	keysToAdd := []string{MetricKey("process_pid"), MetricKey("process_executable_name"), MetricKey("process_command"), MetricKey("process_command_line")}
 	for _, key := range keysToAdd {
 		hasKey := false
 		for _, groupByKey := range req.GroupBy {

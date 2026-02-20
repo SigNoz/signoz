@@ -30,45 +30,26 @@ export const getDeploymentMetricsQueryPayload = (
 	deployment: K8sDeploymentsData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
+	const k8sPodCpuUtilizationKey = 'k8s.pod.cpu.usage';
 
-	const k8sContainerCpuRequestKey = dotMetricsEnabled
-		? 'k8s.container.cpu_request'
-		: 'k8s_container_cpu_request';
+	const k8sContainerCpuRequestKey = 'k8s.container.cpu_request';
 
-	const k8sContainerCpuLimitKey = dotMetricsEnabled
-		? 'k8s.container.cpu_limit'
-		: 'k8s_container_cpu_limit';
+	const k8sContainerCpuLimitKey = 'k8s.container.cpu_limit';
 
-	const k8sPodMemoryUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
+	const k8sPodMemoryUsageKey = 'k8s.pod.memory.usage';
 
-	const k8sContainerMemoryRequestKey = dotMetricsEnabled
-		? 'k8s.container.memory_request'
-		: 'k8s_container_memory_request';
+	const k8sContainerMemoryRequestKey = 'k8s.container.memory_request';
 
-	const k8sContainerMemoryLimitKey = dotMetricsEnabled
-		? 'k8s.container.memory_limit'
-		: 'k8s_container_memory_limit';
+	const k8sContainerMemoryLimitKey = 'k8s.container.memory_limit';
 
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
+	const k8sPodNetworkIoKey = 'k8s.pod.network.io';
 
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
+	const k8sPodNetworkErrorsKey = 'k8s.pod.network.errors';
 
-	const k8sDeploymentNameKey = dotMetricsEnabled
-		? 'k8s.deployment.name'
-		: 'k8s_deployment_name';
+	const k8sDeploymentNameKey = 'k8s.deployment.name';
 
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
+	const k8sPodNameKey = 'k8s.pod.name';
 
 	return [
 		{

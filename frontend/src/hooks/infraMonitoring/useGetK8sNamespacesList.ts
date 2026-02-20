@@ -15,7 +15,6 @@ type UseGetK8sNamespacesList = (
 		Error
 	>,
 	headers?: Record<string, string>,
-	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sNamespacesListResponse> | ErrorResponse,
 	Error
@@ -25,7 +24,6 @@ export const useGetK8sNamespacesList: UseGetK8sNamespacesList = (
 	requestData,
 	options,
 	headers,
-	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -43,8 +41,7 @@ export const useGetK8sNamespacesList: UseGetK8sNamespacesList = (
 		SuccessResponse<K8sNamespacesListResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) =>
-			getK8sNamespacesList(requestData, signal, headers, dotMetricsEnabled),
+		queryFn: ({ signal }) => getK8sNamespacesList(requestData, signal, headers),
 		...options,
 		queryKey,
 	});

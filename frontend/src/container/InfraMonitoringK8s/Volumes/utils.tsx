@@ -142,7 +142,7 @@ export const getK8sVolumesListColumns = (
 	return columnsConfig as ColumnType<K8sVolumesRowData>[];
 };
 
-const dotToUnder: Record<string, keyof K8sVolumesData['meta']> = {
+const attributeToMetaKey: Record<string, keyof K8sVolumesData['meta']> = {
 	'k8s.namespace.name': 'k8s_namespace_name',
 	'k8s.node.name': 'k8s_node_name',
 	'k8s.pod.name': 'k8s_pod_name',
@@ -161,7 +161,8 @@ const getGroupByEle = (
 	groupBy.forEach((group) => {
 		const rawKey = group.key as string;
 
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof volume.meta;
+		const metaKey = (attributeToMetaKey[rawKey] ??
+			rawKey) as keyof typeof volume.meta;
 
 		const value = volume.meta[metaKey];
 

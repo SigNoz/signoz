@@ -3,7 +3,6 @@ package constants
 import (
 	"maps"
 	"os"
-	"regexp"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -34,11 +33,6 @@ var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templa
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
 
-const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
-const NormalizedMetricsMapQueryThreads = 10
-
-var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
-var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
 func GetEvalDelay() valuer.TextDuration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
@@ -677,15 +671,11 @@ var OldToNewTraceFieldsMap = map[string]string{
 
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
-var IsDotMetricsEnabled = false
 var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
-	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
-		IsDotMetricsEnabled = true
-	}
 
 	// set max flattening depth
 	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))
@@ -714,5 +704,4 @@ var MaterializedDataTypeMap = map[string]string{
 
 const InspectMetricsMaxTimeDiff = 1800000
 
-const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"

@@ -211,32 +211,18 @@ export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 ];
 
-export function GetHostsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	// These keys don’t change with dotMetricsEnabled
-	const hostNameKey = dotMetricsEnabled ? 'host.name' : 'host_name';
-	const osTypeKey = dotMetricsEnabled ? 'os.type' : 'os_type';
-	// This metric stays the same regardless of notation
-	const metricName = dotMetricsEnabled
-		? 'system.cpu.load_average.15m'
-		: 'system_cpu_load_average_15m';
-
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetHostsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Host Name',
 			attributeKey: {
-				key: hostNameKey,
+				key: 'host.name',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'system.cpu.load_average.15m',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -244,12 +230,12 @@ export function GetHostsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'OS Type',
 			attributeKey: {
-				key: osTypeKey,
+				key: 'os.type',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'system.cpu.load_average.15m',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -257,7 +243,7 @@ export function GetHostsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},

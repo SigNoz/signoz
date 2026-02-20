@@ -16,8 +16,6 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import {
 	getHostQueryPayload,
 	getNodeQueryPayload,
@@ -52,23 +50,12 @@ function NodeMetrics({
 		};
 	}, [timestamp]);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const queryPayloads = useMemo(() => {
 		if (nodeName) {
-			return getNodeQueryPayload(
-				clusterName,
-				nodeName,
-				start,
-				end,
-				dotMetricsEnabled,
-			);
+			return getNodeQueryPayload(clusterName, nodeName, start, end);
 		}
-		return getHostQueryPayload(hostName, start, end, dotMetricsEnabled);
-	}, [nodeName, hostName, clusterName, start, end, dotMetricsEnabled]);
+		return getHostQueryPayload(hostName, start, end);
+	}, [nodeName, hostName, clusterName, start, end]);
 
 	const widgetInfo = nodeName ? nodeWidgetInfo : hostWidgetInfo;
 	const queries = useQueries(

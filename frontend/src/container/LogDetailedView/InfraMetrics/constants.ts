@@ -10,48 +10,21 @@ export const getPodQueryPayload = (
 	podName: string,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
-		: 'k8s_cluster_name';
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
-	const containerCpuUtilKey = dotMetricsEnabled
-		? 'container.cpu.usage'
-		: 'container_cpu_usage';
-	const containerMemUsageKey = dotMetricsEnabled
-		? 'container.memory.usage'
-		: 'container_memory_usage';
-	const k8sContainerCpuReqKey = dotMetricsEnabled
-		? 'k8s.container.cpu_request'
-		: 'k8s_container_cpu_request';
-	const k8sContainerCpuLimitKey = dotMetricsEnabled
-		? 'k8s.container.cpu_limit'
-		: 'k8s_container_cpu_limit';
-	const k8sContainerMemReqKey = dotMetricsEnabled
-		? 'k8s.container.memory_request'
-		: 'k8s_container_memory_request';
-	const k8sContainerMemLimitKey = dotMetricsEnabled
-		? 'k8s.container.memory_limit'
-		: 'k8s_container_memory_limit';
-	const k8sPodFsAvailKey = dotMetricsEnabled
-		? 'k8s.pod.filesystem.available'
-		: 'k8s_pod_filesystem_available';
-	const k8sPodFsCapKey = dotMetricsEnabled
-		? 'k8s.pod.filesystem.capacity'
-		: 'k8s_pod_filesystem_capacity';
-	const k8sPodNetIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-	const podLegendTemplate = dotMetricsEnabled
-		? '{{k8s.pod.name}}'
-		: '{{k8s_pod_name}}';
-	const podLegendUsage = dotMetricsEnabled
-		? 'usage - {{k8s.pod.name}}'
-		: 'usage - {{k8s_pod_name}}';
-	const podLegendLimit = dotMetricsEnabled
-		? 'limit - {{k8s.pod.name}}'
-		: 'limit - {{k8s_pod_name}}';
+	const k8sClusterNameKey = 'k8s.cluster.name';
+	const k8sPodNameKey = 'k8s.pod.name';
+	const containerCpuUtilKey = 'container.cpu.usage';
+	const containerMemUsageKey = 'container.memory.usage';
+	const k8sContainerCpuReqKey = 'k8s.container.cpu_request';
+	const k8sContainerCpuLimitKey = 'k8s.container.cpu_limit';
+	const k8sContainerMemReqKey = 'k8s.container.memory_request';
+	const k8sContainerMemLimitKey = 'k8s.container.memory_limit';
+	const k8sPodFsAvailKey = 'k8s.pod.filesystem.available';
+	const k8sPodFsCapKey = 'k8s.pod.filesystem.capacity';
+	const k8sPodNetIoKey = 'k8s.pod.network.io';
+	const podLegendTemplate = '{{k8s.pod.name}}';
+	const podLegendUsage = 'usage - {{k8s.pod.name}}';
+	const podLegendLimit = 'limit - {{k8s.pod.name}}';
 
 	return [
 		{
@@ -1028,36 +1001,17 @@ export const getNodeQueryPayload = (
 	nodeName: string,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
-		: 'k8s_cluster_name';
-	const k8sNodeNameKey = dotMetricsEnabled ? 'k8s.node.name' : 'k8s_node_name';
-	const k8sNodeCpuTimeKey = dotMetricsEnabled
-		? 'k8s.node.cpu.time'
-		: 'k8s_node_cpu_time';
-	const k8sNodeAllocCpuKey = dotMetricsEnabled
-		? 'k8s.node.allocatable_cpu'
-		: 'k8s_node_allocatable_cpu';
-	const k8sNodeMemWsKey = dotMetricsEnabled
-		? 'k8s.node.memory.working_set'
-		: 'k8s_node_memory_working_set';
-	const k8sNodeAllocMemKey = dotMetricsEnabled
-		? 'k8s.node.allocatable_memory'
-		: 'k8s_node_allocatable_memory';
-	const k8sNodeNetIoKey = dotMetricsEnabled
-		? 'k8s.node.network.io'
-		: 'k8s_node_network_io';
-	const k8sNodeFsAvailKey = dotMetricsEnabled
-		? 'k8s.node.filesystem.available'
-		: 'k8s_node_filesystem_available';
-	const k8sNodeFsCapKey = dotMetricsEnabled
-		? 'k8s.node.filesystem.capacity'
-		: 'k8s_node_filesystem_capacity';
-	const podLegend = dotMetricsEnabled
-		? '{{k8s.node.name}}'
-		: '{{k8s_node_name}}';
+	const k8sClusterNameKey = 'k8s.cluster.name';
+	const k8sNodeNameKey = 'k8s.node.name';
+	const k8sNodeCpuTimeKey = 'k8s.node.cpu.time';
+	const k8sNodeAllocCpuKey = 'k8s.node.allocatable_cpu';
+	const k8sNodeMemWsKey = 'k8s.node.memory.working_set';
+	const k8sNodeAllocMemKey = 'k8s.node.allocatable_memory';
+	const k8sNodeNetIoKey = 'k8s.node.network.io';
+	const k8sNodeFsAvailKey = 'k8s.node.filesystem.available';
+	const k8sNodeFsCapKey = 'k8s.node.filesystem.capacity';
+	const podLegend = '{{k8s.node.name}}';
 
 	return [
 		{
@@ -1587,42 +1541,21 @@ export const getHostQueryPayload = (
 	hostName: string,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const hostNameKey = dotMetricsEnabled ? 'host.name' : 'host_name';
-	const cpuTimeKey = dotMetricsEnabled ? 'system.cpu.time' : 'system_cpu_time';
-	const memUsageKey = dotMetricsEnabled
-		? 'system.memory.usage'
-		: 'system_memory_usage';
-	const load1mKey = dotMetricsEnabled
-		? 'system.cpu.load_average.1m'
-		: 'system_cpu_load_average_1m';
-	const load5mKey = dotMetricsEnabled
-		? 'system.cpu.load_average.5m'
-		: 'system_cpu_load_average_5m';
-	const load15mKey = dotMetricsEnabled
-		? 'system.cpu.load_average.15m'
-		: 'system_cpu_load_average_15m';
-	const netIoKey = dotMetricsEnabled ? 'system.network.io' : 'system_network_io';
-	const netPktsKey = dotMetricsEnabled
-		? 'system.network.packets'
-		: 'system_network_packets';
-	const netErrKey = dotMetricsEnabled
-		? 'system.network.errors'
-		: 'system_network_errors';
-	const netDropKey = dotMetricsEnabled
-		? 'system.network.dropped'
-		: 'system_network_dropped';
-	const netConnKey = dotMetricsEnabled
-		? 'system.network.connections'
-		: 'system_network_connections';
-	const diskIoKey = dotMetricsEnabled ? 'system.disk.io' : 'system_disk_io';
-	const diskOpTimeKey = dotMetricsEnabled
-		? 'system.disk.operation_time'
-		: 'system_disk_operation_time';
-	const diskPendingKey = dotMetricsEnabled
-		? 'system.disk.pending_operations'
-		: 'system_disk_pending_operations';
+	const hostNameKey = 'host.name';
+	const cpuTimeKey = 'system.cpu.time';
+	const memUsageKey = 'system.memory.usage';
+	const load1mKey = 'system.cpu.load_average.1m';
+	const load5mKey = 'system.cpu.load_average.5m';
+	const load15mKey = 'system.cpu.load_average.15m';
+	const netIoKey = 'system.network.io';
+	const netPktsKey = 'system.network.packets';
+	const netErrKey = 'system.network.errors';
+	const netDropKey = 'system.network.dropped';
+	const netConnKey = 'system.network.connections';
+	const diskIoKey = 'system.disk.io';
+	const diskOpTimeKey = 'system.disk.operation_time';
+	const diskPendingKey = 'system.disk.pending_operations';
 
 	return [
 		{

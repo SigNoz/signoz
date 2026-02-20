@@ -46,95 +46,34 @@ export const getClusterMetricsQueryPayload = (
 	cluster: K8sClustersData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const getKey = (dotKey: string, underscoreKey: string): string =>
-		dotMetricsEnabled ? dotKey : underscoreKey;
-	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.usage',
-		'k8s_pod_cpu_usage',
-	);
-	const k8sNodeAllocatableCpuKey = getKey(
-		'k8s.node.allocatable_cpu',
-		'k8s_node_allocatable_cpu',
-	);
-	const k8sPodMemoryUsageKey = getKey(
-		'k8s.pod.memory.usage',
-		'k8s_pod_memory_usage',
-	);
-	const k8sNodeAllocatableMemoryKey = getKey(
-		'k8s.node.allocatable_memory',
-		'k8s_node_allocatable_memory',
-	);
-	const k8sNodeConditionReadyKey = getKey(
-		'k8s.node.condition_ready',
-		'k8s_node_condition_ready',
-	);
-	const k8sDeploymentAvailableKey = getKey(
-		'k8s.deployment.available',
-		'k8s_deployment_available',
-	);
-	const k8sDeploymentDesiredKey = getKey(
-		'k8s.deployment.desired',
-		'k8s_deployment_desired',
-	);
-	const k8sStatefulsetCurrentPodsKey = getKey(
-		'k8s.statefulset.current_pods',
-		'k8s_statefulset_current_pods',
-	);
-	const k8sStatefulsetDesiredPodsKey = getKey(
-		'k8s.statefulset.desired_pods',
-		'k8s_statefulset_desired_pods',
-	);
-	const k8sStatefulsetReadyPodsKey = getKey(
-		'k8s.statefulset.ready_pods',
-		'k8s_statefulset_ready_pods',
-	);
-	const k8sStatefulsetUpdatedPodsKey = getKey(
-		'k8s.statefulset.updated_pods',
-		'k8s_statefulset_updated_pods',
-	);
-	const k8sDaemonsetCurrentScheduledNodesKey = getKey(
-		'k8s.daemonset.current_scheduled_nodes',
-		'k8s_daemonset_current_scheduled_nodes',
-	);
-	const k8sDaemonsetDesiredScheduledNodesKey = getKey(
-		'k8s.daemonset.desired_scheduled_nodes',
-		'k8s_daemonset_desired_scheduled_nodes',
-	);
-	const k8sDaemonsetReadyNodesKey = getKey(
-		'k8s.daemonset.ready_nodes',
-		'k8s_daemonset_ready_nodes',
-	);
-	const k8sJobActivePodsKey = getKey(
-		'k8s.job.active_pods',
-		'k8s_job_active_pods',
-	);
-	const k8sJobSuccessfulPodsKey = getKey(
-		'k8s.job.successful_pods',
-		'k8s_job_successful_pods',
-	);
-	const k8sJobFailedPodsKey = getKey(
-		'k8s.job.failed_pods',
-		'k8s_job_failed_pods',
-	);
-	const k8sJobDesiredSuccessfulPodsKey = getKey(
-		'k8s.job.desired_successful_pods',
-		'k8s_job_desired_successful_pods',
-	);
-	const k8sClusterNameKey = getKey('k8s.cluster.name', 'k8s_cluster_name');
-	const k8sNodeNameKey = getKey('k8s.node.name', 'k8s_node_name');
-	const k8sDeploymentNameKey = getKey(
-		'k8s.deployment.name',
-		'k8s_deployment_name',
-	);
-	const k8sNamespaceNameKey = getKey('k8s.namespace.name', 'k8s_namespace_name');
-	const k8sStatefulsetNameKey = getKey(
-		'k8s.statefulset.name',
-		'k8s_statefulset_name',
-	);
-	const k8sDaemonsetNameKey = getKey('k8s.daemonset.name', 'k8s_daemonset_name');
-	const k8sJobNameKey = getKey('k8s.job.name', 'k8s_job_name');
+	const k8sPodCpuUtilizationKey = 'k8s.pod.cpu.usage';
+	const k8sNodeAllocatableCpuKey = 'k8s.node.allocatable_cpu';
+	const k8sPodMemoryUsageKey = 'k8s.pod.memory.usage';
+	const k8sNodeAllocatableMemoryKey = 'k8s.node.allocatable_memory';
+	const k8sNodeConditionReadyKey = 'k8s.node.condition_ready';
+	const k8sDeploymentAvailableKey = 'k8s.deployment.available';
+	const k8sDeploymentDesiredKey = 'k8s.deployment.desired';
+	const k8sStatefulsetCurrentPodsKey = 'k8s.statefulset.current_pods';
+	const k8sStatefulsetDesiredPodsKey = 'k8s.statefulset.desired_pods';
+	const k8sStatefulsetReadyPodsKey = 'k8s.statefulset.ready_pods';
+	const k8sStatefulsetUpdatedPodsKey = 'k8s.statefulset.updated_pods';
+	const k8sDaemonsetCurrentScheduledNodesKey =
+		'k8s.daemonset.current_scheduled_nodes';
+	const k8sDaemonsetDesiredScheduledNodesKey =
+		'k8s.daemonset.desired_scheduled_nodes';
+	const k8sDaemonsetReadyNodesKey = 'k8s.daemonset.ready_nodes';
+	const k8sJobActivePodsKey = 'k8s.job.active_pods';
+	const k8sJobSuccessfulPodsKey = 'k8s.job.successful_pods';
+	const k8sJobFailedPodsKey = 'k8s.job.failed_pods';
+	const k8sJobDesiredSuccessfulPodsKey = 'k8s.job.desired_successful_pods';
+	const k8sClusterNameKey = 'k8s.cluster.name';
+	const k8sNodeNameKey = 'k8s.node.name';
+	const k8sDeploymentNameKey = 'k8s.deployment.name';
+	const k8sNamespaceNameKey = 'k8s.namespace.name';
+	const k8sStatefulsetNameKey = 'k8s.statefulset.name';
+	const k8sDaemonsetNameKey = 'k8s.daemonset.name';
+	const k8sJobNameKey = 'k8s.job.name';
 
 	return [
 		{

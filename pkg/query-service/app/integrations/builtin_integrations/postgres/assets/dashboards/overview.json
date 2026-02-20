@@ -117,9 +117,9 @@
             "key": "4250ef7b-8f42-4a24-902a-a764d070b92d",
             "modificationUUID": "4427b655-c8d2-40ce-84ed-7cb058bd3041",
             "multiSelect": true,
-            "name": "host_name",
+            "name": "host.name",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql_operations'\nGROUP BY host_name",
+            "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations'\nGROUP BY `host.name`",
             "selectedValue": [
                 "Srikanths-MacBook-Pro.local"
             ],
@@ -135,9 +135,9 @@
             "id": "8ecaee70-640f-46fd-83d9-a4fd18bc66e6",
             "modificationUUID": "a51321cd-47a2-470a-8df4-372e5bb36f2c",
             "multiSelect": true,
-            "name": "table_name",
+            "name": "table.name",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'postgresql_table_name') AS table_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql_operations' AND JSONExtractString(labels, 'postgresql_database_name') IN {{.db_name}}\nGROUP BY table_name",
+            "queryValue": "SELECT JSONExtractString(labels, 'postgresql.table.name') AS `table.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations' AND JSONExtractString(labels, 'postgresql.database.name') IN {{.db.name}}\nGROUP BY `table.name`",
             "selectedValue": [
                 "public.activations",
                 "public.licenses",
@@ -160,9 +160,9 @@
             "key": "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd",
             "modificationUUID": "564a3f43-98f8-4189-b5e4-dcb518d73852",
             "multiSelect": true,
-            "name": "db_name",
+            "name": "db.name",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'postgresql_database_name') AS db_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql_operations'\nGROUP BY db_name",
+            "queryValue": "SELECT JSONExtractString(labels, 'postgresql.database.name') AS `db.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql.operations'\nGROUP BY `db.name`",
             "selectedValue": [
                 "postgres"
             ],
@@ -188,7 +188,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -199,22 +199,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(operation = 'ins' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'ins' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_database_name}}",
+                            "legend": "{{postgresql.database.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -263,7 +263,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -274,22 +274,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(operation = 'upd' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_database_name}}",
+                            "legend": "{{postgresql.database.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -338,7 +338,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -349,22 +349,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(operation = 'del' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'del' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_database_name}}",
+                            "legend": "{{postgresql.database.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -413,7 +413,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -424,22 +424,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(operation = 'hot_upd' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'hot_upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_database_name}}",
+                            "legend": "{{postgresql.database.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -488,7 +488,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -499,15 +499,15 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(operation = 'ins' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'ins' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
@@ -523,7 +523,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -534,15 +534,15 @@
                             "disabled": false,
                             "expression": "B",
                             "filter": {
-                                "expression": "(operation = 'upd' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'upd' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
@@ -558,7 +558,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_operations",
+                                    "metricName": "postgresql.operations",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -569,15 +569,15 @@
                             "disabled": false,
                             "expression": "C",
                             "filter": {
-                                "expression": "(operation = 'del' AND host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(operation = 'del' AND host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
@@ -633,7 +633,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_database_locks",
+                                    "metricName": "postgresql.database.locks",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -644,7 +644,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -708,7 +708,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_deadlocks",
+                                    "metricName": "postgresql.deadlocks",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -719,22 +719,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_database_name}}",
+                            "legend": "{{postgresql.database.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -783,7 +783,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_backends",
+                                    "metricName": "postgresql.backends",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -794,22 +794,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND postgresql_database_name IN $db_name)"
+                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_database_name--string--tag--false",
+                                    "id": "postgresql.database.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_database_name",
+                                    "key": "postgresql.database.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_database_name}}",
+                            "legend": "{{postgresql.database.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -858,7 +858,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_rows",
+                                    "metricName": "postgresql.rows",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -869,7 +869,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(state = 'dead' AND host_name IN $host_name AND postgresql_database_name IN $db_name AND postgresql_table_name IN $table_name)"
+                                "expression": "(state = 'dead' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
                             },
                             "groupBy": [],
                             "having": {
@@ -924,7 +924,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_index_scans",
+                                    "metricName": "postgresql.index.scans",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -935,22 +935,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND postgresql_database_name IN $db_name AND postgresql_table_name IN $table_name)"
+                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_index_name--string--tag--false",
+                                    "id": "postgresql.index.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_index_name",
+                                    "key": "postgresql.index.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{postgresql_index_name}}",
+                            "legend": "{{postgresql.index.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -999,7 +999,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_rows",
+                                    "metricName": "postgresql.rows",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -1010,15 +1010,15 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(state = 'dead' AND host_name IN $host_name AND postgresql_database_name IN $db_name AND postgresql_table_name IN $table_name)"
+                                "expression": "(state = 'dead' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_table_name--string--tag--false",
+                                    "id": "postgresql.table.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_table_name",
+                                    "key": "postgresql.table.name",
                                     "type": "tag"
                                 }
                             ],
@@ -1034,7 +1034,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_rows",
+                                    "metricName": "postgresql.rows",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -1045,15 +1045,15 @@
                             "disabled": false,
                             "expression": "B",
                             "filter": {
-                                "expression": "(state = 'live' AND host_name IN $host_name AND postgresql_database_name IN $db_name AND postgresql_table_name IN $table_name)"
+                                "expression": "(state = 'live' AND host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_table_name--string--tag--false",
+                                    "id": "postgresql.table.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_table_name",
+                                    "key": "postgresql.table.name",
                                     "type": "tag"
                                 }
                             ],
@@ -1069,7 +1069,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_index_scans",
+                                    "metricName": "postgresql.index.scans",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1080,15 +1080,15 @@
                             "disabled": false,
                             "expression": "C",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND postgresql_database_name IN $db_name AND postgresql_table_name IN $table_name)"
+                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_table_name--string--tag--false",
+                                    "id": "postgresql.table.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_table_name",
+                                    "key": "postgresql.table.name",
                                     "type": "tag"
                                 }
                             ],
@@ -1104,7 +1104,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "postgresql_table_size",
+                                    "metricName": "postgresql.table.size",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -1115,15 +1115,15 @@
                             "disabled": false,
                             "expression": "D",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND postgresql_database_name IN $db_name AND postgresql_table_name IN $table_name)"
+                                "expression": "(host.name IN $host.name AND postgresql.database.name IN $db.name AND postgresql.table.name IN $table.name)"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "postgresql_table_name--string--tag--false",
+                                    "id": "postgresql.table.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "postgresql_table_name",
+                                    "key": "postgresql.table.name",
                                     "type": "tag"
                                 }
                             ],

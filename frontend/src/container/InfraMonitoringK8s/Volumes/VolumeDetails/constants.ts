@@ -34,38 +34,17 @@ export const getVolumeQueryPayload = (
 	volume: K8sVolumesData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
-		: 'k8s_cluster_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const k8sVolumeAvailableKey = dotMetricsEnabled
-		? 'k8s.volume.available'
-		: 'k8s_volume_available';
-	const k8sVolumeCapacityKey = dotMetricsEnabled
-		? 'k8s.volume.capacity'
-		: 'k8s_volume_capacity';
-	const k8sVolumeInodesUsedKey = dotMetricsEnabled
-		? 'k8s.volume.inodes.used'
-		: 'k8s_volume_inodes_used';
-	const k8sVolumeInodesKey = dotMetricsEnabled
-		? 'k8s.volume.inodes'
-		: 'k8s_volume_inodes';
-	const k8sVolumeInodesFreeKey = dotMetricsEnabled
-		? 'k8s.volume.inodes.free'
-		: 'k8s_volume_inodes_free';
-	const k8sVolumeTypeKey = dotMetricsEnabled
-		? 'k8s.volume.type'
-		: 'k8s_volume_type';
-	const k8sPVCNameKey = dotMetricsEnabled
-		? 'k8s.persistentvolumeclaim.name'
-		: 'k8s_persistentvolumeclaim_name';
-	const legendTemplate = dotMetricsEnabled
-		? '{{k8s.namespace.name}}-{{k8s.pod.name}}'
-		: '{{k8s_namespace_name}}-{{k8s_pod_name}}';
+	const k8sClusterNameKey = 'k8s.cluster.name';
+	const k8sNamespaceNameKey = 'k8s.namespace.name';
+	const k8sVolumeAvailableKey = 'k8s.volume.available';
+	const k8sVolumeCapacityKey = 'k8s.volume.capacity';
+	const k8sVolumeInodesUsedKey = 'k8s.volume.inodes.used';
+	const k8sVolumeInodesKey = 'k8s.volume.inodes';
+	const k8sVolumeInodesFreeKey = 'k8s.volume.inodes.free';
+	const k8sVolumeTypeKey = 'k8s.volume.type';
+	const k8sPVCNameKey = 'k8s.persistentvolumeclaim.name';
+	const legendTemplate = '{{k8s.namespace.name}}-{{k8s.pod.name}}';
 
 	return [
 		{

@@ -3211,10 +3211,7 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 
 func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error) {
 	var response v3.AggregateAttributeResponse
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
 	query := fmt.Sprintf(
@@ -3341,10 +3338,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	// skips the internal attributes i.e attributes starting with __
 	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND __normalized = $3 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $4 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
@@ -3417,17 +3411,14 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 AND __normalized=$6 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	names := []string{req.AggregateAttribute}
-	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
+	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute))
 
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized)
 
@@ -5124,10 +5115,7 @@ func (r *ClickHouseReader) SubscribeToQueryProgress(
 func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest) (*[]v3.AttributeKey, *model.ApiError) {
 	var rows driver.Rows
 	var response []v3.AttributeKey
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 	query := fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE unix_milli >= $1 and __normalized = $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
@@ -5163,10 +5151,7 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 	var err error
 	var rows driver.Rows
 	var attributeValues []string
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE JSONExtractString(labels, $2) ILIKE $3 AND unix_milli >= $4 AND __normalized = $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
@@ -5310,10 +5295,7 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 			whereClause = "AND " + strings.Join(conditions, " AND ")
 		}
 	}
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	const baseQueryTemplate = `
 SELECT 
@@ -5405,10 +5387,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY %s %s", req.OrderBy.ColumnName, req.OrderBy.Order)
 	}
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	// Determine which tables to use
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
@@ -5603,10 +5582,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	var args []interface{}
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	// Build filters dynamically
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "")
@@ -5687,10 +5663,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	// Determine time range and tables to use
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
@@ -5842,10 +5815,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	query := fmt.Sprintf(`
 		SELECT 
@@ -5895,10 +5865,7 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := false
 
 	// Get target labels
 	extractedLabelsQuery := fmt.Sprintf(`
@@ -6554,89 +6521,3 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	return &searchSpansResult, nil
 }
 
-func (r *ClickHouseReader) GetNormalizedStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	metricNames []string,
-) (map[string]bool, error) {
-
-	if len(metricNames) == 0 {
-		return map[string]bool{}, nil
-	}
-
-	result := make(map[string]bool, len(metricNames))
-	buildKey := func(name string) string {
-		return constants.NormalizedMetricsMapCacheKey + ":" + name
-	}
-
-	uncached := make([]string, 0, len(metricNames))
-	for _, m := range metricNames {
-		var status model.MetricsNormalizedMap
-		if err := r.cache.Get(ctx, orgID, buildKey(m), &status); err == nil {
-			result[m] = status.IsUnNormalized
-		} else {
-			uncached = append(uncached, m)
-		}
-	}
-	if len(uncached) == 0 {
-		return result, nil
-	}
-
-	placeholders := "'" + strings.Join(uncached, "', '") + "'"
-
-	q := fmt.Sprintf(
-		`SELECT metric_name, toUInt8(__normalized)
-           FROM %s.%s
-          WHERE metric_name IN (%s)
-          GROUP BY metric_name, __normalized`,
-		signozMetricDBName, signozTSTableNameV41Day, placeholders,
-	)
-
-	rows, err := r.db.Query(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	// tmp[m] collects the set {0,1} for a metric name, truth table
-	tmp := make(map[string]map[uint8]struct{}, len(uncached))
-
-	for rows.Next() {
-		var (
-			name       string
-			normalized uint8
-		)
-		if err := rows.Scan(&name, &normalized); err != nil {
-			return nil, err
-		}
-		if _, ok := tmp[name]; !ok {
-			tmp[name] = make(map[uint8]struct{}, 2)
-		}
-		tmp[name][normalized] = struct{}{}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	for _, m := range uncached {
-		set := tmp[m]
-		switch {
-		case len(set) == 0:
-			return nil, fmt.Errorf("metric %q not found in ClickHouse", m)
-
-		case len(set) == 2:
-			result[m] = true
-
-		default:
-			_, hasUnnorm := set[0]
-			result[m] = hasUnnorm
-		}
-		status := model.MetricsNormalizedMap{
-			MetricName:     m,
-			IsUnNormalized: result[m],
-		}
-		_ = r.cache.Set(ctx, orgID, buildKey(m), &status, 0)
-	}
-
-	return result, nil
-}

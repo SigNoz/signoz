@@ -303,7 +303,6 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.Where(sb.ILike("temporality", query.Aggregations[0].Temporality.StringValue()))
 	}
 
-	// TODO configurable if we don't rollout the new un-normalized metrics
 	sb.Where(
 		sb.EQ("__normalized", false),
 	)
