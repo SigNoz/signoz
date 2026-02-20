@@ -20,8 +20,8 @@ import (
 //
 // Validation strategy:
 //   - IdentifierContext nodes are checked against validColumns (the SQL column name set).
-//   - FunctionCallContext nodes are always invalid after rewriting (valid calls were
-//     already replaced); their component tokens are reported as unknown.
+//   - FunctionCallContext nodes are checked as a unit: if the full call text is not a
+//     known SQL column name, the function name is reported as invalid.
 //   - FunctionArg children are not visited individually — they are part of a function
 //     call unit and are only reported when the whole call is rejected.
 type havingExpressionSemanticValidator struct {
@@ -55,32 +55,19 @@ func (v *havingExpressionSemanticValidator) Visit(tree antlr.ParseTree) {
 	}
 }
 
-// visitFunctionCall reports any remaining function call as invalid.
-// After rewriting, all valid function-call references (e.g. "sum(bytes)") have
-// already been replaced with SQL column names, so any function call seen here
-// was not in the column map. Report the function name as invalid; for args,
-// only report those that are not valid column references (e.g. sum(__result_0)
-// should report only "sum", since __result_0 is a valid column).
+// visitFunctionCall checks whether a function call is a known reference. After rewriting,
+// all valid function-call references (e.g. "sum(bytes)") have been replaced with SQL
+// column names, so any function call seen here was not in the column map. The function
+// name is reported as invalid.
 func (v *havingExpressionSemanticValidator) visitFunctionCall(ctx *grammar.FunctionCallContext) {
-	funcName := ctx.IDENTIFIER().GetText()
+	if v.validColumns[ctx.GetText()] {
+		return
+	}
 
+	funcName := ctx.IDENTIFIER().GetText()
 	if !v.seen[funcName] {
 		v.invalid = append(v.invalid, funcName)
 		v.seen[funcName] = true
-	}
-
-	if ctx.FunctionArgs() != nil {
-		for _, arg := range ctx.FunctionArgs().AllFunctionArg() {
-			argText := arg.IDENTIFIER().GetText()
-			// Only report args that are not valid column references
-			if v.validColumns[argText] {
-				continue
-			}
-			if !v.seen[argText] {
-				v.invalid = append(v.invalid, argText)
-				v.seen[argText] = true
-			}
-		}
 	}
 }
 
@@ -98,20 +85,59 @@ func (v *havingExpressionSemanticValidator) visitIdentifier(ctx *grammar.Identif
 	}
 }
 
-// validateWithANTLR parses the HAVING expression with the generated ANTLR lexer/parser
-// and then performs semantic validation via havingExpressionSemanticValidator.
+// syntaxErrorMessages parses expression with ANTLR and returns any syntax error strings.
+func syntaxErrorMessages(expression string) []string {
+	input := antlr.NewInputStream(expression)
+	lexer := grammar.NewHavingExpressionLexer(input)
+	lexerErr := NewErrorListener()
+	lexer.RemoveErrorListeners()
+	lexer.AddErrorListener(lexerErr)
+
+	tokens := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	p := grammar.NewHavingExpressionParser(tokens)
+	parserErr := NewErrorListener()
+	p.RemoveErrorListeners()
+	p.AddErrorListener(parserErr)
+
+	p.Query()
+
+	all := append(lexerErr.SyntaxErrors, parserErr.SyntaxErrors...)
+	msgs := make([]string, 0, len(all))
+	for _, se := range all {
+		if m := se.Error(); m != "" {
+			msgs = append(msgs, m)
+		}
+	}
+	return msgs
+}
+
+// validateWithANTLR validates the `Having` expression after rewriting.
 //
-// It must be called BEFORE rewriteExpression so the expression still contains
-// user-facing references (aliases, function-call strings, __result_N, etc.).
+// original is the user-supplied expression before rewriting; rewritten is the result of
+// rewriteExpression. Both are required so that syntax error messages can reference the
+// original token names (e.g. "count()" or "total") instead of the rewritten SQL column
+// names (e.g. "__result_0").
 //
 // Validation layers:
-//  1. Quoted string literals are detected early in the token stream (QUOTED_TEXT token
-//     is intentionally excluded from the grammar's atom rule) → descriptive error.
-//  2. ANTLR syntax errors (unbalanced parentheses, missing comparison operators,
-//     dangling AND/OR, etc.) → syntax error wrapping the ANTLR message.
-//  3. Semantic errors (unknown identifiers / function calls) → lists the offending tokens.
-func (r *HavingExpressionRewriter) validateWithANTLR(expression string) error {
-	input := antlr.NewInputStream(expression)
+//  1. Quoted string literals are detected in the original expression → descriptive error.
+//  2. ANTLR syntax errors on the rewritten expression → the original expression is
+//     re-parsed to produce error messages that reference user-facing token names.
+//  3. Semantic errors (unknown identifiers / function calls in the rewritten tree) →
+//     lists the offending tokens; valid references from the column map are shown.
+func (r *HavingExpressionRewriter) validateWithANTLR(original, rewritten string) error {
+	// Layer 1 – Reject quoted string literals before parsing.
+	// `Having` expressions compare numeric aggregate results; string literals are not valid.
+	for _, ch := range original {
+		if ch == '\'' || ch == '"' {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"`Having` expression contains string literals",
+			).WithAdditional("Aggregator results are numeric")
+		}
+	}
+
+	// Parse the rewritten expression (authoritative for semantic validation).
+	input := antlr.NewInputStream(rewritten)
 	lexer := grammar.NewHavingExpressionLexer(input)
 
 	lexerErrListener := NewErrorListener()
@@ -125,27 +151,20 @@ func (r *HavingExpressionRewriter) validateWithANTLR(expression string) error {
 	p.RemoveErrorListeners()
 	p.AddErrorListener(parserErrListener)
 
-	// Layer 1 – Reject quoted string literals before parsing.
-	// HAVING expressions compare numeric aggregate results; string literals are not valid.
-	for _, ch := range expression {
-		if ch == '\'' || ch == '"' {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"HAVING expression cannot contain string literals; aggregate results are numeric",
-			)
-		}
-	}
-
-	// Build the parse tree.
 	tree := p.Query()
 
 	// Layer 2 – ANTLR syntax errors.
+	// If the rewritten expression has syntax errors, re-parse the original so that the
+	// error messages reference the user's own token names rather than "__result_0" etc.
 	allSyntaxErrors := append(lexerErrListener.SyntaxErrors, parserErrListener.SyntaxErrors...)
 	if len(allSyntaxErrors) > 0 {
-		msgs := make([]string, 0, len(allSyntaxErrors))
-		for _, se := range allSyntaxErrors {
-			if m := se.Error(); m != "" {
-				msgs = append(msgs, m)
+		msgs := syntaxErrorMessages(original)
+		if len(msgs) == 0 {
+			// Fallback: use messages from the rewritten expression.
+			for _, se := range allSyntaxErrors {
+				if m := se.Error(); m != "" {
+					msgs = append(msgs, m)
+				}
 			}
 		}
 		detail := strings.Join(msgs, "; ")
@@ -154,9 +173,8 @@ func (r *HavingExpressionRewriter) validateWithANTLR(expression string) error {
 		}
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
-			"syntax error in HAVING expression: %s",
-			detail,
-		)
+			"Syntax error in `Having` expression",
+		).WithAdditional(detail)
 	}
 
 	// Layer 3 – Semantic validation: every remaining identifier must be a known
@@ -181,7 +199,7 @@ func (r *HavingExpressionRewriter) validateWithANTLR(expression string) error {
 			// At least one invalid ref is an aggregation function — use tailored message
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
-				"aggregation functions are not allowed in HAVING expression",
+				"Functions are not allowed in `Having` expression",
 			)
 		}
 		validKeys := make([]string, 0, len(r.columnMap))
@@ -191,10 +209,9 @@ func (r *HavingExpressionRewriter) validateWithANTLR(expression string) error {
 		sort.Strings(validKeys)
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
-			"invalid references in HAVING expression: [%s]. Valid references are: [%s]",
+			"Invalid references in `Having` expression: [%s]",
 			strings.Join(sv.invalid, ", "),
-			strings.Join(validKeys, ", "),
-		)
+		).WithAdditional("Valid references are: [" + strings.Join(validKeys, ", ") + "]")
 	}
 
 	return nil

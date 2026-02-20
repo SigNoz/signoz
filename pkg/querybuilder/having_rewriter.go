@@ -20,21 +20,39 @@ func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 }
 
 func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildTraceColumnMap(aggregations)
-	expression = r.rewriteExpression(expression)
-	return expression, r.validateWithANTLR(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
 func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildLogColumnMap(aggregations)
-	expression = r.rewriteExpression(expression)
-	return expression, r.validateWithANTLR(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
 func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildMetricColumnMap(aggregations)
-	expression = r.rewriteExpression(expression)
-	return expression, r.validateWithANTLR(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
 func (r *HavingExpressionRewriter) buildTraceColumnMap(aggregations []qbtypes.TraceAggregation) {
@@ -154,4 +172,3 @@ func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
 
 	return expression
 }
-

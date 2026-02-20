@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 		wantExpression string
 		wantErr        bool
 		wantErrMsg     string
+		wantAdditional []string
 	}{
 		// --- Happy path: reference types (alias, expression, __result variants) ---
 		{
@@ -192,24 +194,33 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "__result_0 > 100",
 		},
-		// --- Error: bare operand / missing comparison operator ---
+		// --- Happy path: empty or whitespace-only expression ---
 		{
-			name:       "urinary expression alias",
-			expression: "total_logs",
+			name:       "empty expression",
+			expression: "",
 			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
+				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantExpression: "",
 		},
+		{
+			name:       "whitespace only expression",
+			expression: "   ",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "",
+		},
+		// --- Error: bare operand / missing comparison operator ---
 		{
 			name:       "bare expression (function call)",
 			expression: "count()",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:7 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
 		},
 		{
 			name:       "bare operand without comparison",
@@ -217,8 +228,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:10 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
 		},
 		// --- Error: parentheses mismatch (unclosed, unexpected, empty) ---
 		{
@@ -227,8 +239,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:35 expecting one of {), ,} but got EOF"},
 		},
 		{
 			name:       "unexpected closing parenthesis",
@@ -236,8 +249,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:16 extraneous input ')' expecting <EOF>"},
 		},
 		{
 			name:       "dangling AND at end",
@@ -245,8 +259,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:20 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got EOF"},
 		},
 		{
 			name:       "dangling OR at start",
@@ -254,8 +269,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got 'OR'"},
 		},
 		// --- Error: dangling or malformed boolean operators (AND, OR) ---
 		{
@@ -264,8 +280,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total_logs"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:21 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got 'AND'"},
 		},
 		// --- Error: invalid operand types (string literals, boolean literal) ---
 		{
@@ -274,8 +291,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:    true,
-			wantErrMsg: "HAVING expression cannot contain string literals",
+			wantErr:        true,
+			wantErrMsg:     "`Having` expression contains string literals",
+			wantAdditional: []string{"Aggregator results are numeric"},
 		},
 		{
 			name:       "string literal without quotes as comparison value",
@@ -283,8 +301,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [xyz]",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [xyz]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, sum(bytes)]"},
 		},
 		{
 			name:       "double-quoted string literal",
@@ -292,8 +311,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "HAVING expression cannot contain string literals",
+			wantErr:        true,
+			wantErrMsg:     "`Having` expression contains string literals",
+			wantAdditional: []string{"Aggregator results are numeric"},
 		},
 		// --- Error: invalid or unknown references ---
 		{
@@ -302,8 +322,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [unknown_alias]",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [unknown_alias]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
 		},
 		{
 			name:       "expression not in column map",
@@ -312,7 +333,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 				{Expression: "count()"},
 			},
 			wantErr:    true,
-			wantErrMsg: "aggregation functions are not allowed in HAVING expression",
+			wantErrMsg: "Functions are not allowed in `Having` expression",
 		},
 		{
 			name:       "one valid one invalid reference",
@@ -320,8 +341,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [ghost]",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
 		},
 		{
 			name:       "__result ambiguous with multiple aggregations",
@@ -330,8 +352,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 				{Expression: "count()"},
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [__result]",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [__result]",
+			wantAdditional: []string{"Valid references are: [__result0, __result1, count(), sum(bytes)]"},
 		},
 		// --- Error: NOT syntax (must wrap comparison in parentheses) ---
 		{
@@ -340,17 +363,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
-		},
-		{
-			name:       "empty expression",
-			expression: "",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()"},
-			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:4 expecting one of {(, )} but got 'count'; line 1:10 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got ')'; line 1:12 mismatched input '>' expecting <EOF>"},
 		},
 		// --- Error: malformed comparison (missing operand, operator, or connector) ---
 		{
@@ -359,8 +374,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:12 mismatched input 'count' expecting <EOF>"},
 		},
 		{
 			name:       "out-of-range __result_N index",
@@ -368,8 +384,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [__result_9]",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [__result_9]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
 		},
 		// --- Error: boolean literal as comparison value ---
 		{
@@ -378,8 +395,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:10 expecting one of {(, ), IDENTIFIER, number, quoted text} but got 'true'"},
 		},
 		{
 			name:       "double NOT without valid grouping",
@@ -387,8 +405,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:4 expecting one of {(, )} but got 'NOT'"},
 		},
 		// --- Error: invalid function calls (cascaded, wrong args) ---
 		{
@@ -398,17 +417,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 				{Expression: "count()"},
 			},
 			wantErr:    true,
-			wantErrMsg: "aggregation functions are not allowed in HAVING expression",
-		},
-		// --- Error: empty or whitespace-only expression ---
-		{
-			name:       "whitespace only expression",
-			expression: "   ",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()"},
-			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErrMsg: "Functions are not allowed in `Having` expression",
 		},
 		// --- Error: standalone parentheses ---
 		{
@@ -417,8 +426,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got EOF"},
 		},
 		{
 			name:       "only closing parenthesis",
@@ -426,8 +436,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got ')'"},
 		},
 		{
 			name:       "empty parentheses",
@@ -435,8 +446,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got ')'"},
 		},
 		// --- Error: missing comparison operands or operator ---
 		{
@@ -445,8 +457,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got '>'; line 1:5 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
 		},
 		{
 			name:       "missing right operand",
@@ -454,8 +467,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:9 expecting one of {(, ), IDENTIFIER, number, quoted text} but got EOF"},
 		},
 		{
 			name:       "missing operator",
@@ -463,8 +477,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:8 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got '100'"},
 		},
 		{
 			name:       "dangling OR at end",
@@ -472,8 +487,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:14 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got EOF"},
 		},
 		{
 			name:       "AND OR without second operand",
@@ -481,8 +497,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:16 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got 'OR'"},
 		},
 		{
 			name:       "NOT without parentheses on alias",
@@ -490,8 +507,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:4 expecting one of {(, )} but got 'total'; line 1:15 expecting one of {), ,} but got EOF"},
 		},
 		// --- Error: invalid function call (not in column map) ---
 		{
@@ -501,7 +519,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 				{Expression: "sum(a)"},
 			},
 			wantErr:    true,
-			wantErrMsg: "aggregation functions are not allowed in HAVING expression",
+			wantErrMsg: "Functions are not allowed in `Having` expression",
 		},
 		// --- Error: out-of-range __result index ---
 		{
@@ -510,8 +528,9 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [__result_1]",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [__result_1]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
 		},
 	}
 
@@ -525,8 +544,12 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, errLogs)
 				assert.ErrorContains(t, errLogs, tt.wantErrMsg)
+				_, _, _, _, _, additionalLogs := errors.Unwrapb(errLogs)
+				assert.Equal(t, tt.wantAdditional, additionalLogs)
 				require.Error(t, errTraces)
 				assert.ErrorContains(t, errTraces, tt.wantErrMsg)
+				_, _, _, _, _, additionalTraces := errors.Unwrapb(errTraces)
+				assert.Equal(t, tt.wantAdditional, additionalTraces)
 			} else {
 				require.NoError(t, errLogs)
 				assert.Equal(t, tt.wantExpression, gotLogs)
@@ -545,6 +568,7 @@ func TestRewriteForMetrics(t *testing.T) {
 		wantExpression string
 		wantErr        bool
 		wantErrMsg     string
+		wantAdditional []string
 	}{
 		// --- Happy path: reference types (time/space aggregation, __result, bare metric) ---
 		{
@@ -620,6 +644,19 @@ func TestRewriteForMetrics(t *testing.T) {
 			},
 			wantExpression: "value < 100 AND value * 2 > 50",
 		},
+		// --- Happy path: empty or bare operand ---
+		{
+			name:       "empty expression",
+			expression: "",
+			aggregations: []qbtypes.MetricAggregation{
+				{
+					MetricName:       "cpu_usage",
+					TimeAggregation:  metrictypes.TimeAggregationSum,
+					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
+				},
+			},
+			wantExpression: "",
+		},
 		// --- Error: invalid or unknown metric reference ---
 		{
 			name:       "unknown metric reference",
@@ -631,22 +668,9 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression: [wrong_metric]",
-		},
-		// --- Error: empty or bare operand ---
-		{
-			name:       "empty expression",
-			expression: "",
-			aggregations: []qbtypes.MetricAggregation{
-				{
-					MetricName:       "cpu_usage",
-					TimeAggregation:  metrictypes.TimeAggregationSum,
-					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
-				},
-			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [wrong_metric]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
 		},
 		// --- Error: string literal (not allowed in HAVING) ---
 		{
@@ -659,8 +683,9 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:    true,
-			wantErrMsg: "HAVING expression cannot contain string literals",
+			wantErr:        true,
+			wantErrMsg:     "`Having` expression contains string literals",
+			wantAdditional: []string{"Aggregator results are numeric"},
 		},
 		// --- Error: bare operand (no comparison) ---
 		{
@@ -673,8 +698,9 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:    true,
-			wantErrMsg: "syntax error in HAVING expression",
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:9 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
 		},
 		// --- Error: aggregation not in column map ---
 		{
@@ -688,7 +714,7 @@ func TestRewriteForMetrics(t *testing.T) {
 				},
 			},
 			wantErr:    true,
-			wantErrMsg: "invalid references in HAVING expression",
+			wantErrMsg: "Functions are not allowed in `Having` expression",
 		},
 	}
 
@@ -699,6 +725,8 @@ func TestRewriteForMetrics(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorContains(t, err, tt.wantErrMsg)
+				_, _, _, _, _, additional := errors.Unwrapb(err)
+				assert.Equal(t, tt.wantAdditional, additional)
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantExpression, got)
