@@ -11,28 +11,28 @@ type PostableHost struct {
 }
 
 type PostableProfile struct {
-	UsesOtel                     bool     `json:"uses_otel"`
-	HasExistingObservabilityTool bool     `json:"has_existing_observability_tool"`
-	ExistingObservabilityTool    string   `json:"existing_observability_tool"`
-	ReasonsForInterestInSigNoz   []string `json:"reasons_for_interest_in_signoz"`
-	LogsScalePerDayInGB          int64    `json:"logs_scale_per_day_in_gb"`
-	NumberOfServices             int64    `json:"number_of_services"`
-	NumberOfHosts                int64    `json:"number_of_hosts"`
-	WhereDidYouDiscoverSigNoz    string   `json:"where_did_you_discover_signoz"`
-	TimelineForMigratingToSigNoz string   `json:"timeline_for_migrating_to_signoz"`
+	UsesOtel                     bool     `json:"uses_otel" required:"true"`
+	HasExistingObservabilityTool bool     `json:"has_existing_observability_tool" required:"true"`
+	ExistingObservabilityTool    string   `json:"existing_observability_tool" required:"true"`
+	ReasonsForInterestInSigNoz   []string `json:"reasons_for_interest_in_signoz" required:"true"`
+	LogsScalePerDayInGB          int64    `json:"logs_scale_per_day_in_gb" required:"true"`
+	NumberOfServices             int64    `json:"number_of_services" required:"true"`
+	NumberOfHosts                int64    `json:"number_of_hosts" required:"true"`
+	WhereDidYouDiscoverSigNoz    string   `json:"where_did_you_discover_signoz" required:"true"`
+	TimelineForMigratingToSigNoz string   `json:"timeline_for_migrating_to_signoz" required:"true"`
 }
 
 type GettableHost struct {
-	Name  string `json:"name"`
-	State string `json:"state"`
-	Tier  string `json:"tier"`
-	Hosts []Host `json:"hosts"`
+	Name  string `json:"name" required:"true"`
+	State string `json:"state" required:"true"`
+	Tier  string `json:"tier" required:"true"`
+	Hosts []Host `json:"hosts" required:"true"`
 }
 
 type Host struct {
-	Name      string `json:"name"`
-	IsDefault bool   `json:"is_default"`
-	URL       string `json:"url"`
+	Name      string `json:"name" required:"true"`
+	IsDefault bool   `json:"is_default" required:"true"`
+	URL       string `json:"url" required:"true"`
 }
 
 func NewGettableHost(data []byte) *GettableHost {
