@@ -16,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -38,7 +38,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 
 	cloudProviderString := mux.Vars(r)["cloudProvider"]
 
-	cloudProvider, err := integrationstypes.NewCloudProvider(cloudProviderString)
+	cloudProvider, err := integrationtypes.NewCloudProvider(cloudProviderString)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -50,7 +50,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	result := integrationstypes.GettableCloudIntegrationConnectionParams{
+	result := integrationtypes.GettableCloudIntegrationConnectionParams{
 		SigNozAPIKey: apiKey,
 	}
 
@@ -175,7 +175,7 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "couldn't query for deployment info: error")
 	}
 
-	resp := new(integrationstypes.GettableDeployment)
+	resp := new(integrationtypes.GettableDeployment)
 
 	err = json.Unmarshal(respBytes, resp)
 	if err != nil {
@@ -187,8 +187,7 @@ func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licens
 
 	if len(regionDns) < 1 || len(deploymentName) < 1 {
 		// Fail early if actual response structure and expectation here ever diverge
-		return "", errors.WrapInternalf(
-			err,
+		return "", errors.NewInternalf(
 			errors.CodeInternal,
 			"deployment info response not in expected shape. couldn't determine region dns and deployment name",
 		)
@@ -205,7 +204,7 @@ func (ah *APIHandler) getOrCreateCloudProviderIngestionKey(
 	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
 
 	// see if the key already exists
-	searchResult, err := requestGateway[integrationstypes.GettableIngestionKeysSearch](
+	searchResult, err := requestGateway[integrationtypes.GettableIngestionKeysSearch](
 		ctx,
 		gatewayUrl,
 		licenseKey,
@@ -244,7 +243,7 @@ func (ah *APIHandler) getOrCreateCloudProviderIngestionKey(
 		slog.String("cloudProvider", cloudProvider.String()),
 	)
 
-	createKeyResult, err := requestGateway[integrationstypes.GettableCreateIngestionKey](
+	createKeyResult, err := requestGateway[integrationtypes.GettableCreateIngestionKey](
 		ctx, gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
 		map[string]any{
 			"name": cloudProviderKeyName,

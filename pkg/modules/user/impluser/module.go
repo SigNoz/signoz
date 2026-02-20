@@ -19,7 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
@@ -287,7 +287,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	if slices.Contains(integrationstypes.IntegrationUserEmails, user.Email) {
+	if slices.Contains(integrationtypes.IntegrationUserEmails, user.Email) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 

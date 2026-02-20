@@ -16,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/store"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -33,7 +33,7 @@ type azureProvider struct {
 	logger                  *slog.Logger
 	accountsRepo            store.CloudProviderAccountsRepository
 	serviceConfigRepo       store.ServiceConfigDatabase
-	azureServiceDefinitions *services.ServicesProvider[*integrationstypes.AzureDefinition]
+	azureServiceDefinitions *services.ServicesProvider[*integrationtypes.AzureDefinition]
 	querier                 querier.Querier
 }
 
@@ -42,7 +42,7 @@ func NewAzureCloudProvider(
 	accountsRepo store.CloudProviderAccountsRepository,
 	serviceConfigRepo store.ServiceConfigDatabase,
 	querier querier.Querier,
-) integrationstypes.CloudProvider {
+) integrationtypes.CloudProvider {
 	azureServiceDefinitions, err := services.NewAzureCloudProviderServices()
 	if err != nil {
 		panic("failed to initialize Azure service definitions: " + err.Error())
@@ -57,36 +57,36 @@ func NewAzureCloudProvider(
 	}
 }
 
-func (a *azureProvider) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationstypes.GettableAccountStatus, error) {
+func (a *azureProvider) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationtypes.GettableAccountStatus, error) {
 	account, err := a.accountsRepo.Get(ctx, orgID, a.GetName().String(), accountID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &integrationstypes.GettableAccountStatus{
+	return &integrationtypes.GettableAccountStatus{
 		Id:             account.ID.String(),
 		CloudAccountId: account.AccountID,
 		Status:         account.Status(),
 	}, nil
 }
 
-func (a *azureProvider) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationstypes.GettableConnectedAccountsList, error) {
+func (a *azureProvider) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationtypes.GettableConnectedAccountsList, error) {
 	accountRecords, err := a.accountsRepo.ListConnected(ctx, orgID, a.GetName().String())
 	if err != nil {
 		return nil, err
 	}
 
-	connectedAccounts := make([]*integrationstypes.Account, 0, len(accountRecords))
+	connectedAccounts := make([]*integrationtypes.Account, 0, len(accountRecords))
 	for _, r := range accountRecords {
 		connectedAccounts = append(connectedAccounts, r.Account(a.GetName()))
 	}
 
-	return &integrationstypes.GettableConnectedAccountsList{
+	return &integrationtypes.GettableConnectedAccountsList{
 		Accounts: connectedAccounts,
 	}, nil
 }
 
-func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationstypes.PostableAgentCheckInPayload) (any, error) {
+func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationtypes.PostableAgentCheckInPayload) (any, error) {
 	existingAccount, err := a.accountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.ID)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationstypes
 		))
 	}
 
-	agentReport := integrationstypes.AgentReport{
+	agentReport := integrationtypes.AgentReport{
 		TimestampMillis: time.Now().UnixMilli(),
 		Data:            req.Data,
 	}
@@ -125,7 +125,7 @@ func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationstypes
 		return nil, err
 	}
 
-	return &integrationstypes.GettableAzureAgentCheckIn{
+	return &integrationtypes.GettableAzureAgentCheckIn{
 		AccountId:         account.ID.StringValue(),
 		CloudAccountId:    *account.AccountID,
 		RemovedAt:         account.RemovedAt,
@@ -133,14 +133,14 @@ func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationstypes
 	}, nil
 }
 
-func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integrationstypes.CloudIntegration) (*integrationstypes.AzureAgentIntegrationConfig, error) {
+func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integrationtypes.CloudIntegration) (*integrationtypes.AzureAgentIntegrationConfig, error) {
 	// prepare and return integration config to be consumed by agent
-	agentConfig := &integrationstypes.AzureAgentIntegrationConfig{
-		TelemetryCollectionStrategy: make(map[string]*integrationstypes.AzureCollectionStrategy),
+	agentConfig := &integrationtypes.AzureAgentIntegrationConfig{
+		TelemetryCollectionStrategy: make(map[string]*integrationtypes.AzureCollectionStrategy),
 	}
 
-	accountConfig := new(integrationstypes.AzureAccountConfig)
-	err := integrationstypes.UnmarshalJSON([]byte(account.Config), accountConfig)
+	accountConfig := new(integrationtypes.AzureAccountConfig)
+	err := integrationtypes.UnmarshalJSON([]byte(account.Config), accountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +161,8 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 	configuredServices := maps.Keys(svcConfigs)
 	slices.Sort(configuredServices)
 
-	metrics := make([]*integrationstypes.AzureMetricsStrategy, 0)
-	logs := make([]*integrationstypes.AzureLogsStrategy, 0)
+	metrics := make([]*integrationtypes.AzureMetricsStrategy, 0)
+	logs := make([]*integrationtypes.AzureLogsStrategy, 0)
 
 	for _, svcType := range configuredServices {
 		definition, err := a.azureServiceDefinitions.GetServiceDefinition(ctx, svcType)
@@ -171,14 +171,14 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 		}
 		config := svcConfigs[svcType]
 
-		serviceConfig := new(integrationstypes.AzureCloudServiceConfig)
-		err = integrationstypes.UnmarshalJSON(config, serviceConfig)
+		serviceConfig := new(integrationtypes.AzureCloudServiceConfig)
+		err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 		if err != nil {
 			continue
 		}
 
-		metricsStrategyMap := make(map[string]*integrationstypes.AzureMetricsStrategy)
-		logsStrategyMap := make(map[string]*integrationstypes.AzureLogsStrategy)
+		metricsStrategyMap := make(map[string]*integrationtypes.AzureMetricsStrategy)
+		logsStrategyMap := make(map[string]*integrationtypes.AzureLogsStrategy)
 
 		if definition.Strategy != nil && definition.Strategy.Metrics != nil {
 			for _, metric := range definition.Strategy.Metrics {
@@ -195,7 +195,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 		if serviceConfig.Metrics != nil {
 			for _, metric := range serviceConfig.Metrics {
 				if metric.Enabled {
-					metrics = append(metrics, &integrationstypes.AzureMetricsStrategy{
+					metrics = append(metrics, &integrationtypes.AzureMetricsStrategy{
 						CategoryType: metricsStrategyMap[metric.Name].CategoryType,
 						Name:         metric.Name,
 					})
@@ -206,7 +206,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 		if serviceConfig.Logs != nil {
 			for _, log := range serviceConfig.Logs {
 				if log.Enabled {
-					logs = append(logs, &integrationstypes.AzureLogsStrategy{
+					logs = append(logs, &integrationtypes.AzureLogsStrategy{
 						CategoryType: logsStrategyMap[log.Name].CategoryType,
 						Name:         log.Name,
 					})
@@ -214,7 +214,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 			}
 		}
 
-		strategy := &integrationstypes.AzureCollectionStrategy{
+		strategy := &integrationtypes.AzureCollectionStrategy{
 			Metrics: metrics,
 			Logs:    logs,
 		}
@@ -226,11 +226,11 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 }
 
 func (a *azureProvider) GetName() valuer.String {
-	return integrationstypes.CloudProviderAzure
+	return integrationtypes.CloudProviderAzure
 }
 
 func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAccountID *string) (any, error) {
-	svcConfigs := make(map[string]*integrationstypes.AzureCloudServiceConfig)
+	svcConfigs := make(map[string]*integrationtypes.AzureCloudServiceConfig)
 	if cloudAccountID != nil {
 		activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), *cloudAccountID)
 		if err != nil {
@@ -243,8 +243,8 @@ func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAcc
 		}
 
 		for svcType, config := range serviceConfigs {
-			serviceConfig := new(integrationstypes.AzureCloudServiceConfig)
-			err = integrationstypes.UnmarshalJSON(config, serviceConfig)
+			serviceConfig := new(integrationtypes.AzureCloudServiceConfig)
+			err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -252,7 +252,7 @@ func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAcc
 		}
 	}
 
-	summaries := make([]integrationstypes.AzureServiceSummary, 0)
+	summaries := make([]integrationtypes.AzureServiceSummary, 0)
 
 	definitions, err := a.azureServiceDefinitions.ListServiceDefinitions(ctx)
 	if err != nil {
@@ -260,7 +260,7 @@ func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAcc
 	}
 
 	for _, def := range definitions {
-		summary := integrationstypes.AzureServiceSummary{
+		summary := integrationtypes.AzureServiceSummary{
 			DefinitionMetadata: def.DefinitionMetadata,
 			Config:             nil,
 		}
@@ -274,13 +274,13 @@ func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAcc
 		return summaries[i].DefinitionMetadata.Title < summaries[j].DefinitionMetadata.Title
 	})
 
-	return &integrationstypes.GettableAzureServices{
+	return &integrationtypes.GettableAzureServices{
 		Services: summaries,
 	}, nil
 }
 
-func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationstypes.GetServiceDetailsReq) (any, error) {
-	details := new(integrationstypes.GettableAzureServiceDetails)
+func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationtypes.GetServiceDetailsReq) (any, error) {
+	details := new(integrationtypes.GettableAzureServiceDetails)
 
 	azureDefinition, err := a.azureServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
@@ -301,22 +301,22 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrations
 
 	// fill default values for config
 	if details.Config == nil {
-		cfg := new(integrationstypes.AzureCloudServiceConfig)
+		cfg := new(integrationtypes.AzureCloudServiceConfig)
 
-		logs := make([]*integrationstypes.AzureCloudServiceLogsConfig, 0)
+		logs := make([]*integrationtypes.AzureCloudServiceLogsConfig, 0)
 		if azureDefinition.Strategy != nil && azureDefinition.Strategy.Logs != nil {
 			for _, log := range azureDefinition.Strategy.Logs {
-				logs = append(logs, &integrationstypes.AzureCloudServiceLogsConfig{
+				logs = append(logs, &integrationtypes.AzureCloudServiceLogsConfig{
 					Enabled: false,
 					Name:    log.Name,
 				})
 			}
 		}
 
-		metrics := make([]*integrationstypes.AzureCloudServiceMetricsConfig, 0)
+		metrics := make([]*integrationtypes.AzureCloudServiceMetricsConfig, 0)
 		if azureDefinition.Strategy != nil && azureDefinition.Strategy.Metrics != nil {
 			for _, metric := range azureDefinition.Strategy.Metrics {
-				metrics = append(metrics, &integrationstypes.AzureCloudServiceMetricsConfig{
+				metrics = append(metrics, &integrationtypes.AzureCloudServiceMetricsConfig{
 					Enabled: false,
 					Name:    metric.Name,
 				})
@@ -348,14 +348,14 @@ func (a *azureProvider) getServiceConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AzureDefinition,
-	serviceConfig *integrationstypes.AzureCloudServiceConfig,
-) (*integrationstypes.ServiceConnectionStatus, error) {
+	def *integrationtypes.AzureDefinition,
+	serviceConfig *integrationtypes.AzureCloudServiceConfig,
+) (*integrationtypes.ServiceConnectionStatus, error) {
 	if def.Strategy == nil {
 		return nil, nil
 	}
 
-	resp := new(integrationstypes.ServiceConnectionStatus)
+	resp := new(integrationtypes.ServiceConnectionStatus)
 
 	wg := sync.WaitGroup{}
 
@@ -432,18 +432,18 @@ func (a *azureProvider) getServiceMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AzureDefinition,
-) ([]*integrationstypes.SignalConnectionStatus, error) {
+	def *integrationtypes.AzureDefinition,
+) ([]*integrationtypes.SignalConnectionStatus, error) {
 	if def.Strategy == nil ||
 		len(def.Strategy.Metrics) < 1 ||
 		len(def.DataCollected.Metrics) < 1 {
 		return nil, nil
 	}
 
-	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
+	statusResp := make([]*integrationtypes.SignalConnectionStatus, 0)
 
 	for _, metric := range def.IngestionStatusCheck.Metrics {
-		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+		statusResp = append(statusResp, &integrationtypes.SignalConnectionStatus{
 			CategoryID:          metric.Category,
 			CategoryDisplayName: metric.DisplayName,
 		})
@@ -515,7 +515,7 @@ func (a *azureProvider) getServiceMetricsConnectionStatus(
 			continue
 		}
 
-		statusResp[index] = &integrationstypes.SignalConnectionStatus{
+		statusResp[index] = &integrationtypes.SignalConnectionStatus{
 			CategoryID:           category.Category,
 			CategoryDisplayName:  category.DisplayName,
 			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
@@ -530,18 +530,18 @@ func (a *azureProvider) getServiceLogsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
-	def *integrationstypes.AzureDefinition,
-) ([]*integrationstypes.SignalConnectionStatus, error) {
+	def *integrationtypes.AzureDefinition,
+) ([]*integrationtypes.SignalConnectionStatus, error) {
 	if def.Strategy == nil ||
 		len(def.Strategy.Logs) < 1 ||
 		len(def.DataCollected.Logs) < 1 {
 		return nil, nil
 	}
 
-	statusResp := make([]*integrationstypes.SignalConnectionStatus, 0)
+	statusResp := make([]*integrationtypes.SignalConnectionStatus, 0)
 
 	for _, log := range def.IngestionStatusCheck.Logs {
-		statusResp = append(statusResp, &integrationstypes.SignalConnectionStatus{
+		statusResp = append(statusResp, &integrationtypes.SignalConnectionStatus{
 			CategoryID:          log.Category,
 			CategoryDisplayName: log.DisplayName,
 		})
@@ -613,7 +613,7 @@ func (a *azureProvider) getServiceLogsConnectionStatus(
 			continue
 		}
 
-		statusResp[index] = &integrationstypes.SignalConnectionStatus{
+		statusResp[index] = &integrationtypes.SignalConnectionStatus{
 			CategoryID:           category.Category,
 			CategoryDisplayName:  category.DisplayName,
 			LastReceivedTsMillis: queryResponse.Aggregations[0].Series[0].Values[0].Timestamp,
@@ -626,11 +626,11 @@ func (a *azureProvider) getServiceLogsConnectionStatus(
 
 func (a *azureProvider) getServiceConfig(
 	ctx context.Context,
-	definition *integrationstypes.AzureDefinition,
+	definition *integrationtypes.AzureDefinition,
 	orgID string,
 	serviceId string,
 	cloudAccountId string,
-) (*integrationstypes.AzureCloudServiceConfig, error) {
+) (*integrationtypes.AzureCloudServiceConfig, error) {
 	activeAccount, err := a.accountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), cloudAccountId)
 	if err != nil {
 		return nil, err
@@ -644,8 +644,8 @@ func (a *azureProvider) getServiceConfig(
 		return nil, err
 	}
 
-	config := new(integrationstypes.AzureCloudServiceConfig)
-	err = integrationstypes.UnmarshalJSON(configBytes, config)
+	config := new(integrationtypes.AzureCloudServiceConfig)
+	err = integrationtypes.UnmarshalJSON(configBytes, config)
 	if err != nil {
 		return nil, err
 	}
@@ -660,24 +660,24 @@ func (a *azureProvider) getServiceConfig(
 	return config, nil
 }
 
-func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationstypes.PostableConnectionArtifact) (any, error) {
-	connection := new(integrationstypes.PostableAzureConnectionCommand)
+func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationtypes.PostableConnectionArtifact) (any, error) {
+	connection := new(integrationtypes.PostableAzureConnectionCommand)
 
-	err := integrationstypes.UnmarshalJSON(req.Data, connection)
+	err := integrationtypes.UnmarshalJSON(req.Data, connection)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed unmarshal request data into AWS connection config")
 	}
 
 	// validate connection config
 	if connection.AccountConfig != nil {
-		if !integrationstypes.ValidAzureRegions[connection.AccountConfig.DeploymentRegion] {
+		if !integrationtypes.ValidAzureRegions[connection.AccountConfig.DeploymentRegion] {
 			return nil, errors.NewInvalidInputf(CodeInvalidAzureRegion, "invalid azure region: %s",
 				connection.AccountConfig.DeploymentRegion,
 			)
 		}
 	}
 
-	config, err := integrationstypes.MarshalJSON(connection.AccountConfig)
+	config, err := integrationtypes.MarshalJSON(connection.AccountConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -702,21 +702,21 @@ func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *int
 		"--action-on-unmanage", "deleteAll", "--deny-settings-mode", "denyDelete", "--parameters", fmt.Sprintf("rgName=%s", "signoz-integration-rg"),
 		fmt.Sprintf("rgLocation=%s", connection.AccountConfig.DeploymentRegion)}
 
-	return &integrationstypes.GettableAzureConnectionCommand{
+	return &integrationtypes.GettableAzureConnectionCommand{
 		AccountId:                   account.ID.String(),
 		AzureShellConnectionCommand: "az create",
 		AzureCliConnectionCommand:   strings.Join(cliCommand, " "),
 	}, nil
 }
 
-func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integrationstypes.PatchableServiceConfig) (any, error) {
+func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integrationtypes.PatchableServiceConfig) (any, error) {
 	definition, err := a.azureServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceConfig := new(integrationstypes.PatchableAzureCloudServiceConfig)
-	err = integrationstypes.UnmarshalJSON(req.Config, serviceConfig)
+	serviceConfig := new(integrationtypes.UpdatableAzureCloudServiceConfig)
+	err = integrationtypes.UnmarshalJSON(req.Config, serviceConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -733,7 +733,7 @@ func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integratio
 		return nil, err
 	}
 
-	serviceConfigBytes, err := integrationstypes.MarshalJSON(serviceConfig.Config)
+	serviceConfigBytes, err := integrationtypes.MarshalJSON(serviceConfig.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -745,11 +745,11 @@ func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integratio
 		return nil, err
 	}
 
-	if err = integrationstypes.UnmarshalJSON(updatedConfig, serviceConfig); err != nil {
+	if err = integrationtypes.UnmarshalJSON(updatedConfig, serviceConfig); err != nil {
 		return nil, err
 	}
 
-	return &integrationstypes.PatchServiceConfigResponse{
+	return &integrationtypes.PatchServiceConfigResponse{
 		ServiceId: req.ServiceId,
 		Config:    serviceConfig,
 	}, nil
@@ -775,8 +775,8 @@ func (a *azureProvider) GetAvailableDashboards(ctx context.Context, orgID valuer
 		}
 
 		for svcId, config := range configsBySvcId {
-			serviceConfig := new(integrationstypes.AzureCloudServiceConfig)
-			err = integrationstypes.UnmarshalJSON(config, serviceConfig)
+			serviceConfig := new(integrationtypes.AzureCloudServiceConfig)
+			err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -802,7 +802,7 @@ func (a *azureProvider) GetAvailableDashboards(ctx context.Context, orgID valuer
 	for _, svc := range allServices {
 		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
 		if serviceDashboardsCreatedAt != nil {
-			svcDashboards = integrationstypes.GetDashboardsFromAssets(svc.Id, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)
+			svcDashboards = integrationtypes.GetDashboardsFromAssets(svc.Id, orgID, a.GetName(), serviceDashboardsCreatedAt, svc.Assets)
 			servicesWithAvailableMetrics[svc.Id] = nil
 		}
 	}
@@ -810,7 +810,7 @@ func (a *azureProvider) GetAvailableDashboards(ctx context.Context, orgID valuer
 	return svcDashboards, nil
 }
 
-func (a *azureProvider) GetDashboard(ctx context.Context, req *integrationstypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
+func (a *azureProvider) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
 	allDashboards, err := a.GetAvailableDashboards(ctx, req.OrgID)
 	if err != nil {
 		return nil, err
@@ -825,10 +825,10 @@ func (a *azureProvider) GetDashboard(ctx context.Context, req *integrationstypes
 	return nil, errors.NewNotFoundf(CodeDashboardNotFound, "dashboard with id %s not found", req.ID)
 }
 
-func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integrationstypes.PatchableAccountConfig) (any, error) {
-	config := new(integrationstypes.PatchableAzureAccountConfig)
+func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integrationtypes.PatchableAccountConfig) (any, error) {
+	config := new(integrationtypes.PatchableAzureAccountConfig)
 
-	err := integrationstypes.UnmarshalJSON(req.Data, config)
+	err := integrationtypes.UnmarshalJSON(req.Data, config)
 	if err != nil {
 		return nil, err
 	}
@@ -843,8 +843,8 @@ func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integratio
 		return nil, err
 	}
 
-	storedConfig := new(integrationstypes.AzureAccountConfig)
-	err = integrationstypes.UnmarshalJSON([]byte(account.Config), storedConfig)
+	storedConfig := new(integrationtypes.AzureAccountConfig)
+	err = integrationtypes.UnmarshalJSON([]byte(account.Config), storedConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -853,7 +853,7 @@ func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integratio
 		config.Config.DeploymentRegion = storedConfig.DeploymentRegion
 	}
 
-	configBytes, err := integrationstypes.MarshalJSON(config.Config)
+	configBytes, err := integrationtypes.MarshalJSON(config.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -868,7 +868,7 @@ func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integratio
 	return accountRecord.Account(a.GetName()), nil
 }
 
-func (a *azureProvider) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationstypes.CloudIntegration, error) {
+func (a *azureProvider) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationtypes.CloudIntegration, error) {
 	account, err := a.accountsRepo.Get(ctx, orgID, a.GetName().String(), accountID)
 	if err != nil {
 		return nil, err

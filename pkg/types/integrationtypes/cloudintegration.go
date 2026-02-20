@@ -1,4 +1,4 @@
-package integrationstypes
+package integrationtypes
 
 import (
 	"context"
@@ -210,13 +210,13 @@ type PatchableServiceConfig struct {
 	Config    []byte `json:"config"` // json serialized config
 }
 
-type PatchableCloudServiceConfig[T any] struct {
+type UpdatableCloudServiceConfig[T any] struct {
 	CloudAccountId string `json:"cloud_account_id"`
 	Config         *T     `json:"config"`
 }
 
-type PatchableAWSCloudServiceConfig = PatchableCloudServiceConfig[AWSCloudServiceConfig]
-type PatchableAzureCloudServiceConfig = PatchableCloudServiceConfig[AzureCloudServiceConfig]
+type UpdatableAWSCloudServiceConfig = UpdatableCloudServiceConfig[AWSCloudServiceConfig]
+type UpdatableAzureCloudServiceConfig = UpdatableCloudServiceConfig[AzureCloudServiceConfig]
 
 type AWSCloudServiceConfig struct {
 	Logs    *AWSCloudServiceLogsConfig    `json:"logs,omitempty"`

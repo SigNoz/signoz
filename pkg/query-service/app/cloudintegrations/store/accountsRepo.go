@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/integrationstypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -20,11 +20,11 @@ var (
 )
 
 type CloudProviderAccountsRepository interface {
-	ListConnected(ctx context.Context, orgId string, provider string) ([]integrationstypes.CloudIntegration, error)
+	ListConnected(ctx context.Context, orgId string, provider string) ([]integrationtypes.CloudIntegration, error)
 
-	Get(ctx context.Context, orgId string, provider string, id string) (*integrationstypes.CloudIntegration, error)
+	Get(ctx context.Context, orgId string, provider string, id string) (*integrationtypes.CloudIntegration, error)
 
-	GetConnectedCloudAccount(ctx context.Context, orgId, provider string, accountID string) (*integrationstypes.CloudIntegration, error)
+	GetConnectedCloudAccount(ctx context.Context, orgId, provider string, accountID string) (*integrationtypes.CloudIntegration, error)
 
 	// Insert an account or update it by (cloudProvider, id)
 	// for specified non-empty fields
@@ -35,9 +35,9 @@ type CloudProviderAccountsRepository interface {
 		id *string,
 		config []byte,
 		accountId *string,
-		agentReport *integrationstypes.AgentReport,
+		agentReport *integrationtypes.AgentReport,
 		removedAt *time.Time,
-	) (*integrationstypes.CloudIntegration, error)
+	) (*integrationtypes.CloudIntegration, error)
 }
 
 func NewCloudProviderAccountsRepository(store sqlstore.SQLStore) CloudProviderAccountsRepository {
@@ -50,8 +50,8 @@ type cloudProviderAccountsSQLRepository struct {
 
 func (r *cloudProviderAccountsSQLRepository) ListConnected(
 	ctx context.Context, orgId string, cloudProvider string,
-) ([]integrationstypes.CloudIntegration, error) {
-	accounts := []integrationstypes.CloudIntegration{}
+) ([]integrationtypes.CloudIntegration, error) {
+	accounts := []integrationtypes.CloudIntegration{}
 
 	err := r.store.BunDB().NewSelect().
 		Model(&accounts).
@@ -73,8 +73,8 @@ func (r *cloudProviderAccountsSQLRepository) ListConnected(
 
 func (r *cloudProviderAccountsSQLRepository) Get(
 	ctx context.Context, orgId string, provider string, id string,
-) (*integrationstypes.CloudIntegration, error) {
-	var result integrationstypes.CloudIntegration
+) (*integrationtypes.CloudIntegration, error) {
+	var result integrationtypes.CloudIntegration
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
@@ -100,8 +100,8 @@ func (r *cloudProviderAccountsSQLRepository) Get(
 
 func (r *cloudProviderAccountsSQLRepository) GetConnectedCloudAccount(
 	ctx context.Context, orgId string, provider string, accountId string,
-) (*integrationstypes.CloudIntegration, error) {
-	var result integrationstypes.CloudIntegration
+) (*integrationtypes.CloudIntegration, error) {
+	var result integrationtypes.CloudIntegration
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
@@ -128,9 +128,9 @@ func (r *cloudProviderAccountsSQLRepository) Upsert(
 	id *string,
 	config []byte,
 	accountId *string,
-	agentReport *integrationstypes.AgentReport,
+	agentReport *integrationtypes.AgentReport,
 	removedAt *time.Time,
-) (*integrationstypes.CloudIntegration, error) {
+) (*integrationtypes.CloudIntegration, error) {
 	// Insert
 	if id == nil {
 		temp := valuer.GenerateUUID().StringValue()
@@ -180,7 +180,7 @@ func (r *cloudProviderAccountsSQLRepository) Upsert(
 		)
 	}
 
-	integration := integrationstypes.CloudIntegration{
+	integration := integrationtypes.CloudIntegration{
 		OrgID:        orgId,
 		Provider:     provider,
 		Identifiable: types.Identifiable{ID: valuer.MustNewUUID(*id)},

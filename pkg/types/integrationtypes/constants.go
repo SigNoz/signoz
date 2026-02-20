@@ -1,4 +1,4 @@
-package integrationstypes
+package integrationtypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
