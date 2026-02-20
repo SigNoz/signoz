@@ -29,7 +29,7 @@ function QueryConditionField({
 			defaultValue={
 				(query as QueryFields).value &&
 				(((((query as QueryFields)
-					?.value as unknown) as QueryFields) as unknown) as string).toUpperCase()
+					?.value as unknown) as QueryFields) as unknown) as string)?.toUpperCase()
 			}
 			onChange={(e): void => {
 				onUpdate({ ...query, value: e }, queryIndex);

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
+// oxlint-disable typescript/unbound-method
+// oxlint-disable typescript/no-require-imports
 // shared config (dev and prod)
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -8,7 +8,6 @@ const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const dotenv = require('dotenv');
 const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -87,7 +86,13 @@ const config = {
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
-		plugins: [new TsconfigPathsPlugin({})],
+		modules: ['node_modules', resolve(__dirname, 'src')],
+		alias: {
+			'@constants': resolve(
+				__dirname,
+				'src/container/OnboardingContainer/constants',
+			),
+		},
 		fallback: { 'process/browser': require.resolve('process/browser') },
 	},
 	cache: {

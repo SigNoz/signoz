@@ -11,14 +11,14 @@ jest.mock('react-query', () => {
 		useQueryClient: jest.fn(),
 	};
 });
-import { useIsFetching, useQueryClient } from 'react-query';
+import { useIsFetching, useQueryClient } from 'react-query'; // oxlint-disable-line first
 
 // Mock OS util
 jest.mock('utils/getUserOS', () => ({
 	getUserOperatingSystem: jest.fn(),
 	UserOperatingSystem: { MACOS: 'mac', WINDOWS: 'win', LINUX: 'linux' },
 }));
-import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
+import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS'; // oxlint-disable-line first
 
 describe('RunQueryBtn', () => {
 	beforeEach(() => {

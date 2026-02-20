@@ -189,8 +189,8 @@ export function EventContents({
 
 export const getMetricsTableData = (data: any): any[] => {
 	if (data?.params && data?.payload?.data?.result?.length) {
-		const rowsData = (data?.payload.data.result[0] as any).table.rows;
-		const columnsData = (data?.payload.data.result[0] as any).table.columns;
+		const rowsData = (data?.payload.data.result[0] as any).table.rows; // oxlint-disable-line no-unsafe-optional-chaining
+		const columnsData = (data?.payload.data.result[0] as any).table.columns; // oxlint-disable-line no-unsafe-optional-chaining
 		const builderQueries = data.params?.compositeQuery?.builderQueries;
 		const columns = columnsData.map((columnData: any) => {
 			if (columnData.isValueColumn) {

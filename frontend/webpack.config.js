@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+// oxlint-disable no-console
+// oxlint-disable typescript/unbound-method
+// oxlint-disable typescript/no-require-imports
 // shared config (dev and prod)
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -6,7 +8,6 @@ const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 const portFinderSync = require('portfinder-sync');
 const dotenv = require('dotenv');
 const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 dotenv.config();
@@ -91,7 +92,13 @@ const config = {
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
-		plugins: [new TsconfigPathsPlugin({})],
+		modules: ['node_modules', resolve(__dirname, 'src')],
+		alias: {
+			'@constants': resolve(
+				__dirname,
+				'src/container/OnboardingContainer/constants',
+			),
+		},
 		fallback: { 'process/browser': require.resolve('process/browser') },
 	},
 	module: {

@@ -13,7 +13,7 @@ import {
 
 describe('Utils testing of Pipeline Page', () => {
 	test('it should be check form field of add pipeline', () => {
-		expect(pipelineFields.length).toBe(3);
+		expect(pipelineFields).toHaveLength(3);
 		expect(pipelineFields.length).toBeGreaterThan(1);
 	});
 
@@ -28,7 +28,7 @@ describe('Utils testing of Pipeline Page', () => {
 	});
 
 	test('it should be check data length of pipeline', () => {
-		expect(pipelineMockData.length).toBe(2);
+		expect(pipelineMockData).toHaveLength(2);
 		expect(pipelineMockData.length).toBeGreaterThan(0);
 	});
 
@@ -55,10 +55,10 @@ describe('Utils testing of Pipeline Page', () => {
 	test('it should be return modified column data', () => {
 		const columnData = getTableColumn(processorColumns);
 		expect(processorColumns).not.toEqual(columnData);
-		expect(processorColumns.length).toEqual(columnData.length);
+		expect(processorColumns).toHaveLength(columnData.length);
 	});
 
-	test('it should be return modified column data', () => {
+	test('it should be return modified pipeline data', () => {
 		const findRecordIndex = getRecordIndex(
 			pipelineMockData,
 			pipelineMockData[0],
@@ -78,7 +78,7 @@ describe('Utils testing of Pipeline Page', () => {
 			updatedPipelineData,
 		);
 		expect(pipelineMockData).not.toEqual(editedData);
-		expect(pipelineMockData.length).toEqual(editedData.length);
+		expect(pipelineMockData).toHaveLength(editedData.length);
 		expect(pipelineMockData[0].name).not.toEqual(editedData[0].name);
 		expect(pipelineMockData[0].description).not.toEqual(
 			editedData[0].description,

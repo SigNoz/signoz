@@ -301,7 +301,7 @@ describe('ExplorerColumnsRenderer', () => {
 					{ dataType: 'string', name: 'field1', type: '' },
 				]);
 			} else {
-				fail('DragDropContext or onDragEndMock not found');
+				fail('DragDropContext or onDragEndMock not found'); // oxlint-disable-line no-undef
 			}
 		});
 	});
@@ -446,7 +446,7 @@ describe('ExplorerColumnsRenderer', () => {
 					{ name: 'trace_field1', fieldDataType: 'string', fieldContext: 'tag' },
 				]);
 			} else {
-				fail('DragDropContext or onDragEndMock not found');
+				fail('DragDropContext or onDragEndMock not found'); // oxlint-disable-line no-undef
 			}
 		});
 	});

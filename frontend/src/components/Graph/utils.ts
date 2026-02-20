@@ -32,8 +32,8 @@ export const toggleGraph = (
 	isVisible: boolean,
 	lineChartRef: MutableRefObject<Chart | undefined>,
 ): void => {
-	if (lineChartRef && lineChartRef.current) {
-		const { type } = lineChartRef.current?.config as ChartConfiguration;
+	if (lineChartRef?.current) {
+		const { type } = lineChartRef.current.config as ChartConfiguration;
 		if (type === 'pie' || type === 'doughnut') {
 			lineChartRef.current?.toggleDataVisibility(graphIndex);
 		} else {

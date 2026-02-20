@@ -19,9 +19,9 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
-		"baseUrl": "./src",
 		"paths": {
-			"@constants/*": ["/container/OnboardingContainer/constants/*"]
+			"*": ["./src/*"],
+			"@constants/*": ["./src/container/OnboardingContainer/constants/*"]
 		},
 		"downlevelIteration": true,
 		"plugins": [
@@ -39,7 +39,6 @@
 		"src/**/*.d.ts",
 		"./babel.config.js",
 		"./jest.config.ts",
-		"./.eslintrc.js",
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",

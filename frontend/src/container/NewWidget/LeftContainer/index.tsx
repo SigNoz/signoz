@@ -1,5 +1,4 @@
-import { memo, useEffect } from 'react';
-import { useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';

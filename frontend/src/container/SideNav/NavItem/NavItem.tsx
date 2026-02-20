@@ -7,7 +7,6 @@ import { Pin, PinOff } from 'lucide-react';
 import { SidebarItem } from '../sideNav.types';
 
 import './NavItem.styles.scss';
-import './NavItem.styles.scss';
 
 export default function NavItem({
 	item,
