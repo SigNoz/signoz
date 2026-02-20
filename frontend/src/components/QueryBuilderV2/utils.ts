@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { createAggregation } from 'api/v5/queryRange/aggregation';
 import {
 	DEPRECATED_OPERATORS_MAP,
 	OPERATORS,

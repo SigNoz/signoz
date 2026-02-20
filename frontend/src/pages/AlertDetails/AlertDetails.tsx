@@ -21,7 +21,8 @@ import {
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
-import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
+import { useGetAlertRuleDetails } from './hooks';
+import { useRouteTabUtils } from './useRouteTabUtils';
 import { AlertDetailsStatusRendererProps } from './types';
 
 import './AlertDetails.styles.scss';

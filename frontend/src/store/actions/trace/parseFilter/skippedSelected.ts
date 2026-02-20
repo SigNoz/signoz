@@ -1,4 +1,4 @@
-import { ParsedUrl } from '../util';
+import { ParsedUrl } from '../shared';
 
 export const parseIsSkippedSelection = (query: string): ParsedUrl<boolean> => {
 	const url = new URLSearchParams(query);

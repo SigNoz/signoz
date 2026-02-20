@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import Convert from 'ansi-to-html';
 import { DataNode } from 'antd/es/tree';
 import { MetricsType } from 'container/MetricsApplication/constant';
@@ -7,9 +8,31 @@ import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
-import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
-import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
+import {
+	AnyObject,
+	BodyTitleRendererProps,
+	IFieldAttributes,
+} from './LogDetailedView.types';
+
+const BodyTitleRenderer = lazy(() =>
+	import('./BodyTitleRenderer').then((module) => ({
+		default: module.default,
+	})),
+);
+
+const BodyTitleRendererWrapper = (
+	props: BodyTitleRendererProps,
+): JSX.Element => (
+	<Suspense fallback={<>...</>}>
+		<BodyTitleRenderer
+			title={props.title}
+			nodeKey={props.nodeKey}
+			value={props.value}
+			parentIsArray={props.parentIsArray}
+		/>
+	</Suspense>
+);
 
 const convertInstance = new Convert();
 
@@ -43,7 +66,7 @@ export const computeDataNode = (
 ): DataNode => ({
 	key: uniqueId(),
 	title: (
-		<BodyTitleRenderer
+		<BodyTitleRendererWrapper
 			title={`${key} ${valueIsArray ? '[...]' : ''}`}
 			nodeKey={nodeKey}
 			value={value}
@@ -81,7 +104,7 @@ export function jsonToDataNodes(
 			return {
 				key: uniqueId(),
 				title: (
-					<BodyTitleRenderer
+					<BodyTitleRendererWrapper
 						title={value as string}
 						nodeKey={nodeKey}
 						value={value}
@@ -98,7 +121,7 @@ export function jsonToDataNodes(
 		return {
 			key: uniqueId(),
 			title: (
-				<BodyTitleRenderer
+				<BodyTitleRendererWrapper
 					title={key}
 					nodeKey={nodeKey}
 					value={value}

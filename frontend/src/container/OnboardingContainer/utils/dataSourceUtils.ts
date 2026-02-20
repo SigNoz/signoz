@@ -1,15 +1,8 @@
 import ROUTES from 'constants/routes';
 
-import { ModuleProps } from '../OnboardingContainer';
-import { DataSourceType } from '../Steps/DataSource/DataSource';
+import { DataSourceType, ModuleProps, ModulesMap } from '../types';
 
-export enum ModulesMap {
-	APM = 'APM',
-	LogsManagement = 'LogsManagement',
-	InfrastructureMonitoring = 'InfrastructureMonitoring',
-	AwsMonitoring = 'AwsMonitoring',
-	AzureMonitoring = 'AzureMonitoring',
-}
+export { ModulesMap };
 
 export const frameworksMap = {
 	APM: {

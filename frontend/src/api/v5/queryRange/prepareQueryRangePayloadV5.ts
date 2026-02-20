@@ -134,6 +134,7 @@ function getFilter(queryData: IBuilderQuery): Filter {
 	};
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,

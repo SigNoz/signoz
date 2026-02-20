@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { generatePath, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { TablePaginationConfig, TableProps } from 'antd/lib';
 import deleteAlerts from 'api/alerts/delete';
@@ -12,13 +12,11 @@ import save from 'api/alerts/save';
 import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
-import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
-import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
+import { TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
 import { RelativeTimeMap } from 'container/TopNav/DateTimeSelectionV2/constants';
 import useAxiosError from 'hooks/useAxiosError';
@@ -28,10 +26,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
 import history from 'lib/history';
-import { History, Table } from 'lucide-react';
-import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
-import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useAlertRule } from 'providers/Alert';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -84,60 +79,6 @@ export const useAlertHistoryQueryParams = (): {
 		hasStartAndEndParams,
 		params,
 	};
-};
-export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
-	const urlQuery = useUrlQuery();
-
-	const getRouteUrl = (tab: AlertDetailsTab): string => {
-		let route = '';
-		let params = urlQuery.toString();
-		const ruleIdKey = QueryParams.ruleId;
-		const relativeTimeKey = QueryParams.relativeTime;
-
-		switch (tab) {
-			case AlertDetailsTab.OVERVIEW:
-				route = ROUTES.ALERT_OVERVIEW;
-				break;
-			case AlertDetailsTab.HISTORY:
-				params = `${ruleIdKey}=${urlQuery.get(
-					ruleIdKey,
-				)}&${relativeTimeKey}=${urlQuery.get(relativeTimeKey)}`;
-				route = ROUTES.ALERT_HISTORY;
-				break;
-			default:
-				return '';
-		}
-
-		return `${generatePath(route)}?${params}`;
-	};
-
-	const routes = [
-		{
-			Component: EditRules,
-			name: (
-				<div className="tab-item">
-					<Table size={14} />
-					Overview
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.OVERVIEW),
-			key: ROUTES.ALERT_OVERVIEW,
-		},
-		{
-			Component: AlertHistory,
-			name: (
-				<div className="tab-item">
-					<History size={14} />
-					History
-					<BetaTag />
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.HISTORY),
-			key: ROUTES.ALERT_HISTORY,
-		},
-	];
-
-	return { routes };
 };
 type Props = {
 	ruleId: string | null;

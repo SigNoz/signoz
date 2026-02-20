@@ -1,20 +1,9 @@
-import { AllTraceFilterEnum } from 'container/Trace/Filters';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { PayloadProps as GetFilterPayload } from 'types/api/trace/getFilters';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
-export * from './parseFilter';
-export interface ParsedUrl<T> {
-	currentValue: T;
-	urlValue: T;
-}
-
-export function isTraceFilterEnum(
-	value: TraceFilterEnum | string,
-): value is TraceFilterEnum {
-	return !!AllTraceFilterEnum.find((enums) => enums === value);
-}
+import { isTraceFilterEnum } from './shared';
 
 export const updateURL = (
 	selectedFilter: TraceReducer['selectedFilter'],
@@ -92,3 +81,6 @@ export const stripTimestampsFromQuery = (query: string): string =>
 		.replace(/(\?|&)startTime=\d+/, '')
 		.replace(/&endTime=\d+/, '')
 		.replace(/[?&]relativeTime=[^&]+/g, '');
+
+// Re-export parse filter helpers so callers can import them from './util'
+export * from './parseFilter';

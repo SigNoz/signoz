@@ -1,10 +1,10 @@
-import { SelectedModuleStepProps } from '../OnboardingContainer';
 import ConnectionStatus from '../Steps/ConnectionStatus/ConnectionStatus';
 import DataSource from '../Steps/DataSource/DataSource';
 import EnvironmentDetails from '../Steps/EnvironmentDetails/EnvironmentDetails';
 import LogsConnectionStatus from '../Steps/LogsConnectionStatus/LogsConnectionStatus';
 import MarkdownStep from '../Steps/MarkdownStep/MarkdownStep';
 import SelectMethod from '../Steps/SelectMethod/SelectMethod';
+import { SelectedModuleStepProps } from '../types';
 
 export const stepsMap = {
 	dataSource: 'dataSource',

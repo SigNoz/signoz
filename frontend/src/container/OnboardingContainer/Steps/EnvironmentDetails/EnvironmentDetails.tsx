@@ -5,7 +5,7 @@ import { Button, Card, Form, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
-import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
+import { useCases } from 'container/OnboardingContainer/types';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, Server } from 'lucide-react';
 

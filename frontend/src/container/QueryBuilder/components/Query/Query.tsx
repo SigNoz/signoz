@@ -15,11 +15,9 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 // ** Components
-import {
-	AdditionalFiltersToggler,
-	DataSourceDropdown,
-	FilterLabel,
-} from 'container/QueryBuilder/components';
+import { AdditionalFiltersToggler } from 'container/QueryBuilder/components/AdditionalFiltersToggler';
+import { DataSourceDropdown } from 'container/QueryBuilder/components/DataSourceDropdown';
+import { FilterLabel } from 'container/QueryBuilder/components/FilterLabel';
 import {
 	AggregatorFilter,
 	GroupByFilter,

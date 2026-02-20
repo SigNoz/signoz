@@ -3,7 +3,7 @@ import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { LEGEND } from 'constants/global';
 // ** Components
-import { FilterLabel } from 'container/QueryBuilder/components';
+import { FilterLabel } from 'container/QueryBuilder/components/FilterLabel';
 import HavingFilter from 'container/QueryBuilder/filters/Formula/Having/HavingFilter';
 import LimitFilter from 'container/QueryBuilder/filters/Formula/Limit/Limit';
 import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderByFilter';

@@ -1,7 +1,7 @@
 import {
 	buildDependencies,
 	buildDependencyGraph,
-} from 'container/DashboardContainer/DashboardVariablesSelection/util';
+} from 'container/DashboardContainer/DashboardVariablesSelection/dependencyGraphUtils';
 import {
 	IDashboardVariable,
 	TVariableQueryType,

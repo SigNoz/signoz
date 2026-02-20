@@ -11,9 +11,10 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import {
+	DataSourceType,
 	ModulesMap,
 	useCases,
-} from 'container/OnboardingContainer/OnboardingContainer';
+} from 'container/OnboardingContainer/types';
 import {
 	getDataSources,
 	getSupportedFrameworks,
@@ -26,13 +27,6 @@ import { Blocks, Check } from 'lucide-react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import './DataSource.styles.scss';
-
-export interface DataSourceType {
-	id?: string;
-	name: string;
-	imgURL?: string;
-	label?: string;
-}
 
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();

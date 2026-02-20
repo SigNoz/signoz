@@ -3,7 +3,7 @@ import { Form, Input, Select, Space, Switch } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { ProcessorData } from 'types/api/pipeline/def';
 
-import { formValidationRules } from '../config';
+import { formValidationRules } from '../constants';
 import { processorFields, ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';

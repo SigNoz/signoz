@@ -11,7 +11,7 @@ import {
 	OnboardingMethods,
 	useOnboardingContext,
 } from 'container/OnboardingContainer/context/OnboardingContext';
-import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
+import { ModulesMap } from 'container/OnboardingContainer/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 export interface IngestionInfoProps {

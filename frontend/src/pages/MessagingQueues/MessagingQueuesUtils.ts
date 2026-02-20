@@ -3,7 +3,10 @@ import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
-import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
+import {
+	getPartitionLatencyDetails,
+	MessagingQueueServiceDetailType,
+} from 'api/messagingQueues/getPartitionLatencyDetails';
 import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
@@ -17,6 +20,8 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
+
+export { MessagingQueueServiceDetailType } from 'api/messagingQueues/getPartitionLatencyDetails';
 
 export const KAFKA_SETUP_DOC_LINK =
 	'https://signoz.io/docs/messaging-queues/kafka?utm_source=product&utm_medium=kafka-get-started';
@@ -32,13 +37,6 @@ export type RowData = {
 	key: string | number;
 	[key: string]: string | number;
 };
-
-export enum MessagingQueueServiceDetailType {
-	ConsumerDetails = 'consumer-details',
-	ProducerDetails = 'producer-details',
-	NetworkLatency = 'network-latency',
-	PartitionHostMetrics = 'partition-host-metric',
-}
 
 export const ConsumerLagDetailTitle: Record<
 	MessagingQueueServiceDetailType,

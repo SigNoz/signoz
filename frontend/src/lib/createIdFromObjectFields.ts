@@ -1,4 +1,4 @@
-import { idDivider } from 'constants/queryBuilder';
+import { idDivider } from 'constants/queryBuilderDividers';
 
 export const createIdFromObjectFields = <T, K extends keyof T>(
 	obj: T,

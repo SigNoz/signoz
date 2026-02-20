@@ -13,8 +13,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import { parseQueryIntoSpanKind } from './parseFilter/parseSpanKind';
+import { isTraceFilterEnum } from './shared';
 import {
-	isTraceFilterEnum,
 	parseAggregateOrderParams,
 	parseFilterExclude,
 	parseFilterToFetchData,

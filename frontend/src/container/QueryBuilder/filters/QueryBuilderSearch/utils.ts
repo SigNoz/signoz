@@ -1,7 +1,6 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { queryFilterTags } from 'hooks/queryBuilder/useTag';
-import { parse } from 'papaparse';
+import { parse, unparse } from 'papaparse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
@@ -181,4 +180,18 @@ export function convertExampleQueriesToOptions(
 		value: query,
 		label: queryFilterTags(query).join(' , '),
 	}));
+}
+
+export function queryFilterTags(filter: TagFilter): string[] {
+	return (filter?.items || []).map((ele) => {
+		if (isInNInOperator(getOperatorFromValue(ele.op))) {
+			try {
+				const csvString = unparse([ele.value]);
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+			} catch {
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+			}
+		}
+		return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+	});
 }

@@ -1,7 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-import { ModuleProps, useCases } from '../OnboardingContainer';
-import { DataSourceType } from '../Steps/DataSource/DataSource';
+import { DataSourceType, ModuleProps, useCases } from '../types';
 import { defaultApplicationDataSource } from '../utils/dataSourceUtils';
 
 export const OnboardingMethods = {

@@ -1,12 +1,12 @@
 import { isEmpty, isUndefined } from 'lodash-es';
 
 import createStore from '../store';
-import { VariableFetchContext } from '../variableFetchStore';
 import { IDashboardVariablesStoreState } from './dashboardVariablesStoreTypes';
 import {
 	computeDerivedValues,
 	updateDerivedValues,
 } from './dashboardVariablesStoreUtils';
+import { VariableFetchContext } from './fetchTypes';
 
 const initialState: IDashboardVariablesStoreState = {
 	dashboardId: '',

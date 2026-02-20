@@ -84,6 +84,20 @@ export type TraceFilterEnum =
 	| 'rpcMethod'
 	| 'traceID';
 
+export const AllTraceFilterEnum: TraceFilterEnum[] = [
+	'duration',
+	'status',
+	'serviceName',
+	'operation',
+	'rpcMethod',
+	'responseStatusCode',
+	'httpHost',
+	'httpMethod',
+	'httpRoute',
+	'httpUrl',
+	'traceID',
+];
+
 export const AllPanelHeading: {
 	key: TraceFilterEnum;
 	displayValue: string;

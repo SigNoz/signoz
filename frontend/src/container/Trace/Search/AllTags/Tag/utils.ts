@@ -5,7 +5,7 @@ import { PayloadProps as TagKeyPayload } from 'types/api/trace/getTagFilters';
 import { PayloadProps as TagValuePayload } from 'types/api/trace/getTagValue';
 import { OperatorValues, Tags } from 'types/reducer/trace';
 
-import { AllMenu, AllMenuProps } from '.';
+import { AllMenu, AllMenuProps } from './constants';
 
 export type TagValueTypes = string | number | boolean;
 /**

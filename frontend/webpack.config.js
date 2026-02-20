@@ -8,9 +8,13 @@ const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+// enable when you start get error like: Cannot read properties of undefined, maybe be due to circular dependency
+// const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 dotenv.config();
 
+// eslint-disable-next-line no-console
 console.log(resolve(__dirname, './src/'));
 
 const cssLoader = 'css-loader';
@@ -18,6 +22,11 @@ const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
 const plugins = [
+	// new CircularDependencyPlugin({
+	// 	exclude: /node_modules/,
+	// 	failOnError: true,
+	// }),
+	new ReactRefreshWebpackPlugin(),
 	new HtmlWebpackPlugin({
 		template: 'src/index.html.ejs',
 		PYLON_APP_ID: process.env.PYLON_APP_ID,
@@ -74,8 +83,6 @@ const config = {
 			disableDotRule: true,
 		},
 		open: true,
-		hot: true,
-		liveReload: true,
 		port: portFinderSync.getPort(3301),
 		static: {
 			directory: resolve(__dirname, 'public'),
@@ -98,7 +105,13 @@ const config = {
 		rules: [
 			{
 				test: [/\.jsx?$/, /\.tsx?$/],
-				use: ['babel-loader'],
+				include: /src/,
+				use: {
+					loader: 'babel-loader',
+					options: {
+						cacheDirectory: true,
+					},
+				},
 				exclude: /node_modules/,
 			},
 			// Add a rule for Markdown files using raw-loader
@@ -167,6 +180,10 @@ const config = {
 	},
 	optimization: {
 		minimize: false,
+		runtimeChunk: true,
+		removeAvailableModules: false,
+		removeEmptyChunks: false,
+		splitChunks: false,
 	},
 };
 

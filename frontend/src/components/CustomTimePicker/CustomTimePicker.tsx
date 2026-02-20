@@ -28,19 +28,15 @@ import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
 
-import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
+import CustomTimePickerPopoverContent, {
+	CustomTimePickerInputStatus,
+} from './CustomTimePickerPopoverContent';
 
 import './CustomTimePicker.styles.scss';
 
 const maxAllowedMinTimeInMonths = 15;
 type ViewType = 'datetime' | 'timezone';
 const DEFAULT_VIEW: ViewType = 'datetime';
-
-export enum CustomTimePickerInputStatus {
-	SUCCESS = 'success',
-	ERROR = 'error',
-	UNSET = '',
-}
 
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;

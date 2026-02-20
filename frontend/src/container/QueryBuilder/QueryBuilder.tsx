@@ -1,4 +1,3 @@
-// ** Constants
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button, Col, Divider, Row, Tooltip, Typography } from 'antd';
@@ -10,14 +9,12 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-// ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
-// ** Components
-import { Formula, Query } from './components';
-// ** Types
+import { Formula } from './components/Formula';
+import { Query } from './components/Query';
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
 
 import './QueryBuilder.styles.scss';

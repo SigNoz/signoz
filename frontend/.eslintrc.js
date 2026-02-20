@@ -118,7 +118,7 @@ module.exports = {
 			},
 		],
 		'import/no-extraneous-dependencies': ['error', { devDependencies: true }], // Prevents importing packages not in package.json
-		'import/no-cycle': 'warn', // Warns about circular dependencies
+		'import/no-cycle': 'error', // Circular imports breaks react refresh
 
 		// Import sorting rules
 		'simple-import-sort/imports': [

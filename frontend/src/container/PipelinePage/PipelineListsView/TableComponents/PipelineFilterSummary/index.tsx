@@ -1,4 +1,4 @@
-import { queryFilterTags } from 'hooks/queryBuilder/useTag';
+import { queryFilterTags } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import './styles.scss';

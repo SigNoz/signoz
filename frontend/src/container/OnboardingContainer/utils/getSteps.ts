@@ -35,8 +35,7 @@ import {
 	StartContainer,
 	TestConnectionStep,
 } from '../constants/stepsConfig';
-import { ModuleProps, SelectedModuleStepProps } from '../OnboardingContainer';
-import { DataSourceType } from '../Steps/DataSource/DataSource';
+import { DataSourceType, ModuleProps, SelectedModuleStepProps } from '../types';
 
 interface GetStepsProps {
 	selectedModule?: ModuleProps;

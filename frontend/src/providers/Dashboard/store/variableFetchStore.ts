@@ -1,5 +1,8 @@
 import { getVariableDependencyContext } from './dashboardVariables/dashboardVariablesStore';
-import { IDashboardVariablesStoreState } from './dashboardVariables/dashboardVariablesStoreTypes';
+import type {
+	VariableFetchContext,
+	VariableFetchState,
+} from './dashboardVariables/fetchTypes';
 import createStore from './store';
 import {
 	areAllQueryVariablesSettled,
@@ -8,13 +11,7 @@ import {
 	unlockWaitingDynamicVariables,
 } from './variableFetchStoreUtils';
 
-// Fetch state for each variable
-export type VariableFetchState =
-	| 'idle' // stable state - initial or complete
-	| 'loading' // actively fetching data (first time)
-	| 'revalidating' // refetching existing data
-	| 'waiting' // blocked on parent dependencies
-	| 'error';
+export type { VariableFetchContext, VariableFetchState };
 
 export interface IVariableFetchStoreState {
 	// Per-variable fetch state
@@ -27,17 +24,6 @@ export interface IVariableFetchStoreState {
 	// Used in react-query keys to auto-cancel stale requests for that variable only.
 	cycleIds: Record<string, number>;
 }
-
-/**
- * Context from dashboardVariablesStore needed by fetch actions.
- * Passed as parameter to avoid circular imports.
- */
-export type VariableFetchContext = Pick<
-	IDashboardVariablesStoreState,
-	'variableTypes' | 'dynamicVariableOrder' | 'dependencyData'
-> & {
-	doAllVariablesHaveValuesSelected: boolean;
-};
 
 const initialState: IVariableFetchStoreState = {
 	states: {},

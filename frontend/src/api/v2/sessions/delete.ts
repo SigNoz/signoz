@@ -1,9 +1,10 @@
-import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
 
 const deleteSession = async (): Promise<SuccessResponseV2<null>> => {
+	const { ApiV2Instance: axios } = await import('api');
+
 	try {
 		const response = await axios.delete<RawSuccessResponse<null>>('/sessions');
 
