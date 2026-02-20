@@ -29,6 +29,8 @@ const (
 	ArrayAnyIndexSuffix = "[*]"
 )
 
+type TelemetryFieldKeys map[string][]*TelemetryFieldKey
+
 type TelemetryFieldKey struct {
 	Name          string        `json:"name" required:"true"`
 	Description   string        `json:"description,omitempty"`
@@ -171,6 +173,10 @@ func (f *TelemetryFieldKey) Normalize() {
 		}
 	}
 
+}
+
+func (f *TelemetryFieldKey) QualifiedName() string {
+	return f.Name + ";" + f.FieldContext.StringValue() + ";" + f.FieldDataType.StringValue()
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
