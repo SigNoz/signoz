@@ -1,8 +1,52 @@
 {
 	"files": [
 		{
-			"path": "./build/**.js",
-			"maxSize": "1.2MB"
+			"path": "./build/runtime~*.js",
+			"maxSize": "50KB"
+		},
+		{
+			"path": "./build/vendors-react.*.js",
+			"maxSize": "300KB"
+		},
+		{
+			"path": "./build/vendors-antd.*.js",
+			"maxSize": "1MB"
+		},
+		{
+			"path": "./build/vendors-antd-icons.*.js",
+			"maxSize": "2.5MB"
+		},
+		{
+			"path": "./build/vendors-charts.*.js",
+			"maxSize": "400KB"
+		},
+		{
+			"path": "./build/vendors-react-query.*.js",
+			"maxSize": "100KB"
+		},
+		{
+			"path": "./build/vendors-utilities.*.js",
+			"maxSize": "600KB"
+		},
+		{
+			"path": "./build/vendors-monaco.*.js",
+			"maxSize": "3MB"
+		},
+		{
+			"path": "./build/vendors-common.*.js",
+			"maxSize": "800KB"
+		},
+		{
+			"path": "./build/main.*.js",
+			"maxSize": "500KB"
+		},
+		{
+			"path": "./build/Home.*.js",
+			"maxSize": "300KB"
+		},
+		{
+			"path": "./build/*.js",
+			"maxSize": "1MB"
 		}
 	]
 }
