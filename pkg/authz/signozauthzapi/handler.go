@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -35,13 +36,14 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID)))
+	role := roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID))
+	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, nil)
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: role.ID})
 }
 
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -112,7 +114,9 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
-	render.Success(rw, http.StatusOK, roletypes.NewGettableResources(handler.authz.GetResources(r.Context())))
+	resources := handler.authz.GetResources(r.Context())
+
+	render.Success(rw, http.StatusOK, roletypes.NewGettableResources(resources))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {

@@ -459,7 +459,7 @@ export const getObjects = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetObjects200>({
-		url: `/api/v1/roles/${id}/relation/${relation}`,
+		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
 		method: 'GET',
 		signal,
 	});
@@ -562,7 +562,7 @@ export const patchObjects = (
 	roletypesPatchableObjectsDTO: RoletypesPatchableObjectsDTO,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/roles/${id}/relation/${relation}`,
+		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: roletypesPatchableObjectsDTO,

@@ -183,6 +183,11 @@ func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource 
 }
 
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
+	_, err := provider.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	storableRole, err := provider.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -194,7 +199,7 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 			resourceObjects, err := provider.
 				ListObjects(
 					ctx,
-					authtypes.MustNewSubject(authtypes.TypeableRole, storableRole.ID.String(), orgID, &authtypes.RelationAssignee),
+					authtypes.MustNewSubject(authtypes.TypeableRole, storableRole.Name, orgID, &authtypes.RelationAssignee),
 					relation,
 					authtypes.MustNewTypeableFromType(resource.Type, resource.Name),
 				)

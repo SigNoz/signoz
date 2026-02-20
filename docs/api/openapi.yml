@@ -3994,6 +3994,12 @@ paths:
                     type: string
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -4006,12 +4012,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -4050,12 +4074,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -4146,12 +4188,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -4160,7 +4220,7 @@ paths:
       summary: Patch role
       tags:
       - role
-  /api/v1/roles/{id}/relation/{relation}:
+  /api/v1/roles/{id}/relation/{relation}/objects:
     get:
       deprecated: false
       description: Gets all objects connected to the specified role via a given relation
@@ -4203,12 +4263,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -4245,6 +4323,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -4257,12 +4341,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
