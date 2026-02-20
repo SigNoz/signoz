@@ -769,7 +769,15 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button type="text" className="only-btn">
+								<Button
+									type="text"
+									className="only-btn"
+									onClick={(e): void => {
+										e.stopPropagation();
+										e.preventDefault();
+										handleItemSelection('option');
+									}}
+								>
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
@@ -1925,9 +1933,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						style={
 							isActive || isSelected
 								? {
-										borderColor: Color.BG_ROBIN_500,
-										backgroundColor: Color.BG_SLATE_400,
-								  }
+									borderColor: Color.BG_ROBIN_500,
+									backgroundColor: Color.BG_SLATE_400,
+								}
 								: undefined
 						}
 					>
