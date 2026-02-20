@@ -8,22 +8,25 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
 type handler struct {
-	module root.Module
-	getter root.Getter
+	module  root.Module
+	getter  root.Getter
+	flagger flagger.Flagger
 }
 
-func NewHandler(module root.Module, getter root.Getter) root.Handler {
-	return &handler{module: module, getter: getter}
+func NewHandler(module root.Module, getter root.Getter, flagger flagger.Flagger) root.Handler {
+	return &handler{module: module, getter: getter, flagger: flagger}
 }
 
 func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
@@ -211,9 +214,26 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	orgId := valuer.MustNewUUID(claims.OrgID)
+	users, err := h.getter.ListByOrgID(ctx, orgId)
 	if err != nil {
 		render.Error(w, err)
+		return
+	}
+
+	// filter root users if feature flag `list_users_include_root` is disabled
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgId)
+	listUsersIncludeRoot := h.flagger.BooleanOrEmpty(r.Context(), flagger.FeatureListUsersIncludeRoot, evalCtx)
+
+	if !listUsersIncludeRoot {
+		filteredUsers := users[:0]
+		for _, u := range users {
+			if !u.IsRoot {
+				filteredUsers = append(filteredUsers, u)
+			}
+		}
+
+		render.Success(w, http.StatusOK, filteredUsers)
 		return
 	}
 

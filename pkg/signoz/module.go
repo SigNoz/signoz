@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -66,6 +67,7 @@ type Modules struct {
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
 	Promote         promote.Module
+	Flagger         flagger.Flagger
 }
 
 func NewModules(
@@ -85,6 +87,7 @@ func NewModules(
 	queryParser queryparser.QueryParser,
 	config Config,
 	dashboard dashboard.Module,
+	flagger flagger.Flagger,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -110,5 +113,6 @@ func NewModules(
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		Flagger:         flagger,
 	}
 }
