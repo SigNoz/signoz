@@ -62,9 +62,9 @@ x-db-depend: &db-depend
   depends_on:
     clickhouse:
       condition: service_healthy
-    clickhouse-1:
-      condition: service_healthy
     clickhouse-2:
+      condition: service_healthy
+    clickhouse-3:
       condition: service_healthy
 services:
   init-clickhouse:
