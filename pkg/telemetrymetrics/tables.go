@@ -3,6 +3,7 @@ package telemetrymetrics
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 )
 
@@ -168,7 +169,7 @@ func AggregationColumnForSamplesTable(
 	temporality metrictypes.Temporality,
 	timeAggregation metrictypes.TimeAggregation,
 	tableHints *metrictypes.MetricTableHints,
-) string {
+) (string, error) {
 	tableName := WhichSamplesTableToUse(start, end, metricType, timeAggregation, tableHints)
 	var aggregationColumn string
 	switch temporality {
@@ -298,5 +299,12 @@ func AggregationColumnForSamplesTable(
 			}
 		}
 	}
-	return aggregationColumn
+	if aggregationColumn == "" {
+		return "", errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"invalid time aggregation, should be one of the following: [`latest`, `sum`, `avg`, `min`, `max`, `count`, `rate`, `increase`]",
+		)
+	}
+	return aggregationColumn, nil
 }

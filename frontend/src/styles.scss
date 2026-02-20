@@ -567,6 +567,15 @@ body {
 		border: 1px solid var(--bg-vanilla-300);
 	}
 
+	.ant-tooltip {
+		--antd-arrow-background-color: var(--bg-vanilla-100);
+
+		.ant-tooltip-inner {
+			background-color: var(--bg-vanilla-100);
+			color: var(---bg-ink-500);
+		}
+	}
+
 	.ant-dropdown-menu {
 		border: 1px solid var(--bg-vanilla-300);
 		background: var(--bg-vanilla-100);

@@ -1,0 +1,15 @@
+.dashboard-header {
+	border-bottom: 1px solid var(--bg-slate-400);
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: center;
+	padding: 0 8px;
+	box-sizing: border-box;
+}
+
+.lightMode {
+	.dashboard-header {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+	}
+}

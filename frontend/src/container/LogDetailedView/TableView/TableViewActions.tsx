@@ -395,7 +395,7 @@ export default function TableViewActions(
 								onOpenChange={setIsOpen}
 								arrow={false}
 								content={
-									<div>
+									<div data-log-detail-ignore="true">
 										<Button
 											className="more-filter-actions"
 											type="text"
@@ -481,7 +481,7 @@ export default function TableViewActions(
 							onOpenChange={setIsOpen}
 							arrow={false}
 							content={
-								<div>
+								<div data-log-detail-ignore="true">
 									<Button
 										className="more-filter-actions"
 										type="text"
