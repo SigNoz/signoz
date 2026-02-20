@@ -229,7 +229,41 @@ install_docker_compose() {
 start_docker() {
     echo -e "🐳 Starting Docker ...\n"
     if [[ $os == "Mac" ]]; then
-        open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
+        # check if the docker daemon is already running (works with  the docker desktop, rancher desktop, colima, etc...)
+        if docker system info > /dev/null 2>&1; then
+            echo "Docker is already running."
+        else
+            # try to open docker desktop if available (ignore errors for alternative docker runtimes..)
+            if open --background -a Docker 2>/dev/null; then
+                echo "Starting Docker Desktop..."
+                # Wait for the docker to be ready okyy
+                local timeout=60
+                while ! docker system info > /dev/null 2>&1; do
+                    if [[ $timeout -le 0 ]]; then
+                        echo ""
+                        echo "+++++++++++ ERROR +++++++++++++++++++++++"
+                        echo "Docker daemon is not running and couldn't be started automatically."
+                        echo "Please start your Docker runtime (Docker Desktop, Rancher Desktop, Colima, etc.) and try again."
+                        echo "+++++++++++++++++++++++++++++++++++++++++++"
+                        exit 1
+                    fi
+                    ((timeout--))
+                    sleep 1
+                done
+            else
+                # docker desktop not found provide guidance for alternative runtimes
+                echo ""
+                echo "+++++++++++ ERROR +++++++++++++++++++++++"
+                echo "Docker daemon is not running."
+                echo "Please start your Docker runtime manually:"
+                echo "  - Docker Desktop: Open the Docker application"
+                echo "  - Rancher Desktop: Open Rancher Desktop application"
+                echo "  - Colima: Run 'colima start'"
+                echo "Then run this script again."
+                echo "+++++++++++++++++++++++++++++++++++++++++++"
+                exit 1
+            fi
+        fi
     else
         if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
@@ -246,7 +280,7 @@ start_docker() {
 wait_for_containers_start() {
     local timeout=$1
 
-    # The while loop is important because for-loops don't work for dynamic values
+    # the while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
         status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/api/v1/health?live=1" || true)"
         if [[ status_code -eq 200 ]]; then
@@ -261,8 +295,8 @@ wait_for_containers_start() {
     echo ""
 }
 
-bye() {  # Prints a friendly good bye message and exits the script.
-    # Switch back to the original directory
+bye() {  # prints a friendly good bye message and exits the script..
+    # switch back to the original directory
     popd > /dev/null 2>&1
     if [[ "$?" -ne 0 ]]; then
         set +o errexit
@@ -319,7 +353,7 @@ echo ""
 sudo_cmd=""
 docker_compose_cmd=""
 
-# Check sudo permissions
+# check sudo permissions
 if (( $EUID != 0 )); then
     echo "🟡 Running installer with non-sudo permissions."
     echo "   In case of any failure or prompt, please consider running the script with sudo privileges."

@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
 type chSQLQuery struct {
@@ -59,8 +60,68 @@ func (q *chSQLQuery) Fingerprint() string {
 
 func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 
+// convertToVariableValues converts a map of VariableItem to a slice of VariableValue
+// for use with the QueryTransformer. It checks for dynamic variables with __all__ value
+// and marks them as IsSelectAll=true so the transformer can remove their filters.
+func convertToVariableValues(vars map[string]qbtypes.VariableItem) []chVariables.VariableValue {
+	result := make([]chVariables.VariableValue, 0, len(vars))
+	for name, item := range vars {
+		vv := chVariables.VariableValue{
+			Name:        name,
+			IsSelectAll: false,
+			FieldType:   "scalar",
+		}
+		// Check if this is a dynamic variable with __all__ value
+		if item.Type == qbtypes.DynamicVariableType {
+			if allVal, ok := item.Value.(string); ok && allVal == "__all__" {
+				vv.IsSelectAll = true
+			}
+		}
+		result = append(result, vv)
+	}
+	return result
+}
+
+// hasAllVars checks if any variable has __all__ value
+func hasAllVars(vars map[string]qbtypes.VariableItem) bool {
+	for _, item := range vars {
+		if item.Type == qbtypes.DynamicVariableType {
+			if allVal, ok := item.Value.(string); ok && allVal == "__all__" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // TODO(srikanthccv): cleanup the templating logic
 func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableItem, start, end uint64) (string, error) {
+	originalQuery := query
+
+	// Transform query to remove filters for variables with __all__ value.
+	// This must happen before variable substitution so we can detect variable references
+	// in their original form ($var, {{var}}, [[var]]).
+	// See: https://github.com/SigNoz/signoz/issues/9889
+	if hasAllVars(vars) {
+		varValues := convertToVariableValues(vars)
+		transformer := chVariables.NewQueryTransformer(query, varValues)
+		transformedQuery, err := transformer.Transform()
+		if err != nil {
+			// Passthrough mode: log error but continue with original query
+			// This ensures we don't break existing queries while validating the transformer
+			q.logger.ErrorContext(context.Background(), "query transformer failed, using original query",
+				"error", err,
+				"query", query)
+		} else if transformedQuery != originalQuery {
+			// Log when transformation modifies the query - helps track __all__ variable usage
+			// and validates transformer behavior in production before full rollout
+			q.logger.InfoContext(context.Background(), "query transformed for __all__ variables",
+				"original", originalQuery,
+				"transformed", transformedQuery)
+			query = transformedQuery
+		}
+	}
+
 	varsData := map[string]any{}
 	for k, v := range vars {
 		varsData[k] = formatValueForCH(v.Value)
