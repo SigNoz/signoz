@@ -927,6 +927,18 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	unit: string;
 }
 
+export interface MetrictypesComparisonSpaceAggregationParamDTO {
+	/**
+	 * @type string
+	 */
+	operator?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	threshold?: number;
+}
+
 export enum MetrictypesSpaceAggregationDTO {
 	sum = 'sum',
 	avg = 'avg',
@@ -938,6 +950,7 @@ export enum MetrictypesSpaceAggregationDTO {
 	p90 = 'p90',
 	p95 = 'p95',
 	p99 = 'p99',
+	histogram_count = 'histogram_count',
 }
 export enum MetrictypesTemporalityDTO {
 	delta = 'delta',
@@ -1288,6 +1301,7 @@ export interface Querybuildertypesv5LogAggregationDTO {
 }
 
 export interface Querybuildertypesv5MetricAggregationDTO {
+	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 	/**
 	 * @type string
 	 */
