@@ -9,6 +9,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { SPAN_ATTRIBUTES } from '../constants';
 import DomainMetrics from './DomainMetrics';
 
 // Mock the API call
@@ -126,11 +127,9 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 				'count()',
 			);
 			// Verify exact domain filter expression structure
+			expect(queryA.filter.expression).toContain("http_host = '0.0.0.0'");
 			expect(queryA.filter.expression).toContain(
-				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
-			);
-			expect(queryA.filter.expression).toContain(
-				'url.full EXISTS OR http.url EXISTS',
+				`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 
 			// Verify Query B - p99 latency
@@ -142,17 +141,13 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 				'p99(duration_nano)',
 			);
 			// Verify exact domain filter expression structure
-			expect(queryB.filter.expression).toContain(
-				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
-			);
+			expect(queryB.filter.expression).toContain("http_host = '0.0.0.0'");
 
 			// Verify Query C - error count (disabled)
 			const queryC = queryData.find((q: any) => q.queryName === 'C');
 			expect(queryC).toBeDefined();
 			expect(queryC.disabled).toBe(true);
-			expect(queryC.filter.expression).toContain(
-				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
-			);
+			expect(queryC.filter.expression).toContain("http_host = '0.0.0.0'");
 			expect(queryC.aggregations?.[0]).toBeDefined();
 			expect((queryC.aggregations?.[0] as TraceAggregation)?.expression).toBe(
 				'count()',
@@ -169,9 +164,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 				'max(timestamp)',
 			);
 			// Verify exact domain filter expression structure
-			expect(queryD.filter.expression).toContain(
-				"(net.peer.name = '0.0.0.0' OR server.address = '0.0.0.0')",
-			);
+			expect(queryD.filter.expression).toContain("http_host = '0.0.0.0'");
 
 			// Verify Formula F1 - error rate calculation
 			const formulas = payload.query.builder.queryFormulas;
