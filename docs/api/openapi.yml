@@ -1,8 +1,2026 @@
-openapi: 3.0.3
+components:
+  schemas:
+    AuthtypesAttributeMapping:
+      properties:
+        email:
+          type: string
+        groups:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      type: object
+    AuthtypesAuthDomainConfig:
+      properties:
+        googleAuthConfig:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+        oidcConfig:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+        samlConfig:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+        ssoEnabled:
+          type: boolean
+        ssoType:
+          type: string
+      type: object
+    AuthtypesAuthNProviderInfo:
+      properties:
+        relayStatePath:
+          nullable: true
+          type: string
+      type: object
+    AuthtypesAuthNSupport:
+      properties:
+        callback:
+          items:
+            $ref: '#/components/schemas/AuthtypesCallbackAuthNSupport'
+          nullable: true
+          type: array
+        password:
+          items:
+            $ref: '#/components/schemas/AuthtypesPasswordAuthNSupport'
+          nullable: true
+          type: array
+      type: object
+    AuthtypesCallbackAuthNSupport:
+      properties:
+        provider:
+          type: string
+        url:
+          type: string
+      type: object
+    AuthtypesGettableAuthDomain:
+      properties:
+        authNProviderInfo:
+          $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
+        createdAt:
+          format: date-time
+          type: string
+        googleAuthConfig:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+        id:
+          type: string
+        name:
+          type: string
+        oidcConfig:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+        orgId:
+          type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+        samlConfig:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+        ssoEnabled:
+          type: boolean
+        ssoType:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    AuthtypesGettableToken:
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+      type: object
+    AuthtypesGoogleConfig:
+      properties:
+        allowedGroups:
+          items:
+            type: string
+          type: array
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        domainToAdminEmail:
+          additionalProperties:
+            type: string
+          type: object
+        fetchGroups:
+          type: boolean
+        fetchTransitiveGroupMembership:
+          type: boolean
+        insecureSkipEmailVerified:
+          type: boolean
+        redirectURI:
+          type: string
+        serviceAccountJson:
+          type: string
+      type: object
+    AuthtypesOIDCConfig:
+      properties:
+        claimMapping:
+          $ref: '#/components/schemas/AuthtypesAttributeMapping'
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        getUserInfo:
+          type: boolean
+        insecureSkipEmailVerified:
+          type: boolean
+        issuer:
+          type: string
+        issuerAlias:
+          type: string
+      type: object
+    AuthtypesOrgSessionContext:
+      properties:
+        authNSupport:
+          $ref: '#/components/schemas/AuthtypesAuthNSupport'
+        id:
+          type: string
+        name:
+          type: string
+        warning:
+          $ref: '#/components/schemas/ErrorsJSON'
+      type: object
+    AuthtypesPasswordAuthNSupport:
+      properties:
+        provider:
+          type: string
+      type: object
+    AuthtypesPostableAuthDomain:
+      properties:
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        name:
+          type: string
+      type: object
+    AuthtypesPostableEmailPasswordSession:
+      properties:
+        email:
+          type: string
+        orgId:
+          type: string
+        password:
+          type: string
+      type: object
+    AuthtypesPostableRotateToken:
+      properties:
+        refreshToken:
+          type: string
+      type: object
+    AuthtypesRoleMapping:
+      properties:
+        defaultRole:
+          type: string
+        groupMappings:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        useRoleAttribute:
+          type: boolean
+      type: object
+    AuthtypesSamlConfig:
+      properties:
+        attributeMapping:
+          $ref: '#/components/schemas/AuthtypesAttributeMapping'
+        insecureSkipAuthNRequestsSigned:
+          type: boolean
+        samlCert:
+          type: string
+        samlEntity:
+          type: string
+        samlIdp:
+          type: string
+      type: object
+    AuthtypesSessionContext:
+      properties:
+        exists:
+          type: boolean
+        orgs:
+          items:
+            $ref: '#/components/schemas/AuthtypesOrgSessionContext'
+          nullable: true
+          type: array
+      type: object
+    AuthtypesUpdateableAuthDomain:
+      properties:
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
+    DashboardtypesDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        data:
+          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
+        id:
+          type: string
+        locked:
+          type: boolean
+        org_id:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      type: object
+    DashboardtypesGettablePublicDasbhboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        publicPath:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
+    DashboardtypesGettablePublicDashboardData:
+      properties:
+        dashboard:
+          $ref: '#/components/schemas/DashboardtypesDashboard'
+        publicDashboard:
+          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+      type: object
+    DashboardtypesPostablePublicDashboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
+    DashboardtypesStorableDashboardData:
+      additionalProperties: {}
+      type: object
+    DashboardtypesUpdatablePublicDashboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
+    ErrorsJSON:
+      properties:
+        code:
+          type: string
+        errors:
+          items:
+            $ref: '#/components/schemas/ErrorsResponseerroradditional'
+          type: array
+        message:
+          type: string
+        url:
+          type: string
+      type: object
+    ErrorsResponseerroradditional:
+      properties:
+        message:
+          type: string
+      type: object
+    FeaturetypesGettableFeature:
+      properties:
+        defaultVariant:
+          type: string
+        description:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        resolvedValue: {}
+        stage:
+          type: string
+        variants:
+          additionalProperties: {}
+          nullable: true
+          type: object
+      type: object
+    GatewaytypesGettableCreatedIngestionKey:
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+      required:
+      - id
+      - value
+      type: object
+    GatewaytypesGettableCreatedIngestionKeyLimit:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
+    GatewaytypesGettableIngestionKeys:
+      properties:
+        _pagination:
+          $ref: '#/components/schemas/GatewaytypesPagination'
+        keys:
+          items:
+            $ref: '#/components/schemas/GatewaytypesIngestionKey'
+          nullable: true
+          type: array
+      type: object
+    GatewaytypesIngestionKey:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        expires_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        limits:
+          items:
+            $ref: '#/components/schemas/GatewaytypesLimit'
+          nullable: true
+          type: array
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updated_at:
+          format: date-time
+          type: string
+        value:
+          type: string
+        workspace_id:
+          type: string
+      type: object
+    GatewaytypesLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        created_at:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key_id:
+          type: string
+        metric:
+          $ref: '#/components/schemas/GatewaytypesLimitMetric'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updated_at:
+          format: date-time
+          type: string
+      type: object
+    GatewaytypesLimitConfig:
+      properties:
+        day:
+          $ref: '#/components/schemas/GatewaytypesLimitValue'
+        second:
+          $ref: '#/components/schemas/GatewaytypesLimitValue'
+      type: object
+    GatewaytypesLimitMetric:
+      properties:
+        day:
+          $ref: '#/components/schemas/GatewaytypesLimitMetricValue'
+        second:
+          $ref: '#/components/schemas/GatewaytypesLimitMetricValue'
+      type: object
+    GatewaytypesLimitMetricValue:
+      properties:
+        count:
+          format: int64
+          type: integer
+        size:
+          format: int64
+          type: integer
+      type: object
+    GatewaytypesLimitValue:
+      properties:
+        count:
+          format: int64
+          type: integer
+        size:
+          format: int64
+          type: integer
+      type: object
+    GatewaytypesPagination:
+      properties:
+        page:
+          type: integer
+        pages:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+      type: object
+    GatewaytypesPostableIngestionKey:
+      properties:
+        expires_at:
+          format: date-time
+          type: string
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - name
+      type: object
+    GatewaytypesPostableIngestionKeyLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    GatewaytypesUpdatableIngestionKeyLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - config
+      type: object
+    MetricsexplorertypesListMetric:
+      properties:
+        description:
+          type: string
+        isMonotonic:
+          type: boolean
+        metricName:
+          type: string
+        temporality:
+          $ref: '#/components/schemas/MetrictypesTemporality'
+        type:
+          $ref: '#/components/schemas/MetrictypesType'
+        unit:
+          type: string
+      required:
+      - metricName
+      - description
+      - type
+      - unit
+      - temporality
+      - isMonotonic
+      type: object
+    MetricsexplorertypesListMetricsResponse:
+      properties:
+        metrics:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesListMetric'
+          nullable: true
+          type: array
+      required:
+      - metrics
+      type: object
+    MetricsexplorertypesMetricAlert:
+      properties:
+        alertId:
+          type: string
+        alertName:
+          type: string
+      required:
+      - alertName
+      - alertId
+      type: object
+    MetricsexplorertypesMetricAlertsResponse:
+      properties:
+        alerts:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
+          nullable: true
+          type: array
+      required:
+      - alerts
+      type: object
+    MetricsexplorertypesMetricAttribute:
+      properties:
+        key:
+          type: string
+        valueCount:
+          minimum: 0
+          type: integer
+        values:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - key
+      - values
+      - valueCount
+      type: object
+    MetricsexplorertypesMetricAttributesResponse:
+      properties:
+        attributes:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesMetricAttribute'
+          nullable: true
+          type: array
+        totalKeys:
+          format: int64
+          type: integer
+      required:
+      - attributes
+      - totalKeys
+      type: object
+    MetricsexplorertypesMetricDashboard:
+      properties:
+        dashboardId:
+          type: string
+        dashboardName:
+          type: string
+        widgetId:
+          type: string
+        widgetName:
+          type: string
+      required:
+      - dashboardName
+      - dashboardId
+      - widgetId
+      - widgetName
+      type: object
+    MetricsexplorertypesMetricDashboardsResponse:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
+          nullable: true
+          type: array
+      required:
+      - dashboards
+      type: object
+    MetricsexplorertypesMetricHighlightsResponse:
+      properties:
+        activeTimeSeries:
+          minimum: 0
+          type: integer
+        dataPoints:
+          minimum: 0
+          type: integer
+        lastReceived:
+          minimum: 0
+          type: integer
+        totalTimeSeries:
+          minimum: 0
+          type: integer
+      required:
+      - dataPoints
+      - lastReceived
+      - totalTimeSeries
+      - activeTimeSeries
+      type: object
+    MetricsexplorertypesMetricMetadata:
+      properties:
+        description:
+          type: string
+        isMonotonic:
+          type: boolean
+        temporality:
+          $ref: '#/components/schemas/MetrictypesTemporality'
+        type:
+          $ref: '#/components/schemas/MetrictypesType'
+        unit:
+          type: string
+      required:
+      - description
+      - type
+      - unit
+      - temporality
+      - isMonotonic
+      type: object
+    MetricsexplorertypesStat:
+      properties:
+        description:
+          type: string
+        metricName:
+          type: string
+        samples:
+          minimum: 0
+          type: integer
+        timeseries:
+          minimum: 0
+          type: integer
+        type:
+          $ref: '#/components/schemas/MetrictypesType'
+        unit:
+          type: string
+      required:
+      - metricName
+      - description
+      - type
+      - unit
+      - timeseries
+      - samples
+      type: object
+    MetricsexplorertypesStatsRequest:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    MetricsexplorertypesStatsResponse:
+      properties:
+        metrics:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesStat'
+          nullable: true
+          type: array
+        total:
+          minimum: 0
+          type: integer
+      required:
+      - metrics
+      - total
+      type: object
+    MetricsexplorertypesTreemapEntry:
+      properties:
+        metricName:
+          type: string
+        percentage:
+          format: double
+          type: number
+        totalValue:
+          minimum: 0
+          type: integer
+      required:
+      - metricName
+      - percentage
+      - totalValue
+      type: object
+    MetricsexplorertypesTreemapMode:
+      enum:
+      - timeseries
+      - samples
+      type: string
+    MetricsexplorertypesTreemapRequest:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        limit:
+          type: integer
+        mode:
+          $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      - mode
+      type: object
+    MetricsexplorertypesTreemapResponse:
+      properties:
+        samples:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
+          nullable: true
+          type: array
+        timeseries:
+          items:
+            $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
+          nullable: true
+          type: array
+      required:
+      - timeseries
+      - samples
+      type: object
+    MetricsexplorertypesUpdateMetricMetadataRequest:
+      properties:
+        description:
+          type: string
+        isMonotonic:
+          type: boolean
+        metricName:
+          type: string
+        temporality:
+          $ref: '#/components/schemas/MetrictypesTemporality'
+        type:
+          $ref: '#/components/schemas/MetrictypesType'
+        unit:
+          type: string
+      required:
+      - metricName
+      - type
+      - description
+      - unit
+      - temporality
+      - isMonotonic
+      type: object
+    MetrictypesSpaceAggregation:
+      enum:
+      - sum
+      - avg
+      - min
+      - max
+      - count
+      - p50
+      - p75
+      - p90
+      - p95
+      - p99
+      type: string
+    MetrictypesTemporality:
+      enum:
+      - delta
+      - cumulative
+      - unspecified
+      type: string
+    MetrictypesTimeAggregation:
+      enum:
+      - latest
+      - sum
+      - avg
+      - min
+      - max
+      - count
+      - count_distinct
+      - rate
+      - increase
+      type: string
+    MetrictypesType:
+      enum:
+      - gauge
+      - sum
+      - histogram
+      - summary
+      - exponentialhistogram
+      type: string
+    PreferencetypesPreference:
+      properties:
+        allowedScopes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        allowedValues:
+          items:
+            type: string
+          nullable: true
+          type: array
+        defaultValue:
+          $ref: '#/components/schemas/PreferencetypesValue'
+        description:
+          type: string
+        name:
+          type: string
+        value:
+          $ref: '#/components/schemas/PreferencetypesValue'
+        valueType:
+          type: string
+      type: object
+    PreferencetypesUpdatablePreference:
+      properties:
+        value: {}
+      type: object
+    PreferencetypesValue:
+      type: object
+    PromotetypesPromotePath:
+      properties:
+        indexes:
+          items:
+            $ref: '#/components/schemas/PromotetypesWrappedIndex'
+          type: array
+        path:
+          type: string
+        promote:
+          type: boolean
+      type: object
+    PromotetypesWrappedIndex:
+      properties:
+        column_type:
+          type: string
+        granularity:
+          type: integer
+        type:
+          type: string
+      type: object
+    Querybuildertypesv5AggregationBucket:
+      properties:
+        alias:
+          type: string
+        anomalyScores:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+        index:
+          type: integer
+        lowerBoundSeries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+        meta:
+          properties:
+            unit:
+              type: string
+          type: object
+        predictedSeries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+        series:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          nullable: true
+          type: array
+        upperBoundSeries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
+          type: array
+      type: object
+    Querybuildertypesv5Bucket:
+      properties:
+        step:
+          format: double
+          type: number
+      type: object
+    Querybuildertypesv5ClickHouseQuery:
+      properties:
+        disabled:
+          type: boolean
+        legend:
+          type: string
+        name:
+          type: string
+        query:
+          type: string
+      type: object
+    Querybuildertypesv5ColumnDescriptor:
+      properties:
+        aggregationIndex:
+          format: int64
+          type: integer
+        columnType:
+          $ref: '#/components/schemas/Querybuildertypesv5ColumnType'
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        meta:
+          properties:
+            unit:
+              type: string
+          type: object
+        name:
+          type: string
+        queryName:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
+          type: string
+      required:
+      - name
+      type: object
+    Querybuildertypesv5ColumnType:
+      enum:
+      - group
+      - aggregation
+      type: string
+    Querybuildertypesv5CompositeQuery:
+      description: Composite query containing one or more query envelopes. Each query
+        envelope specifies its type and corresponding spec.
+      properties:
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5ExecStats:
+      description: Execution statistics for the query, including rows scanned, bytes
+        scanned, and duration.
+      properties:
+        bytesScanned:
+          minimum: 0
+          type: integer
+        durationMs:
+          minimum: 0
+          type: integer
+        rowsScanned:
+          minimum: 0
+          type: integer
+        stepIntervals:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          type: object
+      type: object
+    Querybuildertypesv5Filter:
+      properties:
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5FormatOptions:
+      properties:
+        fillGaps:
+          type: boolean
+        formatTableResultForUI:
+          type: boolean
+      type: object
+    Querybuildertypesv5Function:
+      properties:
+        args:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5FunctionArg'
+          type: array
+        name:
+          $ref: '#/components/schemas/Querybuildertypesv5FunctionName'
+      type: object
+    Querybuildertypesv5FunctionArg:
+      properties:
+        name:
+          type: string
+        value: {}
+      type: object
+    Querybuildertypesv5FunctionName:
+      enum:
+      - cutoffmin
+      - cutoffmax
+      - clampmin
+      - clampmax
+      - absolute
+      - runningdiff
+      - log2
+      - log10
+      - cumulativesum
+      - ewma3
+      - ewma5
+      - ewma7
+      - median3
+      - median5
+      - median7
+      - timeshift
+      - anomaly
+      - fillzero
+      type: string
+    Querybuildertypesv5GroupByKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
+          type: string
+      required:
+      - name
+      type: object
+    Querybuildertypesv5Having:
+      properties:
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5Label:
+      properties:
+        key:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value: {}
+      type: object
+    Querybuildertypesv5LimitBy:
+      properties:
+        keys:
+          items:
+            type: string
+          nullable: true
+          type: array
+        value:
+          type: string
+      type: object
+    Querybuildertypesv5LogAggregation:
+      properties:
+        alias:
+          type: string
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5MetricAggregation:
+      properties:
+        metricName:
+          type: string
+        reduceTo:
+          $ref: '#/components/schemas/Querybuildertypesv5ReduceTo'
+        spaceAggregation:
+          $ref: '#/components/schemas/MetrictypesSpaceAggregation'
+        temporality:
+          $ref: '#/components/schemas/MetrictypesTemporality'
+        timeAggregation:
+          $ref: '#/components/schemas/MetrictypesTimeAggregation'
+      type: object
+    Querybuildertypesv5OrderBy:
+      properties:
+        direction:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderDirection'
+        key:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderByKey'
+      type: object
+    Querybuildertypesv5OrderByKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
+          type: string
+      required:
+      - name
+      type: object
+    Querybuildertypesv5OrderDirection:
+      enum:
+      - asc
+      - desc
+      type: string
+    Querybuildertypesv5PromQuery:
+      properties:
+        disabled:
+          type: boolean
+        legend:
+          type: string
+        name:
+          type: string
+        query:
+          type: string
+        stats:
+          type: boolean
+        step:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderFormula:
+      properties:
+        disabled:
+          type: boolean
+        expression:
+          type: string
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        name:
+          type: string
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+      type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        secondaryAggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SecondaryAggregation'
+          type: array
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        source:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryBuilderTraceOperator:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
+          type: array
+        cursor:
+          type: string
+        disabled:
+          type: boolean
+        expression:
+          type: string
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        functions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Function'
+          type: array
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        having:
+          $ref: '#/components/schemas/Querybuildertypesv5Having'
+        legend:
+          type: string
+        limit:
+          type: integer
+        name:
+          type: string
+        offset:
+          type: integer
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        returnSpansFrom:
+          type: string
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5QueryData:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesData'
+      - $ref: '#/components/schemas/Querybuildertypesv5ScalarData'
+      - $ref: '#/components/schemas/Querybuildertypesv5RawData'
+      properties:
+        results:
+          items: {}
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5QueryEnvelope:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderTrace'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderLog'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderMetric'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeClickHouseSQL'
+      properties:
+        spec: {}
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderLog:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderMetric:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderTrace:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeClickHouseSQL:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeFormula:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopePromQL:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryEnvelopeTraceOperator:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      type: object
+    Querybuildertypesv5QueryRangeRequest:
+      description: Request body for the v5 query range endpoint. Supports builder
+        queries (traces, logs, metrics), formulas, joins, trace operators, PromQL,
+        and ClickHouse SQL queries.
+      properties:
+        compositeQuery:
+          $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+        end:
+          minimum: 0
+          type: integer
+        formatOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5FormatOptions'
+        noCache:
+          type: boolean
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+        schemaVersion:
+          type: string
+        start:
+          minimum: 0
+          type: integer
+        variables:
+          additionalProperties:
+            $ref: '#/components/schemas/Querybuildertypesv5VariableItem'
+          type: object
+      type: object
+    Querybuildertypesv5QueryRangeResponse:
+      description: 'Response from the v5 query range endpoint. The data.results array
+        contains typed results depending on the requestType: TimeSeriesData for time_series,
+        ScalarData for scalar, or RawData for raw requests.'
+      properties:
+        data:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryData'
+        meta:
+          $ref: '#/components/schemas/Querybuildertypesv5ExecStats'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      type: object
+    Querybuildertypesv5QueryType:
+      enum:
+      - builder_query
+      - builder_formula
+      - builder_trace_operator
+      - clickhouse_sql
+      - promql
+      type: string
+    Querybuildertypesv5QueryWarnData:
+      properties:
+        message:
+          type: string
+        url:
+          type: string
+        warnings:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryWarnDataAdditional'
+          type: array
+      type: object
+    Querybuildertypesv5QueryWarnDataAdditional:
+      properties:
+        message:
+          type: string
+      type: object
+    Querybuildertypesv5RawData:
+      properties:
+        nextCursor:
+          type: string
+        queryName:
+          type: string
+        rows:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5RawRow'
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5RawRow:
+      properties:
+        data:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+      type: object
+    Querybuildertypesv5ReduceTo:
+      enum:
+      - sum
+      - count
+      - avg
+      - min
+      - max
+      - last
+      - median
+      type: string
+    Querybuildertypesv5RequestType:
+      enum:
+      - scalar
+      - time_series
+      - raw
+      - raw_stream
+      - trace
+      type: string
+    Querybuildertypesv5ScalarData:
+      properties:
+        columns:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5ColumnDescriptor'
+          nullable: true
+          type: array
+        data:
+          items:
+            items: {}
+            type: array
+          nullable: true
+          type: array
+        queryName:
+          type: string
+      type: object
+    Querybuildertypesv5SecondaryAggregation:
+      properties:
+        alias:
+          type: string
+        expression:
+          type: string
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          type: array
+        limit:
+          type: integer
+        limitBy:
+          $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
+        order:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+        stepInterval:
+          $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5Step:
+      description: Step interval. Accepts a Go duration string (e.g., "60s", "1m",
+        "1h") or a number representing seconds (e.g., 60).
+      oneOf:
+      - description: Duration string (e.g., "60s", "5m", "1h").
+        example: 60s
+        type: string
+      - description: Duration in seconds.
+        example: 60
+        type: number
+    Querybuildertypesv5TimeSeries:
+      properties:
+        labels:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          type: array
+        values:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesValue'
+          nullable: true
+          type: array
+      type: object
+    Querybuildertypesv5TimeSeriesData:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5AggregationBucket'
+          nullable: true
+          type: array
+        queryName:
+          type: string
+      type: object
+    Querybuildertypesv5TimeSeriesValue:
+      properties:
+        bucket:
+          $ref: '#/components/schemas/Querybuildertypesv5Bucket'
+        partial:
+          type: boolean
+        timestamp:
+          format: int64
+          type: integer
+        value:
+          format: double
+          type: number
+        values:
+          items:
+            format: double
+            type: number
+          type: array
+      type: object
+    Querybuildertypesv5TraceAggregation:
+      properties:
+        alias:
+          type: string
+        expression:
+          type: string
+      type: object
+    Querybuildertypesv5VariableItem:
+      properties:
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5VariableType'
+        value: {}
+      type: object
+    Querybuildertypesv5VariableType:
+      enum:
+      - query
+      - dynamic
+      - custom
+      - text
+      type: string
+    RenderErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorsJSON'
+        status:
+          type: string
+      type: object
+    RoletypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    TelemetrytypesFieldContext:
+      enum:
+      - metric
+      - log
+      - span
+      - resource
+      - attribute
+      - body
+      type: string
+    TelemetrytypesFieldDataType:
+      enum:
+      - string
+      - bool
+      - float64
+      - int64
+      - number
+      type: string
+    TelemetrytypesGettableFieldKeys:
+      properties:
+        complete:
+          type: boolean
+        keys:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+            type: array
+          nullable: true
+          type: object
+      required:
+      - keys
+      - complete
+      type: object
+    TelemetrytypesGettableFieldValues:
+      properties:
+        complete:
+          type: boolean
+        values:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
+      required:
+      - values
+      - complete
+      type: object
+    TelemetrytypesSignal:
+      enum:
+      - traces
+      - logs
+      - metrics
+      type: string
+    TelemetrytypesSource:
+      enum:
+      - meter
+      type: string
+    TelemetrytypesTelemetryFieldKey:
+      properties:
+        description:
+          type: string
+        fieldContext:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+        unit:
+          type: string
+      required:
+      - name
+      type: object
+    TelemetrytypesTelemetryFieldValues:
+      properties:
+        boolValues:
+          items:
+            type: boolean
+          type: array
+        numberValues:
+          items:
+            format: double
+            type: number
+          type: array
+        relatedValues:
+          items:
+            type: string
+          type: array
+        stringValues:
+          items:
+            type: string
+          type: array
+      type: object
+    TypesChangePasswordRequest:
+      properties:
+        newPassword:
+          type: string
+        oldPassword:
+          type: string
+        userId:
+          type: string
+      type: object
+    TypesGettableAPIKey:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        createdByUser:
+          $ref: '#/components/schemas/TypesUser'
+        expiresAt:
+          format: int64
+          type: integer
+        id:
+          type: string
+        lastUsed:
+          format: int64
+          type: integer
+        name:
+          type: string
+        revoked:
+          type: boolean
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+        updatedByUser:
+          $ref: '#/components/schemas/TypesUser'
+        userId:
+          type: string
+      type: object
+    TypesGettableGlobalConfig:
+      properties:
+        external_url:
+          type: string
+        ingestion_url:
+          type: string
+      type: object
+    TypesIdentifiable:
+      properties:
+        id:
+          type: string
+      type: object
+    TypesInvite:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        inviteLink:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    TypesOrganization:
+      properties:
+        alias:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        key:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    TypesPostableAPIKey:
+      properties:
+        expiresInDays:
+          format: int64
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+      type: object
+    TypesPostableAcceptInvite:
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+        sourceUrl:
+          type: string
+        token:
+          type: string
+      type: object
+    TypesPostableForgotPassword:
+      properties:
+        email:
+          type: string
+        frontendBaseURL:
+          type: string
+        orgId:
+          type: string
+      required:
+      - orgId
+      - email
+      type: object
+    TypesPostableInvite:
+      properties:
+        email:
+          type: string
+        frontendBaseUrl:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      type: object
+    TypesPostableResetPassword:
+      properties:
+        password:
+          type: string
+        token:
+          type: string
+      type: object
+    TypesResetPasswordToken:
+      properties:
+        expiresAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        passwordId:
+          type: string
+        token:
+          type: string
+      type: object
+    TypesStorableAPIKey:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        revoked:
+          type: boolean
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+        userId:
+          type: string
+      type: object
+    TypesUser:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        role:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    ZeustypesGettableHost:
+      properties:
+        hosts:
+          items:
+            $ref: '#/components/schemas/ZeustypesHost'
+          nullable: true
+          type: array
+        name:
+          type: string
+        state:
+          type: string
+        tier:
+          type: string
+      required:
+      - name
+      - state
+      - tier
+      - hosts
+      type: object
+    ZeustypesHost:
+      properties:
+        is_default:
+          type: boolean
+        name:
+          type: string
+        url:
+          type: string
+      required:
+      - name
+      - is_default
+      - url
+      type: object
+    ZeustypesPostableHost:
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
+    ZeustypesPostableProfile:
+      properties:
+        existing_observability_tool:
+          type: string
+        has_existing_observability_tool:
+          type: boolean
+        logs_scale_per_day_in_gb:
+          format: int64
+          type: integer
+        number_of_hosts:
+          format: int64
+          type: integer
+        number_of_services:
+          format: int64
+          type: integer
+        reasons_for_interest_in_signoz:
+          items:
+            type: string
+          nullable: true
+          type: array
+        timeline_for_migrating_to_signoz:
+          type: string
+        uses_otel:
+          type: boolean
+        where_did_you_discover_signoz:
+          type: string
+      required:
+      - uses_otel
+      - has_existing_observability_tool
+      - existing_observability_tool
+      - reasons_for_interest_in_signoz
+      - logs_scale_per_day_in_gb
+      - number_of_services
+      - number_of_hosts
+      - where_did_you_discover_signoz
+      - timeline_for_migrating_to_signoz
+      type: object
+  securitySchemes:
+    api_key:
+      description: API Keys
+      in: header
+      name: SigNoz-Api-Key
+      type: apiKey
+    tokenizer:
+      bearerFormat: Tokenizer
+      description: Tokens generated by the tokenizer
+      scheme: bearer
+      type: http
 info:
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
   title: SigNoz
   version: ""
+openapi: 3.0.3
 paths:
   /api/v1/changePassword/{id}:
     post:
@@ -616,11 +2634,11 @@ paths:
       - in: query
         name: signal
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesSignal'
       - in: query
         name: source
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesSource'
       - in: query
         name: limit
         schema:
@@ -638,11 +2656,11 @@ paths:
       - in: query
         name: fieldContext
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
       - in: query
         name: fieldDataType
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: metricName
         schema:
@@ -698,11 +2716,11 @@ paths:
       - in: query
         name: signal
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesSignal'
       - in: query
         name: source
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesSource'
       - in: query
         name: limit
         schema:
@@ -720,11 +2738,11 @@ paths:
       - in: query
         name: fieldContext
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
       - in: query
         name: fieldDataType
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: metricName
         schema:
@@ -1205,12 +3223,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
       summary: Promote and index paths
       tags:
       - logs
@@ -1235,12 +3270,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
       summary: Promote and index paths
       tags:
       - logs
@@ -2787,6 +4839,7 @@ paths:
       parameters:
       - in: query
         name: name
+        required: true
         schema:
           type: string
       - in: query
@@ -2835,14 +4888,83 @@ paths:
       summary: Search ingestion keys for workspace
       tags:
       - gateway
-  /api/v2/metric/alerts:
+  /api/v2/metrics:
+    get:
+      deprecated: false
+      description: This endpoint returns a list of distinct metric names within the
+        specified time range
+      operationId: ListMetrics
+      parameters:
+      - in: query
+        name: start
+        schema:
+          nullable: true
+          type: integer
+      - in: query
+        name: end
+        schema:
+          nullable: true
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesListMetricsResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List metric names
+      tags:
+      - metrics
+  /api/v2/metrics/{metric_name}/alerts:
     get:
       deprecated: false
       description: This endpoint returns associated alerts for a specified metric
       operationId: GetMetricAlerts
       parameters:
-      - in: query
-        name: metricName
+      - in: path
+        name: metric_name
         required: true
         schema:
           type: string
@@ -2890,14 +5012,80 @@ paths:
       summary: Get metric alerts
       tags:
       - metrics
-  /api/v2/metric/dashboards:
+  /api/v2/metrics/{metric_name}/attributes:
+    get:
+      deprecated: false
+      description: This endpoint returns attribute keys and their unique values for
+        a specified metric
+      operationId: GetMetricAttributes
+      parameters:
+      - in: query
+        name: start
+        schema:
+          nullable: true
+          type: integer
+      - in: query
+        name: end
+        schema:
+          nullable: true
+          type: integer
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric attributes
+      tags:
+      - metrics
+  /api/v2/metrics/{metric_name}/dashboards:
     get:
       deprecated: false
       description: This endpoint returns associated dashboards for a specified metric
       operationId: GetMetricDashboards
       parameters:
-      - in: query
-        name: metricName
+      - in: path
+        name: metric_name
         required: true
         schema:
           type: string
@@ -2945,15 +5133,15 @@ paths:
       summary: Get metric dashboards
       tags:
       - metrics
-  /api/v2/metric/highlights:
+  /api/v2/metrics/{metric_name}/highlights:
     get:
       deprecated: false
       description: This endpoint returns highlights like number of datapoints, totaltimeseries,
         active time series, last received time for a specified metric
       operationId: GetMetricHighlights
       parameters:
-      - in: query
-        name: metricName
+      - in: path
+        name: metric_name
         required: true
         schema:
           type: string
@@ -3002,6 +5190,67 @@ paths:
       tags:
       - metrics
   /api/v2/metrics/{metric_name}/metadata:
+    get:
+      deprecated: false
+      description: This endpoint returns metadata information like metric description,
+        unit, type, temporality, monotonicity for a specified metric
+      operationId: GetMetricMetadata
+      parameters:
+      - in: path
+        name: metric_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MetricsexplorertypesMetricMetadata'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get metric metadata
+      tags:
+      - metrics
     post:
       deprecated: false
       description: This endpoint helps to update metadata information like metric
@@ -3055,123 +5304,6 @@ paths:
       - tokenizer:
         - EDITOR
       summary: Update metric metadata
-      tags:
-      - metrics
-  /api/v2/metrics/attributes:
-    post:
-      deprecated: false
-      description: This endpoint returns attribute keys and their unique values for
-        a specified metric
-      operationId: GetMetricAttributes
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
-                  status:
-                    type: string
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get metric attributes
-      tags:
-      - metrics
-  /api/v2/metrics/metadata:
-    get:
-      deprecated: false
-      description: This endpoint returns metadata information like metric description,
-        unit, type, temporality, monotonicity for a specified metric
-      operationId: GetMetricMetadata
-      parameters:
-      - in: query
-        name: metricName
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricMetadata'
-                  status:
-                    type: string
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get metric metadata
       tags:
       - metrics
   /api/v2/metrics/stats:
@@ -3526,1176 +5658,620 @@ paths:
       summary: Rotate session
       tags:
       - sessions
-components:
-  schemas:
-    AuthtypesAttributeMapping:
-      properties:
-        email:
-          type: string
-        groups:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-      type: object
-    AuthtypesAuthDomainConfig:
-      properties:
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
-          type: string
-      type: object
-    AuthtypesAuthNProviderInfo:
-      properties:
-        relayStatePath:
-          nullable: true
-          type: string
-      type: object
-    AuthtypesAuthNSupport:
-      properties:
-        callback:
-          items:
-            $ref: '#/components/schemas/AuthtypesCallbackAuthNSupport'
-          nullable: true
-          type: array
-        password:
-          items:
-            $ref: '#/components/schemas/AuthtypesPasswordAuthNSupport'
-          nullable: true
-          type: array
-      type: object
-    AuthtypesCallbackAuthNSupport:
-      properties:
-        provider:
-          type: string
-        url:
-          type: string
-      type: object
-    AuthtypesGettableAuthDomain:
-      properties:
-        authNProviderInfo:
-          $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
-        createdAt:
-          format: date-time
-          type: string
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
-        id:
-          type: string
-        name:
-          type: string
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
-        orgId:
-          type: string
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      type: object
-    AuthtypesGettableToken:
-      properties:
-        accessToken:
-          type: string
-        expiresIn:
-          type: integer
-        refreshToken:
-          type: string
-        tokenType:
-          type: string
-      type: object
-    AuthtypesGoogleConfig:
-      properties:
-        allowedGroups:
-          items:
-            type: string
-          type: array
-        clientId:
-          type: string
-        clientSecret:
-          type: string
-        domainToAdminEmail:
-          additionalProperties:
-            type: string
-          type: object
-        fetchGroups:
-          type: boolean
-        fetchTransitiveGroupMembership:
-          type: boolean
-        insecureSkipEmailVerified:
-          type: boolean
-        redirectURI:
-          type: string
-        serviceAccountJson:
-          type: string
-      type: object
-    AuthtypesOIDCConfig:
-      properties:
-        claimMapping:
-          $ref: '#/components/schemas/AuthtypesAttributeMapping'
-        clientId:
-          type: string
-        clientSecret:
-          type: string
-        getUserInfo:
-          type: boolean
-        insecureSkipEmailVerified:
-          type: boolean
-        issuer:
-          type: string
-        issuerAlias:
-          type: string
-      type: object
-    AuthtypesOrgSessionContext:
-      properties:
-        authNSupport:
-          $ref: '#/components/schemas/AuthtypesAuthNSupport'
-        id:
-          type: string
-        name:
-          type: string
-        warning:
-          $ref: '#/components/schemas/ErrorsJSON'
-      type: object
-    AuthtypesPasswordAuthNSupport:
-      properties:
-        provider:
-          type: string
-      type: object
-    AuthtypesPostableAuthDomain:
-      properties:
-        config:
-          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
-        name:
-          type: string
-      type: object
-    AuthtypesPostableEmailPasswordSession:
-      properties:
-        email:
-          type: string
-        orgId:
-          type: string
-        password:
-          type: string
-      type: object
-    AuthtypesPostableRotateToken:
-      properties:
-        refreshToken:
-          type: string
-      type: object
-    AuthtypesRoleMapping:
-      properties:
-        defaultRole:
-          type: string
-        groupMappings:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
-        useRoleAttribute:
-          type: boolean
-      type: object
-    AuthtypesSamlConfig:
-      properties:
-        attributeMapping:
-          $ref: '#/components/schemas/AuthtypesAttributeMapping'
-        insecureSkipAuthNRequestsSigned:
-          type: boolean
-        samlCert:
-          type: string
-        samlEntity:
-          type: string
-        samlIdp:
-          type: string
-      type: object
-    AuthtypesSessionContext:
-      properties:
-        exists:
-          type: boolean
-        orgs:
-          items:
-            $ref: '#/components/schemas/AuthtypesOrgSessionContext'
-          nullable: true
-          type: array
-      type: object
-    AuthtypesUpdateableAuthDomain:
-      properties:
-        config:
-          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
-      type: object
-    DashboardtypesDashboard:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        data:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        id:
-          type: string
-        locked:
-          type: boolean
-        org_id:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      type: object
-    DashboardtypesGettablePublicDasbhboard:
-      properties:
-        defaultTimeRange:
-          type: string
-        publicPath:
-          type: string
-        timeRangeEnabled:
-          type: boolean
-      type: object
-    DashboardtypesGettablePublicDashboardData:
-      properties:
-        dashboard:
-          $ref: '#/components/schemas/DashboardtypesDashboard'
-        publicDashboard:
-          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
-      type: object
-    DashboardtypesPostablePublicDashboard:
-      properties:
-        defaultTimeRange:
-          type: string
-        timeRangeEnabled:
-          type: boolean
-      type: object
-    DashboardtypesStorableDashboardData:
-      additionalProperties: {}
-      type: object
-    DashboardtypesUpdatablePublicDashboard:
-      properties:
-        defaultTimeRange:
-          type: string
-        timeRangeEnabled:
-          type: boolean
-      type: object
-    ErrorsJSON:
-      properties:
-        code:
-          type: string
-        errors:
-          items:
-            $ref: '#/components/schemas/ErrorsResponseerroradditional'
-          type: array
-        message:
-          type: string
-        url:
-          type: string
-      type: object
-    ErrorsResponseerroradditional:
-      properties:
-        message:
-          type: string
-      type: object
-    FeaturetypesGettableFeature:
-      properties:
-        defaultVariant:
-          type: string
-        description:
-          type: string
-        kind:
-          type: string
-        name:
-          type: string
-        resolvedValue: {}
-        stage:
-          type: string
-        variants:
-          additionalProperties: {}
-          nullable: true
-          type: object
-      type: object
-    GatewaytypesGettableCreatedIngestionKey:
-      properties:
-        id:
-          type: string
-        value:
-          type: string
-      type: object
-    GatewaytypesGettableCreatedIngestionKeyLimit:
-      properties:
-        id:
-          type: string
-      type: object
-    GatewaytypesGettableIngestionKeys:
-      properties:
-        _pagination:
-          $ref: '#/components/schemas/GatewaytypesPagination'
-        keys:
-          items:
-            $ref: '#/components/schemas/GatewaytypesIngestionKey'
-          nullable: true
-          type: array
-      type: object
-    GatewaytypesIngestionKey:
-      properties:
-        created_at:
-          format: date-time
-          type: string
-        expires_at:
-          format: date-time
-          type: string
-        id:
-          type: string
-        limits:
-          items:
-            $ref: '#/components/schemas/GatewaytypesLimit'
-          nullable: true
-          type: array
-        name:
-          type: string
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        updated_at:
-          format: date-time
-          type: string
-        value:
-          type: string
-        workspace_id:
-          type: string
-      type: object
-    GatewaytypesLimit:
-      properties:
-        config:
-          $ref: '#/components/schemas/GatewaytypesLimitConfig'
-        created_at:
-          format: date-time
-          type: string
-        id:
-          type: string
-        key_id:
-          type: string
-        metric:
-          $ref: '#/components/schemas/GatewaytypesLimitMetric'
-        signal:
-          type: string
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        updated_at:
-          format: date-time
-          type: string
-      type: object
-    GatewaytypesLimitConfig:
-      properties:
-        day:
-          $ref: '#/components/schemas/GatewaytypesLimitValue'
-        second:
-          $ref: '#/components/schemas/GatewaytypesLimitValue'
-      type: object
-    GatewaytypesLimitMetric:
-      properties:
-        day:
-          $ref: '#/components/schemas/GatewaytypesLimitMetricValue'
-        second:
-          $ref: '#/components/schemas/GatewaytypesLimitMetricValue'
-      type: object
-    GatewaytypesLimitMetricValue:
-      properties:
-        count:
-          format: int64
-          type: integer
-        size:
-          format: int64
-          type: integer
-      type: object
-    GatewaytypesLimitValue:
-      properties:
-        count:
-          format: int64
-          type: integer
-        size:
-          format: int64
-          type: integer
-      type: object
-    GatewaytypesPagination:
-      properties:
-        page:
-          type: integer
-        pages:
-          type: integer
-        per_page:
-          type: integer
-        total:
-          type: integer
-      type: object
-    GatewaytypesPostableIngestionKey:
-      properties:
-        expires_at:
-          format: date-time
-          type: string
-        name:
-          type: string
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    GatewaytypesPostableIngestionKeyLimit:
-      properties:
-        config:
-          $ref: '#/components/schemas/GatewaytypesLimitConfig'
-        signal:
-          type: string
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    GatewaytypesUpdatableIngestionKeyLimit:
-      properties:
-        config:
-          $ref: '#/components/schemas/GatewaytypesLimitConfig'
-        tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    MetricsexplorertypesMetricAlert:
-      properties:
-        alertId:
-          type: string
-        alertName:
-          type: string
-      required:
-      - alertName
-      - alertId
-      type: object
-    MetricsexplorertypesMetricAlertsResponse:
-      properties:
-        alerts:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesMetricAlert'
-          nullable: true
-          type: array
-      required:
-      - alerts
-      type: object
-    MetricsexplorertypesMetricAttribute:
-      properties:
-        key:
-          type: string
-        valueCount:
-          minimum: 0
-          type: integer
-        values:
-          items:
-            type: string
-          nullable: true
-          type: array
-      required:
-      - key
-      - values
-      - valueCount
-      type: object
-    MetricsexplorertypesMetricAttributesRequest:
-      properties:
-        end:
-          nullable: true
-          type: integer
-        metricName:
-          type: string
-        start:
-          nullable: true
-          type: integer
-      required:
-      - metricName
-      type: object
-    MetricsexplorertypesMetricAttributesResponse:
-      properties:
-        attributes:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesMetricAttribute'
-          nullable: true
-          type: array
-        totalKeys:
-          format: int64
-          type: integer
-      required:
-      - attributes
-      - totalKeys
-      type: object
-    MetricsexplorertypesMetricDashboard:
-      properties:
-        dashboardId:
-          type: string
-        dashboardName:
-          type: string
-        widgetId:
-          type: string
-        widgetName:
-          type: string
-      required:
-      - dashboardName
-      - dashboardId
-      - widgetId
-      - widgetName
-      type: object
-    MetricsexplorertypesMetricDashboardsResponse:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
-          nullable: true
-          type: array
-      required:
-      - dashboards
-      type: object
-    MetricsexplorertypesMetricHighlightsResponse:
-      properties:
-        activeTimeSeries:
-          minimum: 0
-          type: integer
-        dataPoints:
-          minimum: 0
-          type: integer
-        lastReceived:
-          minimum: 0
-          type: integer
-        totalTimeSeries:
-          minimum: 0
-          type: integer
-      required:
-      - dataPoints
-      - lastReceived
-      - totalTimeSeries
-      - activeTimeSeries
-      type: object
-    MetricsexplorertypesMetricMetadata:
-      properties:
-        description:
-          type: string
-        isMonotonic:
-          type: boolean
-        temporality:
-          $ref: '#/components/schemas/MetrictypesTemporality'
-        type:
-          $ref: '#/components/schemas/MetrictypesType'
-        unit:
-          type: string
-      required:
-      - description
-      - type
-      - unit
-      - temporality
-      - isMonotonic
-      type: object
-    MetricsexplorertypesStat:
-      properties:
-        description:
-          type: string
-        metricName:
-          type: string
-        samples:
-          minimum: 0
-          type: integer
-        timeseries:
-          minimum: 0
-          type: integer
-        type:
-          $ref: '#/components/schemas/MetrictypesType'
-        unit:
-          type: string
-      required:
-      - metricName
-      - description
-      - type
-      - unit
-      - timeseries
-      - samples
-      type: object
-    MetricsexplorertypesStatsRequest:
-      properties:
-        end:
-          format: int64
-          type: integer
-        filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        limit:
-          type: integer
-        offset:
-          type: integer
-        orderBy:
-          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
-        start:
-          format: int64
-          type: integer
-      required:
-      - start
-      - end
-      - limit
-      type: object
-    MetricsexplorertypesStatsResponse:
-      properties:
-        metrics:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesStat'
-          nullable: true
-          type: array
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - metrics
-      - total
-      type: object
-    MetricsexplorertypesTreemapEntry:
-      properties:
-        metricName:
-          type: string
-        percentage:
-          format: double
-          type: number
-        totalValue:
-          minimum: 0
-          type: integer
-      required:
-      - metricName
-      - percentage
-      - totalValue
-      type: object
-    MetricsexplorertypesTreemapMode:
-      enum:
-      - timeseries
-      - samples
-      type: string
-    MetricsexplorertypesTreemapRequest:
-      properties:
-        end:
-          format: int64
-          type: integer
-        filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        limit:
-          type: integer
-        mode:
-          $ref: '#/components/schemas/MetricsexplorertypesTreemapMode'
-        start:
-          format: int64
-          type: integer
-      required:
-      - start
-      - end
-      - limit
-      - mode
-      type: object
-    MetricsexplorertypesTreemapResponse:
-      properties:
-        samples:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
-          nullable: true
-          type: array
-        timeseries:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesTreemapEntry'
-          nullable: true
-          type: array
-      required:
-      - timeseries
-      - samples
-      type: object
-    MetricsexplorertypesUpdateMetricMetadataRequest:
-      properties:
-        description:
-          type: string
-        isMonotonic:
-          type: boolean
-        metricName:
-          type: string
-        temporality:
-          $ref: '#/components/schemas/MetrictypesTemporality'
-        type:
-          $ref: '#/components/schemas/MetrictypesType'
-        unit:
-          type: string
-      required:
-      - metricName
-      - type
-      - description
-      - unit
-      - temporality
-      - isMonotonic
-      type: object
-    MetrictypesTemporality:
-      enum:
-      - delta
-      - cumulative
-      - unspecified
-      type: string
-    MetrictypesType:
-      enum:
-      - gauge
-      - sum
-      - histogram
-      - summary
-      - exponentialhistogram
-      type: string
-    PreferencetypesPreference:
-      properties:
-        allowedScopes:
-          items:
-            type: string
-          nullable: true
-          type: array
-        allowedValues:
-          items:
-            type: string
-          nullable: true
-          type: array
-        defaultValue:
-          $ref: '#/components/schemas/PreferencetypesValue'
-        description:
-          type: string
-        name:
-          type: string
-        value:
-          $ref: '#/components/schemas/PreferencetypesValue'
-        valueType:
-          type: string
-      type: object
-    PreferencetypesUpdatablePreference:
-      properties:
-        value: {}
-      type: object
-    PreferencetypesValue:
-      type: object
-    PromotetypesPromotePath:
-      properties:
-        indexes:
-          items:
-            $ref: '#/components/schemas/PromotetypesWrappedIndex'
-          type: array
-        path:
-          type: string
-        promote:
-          type: boolean
-      type: object
-    PromotetypesWrappedIndex:
-      properties:
-        column_type:
-          type: string
-        granularity:
-          type: integer
-        type:
-          type: string
-      type: object
-    Querybuildertypesv5ExecStats:
-      properties:
-        bytesScanned:
-          minimum: 0
-          type: integer
-        durationMs:
-          minimum: 0
-          type: integer
-        rowsScanned:
-          minimum: 0
-          type: integer
-        stepIntervals:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          type: object
-      type: object
-    Querybuildertypesv5Filter:
-      properties:
-        expression:
-          type: string
-      type: object
-    Querybuildertypesv5OrderBy:
-      properties:
-        direction:
-          type: string
-        key:
-          $ref: '#/components/schemas/Querybuildertypesv5OrderByKey'
-      type: object
-    Querybuildertypesv5OrderByKey:
-      properties:
-        description:
-          type: string
-        fieldContext:
-          type: string
-        fieldDataType:
-          type: string
-        name:
-          type: string
-        signal:
-          type: string
-        unit:
-          type: string
-      required:
-      - name
-      type: object
-    Querybuildertypesv5QueryData:
-      properties:
-        results:
-          items: {}
-          nullable: true
-          type: array
-      type: object
-    Querybuildertypesv5QueryRangeResponse:
-      properties:
-        data:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryData'
-        meta:
-          $ref: '#/components/schemas/Querybuildertypesv5ExecStats'
-        type:
-          type: string
-        warning:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
-      type: object
-    Querybuildertypesv5QueryWarnData:
-      properties:
-        message:
-          type: string
-        url:
-          type: string
-        warnings:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5QueryWarnDataAdditional'
-          type: array
-      type: object
-    Querybuildertypesv5QueryWarnDataAdditional:
-      properties:
-        message:
-          type: string
-      type: object
-    RenderErrorResponse:
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorsJSON'
-        status:
-          type: string
-      type: object
-    RoletypesRole:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      type: object
-    TelemetrytypesGettableFieldKeys:
-      properties:
-        complete:
-          type: boolean
-        keys:
-          additionalProperties:
-            items:
-              $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-            type: array
-          nullable: true
-          type: object
-      required:
-      - keys
-      - complete
-      type: object
-    TelemetrytypesGettableFieldValues:
-      properties:
-        complete:
-          type: boolean
-        values:
-          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldValues'
-      required:
-      - values
-      - complete
-      type: object
-    TelemetrytypesTelemetryFieldKey:
-      properties:
-        description:
-          type: string
-        fieldContext:
-          type: string
-        fieldDataType:
-          type: string
-        name:
-          type: string
-        signal:
-          type: string
-        unit:
-          type: string
-      required:
-      - name
-      type: object
-    TelemetrytypesTelemetryFieldValues:
-      properties:
-        boolValues:
-          items:
-            type: boolean
-          type: array
-        numberValues:
-          items:
-            format: double
-            type: number
-          type: array
-        relatedValues:
-          items:
-            type: string
-          type: array
-        stringValues:
-          items:
-            type: string
-          type: array
-      type: object
-    TypesChangePasswordRequest:
-      properties:
-        newPassword:
-          type: string
-        oldPassword:
-          type: string
-        userId:
-          type: string
-      type: object
-    TypesGettableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        createdByUser:
-          $ref: '#/components/schemas/TypesUser'
-        expiresAt:
-          format: int64
-          type: integer
-        id:
-          type: string
-        lastUsed:
-          format: int64
-          type: integer
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        updatedByUser:
-          $ref: '#/components/schemas/TypesUser'
-        userId:
-          type: string
-      type: object
-    TypesGettableGlobalConfig:
-      properties:
-        external_url:
-          type: string
-        ingestion_url:
-          type: string
-      type: object
-    TypesIdentifiable:
-      properties:
-        id:
-          type: string
-      type: object
-    TypesInvite:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        inviteLink:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      type: object
-    TypesOrganization:
-      properties:
-        alias:
-          type: string
-        createdAt:
-          format: date-time
-          type: string
-        displayName:
-          type: string
-        id:
-          type: string
-        key:
-          minimum: 0
-          type: integer
-        name:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      type: object
-    TypesPostableAPIKey:
-      properties:
-        expiresInDays:
-          format: int64
-          type: integer
-        name:
-          type: string
-        role:
-          type: string
-      type: object
-    TypesPostableAcceptInvite:
-      properties:
-        displayName:
-          type: string
-        password:
-          type: string
-        sourceUrl:
-          type: string
-        token:
-          type: string
-      type: object
-    TypesPostableForgotPassword:
-      properties:
-        email:
-          type: string
-        frontendBaseURL:
-          type: string
-        orgId:
-          type: string
-      required:
-      - orgId
-      - email
-      type: object
-    TypesPostableInvite:
-      properties:
-        email:
-          type: string
-        frontendBaseUrl:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-      type: object
-    TypesPostableResetPassword:
-      properties:
-        password:
-          type: string
-        token:
-          type: string
-      type: object
-    TypesResetPasswordToken:
-      properties:
-        expiresAt:
-          format: date-time
-          type: string
-        id:
-          type: string
-        passwordId:
-          type: string
-        token:
-          type: string
-      type: object
-    TypesStorableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        userId:
-          type: string
-      type: object
-    TypesUser:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        displayName:
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        isRoot:
-          type: boolean
-        orgId:
-          type: string
-        role:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      type: object
-  securitySchemes:
-    api_key:
-      description: API Keys
-      in: header
-      name: SigNoz-Api-Key
-      type: apiKey
-    tokenizer:
-      bearerFormat: Tokenizer
-      description: Tokens generated by the tokenizer
-      scheme: bearer
-      type: http
+  /api/v2/zeus/hosts:
+    get:
+      deprecated: false
+      description: This endpoint gets the host info from zeus.
+      operationId: GetHosts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ZeustypesGettableHost'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get host info from Zeus.
+      tags:
+      - zeus
+    put:
+      deprecated: false
+      description: This endpoint saves the host of a deployment to zeus.
+      operationId: PutHost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZeustypesPostableHost'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Put host in Zeus for a deployment.
+      tags:
+      - zeus
+  /api/v2/zeus/profiles:
+    put:
+      deprecated: false
+      description: This endpoint saves the profile of a deployment to zeus.
+      operationId: PutProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZeustypesPostableProfile'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Put profile in Zeus for a deployment.
+      tags:
+      - zeus
+  /api/v5/query_range:
+    post:
+      deprecated: false
+      description: Execute a composite query over a time range. Supports builder queries
+        (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse
+        SQL.
+      operationId: QueryRangeV5
+      requestBody:
+        content:
+          application/json:
+            examples:
+              clickhouse_sql_logs_raw:
+                summary: 'ClickHouse SQL: raw logs with resource filter'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        name: recent_errors
+                        query: WITH __resource_filter AS ( SELECT fingerprint FROM
+                          signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start
+                          >= $start_timestamp - 1800 AND seen_at_ts_bucket_start <=
+                          $end_timestamp ) SELECT timestamp, body FROM signoz_logs.distributed_logs_v2
+                          WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint
+                          FROM __resource_filter) AND timestamp >= $start_timestamp_nano
+                          AND timestamp <= $end_timestamp_nano AND ts_bucket_start
+                          >= $start_timestamp - 1800 AND ts_bucket_start <= $end_timestamp
+                          AND severity_text = 'ERROR' ORDER BY timestamp DESC LIMIT
+                          100
+                      type: clickhouse_sql
+                  end: 1640998800000
+                  requestType: raw
+                  schemaVersion: v1
+                  start: 1640995200000
+              clickhouse_sql_traces_scalar:
+                summary: 'ClickHouse SQL: scalar aggregate with resource filter'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        name: total_spans
+                        query: WITH __resource_filter AS ( SELECT fingerprint FROM
+                          signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start
+                          >= $start_timestamp - 1800 AND seen_at_ts_bucket_start <=
+                          $end_timestamp ) SELECT count() AS value FROM signoz_traces.distributed_signoz_index_v3
+                          WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint
+                          FROM __resource_filter) AND timestamp >= $start_datetime
+                          AND timestamp <= $end_datetime AND ts_bucket_start >= $start_timestamp
+                          - 1800 AND ts_bucket_start <= $end_timestamp
+                      type: clickhouse_sql
+                  end: 1640998800000
+                  requestType: scalar
+                  schemaVersion: v1
+                  start: 1640995200000
+              clickhouse_sql_traces_time_series:
+                summary: 'ClickHouse SQL: traces time series with resource filter'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        name: span_rate
+                        query: WITH __resource_filter AS ( SELECT fingerprint FROM
+                          signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start
+                          >= $start_timestamp - 1800 AND seen_at_ts_bucket_start <=
+                          $end_timestamp ) SELECT toStartOfInterval(timestamp, INTERVAL
+                          60 SECOND) AS ts, count() AS value FROM signoz_traces.distributed_signoz_index_v3
+                          WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint
+                          FROM __resource_filter) AND timestamp >= $start_datetime
+                          AND timestamp <= $end_datetime AND ts_bucket_start >= $start_timestamp
+                          - 1800 AND ts_bucket_start <= $end_timestamp GROUP BY ts
+                          ORDER BY ts
+                      type: clickhouse_sql
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              formula:
+                summary: 'Formula: error rate from two trace queries'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - expression: countIf(has_error = true)
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                    - spec:
+                        aggregations:
+                        - expression: count()
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: B
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                    - spec:
+                        expression: A / B * 100
+                        name: error_rate
+                      type: builder_formula
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              logs_raw:
+                summary: 'Raw: fetch raw log records'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        limit: 50
+                        name: A
+                        offset: 0
+                        order:
+                        - direction: desc
+                          key:
+                            fieldContext: log
+                            name: timestamp
+                        - direction: desc
+                          key:
+                            name: id
+                        selectFields:
+                        - fieldContext: log
+                          name: body
+                        - fieldContext: resource
+                          name: service.name
+                        signal: logs
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: raw
+                  schemaVersion: v1
+                  start: 1640995200000
+              logs_scalar:
+                summary: 'Scalar: total error log count'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: error_count
+                          expression: count()
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        name: A
+                        signal: logs
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: scalar
+                  schemaVersion: v1
+                  start: 1640995200000
+              logs_time_series:
+                summary: 'Time series: count error logs grouped by service'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: log_count
+                          expression: count()
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        limit: 10
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: log_count
+                        signal: logs
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              metrics_gauge_time_series:
+                summary: 'Time series: latest gauge value averaged across series'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.cpu.utilization
+                          spaceAggregation: avg
+                          timeAggregation: latest
+                        groupBy:
+                        - fieldContext: resource
+                          name: host.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              metrics_histogram_time_series:
+                summary: 'Time series: p99 latency from histogram'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.bucket
+                          spaceAggregation: p99
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              metrics_rate_time_series:
+                summary: 'Time series: rate of cumulative counter'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.count
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 120
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              metrics_scalar:
+                summary: 'Scalar: single reduced metric value'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.count
+                          reduceTo: sum
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: scalar
+                  schemaVersion: v1
+                  start: 1640995200000
+              promql:
+                summary: 'PromQL: request rate with UTF-8 metric name'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        name: request_rate
+                        query: sum(rate({"http.server.duration.count"}[5m])) by ("service.name")
+                        step: 60
+                      type: promql
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              traces_raw:
+                summary: 'Raw: fetch raw span records'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        filter:
+                          expression: service.name = 'frontend' AND has_error = true
+                        limit: 100
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            fieldContext: span
+                            name: timestamp
+                        selectFields:
+                        - fieldContext: span
+                          name: name
+                        - fieldContext: span
+                          name: duration_nano
+                        signal: traces
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: raw
+                  schemaVersion: v1
+                  start: 1640995200000
+              traces_scalar:
+                summary: 'Scalar: total span count'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: span_count
+                          expression: count()
+                        filter:
+                          expression: service.name = 'frontend'
+                        name: A
+                        signal: traces
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: scalar
+                  schemaVersion: v1
+                  start: 1640995200000
+              traces_time_series:
+                summary: 'Time series: count spans grouped by service'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: span_count
+                          expression: count()
+                        filter:
+                          expression: service.name = 'frontend'
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        limit: 10
+                        name: A
+                        order:
+                        - direction: desc
+                          key:
+                            name: span_count
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Query range
+      tags:
+      - querier
+  /api/v5/substitute_vars:
+    post:
+      deprecated: false
+      description: Replace variables in a query
+      operationId: ReplaceVariables
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Replace variables
+      tags:
+      - querier

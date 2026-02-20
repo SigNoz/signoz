@@ -2,16 +2,11 @@ package api
 
 import (
 	"bytes"
-	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"runtime/debug"
 
-	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -20,8 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
-
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
@@ -144,140 +137,3 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func extractSeasonality(anomalyQuery *qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) anomalyV2.Seasonality {
-	for _, fn := range anomalyQuery.Functions {
-		if fn.Name == qbtypes.FunctionNameAnomaly {
-			for _, arg := range fn.Args {
-				if arg.Name == "seasonality" {
-					if seasonalityStr, ok := arg.Value.(string); ok {
-						switch seasonalityStr {
-						case "weekly":
-							return anomalyV2.SeasonalityWeekly
-						case "hourly":
-							return anomalyV2.SeasonalityHourly
-						}
-					}
-				}
-			}
-		}
-	}
-	return anomalyV2.SeasonalityDaily // default
-}
-
-func createAnomalyProvider(aH *APIHandler, seasonality anomalyV2.Seasonality) anomalyV2.Provider {
-	switch seasonality {
-	case anomalyV2.SeasonalityWeekly:
-		return anomalyV2.NewWeeklyProvider(
-			anomalyV2.WithQuerier[*anomalyV2.WeeklyProvider](aH.Signoz.Querier),
-			anomalyV2.WithLogger[*anomalyV2.WeeklyProvider](aH.Signoz.Instrumentation.Logger()),
-		)
-	case anomalyV2.SeasonalityHourly:
-		return anomalyV2.NewHourlyProvider(
-			anomalyV2.WithQuerier[*anomalyV2.HourlyProvider](aH.Signoz.Querier),
-			anomalyV2.WithLogger[*anomalyV2.HourlyProvider](aH.Signoz.Instrumentation.Logger()),
-		)
-	default:
-		return anomalyV2.NewDailyProvider(
-			anomalyV2.WithQuerier[*anomalyV2.DailyProvider](aH.Signoz.Querier),
-			anomalyV2.WithLogger[*anomalyV2.DailyProvider](aH.Signoz.Instrumentation.Logger()),
-		)
-	}
-}
-
-func (aH *APIHandler) handleAnomalyQuery(ctx context.Context, orgID valuer.UUID, anomalyQuery *qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], queryRangeRequest qbtypes.QueryRangeRequest) (*anomalyV2.AnomaliesResponse, error) {
-	seasonality := extractSeasonality(anomalyQuery)
-	provider := createAnomalyProvider(aH, seasonality)
-
-	return provider.GetAnomalies(ctx, orgID, &anomalyV2.AnomaliesRequest{Params: queryRangeRequest})
-}
-
-func (aH *APIHandler) queryRangeV5(rw http.ResponseWriter, req *http.Request) {
-
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to read request body: %v", err))
-		return
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	ctx := req.Context()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
-		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body: %v", err))
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			aH.Signoz.Instrumentation.Logger().ErrorContext(ctx, "panic in QueryRange",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
-
-	if err := queryRangeRequest.Validate(); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if anomalyQuery, ok := queryRangeRequest.IsAnomalyRequest(); ok {
-		anomalies, err := aH.handleAnomalyQuery(ctx, orgID, anomalyQuery, queryRangeRequest)
-		if err != nil {
-			render.Error(rw, errors.NewInternalf(errors.CodeInternal, "failed to get anomalies: %v", err))
-			return
-		}
-
-		results := []any{}
-		for _, item := range anomalies.Results {
-			results = append(results, item)
-		}
-
-		// Build step intervals from the anomaly query
-		stepIntervals := make(map[string]uint64)
-		if anomalyQuery.StepInterval.Duration > 0 {
-			stepIntervals[anomalyQuery.Name] = uint64(anomalyQuery.StepInterval.Duration.Seconds())
-		}
-
-		finalResp := &qbtypes.QueryRangeResponse{
-			Type: queryRangeRequest.RequestType,
-			Data: qbtypes.QueryData{
-				Results: results,
-			},
-			Meta: qbtypes.ExecStats{
-				StepIntervals: stepIntervals,
-			},
-		}
-
-		render.Success(rw, http.StatusOK, finalResp)
-		return
-	} else {
-		// regular query range request, let the querier handle it
-		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-		aH.QuerierAPI.QueryRange(rw, req)
-	}
-}

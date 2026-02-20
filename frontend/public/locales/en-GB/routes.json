@@ -12,5 +12,6 @@
 	"pipeline": "Pipeline",
 	"pipelines": "Pipelines",
 	"archives": "Archives",
-	"logs_to_metrics": "Logs To Metrics"
+	"logs_to_metrics": "Logs To Metrics",
+	"roles": "Roles"
 }

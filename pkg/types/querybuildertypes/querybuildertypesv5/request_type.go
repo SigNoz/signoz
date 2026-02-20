@@ -30,3 +30,15 @@ var (
 func (r RequestType) IsAggregation() bool {
 	return r == RequestTypeTimeSeries || r == RequestTypeScalar || r == RequestTypeDistribution
 }
+
+// Enum implements jsonschema.Enum; returns the acceptable values for RequestType.
+func (RequestType) Enum() []any {
+	return []any{
+		RequestTypeScalar,
+		RequestTypeTimeSeries,
+		RequestTypeRaw,
+		RequestTypeRawStream,
+		RequestTypeTrace,
+		// RequestTypeDistribution,
+	}
+}

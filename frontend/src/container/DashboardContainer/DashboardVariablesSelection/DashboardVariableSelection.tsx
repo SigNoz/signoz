@@ -34,6 +34,9 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const sortedVariablesArray = useDashboardVariablesSelector(
 		(state) => state.sortedVariablesArray,
 	);
+	const dynamicVariableOrder = useDashboardVariablesSelector(
+		(state) => state.dynamicVariableOrder,
+	);
 	const dependencyData = useDashboardVariablesSelector(
 		(state) => state.dependencyData,
 	);
@@ -52,10 +55,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
 	// Memoize the order key to avoid unnecessary triggers
-	const dependencyOrderKey = useMemo(
-		() => dependencyData?.order?.join(',') ?? '',
-		[dependencyData?.order],
-	);
+	const variableOrderKey = useMemo(() => {
+		const queryVariableOrderKey = dependencyData?.order?.join(',') ?? '';
+		const dynamicVariableOrderKey = dynamicVariableOrder?.join(',') ?? '';
+		return `${queryVariableOrderKey}|${dynamicVariableOrderKey}`;
+	}, [dependencyData?.order, dynamicVariableOrder]);
 
 	// Initialize fetch store then start a new fetch cycle.
 	// Runs on dependency order changes, and time range changes.
@@ -66,7 +70,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		initializeVariableFetchStore(allVariableNames);
 		enqueueFetchOfAllVariables();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dependencyOrderKey, minTime, maxTime]);
+	}, [variableOrderKey, minTime, maxTime]);
 
 	// Performance optimization: For dynamic variables with allSelected=true, we don't store
 	// individual values in localStorage since we can always derive them from available options.

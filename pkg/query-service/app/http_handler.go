@@ -79,8 +79,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/version"
-
-	querierAPI "github.com/SigNoz/signoz/pkg/querier"
 )
 
 type status string
@@ -145,8 +143,6 @@ type APIHandler struct {
 
 	LicensingAPI licensing.API
 
-	QuerierAPI *querierAPI.API
-
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
@@ -174,8 +170,6 @@ type APIHandlerOpts struct {
 	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
-
-	QuerierAPI *querierAPI.API
 
 	QueryParserAPI *queryparser.API
 
@@ -239,7 +233,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
-		QuerierAPI:                    opts.QuerierAPI,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}
 
@@ -396,7 +389,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.QuerierAPI.QueryRawStream)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.Signoz.Handlers.QuerierHandler.QueryRawStream)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *middleware.AuthZ) {
@@ -468,12 +461,6 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middlew
 	subRouter := router.PathPrefix("/api/v4").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterQueryRangeV5Routes(router *mux.Router, am *middleware.AuthZ) {
-	subRouter := router.PathPrefix("/api/v5").Subrouter()
-	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QuerierAPI.QueryRange)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/substitute_vars", am.ViewAccess(aH.QuerierAPI.ReplaceVariables)).Methods(http.MethodPost)
 }
 
 // todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
@@ -5001,7 +4988,6 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = thirdpartyapi.MergeSemconvColumns(result)
 	result = thirdpartyapi.FilterIntermediateColumns(result)
 
 	// Filter IP addresses if ShowIp is false
@@ -5058,7 +5044,6 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = thirdpartyapi.MergeSemconvColumns(result)
 	result = thirdpartyapi.FilterIntermediateColumns(result)
 
 	// Filter IP addresses if ShowIp is false
