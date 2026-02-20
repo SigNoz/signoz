@@ -92,6 +92,15 @@ components:
         tokenType:
           type: string
       type: object
+    AuthtypesGettableTransaction:
+      properties:
+        authorized:
+          type: boolean
+        object:
+          $ref: '#/components/schemas/AuthtypesObject'
+        relation:
+          type: string
+      type: object
     AuthtypesGoogleConfig:
       properties:
         allowedGroups:
@@ -117,6 +126,8 @@ components:
         serviceAccountJson:
           type: string
       type: object
+    AuthtypesName:
+      type: object
     AuthtypesOIDCConfig:
       properties:
         claimMapping:
@@ -133,6 +144,16 @@ components:
           type: string
         issuerAlias:
           type: string
+      type: object
+    AuthtypesObject:
+      properties:
+        resource:
+          $ref: '#/components/schemas/AuthtypesResource'
+        selector:
+          $ref: '#/components/schemas/AuthtypesSelector'
+      required:
+      - resource
+      - selector
       type: object
     AuthtypesOrgSessionContext:
       properties:
@@ -171,6 +192,16 @@ components:
         refreshToken:
           type: string
       type: object
+    AuthtypesResource:
+      properties:
+        name:
+          $ref: '#/components/schemas/AuthtypesName'
+        type:
+          type: string
+      required:
+      - name
+      - type
+      type: object
     AuthtypesRoleMapping:
       properties:
         defaultRole:
@@ -196,6 +227,8 @@ components:
         samlIdp:
           type: string
       type: object
+    AuthtypesSelector:
+      type: object
     AuthtypesSessionContext:
       properties:
         exists:
@@ -205,6 +238,18 @@ components:
             $ref: '#/components/schemas/AuthtypesOrgSessionContext'
           nullable: true
           type: array
+      type: object
+    AuthtypesTransaction:
+      properties:
+        id:
+          type: string
+        object:
+          $ref: '#/components/schemas/AuthtypesObject'
+        relation:
+          type: string
+      required:
+      - relation
+      - object
       type: object
     AuthtypesUpdateableAuthDomain:
       properties:
@@ -1613,6 +1658,52 @@ components:
         status:
           type: string
       type: object
+    RoletypesGettableResources:
+      properties:
+        relations:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          nullable: true
+          type: object
+        resources:
+          items:
+            $ref: '#/components/schemas/AuthtypesResource'
+          nullable: true
+          type: array
+      type: object
+    RoletypesPatchableObjects:
+      properties:
+        additions:
+          items:
+            $ref: '#/components/schemas/AuthtypesObject'
+          nullable: true
+          type: array
+        deletions:
+          items:
+            $ref: '#/components/schemas/AuthtypesObject'
+          nullable: true
+          type: array
+      required:
+      - additions
+      - deletions
+      type: object
+    RoletypesPatchableRole:
+      properties:
+        description:
+          nullable: true
+          type: string
+      type: object
+    RoletypesPostableRole:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      type: object
     RoletypesRole:
       properties:
         createdAt:
@@ -2022,6 +2113,41 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
+  /api/v1/authz/check:
+    post:
+      deprecated: false
+      description: Checks if the authenticated user has permissions for given transactions
+      operationId: AuthzCheck
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/AuthtypesTransaction'
+              type: array
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesGettableTransaction'
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Check permissions
+      tags:
+      - authz
   /api/v1/changePassword/{id}:
     post:
       deprecated: false
@@ -3851,6 +3977,11 @@ paths:
       deprecated: false
       description: This endpoint creates a role
       operationId: CreateRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoletypesPostableRole'
       responses:
         "201":
           content:
@@ -3863,6 +3994,12 @@ paths:
                     type: string
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -3875,12 +4012,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -3919,12 +4074,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -3991,6 +4164,11 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoletypesPatchableRole'
       responses:
         "204":
           content:
@@ -3998,6 +4176,220 @@ paths:
               schema:
                 type: string
           description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Patch role
+      tags:
+      - role
+  /api/v1/roles/{id}/relation/{relation}/objects:
+    get:
+      deprecated: false
+      description: Gets all objects connected to the specified role via a given relation
+        type
+      operationId: GetObjects
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: relation
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesObject'
+                    type: array
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get objects for a role by relation
+      tags:
+      - role
+    patch:
+      deprecated: false
+      description: Patches the objects connected to the specified role via a given
+        relation type
+      operationId: PatchObjects
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: relation
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoletypesPatchableObjects'
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Patch objects for a role by relation
+      tags:
+      - role
+  /api/v1/roles/resources:
+    get:
+      deprecated: false
+      description: Gets all the available resources for role assignment
+      operationId: GetResources
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RoletypesGettableResources'
+                  status:
+                    type: string
+                type: object
+          description: OK
         "401":
           content:
             application/json:
@@ -4021,7 +4413,7 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Patch role
+      summary: Get resources
       tags:
       - role
   /api/v1/user:
