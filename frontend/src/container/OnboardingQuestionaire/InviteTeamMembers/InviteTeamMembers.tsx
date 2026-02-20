@@ -88,12 +88,10 @@ function InviteTeamMembers({
 		setTeamMembersToInvite((prev) => (prev || []).filter((m) => m.id !== id));
 	};
 
-	// A row is "touched" if the user has entered an email or selected a role
 	const isMemberTouched = (member: TeamMember): boolean =>
 		member.email.trim() !== '' ||
 		Boolean(member.role && member.role.trim() !== '');
 
-	// Validation function — only validates rows the user has touched
 	const validateAllUsers = (): boolean => {
 		let isValid = true;
 		let hasEmailErrors = false;
@@ -101,7 +99,6 @@ function InviteTeamMembers({
 
 		const updatedEmailValidity: Record<string, boolean> = {};
 
-		// Only consider rows the user has interacted with
 		const touchedMembers = teamMembersToInvite?.filter(isMemberTouched) ?? [];
 
 		touchedMembers?.forEach((member) => {
