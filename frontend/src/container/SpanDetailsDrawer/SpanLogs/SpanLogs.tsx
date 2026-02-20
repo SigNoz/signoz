@@ -46,6 +46,7 @@ interface SpanLogsProps {
 	isLogSpanRelated: (logId: string) => boolean;
 	handleExplorerPageRedirect: () => void;
 	emptyStateConfig?: EmptyLogsListConfig;
+	isTraceOnlyLoading: boolean;
 }
 
 function SpanLogs({
@@ -59,6 +60,7 @@ function SpanLogs({
 	isLogSpanRelated,
 	handleExplorerPageRedirect,
 	emptyStateConfig,
+	isTraceOnlyLoading,
 }: SpanLogsProps): JSX.Element {
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
@@ -254,7 +256,7 @@ function SpanLogs({
 	);
 
 	const renderSpanLogsContent = (): JSX.Element | null => {
-		if (isLoading || isFetching) {
+		if (isLoading || isFetching || isTraceOnlyLoading) {
 			return <LogsLoading />;
 		}
 
@@ -263,7 +265,8 @@ function SpanLogs({
 		}
 
 		if (logs.length === 0) {
-			if (emptyStateConfig) {
+			// Only show enhanced empty state if not loading trace-only logs
+			if (emptyStateConfig && !isTraceOnlyLoading) {
 				return (
 					<EmptyLogsSearch
 						dataSource={DataSource.LOGS}
