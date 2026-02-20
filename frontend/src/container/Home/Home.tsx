@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover } from 'antd';
@@ -28,6 +28,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
+import { navigateToPage } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -413,12 +414,12 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											className="active-ingestion-card-actions"
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												// eslint-disable-next-line sonarjs/no-duplicate-string
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												history.push(ROUTES.LOGS_EXPLORER);
+												navigateToPage(ROUTES.LOGS_EXPLORER, history.push, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -455,11 +456,11 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												history.push(ROUTES.TRACES_EXPLORER);
+												navigateToPage(ROUTES.TRACES_EXPLORER, history.push, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -496,11 +497,11 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												history.push(ROUTES.METRICS_EXPLORER);
+												navigateToPage(ROUTES.METRICS_EXPLORER, history.push, e);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -550,11 +551,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													navigateToPage(ROUTES.LOGS_EXPLORER, history.push, e);
 												}}
 											>
 												Open Logs Explorer
@@ -564,11 +565,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													navigateToPage(ROUTES.TRACES_EXPLORER, history.push, e);
 												}}
 											>
 												Open Traces Explorer
@@ -578,11 +579,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													navigateToPage(ROUTES.METRICS_EXPLORER_EXPLORER, history.push, e);
 												}}
 											>
 												Open Metrics Explorer
@@ -619,11 +620,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													navigateToPage(ROUTES.ALL_DASHBOARD, history.push, e);
 												}}
 											>
 												Create dashboard
@@ -661,11 +662,11 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													navigateToPage(ROUTES.ALERTS_NEW, history.push, e);
 												}}
 											>
 												Create an alert

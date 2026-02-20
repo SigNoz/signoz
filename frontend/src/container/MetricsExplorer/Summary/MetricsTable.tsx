@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Spin,
@@ -107,8 +107,9 @@ function MetricsTable({
 					onChange: onPaginationChange,
 					total: totalCount,
 				}}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => openMetricDetails(record.key, 'list'),
+				onRow={(record: MetricsListItemRowData): Record<string, unknown> => ({
+					onClick: (event: React.MouseEvent): void =>
+						openMetricDetails(record.key, 'list', event),
 					className: 'clickable-row',
 				})}
 			/>

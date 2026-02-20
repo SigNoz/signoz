@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -26,6 +26,7 @@ import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
@@ -495,7 +496,16 @@ function K8sPodsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleRowClick = (record: K8sPodsRowData): void => {
+	const handleRowClick = (
+		record: K8sPodsRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			const newParams = new URLSearchParams(searchParams);
+			newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
+			openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+			return;
+		}
 		if (groupBy.length === 0) {
 			setSelectedPodUID(record.podUID);
 			setSearchParams({
@@ -615,8 +625,14 @@ function K8sPodsList({
 							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
-						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
+						onRow={(record: K8sPodsRowData): Record<string, unknown> => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (isModifierKeyPressed(event)) {
+									const newParams = new URLSearchParams(searchParams);
+									newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
+									openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+									return;
+								}
 								setSelectedPodUID(record.podUID);
 							},
 							className: 'expanded-clickable-row',
@@ -752,8 +768,8 @@ function K8sPodsList({
 				scroll={{ x: true }}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
+				onRow={(record: K8sPodsRowData): Record<string, unknown> => ({
+					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}
 				expandable={{

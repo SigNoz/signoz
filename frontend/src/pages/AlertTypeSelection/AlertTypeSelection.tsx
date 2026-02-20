@@ -18,7 +18,7 @@ function AlertTypeSelectionPage(): JSX.Element {
 	}, []);
 
 	const handleSelectType = useCallback(
-		(type: AlertTypes): void => {
+		(type: AlertTypes, event?: React.MouseEvent): void => {
 			// For anamoly based alert, we need to set the ruleType to anomaly_rule
 			// and alertType to metrics_based_alert
 			if (type === AlertTypes.ANOMALY_BASED_ALERT) {
@@ -41,7 +41,7 @@ function AlertTypeSelectionPage(): JSX.Element {
 				queryParams.set(QueryParams.showClassicCreateAlertsPage, 'true');
 			}
 
-			safeNavigate(`${ROUTES.ALERTS_NEW}?${queryParams.toString()}`);
+			safeNavigate(`${ROUTES.ALERTS_NEW}?${queryParams.toString()}`, { event });
 		},
 		[queryParams, safeNavigate],
 	);

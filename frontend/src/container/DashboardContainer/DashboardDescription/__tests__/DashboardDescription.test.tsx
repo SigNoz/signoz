@@ -161,6 +161,7 @@ describe('Dashboard landing page actions header tests', () => {
 		// Verify navigation was called with correct URL
 		expect(mockSafeNavigate).toHaveBeenCalledWith(
 			'/dashboard?columnKey=updatedAt&order=descend&page=1&search=',
+			expect.objectContaining({ event: expect.any(Object) }),
 		);
 
 		// Ensure the URL contains only essential dashboard list params

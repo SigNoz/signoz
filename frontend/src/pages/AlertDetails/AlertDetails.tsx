@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Breadcrumb, Button, Divider } from 'antd';
@@ -18,6 +18,7 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
+import { navigateToPage } from 'utils/navigation';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
@@ -58,11 +59,11 @@ function BreadCrumbItem({
 	if (isLast) {
 		return <div className="breadcrumb-item breadcrumb-item--last">{title}</div>;
 	}
-	const handleNavigate = (): void => {
+	const handleNavigate = (e: React.MouseEvent): void => {
 		if (!route) {
 			return;
 		}
-		history.push(ROUTES.LIST_ALL_ALERT);
+		navigateToPage(ROUTES.LIST_ALL_ALERT, history.push, e);
 	};
 
 	return (

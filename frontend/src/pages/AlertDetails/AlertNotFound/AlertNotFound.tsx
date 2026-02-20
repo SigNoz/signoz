@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -15,8 +16,8 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { safeNavigate } = useSafeNavigate();
 
-	const checkAllRulesHandler = (): void => {
-		safeNavigate(ROUTES.LIST_ALL_ALERT);
+	const checkAllRulesHandler = (e?: React.MouseEvent): void => {
+		safeNavigate(ROUTES.LIST_ALL_ALERT, { event: e });
 	};
 
 	const contactSupportHandler = (): void => {

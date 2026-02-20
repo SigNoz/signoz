@@ -1,5 +1,11 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import {
 	LoadingOutlined,
@@ -279,9 +285,9 @@ function FullView({
 											<Button
 												className="switch-edit-btn"
 												disabled={response.isFetching || response.isLoading}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													if (dashboardEditView) {
-														safeNavigate(dashboardEditView);
+														safeNavigate(dashboardEditView, { event: e });
 													}
 												}}
 											>

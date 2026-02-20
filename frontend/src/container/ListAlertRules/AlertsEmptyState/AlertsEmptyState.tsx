@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Divider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -7,6 +7,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
@@ -36,9 +37,13 @@ export function AlertsEmptyState(): JSX.Element {
 
 	const [loading, setLoading] = useState(false);
 
-	const onClickNewAlertHandler = useCallback(() => {
+	const onClickNewAlertHandler = useCallback((e: React.MouseEvent) => {
 		setLoading(false);
-		history.push(ROUTES.ALERTS_NEW);
+		if (isModifierKeyPressed(e)) {
+			openInNewTab(ROUTES.ALERTS_NEW);
+		} else {
+			history.push(ROUTES.ALERTS_NEW);
+		}
 	}, []);
 
 	return (

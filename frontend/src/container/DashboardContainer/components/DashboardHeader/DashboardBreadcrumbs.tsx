@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -23,16 +23,19 @@ function DashboardBreadcrumbs(): JSX.Element {
 
 	const { title = '', image = Base64Icons[0] } = selectedData || {};
 
-	const goToListPage = useCallback(() => {
-		const urlParams = new URLSearchParams();
-		urlParams.set('columnKey', listSortOrder.columnKey as string);
-		urlParams.set('order', listSortOrder.order as string);
-		urlParams.set('page', listSortOrder.pagination as string);
-		urlParams.set('search', listSortOrder.search as string);
+	const goToListPage = useCallback(
+		(e?: React.MouseEvent) => {
+			const urlParams = new URLSearchParams();
+			urlParams.set('columnKey', listSortOrder.columnKey as string);
+			urlParams.set('order', listSortOrder.order as string);
+			urlParams.set('page', listSortOrder.pagination as string);
+			urlParams.set('search', listSortOrder.search as string);
 
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
-		safeNavigate(generatedUrl);
-	}, [listSortOrder, safeNavigate]);
+			const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
+			safeNavigate(generatedUrl, { event: e });
+		},
+		[listSortOrder, safeNavigate],
+	);
 
 	return (
 		<div className="dashboard-breadcrumbs">
