@@ -85,6 +85,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(_ licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return noopgateway.NewProviderFactory()
 		},
+		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
+			return querier.NewHandler(ps, q, a)
+		},
 	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", "error", err)
