@@ -28,6 +28,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/gorilla/mux"
+	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
@@ -58,6 +59,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ gateway.Handler }{},
 		struct{ fields.Handler }{},
 		struct{ authz.Handler }{},
+		struct{ zeus.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

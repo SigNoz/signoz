@@ -58,6 +58,7 @@
 		"@signozhq/radio-group": "0.0.2",
 		"@signozhq/resizable": "0.0.0",
 		"@signozhq/sonner": "0.1.0",
+		"@signozhq/switch": "0.0.2",
 		"@signozhq/table": "0.3.7",
 		"@signozhq/tooltip": "0.0.2",
 		"@tanstack/react-table": "8.20.6",

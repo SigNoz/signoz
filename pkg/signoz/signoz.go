@@ -392,7 +392,7 @@ func New(
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
 	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, gateway, telemetryMetadataStore, authz)
+	handlers := NewHandlers(modules, providerSettings, querier, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus)
 
 	// Initialize the API server
 	apiserver, err := factory.NewProviderFromNamedMap(
