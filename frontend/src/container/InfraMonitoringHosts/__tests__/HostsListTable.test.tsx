@@ -1,12 +1,16 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { render, screen } from '@testing-library/react';
+import { HostData, HostListResponse } from 'api/infraMonitoring/getHostLists';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import HostsListTable from '../HostsListTable';
+import { HostsListTableProps } from '../utils';
 
 const EMPTY_STATE_CONTAINER_CLASS = '.hosts-empty-state-container';
 
-describe('HostsListTable', () => {
-	const mockHost = {
+const createMockHost = (): HostData =>
+	({
 		hostName: 'test-host-1',
 		active: true,
 		cpu: 0.75,
@@ -14,20 +18,46 @@ describe('HostsListTable', () => {
 		wait: 0.03,
 		load15: 1.5,
 		os: 'linux',
-	};
+		cpuTimeSeries: { labels: {}, labelsArray: [], values: [] },
+		memoryTimeSeries: { labels: {}, labelsArray: [], values: [] },
+		waitTimeSeries: { labels: {}, labelsArray: [], values: [] },
+		load15TimeSeries: { labels: {}, labelsArray: [], values: [] },
+	} as HostData);
 
-	const mockTableData = {
+const createMockTableData = (
+	overrides: Partial<HostListResponse['data']> = {},
+): SuccessResponse<HostListResponse> => {
+	const mockHost = createMockHost();
+	return {
+		statusCode: 200,
+		message: 'Success',
+		error: null,
 		payload: {
+			status: 'success',
 			data: {
-				hosts: [mockHost],
+				type: 'list',
+				records: [mockHost],
+				groups: null,
+				total: 1,
+				sentAnyHostMetricsData: true,
+				isSendingK8SAgentMetrics: false,
+				endTimeBeforeRetention: false,
+				...overrides,
 			},
 		},
 	};
+};
+
+describe('HostsListTable', () => {
+	const mockHost = createMockHost();
+	const mockTableData = createMockTableData();
+
 	const mockOnHostClick = jest.fn();
 	const mockSetCurrentPage = jest.fn();
 	const mockSetOrderBy = jest.fn();
 	const mockSetPageSize = jest.fn();
-	const mockProps = {
+
+	const mockProps: HostsListTableProps = {
 		isLoading: false,
 		isError: false,
 		isFetching: false,
@@ -43,7 +73,7 @@ describe('HostsListTable', () => {
 		pageSize: 10,
 		setOrderBy: mockSetOrderBy,
 		setPageSize: mockSetPageSize,
-	} as any;
+	};
 
 	it('renders loading state if isLoading is true and tableData is empty', () => {
 		const { container } = render(
@@ -51,7 +81,7 @@ describe('HostsListTable', () => {
 				{...mockProps}
 				isLoading
 				hostMetricsData={[]}
-				tableData={{ payload: { data: { hosts: [] } } }}
+				tableData={createMockTableData({ records: [] })}
 			/>,
 		);
 		expect(container.querySelector('.hosts-list-loading-state')).toBeTruthy();
@@ -63,7 +93,7 @@ describe('HostsListTable', () => {
 				{...mockProps}
 				isFetching
 				hostMetricsData={[]}
-				tableData={{ payload: { data: { hosts: [] } } }}
+				tableData={createMockTableData({ records: [] })}
 			/>,
 		);
 		expect(container.querySelector('.hosts-list-loading-state')).toBeTruthy();
@@ -74,19 +104,56 @@ describe('HostsListTable', () => {
 		expect(screen.getByText('Something went wrong')).toBeTruthy();
 	});
 
+	it('renders "Something went wrong" fallback when isError is true and error message is empty', () => {
+		const tableDataWithEmptyError: ErrorResponse = {
+			statusCode: 500,
+			payload: null,
+			error: '',
+			message: null,
+		};
+		render(
+			<HostsListTable
+				{...mockProps}
+				isError
+				hostMetricsData={[]}
+				tableData={tableDataWithEmptyError}
+			/>,
+		);
+		expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+	});
+
+	it('renders custom error message when isError is true and error message is provided', () => {
+		const customErrorMessage = 'Failed to fetch host metrics';
+		const tableDataWithError: ErrorResponse = {
+			statusCode: 500,
+			payload: null,
+			error: customErrorMessage,
+			message: null,
+		};
+		render(
+			<HostsListTable
+				{...mockProps}
+				isError
+				hostMetricsData={[]}
+				tableData={tableDataWithError}
+			/>,
+		);
+		expect(screen.getByText(customErrorMessage)).toBeInTheDocument();
+	});
+
 	it('renders empty state if no hosts are found', () => {
 		const { container } = render(
 			<HostsListTable
 				{...mockProps}
 				hostMetricsData={[]}
-				tableData={{
-					payload: {
-						data: { hosts: [] },
-					},
-				}}
+				tableData={createMockTableData({
+					records: [],
+				})}
 			/>,
 		);
-		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
+		expect(
+			container.querySelector('.no-filtered-hosts-message-container'),
+		).toBeTruthy();
 	});
 
 	it('renders empty state if sentAnyHostMetricsData is false', () => {
@@ -94,58 +161,114 @@ describe('HostsListTable', () => {
 			<HostsListTable
 				{...mockProps}
 				hostMetricsData={[]}
-				tableData={{
-					...mockTableData,
-					payload: {
-						...mockTableData.payload,
-						data: {
-							...mockTableData.payload.data,
-							sentAnyHostMetricsData: false,
-							hosts: [],
-						},
-					},
-				}}
+				tableData={createMockTableData({
+					sentAnyHostMetricsData: false,
+					records: [],
+				})}
 			/>,
 		);
 		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
 	});
 
-	it('renders empty state if isSendingIncorrectK8SAgentMetrics is true', () => {
+	it('renders empty state if isSendingK8SAgentMetrics is true', () => {
 		const { container } = render(
 			<HostsListTable
 				{...mockProps}
 				hostMetricsData={[]}
-				tableData={{
-					...mockTableData,
-					payload: {
-						...mockTableData.payload,
-						data: {
-							...mockTableData.payload.data,
-							isSendingIncorrectK8SAgentMetrics: true,
-							hosts: [],
-						},
-					},
-				}}
+				tableData={createMockTableData({
+					isSendingK8SAgentMetrics: true,
+					records: [],
+				})}
 			/>,
 		);
 		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
+	});
+
+	it('renders end time before retention message when endTimeBeforeRetention is true', () => {
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				hostMetricsData={[]}
+				tableData={createMockTableData({
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: false,
+					endTimeBeforeRetention: true,
+					records: [],
+				})}
+			/>,
+		);
+		expect(container.querySelector(EMPTY_STATE_CONTAINER_CLASS)).toBeTruthy();
+		expect(
+			screen.getByText(
+				/Your requested end time is earlier than the earliest detected time of host metrics data, please adjust your end time\./,
+			),
+		).toBeInTheDocument();
+	});
+
+	it('renders no records message when noRecordsInSelectedTimeRangeAndFilters is true', () => {
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				hostMetricsData={[]}
+				tableData={createMockTableData({
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: false,
+					records: [],
+				})}
+			/>,
+		);
+		expect(
+			container.querySelector('.no-filtered-hosts-message-container'),
+		).toBeTruthy();
+		expect(
+			screen.getByText(/No host metrics in the selected time range and filters/),
+		).toBeInTheDocument();
+	});
+
+	it('renders no filtered hosts message when filters are present and no hosts are found', () => {
+		const { container } = render(
+			<HostsListTable
+				{...mockProps}
+				hostMetricsData={[]}
+				filters={{
+					items: [
+						{
+							id: 'host_name',
+							key: {
+								key: 'host_name',
+								dataType: DataTypes.String,
+								type: 'tag',
+								isIndexed: true,
+							},
+							op: '=',
+							value: 'unknown',
+						},
+					],
+					op: 'AND',
+				}}
+				tableData={createMockTableData({
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: false,
+					records: [],
+				})}
+			/>,
+		);
+		expect(container.querySelector('.no-filtered-hosts-message')).toBeTruthy();
+		expect(
+			screen.getByText(
+				/No host metrics in the selected time range and filters\. Please adjust your time range or filters\./,
+			),
+		).toBeInTheDocument();
 	});
 
 	it('renders table data', () => {
 		const { container } = render(
 			<HostsListTable
 				{...mockProps}
-				tableData={{
-					...mockTableData,
-					payload: {
-						...mockTableData.payload,
-						data: {
-							...mockTableData.payload.data,
-							isSendingIncorrectK8SAgentMetrics: false,
-							sentAnyHostMetricsData: true,
-						},
-					},
-				}}
+				tableData={createMockTableData({
+					isSendingK8SAgentMetrics: false,
+					sentAnyHostMetricsData: true,
+				})}
 			/>,
 		);
 		expect(container.querySelector('.hosts-list-table')).toBeTruthy();

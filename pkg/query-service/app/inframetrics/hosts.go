@@ -67,10 +67,11 @@ var (
 		GetDotMetrics("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"cpu":    GetDotMetrics("system_cpu_time"),
-		"memory": GetDotMetrics("system_memory_usage"),
-		"load15": GetDotMetrics("system_cpu_load_average_15m"),
-		"wait":   GetDotMetrics("system_cpu_time"),
+		"filesystem": GetDotMetrics("system_filesystem_usage"),
+		"cpu":        GetDotMetrics("system_cpu_time"),
+		"memory":     GetDotMetrics("system_memory_usage"),
+		"load15":     GetDotMetrics("system_cpu_load_average_15m"),
+		"wait":       GetDotMetrics("system_cpu_time"),
 	}
 )
 
@@ -316,24 +317,15 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req
 	return topHostGroups, allHostGroups, nil
 }
 
-func (h *HostsRepo) DidSendHostMetricsData(ctx context.Context, req model.HostListRequest) (bool, error) {
-
+// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for host metrics
+// in distributed_metadata. Uses metricNamesForHosts plus system.filesystem.usage.
+func (h *HostsRepo) GetHostMetricsExistenceAndEarliestTime(ctx context.Context, req model.HostListRequest) (uint64, uint64, error) {
 	names := []string{}
 	for _, metricName := range metricNamesForHosts {
 		names = append(names, metricName)
 	}
 
-	namesStr := "'" + strings.Join(names, "','") + "'"
-
-	query := fmt.Sprintf("SELECT count() FROM %s.%s WHERE metric_name IN (%s)",
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
-
-	count, err := h.reader.GetCountOfThings(ctx, query)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
+	return h.reader.GetHostMetricsExistenceAndEarliestTime(ctx, names)
 }
 
 func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) ([]string, []string, error) {
@@ -412,8 +404,25 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		resp.ClusterNames = clusterNames
 		resp.NodeNames = nodeNames
 	}
-	if sentAnyHostMetricsData, err := h.DidSendHostMetricsData(ctx, req); err == nil {
-		resp.SentAnyHostMetricsData = sentAnyHostMetricsData
+
+	// 1. Check if any host metrics exist and get earliest retention time
+	// if no hosts metrics exist, that means we should show the onboarding guide on UI, and return early.
+	// 2. If host metrics exist, but req.End is earlier than the earliest time of host metrics as read from
+	// metadata table, then we should convey the same to the user and return early
+	if count, minFirstReportedUnixMilli, err := h.GetHostMetricsExistenceAndEarliestTime(ctx, req); err == nil {
+		if count == 0 {
+			resp.SentAnyHostMetricsData = false
+			resp.Records = []model.HostListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyHostMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.HostListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
