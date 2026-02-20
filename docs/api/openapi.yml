@@ -742,11 +742,11 @@ components:
       type: object
     MetrictypesComparisonSpaceAggregationParam:
       properties:
-        limit:
-          format: double
-          type: number
         operator:
           type: string
+        threshold:
+          format: double
+          type: number
       type: object
     MetrictypesSpaceAggregation:
       enum:
