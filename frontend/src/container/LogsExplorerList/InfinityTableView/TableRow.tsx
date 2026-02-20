@@ -7,6 +7,7 @@ import {
 	useMemo,
 } from 'react';
 import { ColumnsType } from 'antd/es/table';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -22,22 +23,27 @@ interface TableRowProps {
 	tableColumns: ColumnsType<Record<string, unknown>>;
 	index: number;
 	log: Record<string, unknown>;
-	handleSetActiveContextLog: (log: ILog) => void;
-	onShowLogDetails: (log: ILog) => void;
+	onShowLogDetails?: (
+		log: ILog,
+		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+	) => void;
 	logs: ILog[];
 	hasActions: boolean;
 	fontSize: FontSize;
+	isActiveLog?: boolean;
+	onClearActiveLog?: () => void;
 }
 
 export default function TableRow({
 	tableColumns,
 	index,
 	log,
-	handleSetActiveContextLog,
 	onShowLogDetails,
 	logs,
 	hasActions,
 	fontSize,
+	isActiveLog,
+	onClearActiveLog,
 }: TableRowProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -52,21 +58,31 @@ export default function TableRow({
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			if (!handleSetActiveContextLog || !currentLog) {
+			if (!currentLog) {
 				return;
 			}
 
-			handleSetActiveContextLog(currentLog);
+			onShowLogDetails?.(currentLog, VIEW_TYPES.CONTEXT);
 		},
-		[currentLog, handleSetActiveContextLog],
+		[currentLog, onShowLogDetails],
 	);
 
 	const handleShowLogDetails = useCallback(() => {
-		if (!onShowLogDetails || !currentLog) {
+		if (!currentLog) {
 			return;
 		}
-		onShowLogDetails(currentLog);
-	}, [currentLog, onShowLogDetails]);
+
+		// If this log is already active, close the detail drawer
+		if (isActiveLog && onClearActiveLog) {
+			onClearActiveLog();
+			return;
+		}
+
+		// Otherwise, open the detail drawer for this log
+		if (onShowLogDetails) {
+			onShowLogDetails(currentLog);
+		}
+	}, [currentLog, onShowLogDetails, isActiveLog, onClearActiveLog]);
 
 	const hasSingleColumn =
 		tableColumns.filter((column) => column.key !== 'state-indicator').length ===

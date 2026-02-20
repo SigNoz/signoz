@@ -678,7 +678,7 @@ export const useUpdateIngestionKeyLimit = <
  * @summary Search ingestion keys for workspace
  */
 export const searchIngestionKeys = (
-	params?: SearchIngestionKeysParams,
+	params: SearchIngestionKeysParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<SearchIngestionKeys200>({
@@ -699,7 +699,7 @@ export const getSearchIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: SearchIngestionKeysParams,
+	params: SearchIngestionKeysParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof searchIngestionKeys>>,
@@ -737,7 +737,7 @@ export function useSearchIngestionKeys<
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,
 	TError = RenderErrorResponseDTO
 >(
-	params?: SearchIngestionKeysParams,
+	params: SearchIngestionKeysParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof searchIngestionKeys>>,
@@ -762,7 +762,7 @@ export function useSearchIngestionKeys<
  */
 export const invalidateSearchIngestionKeys = async (
 	queryClient: QueryClient,
-	params?: SearchIngestionKeysParams,
+	params: SearchIngestionKeysParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(

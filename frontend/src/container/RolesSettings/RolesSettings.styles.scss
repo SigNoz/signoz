@@ -1,0 +1,238 @@
+.roles-settings {
+	.roles-settings-header {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		width: 100%;
+		padding: 16px;
+
+		.roles-settings-header-title {
+			color: var(--text-base-white);
+			font-family: Inter;
+			font-style: normal;
+			font-size: 18px;
+			font-weight: 500;
+			line-height: 28px;
+			letter-spacing: -0.09px;
+		}
+
+		.roles-settings-header-description {
+			color: var(--foreground);
+			font-family: Inter;
+			font-style: normal;
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
+	}
+
+	.roles-settings-content {
+		padding: 0 16px;
+	}
+
+	// todo: https://github.com/SigNoz/components/issues/116
+	.roles-search-wrapper {
+		input {
+			width: 100%;
+			background: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			border-radius: 2px;
+			padding: 6px 6px 6px 8px;
+			font-family: Inter;
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.07px;
+			color: var(--l1-foreground);
+			outline: none;
+			height: 32px;
+
+			&::placeholder {
+				color: var(--l3-foreground);
+			}
+
+			&:focus {
+				border-color: var(--input);
+			}
+		}
+	}
+}
+
+.roles-description-tooltip {
+	max-height: none;
+	overflow-y: visible;
+}
+
+.roles-listing-table {
+	margin-top: 12px;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.roles-table-scroll-container {
+	overflow-x: auto;
+}
+
+.roles-table-inner {
+	min-width: 850px;
+}
+
+.roles-table-header {
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	gap: 24px;
+}
+
+.roles-table-header-cell {
+	font-family: Inter;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.44px;
+	color: var(--foreground);
+	line-height: 16px;
+
+	&--name {
+		flex: 0 0 180px;
+	}
+
+	&--description {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&--created-at {
+		flex: 0 0 180px;
+		text-align: right;
+	}
+
+	&--updated-at {
+		flex: 0 0 180px;
+		text-align: right;
+	}
+}
+
+.roles-table-section-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 32px;
+	padding: 0 16px;
+	background: rgba(171, 189, 255, 0.04);
+	border-top: 1px solid var(--secondary);
+	border-bottom: 1px solid var(--secondary);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--foreground);
+	line-height: 16px;
+	margin: 0;
+
+	&__count {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 20px;
+		height: 18px;
+		padding: 0 6px;
+		border-radius: 9px;
+		background: var(--l3-background);
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--foreground);
+		line-height: 1;
+	}
+}
+
+.roles-table-row {
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	background: rgba(171, 189, 255, 0.02);
+	border-bottom: 1px solid var(--secondary);
+	gap: 24px;
+}
+
+.roles-table-cell {
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	color: var(--foreground);
+	line-height: 20px;
+
+	&--name {
+		flex: 0 0 180px;
+		font-weight: 500;
+	}
+
+	&--description {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	&--created-at {
+		flex: 0 0 180px;
+		text-align: right;
+		white-space: nowrap;
+	}
+
+	&--updated-at {
+		flex: 0 0 180px;
+		text-align: right;
+		white-space: nowrap;
+	}
+}
+
+.roles-table-empty {
+	padding: 24px 16px;
+	text-align: center;
+	color: var(--foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.roles-table-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 8px 16px;
+
+	.ant-pagination-total-text {
+		margin-right: auto;
+
+		.numbers {
+			font-family: Inter;
+			font-size: 12px;
+			color: var(--foreground);
+		}
+
+		.total {
+			font-family: Inter;
+			font-size: 12px;
+			color: var(--foreground);
+			opacity: 0.5;
+		}
+	}
+}
+
+.lightMode {
+	.roles-settings {
+		.roles-settings-header {
+			.roles-settings-header-title {
+				color: var(--text-base-black);
+			}
+		}
+	}
+
+	.roles-table-section-header {
+		background: rgba(0, 0, 0, 0.03);
+	}
+
+	.roles-table-row {
+		background: rgba(0, 0, 0, 0.01);
+	}
+}

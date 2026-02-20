@@ -216,7 +216,7 @@ describe('TopErrors', () => {
 					value: 'true',
 				}),
 				expect.objectContaining({
-					key: expect.objectContaining({ key: 'http_host' }),
+					key: expect.objectContaining({ key: SPAN_ATTRIBUTES.SERVER_NAME }),
 					op: '=',
 					value: 'test-domain',
 				}),
