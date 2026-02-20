@@ -123,7 +123,9 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	origTimeAgg := query.Aggregations[0].TimeAggregation
 	origGroupBy := slices.Clone(query.GroupBy)
 
-	if query.Aggregations[0].Type == metrictypes.HistogramType {
+	if (query.Aggregations[0].SpaceAggregation.IsPercentile() ||
+		query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount) &&
+		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
 		// add le in the group by if doesn't exist
 		leExists := false
 		for _, g := range query.GroupBy {
@@ -592,16 +594,11 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 
-		switch query.Aggregations[0].SpaceAggregationParam.(type) {
-		case metrictypes.ComparisonSpaceAggregationParam:
-			aggQuery, err := AggregationQueryForHistogramCount(query.Aggregations[0].SpaceAggregationParam.(metrictypes.ComparisonSpaceAggregationParam))
-			if err != nil {
-				return nil, err
-			}
-			sb.SelectMore(aggQuery)
-		default:
-			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no aggregation param provided for histogram count")
+		aggQuery, err := AggregationQueryForHistogramCount(query.Aggregations[0].ComparisonSpaceAggregationParam)
+		if err != nil {
+			return nil, err
 		}
+		sb.SelectMore(aggQuery)
 
 		sb.From("__spatial_aggregation_cte")
 

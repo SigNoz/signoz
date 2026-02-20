@@ -740,6 +740,14 @@ components:
       - temporality
       - isMonotonic
       type: object
+    MetrictypesComparisonSpaceAggregationParam:
+      properties:
+        limit:
+          format: double
+          type: number
+        operator:
+          type: string
+      type: object
     MetrictypesSpaceAggregation:
       enum:
       - sum
@@ -754,7 +762,6 @@ components:
       - p99
       - histogram_count
       type: string
-    MetrictypesSpaceAggregationParam: {}
     MetrictypesTemporality:
       enum:
       - delta
@@ -1038,14 +1045,14 @@ components:
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
+        comparisonSpaceAggregationParam:
+          $ref: '#/components/schemas/MetrictypesComparisonSpaceAggregationParam'
         metricName:
           type: string
         reduceTo:
           $ref: '#/components/schemas/Querybuildertypesv5ReduceTo'
         spaceAggregation:
           $ref: '#/components/schemas/MetrictypesSpaceAggregation'
-        spaceAggregationParam:
-          $ref: '#/components/schemas/MetrictypesSpaceAggregationParam'
         temporality:
           $ref: '#/components/schemas/MetrictypesTemporality'
         timeAggregation:

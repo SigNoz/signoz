@@ -310,10 +310,13 @@ func AggregationColumnForSamplesTable(
 	return aggregationColumn, nil
 }
 
-func AggregationQueryForHistogramCount(params metrictypes.ComparisonSpaceAggregationParam) (string, error) {
-	histogramCountThreshold := params.Threshold
+func AggregationQueryForHistogramCount(param *metrictypes.ComparisonSpaceAggregationParam) (string, error) {
+	if param == nil {
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no aggregation param provided for histogram count")
+	}
+	histogramCountThreshold := param.Threshold
 
-	switch params.Operater {
+	switch param.Operater {
 	case "<=":
 		return fmt.Sprintf("argMaxIf(value, toFloat64(le), toFloat64(le) <= %f) + (argMinIf(value, toFloat64(le), toFloat64(le) > %f) - argMaxIf(value, toFloat64(le), toFloat64(le) <= %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) <= %f)) / (minIf(toFloat64(le), toFloat64(le) > %f) - maxIf(toFloat64(le), toFloat64(le) <= %f)) AS value", histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold), nil
 	case ">":

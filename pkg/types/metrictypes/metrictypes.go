@@ -260,21 +260,11 @@ type MetricValueFilter struct {
 	Value float64
 }
 
-type SpaceAggregationParam interface {
-	StringValue() string
-}
-
-type NoSpaceAggregationParam struct{}
-
-func (_ NoSpaceAggregationParam) StringValue() string {
-	return "{}"
-}
-
 type ComparisonSpaceAggregationParam struct {
 	Operater  string  `json:"operator"`
-	Threshold float64 `json:"limit"`
+	Threshold float64 `json:"threshold"`
 }
 
-func (cso ComparisonSpaceAggregationParam) StringValue() string {
-	return fmt.Sprintf("{\"operator\": \"%s\", \"limit\": \"%f\"}", cso.Operater, cso.Threshold)
+func (param ComparisonSpaceAggregationParam) StringValue() string {
+	return fmt.Sprintf("{\"operator\": \"%s\", \"limit\": \"%f\"}", param.Operater, param.Threshold)
 }
