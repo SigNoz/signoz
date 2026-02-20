@@ -718,17 +718,15 @@ describe('SpanDetailsDrawer', () => {
 			// Click on the percentile value to expand details
 			const percentileValue = screen.getByText(P75_TEXT);
 			fireEvent.click(percentileValue);
-
 			// Verify percentile details are expanded
 			await waitFor(() => {
 				expect(screen.getByText(SPAN_PERCENTILE_TEXT)).toBeInTheDocument();
 				// Look for the text that's actually rendered
-				expect(screen.getByText(/This span duration is/)).toBeInTheDocument();
-				expect(
-					screen.getByText(/out of the distribution for this resource/),
-				).toBeInTheDocument();
+				expect(screen.getByText(/p\d+.*slower than/)).toBeInTheDocument();
+				expect(screen.getByText(/recent spans for this operation/)).toBeInTheDocument();
 			});
 		});
+
 
 		it('should display percentile table with correct values', async () => {
 			renderSpanDetailsDrawer();
