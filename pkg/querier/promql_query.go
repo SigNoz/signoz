@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 )
@@ -240,13 +241,13 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
-		lbls := make([]*qbv5.Label, 0, len(v.Metric))
-		for name, value := range v.Metric.Copy().Map() {
+		lbls := make([]*qbv5.Label, 0, v.Metric.Len())
+		v.Metric.Range(func(l labels.Label) {
 			lbls = append(lbls, &qbv5.Label{
-				Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-				Value: value,
+				Key:   telemetrytypes.TelemetryFieldKey{Name: l.Name},
+				Value: l.Value,
 			})
-		}
+		})
 
 		s.Labels = lbls
 

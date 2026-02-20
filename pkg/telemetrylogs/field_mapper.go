@@ -30,7 +30,7 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
-		LogsV2BodyJSONColumn: {Name: LogsV2BodyJSONColumn, Type: schema.JSONColumnType{
+		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{
 			MaxDynamicTypes: utils.ToPointer(uint(32)),
 			MaxDynamicPaths: utils.ToPointer(uint(0)),
 		}},
@@ -89,9 +89,9 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields
-		// Use body_json if feature flag is enabled
+		// Use body_v2 if feature flag is enabled
 		if querybuilder.BodyJSONQueryEnabled {
-			return logsV2Columns[LogsV2BodyJSONColumn], nil
+			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
 		// Fall back to legacy body column
 		return logsV2Columns["body"], nil
@@ -100,9 +100,9 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-				// Use body_json if feature flag is enabled and we have a body condition builder
+				// Use body_v2 if feature flag is enabled and we have a body condition builder
 				if querybuilder.BodyJSONQueryEnabled {
-					return logsV2Columns[LogsV2BodyJSONColumn], nil
+					return logsV2Columns[LogsV2BodyV2Column], nil
 				}
 				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
@@ -147,6 +147,9 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			}
 
 			return m.buildFieldForJSON(key)
+		case telemetrytypes.FieldContextLog:
+			// return the column name as is for log context fields
+			return column.Name, nil
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
