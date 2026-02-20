@@ -28,6 +28,32 @@ docker compose up -d
 
 Open http://localhost:8080 in your favourite browser.
 
+### Custom Port Configuration
+
+You can customize the ports used by SigNoz by setting the following environment variables:
+
+- `SIGNOZ_PORT` - Port for the SigNoz UI and API (default: 8080)
+- `OTEL_GRPC_PORT` - Port for OTLP gRPC receiver (default: 4317)
+- `OTEL_HTTP_PORT` - Port for OTLP HTTP receiver (default: 4318)
+
+**Example using Docker Compose:**
+
+```sh
+cd deploy/docker
+SIGNOZ_PORT=9090 OTEL_GRPC_PORT=5317 OTEL_HTTP_PORT=5318 docker compose up -d
+```
+
+**Example using Install Script:**
+
+```sh
+export SIGNOZ_PORT=9090
+export OTEL_GRPC_PORT=5317
+export OTEL_HTTP_PORT=5318
+./install.sh
+```
+
+After setting custom ports, access SigNoz UI at `http://localhost:<SIGNOZ_PORT>`.
+
 To start collecting logs and metrics from your infrastructure, run the following command:
 
 ```sh
@@ -78,4 +104,3 @@ For more details, please refer to the [SigNoz documentation](https://signoz.io/d
 ## Uninstall/Troubleshoot?
 
 Go to our official documentation site [signoz.io/docs](https://signoz.io/docs) for more.
-

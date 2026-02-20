@@ -127,7 +127,11 @@ check_os() {
 # The script should error out in case they aren't available
 check_ports_occupied() {
     local port_check_output
-    local ports_pattern="8080|4317"
+    # Use environment variables with defaults matching docker-compose.yaml
+    local signoz_port="${SIGNOZ_PORT:-8080}"
+    local otel_grpc_port="${OTEL_GRPC_PORT:-4317}"
+    local otel_http_port="${OTEL_HTTP_PORT:-4318}"
+    local ports_pattern="${signoz_port}|${otel_grpc_port}|${otel_http_port}"
 
     if is_mac; then
         port_check_output="$(netstat -anp tcp | awk '$6 == "LISTEN" && $4 ~ /^.*\.('"$ports_pattern"')$/')"
@@ -144,8 +148,9 @@ check_ports_occupied() {
         send_event "port_not_available"
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
-        echo "SigNoz requires ports 8080 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
-        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/install/troubleshooting/"
+        echo "SigNoz requires ports ${signoz_port}, ${otel_grpc_port} & ${otel_http_port} to be open. Please shut down any other service(s) that may be running on these ports."
+        echo "You can run SigNoz on another port by setting SIGNOZ_PORT, OTEL_GRPC_PORT, and OTEL_HTTP_PORT environment variables."
+        echo "For more details, refer to https://signoz.io/docs/install/troubleshooting/"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
         exit 1
@@ -245,10 +250,12 @@ start_docker() {
 
 wait_for_containers_start() {
     local timeout=$1
+    # Use environment variable with default matching docker-compose.yaml
+    local signoz_port="${SIGNOZ_PORT:-8080}"
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/api/v1/health?live=1" || true)"
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${signoz_port}/api/v1/health?live=1" || true)"
         if [[ status_code -eq 200 ]]; then
             break
         else
@@ -528,12 +535,14 @@ if [[ $status_code -ne 200 ]]; then
 
 else
     send_event "installation_success"
+    # Use environment variable with default matching docker-compose.yaml
+    signoz_port="${SIGNOZ_PORT:-8080}"
 
     echo "++++++++++++++++++ SUCCESS ++++++++++++++++++++++"
     echo ""
     echo "🟢 Your installation is complete!"
     echo ""
-    echo -e "🟢 SigNoz is running on http://localhost:8080"
+    echo -e "🟢 SigNoz is running on http://localhost:${signoz_port}"
     echo ""
     echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics."
     echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"

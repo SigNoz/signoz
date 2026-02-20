@@ -116,7 +116,7 @@ services:
     command:
       - --config=/root/config/prometheus.yml
     ports:
-      - "8080:8080" # signoz port
+      - "${SIGNOZ_PORT:-8080}:8080" # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
       - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
@@ -158,8 +158,8 @@ services:
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
     ports:
       # - "1777:1777"     # pprof extension
-      - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP HTTP receiver
+      - "${OTEL_GRPC_PORT:-4317}:4317" # OTLP gRPC receiver
+      - "${OTEL_HTTP_PORT:-4318}:4318" # OTLP HTTP receiver
     depends_on:
       signoz:
         condition: service_healthy
