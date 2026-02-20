@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
 	"os"
 	"reflect"
 
@@ -27,7 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/gorilla/mux"
+	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
@@ -58,14 +57,12 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ gateway.Handler }{},
 		struct{ fields.Handler }{},
 		struct{ authz.Handler }{},
+		struct{ zeus.Handler }{},
+		struct{ querier.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err
 	}
-
-	// Register routes that live outside the APIServer modules
-	// so they are discovered by the OpenAPI walker.
-	registerQueryRoutes(apiserver.Router())
 
 	reflector := openapi3.NewReflector()
 	reflector.JSONSchemaReflector().DefaultOptions = append(reflector.JSONSchemaReflector().DefaultOptions, jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
@@ -156,11 +153,4 @@ func convertJSONNumbers(v interface{}) {
 			}
 		}
 	}
-}
-
-func registerQueryRoutes(router *mux.Router) {
-	router.Handle("/api/v5/query_range", handler.New(
-		func(http.ResponseWriter, *http.Request) {},
-		querier.QueryRangeV5OpenAPIDef,
-	)).Methods(http.MethodPost)
 }

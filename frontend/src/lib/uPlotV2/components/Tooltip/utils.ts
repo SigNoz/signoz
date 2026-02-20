@@ -4,7 +4,7 @@ import uPlot, { AlignedData, Series } from 'uplot';
 
 import { TooltipContentItem } from '../types';
 
-const FALLBACK_SERIES_COLOR = '#000000';
+export const FALLBACK_SERIES_COLOR = '#000000';
 
 export function resolveSeriesColor(
 	stroke: Series.Stroke | undefined,

@@ -1,3 +1,8 @@
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { AxiosError } from 'axios';
+import { ErrorV2Resp } from 'types/api';
+import APIError from 'types/api/error';
+
 /**
  * Extracts HTTP status code from various error types
  * @param error - The error object (could be APIError, AxiosError, or other error types)
@@ -28,3 +33,25 @@ export const isRetryableError = (error: any): boolean => {
 	// If no status code is available, default to retryable
 	return !statusCode || statusCode >= 500;
 };
+
+export function toAPIError(
+	error: unknown,
+	defaultMessage = 'An unexpected error occurred.',
+): APIError {
+	try {
+		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+	} catch (apiError) {
+		if (apiError instanceof APIError) {
+			return apiError;
+		}
+	}
+	return new APIError({
+		httpStatusCode: 500,
+		error: {
+			code: 'UNKNOWN_ERROR',
+			message: defaultMessage,
+			url: '',
+			errors: [],
+		},
+	});
+}
