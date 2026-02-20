@@ -15,15 +15,7 @@ import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { eventEmitter } from 'utils/getEventEmitter';
 
-import apiV1, {
-	apiAlertManager,
-	apiV2,
-	apiV3,
-	apiV4,
-	apiV5,
-	gatewayApiV1,
-	gatewayApiV2,
-} from './apiV1';
+import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
 import { Logout } from './utils';
 
 const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
@@ -211,24 +203,6 @@ LogEventAxiosInstance.interceptors.response.use(
 LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
 //
 
-// gateway Api V1
-export const GatewayApiV1Instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV1}`,
-});
-
-GatewayApiV1Instance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
-);
-
-GatewayApiV1Instance.interceptors.request.use(interceptorsRequestResponse);
-//
-
-// gateway Api V2
-export const GatewayApiV2Instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${gatewayApiV2}`,
-});
-
 // generated API Instance
 export const GeneratedAPIInstance = axios.create({
 	baseURL: ENVIRONMENT.baseURL,
@@ -239,14 +213,6 @@ GeneratedAPIInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejected,
 );
-
-GatewayApiV2Instance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
-);
-
-GatewayApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
-//
 
 AxiosAlertManagerInstance.interceptors.response.use(
 	interceptorsResponse,

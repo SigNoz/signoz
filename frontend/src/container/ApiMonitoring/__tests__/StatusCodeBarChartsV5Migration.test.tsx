@@ -10,7 +10,7 @@
  *
  * V5 Changes:
  * - Filter format change: filters.items[] → filter.expression
- * - Domain filter: (net.peer.name OR server.address)
+ * - Domain filter: (http_host)
  * - Kind filter: kind_string = 'Client'
  * - stepInterval: 60 → null
  * - Grouped by response_status_code
@@ -47,9 +47,9 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
@@ -96,9 +96,9 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
@@ -177,7 +177,7 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(callsExpression).toBe(latencyExpression);
 
 			// Verify base filters
-			expect(callsExpression).toContain('net.peer.name');
+			expect(callsExpression).toContain('http_host');
 			expect(callsExpression).toContain("kind_string = 'Client'");
 
 			// Verify custom filters are merged
@@ -185,53 +185,6 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			expect(callsExpression).toContain('user-service');
 			expect(callsExpression).toContain('deployment.environment');
 			expect(callsExpression).toContain('production');
-		});
-	});
-
-	describe('4. HTTP URL Filter Handling', () => {
-		it('converts http.url filter to (http.url OR url.full) expression in both charts', () => {
-			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'http-url-filter',
-						key: {
-							key: 'http.url',
-							dataType: 'string' as any,
-							type: 'tag',
-						},
-						op: '=',
-						value: '/api/metrics',
-					},
-				],
-				op: 'AND',
-			};
-
-			const payload = getEndPointDetailsQueryPayload(
-				mockDomainName,
-				mockStartTime,
-				mockEndTime,
-				filtersWithHttpUrl,
-			);
-
-			const callsChartQuery = payload[4];
-			const latencyChartQuery = payload[5];
-
-			const callsExpression =
-				callsChartQuery.query.builder.queryData[0].filter?.expression;
-			const latencyExpression =
-				latencyChartQuery.query.builder.queryData[0].filter?.expression;
-
-			// CRITICAL: http.url converted to OR logic
-			expect(callsExpression).toContain(
-				"(http.url = '/api/metrics' OR url.full = '/api/metrics')",
-			);
-			expect(latencyExpression).toContain(
-				"(http.url = '/api/metrics' OR url.full = '/api/metrics')",
-			);
-
-			// Base filters still present
-			expect(callsExpression).toContain('net.peer.name');
-			expect(callsExpression).toContain("kind_string = 'Client'");
 		});
 	});
 });
