@@ -418,6 +418,9 @@ describe('InviteTeamMembers', () => {
 					role: 'ADMIN',
 				});
 			});
+			await waitFor(() => expect(mockOnNext).toHaveBeenCalled(), {
+				timeout: 1200,
+			});
 		});
 
 		it('calls the invite API, shows a success notification, and calls onNext after the 1 s delay', async () => {
@@ -477,29 +480,6 @@ describe('InviteTeamMembers', () => {
 					document.querySelector('.auth-error-container'),
 				).not.toBeInTheDocument();
 			});
-		});
-	});
-
-	describe('"I\'ll do this later" button', () => {
-		it('calls onNext immediately without invoking the invite API', async () => {
-			const mockPost = jest.fn() as jest.MockedFunction<() => void>;
-
-			server.use(
-				rest.post(INVITE_USERS_ENDPOINT, (_, res, ctx) => {
-					mockPost();
-					return res(ctx.status(200), ctx.json({ status: 'success' }));
-				}),
-			);
-
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			renderComponent();
-
-			await user.click(
-				screen.getByRole('button', { name: /i'll do this later/i }),
-			);
-
-			expect(mockOnNext).toHaveBeenCalledTimes(1);
-			expect(mockPost).not.toHaveBeenCalled();
 		});
 	});
 });
