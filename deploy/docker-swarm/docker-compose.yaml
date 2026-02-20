@@ -167,7 +167,7 @@ services:
     deploy:
       replicas: 3
   signoz-telemetrystore-migrator:
-    !!merge <<: *common
+    !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
     environment:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
@@ -181,7 +181,7 @@ services:
     - |
       /signoz-otel-collector migrate bootstrap &&
       /signoz-otel-collector migrate sync up &&
-      /signoz-otel-collector migrate async up    
+      /signoz-otel-collector migrate async up
 networks:
   signoz-net:
     name: signoz-net
