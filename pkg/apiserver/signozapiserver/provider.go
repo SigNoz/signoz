@@ -203,6 +203,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addRoleRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addAuthzRoutes(router); err != nil {
 		return err
 	}
