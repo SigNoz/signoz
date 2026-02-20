@@ -7,7 +7,6 @@ module.exports = {
 		browser: true,
 		es2021: true,
 		node: true,
-		'jest/globals': true,
 	},
 	extends: [
 		'eslint:recommended',
@@ -33,7 +32,7 @@ module.exports = {
 		'simple-import-sort', // Auto-sort imports
 		'react-hooks', // React Hooks rules
 		'prettier', // Code formatting
-		'jest', // Jest test rules
+		// 'jest', // Disabled due to old version of eslint
 		'jsx-a11y', // Accessibility rules
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity

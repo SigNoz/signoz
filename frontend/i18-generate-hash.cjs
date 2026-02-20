@@ -1,3 +1,4 @@
+// oxlint-disable typescript/no-require-imports
 const crypto = require('crypto');
 const fs = require('fs');
 const glob = require('glob');

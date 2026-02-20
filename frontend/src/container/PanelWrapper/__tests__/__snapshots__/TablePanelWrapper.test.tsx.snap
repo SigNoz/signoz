@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Table panel wrappper tests table should render fine with the query response and column units 1`] = `
 .c1 {
@@ -223,7 +223,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                   style="overflow-x: auto; overflow-y: hidden;"
                 >
                   <table
-                    style="min-width: 100%; table-layout: fixed;"
+                    style="width: max-content; min-width: 100%; table-layout: fixed;"
                   >
                     <colgroup>
                       <col
@@ -274,6 +274,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 demo-app
                               </div>
@@ -291,6 +292,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 4.35 s
                               </div>
@@ -312,6 +314,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 customer
                               </div>
@@ -329,6 +332,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 431.25 ms
                               </div>
@@ -350,6 +354,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 mysql
                               </div>
@@ -367,6 +372,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 431.25 ms
                               </div>
@@ -388,6 +394,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 frontend
                               </div>
@@ -405,6 +412,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 287.11 ms
                               </div>
@@ -426,6 +434,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 driver
                               </div>
@@ -443,6 +452,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 230.02 ms
                               </div>
@@ -464,6 +474,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 route
                               </div>
@@ -481,6 +492,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 66.37 ms
                               </div>
@@ -502,6 +514,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 redis
                               </div>
@@ -519,6 +532,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             <div>
                               <div
                                 class="line-clamped-wrapper__text"
+                                style="-webkit-line-clamp: 3;"
                               >
                                 31.3 ms
                               </div>

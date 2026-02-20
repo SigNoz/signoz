@@ -64,12 +64,12 @@ jobs:
         run: |
           mkdir -p frontend
           echo 'CI=1' > frontend/.env
-          echo 'TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
-          echo 'TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
-          echo 'PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
-          echo 'APPCUES_APP_ID="${{ secrets.NP_APPCUES_APP_ID }}"' >> frontend/.env
-          echo 'PYLON_IDENTITY_SECRET="${{ secrets.NP_PYLON_IDENTITY_SECRET }}"' >> frontend/.env
-          echo 'DOCS_BASE_URL="https://staging.signoz.io"' >> frontend/.env
+          echo 'VITE_TUNNEL_URL="${{ secrets.NP_TUNNEL_URL }}"' >> frontend/.env
+          echo 'VITE_TUNNEL_DOMAIN="${{ secrets.NP_TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'VITE_PYLON_APP_ID="${{ secrets.NP_PYLON_APP_ID }}"' >> frontend/.env
+          echo 'VITE_APPCUES_APP_ID="${{ secrets.NP_APPCUES_APP_ID }}"' >> frontend/.env
+          echo 'VITE_PYLON_IDENTITY_SECRET="${{ secrets.NP_PYLON_IDENTITY_SECRET }}"' >> frontend/.env
+          echo 'VITE_DOCS_BASE_URL="https://staging.signoz.io"' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
