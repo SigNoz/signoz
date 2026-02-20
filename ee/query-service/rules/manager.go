@@ -26,6 +26,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
+
+	// calculate eval delay based on rule config
+	evalDelay := baserules.CalculateEvalDelay(opts.Rule, opts.ManagerOpts.EvalDelay)
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
@@ -35,7 +39,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Reader,
 			opts.Querier,
 			opts.SLogger,
-			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithEvalDelay(evalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
@@ -84,7 +88,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Querier,
 			opts.SLogger,
 			opts.Cache,
-			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithEvalDelay(evalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
