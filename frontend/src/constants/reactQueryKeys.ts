@@ -97,4 +97,7 @@ export const REACT_QUERY_KEY = {
 
 	// Span Percentiles Query Keys
 	GET_SPAN_PERCENTILES: 'GET_SPAN_PERCENTILES',
+
+	// Dashboard Grid Card Query Keys
+	DASHBOARD_GRID_CARD_QUERY_RANGE: 'DASHBOARD_GRID_CARD_QUERY_RANGE',
 } as const;
