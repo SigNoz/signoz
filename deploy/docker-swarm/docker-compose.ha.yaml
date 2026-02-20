@@ -61,7 +61,6 @@ x-db-depend: &db-depend
     - clickhouse
     - clickhouse-2
     - clickhouse-3
-    - schema-migrator
 services:
   init-clickhouse:
     !!merge <<: *common
@@ -136,12 +135,17 @@ services:
     #   - "9000:9000"
     #   - "8123:8123"
     #   - "9181:9181"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.ha.xml
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ./clickhouse-setup/data/clickhouse/:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-2:
@@ -151,12 +155,17 @@ services:
     #   - "9001:9000"
     #   - "8124:8123"
     #   - "9182:9181"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.ha.xml
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ./clickhouse-setup/data/clickhouse-2/:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-3:
@@ -166,37 +175,32 @@ services:
     #   - "9002:9000"
     #   - "8125:8123"
     #   - "9183:9181"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.xml
+      - source: clickhouse-custom-function
+        target: /etc/clickhouse-server/custom-function.xml
+      - source: clickhouse-cluster
+        target: /etc/clickhouse-server/config.d/cluster.ha.xml
     volumes:
-      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
       - ./clickhouse-setup/data/clickhouse-3/:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
     image: signoz/signoz:v0.112.0
-    command:
-      - --config=/root/config/prometheus.yml
     ports:
       - "8080:8080" # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
-      - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
-      - ../common/dashboards:/root/config/dashboards
       - ./clickhouse-setup/data/signoz/:/var/lib/signoz/
     environment:
       - SIGNOZ_ALERTMANAGER_PROVIDER=signoz
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
       - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
-      - DASHBOARDS_PATH=/root/config/dashboards
-      - STORAGE=clickhouse
-      - GODEBUG=netdns=go
-      - TELEMETRY_ENABLED=true
-      - DEPLOYMENT_TYPE=docker-swarm
       - SIGNOZ_TOKENIZER_JWT_SECRET=secret
-      - DOT_METRICS_ENABLED=true
     healthcheck:
       test:
         - CMD
@@ -210,39 +214,47 @@ services:
   otel-collector:
     !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:v0.142.0
+    entrypoint:
+    - /bin/sh
     command:
-      - --config=/etc/otel-collector-config.yaml
-      - --manager-config=/etc/manager-config.yaml
-      - --copy-path=/var/tmp/collector-config.yaml
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-      - ../common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+      - -c
+      - |
+        /signoz-otel-collector migrate sync check &&
+        /signoz-otel-collector --config=/etc/otel-collector-config.yaml --manager-config=/etc/manager-config.yaml --copy-path=/var/tmp/collector-config.yaml
+    configs:
+      - source: otel-collector-config
+        target: /etc/otel-collector-config.yaml
+      - source: otel-manager-config
+        target: /etc/manager-config.yaml
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
     deploy:
       replicas: 3
-    depends_on:
-      - clickhouse
-      - schema-migrator
-      - signoz
-  schema-migrator:
-    !!merge <<: *common
-    image: signoz/signoz-schema-migrator:v0.142.0
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-    entrypoint: sh
+  signoz-telemetrystore-migrator:
+    !!merge <<: *db-depend
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
+    environment:
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER=cluster
+      - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION=true
+      - SIGNOZ_OTEL_COLLECTOR_TIMEOUT=10m
+    entrypoint:
+      - /bin/sh
     command:
-      - -c
-      - "/signoz-schema-migrator sync --dsn=tcp://clickhouse:9000 --up= && /signoz-schema-migrator async --dsn=tcp://clickhouse:9000 --up="
-    depends_on:
-      - clickhouse
+    - -c 
+    - |
+      /signoz-otel-collector migrate bootstrap &&
+      /signoz-otel-collector migrate sync up &&
+      /signoz-otel-collector migrate async up
 networks:
   signoz-net:
     name: signoz-net
@@ -261,3 +273,16 @@ volumes:
     name: signoz-zookeeper-2
   zookeeper-3:
     name: signoz-zookeeper-3
+configs:
+  clickhouse-config:
+    file: ../common/clickhouse/config.xml
+  clickhouse-users:
+    file: ../common/clickhouse/users.xml
+  clickhouse-custom-function:
+    file: ../common/clickhouse/custom-function.xml
+  clickhouse-cluster:
+    file: ../common/clickhouse/cluster.ha.xml
+  otel-collector-config:
+    file: ./otel-collector-config.yaml
+  otel-manager-config:
+    file: ../common/signoz/otel-collector-opamp-config.yaml
