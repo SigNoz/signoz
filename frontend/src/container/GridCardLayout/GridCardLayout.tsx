@@ -536,12 +536,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						}
 
 						return (
-							<CardContainer
-								className="row-card"
-								isDarkMode={isDarkMode}
-								key={id}
-								data-grid={JSON.stringify(currentWidget)}
-							>
+							<CardContainer className="row-card" isDarkMode={isDarkMode} key={id}>
 								<div className={cx('row-panel')}>
 									<div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
 										{rowWidgetProperties.collapsed && (
@@ -598,7 +593,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 							className={isDashboardLocked ? '' : 'enable-resize'}
 							isDarkMode={isDarkMode}
 							key={id}
-							data-grid={JSON.stringify(currentWidget)}
 						>
 							<Card
 								className="grid-item"
