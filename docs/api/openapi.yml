@@ -307,11 +307,16 @@ components:
           type: string
         value:
           type: string
+      required:
+      - id
+      - value
       type: object
     GatewaytypesGettableCreatedIngestionKeyLimit:
       properties:
         id:
           type: string
+      required:
+      - id
       type: object
     GatewaytypesGettableIngestionKeys:
       properties:
@@ -432,6 +437,8 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - name
       type: object
     GatewaytypesPostableIngestionKeyLimit:
       properties:
@@ -454,6 +461,8 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - config
       type: object
     MetricsexplorertypesListMetric:
       properties:
@@ -1933,6 +1942,11 @@ components:
           type: string
         tier:
           type: string
+      required:
+      - name
+      - state
+      - tier
+      - hosts
       type: object
     ZeustypesHost:
       properties:
@@ -1942,6 +1956,10 @@ components:
           type: string
         url:
           type: string
+      required:
+      - name
+      - is_default
+      - url
       type: object
     ZeustypesPostableHost:
       properties:
@@ -1976,6 +1994,16 @@ components:
           type: boolean
         where_did_you_discover_signoz:
           type: string
+      required:
+      - uses_otel
+      - has_existing_observability_tool
+      - existing_observability_tool
+      - reasons_for_interest_in_signoz
+      - logs_scale_per_day_in_gb
+      - number_of_services
+      - number_of_hosts
+      - where_did_you_discover_signoz
+      - timeline_for_migrating_to_signoz
       type: object
   securitySchemes:
     api_key:
@@ -4777,6 +4805,7 @@ paths:
       parameters:
       - in: query
         name: name
+        required: true
         schema:
           type: string
       - in: query
