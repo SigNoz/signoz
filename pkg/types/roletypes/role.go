@@ -69,10 +69,10 @@ type StorableRole struct {
 type Role struct {
 	types.Identifiable
 	types.TimeAuditable
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Type        valuer.String `json:"type"`
-	OrgID       valuer.UUID   `json:"orgId"`
+	Name        string        `json:"name" required:"true"`
+	Description string        `json:"description" required:"true"`
+	Type        valuer.String `json:"type" required:"true"`
+	OrgID       valuer.UUID   `json:"orgId" required:"true"`
 }
 
 type PostableRole struct {
@@ -81,7 +81,7 @@ type PostableRole struct {
 }
 
 type PatchableRole struct {
-	Description *string `json:"description"`
+	Description string `json:"description" required:"true"`
 }
 
 type PatchableObjects struct {
@@ -90,8 +90,8 @@ type PatchableObjects struct {
 }
 
 type GettableResources struct {
-	Resources []*authtypes.Resource                   `json:"resources"`
-	Relations map[authtypes.Type][]authtypes.Relation `json:"relations"`
+	Resources []*authtypes.Resource                   `json:"resources" required:"true"`
+	Relations map[authtypes.Type][]authtypes.Relation `json:"relations" required:"true"`
 }
 
 func NewStorableRoleFromRole(role *Role) *StorableRole {
@@ -149,15 +149,13 @@ func NewGettableResources(resources []*authtypes.Resource) *GettableResources {
 	}
 }
 
-func (role *Role) PatchMetadata(description *string) error {
+func (role *Role) PatchMetadata(description string) error {
 	err := role.CanEditDelete()
 	if err != nil {
 		return err
 	}
 
-	if description != nil {
-		role.Description = *description
-	}
+	role.Description = description
 	role.UpdatedAt = time.Now()
 	return nil
 }
@@ -222,7 +220,7 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	type shadowPatchableRole struct {
-		Description *string `json:"description"`
+		Description string `json:"description"`
 	}
 
 	var shadowRole shadowPatchableRole
@@ -230,7 +228,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if shadowRole.Description == nil {
+	if shadowRole.Description == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, description must be present")
 	}
 
