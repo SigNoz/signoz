@@ -27,6 +27,7 @@ export interface HostRowData {
 	hostName: string;
 	cpu: React.ReactNode;
 	memory: React.ReactNode;
+	filesystem: React.ReactNode;
 	wait: string;
 	load15: number;
 	active: React.ReactNode;
@@ -109,6 +110,14 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		align: 'right',
 	},
 	{
+		title: <div className="column-header-right">Disk Usage</div>,
+		dataIndex: 'filesystem',
+		key: 'filesystem',
+		width: 100,
+		sorter: true,
+		align: 'right',
+	},
+	{
 		title: <div className="column-header-right">IOWait</div>,
 		dataIndex: 'wait',
 		key: 'wait',
@@ -170,6 +179,26 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 							return Color.BG_CHERRY_500;
 						}
 						if (memoryPercent >= 60) {
+							return Color.BG_AMBER_500;
+						}
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar"
+				/>
+			</div>
+		),
+		filesystem: (
+			<div className="progress-container">
+				<Progress
+					percent={Number((host.filesystem * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): string => {
+						const filesystemPercent = Number((host.filesystem * 100).toFixed(1));
+						if (filesystemPercent >= 90) {
+							return Color.BG_CHERRY_500;
+						}
+						if (filesystemPercent >= 60) {
 							return Color.BG_AMBER_500;
 						}
 						return Color.BG_FOREST_500;

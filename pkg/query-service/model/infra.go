@@ -26,14 +26,15 @@ type HostListRequest struct {
 }
 
 type HostListRecord struct {
-	HostName string            `json:"hostName"`
-	Active   bool              `json:"active"`
-	OS       string            `json:"os"`
-	CPU      float64           `json:"cpu"`
-	Memory   float64           `json:"memory"`
-	Wait     float64           `json:"wait"`
-	Load15   float64           `json:"load15"`
-	Meta     map[string]string `json:"meta"`
+	HostName   string            `json:"hostName"`
+	Active     bool              `json:"active"`
+	OS         string            `json:"os"`
+	CPU        float64           `json:"cpu"`
+	Memory     float64           `json:"memory"`
+	Wait       float64           `json:"wait"`
+	Load15     float64           `json:"load15"`
+	Filesystem float64           `json:"filesystem"`
+	Meta       map[string]string `json:"meta"`
 }
 
 type HostListResponse struct {
@@ -63,6 +64,10 @@ func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {
 	case "wait":
 		sort.Slice(r.Records, func(i, j int) bool {
 			return r.Records[i].Wait > r.Records[j].Wait
+		})
+	case "filesystem":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Filesystem > r.Records[j].Filesystem
 		})
 	}
 	// the default is descending
