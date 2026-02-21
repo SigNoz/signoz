@@ -580,3 +580,134 @@ def test_metrics_fill_formula_with_group_by(
             expected_by_ts=expectations[group],
             context=f"metrics/{fill_mode}/F1/{group}",
         )
+
+def test_metrics_distribution(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+) -> None:
+    """
+    Test distribution query with metrics.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    metric_name = "multi_time_histogram_bucket"
+
+    metrics: List[Metrics] = []
+    
+    # Insert metrics at minute -3
+    for le, value in [("10", 50.0), ("50", 100.0), ("100", 150.0), ("+Inf", 200.0)]:
+        metrics.append(
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "test", "le": le},
+                timestamp=now - timedelta(minutes=3),
+                value=value,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+        )
+    
+    # Insert metrics at minute -2
+    for le, value in [("10", 80.0), ("50", 160.0), ("100", 240.0), ("+Inf", 320.0)]:
+        metrics.append(
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "test", "le": le},
+                timestamp=now - timedelta(minutes=2),
+                value=value,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+        )
+    
+    # Insert metrics at minute -1
+    for le, value in [("10", 120.0), ("50", 240.0), ("100", 360.0), ("+Inf", 480.0)]:
+        metrics.append(
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "test", "le": le},
+                timestamp=now - timedelta(minutes=1),
+                value=value,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+        )
+    
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "distribution",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
+                            "stepInterval": 60,
+                            "disabled": False,
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+    
+    response_data = response.json()
+    assert response_data["status"] == "success", f"Query failed: {response_data}"
+
+    results = response_data["data"]["data"]["results"]
+    assert len(results) == 1, f"Expected 1 result, got {len(results)}"
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1, f"Expected 1 aggregation, got {len(aggregations)}"
+
+    buckets = aggregations[0]["buckets"]
+    assert len(buckets) == 3, f"Expected exactly 3 buckets, got {len(buckets)}: {buckets}"
+
+    #Basic structure
+    for bucket in buckets:
+        assert "lowerBound" in bucket
+        assert "upperBound" in bucket
+        assert "count" in bucket
+
+    # Expected bucket bounds (excluding +Inf)
+    expected_bounds = [
+        (0, 10),
+        (10, 50),
+        (50, 100),
+    ]
+
+    # Verify bounds
+    for bucket, (lb, ub) in zip(buckets, expected_bounds):
+        assert bucket["lowerBound"] == lb
+        assert bucket["upperBound"] == ub
+
+    # Buckets should be contiguous and valid
+    for prev, curr in zip(buckets, buckets[1:]):
+        assert prev["upperBound"] == curr["lowerBound"]
+        assert prev["lowerBound"] < prev["upperBound"]
