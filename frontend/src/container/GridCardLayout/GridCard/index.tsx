@@ -286,13 +286,6 @@ function GridCardGraph({
 		queryResponse.data = transformedData;
 	}
 
-	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE ||
-		widget.panelTypes === PANEL_TYPES.LIST ||
-		widget.panelTypes === PANEL_TYPES.PIE
-			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
-			: headerMenuList;
-
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			{isEmptyLayout ? (
@@ -305,7 +298,7 @@ function GridCardGraph({
 					isWarning={!isEmpty(queryResponse.data?.warning)}
 					version={version}
 					threshold={threshold}
-					headerMenuList={menuList}
+					headerMenuList={headerMenuList}
 					isFetchingResponse={
 						queryResponse.isFetching || isPanelWaitingOnAnyVariable
 					}
