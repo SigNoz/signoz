@@ -21,7 +21,7 @@ import {
 	METRIC_TYPE_LABEL_MAP,
 	METRIC_TYPE_VALUES_MAP,
 } from '../Summary/constants';
-import { MetricTypeRenderer } from '../Summary/utils';
+import MetricTypeRenderer from '../Summary/MetricTypeRenderer';
 import { METRIC_METADATA_KEYS } from './constants';
 import { MetadataProps } from './types';
 import { determineIsMonotonic } from './utils';

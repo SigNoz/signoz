@@ -1,9 +1,11 @@
 import React from 'react';
-import { MetricsTreeMapResponse } from 'api/metricsExplorer/getMetricsTreeMap';
 import {
-	IBuilderQuery,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+	MetricsexplorertypesTreemapModeDTO,
+	MetricsexplorertypesTreemapResponseDTO,
+	Querybuildertypesv5OrderByDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { Filter } from 'api/v5/v5';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface MetricsTableProps {
 	isLoading: boolean;
@@ -12,24 +14,36 @@ export interface MetricsTableProps {
 	pageSize: number;
 	currentPage: number;
 	onPaginationChange: (page: number, pageSize: number) => void;
-	setOrderBy: (orderBy: OrderByPayload) => void;
+	setOrderBy: (orderBy: Querybuildertypesv5OrderByDTO) => void;
 	totalCount: number;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
-	queryFilters: TagFilter;
+	queryFilterExpression: Filter;
+	onFilterChange: (expression: string) => void;
 }
 
 export interface MetricsSearchProps {
 	query: IBuilderQuery;
-	onChange: (value: TagFilter) => void;
+	onChange: (expression: string) => void;
+	currentQueryFilterExpression: string;
+	setCurrentQueryFilterExpression: (expression: string) => void;
+	isLoading: boolean;
 }
 
 export interface MetricsTreemapProps {
-	data: MetricsTreeMapResponse | null | undefined;
+	data: MetricsexplorertypesTreemapResponseDTO | null | undefined;
 	isLoading: boolean;
 	isError: boolean;
-	viewType: TreemapViewType;
+	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
-	setHeatmapView: (value: TreemapViewType) => void;
+	setHeatmapView: (value: MetricsexplorertypesTreemapModeDTO) => void;
+}
+
+export interface TreemapContentProps {
+	isLoading: boolean;
+	isError: boolean;
+	data: MetricsexplorertypesTreemapResponseDTO | null | undefined;
+	viewType: MetricsexplorertypesTreemapModeDTO;
+	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 }
 
 export interface OrderByPayload {

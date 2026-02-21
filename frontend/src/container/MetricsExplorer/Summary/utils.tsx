@@ -1,39 +1,31 @@
-import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
-	MetricsListItemData,
-	MetricsListPayload,
-	MetricType,
-} from 'api/metricsExplorer/getMetricsList';
-import {
-	SamplesData,
-	TimeseriesData,
-} from 'api/metricsExplorer/getMetricsTreeMap';
+	MetricsexplorertypesStatDTO,
+	MetricsexplorertypesTreemapEntryDTO,
+	MetricsexplorertypesTreemapModeDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { MetricsListPayload } from 'api/metricsExplorer/getMetricsList';
+import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
-import {
-	BarChart,
-	BarChart2,
-	BarChartHorizontal,
-	Diff,
-	Gauge,
-} from 'lucide-react';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { METRIC_TYPE_LABEL_MAP } from './constants';
 import MetricNameSearch from './MetricNameSearch';
-import MetricTypeSearch from './MetricTypeSearch';
-import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
+import MetricTypeRendererV2 from './MetricTypeRendererV2';
+import { MetricsListItemRowData, TreemapTile } from './types';
 
 export const getMetricsTableColumns = (
-	queryFilters: TagFilter,
+	queryFilterExpression: Filter,
+	onFilterChange: (expression: string) => void,
 ): ColumnType<MetricsListItemRowData>[] => [
 	{
 		title: (
 			<div className="metric-name-column-header">
 				<span className="metric-name-column-header-text">METRIC</span>
-				<MetricNameSearch queryFilters={queryFilters} />
+				<MetricNameSearch
+					queryFilterExpression={queryFilterExpression}
+					onFilterChange={onFilterChange}
+				/>
 			</div>
 		),
 		dataIndex: 'metric_name',
@@ -55,7 +47,11 @@ export const getMetricsTableColumns = (
 		title: (
 			<div className="metric-type-column-header">
 				<span className="metric-type-column-header-text">TYPE</span>
-				<MetricTypeSearch queryFilters={queryFilters} />
+				{/* TODO: @amlannandy: Re-enable once API supports metric type filtering */}
+				{/* <MetricTypeSearch
+					queryFilters={queryFilters}
+					onFilterChange={onFilterChange}
+				/> */}
 			</div>
 		),
 		dataIndex: 'metric_type',
@@ -69,13 +65,13 @@ export const getMetricsTableColumns = (
 	},
 	{
 		title: 'SAMPLES',
-		dataIndex: TreemapViewType.SAMPLES,
+		dataIndex: MetricsexplorertypesTreemapModeDTO.samples,
 		width: 150,
 		sorter: true,
 	},
 	{
 		title: 'TIME SERIES',
-		dataIndex: TreemapViewType.TIMESERIES,
+		dataIndex: MetricsexplorertypesTreemapModeDTO.timeseries,
 		width: 150,
 		sorter: true,
 	},
@@ -88,60 +84,6 @@ export const getMetricsListQuery = (): MetricsListPayload => ({
 	},
 	orderBy: { columnName: 'metric_name', order: 'asc' },
 });
-
-export function MetricTypeRenderer({
-	type,
-}: {
-	type: MetricType;
-}): JSX.Element {
-	const [icon, color] = useMemo(() => {
-		switch (type) {
-			case MetricType.SUM:
-				return [
-					<Diff key={type} size={12} color={Color.BG_ROBIN_500} />,
-					Color.BG_ROBIN_500,
-				];
-			case MetricType.GAUGE:
-				return [
-					<Gauge key={type} size={12} color={Color.BG_SAKURA_500} />,
-					Color.BG_SAKURA_500,
-				];
-			case MetricType.HISTOGRAM:
-				return [
-					<BarChart2 key={type} size={12} color={Color.BG_SIENNA_500} />,
-					Color.BG_SIENNA_500,
-				];
-			case MetricType.SUMMARY:
-				return [
-					<BarChartHorizontal key={type} size={12} color={Color.BG_FOREST_500} />,
-					Color.BG_FOREST_500,
-				];
-			case MetricType.EXPONENTIAL_HISTOGRAM:
-				return [
-					<BarChart key={type} size={12} color={Color.BG_AQUA_500} />,
-					Color.BG_AQUA_500,
-				];
-			default:
-				return [null, ''];
-		}
-	}, [type]);
-
-	return (
-		<div
-			className="metric-type-renderer"
-			style={{
-				backgroundColor: `${color}33`,
-				border: `1px solid ${color}`,
-				color,
-			}}
-		>
-			{icon}
-			<Typography.Text style={{ color, fontSize: 12 }}>
-				{METRIC_TYPE_LABEL_MAP[type]}
-			</Typography.Text>
-		</div>
-	);
-}
 
 function ValidateRowValueWrapper({
 	value,
@@ -182,13 +124,13 @@ export const formatNumberIntoHumanReadableFormat = (
 };
 
 export const formatDataForMetricsTable = (
-	data: MetricsListItemData[],
+	data: MetricsexplorertypesStatDTO[],
 ): MetricsListItemRowData[] =>
 	data.map((metric) => ({
-		key: metric.metric_name,
+		key: metric.metricName,
 		metric_name: (
-			<ValidateRowValueWrapper value={metric.metric_name}>
-				<Tooltip title={metric.metric_name}>{metric.metric_name}</Tooltip>
+			<ValidateRowValueWrapper value={metric.metricName}>
+				<Tooltip title={metric.metricName}>{metric.metricName}</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 		description: (
@@ -198,39 +140,54 @@ export const formatDataForMetricsTable = (
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		metric_type: <MetricTypeRenderer type={metric.type} />,
+		metric_type: <MetricTypeRendererV2 type={metric.type} />,
 		unit: (
 			<ValidateRowValueWrapper value={getUniversalNameFromMetricUnit(metric.unit)}>
 				{getUniversalNameFromMetricUnit(metric.unit)}
 			</ValidateRowValueWrapper>
 		),
-		[TreemapViewType.SAMPLES]: (
-			<ValidateRowValueWrapper value={metric[TreemapViewType.SAMPLES]}>
-				<Tooltip title={metric[TreemapViewType.SAMPLES].toLocaleString()}>
-					{formatNumberIntoHumanReadableFormat(metric[TreemapViewType.SAMPLES])}
+		[MetricsexplorertypesTreemapModeDTO.samples]: (
+			<ValidateRowValueWrapper
+				value={metric[MetricsexplorertypesTreemapModeDTO.samples]}
+			>
+				<Tooltip
+					title={metric[MetricsexplorertypesTreemapModeDTO.samples].toLocaleString()}
+				>
+					{formatNumberIntoHumanReadableFormat(
+						metric[MetricsexplorertypesTreemapModeDTO.samples],
+					)}
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		[TreemapViewType.TIMESERIES]: (
-			<ValidateRowValueWrapper value={metric[TreemapViewType.TIMESERIES]}>
-				<Tooltip title={metric[TreemapViewType.TIMESERIES].toLocaleString()}>
-					{formatNumberIntoHumanReadableFormat(metric[TreemapViewType.TIMESERIES])}
+		[MetricsexplorertypesTreemapModeDTO.timeseries]: (
+			<ValidateRowValueWrapper
+				value={metric[MetricsexplorertypesTreemapModeDTO.timeseries]}
+			>
+				<Tooltip
+					title={metric[
+						MetricsexplorertypesTreemapModeDTO.timeseries
+					].toLocaleString()}
+				>
+					{formatNumberIntoHumanReadableFormat(
+						metric[MetricsexplorertypesTreemapModeDTO.timeseries],
+					)}
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 	}));
 
 export const transformTreemapData = (
-	data: TimeseriesData[] | SamplesData[],
-	viewType: TreemapViewType,
+	data: MetricsexplorertypesTreemapEntryDTO[],
+	viewType: MetricsexplorertypesTreemapModeDTO,
 ): TreemapTile[] => {
-	const totalSize = (data as (TimeseriesData | SamplesData)[]).reduce(
-		(acc: number, item: TimeseriesData | SamplesData) => acc + item.percentage,
+	const totalSize = data.reduce(
+		(acc: number, item: MetricsexplorertypesTreemapEntryDTO) =>
+			acc + item.percentage,
 		0,
 	);
 
 	const children = data.map((item) => ({
-		id: item.metric_name,
+		id: item.metricName,
 		size: totalSize > 0 ? Number((item.percentage / totalSize).toFixed(2)) : 0,
 		displayValue: Number(item.percentage).toFixed(2),
 		parent: viewType,
