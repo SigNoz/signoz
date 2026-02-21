@@ -215,6 +215,38 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "test_bucket_query",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "http_server_duration_bucket",
+						Type:             metrictypes.HistogramType,
+						Temporality:      metrictypes.Cumulative,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'cartservice'",
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `service.name`, `le`, If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, per_series_value, ((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(1747947300000))) OVER rate_window)) * (ts - lagInFrame(ts, 1, toDateTime(fromUnixTimestamp64Milli(1747947300000))) OVER rate_window)) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `service.name`, `le`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND __normalized = ? AND JSONExtractString(labels, 'service.name') = ? GROUP BY fingerprint, `service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `service.name`, `le` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `service.name`, `le`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `service.name`, `le`), __bins AS (SELECT ts, `service.name`, lagInFrame(bin_upper, 1, toFloat64(0)) OVER (PARTITION BY ts, `service.name` ORDER BY bin_upper) AS bin_lower, bin_upper, greatest(cumulative_value - lagInFrame(cumulative_value, 1, toFloat64(0)) OVER (PARTITION BY ts, `service.name` ORDER BY bin_upper), toFloat64(0)) AS value FROM (SELECT ts, `service.name`, toFloat64OrNull(le) AS bin_upper, sum(value) AS cumulative_value FROM __spatial_aggregation_cte WHERE le != '+Inf' AND toFloat64OrNull(le) IS NOT NULL AND isFinite(toFloat64OrNull(le)) GROUP BY ts, bin_upper, `service.name` ORDER BY ts, bin_upper, `service.name`) ORDER BY ts, bin_upper, `service.name`) SELECT toUnixTimestamp(ts) * 1000 AS ts, `service.name` AS `service.name`, groupArray([bin_lower, bin_upper, value]) AS __result_0 FROM __bins GROUP BY ts, `service.name` HAVING length(__result_0) > 0 ORDER BY ts",
+				Args:  []any{"http_server_duration_bucket", uint64(1747936800000), uint64(1747983420000), "cumulative", false, "cartservice", "http_server_duration_bucket", uint64(1747947300000), uint64(1747983420000), 0},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()
