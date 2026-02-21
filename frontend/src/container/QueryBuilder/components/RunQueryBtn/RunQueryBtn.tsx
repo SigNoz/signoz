@@ -19,6 +19,7 @@ interface RunQueryBtnProps {
 	handleCancelQuery?: () => void;
 	onStageRunQuery?: () => void;
 	queryRangeKey?: QueryKey;
+	disabled?: boolean;
 }
 
 function RunQueryBtn({
@@ -28,6 +29,7 @@ function RunQueryBtn({
 	handleCancelQuery,
 	onStageRunQuery,
 	queryRangeKey,
+	disabled,
 }: RunQueryBtnProps): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const queryClient = useQueryClient();
@@ -61,7 +63,7 @@ function RunQueryBtn({
 		<Button
 			type="primary"
 			className={cx('run-query-btn periscope-btn primary', className)}
-			disabled={isLoading || !onStageRunQuery}
+			disabled={isLoading || !onStageRunQuery || disabled}
 			onClick={onStageRunQuery}
 			icon={<Play size={14} />}
 		>

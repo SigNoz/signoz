@@ -1,7 +1,8 @@
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { Info, Play } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsSearchProps } from './types';
@@ -11,6 +12,7 @@ function MetricsSearch({
 	onChange,
 	currentQueryFilterExpression,
 	setCurrentQueryFilterExpression,
+	isLoading,
 }: MetricsSearchProps): JSX.Element {
 	const handleOnChange = (expression: string): void => {
 		setCurrentQueryFilterExpression(expression);
@@ -42,14 +44,7 @@ function MetricsSearch({
 					showFilterSuggestionsWithoutMetric
 				/>
 			</div>
-			<Button
-				type="primary"
-				onClick={handleStageAndRunQuery}
-				className="stage-run-query"
-				icon={<Play size={14} />}
-			>
-				Stage & Run Query
-			</Button>
+			<RunQueryBtn onStageRunQuery={handleStageAndRunQuery} disabled={isLoading} />
 			<div className="metrics-search-options">
 				<DateTimeSelectionV2
 					showAutoRefresh={false}

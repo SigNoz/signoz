@@ -162,15 +162,13 @@ function Summary(): JSX.Element {
 		getMetricsStats({
 			data: metricsListQuery,
 		});
+	}, [metricsListQuery, getMetricsStats]);
+
+	useEffect(() => {
 		getMetricsTreemap({
 			data: metricsTreemapQuery,
 		});
-	}, [
-		metricsTreemapQuery,
-		metricsListQuery,
-		getMetricsTreemap,
-		getMetricsStats,
-	]);
+	}, [metricsTreemapQuery, getMetricsTreemap]);
 
 	const isProportionViewError = useMemo(
 		() => isGetMetricsTreemapError || treeMapData?.status !== 200,
@@ -314,6 +312,7 @@ function Summary(): JSX.Element {
 					onChange={handleFilterChange}
 					currentQueryFilterExpression={currentQueryFilterExpression}
 					setCurrentQueryFilterExpression={setCurrentQueryFilterExpression}
+					isLoading={isGetMetricsStatsLoading || isGetMetricsTreemapLoading}
 				/>
 				{showFullScreenLoading ? (
 					<MetricsLoading />
