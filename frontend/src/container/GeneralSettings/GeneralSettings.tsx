@@ -1,4 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
+import { useInterval } from 'react-use';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
@@ -11,10 +15,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
 import { useAppContext } from 'providers/App/App';
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
-import { useInterval } from 'react-use';
 import {
 	ErrorResponse,
 	ErrorResponseV2,
@@ -174,14 +174,26 @@ function GeneralSettings({
 	const { notifications } = useNotifications();
 
 	const onModalToggleHandler = (type: TTTLType): void => {
-		if (type === 'metrics') setModalMetrics((modal) => !modal);
-		if (type === 'traces') setModalTraces((modal) => !modal);
-		if (type === 'logs') setModalLogs((modal) => !modal);
+		if (type === 'metrics') {
+			setModalMetrics((modal) => !modal);
+		}
+		if (type === 'traces') {
+			setModalTraces((modal) => !modal);
+		}
+		if (type === 'logs') {
+			setModalLogs((modal) => !modal);
+		}
 	};
 	const onPostApiLoadingHandler = (type: TTTLType): void => {
-		if (type === 'metrics') setPostApiLoadingMetrics((modal) => !modal);
-		if (type === 'traces') setPostApiLoadingTraces((modal) => !modal);
-		if (type === 'logs') setPostApiLoadingLogs((modal) => !modal);
+		if (type === 'metrics') {
+			setPostApiLoadingMetrics((modal) => !modal);
+		}
+		if (type === 'traces') {
+			setPostApiLoadingTraces((modal) => !modal);
+		}
+		if (type === 'logs') {
+			setPostApiLoadingLogs((modal) => !modal);
+		}
 	};
 
 	const onClickSaveHandler = useCallback(
@@ -282,23 +294,26 @@ function GeneralSettings({
 				metricsTotalRetentionPeriod &&
 			metricsCurrentTTLValues.metrics_move_ttl_duration_hrs ===
 				metricsS3RetentionPeriod
-		)
+		) {
 			isMetricsSaveDisabled = true;
+		}
 
 		if (
 			tracesCurrentTTLValues.traces_ttl_duration_hrs ===
 				tracesTotalRetentionPeriod &&
 			tracesCurrentTTLValues.traces_move_ttl_duration_hrs ===
 				tracesS3RetentionPeriod
-		)
+		) {
 			isTracesSaveDisabled = true;
+		}
 
 		if (
 			logsCurrentTTLValues.default_ttl_days * 24 === logsTotalRetentionPeriod &&
 			logsCurrentTTLValues.cold_storage_ttl_days &&
 			logsCurrentTTLValues.cold_storage_ttl_days * 24 === logsS3RetentionPeriod
-		)
+		) {
 			isLogsSaveDisabled = true;
+		}
 
 		return [
 			isMetricsSaveDisabled,
@@ -395,26 +410,28 @@ function GeneralSettings({
 			if (type === 'metrics') {
 				metricsTtlValuesRefetch();
 
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setMetricsCurrentTTLValues({
 						metrics_ttl_duration_hrs: metricsTotalRetentionPeriod || -1,
 						metrics_move_ttl_duration_hrs: metricsS3RetentionPeriod || -1,
 						status: '',
 					});
+				}
 			} else if (type === 'traces') {
 				tracesTtlValuesRefetch();
 
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setTracesCurrentTTLValues({
 						traces_ttl_duration_hrs: tracesTotalRetentionPeriod || -1,
 						traces_move_ttl_duration_hrs: tracesS3RetentionPeriod || -1,
 						status: '',
 					});
+				}
 			} else if (type === 'logs') {
 				logsTtlValuesRefetch();
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setLogsCurrentTTLValues((prev) => ({
 						...prev,
@@ -425,6 +442,7 @@ function GeneralSettings({
 							? logsTotalRetentionPeriod / 24 // convert Hours to days
 							: -1,
 					}));
+				}
 			}
 		} catch (error) {
 			notifications.error({

@@ -1,6 +1,6 @@
+import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
-import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 
 const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.APPLICATION]: 'Services',

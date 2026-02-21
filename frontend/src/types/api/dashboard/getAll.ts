@@ -1,10 +1,10 @@
+import { ReactNode } from 'react';
+import { Layout } from 'react-grid-layout';
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { ReactNode } from 'react';
-import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IField } from '../logs/fields';
@@ -37,6 +37,7 @@ export interface IDashboardVariable {
 	// Custom
 	customValue?: string;
 	// Textbox
+	// special case of variable where defaultValue is same as this. Otherwise, defaultValue is a single field
 	textboxValue?: string;
 
 	sort: TSortVariableValuesType;

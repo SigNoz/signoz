@@ -1,3 +1,5 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Card, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
@@ -21,8 +23,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -34,7 +34,6 @@ function StatusCodeBarCharts({
 	endPointStatusCodeBarChartsDataQuery,
 	endPointStatusCodeLatencyBarChartsDataQuery,
 	domainName,
-	endPointName,
 	filters,
 	timeRange,
 	onDragSelect,
@@ -48,7 +47,6 @@ function StatusCodeBarCharts({
 		unknown
 	>;
 	domainName: string;
-	endPointName: string;
 	filters: IBuilderQuery['filters'];
 	timeRange: {
 		startTime: number;
@@ -144,11 +142,11 @@ function StatusCodeBarCharts({
 
 	const widget = useMemo<Widgets>(
 		() =>
-			getStatusCodeBarChartWidgetData(domainName, endPointName, {
+			getStatusCodeBarChartWidgetData(domainName, {
 				items: [...(filters?.items || [])],
 				op: filters?.op || 'AND',
 			}),
-		[domainName, endPointName, filters],
+		[domainName, filters],
 	);
 
 	const graphClickHandler = useCallback(
@@ -166,6 +164,7 @@ function StatusCodeBarCharts({
 				xValue,
 				TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
 			);
+
 			handleGraphClick({
 				xValue,
 				yValue,

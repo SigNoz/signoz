@@ -154,3 +154,36 @@ func (f FieldContext) TagType() string {
 	}
 	return ""
 }
+
+func isContextValidForSignal(ctx FieldContext, signal Signal) bool {
+	if ctx == FieldContextResource ||
+		ctx == FieldContextAttribute ||
+		ctx == FieldContextScope {
+		return true
+	}
+
+	switch signal.StringValue() {
+	case SignalLogs.StringValue():
+		return ctx == FieldContextLog || ctx == FieldContextBody
+	case SignalTraces.StringValue():
+		return ctx == FieldContextSpan || ctx == FieldContextEvent || ctx == FieldContextTrace
+	case SignalMetrics.StringValue():
+		return ctx == FieldContextMetric
+	}
+	return true
+}
+
+// Enum returns the acceptable values for FieldContext.
+func (FieldContext) Enum() []any {
+	return []any{
+		FieldContextMetric,
+		FieldContextLog,
+		FieldContextSpan,
+		// FieldContextTrace,
+		FieldContextResource,
+		// FieldContextScope,
+		FieldContextAttribute,
+		// FieldContextEvent,
+		FieldContextBody,
+	}
+}

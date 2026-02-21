@@ -1,3 +1,4 @@
+import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -18,6 +19,12 @@ interface TestAllIngestionKeyProps extends Omit<AllIngestionKeyProps, 'data'> {
 	data: TestIngestionKeyProps[];
 }
 
+// Gateway API response type (uses actual schema types for contract safety)
+interface TestGatewayIngestionKeysResponse {
+	status: string;
+	data: GatewaytypesGettableIngestionKeysDTO;
+}
+
 // Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
 const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
 jest.mock('react-router-dom', () => {
@@ -28,24 +35,6 @@ jest.mock('react-router-dom', () => {
 		useHistory: (): { push: typeof mockPush } => ({ push: mockPush }),
 	};
 });
-
-// Mock deployments data hook to avoid unrelated network calls in this page
-jest.mock(
-	'hooks/CustomDomain/useGetDeploymentsData',
-	(): Record<string, unknown> => ({
-		useGetDeploymentsData: (): {
-			data: undefined;
-			isLoading: boolean;
-			isFetching: boolean;
-			isError: boolean;
-		} => ({
-			data: undefined,
-			isLoading: false,
-			isFetching: false,
-			isError: false,
-		}),
-	}),
-);
 
 const TEST_CREATED_UPDATED = '2024-01-01T00:00:00Z';
 const TEST_EXPIRES_AT = '2030-01-01T00:00:00Z';
@@ -86,32 +75,34 @@ describe('MultiIngestionSettings Page', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		// Arrange API response with a metrics daily count limit so the alert button is visible
-		const response: TestAllIngestionKeyProps = {
+		const response: TestGatewayIngestionKeysResponse = {
 			status: 'success',
-			data: [
-				{
-					name: 'Key One',
-					expires_at: TEST_EXPIRES_AT,
-					value: 'secret',
-					workspace_id: TEST_WORKSPACE_ID,
-					id: 'k1',
-					created_at: TEST_CREATED_UPDATED,
-					updated_at: TEST_CREATED_UPDATED,
-					tags: [],
-					limits: [
-						{
-							id: 'l1',
-							signal: 'metrics',
-							config: { day: { count: 1000 } },
-						},
-					],
-				},
-			],
-			_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			data: {
+				keys: [
+					{
+						name: 'Key One',
+						expires_at: new Date(TEST_EXPIRES_AT),
+						value: 'secret',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k1',
+						created_at: new Date(TEST_CREATED_UPDATED),
+						updated_at: new Date(TEST_CREATED_UPDATED),
+						tags: [],
+						limits: [
+							{
+								id: 'l1',
+								signal: 'metrics',
+								config: { day: { count: 1000 } },
+							},
+						],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
 		};
 
 		server.use(
-			rest.get('*/workspaces/me/keys*', (_req, res, ctx) =>
+			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(response)),
 			),
 		);
@@ -142,7 +133,6 @@ describe('MultiIngestionSettings Page', () => {
 
 		// Check URL contains alerts/new route
 		expect(navigationCall).toContain('/alerts/new');
-		expect(navigationCall).toContain('showNewCreateAlertsPage=true');
 
 		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
@@ -231,7 +221,6 @@ describe('MultiIngestionSettings Page', () => {
 
 		// Check URL contains alerts/new route
 		expect(navigationCall).toContain('/alerts/new');
-		expect(navigationCall).toContain('showNewCreateAlertsPage=true');
 
 		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
@@ -258,5 +247,96 @@ describe('MultiIngestionSettings Page', () => {
 		expect(firstQueryData.aggregations[0].metricName).toBe(
 			'signoz.meter.log.size',
 		);
+	});
+
+	it('switches to search API when search text is entered', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		const getResponse: TestGatewayIngestionKeysResponse = {
+			status: 'success',
+			data: {
+				keys: [
+					{
+						name: 'Key Regular',
+						expires_at: new Date(TEST_EXPIRES_AT),
+						value: 'secret1',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k1',
+						created_at: new Date(TEST_CREATED_UPDATED),
+						updated_at: new Date(TEST_CREATED_UPDATED),
+						tags: [],
+						limits: [],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
+		};
+
+		const searchResponse: TestGatewayIngestionKeysResponse = {
+			status: 'success',
+			data: {
+				keys: [
+					{
+						name: 'Key Search Result',
+						expires_at: new Date(TEST_EXPIRES_AT),
+						value: 'secret2',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k2',
+						created_at: new Date(TEST_CREATED_UPDATED),
+						updated_at: new Date(TEST_CREATED_UPDATED),
+						tags: [],
+						limits: [],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
+		};
+
+		const getHandler = jest.fn();
+		const searchHandler = jest.fn();
+
+		server.use(
+			rest.get('*/api/v2/gateway/ingestion_keys', (req, res, ctx) => {
+				if (req.url.pathname.endsWith('/search')) {
+					return undefined;
+				}
+				getHandler();
+				return res(ctx.status(200), ctx.json(getResponse));
+			}),
+			rest.get('*/api/v2/gateway/ingestion_keys/search', (_req, res, ctx) => {
+				searchHandler();
+				return res(ctx.status(200), ctx.json(searchResponse));
+			}),
+		);
+
+		render(<MultiIngestionSettings />, undefined, {
+			initialRoute: INGESTION_SETTINGS_ROUTE,
+		});
+
+		await screen.findByText('Key Regular');
+		expect(getHandler).toHaveBeenCalled();
+		expect(searchHandler).not.toHaveBeenCalled();
+
+		// Reset getHandler count to verify it's not called again during search
+		getHandler.mockClear();
+
+		// Type in search box
+		const searchInput = screen.getByPlaceholderText(
+			'Search for ingestion key...',
+		);
+		await user.type(searchInput, 'test');
+
+		await screen.findByText('Key Search Result');
+		expect(searchHandler).toHaveBeenCalled();
+		expect(getHandler).not.toHaveBeenCalled();
+
+		// Clear search
+		searchHandler.mockClear();
+		getHandler.mockClear();
+		await user.clear(searchInput);
+
+		await screen.findByText('Key Regular');
+		// Search API should be disabled when not searching
+		expect(searchHandler).not.toHaveBeenCalled();
 	});
 });

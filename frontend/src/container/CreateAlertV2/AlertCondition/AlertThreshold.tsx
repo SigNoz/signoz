@@ -1,12 +1,9 @@
-import './styles.scss';
-import '../EvaluationSettings/styles.scss';
-
+import { useEffect } from 'react';
 import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getRandomColor from 'lib/getRandomColor';
 import { Plus } from 'lucide-react';
-import { useEffect } from 'react';
 import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
@@ -29,6 +26,9 @@ import {
 	getQueryNames,
 	RoutingPolicyBanner,
 } from './utils';
+
+import './styles.scss';
+import '../EvaluationSettings/styles.scss';
 
 function AlertThreshold({
 	channels,

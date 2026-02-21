@@ -1,21 +1,3 @@
-import './CustomTimePicker.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
-import logEvent from 'api/common/logEvent';
-import cx from 'classnames';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
-import {
-	LexicalContext,
-	Option,
-	RelativeDurationSuggestionOptions,
-} from 'container/TopNav/DateTimeSelectionV2/config';
-import dayjs from 'dayjs';
-import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
-import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	SetStateAction,
@@ -25,12 +7,31 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Color } from '@signozhq/design-tokens';
+import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
+import cx from 'classnames';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
+import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import { RelativeDurationSuggestionOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
+import {
+	LexicalContext,
+	Option,
+} from 'container/TopNav/DateTimeSelectionV2/types';
+import dayjs from 'dayjs';
+import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
+import { Timezone } from './timezoneUtils';
+
+import './CustomTimePicker.styles.scss';
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
@@ -52,6 +53,7 @@ interface CustomTimePickerPopoverContentProps {
 		lexicalContext?: LexicalContext,
 	) => void;
 	onSelectHandler: (label: string, value: string) => void;
+	onTimezoneChange: (timezone: Timezone) => void;
 	onGoLive: () => void;
 	selectedTime: string;
 	activeView: 'datetime' | 'timezone';
@@ -101,6 +103,7 @@ function CustomTimePickerPopoverContent({
 	setCustomDTPickerVisible,
 	onCustomDateHandler,
 	onSelectHandler,
+	onTimezoneChange,
 	onGoLive,
 	selectedTime,
 	activeView,
@@ -208,6 +211,7 @@ function CustomTimePickerPopoverContent({
 					setActiveView={setActiveView}
 					setIsOpen={setIsOpen}
 					isOpenedFromFooter={isOpenedFromFooter}
+					onTimezoneSelect={onTimezoneChange}
 				/>
 			</div>
 		);
@@ -352,26 +356,30 @@ function CustomTimePickerPopoverContent({
 
 			<div className="date-time-popover__footer">
 				<div className="timezone-container">
-					<Clock
-						color={Color.BG_VANILLA_400}
-						className="timezone-container__clock-icon"
-						height={12}
-						width={12}
-					/>
-					<span className="timezone__icon">Current timezone</span>
-					<div>⎯</div>
-					<button
-						type="button"
-						className="timezone"
-						onClick={handleTimezoneHintClick}
-					>
-						<span>{activeTimezoneOffset}</span>
-						<PenLine
-							color={Color.BG_VANILLA_100}
-							className="timezone__icon"
-							size={10}
+					<div className="timezone-container__left">
+						<Clock
+							color={Color.BG_ROBIN_400}
+							className="timezone-container__clock-icon"
+							height={12}
+							width={12}
 						/>
-					</button>
+
+						<span className="timezone__name">{timezone.name}</span>
+						<span className="timezone__separator">⎯</span>
+						<span className="timezone__offset">{activeTimezoneOffset}</span>
+					</div>
+
+					<div className="timezone-container__right">
+						<Button
+							type="text"
+							size="small"
+							className="periscope-btn text timezone-change-button"
+							onClick={handleTimezoneHintClick}
+							icon={<PenLine size={10} />}
+						>
+							Change Timezone
+						</Button>
+					</div>
 				</div>
 			</div>
 		</>

@@ -1,15 +1,15 @@
-import './HeaderRightSection.styles.scss';
-
+import { useCallback, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
 import ShareURLModal from './ShareURLModal';
+
+import './HeaderRightSection.styles.scss';
 
 interface HeaderRightSectionProps {
 	enableAnnouncements: boolean;

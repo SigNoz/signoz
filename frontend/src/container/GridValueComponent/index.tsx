@@ -1,11 +1,11 @@
+import { memo, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
-import { memo, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 
 import { TitleContainer, ValueContainer } from './styles';
@@ -83,7 +83,9 @@ function GridValueComponent({
 					const queryName = (queryResponse?.data?.params as any)?.compositeQuery
 						?.queries[0]?.spec?.name;
 
-					if (!enableDrillDown || !queryName || !isQueryTypeBuilder) return;
+					if (!enableDrillDown || !queryName || !isQueryTypeBuilder) {
+						return;
+					}
 
 					// when multiple queries are present, we need to get the query name from the queryResponse
 					// since value panel shows result for the first query

@@ -1,5 +1,10 @@
-import './TimezonePicker.styles.scss';
-
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -8,15 +13,10 @@ import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShort
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Check, Search } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
 
 import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
+
+import './TimezonePicker.styles.scss';
 
 interface SearchBarProps {
 	value: string;
@@ -121,12 +121,14 @@ interface TimezonePickerProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	isOpenedFromFooter: boolean;
+	onTimezoneSelect: (timezone: Timezone) => void;
 }
 
 function TimezonePicker({
 	setActiveView,
 	setIsOpen,
 	isOpenedFromFooter,
+	onTimezoneSelect,
 }: TimezonePickerProps): JSX.Element {
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
@@ -153,11 +155,11 @@ function TimezonePicker({
 	}, [isOpenedFromFooter, setActiveView, setIsOpen]);
 
 	const handleTimezoneSelect = useCallback(
-		(timezone: Timezone) => {
+		(timezone: Timezone): void => {
 			setSelectedTimezone(timezone.name);
 			updateTimezone(timezone);
+			onTimezoneSelect(timezone);
 			handleCloseTimezonePicker();
-			setIsOpen(false);
 			logEvent('DateTimePicker: New Timezone Selected', {
 				timezone: {
 					name: timezone.name,
@@ -165,7 +167,7 @@ function TimezonePicker({
 				},
 			});
 		},
-		[handleCloseTimezonePicker, setIsOpen, updateTimezone],
+		[handleCloseTimezonePicker, updateTimezone, onTimezoneSelect],
 	);
 
 	// Register keyboard shortcuts
@@ -194,7 +196,7 @@ function TimezonePicker({
 			<div className="timezone-picker__list">
 				{getFilteredTimezones(searchTerm).map((timezone) => (
 					<TimezoneItem
-						key={timezone.value}
+						key={`${timezone.value}-${timezone.name}`}
 						timezone={timezone}
 						isSelected={timezone.name === selectedTimezone}
 						onClick={(): void => handleTimezoneSelect(timezone)}

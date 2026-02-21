@@ -1,20 +1,3 @@
-import './LogsPanelComponent.styles.scss';
-
-import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { ResizeTable } from 'components/ResizeTable';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import Controls from 'container/Controls';
-import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
-import { tableStyles } from 'container/TracesExplorer/ListView/styles';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
-import { useLogsData } from 'hooks/useLogsData';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { FlatLogData } from 'lib/logs/flatLogData';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -24,11 +7,27 @@ import {
 	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
+import LogDetail from 'components/LogDetail';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { ResizeTable } from 'components/ResizeTable';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import Controls from 'container/Controls';
+import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
+import { tableStyles } from 'container/TracesExplorer/ListView/styles';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import { useLogsData } from 'hooks/useLogsData';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { FlatLogData } from 'lib/logs/flatLogData';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
+
+import './LogsPanelComponent.styles.scss';
 
 function LogsPanelComponent({
 	widget,
@@ -83,22 +82,24 @@ function LogsPanelComponent({
 		() => logs.map((log) => FlatLogData(log) as RowData),
 		[logs],
 	);
-
 	const {
 		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
 		onAddToQuery,
-	} = useActiveLog();
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers();
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (): void => {
 				const log = logs.find((item) => item.id === record.id);
-				if (log) onSetActiveLog(log);
+				if (log) {
+					handleSetActiveLog(log);
+				}
 			},
 		}),
-		[logs, onSetActiveLog],
+		[handleSetActiveLog, logs],
 	);
 
 	const handleRequestData = (newOffset: number): void => {
@@ -130,7 +131,7 @@ function LogsPanelComponent({
 
 	return (
 		<>
-			<div className="logs-table">
+			<div className="logs-table" data-log-detail-ignore="true">
 				<div className="resize-table">
 					<OverlayScrollbar>
 						<ResizeTable
@@ -164,15 +165,19 @@ function LogsPanelComponent({
 					</div>
 				)}
 			</div>
-			<LogDetail
-				selectedTab={VIEW_TYPES.OVERVIEW}
-				log={activeLog}
-				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-				isListViewPanel
-				listViewPanelSelectedFields={widget?.selectedLogFields}
-			/>
+			{selectedTab && activeLog && (
+				<LogDetail
+					selectedTab={selectedTab}
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+					isListViewPanel
+					listViewPanelSelectedFields={widget?.selectedLogFields}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+				/>
+			)}
 		</>
 	);
 }

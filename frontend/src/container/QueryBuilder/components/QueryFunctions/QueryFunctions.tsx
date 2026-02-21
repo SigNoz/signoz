@@ -1,11 +1,9 @@
-import './QueryFunctions.styles.scss';
-
+import { useState } from 'react';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -13,6 +11,8 @@ import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 import Function from './Function';
 import { toFloat64 } from './utils';
+
+import './QueryFunctions.styles.scss';
 
 const defaultMetricFunctionStruct: QueryFunction = {
 	name: QueryFunctionsTypes.CUTOFF_MIN as any,
@@ -96,6 +96,7 @@ export default function QueryFunctions({
 	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
+	const hasFunctions = functions.length > 0;
 
 	const handleAddNewFunction = (): void => {
 		const defaultFunctionStruct =
@@ -180,10 +181,14 @@ export default function QueryFunctions({
 		<div
 			className={cx(
 				'query-functions-container',
-				functions && functions.length > 0 ? 'hasFunctions' : '',
+				hasFunctions ? 'hasFunctions' : '',
 			)}
 		>
-			<Button className="periscope-btn function-btn">
+			<Button
+				className="periscope-btn function-btn"
+				disabled={hasFunctions}
+				onClick={handleAddNewFunction}
+			>
 				<FunctionIcon
 					className="function-icon"
 					fillColor={!isDarkMode ? '#0B0C0E' : 'white'}

@@ -1,3 +1,4 @@
+import { useQueries } from 'react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -9,8 +10,7 @@ import {
 import {
 	CustomTimeType,
 	Time,
-} from 'container/TopNav/DateTimeSelectionV2/config';
-import { useQueries } from 'react-query';
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	TagFilter,
@@ -258,7 +258,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),
@@ -278,7 +278,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),
@@ -360,7 +360,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),
@@ -373,7 +373,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),

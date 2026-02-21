@@ -3,6 +3,7 @@ import { TelemetryFieldKey } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
+import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 import { isArray } from 'lodash-es';
 import {
 	Dashboard,
@@ -104,10 +105,11 @@ export const createDynamicVariableToWidgetsMap = (
 	// Check each widget for usage of dynamic variables
 	if (Array.isArray(widgets)) {
 		widgets.forEach((widget) => {
-			if (
-				widget.query?.builder?.queryData &&
-				widget.query?.queryType === EQueryType.QUERY_BUILDER
-			) {
+			if (widget.query?.queryType === EQueryType.QUERY_BUILDER) {
+				if (!Array.isArray(widget.query.builder.queryData)) {
+					return;
+				}
+
 				widget.query.builder.queryData.forEach((queryData: IBuilderQuery) => {
 					// Check filter items for dynamic variables
 					queryData.filters?.items?.forEach((filter: TagFilterItem) => {
@@ -115,10 +117,17 @@ export const createDynamicVariableToWidgetsMap = (
 						dynamicVariables.forEach((variable) => {
 							if (
 								variable.dynamicVariablesAttribute &&
+								variable.name &&
 								filter.key?.key === variable.dynamicVariablesAttribute &&
-								((isArray(filter.value) &&
-									filter.value.includes(`$${variable.name}`)) ||
-									filter.value === `$${variable.name}`) &&
+								(isArray(filter.value)
+									? filter.value.some(
+											(v) =>
+												typeof v === 'string' &&
+												variable.name &&
+												textContainsVariableReference(v, variable.name),
+									  )
+									: typeof filter.value === 'string' &&
+									  textContainsVariableReference(filter.value, variable.name)) &&
 								!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 							) {
 								dynamicVariableToWidgetsMap[variable.id].push(widget.id);
@@ -131,13 +140,54 @@ export const createDynamicVariableToWidgetsMap = (
 						dynamicVariables.forEach((variable) => {
 							if (
 								variable.dynamicVariablesAttribute &&
-								queryData.filter?.expression?.includes(`$${variable.name}`) &&
+								variable.name &&
+								queryData.filter?.expression &&
+								textContainsVariableReference(
+									queryData.filter.expression,
+									variable.name,
+								) &&
 								!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 							) {
 								dynamicVariableToWidgetsMap[variable.id].push(widget.id);
 							}
 						});
 					}
+				});
+			} else if (widget.query?.queryType === EQueryType.PROM) {
+				if (!Array.isArray(widget.query.promql)) {
+					return;
+				}
+
+				widget.query.promql.forEach((promqlQuery) => {
+					dynamicVariables.forEach((variable) => {
+						if (
+							variable.dynamicVariablesAttribute &&
+							variable.name &&
+							promqlQuery.query &&
+							textContainsVariableReference(promqlQuery.query, variable.name) &&
+							!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
+						) {
+							dynamicVariableToWidgetsMap[variable.id].push(widget.id);
+						}
+					});
+				});
+			} else if (widget.query?.queryType === EQueryType.CLICKHOUSE) {
+				if (!Array.isArray(widget.query.clickhouse_sql)) {
+					return;
+				}
+
+				widget.query.clickhouse_sql.forEach((clickhouseQuery) => {
+					dynamicVariables.forEach((variable) => {
+						if (
+							variable.dynamicVariablesAttribute &&
+							variable.name &&
+							clickhouseQuery.query &&
+							textContainsVariableReference(clickhouseQuery.query, variable.name) &&
+							!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
+						) {
+							dynamicVariableToWidgetsMap[variable.id].push(widget.id);
+						}
+					});
 				});
 			}
 		});

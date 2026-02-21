@@ -4,8 +4,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/function-component-definition */
-import './styles.scss';
-
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import {
 	DownOutlined,
 	LoadingOutlined,
@@ -20,14 +26,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { Virtuoso } from 'react-virtuoso';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
@@ -38,6 +36,8 @@ import {
 	prioritizeOrAddOptionForMultiSelect,
 	SPACEKEY,
 } from './utils';
+
+import './styles.scss';
 
 enum ToggleTagValue {
 	Only = 'Only',
@@ -73,6 +73,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	enableRegexOption = false,
 	isDynamicVariable = false,
 	showRetryButton = true,
+	waitingMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -140,10 +141,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	}, [selectedValues, allAvailableValues, enableAllSelection]);
 
 	// Define allOptionShown earlier in the code
-	const allOptionShown = useMemo(
-		() => value === ALL_SELECTED_VALUE || value === 'ALL',
-		[value],
-	);
+	const allOptionShown = value === ALL_SELECTED_VALUE;
 
 	// Value passed to the underlying Ant Select component
 	const displayValue = useMemo(
@@ -165,7 +163,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				return;
 			}
 
-			if (!onChange) return;
+			if (!onChange) {
+				return;
+			}
 
 			// Case 1: Cleared (empty array or undefined)
 			if (!newValue || currentNewValue.length === 0) {
@@ -327,7 +327,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 * Selects all chips
 	 */
 	const selectAllChips = useCallback((): void => {
-		if (selectedValues.length === 0) return;
+		if (selectedValues.length === 0) {
+			return;
+		}
 
 		// When maxTagCount is set, only select visible chips
 		const visibleCount =
@@ -394,7 +396,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 * Handle copy event
 	 */
 	const handleCopy = useCallback((): void => {
-		if (selectedChips.length === 0) return;
+		if (selectedChips.length === 0) {
+			return;
+		}
 
 		const selectedTexts = selectedChips
 			.sort((a, b) => a - b)
@@ -409,7 +413,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 * Handle cut event
 	 */
 	const handleCut = useCallback((): void => {
-		if (selectedChips.length === 0) return;
+		if (selectedChips.length === 0) {
+			return;
+		}
 
 		// First copy the content
 		handleCopy();
@@ -577,7 +583,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 			}
 
-			if (onSearch) onSearch(trimmedValue);
+			if (onSearch) {
+				onSearch(trimmedValue);
+			}
 		},
 		[
 			onSearch,
@@ -596,7 +604,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 */
 	const highlightMatchedText = useCallback(
 		(text: string, searchQuery: string): React.ReactNode => {
-			if (!searchQuery || !highlightSearch) return text;
+			if (!searchQuery || !highlightSearch) {
+				return text;
+			}
 
 			try {
 				const parts = text.split(
@@ -632,7 +642,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// Adjusted handleSelectAll for internal change handler
 	const handleSelectAll = useCallback((): void => {
-		if (!options) return;
+		if (!options) {
+			return;
+		}
 
 		if (isAllSelected) {
 			// If all are selected, deselect all
@@ -658,7 +670,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const handleItemSelection = (source?: string): void => {
 				// Special handling for ALL option is done by the caller
 
-				if (!option.value) return;
+				if (!option.value) {
+					return;
+				}
 
 				if (source === 'option') {
 					if (
@@ -792,7 +806,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// Helper function to get visible chip indices
 	const getVisibleChipIndices = useCallback((): number[] => {
 		// If no values, return empty array
-		if (selectedValues.length === 0) return [];
+		if (selectedValues.length === 0) {
+			return [];
+		}
 
 		// If maxTagCount is set and greater than 0, only return the first maxTagCount indices
 		const visibleCount =
@@ -836,7 +852,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 			// Get flattened list of all selectable options
 			const getFlatOptions = (): OptionData[] => {
-				if (!visibleOptions) return [];
+				if (!visibleOptions) {
+					return [];
+				}
 
 				const flatList: OptionData[] = [];
 				const hasAll = enableAllSelection && !searchText;
@@ -1664,6 +1682,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
+						!waitingMessage &&
 						!(showIncompleteDataMessage && isScrolledToBottom) && (
 							<section className="navigate">
 								<ArrowDown size={8} className="icons" />
@@ -1681,7 +1700,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
 					)}
-					{errorMessage && !loading && (
+					{!loading && waitingMessage && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<LoadingOutlined />
+							</div>
+							<div className="navigation-text" title={waitingMessage}>
+								{waitingMessage}
+							</div>
+						</div>
+					)}
+					{errorMessage && !loading && !waitingMessage && (
 						<div className="navigation-error">
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
@@ -1703,6 +1732,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{showIncompleteDataMessage &&
 						isScrolledToBottom &&
 						!loading &&
+						!waitingMessage &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
 								Don&apos;t see the value? Use search
@@ -1745,6 +1775,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isDarkMode,
 		isDynamicVariable,
 		showRetryButton,
+		waitingMessage,
 	]);
 
 	// Custom handler for dropdown visibility changes
@@ -1845,7 +1876,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			// but base indices/visibility on the original `selectedValues`
 			if (!isAllSelected) {
 				const index = selectedValues.indexOf(value);
-				if (index === -1) return <div style={{ display: 'none' }} />; // Should not happen if value comes from displayValue
+				if (index === -1) {
+					return <div style={{ display: 'none' }} />;
+				} // Should not happen if value comes from displayValue
 
 				const isActive = index === activeChipIndex;
 				const isSelected = selectedChips.includes(index);
@@ -1931,7 +1964,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		// Normal clear behavior
 		handleInternalChange([], true);
-		if (onClear) onClear();
+		if (onClear) {
+			onClear();
+		}
 	}, [onClear, handleInternalChange, allOptionShown, isAllSelected]);
 
 	// ===== Component Rendering =====

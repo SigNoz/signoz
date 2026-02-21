@@ -155,6 +155,7 @@ The `handler.New` function ties the HTTP handler to OpenAPI metadata via `OpenAP
 - **Request / RequestContentType**:
   - `Request` is a Go type that describes the request body or form.
   - `RequestContentType` is usually `"application/json"` or `"application/x-www-form-urlencoded"` (for callbacks like SAML).
+- **RequestExamples**: An array of `handler.OpenAPIExample` that provide concrete request payloads in the generated spec. See [Adding request examples](#adding-request-examples) below.
 - **Response / ResponseContentType**:
   - `Response` is the Go type for the successful response payload.
   - `ResponseContentType` is usually `"application/json"`; use `""` for responses without a body.
@@ -172,8 +173,170 @@ See existing examples in:
 - `addUserRoutes` (for typical JSON request/response)
 - `addSessionRoutes` (for form-encoded and redirect flows)
 
+## OpenAPI schema details for request/response types
+
+The OpenAPI spec is generated from the Go types you pass as `Request` and `Response` in `OpenAPIDef`. The following struct tags and interfaces control how those types appear in the generated schema.
+
+### Adding request examples
+
+Use the `RequestExamples` field in `OpenAPIDef` to provide concrete request payloads. Each example is a `handler.OpenAPIExample`:
+
+```go
+type OpenAPIExample struct {
+    Name        string // unique key for the example (e.g. "traces_time_series")
+    Summary     string // short description shown in docs (e.g. "Time series: count spans grouped by service")
+    Description string // optional longer description
+    Value       any    // the example payload, typically map[string]any
+}
+```
+
+For reference, see `pkg/apiserver/signozapiserver/querier.go` which defines examples inline for the `/api/v5/query_range` endpoint:
+
+```go
+if err := router.Handle("/api/v5/query_range", handler.New(provider.authZ.ViewAccess(provider.querierHandler.QueryRange), handler.OpenAPIDef{
+    ID:                 "QueryRangeV5",
+    Tags:               []string{"querier"},
+    Summary:            "Query range",
+    Description:        "Execute a composite query over a time range.",
+    Request:            new(qbtypes.QueryRangeRequest),
+    RequestContentType: "application/json",
+    RequestExamples: []handler.OpenAPIExample{
+        {
+            Name:    "traces_time_series",
+            Summary: "Time series: count spans grouped by service",
+            Value: map[string]any{
+                "schemaVersion": "v1",
+                "start":         1640995200000,
+                "end":           1640998800000,
+                "requestType":   "time_series",
+                "compositeQuery": map[string]any{
+                    "queries": []any{
+                        map[string]any{
+                            "type": "builder_query",
+                            "spec": map[string]any{
+                                "name":   "A",
+                                "signal": "traces",
+                                // ...
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        // ... more examples
+    },
+    // ...
+})).Methods(http.MethodPost).GetError(); err != nil {
+    return err
+}
+```
+
+### `required` tag
+
+Use `required:"true"` on struct fields where the property is expected to be **present** in the JSON payload. This is different from the zero value, a field can have its zero value (e.g. `0`, `""`, `false`) and still be required. The `required` tag means the key itself must exist in the JSON object.
+
+```go
+type ListItem struct {
+    ...
+}
+
+type ListResponse struct {
+	List  []ListItem `json:"list" required:"true" nullable:"true"`
+	Total uint64     `json:"total" required:"true"`
+}
+```
+
+In this example, a response like `{"list": null, "total": 0}` is valid. Both keys are present (satisfying `required`), `total` has its zero value, and `list` is null (allowed by `nullable`). But `{"total": 0}` would violate the schema because the `list` key is missing.
+
+### `nullable` tag
+
+Use `nullable:"true"` on struct fields that can be `null` in the JSON payload. This is especially important for **slice and map fields** because in Go, the zero value for these types is `nil`, which serializes to `null` in JSON (not `[]` or `{}`).
+
+Be explicit about the distinction:
+
+- **Nullable list** (`nullable:"true"`): the field can be `null`. Use this when the Go code may return `nil` for the slice.
+- **Non-nullable list** (no `nullable` tag): the field is always an array, never `null`. Ensure the Go code initializes it to an empty slice (e.g. `make([]T, 0)`) before serializing.
+
+```go
+// Non-nullable: Go code must ensure this is always an initialized slice.
+type NonNullableExample struct {
+    Items []Item `json:"items" required:"true"`
+}
+```
+
+When defining your types, ask yourself: "Can this field be `null` in the JSON response, or is it always an array/object?" If the Go code ever returns a `nil` slice or map, mark it `nullable:"true"`.
+
+### `Enum()` method
+
+For types that have a fixed set of acceptable values, implement the `Enum() []any` method. This generates an `enum` constraint in the JSON schema so the OpenAPI spec accurately restricts the values.
+
+```go
+type Signal struct {
+    valuer.String
+}
+
+var (
+    SignalTraces  = Signal{valuer.NewString("traces")}
+    SignalLogs    = Signal{valuer.NewString("logs")}
+    SignalMetrics = Signal{valuer.NewString("metrics")}
+)
+
+func (Signal) Enum() []any {
+    return []any{
+        SignalTraces,
+        SignalLogs,
+        SignalMetrics,
+    }
+}
+```
+
+This produces the following in the generated OpenAPI spec:
+
+```yaml
+Signal:
+  enum:
+  - traces
+  - logs
+  - metrics
+  type: string
+```
+
+Every type with a known set of values **must** implement `Enum()`. Without it, the JSON schema will only show the base type (e.g. `string`) with no value constraints.
+
+### `JSONSchema()` method (custom schema)
+
+For types that need a completely custom JSON schema (for example, a field that accepts either a string or a number), implement the `jsonschema.Exposer` interface:
+
+```go
+var _ jsonschema.Exposer = Step{}
+
+func (Step) JSONSchema() (jsonschema.Schema, error) {
+    s := jsonschema.Schema{}
+    s.WithDescription("Step interval. Accepts a duration string or seconds.")
+
+    strSchema := jsonschema.Schema{}
+    strSchema.WithType(jsonschema.String.Type())
+    strSchema.WithExamples("60s", "5m", "1h")
+
+    numSchema := jsonschema.Schema{}
+    numSchema.WithType(jsonschema.Number.Type())
+    numSchema.WithExamples(60, 300, 3600)
+
+    s.OneOf = []jsonschema.SchemaOrBool{
+        strSchema.ToSchemaOrBool(),
+        numSchema.ToSchemaOrBool(),
+    }
+    return s, nil
+}
+```
+
+
 ## What should I remember?
 
 - **Keep handlers thin**: focus on HTTP concerns and delegate logic to modules/services.
 - **Always register routes through `signozapiserver`** using `handler.New` and a complete `OpenAPIDef`.
 - **Choose accurate request/response types** from the `types` packages so OpenAPI schemas are correct.
+- **Add `required:"true"`** on fields where the key must be present in the JSON (this is about key presence, not about the zero value).
+- **Add `nullable:"true"`** on fields that can be `null`. Pay special attention to slices and maps -- in Go these default to `nil` which serializes to `null`. If the field should always be an array, initialize it and do not mark it nullable.
+- **Implement `Enum()`** on every type that has a fixed set of acceptable values so the JSON schema generates proper `enum` constraints.
+- **Add request examples** via `RequestExamples` in `OpenAPIDef` for any non-trivial endpoint. See `pkg/apiserver/signozapiserver/querier.go` for reference.

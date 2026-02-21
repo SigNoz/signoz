@@ -3,12 +3,12 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
@@ -40,32 +40,56 @@ func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetryt
 	return valueType, parsedValue
 }
 
-func inferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
-	// check if the value is a int, float, string, bool
-	valueType := telemetrytypes.FieldDataTypeUnspecified
-	switch v := value.(type) {
-	case []any:
-		// take the first element and infer the type
-		if len(v) > 0 {
-			valueType, _ = inferDataType(v[0], operator, key)
+func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
+	if operator.IsArrayOperator() && reflect.ValueOf(value).Kind() != reflect.Slice {
+		value = []any{value}
+	}
+
+	// closure to calculate the data type of the value
+	var closure func(value any, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any)
+	closure = func(value any, key *telemetrytypes.TelemetryFieldKey) (telemetrytypes.FieldDataType, any) {
+		// check if the value is a int, float, string, bool
+		valueType := telemetrytypes.FieldDataTypeUnspecified
+		switch v := value.(type) {
+		case []any:
+			// take the first element and infer the type
+			var scalerType telemetrytypes.FieldDataType
+			if len(v) > 0 {
+				// Note: [[...]] Slices inside Slices are not handled yet
+				if reflect.ValueOf(v[0]).Kind() == reflect.Slice {
+					return telemetrytypes.FieldDataTypeUnspecified, value
+				}
+
+				scalerType, _ = closure(v[0], key)
+			}
+
+			arrayType := telemetrytypes.ScalerFieldTypeToArrayFieldType[scalerType]
+			switch {
+			// decide on the field data type based on the key
+			case key.FieldDataType.IsArray():
+				return arrayType, v
+			default:
+				// TODO(Piyush): backward compatibility for the old String based JSON QB queries
+				if strings.HasSuffix(key.Name, telemetrytypes.ArrayAnyIndexSuffix) {
+					return arrayType, v
+				}
+				return scalerType, v
+			}
+		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+			valueType = telemetrytypes.FieldDataTypeInt64
+		case float32, float64:
+			valueType = telemetrytypes.FieldDataTypeFloat64
+		case string:
+			valueType, value = parseStrValue(v, operator)
+		case bool:
+			valueType = telemetrytypes.FieldDataTypeBool
 		}
-		return valueType, v
-	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-		valueType = telemetrytypes.FieldDataTypeInt64
-	case float32, float64:
-		valueType = telemetrytypes.FieldDataTypeFloat64
-	case string:
-		valueType, value = parseStrValue(v, operator)
-	case bool:
-		valueType = telemetrytypes.FieldDataTypeBool
+
+		return valueType, value
 	}
 
-	// check if it is array
-	if strings.HasSuffix(key.Name, "[*]") || strings.HasSuffix(key.Name, "[]") {
-		valueType = telemetrytypes.FieldDataType{String: valuer.NewString(fmt.Sprintf("[]%s", valueType.StringValue()))}
-	}
-
-	return valueType, value
+	// calculate the data type of the value
+	return closure(value, key)
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
@@ -84,7 +108,7 @@ func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
 }
 
 func GetBodyJSONKey(_ context.Context, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) (string, any) {
-	dataType, value := inferDataType(value, operator, key)
+	dataType, value := InferDataType(value, operator, key)
 
 	// for array types, we need to extract the value from the JSON_QUERY
 	if dataType == telemetrytypes.FieldDataTypeArrayInt64 ||

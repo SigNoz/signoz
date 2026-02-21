@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import configureStore from 'redux-mock-store';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -78,12 +78,10 @@ function TestWrapper({ children }: { children: React.ReactNode }): JSX.Element {
 describe('VariableItem Integration Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
 	let mockOnValueUpdate: jest.Mock;
-	let mockSetVariablesToGetUpdated: jest.Mock;
 
 	beforeEach(() => {
 		user = userEvent.setup();
 		mockOnValueUpdate = jest.fn();
-		mockSetVariablesToGetUpdated = jest.fn();
 		jest.clearAllMocks();
 	});
 
@@ -102,9 +100,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -150,9 +145,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -195,9 +187,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -211,7 +200,10 @@ describe('VariableItem Integration Tests', () => {
 			await user.clear(textInput);
 			await user.type(textInput, 'new-text-value');
 
-			// Should call onValueUpdate after debounce
+			// Blur the input to trigger the value update
+			await user.tab();
+
+			// Should call onValueUpdate after blur
 			await waitFor(
 				() => {
 					expect(mockOnValueUpdate).toHaveBeenCalledWith(
@@ -244,9 +236,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -269,9 +258,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -305,9 +291,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -341,9 +324,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -366,9 +346,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -402,9 +379,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -458,9 +432,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -505,9 +476,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -545,9 +513,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -579,9 +544,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);

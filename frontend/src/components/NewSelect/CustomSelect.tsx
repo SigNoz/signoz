@@ -2,8 +2,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/function-component-definition */
-import './styles.scss';
-
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import {
 	CloseOutlined,
 	DownOutlined,
@@ -19,13 +24,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
 import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { CustomSelectProps, OptionData } from './types';
@@ -35,6 +33,8 @@ import {
 	prioritizeOrAddOptionForSingleSelect,
 	SPACEKEY,
 } from './utils';
+
+import './styles.scss';
 
 /**
  * CustomSelect Component
@@ -63,6 +63,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	showIncompleteDataMessage = false,
 	showRetryButton = true,
 	isDynamicVariable = false,
+	waitingMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -147,7 +148,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const highlightMatchedText = useCallback(
 		(text: string, searchQuery: string): React.ReactNode => {
-			if (!searchQuery || !highlightSearch) return text;
+			if (!searchQuery || !highlightSearch) {
+				return text;
+			}
 
 			try {
 				const parts = text.split(
@@ -257,8 +260,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			<CloseOutlined
 				onClick={(e): void => {
 					e.stopPropagation();
-					if (onChange) onChange(undefined, []);
-					if (onClear) onClear();
+					if (onChange) {
+						onChange(undefined, []);
+					}
+					if (onClear) {
+						onClear();
+					}
 				}}
 			/>
 		),
@@ -280,7 +287,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				setActiveOptionIndex(0);
 			}
 
-			if (onSearch) onSearch(trimmedValue);
+			if (onSearch) {
+				onSearch(trimmedValue);
+			}
 		},
 		[onSearch, isOpen],
 	);
@@ -301,7 +310,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			if (isOpen) {
 				// Get flattened list of all selectable options
 				const getFlatOptions = (): OptionData[] => {
-					if (!filteredOptions) return [];
+					if (!filteredOptions) {
+						return [];
+					}
 
 					const flatList: OptionData[] = [];
 
@@ -558,6 +569,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
+						!waitingMessage &&
 						!(showIncompleteDataMessage && isScrolledToBottom) && (
 							<section className="navigate">
 								<ArrowDown size={8} className="icons" />
@@ -571,6 +583,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								<LoadingOutlined />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
+						</div>
+					)}
+					{!loading && waitingMessage && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<LoadingOutlined />
+							</div>
+							<div className="navigation-text" title={waitingMessage}>
+								{waitingMessage}
+							</div>
 						</div>
 					)}
 					{errorMessage && !loading && (
@@ -595,6 +617,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{showIncompleteDataMessage &&
 						isScrolledToBottom &&
 						!loading &&
+						!waitingMessage &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
 								Don&apos;t see the value? Use search
@@ -631,6 +654,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		showRetryButton,
 		isDarkMode,
 		isDynamicVariable,
+		waitingMessage,
 	]);
 
 	// Handle dropdown visibility changes

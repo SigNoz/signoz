@@ -1,7 +1,7 @@
+import { useMemo } from 'react';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/FunnelMetricsTable';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useMemo } from 'react';
 import { LatencyOptions } from 'types/api/traceFunnels';
 
 import { useFunnelOverview, useFunnelStepsOverview } from './useFunnels';
@@ -36,7 +36,9 @@ export function useFunnelMetrics({
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;
-		if (!sourceData) return [];
+		if (!sourceData) {
+			return [];
+		}
 
 		return [
 			{
@@ -102,7 +104,9 @@ export function useFunnelStepsMetrics({
 
 	const metricsData = useMemo(() => {
 		const sourceData = stepsOverviewData?.payload?.data?.[0]?.data;
-		if (!sourceData) return [];
+		if (!sourceData) {
+			return [];
+		}
 
 		return [
 			{

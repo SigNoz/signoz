@@ -1,5 +1,4 @@
-import './ResourceAttributesFilter.styles.scss';
-
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { CloseCircleFilled } from '@ant-design/icons';
 import { Button, Select, Spin } from 'antd';
 import useResourceAttribute, {
@@ -11,7 +10,6 @@ import {
 	getEnvironmentTagValues,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
@@ -20,6 +18,8 @@ import { FeatureKeys } from '../../constants/features';
 import { useAppContext } from '../../providers/App/App';
 import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
+
+import './ResourceAttributesFilter.styles.scss';
 
 function ResourceAttributesFilter({
 	suffixIcon,
@@ -95,7 +95,6 @@ function ResourceAttributesFilter({
 					data-testid="resource-environment-filter"
 					style={{ minWidth: 200, height: 34 }}
 					onChange={handleEnvironmentChange}
-					onBlur={handleBlur}
 				>
 					{environments.map((opt) => (
 						<Select.Option key={opt.value} value={opt.value}>

@@ -1,4 +1,7 @@
 /* eslint-disable react/display-name */
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
 import { Button } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
@@ -7,9 +10,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
 import { Channels } from 'types/api/channels/getAll';
 
 import Delete from './Delete';

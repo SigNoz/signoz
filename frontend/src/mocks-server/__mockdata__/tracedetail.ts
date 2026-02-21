@@ -1,3 +1,5 @@
+import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
+
 /* eslint-disable sonarjs/no-duplicate-string */
 export const traceDetailResponse = [
 	{
@@ -35,7 +37,7 @@ export const traceDetailResponse = [
 					'component',
 					'host.name',
 					'http.method',
-					'http.url',
+					SPAN_ATTRIBUTES.HTTP_URL,
 					'ip',
 					'http.status_code',
 					'opencensus.exporterversion',
@@ -84,7 +86,7 @@ export const traceDetailResponse = [
 					'signoz.collector.id',
 					'component',
 					'http.method',
-					'http.url',
+					SPAN_ATTRIBUTES.HTTP_URL,
 					'ip',
 				],
 				[
@@ -741,7 +743,7 @@ export const traceDetailResponse = [
 					'component',
 					'http.method',
 					'http.status_code',
-					'http.url',
+					SPAN_ATTRIBUTES.HTTP_URL,
 					'net/http.reused',
 					'net/http.was_idle',
 					'service.name',
@@ -833,7 +835,7 @@ export const traceDetailResponse = [
 					'opencensus.exporterversion',
 					'signoz.collector.id',
 					'host.name',
-					'http.url',
+					SPAN_ATTRIBUTES.HTTP_URL,
 					'net/http.reused',
 					'net/http.was_idle',
 				],
@@ -916,7 +918,7 @@ export const traceDetailResponse = [
 					'net/http.was_idle',
 					'component',
 					'host.name',
-					'http.url',
+					SPAN_ATTRIBUTES.HTTP_URL,
 					'ip',
 					'service.name',
 					'signoz.collector.id',

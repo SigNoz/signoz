@@ -1,7 +1,7 @@
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import { commaValuesParser } from '../../lib/dashbaordVariables/customCommaValuesParser';
+import { commaValuesParser } from '../../lib/dashboardVariables/customCommaValuesParser';
 
 interface UrlVariables {
 	[key: string]: any;
@@ -23,7 +23,9 @@ export const initializeDefaultVariables = (
 		selectedValue: IDashboardVariable['selectedValue'],
 	) => void,
 ): void => {
-	if (!variables) return;
+	if (!variables) {
+		return;
+	}
 
 	Object.values(variables).forEach((variable) => {
 		const { id, name, allSelected, showALLOption } = variable;

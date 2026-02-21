@@ -1,6 +1,12 @@
 
 node_modules
 
+# editor
+.vscode
+!.vscode/settings.json
+.zed
+.idea
+
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
@@ -28,8 +34,6 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/src/constants/env.ts
 
-.idea
-
 **/build
 **/storage
 **/locust-scripts/__pycache__/
@@ -54,7 +58,6 @@ bin/
 .local/
 */query-service/queries.active
 ee/query-service/db
-
 # e2e
 
 e2e/node_modules/
@@ -104,7 +107,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -228,5 +230,3 @@ cython_debug/
 pyrightconfig.json
 
 
-# cursor files
-frontend/.cursor/

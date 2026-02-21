@@ -1,6 +1,9 @@
 package querybuildertypesv5
 
 import (
+	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -131,12 +134,95 @@ func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 
 	var temp Alias
 	// Use UnmarshalJSONWithContext for better error messages
-	if err := UnmarshalJSONWithContext(data, &temp, "query spec"); err != nil {
+	if err := UnmarshalJSONWithContext(data, &temp, fmt.Sprintf("query spec for %T", q)); err != nil {
 		return err
 	}
 
 	// Copy the decoded values back to the original struct
 	*q = QueryBuilderQuery[T](temp)
 
+	// Nomarlize the query after unmarshaling
+	q.Normalize()
 	return nil
+}
+
+// Normalize normalizes all the field keys in the query
+func (q *QueryBuilderQuery[T]) Normalize() {
+
+	// normalize select fields
+	for idx := range q.SelectFields {
+		q.SelectFields[idx].Normalize()
+	}
+
+	// normalize group by fields
+	for idx := range q.GroupBy {
+		q.GroupBy[idx].Normalize()
+	}
+
+	// normalize order by fields
+	for idx := range q.Order {
+		q.Order[idx].Key.Normalize()
+	}
+
+	// normalize secondary aggregations
+	for idx := range q.SecondaryAggregations {
+		for jdx := range q.SecondaryAggregations[idx].Order {
+			q.SecondaryAggregations[idx].Order[jdx].Key.Normalize()
+		}
+		for jdx := range q.SecondaryAggregations[idx].GroupBy {
+			q.SecondaryAggregations[idx].GroupBy[jdx].Normalize()
+		}
+	}
+
+}
+
+// Fast‑path (no fingerprint grouping)
+// canShortCircuitDelta returns true if we can use the optimized query
+// for the given query
+// This is used to avoid the group by fingerprint thus improving the performance
+// for certain queries
+// cases where we can short circuit:
+// 1. time aggregation = (rate|increase) and space aggregation = sum
+//   - rate = sum(value)/step, increase = sum(value) - sum of sums is same as sum of all values
+//
+// 2. time aggregation = sum and space aggregation = sum
+//   - sum of sums is same as sum of all values
+//
+// 3. time aggregation = min and space aggregation = min
+//   - min of mins is same as min of all values
+//
+// 4. time aggregation = max and space aggregation = max
+//   - max of maxs is same as max of all values
+//
+// 5. special case exphist, there is no need for per series/fingerprint aggregation
+// we can directly use the quantilesDDMerge function
+//
+// all of this is true only for delta metrics
+func CanShortCircuitDelta(metricAgg MetricAggregation) bool {
+
+	if metricAgg.Temporality != metrictypes.Delta {
+		return false
+	}
+
+	ta := metricAgg.TimeAggregation
+	sa := metricAgg.SpaceAggregation
+
+	if (ta == metrictypes.TimeAggregationRate || ta == metrictypes.TimeAggregationIncrease) &&
+		sa == metrictypes.SpaceAggregationSum {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationSum && sa == metrictypes.SpaceAggregationSum {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMin && sa == metrictypes.SpaceAggregationMin {
+		return true
+	}
+	if ta == metrictypes.TimeAggregationMax && sa == metrictypes.SpaceAggregationMax {
+		return true
+	}
+	if metricAgg.Type == metrictypes.ExpHistogramType && sa.IsPercentile() {
+		return true
+	}
+
+	return false
 }

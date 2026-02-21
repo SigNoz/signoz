@@ -7,19 +7,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/gorilla/mux"
 )
 
@@ -39,6 +43,11 @@ type provider struct {
 	dashboardModule        dashboard.Module
 	dashboardHandler       dashboard.Handler
 	metricsExplorerHandler metricsexplorer.Handler
+	gatewayHandler         gateway.Handler
+	fieldsHandler          fields.Handler
+	authzHandler           authz.Handler
+	zeusHandler            zeus.Handler
+	querierHandler         querier.Handler
 }
 
 func NewFactory(
@@ -55,9 +64,36 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	gatewayHandler gateway.Handler,
+	fieldsHandler fields.Handler,
+	authzHandler authz.Handler,
+	zeusHandler zeus.Handler,
+	querierHandler querier.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
-		return newProvider(ctx, providerSettings, config, orgGetter, authz, orgHandler, userHandler, sessionHandler, authDomainHandler, preferenceHandler, globalHandler, promoteHandler, flaggerHandler, dashboardModule, dashboardHandler, metricsExplorerHandler)
+		return newProvider(
+			ctx,
+			providerSettings,
+			config,
+			orgGetter,
+			authz,
+			orgHandler,
+			userHandler,
+			sessionHandler,
+			authDomainHandler,
+			preferenceHandler,
+			globalHandler,
+			promoteHandler,
+			flaggerHandler,
+			dashboardModule,
+			dashboardHandler,
+			metricsExplorerHandler,
+			gatewayHandler,
+			fieldsHandler,
+			authzHandler,
+			zeusHandler,
+			querierHandler,
+		)
 	})
 }
 
@@ -78,6 +114,11 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	gatewayHandler gateway.Handler,
+	fieldsHandler fields.Handler,
+	authzHandler authz.Handler,
+	zeusHandler zeus.Handler,
+	querierHandler querier.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -97,6 +138,11 @@ func newProvider(
 		dashboardModule:        dashboardModule,
 		dashboardHandler:       dashboardHandler,
 		metricsExplorerHandler: metricsExplorerHandler,
+		gatewayHandler:         gatewayHandler,
+		fieldsHandler:          fieldsHandler,
+		authzHandler:           authzHandler,
+		zeusHandler:            zeusHandler,
+		querierHandler:         querierHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -149,7 +195,31 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
-	if err := provider.addMetricsExplorerV2Routes(router); err != nil {
+	if err := provider.addMetricsExplorerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addGatewayRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRoleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAuthzRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addFieldsRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addZeusRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addQuerierRoutes(router); err != nil {
 		return err
 	}
 

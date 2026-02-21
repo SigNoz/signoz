@@ -1,9 +1,3 @@
-import { toast } from '@signozhq/sonner';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -14,6 +8,12 @@ import {
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { toast } from '@signozhq/sonner';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -45,7 +45,9 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 
 	const onLogCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
-			if (!logId) return;
+			if (!logId) {
+				return;
+			}
 
 			event.preventDefault();
 			event.stopPropagation();
@@ -74,7 +76,9 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	}, [pathname, search, safeNavigate]);
 
 	useEffect(() => {
-		if (!isActiveLog) return;
+		if (!isActiveLog) {
+			return;
+		}
 
 		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
 

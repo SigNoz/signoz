@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import editEmail from 'api/channels/editEmail';
 import editMsTeamsApi from 'api/channels/editMsTeams';
@@ -26,8 +28,6 @@ import {
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import APIError from 'types/api/error';
 
 function EditAlertChannels({
@@ -420,19 +420,27 @@ function EditAlertChannels({
 						break;
 					case ChannelType.Pagerduty:
 						request = preparePagerRequest();
-						if (request) await testPagerApi(request);
+						if (request) {
+							await testPagerApi(request);
+						}
 						break;
 					case ChannelType.MsTeams:
 						request = prepareMsTeamsRequest();
-						if (request) await testMsTeamsApi(request);
+						if (request) {
+							await testMsTeamsApi(request);
+						}
 						break;
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
-						if (request) await testOpsgenie(request);
+						if (request) {
+							await testOpsgenie(request);
+						}
 						break;
 					case ChannelType.Email:
 						request = prepareEmailRequest();
-						if (request) await testEmail(request);
+						if (request) {
+							await testEmail(request);
+						}
 						break;
 					default:
 						notifications.error({

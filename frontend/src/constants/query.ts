@@ -52,6 +52,7 @@ export enum QueryParams {
 	selectedExplorerView = 'selectedExplorerView',
 	variables = 'variables',
 	version = 'version',
-	showNewCreateAlertsPage = 'showNewCreateAlertsPage',
 	source = 'source',
+	showClassicCreateAlertsPage = 'showClassicCreateAlertsPage',
+	isTestAlert = 'isTestAlert',
 }

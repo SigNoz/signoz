@@ -1,16 +1,19 @@
-import './IngestionDetails.styles.scss';
-
+import { useEffect, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { useGetIngestionKeys } from 'api/generated/services/gateway';
+import {
+	GatewaytypesIngestionKeyDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { DOCS_BASE_URL } from 'constants/app';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
-import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
-import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
+
+import './IngestionDetails.styles.scss';
 
 function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 	if (!key) {
@@ -39,17 +42,17 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionKeyProps>(
-		{} as IngestionKeyProps,
-	);
+	const [
+		firstIngestionKey,
+		setFirstIngestionKey,
+	] = useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
 
 	const {
 		data: ingestionKeys,
 		isLoading: isIngestionKeysLoading,
 		error,
 		isError,
-	} = useGetAllIngestionsKeys({
-		search: '',
+	} = useGetIngestionKeys({
 		page: 1,
 		per_page: 10,
 	});
@@ -69,8 +72,11 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (ingestionKeys?.data.data && ingestionKeys?.data.data.length > 0) {
-			setFirstIngestionKey(ingestionKeys?.data.data[0]);
+		if (
+			ingestionKeys?.data?.data?.keys &&
+			ingestionKeys?.data.data.keys.length > 0
+		) {
+			setFirstIngestionKey(ingestionKeys?.data.data.keys[0]);
 		}
 	}, [ingestionKeys]);
 
@@ -80,7 +86,10 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 				<div className="ingestion-endpoint-section-error-container">
 					<Typography.Text className="ingestion-endpoint-section-error-text error">
 						<TriangleAlert size={14} />{' '}
-						{(error as AxiosError)?.message || 'Something went wrong'}
+						{(error as AxiosError<RenderErrorResponseDTO>)?.response?.data?.error
+							?.message ||
+							(error as AxiosError)?.message ||
+							'Something went wrong'}
 					</Typography.Text>
 
 					<div className="ingestion-setup-details-links">
@@ -176,7 +185,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 										</Typography.Text>
 
 										<Typography.Text className="ingestion-key-value-copy">
-											{maskKey(firstIngestionKey?.value)}
+											{maskKey(firstIngestionKey?.value || '')}
 
 											<Copy
 												size={14}
@@ -186,7 +195,9 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
 														{},
 													);
-													handleCopyKey(firstIngestionKey?.value);
+													if (firstIngestionKey?.value) {
+														handleCopyKey(firstIngestionKey.value);
+													}
 												}}
 											/>
 										</Typography.Text>

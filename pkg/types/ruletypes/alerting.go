@@ -202,7 +202,15 @@ func (rc *RuleCondition) IsValid() bool {
 	return true
 }
 
-// QueryType is a short hand method to get query type
+// ShouldEval checks if the further series should be evaluated at all for alerts.
+func (rc *RuleCondition) ShouldEval(series *v3.Series) bool {
+	if rc == nil {
+		return true
+	}
+	return !rc.RequireMinPoints || len(series.Points) >= rc.RequiredNumPoints
+}
+
+// QueryType is a shorthand method to get query type
 func (rc *RuleCondition) QueryType() v3.QueryType {
 	if rc.CompositeQuery != nil {
 		return rc.CompositeQuery.QueryType
@@ -219,10 +227,9 @@ func (rc *RuleCondition) String() string {
 	return string(data)
 }
 
-// prepareRuleGeneratorURL creates an appropriate url
-// for the rule. the URL is sent in slack messages as well as
-// to other systems and allows backtracking to the rule definition
-// from the third party systems.
+// PrepareRuleGeneratorURL creates an appropriate url for the rule. The URL is
+// sent in Slack messages as well as to other systems and allows backtracking
+// to the rule definition from the third party systems.
 func PrepareRuleGeneratorURL(ruleId string, source string) string {
 	if source == "" {
 		return source

@@ -66,6 +66,17 @@ Read [more](https://signoz.io/metrics-and-dashboards/).
 
 ![metrics-n-dashboards-cover](https://github.com/user-attachments/assets/a536fd71-1d2c-4681-aa7e-516d754c47a5)
 
+### LLM Observability
+
+Monitor and debug your LLM applications with comprehensive observability. Track LLM calls, analyze token usage, monitor performance, and gain insights into your AI application's behavior in production.
+
+SigNoz LLM observability helps you understand how your language models are performing, identify issues with prompts and responses, track token usage and costs, and optimize your AI applications for better performance and reliability.
+
+[Get started with LLM Observability →](https://signoz.io/docs/llm-observability/)
+
+![llm-observability-cover](https://github.com/user-attachments/assets/a6cc0ca3-59df-48f9-9c16-7c843fccff96)
+
+
 ### Alerts
 
 Use alerts in SigNoz to get notified when anything unusual happens in your application. You can set alerts on any type of telemetry signal (logs, metrics, traces), create thresholds and set up a notification channel to get notified. Advanced features like alert history and anomaly detection can help you create smarter alerts.
@@ -209,34 +220,6 @@ We have published benchmarks comparing Loki with SigNoz. Check it out [here](htt
 We ❤️ contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz.
 
 Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://signoz.io/slack)
-
-### Project maintainers
-
-#### Backend
-
-- [Ankit Nayan](https://github.com/ankitnayan)
-- [Nityananda Gohain](https://github.com/nityanandagohain)
-- [Srikanth Chekuri](https://github.com/srikanthccv)
-- [Vishal Sharma](https://github.com/makeavish)
-- [Shivanshu Raj Shrivastava](https://github.com/shivanshuraj1333)
-- [Ekansh Gupta](https://github.com/eKuG)
-- [Aniket Agarwal](https://github.com/aniketio-ctrl)
-
-#### Frontend
-
-- [Yunus M](https://github.com/YounixM)
-- [Vikrant Gupta](https://github.com/vikrantgupta25)
-- [Sagar Rajput](https://github.com/SagarRajput-7)
-- [Shaheer Kochai](https://github.com/ahmadshaheer)
-- [Amlan Kumar Nandy](https://github.com/amlannandy)
-- [Sahil Khan](https://github.com/sawhil)
-- [Aditya Singh](https://github.com/aks07)
-- [Abhi Kumar](https://github.com/ahrefabhi)
-
-#### DevOps
-
-- [Prashant Shahi](https://github.com/prashant-shahi)
-- [Vibhu Pandey](https://github.com/therealpandey)
 
 <br /><br />
 

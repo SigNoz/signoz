@@ -9,6 +9,14 @@ import (
 	"github.com/swaggest/rest/openapi"
 )
 
+// OpenAPIExample is a named example for an OpenAPI operation.
+type OpenAPIExample struct {
+	Name        string
+	Summary     string
+	Description string
+	Value       any
+}
+
 // Def is the definition of an OpenAPI operation
 type OpenAPIDef struct {
 	ID                  string
@@ -16,7 +24,9 @@ type OpenAPIDef struct {
 	Summary             string
 	Description         string
 	Request             any
+	RequestQuery        any
 	RequestContentType  string
+	RequestExamples     []OpenAPIExample
 	Response            any
 	ResponseContentType string
 	SuccessStatusCode   int

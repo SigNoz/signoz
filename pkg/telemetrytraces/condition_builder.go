@@ -35,13 +35,7 @@ func (c *conditionBuilder) conditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	switch operator {
-	case qbtypes.FilterOperatorContains,
-		qbtypes.FilterOperatorNotContains,
-		qbtypes.FilterOperatorILike,
-		qbtypes.FilterOperatorNotILike,
-		qbtypes.FilterOperatorLike,
-		qbtypes.FilterOperatorNotLike:
+	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
 
@@ -279,7 +273,7 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
 	}
 
-	isTrue := false
+	var isTrue bool
 	switch v := value.(type) {
 	case bool:
 		isTrue = v

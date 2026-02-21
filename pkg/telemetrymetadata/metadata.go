@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -50,8 +49,9 @@ type telemetryMetaStore struct {
 	relatedMetadataDBName     string
 	relatedMetadataTblName    string
 
-	fm               qbtypes.FieldMapper
-	conditionBuilder qbtypes.ConditionBuilder
+	fm                 qbtypes.FieldMapper
+	conditionBuilder   qbtypes.ConditionBuilder
+	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 }
 
 func escapeForLike(s string) string {
@@ -97,6 +97,14 @@ func NewTelemetryMetaStore(
 		logResourceKeysTblName:    logResourceKeysTblName,
 		relatedMetadataDBName:     relatedMetadataDBName,
 		relatedMetadataTblName:    relatedMetadataTblName,
+		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
+			telemetrytypes.SignalLogs: {
+				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
+					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
+				},
+			},
+		},
 	}
 
 	fm := NewFieldMapper()
@@ -276,23 +284,6 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			if v == "" || strings.Contains(key, v) {
 				found = true
 				break
-			}
-		}
-
-		// skip the keys that don't match data type
-		if field, exists := telemetrytraces.IntrinsicFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
-			}
-		}
-
-		if field, exists := telemetrytraces.CalculatedFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
 			}
 		}
 
@@ -548,15 +539,6 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			}
 		}
 
-		// skip the keys that don't match data type
-		if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-			if len(dataTypes) > 0 &&
-				slices.Index(dataTypes, field.FieldDataType) == -1 &&
-				field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				continue
-			}
-		}
-
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
 				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
@@ -574,7 +556,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	if querybuilder.BodyJSONQueryEnabled {
-		bodyJSONPaths, finished, err := t.getBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
+		bodyJSONPaths, finished, err := t.buildBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
 			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", "error", err)
 		}
@@ -1615,12 +1597,12 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error) {
 	if metricName == "" {
 		return metrictypes.Unknown, errors.Newf(errors.TypeInternal, errors.CodeInternal, "metric name cannot be empty")
 	}
 
-	temporalityMap, err := t.FetchTemporalityMulti(ctx, metricName)
+	temporalityMap, err := t.FetchTemporalityMulti(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricName)
 	if err != nil {
 		return metrictypes.Unknown, err
 	}
@@ -1633,13 +1615,13 @@ func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, metricName st
 	return temporality, nil
 }
 
-func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
 	if len(metricNames) == 0 {
 		return make(map[string]metrictypes.Temporality), nil
 	}
 
 	result := make(map[string]metrictypes.Temporality)
-	metricsTemporality, err := t.fetchMetricsTemporality(ctx, metricNames...)
+	metricsTemporality, err := t.fetchMetricsTemporality(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -1648,8 +1630,12 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
-		if temporality, exists := metricsTemporality[metricName]; exists {
-			result[metricName] = temporality
+		if temporality, exists := metricsTemporality[metricName]; exists && len(temporality) > 0 {
+			if len(temporality) > 1 {
+				result[metricName] = metrictypes.Multiple
+			} else {
+				result[metricName] = temporality[0]
+			}
 			continue
 		}
 		if temporality, exists := meterMetricsTemporality[metricName]; exists {
@@ -1662,8 +1648,10 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, metricNa
 	return result, nil
 }
 
-func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
-	result := make(map[string]metrictypes.Temporality)
+func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
+	result := make(map[string][]metrictypes.Temporality)
+
+	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
 
 	// Build query to fetch temporality for all metrics
 	// We use attr_string_value where attr_name = '__temporality__'
@@ -1671,14 +1659,18 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metric
 	// and metric_name column contains temporality value, so we use the correct mapping
 	sb := sqlbuilder.Select(
 		"metric_name",
-		"argMax(temporality, last_reported_unix_milli) as temporality",
-	).From(t.metricsDBName + "." + t.metricsFieldsTblName)
+		"temporality",
+	).
+		From(t.metricsDBName + "." + tsTableName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
-	sb.Where(sb.In("metric_name", metricNames))
+	sb.Where(
+		sb.In("metric_name", metricNames),
+		sb.GTE("unix_milli", adjustedStartTs),
+		sb.LT("unix_milli", adjustedEndTs),
+	)
 
-	// Group by metric name to get one temporality per metric
-	sb.GroupBy("metric_name")
+	sb.GroupBy("metric_name", "temporality")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
@@ -1710,8 +1702,12 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, metric
 			// Unknown or empty temporality
 			temporality = metrictypes.Unknown
 		}
-
-		result[metricName] = temporality
+		if temporality != metrictypes.Unknown {
+			result[metricName] = append(result[metricName], temporality)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
 	}
 
 	return result, nil

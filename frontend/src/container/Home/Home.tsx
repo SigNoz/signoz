@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import './Home.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -24,8 +24,6 @@ import { AnimatePresence } from 'motion/react';
 import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
 import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
@@ -40,6 +38,8 @@ import HomeChecklist, { ChecklistItem } from './HomeChecklist/HomeChecklist';
 import SavedViews from './SavedViews/SavedViews';
 import Services from './Services/Services';
 import StepsProgress from './StepsProgress/StepsProgress';
+
+import './Home.styles.scss';
 
 const homeInterval = 30 * 60 * 1000;
 

@@ -1,10 +1,10 @@
-import './StepsFooter.styles.scss';
-
+import { useIsMutating } from 'react-query';
 import { Button, Skeleton } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Check, Cone } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useIsMutating } from 'react-query';
+
+import './StepsFooter.styles.scss';
 
 interface StepsFooterProps {
 	stepsCount: number;

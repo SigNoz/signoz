@@ -1,0 +1,21 @@
+.chart-manager-container {
+	width: 100%;
+	max-height: calc(40% - 40px);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	.chart-manager-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 16px;
+
+		.chart-manager-actions-container {
+			display: flex;
+			justify-content: flex-end;
+			align-items: center;
+			gap: 8px;
+		}
+	}
+}

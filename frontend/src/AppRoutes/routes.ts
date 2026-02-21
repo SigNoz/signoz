@@ -1,8 +1,8 @@
+import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import MessagingQueues from 'pages/MessagingQueues';
 import MeterExplorer from 'pages/MeterExplorer';
-import { RouteProps } from 'react-router-dom';
 
 import {
 	AlertHistory,
@@ -17,6 +17,7 @@ import {
 	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
+	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
 	InstalledIntegrations,
@@ -338,6 +339,13 @@ const routes: AppRoutes[] = [
 		component: Login,
 		isPrivate: false,
 		key: 'LOGIN',
+	},
+	{
+		path: ROUTES.FORGOT_PASSWORD,
+		exact: true,
+		component: ForgotPassword,
+		isPrivate: false,
+		key: 'FORGOT_PASSWORD',
 	},
 	{
 		path: ROUTES.UN_AUTHORIZED,

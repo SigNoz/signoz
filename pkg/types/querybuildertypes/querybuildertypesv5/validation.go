@@ -10,100 +10,84 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+// queryName returns the name from any query envelope spec type.
+func (e QueryEnvelope) queryName() string {
+	switch spec := e.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation]:
+		return spec.Name
+	case QueryBuilderQuery[LogAggregation]:
+		return spec.Name
+	case QueryBuilderQuery[MetricAggregation]:
+		return spec.Name
+	case QueryBuilderFormula:
+		return spec.Name
+	case QueryBuilderTraceOperator:
+		return spec.Name
+	case QueryBuilderJoin:
+		return spec.Name
+	case PromQuery:
+		return spec.Name
+	case ClickHouseQuery:
+		return spec.Name
+	}
+	return ""
+}
+
+// isDisabled returns the disabled status from any query envelope spec type.
+func (e QueryEnvelope) isDisabled() bool {
+	switch spec := e.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation]:
+		return spec.Disabled
+	case QueryBuilderQuery[LogAggregation]:
+		return spec.Disabled
+	case QueryBuilderQuery[MetricAggregation]:
+		return spec.Disabled
+	case QueryBuilderFormula:
+		return spec.Disabled
+	case QueryBuilderTraceOperator:
+		return spec.Disabled
+	case QueryBuilderJoin:
+		return spec.Disabled
+	case PromQuery:
+		return spec.Disabled
+	case ClickHouseQuery:
+		return spec.Disabled
+	}
+	return false
+}
+
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
+	name := envelope.queryName()
+
+	var typeLabel string
 	switch envelope.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
-		switch spec := envelope.Spec.(type) {
-		case QueryBuilderQuery[TraceAggregation]:
-			if spec.Name != "" {
-				return fmt.Sprintf("query '%s'", spec.Name)
-			}
-			return fmt.Sprintf("trace query at position %d", index+1)
-		case QueryBuilderQuery[LogAggregation]:
-			if spec.Name != "" {
-				return fmt.Sprintf("query '%s'", spec.Name)
-			}
-			return fmt.Sprintf("log query at position %d", index+1)
-		case QueryBuilderQuery[MetricAggregation]:
-			if spec.Name != "" {
-				return fmt.Sprintf("query '%s'", spec.Name)
-			}
-			return fmt.Sprintf("metric query at position %d", index+1)
-		}
+		typeLabel = "query"
 	case QueryTypeFormula:
-		if spec, ok := envelope.Spec.(QueryBuilderFormula); ok && spec.Name != "" {
-			return fmt.Sprintf("formula '%s'", spec.Name)
-		}
-		return fmt.Sprintf("formula at position %d", index+1)
+		typeLabel = "formula"
 	case QueryTypeTraceOperator:
-		if spec, ok := envelope.Spec.(QueryBuilderTraceOperator); ok && spec.Name != "" {
-			return fmt.Sprintf("trace operator '%s'", spec.Name)
-		}
-		return fmt.Sprintf("trace operator at position %d", index+1)
+		typeLabel = "trace operator"
 	case QueryTypeJoin:
-		if spec, ok := envelope.Spec.(QueryBuilderJoin); ok && spec.Name != "" {
-			return fmt.Sprintf("join '%s'", spec.Name)
-		}
-		return fmt.Sprintf("join at position %d", index+1)
+		typeLabel = "join"
 	case QueryTypePromQL:
-		if spec, ok := envelope.Spec.(PromQuery); ok && spec.Name != "" {
-			return fmt.Sprintf("PromQL query '%s'", spec.Name)
-		}
-		return fmt.Sprintf("PromQL query at position %d", index+1)
+		typeLabel = "PromQL query"
 	case QueryTypeClickHouseSQL:
-		if spec, ok := envelope.Spec.(ClickHouseQuery); ok && spec.Name != "" {
-			return fmt.Sprintf("ClickHouse query '%s'", spec.Name)
-		}
-		return fmt.Sprintf("ClickHouse query at position %d", index+1)
+		typeLabel = "ClickHouse query"
+	default:
+		typeLabel = "query"
 	}
-	return fmt.Sprintf("query at position %d", index+1)
+
+	if name != "" {
+		return fmt.Sprintf("%s '%s'", typeLabel, name)
+	}
+	return fmt.Sprintf("%s at position %d", typeLabel, index+1)
 }
 
 const (
 	// Maximum limit for query results
 	MaxQueryLimit = 10000
 )
-
-// ValidateFunctionName checks if the function name is valid
-func ValidateFunctionName(name FunctionName) error {
-	validFunctions := []FunctionName{
-		FunctionNameCutOffMin,
-		FunctionNameCutOffMax,
-		FunctionNameClampMin,
-		FunctionNameClampMax,
-		FunctionNameAbsolute,
-		FunctionNameRunningDiff,
-		FunctionNameLog2,
-		FunctionNameLog10,
-		FunctionNameCumulativeSum,
-		FunctionNameEWMA3,
-		FunctionNameEWMA5,
-		FunctionNameEWMA7,
-		FunctionNameMedian3,
-		FunctionNameMedian5,
-		FunctionNameMedian7,
-		FunctionNameTimeShift,
-		FunctionNameAnomaly,
-		FunctionNameFillZero,
-	}
-
-	if slices.Contains(validFunctions, name) {
-		return nil
-	}
-
-	// Format valid functions as comma-separated string
-	var validFunctionNames []string
-	for _, fn := range validFunctions {
-		validFunctionNames = append(validFunctionNames, fn.StringValue())
-	}
-
-	return errors.NewInvalidInputf(
-		errors.CodeInvalidInput,
-		"invalid function name: %s",
-		name.StringValue(),
-	).WithAdditional(fmt.Sprintf("valid functions are: %s", strings.Join(validFunctionNames, ", ")))
-}
 
 // Validate performs preliminary validation on QueryBuilderQuery
 func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
@@ -112,11 +96,12 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		return err
 	}
 
-	// Validate aggregations only for non-raw request types
-	if requestType != RequestTypeRaw && requestType != RequestTypeRawStream && requestType != RequestTypeTrace {
-		if err := q.validateAggregations(); err != nil {
-			return err
-		}
+	if err := q.validateAggregations(requestType); err != nil {
+		return err
+	}
+
+	if err := q.validateGroupBy(requestType); err != nil {
+		return err
 	}
 
 	// Validate limit and pagination
@@ -134,38 +119,44 @@ func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
 		return err
 	}
 
-	if requestType != RequestTypeRaw && requestType != RequestTypeTrace && len(q.Aggregations) > 0 {
-		if err := q.validateOrderByForAggregation(); err != nil {
-			return err
-		}
-	} else {
-		if err := q.validateOrderBy(); err != nil {
-			return err
-		}
+	if err := q.validateOrderBy(requestType); err != nil {
+		return err
 	}
 
-	if requestType != RequestTypeRaw && requestType != RequestTypeTrace {
-		if err := q.validateHaving(); err != nil {
-			return err
-		}
-	}
-
-	if requestType == RequestTypeRaw {
-		if err := q.validateSelectFields(); err != nil {
-			return err
-		}
+	if err := q.validateSelectFields(requestType); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateSelectFields() error {
+func (q *QueryBuilderQuery[T]) validateSelectFields(requestType RequestType) error {
+	// selectFields don't apply to aggregation queries, skip validation
+	if requestType.IsAggregation() {
+		return nil
+	}
+
 	// isRoot and isEntryPoint are returned by the Metadata API, so if someone sends them, we have to reject the request.
 	for _, v := range q.SelectFields {
 		if v.Name == "isRoot" || v.Name == "isEntryPoint" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"isRoot and isEntryPoint fields are not supported in selectFields",
+			)
+		}
+	}
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateGroupBy(requestType RequestType) error {
+	// groupBy doesn't apply to non-aggregation queries, skip validation
+	if !requestType.IsAggregation() {
+		return nil
+	}
+	for idx, item := range q.GroupBy {
+		if item.TelemetryFieldKey.Name == "" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
 			)
 		}
 	}
@@ -192,7 +183,12 @@ func (q *QueryBuilderQuery[T]) validateSignal() error {
 	}
 }
 
-func (q *QueryBuilderQuery[T]) validateAggregations() error {
+func (q *QueryBuilderQuery[T]) validateAggregations(requestType RequestType) error {
+	// aggregations don't apply to non-aggregation queries, skip validation
+	if !requestType.IsAggregation() {
+		return nil
+	}
+
 	// At least one aggregation required for non-disabled queries
 	if len(q.Aggregations) == 0 && !q.Disabled {
 		return errors.NewInvalidInputf(
@@ -218,14 +214,6 @@ func (q *QueryBuilderQuery[T]) validateAggregations() error {
 					"metric name is required for %s",
 					aggId,
 				)
-			}
-			// Validate metric-specific aggregations
-			if err := validateMetricAggregation(v); err != nil {
-				aggId := fmt.Sprintf("aggregation #%d", i+1)
-				if q.Name != "" {
-					aggId = fmt.Sprintf("aggregation #%d in query '%s'", i+1, q.Name)
-				}
-				return wrapValidationError(err, aggId, "invalid metric %s: %s")
 			}
 		case TraceAggregation:
 			if v.Expression == "" {
@@ -311,7 +299,7 @@ func (q *QueryBuilderQuery[T]) validateLimitAndPagination() error {
 
 func (q *QueryBuilderQuery[T]) validateFunctions() error {
 	for i, fn := range q.Functions {
-		if err := ValidateFunctionName(fn.Name); err != nil {
+		if err := fn.Validate(); err != nil {
 			fnId := fmt.Sprintf("function #%d", i+1)
 			if q.Name != "" {
 				fnId = fmt.Sprintf("function #%d in query '%s'", i+1, q.Name)
@@ -341,7 +329,7 @@ func (q *QueryBuilderQuery[T]) validateSecondaryAggregations() error {
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateOrderBy() error {
+func (q *QueryBuilderQuery[T]) validateOrderBy(requestType RequestType) error {
 	for i, order := range q.Order {
 		// Direction validation is handled by the OrderDirection type
 		if order.Direction != OrderDirectionAsc && order.Direction != OrderDirectionDesc {
@@ -359,6 +347,12 @@ func (q *QueryBuilderQuery[T]) validateOrderBy() error {
 			)
 		}
 	}
+
+	// aggregation-specific order key validation only applies to aggregation queries
+	if requestType.IsAggregation() {
+		return q.validateOrderByForAggregation()
+	}
+
 	return nil
 }
 
@@ -368,10 +362,6 @@ func (q *QueryBuilderQuery[T]) validateOrderBy() error {
 // 2. Aggregation expressions or aliases
 // 3. Aggregation index (0, 1, 2, etc.)
 func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
-	// First validate basic order by constraints
-	if err := q.validateOrderBy(); err != nil {
-		return err
-	}
 
 	validOrderKeys := make(map[string]bool)
 
@@ -410,7 +400,12 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	for i, order := range q.Order {
 		orderKey := order.Key.Name
 
-		if !validOrderKeys[orderKey] {
+		// Also check the context-prefixed key name for alias matching
+		// This handles cases where user specifies alias like "span.count_" and
+		// order by comes as FieldContext=span, Name=count_
+		contextPrefixedKey := fmt.Sprintf("%s.%s", order.Key.FieldContext.StringValue(), order.Key.Name)
+
+		if !validOrderKeys[orderKey] && !validOrderKeys[contextPrefixedKey] {
 			orderId := fmt.Sprintf("order by clause #%d", i+1)
 			if q.Name != "" {
 				orderId = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)
@@ -431,22 +426,6 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
 			)
 		}
-	}
-
-	return nil
-}
-
-func (q *QueryBuilderQuery[T]) validateHaving() error {
-	if q.Having == nil || q.Having.Expression == "" {
-		return nil
-	}
-
-	// ensure that having is only used with aggregations
-	if len(q.Aggregations) == 0 {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"having clause can only be used with aggregation queries. Use `filter.expression` instead",
-		)
 	}
 
 	return nil
@@ -491,236 +470,20 @@ func (r *QueryRangeRequest) Validate() error {
 
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
-	allDisabled := true
 	for _, envelope := range r.CompositeQuery.Queries {
-		switch envelope.Type {
-		case QueryTypeBuilder, QueryTypeSubQuery:
-			switch spec := envelope.Spec.(type) {
-			case QueryBuilderQuery[TraceAggregation]:
-				if !spec.Disabled {
-					allDisabled = false
-				}
-			case QueryBuilderQuery[LogAggregation]:
-				if !spec.Disabled {
-					allDisabled = false
-				}
-			case QueryBuilderQuery[MetricAggregation]:
-				if !spec.Disabled {
-					allDisabled = false
-				}
-			}
-		case QueryTypeFormula:
-			if spec, ok := envelope.Spec.(QueryBuilderFormula); ok && !spec.Disabled {
-				allDisabled = false
-			}
-		case QueryTypeTraceOperator:
-			if spec, ok := envelope.Spec.(QueryBuilderTraceOperator); ok && !spec.Disabled {
-				allDisabled = false
-			}
-		case QueryTypeJoin:
-			if spec, ok := envelope.Spec.(QueryBuilderJoin); ok && !spec.Disabled {
-				allDisabled = false
-			}
-		case QueryTypePromQL:
-			if spec, ok := envelope.Spec.(PromQuery); ok && !spec.Disabled {
-				allDisabled = false
-			}
-		case QueryTypeClickHouseSQL:
-			if spec, ok := envelope.Spec.(ClickHouseQuery); ok && !spec.Disabled {
-				allDisabled = false
-			}
-		}
-
-		// Early exit if we find at least one enabled query
-		if !allDisabled {
-			break
+		if !envelope.isDisabled() {
+			return nil
 		}
 	}
 
-	if allDisabled {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"all queries are disabled - at least one query must be enabled",
-		)
-	}
-
-	return nil
+	return errors.NewInvalidInputf(
+		errors.CodeInvalidInput,
+		"all queries are disabled - at least one query must be enabled",
+	)
 }
 
 func (r *QueryRangeRequest) validateCompositeQuery() error {
-	// Validate queries in composite query
-	if len(r.CompositeQuery.Queries) == 0 {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"at least one query is required",
-		)
-	}
-
-	// Track query names for uniqueness (only for non-formula queries)
-	queryNames := make(map[string]bool)
-
-	// Validate each query based on its type
-	for i, envelope := range r.CompositeQuery.Queries {
-		switch envelope.Type {
-		case QueryTypeBuilder, QueryTypeSubQuery:
-			// Validate based on the concrete type
-			switch spec := envelope.Spec.(type) {
-			case QueryBuilderQuery[TraceAggregation]:
-				if err := spec.Validate(r.RequestType); err != nil {
-					queryId := getQueryIdentifier(envelope, i)
-					return wrapValidationError(err, queryId, "invalid %s: %s")
-				}
-				// Check name uniqueness for non-formula context
-				if spec.Name != "" {
-					if queryNames[spec.Name] {
-						return errors.NewInvalidInputf(
-							errors.CodeInvalidInput,
-							"duplicate query name '%s'",
-							spec.Name,
-						)
-					}
-					queryNames[spec.Name] = true
-				}
-			case QueryBuilderQuery[LogAggregation]:
-				if err := spec.Validate(r.RequestType); err != nil {
-					queryId := getQueryIdentifier(envelope, i)
-					return wrapValidationError(err, queryId, "invalid %s: %s")
-				}
-				// Check name uniqueness for non-formula context
-				if spec.Name != "" {
-					if queryNames[spec.Name] {
-						return errors.NewInvalidInputf(
-							errors.CodeInvalidInput,
-							"duplicate query name '%s'",
-							spec.Name,
-						)
-					}
-					queryNames[spec.Name] = true
-				}
-			case QueryBuilderQuery[MetricAggregation]:
-				if err := spec.Validate(r.RequestType); err != nil {
-					queryId := getQueryIdentifier(envelope, i)
-					return wrapValidationError(err, queryId, "invalid %s: %s")
-				}
-				// Check name uniqueness for non-formula context
-				if spec.Name != "" {
-					if queryNames[spec.Name] {
-						return errors.NewInvalidInputf(
-							errors.CodeInvalidInput,
-							"duplicate query name '%s'",
-							spec.Name,
-						)
-					}
-					queryNames[spec.Name] = true
-				}
-			default:
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"unknown spec type for %s",
-					queryId,
-				)
-			}
-		case QueryTypeFormula:
-			// Formula validation is handled separately
-			spec, ok := envelope.Spec.(QueryBuilderFormula)
-			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid spec for %s",
-					queryId,
-				)
-			}
-			if spec.Expression == "" {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"expression is required for %s",
-					queryId,
-				)
-			}
-		case QueryTypeJoin:
-			// Join validation is handled separately
-			_, ok := envelope.Spec.(QueryBuilderJoin)
-			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid spec for %s",
-					queryId,
-				)
-			}
-		case QueryTypeTraceOperator:
-			spec, ok := envelope.Spec.(QueryBuilderTraceOperator)
-			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid spec for %s",
-					queryId,
-				)
-			}
-			if spec.Expression == "" {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"expression is required for %s",
-					queryId,
-				)
-			}
-		case QueryTypePromQL:
-			// PromQL validation is handled separately
-			spec, ok := envelope.Spec.(PromQuery)
-			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid spec for %s",
-					queryId,
-				)
-			}
-			if spec.Query == "" {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"query expression is required for %s",
-					queryId,
-				)
-			}
-		case QueryTypeClickHouseSQL:
-			// ClickHouse SQL validation is handled separately
-			spec, ok := envelope.Spec.(ClickHouseQuery)
-			if !ok {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"invalid spec for %s",
-					queryId,
-				)
-			}
-			if spec.Query == "" {
-				queryId := getQueryIdentifier(envelope, i)
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"query expression is required for %s",
-					queryId,
-				)
-			}
-		default:
-			queryId := getQueryIdentifier(envelope, i)
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"unknown query type '%s' for %s",
-				envelope.Type,
-				queryId,
-			).WithAdditional(
-				"Valid query types are: builder_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
-			)
-		}
-	}
-
-	return nil
+	return r.CompositeQuery.Validate(r.RequestType)
 }
 
 // Validate performs validation on CompositeQuery
@@ -732,11 +495,28 @@ func (c *CompositeQuery) Validate(requestType RequestType) error {
 		)
 	}
 
-	// Validate each query
+	// Track query names for uniqueness (only for builder queries)
+	queryNames := make(map[string]bool)
+
 	for i, envelope := range c.Queries {
 		if err := validateQueryEnvelope(envelope, requestType); err != nil {
 			queryId := getQueryIdentifier(envelope, i)
 			return wrapValidationError(err, queryId, "invalid %s: %s")
+		}
+
+		// Check name uniqueness for builder queries
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+			name := envelope.queryName()
+			if name != "" {
+				if queryNames[name] {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"duplicate query name '%s'",
+						name,
+					)
+				}
+				queryNames[name] = true
+			}
 		}
 	}
 
@@ -837,86 +617,4 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 		)
 	}
-}
-
-// validateMetricAggregation validates metric-specific aggregation parameters
-func validateMetricAggregation(agg MetricAggregation) error {
-	// we can't decide anything here without known temporality
-	if agg.Temporality == metrictypes.Unknown {
-		return nil
-	}
-
-	// Validate that rate/increase are only used with appropriate temporalities
-	if agg.TimeAggregation == metrictypes.TimeAggregationRate || agg.TimeAggregation == metrictypes.TimeAggregationIncrease {
-		// For gauge metrics (Unspecified temporality), rate/increase doesn't make sense
-		if agg.Temporality == metrictypes.Unspecified {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"rate/increase aggregation cannot be used with gauge metrics (unspecified temporality)",
-			)
-		}
-	}
-
-	// Validate percentile aggregations are only used with histogram types
-	if agg.SpaceAggregation.IsPercentile() {
-		if agg.Type != metrictypes.HistogramType && agg.Type != metrictypes.ExpHistogramType && agg.Type != metrictypes.SummaryType {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"percentile aggregation can only be used with histogram or summary metric types",
-			)
-		}
-	}
-
-	// Validate time aggregation values
-	validTimeAggregations := []metrictypes.TimeAggregation{
-		metrictypes.TimeAggregationUnspecified,
-		metrictypes.TimeAggregationLatest,
-		metrictypes.TimeAggregationSum,
-		metrictypes.TimeAggregationAvg,
-		metrictypes.TimeAggregationMin,
-		metrictypes.TimeAggregationMax,
-		metrictypes.TimeAggregationCount,
-		metrictypes.TimeAggregationCountDistinct,
-		metrictypes.TimeAggregationRate,
-		metrictypes.TimeAggregationIncrease,
-	}
-
-	validTimeAgg := slices.Contains(validTimeAggregations, agg.TimeAggregation)
-	if !validTimeAgg {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid time aggregation: %s",
-			agg.TimeAggregation.StringValue(),
-		).WithAdditional(
-			"Valid time aggregations: latest, sum, avg, min, max, count, count_distinct, rate, increase",
-		)
-	}
-
-	// Validate space aggregation values
-	validSpaceAggregations := []metrictypes.SpaceAggregation{
-		metrictypes.SpaceAggregationUnspecified,
-		metrictypes.SpaceAggregationSum,
-		metrictypes.SpaceAggregationAvg,
-		metrictypes.SpaceAggregationMin,
-		metrictypes.SpaceAggregationMax,
-		metrictypes.SpaceAggregationCount,
-		metrictypes.SpaceAggregationPercentile50,
-		metrictypes.SpaceAggregationPercentile75,
-		metrictypes.SpaceAggregationPercentile90,
-		metrictypes.SpaceAggregationPercentile95,
-		metrictypes.SpaceAggregationPercentile99,
-	}
-
-	validSpaceAgg := slices.Contains(validSpaceAggregations, agg.SpaceAggregation)
-	if !validSpaceAgg {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid space aggregation: %s",
-			agg.SpaceAggregation.StringValue(),
-		).WithAdditional(
-			"Valid space aggregations: sum, avg, min, max, count, p50, p75, p90, p95, p99",
-		)
-	}
-
-	return nil
 }

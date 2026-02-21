@@ -1,8 +1,31 @@
+import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 const toggleThemeFunction = jest.fn();
 const logEventFunction = jest.fn();
+const copyToClipboardFn = jest.fn();
+const editUserFn = jest.fn();
+
+jest.mock('react-use', () => ({
+	__esModule: true,
+	useCopyToClipboard: (): [unknown, (text: string) => void] => [
+		null,
+		copyToClipboardFn,
+	],
+}));
+
+jest.mock('api/v1/user/id/update', () => ({
+	__esModule: true,
+	default: (...args: unknown[]): Promise<unknown> => editUserFn(...args),
+}));
 
 jest.mock('hooks/useDarkMode', () => ({
 	__esModule: true,
@@ -44,6 +67,7 @@ const PASSWORD_VALIDATION_MESSAGE_TEST_ID = 'password-validation-message';
 describe('MySettings Flows', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
 		render(<MySettingsContainer />);
 	});
 
@@ -213,6 +237,73 @@ describe('MySettings Flows', () => {
 			});
 
 			expect(submitButton).not.toBeDisabled();
+		});
+	});
+
+	describe('License section', () => {
+		it('Should render license section content when license key exists', () => {
+			expect(screen.getByText('License')).toBeInTheDocument();
+			expect(screen.getByText('License key')).toBeInTheDocument();
+			expect(screen.getByText('Your SigNoz license key.')).toBeInTheDocument();
+		});
+
+		it('Should not render license section when license key is missing', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: null,
+				},
+			});
+
+			const scoped = within(container);
+			expect(scoped.queryByText('License')).not.toBeInTheDocument();
+			expect(scoped.queryByText('License key')).not.toBeInTheDocument();
+			expect(
+				scoped.queryByText('Your SigNoz license key.'),
+			).not.toBeInTheDocument();
+		});
+
+		it('Should mask license key in the UI', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'abcd',
+					} as any,
+				},
+			});
+
+			expect(within(container).getByText('ab********cd')).toBeInTheDocument();
+		});
+
+		it('Should not mask license key if it is too short', () => {
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'abc',
+					} as any,
+				},
+			});
+
+			expect(within(container).getByText('abc')).toBeInTheDocument();
+		});
+
+		it('Should copy license key and show success toast', async () => {
+			const user = userEvent.setup();
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: {
+					activeLicense: {
+						key: 'test-license-key-12345',
+					} as any,
+				},
+			});
+
+			await user.click(within(container).getByTestId('license-key-copy-btn'));
+
+			await waitFor(() => {
+				expect(copyToClipboardFn).toHaveBeenCalledWith('test-license-key-12345');
+				expect(successNotification).toHaveBeenCalledWith({
+					message: 'Copied to clipboard',
+				});
+			});
 		});
 	});
 });

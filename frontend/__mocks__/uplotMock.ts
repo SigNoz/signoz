@@ -12,6 +12,8 @@ export interface MockUPlotInstance {
 export interface MockUPlotPaths {
 	spline: jest.Mock;
 	bars: jest.Mock;
+	linear: jest.Mock;
+	stepped: jest.Mock;
 }
 
 // Create mock instance methods
@@ -23,10 +25,23 @@ const createMockUPlotInstance = (): MockUPlotInstance => ({
 	setSeries: jest.fn(),
 });
 
-// Create mock paths
-const mockPaths: MockUPlotPaths = {
-	spline: jest.fn(),
-	bars: jest.fn(),
+// Path builder: (self, seriesIdx, idx0, idx1) => paths or null
+const createMockPathBuilder = (name: string): jest.Mock =>
+	jest.fn(() => ({
+		name, // To test if the correct pathBuilder is used
+		stroke: jest.fn(),
+		fill: jest.fn(),
+		clip: jest.fn(),
+	}));
+
+// Create mock paths - linear, spline, stepped needed by UPlotSeriesBuilder.getPathBuilder
+const mockPaths = {
+	spline: jest.fn(() => createMockPathBuilder('spline')),
+	bars: jest.fn(() => createMockPathBuilder('bars')),
+	linear: jest.fn(() => createMockPathBuilder('linear')),
+	stepped: jest.fn((opts?: { align?: number }) =>
+		createMockPathBuilder(`stepped-(${opts?.align ?? 0})`),
+	),
 };
 
 // Mock static methods

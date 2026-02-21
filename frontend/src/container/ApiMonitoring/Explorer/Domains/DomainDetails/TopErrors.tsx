@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
@@ -16,8 +18,6 @@ import {
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { Info } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
 import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -56,15 +56,15 @@ function TopErrors({
 				{
 					items: endPointName
 						? [
-								// Remove any existing http.url filters from initialFilters to avoid duplicates
+								// Remove any existing http_url filters from initialFilters to avoid duplicates
 								...(initialFilters?.items?.filter(
-									(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+									(item) => item.key?.key !== SPAN_ATTRIBUTES.HTTP_URL,
 								) || []),
 								{
 									id: '92b8a1c1',
 									key: {
 										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.URL_PATH,
+										key: SPAN_ATTRIBUTES.HTTP_URL,
 										type: 'tag',
 									},
 									op: '=',

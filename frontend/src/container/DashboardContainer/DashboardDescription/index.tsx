@@ -1,5 +1,8 @@
-import './Description.styles.scss';
-
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { useCopyToClipboard } from 'react-use';
 import { PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -13,17 +16,15 @@ import {
 } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -33,7 +34,6 @@ import {
 	FolderKanban,
 	Fullscreen,
 	Globe,
-	LayoutGrid,
 	LockKeyhole,
 	PenLine,
 	X,
@@ -41,54 +41,33 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useCopyToClipboard } from 'react-use';
-import { DashboardData, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
+import DashboardHeader from '../components/DashboardHeader/DashboardHeader';
 import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardSettings from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import { VariablesSettingsTab } from './types';
-import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
+import {
+	DEFAULT_ROW_NAME,
+	downloadObjectAsJson,
+	sanitizeDashboardData,
+} from './utils';
+
+import './Description.styles.scss';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
-export function sanitizeDashboardData(
-	selectedData: DashboardData,
-): DashboardData {
-	if (!selectedData?.variables) {
-		return selectedData;
-	}
-
-	const updatedVariables = Object.entries(selectedData.variables).reduce(
-		(acc, [key, value]) => {
-			const { selectedValue, ...rest } = value;
-			acc[key] = rest;
-			return acc;
-		},
-		{} as Record<string, IDashboardVariable>,
-	);
-
-	return {
-		...selectedData,
-		variables: updatedVariables,
-	};
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
 	const { handle } = props;
 	const {
 		selectedDashboard,
@@ -97,7 +76,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		layouts,
 		setLayouts,
 		isDashboardLocked,
-		listSortOrder,
 		setSelectedDashboard,
 		handleToggleDashboardSlider,
 		setSelectedRowWidgetId,
@@ -119,6 +97,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				uuid: selectedDashboard.id,
 		  }
 		: ({} as DashboardData);
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { title = '', description, tags, image = Base64Icons[0] } =
 		selectedData || {};
@@ -200,7 +179,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					message: 'Dashboard renamed successfully',
 				});
 				setIsRenameDashboardOpen(false);
-				if (updatedDashboard.data) setSelectedDashboard(updatedDashboard.data);
+				if (updatedDashboard.data) {
+					setSelectedDashboard(updatedDashboard.data);
+				}
 			},
 			onError: () => {
 				setIsRenameDashboardOpen(true);
@@ -240,7 +221,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}, [state.error, state.value, t, notifications]);
 
 	function handleAddRow(): void {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 		const id = uuid();
 
 		const newRowWidgetMap: { widgets: Layout[]; collapsed: boolean } = {
@@ -291,8 +274,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onSuccess: (updatedDashboard) => {
 				if (updatedDashboard.data) {
-					if (updatedDashboard.data.data.layout)
+					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
+					}
 					setSelectedDashboard(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
@@ -301,17 +285,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				setSectionName(DEFAULT_ROW_NAME);
 			},
 		});
-	}
-
-	function goToListPage(): void {
-		const urlParams = new URLSearchParams();
-		urlParams.set('columnKey', listSortOrder.columnKey as string);
-		urlParams.set('order', listSortOrder.order as string);
-		urlParams.set('page', listSortOrder.pagination as string);
-		urlParams.set('search', listSortOrder.search as string);
-
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
-		safeNavigate(generatedUrl);
 	}
 
 	const {
@@ -362,32 +335,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	return (
 		<Card className="dashboard-description-container">
-			<div className="dashboard-header">
-				<section className="dashboard-breadcrumbs">
-					<Button
-						type="text"
-						icon={<LayoutGrid size={14} />}
-						className="dashboard-btn"
-						onClick={(): void => goToListPage()}
-					>
-						Dashboard /
-					</Button>
-					<Button type="text" className="id-btn dashboard-name-btn">
-						<img
-							src={image}
-							alt="dashboard-icon"
-							style={{ height: '14px', width: '14px' }}
-						/>
-						{title}
-					</Button>
-				</section>
-
-				<HeaderRightSection
-					enableAnnouncements={false}
-					enableShare
-					enableFeedback
-				/>
-			</div>
+			<DashboardHeader />
 			<section className="dashboard-details">
 				<div className="left-section">
 					<img src={image} alt="dashboard-img" className="dashboard-img" />
@@ -571,7 +519,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				<section className="dashboard-description-section">{description}</section>
 			)}
 
-			{!isEmpty(selectedData.variables) && (
+			{!isEmpty(dashboardVariables) && (
 				<section className="dashboard-variables">
 					<DashboardVariableSelection />
 				</section>

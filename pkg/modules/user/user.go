@@ -30,7 +30,13 @@ type Module interface {
 	// Updates password of user to the new password. It also deletes all reset password tokens for the user.
 	UpdatePassword(ctx context.Context, userID valuer.UUID, oldPassword string, password string) error
 
+	// Initiate forgot password flow for a user
+	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
+
 	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error)
+
+	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
+	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
@@ -51,6 +57,9 @@ type Module interface {
 }
 
 type Getter interface {
+	// Get root user by org id.
+	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, error)
+
 	// Get gets the users based on the given id
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
 
@@ -92,6 +101,7 @@ type Handler interface {
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
+	ForgotPassword(http.ResponseWriter, *http.Request)
 
 	// API KEY
 	CreateAPIKey(http.ResponseWriter, *http.Request)

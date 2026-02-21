@@ -1,6 +1,8 @@
-import '@testing-library/jest-dom';
-
 import { ENVIRONMENT } from 'constants/env';
+import {
+	ApiMonitoringParams,
+	useApiMonitoringParams,
+} from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	otherFiltersResponse,
@@ -11,6 +13,8 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
+import '@testing-library/jest-dom';
+
 import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
 import { QuickFiltersConfig } from './constants';
@@ -18,10 +22,15 @@ import { QuickFiltersConfig } from './constants';
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
+jest.mock('container/ApiMonitoring/queryParams');
 
 const handleFilterVisibilityChange = jest.fn();
 const redirectWithQueryBuilderData = jest.fn();
 const putHandler = jest.fn();
+const mockSetApiMonitoringParams = jest.fn() as jest.MockedFunction<
+	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void
+>;
+const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
@@ -84,6 +93,28 @@ TestQuickFilters.defaultProps = {
 	config: QuickFiltersConfig,
 };
 
+function TestQuickFiltersApiMonitoring({
+	signal = SignalType.LOGS,
+	config = QuickFiltersConfig,
+}: {
+	signal?: SignalType;
+	config?: IQuickFiltersConfig[];
+}): JSX.Element {
+	return (
+		<QuickFilters
+			source={QuickFiltersSource.API_MONITORING}
+			config={config}
+			handleFilterVisibilityChange={handleFilterVisibilityChange}
+			signal={signal}
+		/>
+	);
+}
+
+TestQuickFiltersApiMonitoring.defaultProps = {
+	signal: '',
+	config: QuickFiltersConfig,
+};
+
 beforeAll(() => {
 	server.listen();
 });
@@ -112,6 +143,10 @@ beforeEach(() => {
 		lastUsedQuery: 0,
 		redirectWithQueryBuilderData,
 	});
+	mockUseApiMonitoringParams.mockReturnValue([
+		{ showIP: true } as ApiMonitoringParams,
+		mockSetApiMonitoringParams,
+	]);
 	setupServer();
 });
 
@@ -120,6 +155,103 @@ describe('Quick Filters', () => {
 		render(<TestQuickFilters />);
 		expect(screen.getByText('Filters for')).toBeInTheDocument();
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
+	});
+
+	it('should display and allow selection from query dropdown when multiple queries exist', async () => {
+		const setLastUsedQuery = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: 'Query A',
+							filters: { items: [] },
+						},
+						{
+							queryName: 'Query B',
+							filters: { items: [] },
+						},
+						{
+							queryName: 'Query C',
+							filters: { items: [] },
+						},
+					],
+				},
+			},
+			lastUsedQuery: 0,
+			setLastUsedQuery,
+			redirectWithQueryBuilderData,
+			panelType: 'graph', // not LIST view
+		});
+
+		render(<TestQuickFilters />);
+
+		// The dropdown trigger should show the first query name
+		const trigger = screen.getByText('Query A');
+		expect(trigger).toBeInTheDocument();
+
+		// Click to open the dropdown
+		await user.click(trigger);
+
+		// All query options should be visible
+		await waitFor(() => {
+			expect(screen.getByRole('option', { name: 'Query A' })).toBeInTheDocument();
+			expect(screen.getByRole('option', { name: 'Query B' })).toBeInTheDocument();
+			expect(screen.getByRole('option', { name: 'Query C' })).toBeInTheDocument();
+		});
+
+		// Select Query B
+		const queryBOption = screen.getByRole('option', { name: 'Query B' });
+		await user.click(queryBOption);
+
+		// Verify setLastUsedQuery was called with index 1
+		await waitFor(() => {
+			expect(setLastUsedQuery).toHaveBeenCalledWith(1);
+		});
+	});
+
+	it('should not display query dropdown in ListView', () => {
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							queryName: 'Query A',
+							filters: { items: [] },
+						},
+						{
+							queryName: 'Query B',
+							filters: { items: [] },
+						},
+					],
+				},
+			},
+			lastUsedQuery: 0,
+			redirectWithQueryBuilderData,
+			panelType: 'list', // ListView
+		});
+
+		render(<TestQuickFilters />);
+
+		// Should show static query name without dropdown
+		expect(screen.getByText('Query A')).toBeInTheDocument();
+
+		// Dropdown trigger should not be interactive (no button/combobox)
+		const queryText = screen.getByText('Query A');
+		expect(queryText.tagName).not.toBe('BUTTON');
+	});
+
+	it('should display static query name when only one query exists', () => {
+		render(<TestQuickFilters />);
+
+		// Should show static query name
+		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
+
+		// No dropdown should be present
+		const queryText = screen.getByText(QUERY_NAME);
+		expect(queryText.closest('[role="combobox"]')).not.toBeInTheDocument();
 	});
 
 	it('should add filter data to query when checkbox is clicked', async () => {
@@ -151,6 +283,24 @@ describe('Quick Filters', () => {
 						]),
 					},
 				}),
+			);
+		});
+	});
+	it('toggles Show IP addresses and updates API Monitoring params', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(<TestQuickFiltersApiMonitoring />);
+
+		// Switch should be rendered and initially checked
+		expect(screen.getByText('Show IP addresses')).toBeInTheDocument();
+		const toggle = screen.getByRole('switch');
+		expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+		await user.click(toggle);
+
+		await waitFor(() => {
+			expect(mockSetApiMonitoringParams).toHaveBeenCalledWith(
+				expect.objectContaining({ showIP: false }),
 			);
 		});
 	});

@@ -1,7 +1,7 @@
-import './GridCardLayout.styles.scss';
-
-import { isUndefined } from 'lodash-es';
 import { useCallback, useEffect, useRef } from 'react';
+import { isUndefined } from 'lodash-es';
+
+import './GridCardLayout.styles.scss';
 
 interface ClickToShowButtonProps {
 	graphRef: React.RefObject<HTMLDivElement>;
@@ -92,7 +92,9 @@ export const useGraphClickToShowButton = ({
 		menuList.style.zIndex = '9999';
 
 		const graphBounds = graphRef.current?.getBoundingClientRect();
-		if (!graphBounds) return;
+		if (!graphBounds) {
+			return;
+		}
 
 		graphRef.current?.appendChild(menuList);
 

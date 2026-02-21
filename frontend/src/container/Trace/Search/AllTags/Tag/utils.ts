@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction } from 'react';
 import { AutoCompleteProps } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
-import { Dispatch, SetStateAction } from 'react';
 import { PayloadProps as TagKeyPayload } from 'types/api/trace/getTagFilters';
 import { PayloadProps as TagValuePayload } from 'types/api/trace/getTagValue';
 import { OperatorValues, Tags } from 'types/reducer/trace';

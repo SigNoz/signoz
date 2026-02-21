@@ -1,11 +1,20 @@
-import '../GridCardLayout.styles.scss';
-
+import {
+	Dispatch,
+	RefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { Skeleton, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
@@ -20,16 +29,6 @@ import {
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	RefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
-import { useLocation } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { EQueryType } from 'types/common/dashboard';
@@ -43,6 +42,8 @@ import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
+
+import '../GridCardLayout.styles.scss';
 
 function WidgetGraphComponent({
 	widget,
@@ -86,7 +87,9 @@ function WidgetGraphComponent({
 	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
-		if (!lineChartRef.current) return;
+		if (!lineChartRef.current) {
+			return;
+		}
 
 		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
@@ -110,7 +113,9 @@ function WidgetGraphComponent({
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const onDeleteHandler = (): void => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== widget.id,
@@ -130,7 +135,9 @@ function WidgetGraphComponent({
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+				if (setLayouts) {
+					setLayouts(updatedDashboard.data?.data?.layout || []);
+				}
 				if (setSelectedDashboard && updatedDashboard.data) {
 					setSelectedDashboard(updatedDashboard.data);
 				}
@@ -140,7 +147,9 @@ function WidgetGraphComponent({
 	};
 
 	const onCloneHandler = async (): Promise<void> => {
-		if (!selectedDashboard) return;
+		if (!selectedDashboard) {
+			return;
+		}
 
 		const uuid = v4();
 
@@ -178,7 +187,9 @@ function WidgetGraphComponent({
 			},
 			{
 				onSuccess: (updatedDashboard) => {
-					if (setLayouts) setLayouts(updatedDashboard.data?.data?.layout || []);
+					if (setLayouts) {
+						setLayouts(updatedDashboard.data?.data?.layout || []);
+					}
 					if (setSelectedDashboard && updatedDashboard.data) {
 						setSelectedDashboard(updatedDashboard.data);
 					}
@@ -397,6 +408,7 @@ function WidgetGraphComponent({
 					ref={graphRef}
 				>
 					<PanelWrapper
+						panelMode={PanelMode.DASHBOARD_VIEW}
 						widget={widget}
 						queryResponse={queryResponse}
 						setRequestData={setRequestData}

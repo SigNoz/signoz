@@ -1,7 +1,7 @@
+import { useMemo, useState } from 'react';
 import { Button, Input, Select, Tooltip, Typography } from 'antd';
 import { CircleX, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
@@ -37,10 +37,7 @@ function ThresholdItem({
 		);
 		if (units.length === 0) {
 			component = (
-				<Tooltip
-					trigger="hover"
-					title="Please select a Y-axis unit for the query first"
-				>
+				<Tooltip trigger="hover" title="No compatible units available">
 					<Select
 						placeholder="Unit"
 						value={threshold.unit ? threshold.unit : null}
