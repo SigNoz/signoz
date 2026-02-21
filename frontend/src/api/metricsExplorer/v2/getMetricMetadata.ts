@@ -11,10 +11,13 @@ export const getMetricMetadata = async (
 ): Promise<SuccessResponseV2<MetricMetadataResponse> | ErrorResponseV2> => {
 	try {
 		const encodedMetricName = encodeURIComponent(metricName);
-		const response = await axios.get(`/metrics/${encodedMetricName}/metadata`, {
-			signal,
-			headers,
-		});
+		const response = await axios.get(
+			`/metrics/metadata?metricName=${encodedMetricName}`,
+			{
+				signal,
+				headers,
+			},
+		);
 
 		return {
 			httpStatusCode: response.status,
