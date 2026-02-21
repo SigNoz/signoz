@@ -128,13 +128,13 @@ func TestGetColumn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			col, err := fm.ColumnFor(context.Background(), &tc.key)
+			col, err := fm.ColumnFor(context.Background(), 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedCol, col)
+				assert.Equal(t, tc.expectedCol, col[0])
 			}
 		})
 	}
@@ -145,6 +145,8 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	testCases := []struct {
 		name           string
+		tsStart        uint64
+		tsEnd          uint64
 		key            telemetrytypes.TelemetryFieldKey
 		expectedResult string
 		expectedError  error
@@ -203,7 +205,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := fm.FieldFor(ctx, &tc.key)
+			result, err := fm.FieldFor(ctx, tc.tsStart, tc.tsEnd, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

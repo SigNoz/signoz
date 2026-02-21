@@ -41,62 +41,63 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
-		return timeSeriesV4Columns["labels"], nil
+		return []*schema.Column{timeSeriesV4Columns["labels"]}, nil
 	case telemetrytypes.FieldContextMetric:
 		col, ok := timeSeriesV4Columns[key.Name]
 		if !ok {
-			return nil, qbtypes.ErrColumnNotFound
+			return []*schema.Column{}, qbtypes.ErrColumnNotFound
 		}
-		return col, nil
+		return []*schema.Column{col}, nil
 	case telemetrytypes.FieldContextUnspecified:
 		col, ok := timeSeriesV4Columns[key.Name]
 		if !ok {
 			// if nothing is found, return labels column
 			// as we keep all the labels in the labels column
-			return timeSeriesV4Columns["labels"], nil
+			return []*schema.Column{timeSeriesV4Columns["labels"]}, nil
 		}
-		return col, nil
+		return []*schema.Column{col}, nil
 	}
 
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	column, err := m.getColumn(ctx, key)
+func (m *fieldMapper) FieldFor(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", column.Name, key.Name), nil
+		return fmt.Sprintf("JSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
 	case telemetrytypes.FieldContextMetric:
-		return column.Name, nil
+		return columns[0].Name, nil
 	case telemetrytypes.FieldContextUnspecified:
 		if slices.Contains(IntrinsicFields, key.Name) {
-			return column.Name, nil
+			return columns[0].Name, nil
 		}
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", column.Name, key.Name), nil
+		return fmt.Sprintf("JSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
 	}
 
-	return column.Name, nil
+	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
-	return m.getColumn(ctx, key)
+func (m *fieldMapper) ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+	return m.getColumn(ctx, tsStart, tsEnd, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, field)
+	colName, err := m.FieldFor(ctx, startNs, endNs, field)
 	if err != nil {
 		return "", err
 	}

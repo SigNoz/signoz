@@ -39,6 +39,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		telemetrylogs.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
 	)
 
 	lookupKeys := []telemetrytypes.MetricMetadataLookupKey{

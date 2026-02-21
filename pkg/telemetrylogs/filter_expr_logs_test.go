@@ -1,9 +1,11 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -15,19 +17,33 @@ import (
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search
 func TestFilterExprLogs(t *testing.T) {
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	ctx := context.Background()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap()
 
+	// for each key of resource attribute add evolution metadata
+	for i, telemetryKeys := range keys {
+		for j, telemetryKey := range telemetryKeys {
+			if telemetryKey.FieldContext == telemetrytypes.FieldContextResource {
+				keys[i][j].Evolutions = mockEvolutionData(releaseTime)
+			}
+		}
+	}
+
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
+		StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
+		EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
 	}
 
 	testCases := []struct {
@@ -466,7 +482,7 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
-		// fulltext with parenthesized expression
+		//fulltext with parenthesized expression
 		{
 			category:              "FREETEXT with parentheses",
 			query:                 "error (status.code=500 OR status.code=503)",
@@ -2386,7 +2402,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2442,6 +2458,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -2504,7 +2521,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {

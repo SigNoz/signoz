@@ -25,30 +25,34 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	startNs, endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	column, err := c.fm.ColumnFor(ctx, key)
+	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
-	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
-		valueType, value := InferDataType(value, operator, key)
-		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
-		if err != nil {
-			return "", err
+	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
+	for _, column := range columns {
+		if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+			valueType, value := InferDataType(value, operator, key)
+			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
+			if err != nil {
+				return "", err
+			}
+			return cond, nil
 		}
-		return cond, nil
 	}
 
 	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, key)
+	tblFieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -174,6 +178,31 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		var value any
+		column := columns[0]
+		if len(key.Evolutions) > 0 {
+			// we will use the corresponding column and its evolution entry for the query
+			newColumns, _, err := selectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+			if err != nil {
+				return "", err
+			}
+
+			if len(newColumns) == 0 {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
+			}
+
+			// This mean tblFieldName is with multiIf, we just need to do a null check.
+			if len(newColumns) > 1 {
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(tblFieldName), nil
+				} else {
+					return sb.IsNull(tblFieldName), nil
+				}
+			}
+
+			// otherwise we have to find the correct exist operator based on the column type
+			column = newColumns[0]
+		}
+
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
@@ -228,6 +257,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+
 		}
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
@@ -235,14 +265,15 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+
+	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -250,12 +281,12 @@ func (c *conditionBuilder) ConditionFor(
 	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
 		// with an exception for body json search
-		field, _ := c.fm.FieldFor(ctx, key)
+		field, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
 		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

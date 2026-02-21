@@ -153,6 +153,7 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			key.Indexes = intrinsicOrCalculatedField.Indexes
 			key.Materialized = intrinsicOrCalculatedField.Materialized
 			key.JSONPlan = intrinsicOrCalculatedField.JSONPlan
+			key.Evolutions = intrinsicOrCalculatedField.Evolutions
 			return actions
 
 		}
@@ -205,6 +206,7 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 		key.Indexes = matchingKey.Indexes
 		key.Materialized = matchingKey.Materialized
 		key.JSONPlan = matchingKey.JSONPlan
+		key.Evolutions = matchingKey.Evolutions
 
 		return actions
 	} else {

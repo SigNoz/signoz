@@ -12,25 +12,27 @@ import (
 // MockMetadataStore implements the MetadataStore interface for testing purposes
 type MockMetadataStore struct {
 	// Maps to store test data
-	KeysMap            map[string][]*telemetrytypes.TelemetryFieldKey
-	RelatedValuesMap   map[string][]string
-	AllValuesMap       map[string]*telemetrytypes.TelemetryFieldValues
-	TemporalityMap     map[string]metrictypes.Temporality
-	PromotedPathsMap   map[string]struct{}
-	LogsJSONIndexesMap map[string][]schemamigrator.Index
-	LookupKeysMap      map[telemetrytypes.MetricMetadataLookupKey]int64
+	KeysMap                    map[string][]*telemetrytypes.TelemetryFieldKey
+	RelatedValuesMap           map[string][]string
+	AllValuesMap               map[string]*telemetrytypes.TelemetryFieldValues
+	TemporalityMap             map[string]metrictypes.Temporality
+	PromotedPathsMap           map[string]struct{}
+	LogsJSONIndexesMap         map[string][]schemamigrator.Index
+	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
+	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
 func NewMockMetadataStore() *MockMetadataStore {
 	return &MockMetadataStore{
-		KeysMap:            make(map[string][]*telemetrytypes.TelemetryFieldKey),
-		RelatedValuesMap:   make(map[string][]string),
-		AllValuesMap:       make(map[string]*telemetrytypes.TelemetryFieldValues),
-		TemporalityMap:     make(map[string]metrictypes.Temporality),
-		PromotedPathsMap:   make(map[string]struct{}),
-		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
-		LookupKeysMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+		KeysMap:                    make(map[string][]*telemetrytypes.TelemetryFieldKey),
+		RelatedValuesMap:           make(map[string][]string),
+		AllValuesMap:               make(map[string]*telemetrytypes.TelemetryFieldValues),
+		TemporalityMap:             make(map[string]metrictypes.Temporality),
+		PromotedPathsMap:           make(map[string]struct{}),
+		LogsJSONIndexesMap:         make(map[string][]schemamigrator.Index),
+		ColumnEvolutionMetadataMap: make(map[string][]*telemetrytypes.EvolutionEntry),
+		LookupKeysMap:              make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 	}
 }
 
@@ -95,7 +97,49 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
+	// fetch and add evolutions
+	for k, v := range result {
+		keys := v
+		evolutionMetadataKeySelectors := getEvolutionMetadataKeySelectors(keys)
+		evolutions, err := m.GetColumnEvolutionMetadataMulti(ctx, evolutionMetadataKeySelectors)
+		if err != nil {
+			return nil, false, err
+		}
+		for i, key := range keys {
+			// first check if there is evolutions that with field name as __all__
+			// then check for specific field name
+			selector := &telemetrytypes.EvolutionSelector{
+				Signal:       key.Signal,
+				FieldContext: key.FieldContext,
+				FieldName:    "__all__",
+			}
+
+			if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+				keys[i].Evolutions = keyEvolutions
+			}
+
+			selector.FieldName = key.Name
+			if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+				keys[i].Evolutions = keyEvolutions
+			}
+		}
+		result[k] = keys
+	}
+
 	return result, true, nil
+}
+
+func getEvolutionMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
+	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	for _, keySelector := range keySelectors {
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       keySelector.Signal,
+			FieldContext: keySelector.FieldContext,
+			FieldName:    keySelector.Name,
+		}
+		metadataKeySelectors = append(metadataKeySelectors, selector)
+	}
+	return metadataKeySelectors
 }
 
 // GetKey returns a list of keys with the given name
@@ -308,6 +352,27 @@ func (m *MockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...stri
 // ListLogsJSONIndexes lists the JSON indexes for the logs table.
 func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
 	return m.LogsJSONIndexesMap, nil
+}
+
+func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
+	result := make(map[string][]*telemetrytypes.EvolutionEntry)
+
+	// Iterate over each selector
+	for i, selector := range selectors {
+		// Build the key: Signal:FieldContext:FieldName
+		selector.FieldName = "__all__"
+		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
+		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
+			result[key] = entries
+		}
+		selector.FieldName = selectors[i].FieldName
+		key = telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
+		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
+			result[key] = entries
+		}
+	}
+
+	return result, nil
 }
 
 func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {

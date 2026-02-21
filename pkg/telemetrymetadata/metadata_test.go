@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -38,6 +39,7 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		telemetrylogs.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
 	)
 }
 
@@ -382,5 +384,388 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	assert.True(t, complete)
 	assert.Empty(t, values.StringValues)
 	assert.Empty(t, values.BoolValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+var (
+	clickHouseQueryPatternWithFieldName    = "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*version.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*signal.*=.*field_context.*=.*field_name.*=.*field_name.*=.*"
+	clickHouseQueryPatternWithoutFieldName = "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*version.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*signal.*=.*field_context.*=.*ORDER BY.*release_time.*ASC"
+	clickHouseColumns                      = []cmock.ColumnType{
+		{Name: "signal", Type: "String"},
+		{Name: "column_name", Type: "String"},
+		{Name: "column_type", Type: "String"},
+		{Name: "field_context", Type: "String"},
+		{Name: "field_name", Type: "String"},
+		{Name: "version", Type: "UInt32"},
+		{Name: "release_time", Type: "Float64"},
+	}
+)
+
+func createMockRows(values [][]any) *cmock.Rows {
+	return cmock.NewRows(clickHouseColumns, values)
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_FetchFromClickHouse(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	values := [][]any{
+		{
+			"logs",
+			"resources_string",
+			"Map(LowCardinality(String), String)",
+			"resource",
+			"__all__",
+			uint32(0),
+			float64(releaseTime.UnixNano()),
+		},
+	}
+
+	selector := &telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+
+	rows := createMockRows(values)
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
+
+	expectedKey := "logs:resource:__all__"
+	require.Contains(t, result, expectedKey)
+	require.Len(t, result[expectedKey], 1)
+	assert.Equal(t, telemetrytypes.SignalLogs, result[expectedKey][0].Signal)
+	assert.Equal(t, "resources_string", result[expectedKey][0].ColumnName)
+	assert.Equal(t, "Map(LowCardinality(String), String)", result[expectedKey][0].ColumnType)
+	assert.Equal(t, telemetrytypes.FieldContextResource, result[expectedKey][0].FieldContext)
+	assert.Equal(t, "__all__", result[expectedKey][0].FieldName)
+	assert.Equal(t, releaseTime.UnixNano(), result[expectedKey][0].ReleaseTime.UnixNano())
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntries(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	releaseTime1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime2 := time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC)
+
+	values := [][]any{
+		{
+			"logs",
+			"resources_string",
+			"Map(LowCardinality(String), String)",
+			"resource",
+			"__all__",
+			uint32(0),
+			float64(releaseTime1.UnixNano()),
+		},
+		{
+			"logs",
+			"resource",
+			"JSON()",
+			"resource",
+			"__all__",
+			uint32(1),
+			float64(releaseTime2.UnixNano()),
+		},
+	}
+
+	rows := createMockRows(values)
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	selector := &telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
+
+	expectedKey := "logs:resource:__all__"
+	require.Contains(t, result, expectedKey)
+	require.Len(t, result[expectedKey], 2)
+	assert.Equal(t, "resources_string", result[expectedKey][0].ColumnName)
+	assert.Equal(t, "Map(LowCardinality(String), String)", result[expectedKey][0].ColumnType)
+	assert.Equal(t, "resource", result[expectedKey][0].FieldContext.StringValue())
+	assert.Equal(t, "__all__", result[expectedKey][0].FieldName)
+	assert.Equal(t, releaseTime1.UnixNano(), result[expectedKey][0].ReleaseTime.UnixNano())
+	assert.Equal(t, "resource", result[expectedKey][1].ColumnName)
+	assert.Equal(t, "JSON()", result[expectedKey][1].ColumnType)
+	assert.Equal(t, "resource", result[expectedKey][1].FieldContext.StringValue())
+	assert.Equal(t, "__all__", result[expectedKey][1].FieldName)
+	assert.Equal(t, releaseTime2.UnixNano(), result[expectedKey][1].ReleaseTime.UnixNano())
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithFieldName(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	releaseTime1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime2 := time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime3 := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
+
+	values := [][]any{
+		{
+			"logs",
+			"body",
+			"String",
+			"body",
+			"__all__",
+			uint32(0),
+			float64(releaseTime1.UnixNano()),
+		},
+		{
+			"logs",
+			"body_json",
+			"JSON()",
+			"body",
+			"__all__",
+			uint32(1),
+			float64(releaseTime2.UnixNano()),
+		},
+		{
+			"logs",
+			"body_promoted",
+			"JSON()",
+			"body",
+			"user.name",
+			uint32(2),
+			float64(releaseTime3.UnixNano()),
+		},
+	}
+
+	selector := &telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextBody,
+		FieldName:    "user.name",
+	}
+
+	rows := createMockRows(values)
+	mock.ExpectQuery(clickHouseQueryPatternWithFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextBody, selector.FieldName, "__all__").WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
+
+	// Check entries for "__all__" field name
+	expectedKeyAll := "logs:body:__all__"
+	require.Contains(t, result, expectedKeyAll)
+	require.Len(t, result[expectedKeyAll], 2)
+	assert.Equal(t, "body", result[expectedKeyAll][0].ColumnName)
+	assert.Equal(t, "String", result[expectedKeyAll][0].ColumnType)
+	assert.Equal(t, "body", result[expectedKeyAll][0].FieldContext.StringValue())
+	assert.Equal(t, "__all__", result[expectedKeyAll][0].FieldName)
+	assert.Equal(t, releaseTime1.UnixNano(), result[expectedKeyAll][0].ReleaseTime.UnixNano())
+	assert.Equal(t, "body_json", result[expectedKeyAll][1].ColumnName)
+	assert.Equal(t, "JSON()", result[expectedKeyAll][1].ColumnType)
+	assert.Equal(t, "body", result[expectedKeyAll][1].FieldContext.StringValue())
+	assert.Equal(t, "__all__", result[expectedKeyAll][1].FieldName)
+	assert.Equal(t, releaseTime2.UnixNano(), result[expectedKeyAll][1].ReleaseTime.UnixNano())
+
+	// Check entries for "user.name" field name
+	expectedKeyUser := "logs:body:user.name"
+	require.Contains(t, result, expectedKeyUser)
+	require.Len(t, result[expectedKeyUser], 1)
+	assert.Equal(t, "body_promoted", result[expectedKeyUser][0].ColumnName)
+	assert.Equal(t, "JSON()", result[expectedKeyUser][0].ColumnType)
+	assert.Equal(t, "body", result[expectedKeyUser][0].FieldContext.StringValue())
+	assert.Equal(t, "user.name", result[expectedKeyUser][0].FieldName)
+	assert.Equal(t, releaseTime3.UnixNano(), result[expectedKeyUser][0].ReleaseTime.UnixNano())
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_MultipleMetadataEntriesWithMultipleSelectors(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	// releaseTime1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime2 := time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime3 := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
+
+	values := [][]any{
+		{
+			"logs",
+			"body_json",
+			"JSON()",
+			"body",
+			"__all__",
+			uint32(0),
+			float64(releaseTime2.UnixNano()),
+		},
+		{
+			"logs",
+			"body_promoted",
+			"JSON()",
+			"body",
+			"user.name",
+			uint32(1),
+			float64(releaseTime3.UnixNano()),
+		},
+		{
+			"traces",
+			"resources_string",
+			"map()",
+			telemetrytypes.FieldContextResource,
+			"__all__",
+			uint32(0),
+			float64(releaseTime2.UnixNano()),
+		},
+		{
+			telemetrytypes.SignalTraces,
+			"resource",
+			"JSON()",
+			telemetrytypes.FieldContextResource,
+			"__all__",
+			uint32(1),
+			float64(releaseTime3.UnixNano()),
+		},
+	}
+
+	selectors := []*telemetrytypes.EvolutionSelector{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			FieldContext: telemetrytypes.FieldContextBody,
+			FieldName:    "user.name",
+		},
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "service.name",
+		},
+	}
+
+	query := `SELECT signal, column_name, column_type, field_context, field_name, version, release_time FROM signoz_metadata\.distributed_column_evolution_metadata WHERE ` +
+		`\(\(signal = \? AND \(field_context = \? AND \(field_name = \? OR field_name = \?\)\)\) OR ` +
+		`\(signal = \? AND \(field_context = \? AND \(field_name = \? OR field_name = \?\)\)\)\) ` +
+		`ORDER BY release_time ASC`
+	rows := createMockRows(values)
+	mock.ExpectQuery(query).WithArgs(
+		telemetrytypes.SignalLogs, telemetrytypes.FieldContextBody, selectors[0].FieldName, "__all__",
+		telemetrytypes.SignalTraces, telemetrytypes.FieldContextResource, selectors[1].FieldName, "__all__",
+	).WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	_, err := metadata.GetColumnEvolutionMetadataMulti(ctx, selectors)
+	require.NoError(t, err)
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_EmptyResultFromClickHouse(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	rows := createMockRows([][]any{})
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnRows(rows)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	selector := &telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.NoError(t, err)
+
+	assert.Empty(t, result)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_ClickHouseQueryError(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	mock.ExpectQuery(clickHouseQueryPatternWithoutFieldName).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__").WillReturnError(assert.AnError)
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	selector := &telemetrytypes.EvolutionSelector{
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+	_, err := metadata.GetColumnEvolutionMetadataMulti(ctx, []*telemetrytypes.EvolutionSelector{selector})
+	require.Error(t, err)
+}
+
+func TestKeyEvolutionMetadata_Get_Multi_MultipleSelectors(t *testing.T) {
+	ctx := context.Background()
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := telemetryStore.Mock()
+
+	releaseTime1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	releaseTime2 := time.Date(2024, 2, 15, 10, 0, 0, 0, time.UTC)
+
+	values := [][]any{
+		{
+			telemetrytypes.SignalLogs,
+			"resources_string",
+			"Map(LowCardinality(String), String)",
+			telemetrytypes.FieldContextResource,
+			"__all__",
+			uint32(0),
+			float64(releaseTime1.UnixNano()),
+		},
+		{
+			telemetrytypes.SignalLogs,
+			"body",
+			"JSON()",
+			telemetrytypes.FieldContextBody,
+			"__all__",
+			uint32(1),
+			float64(releaseTime2.UnixNano()),
+		},
+	}
+
+	// When multiple selectors are provided, the query will have OR conditions
+	// The pattern should match queries with multiple OR clauses
+	queryPattern := "SELECT.*signal.*column_name.*column_type.*field_context.*field_name.*release_time.*FROM.*distributed_column_evolution_metadata.*WHERE.*ORDER BY.*release_time.*ASC"
+	rows := createMockRows(values)
+	mock.ExpectQuery(queryPattern).WillReturnRows(rows).WithArgs(telemetrytypes.SignalLogs, telemetrytypes.FieldContextResource, "__all__", "__all__", telemetrytypes.SignalLogs, telemetrytypes.FieldContextBody, "__all__", "__all__")
+
+	metadata := newTestTelemetryMetaStoreTestHelper(telemetryStore)
+	selectors := []*telemetrytypes.EvolutionSelector{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			FieldContext: telemetrytypes.FieldContextBody,
+			FieldName:    "__all__",
+		},
+	}
+	result, err := metadata.GetColumnEvolutionMetadataMulti(ctx, selectors)
+	require.NoError(t, err)
+
+	// Should have entries for both selectors
+	expectedKey1 := "logs:resource:__all__"
+	expectedKey2 := "logs:body:__all__"
+	require.Contains(t, result, expectedKey1)
+	require.Contains(t, result, expectedKey2)
+	require.Len(t, result[expectedKey1], 1)
+	require.Len(t, result[expectedKey2], 1)
+	assert.Equal(t, "resources_string", result[expectedKey1][0].ColumnName)
+	assert.Equal(t, "body", result[expectedKey2][0].ColumnName)
+
 	require.NoError(t, mock.ExpectationsWereMet())
 }

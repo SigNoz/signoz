@@ -66,6 +66,7 @@ func newProvider(
 		telemetrylogs.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
 	)
 
 	// Create trace statement builder
