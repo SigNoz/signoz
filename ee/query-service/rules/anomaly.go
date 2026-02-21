@@ -251,7 +251,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
 			continue
 		}
-		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		results, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})
@@ -319,7 +319,7 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
 			continue
 		}
-		results, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		results, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})

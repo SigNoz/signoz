@@ -480,7 +480,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
 			continue
 		}
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})
@@ -555,7 +555,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
 			continue
 		}
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})

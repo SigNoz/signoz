@@ -2,6 +2,7 @@ package transition
 
 import (
 	"fmt"
+	"math"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -36,6 +37,11 @@ func ConvertV5TimeSeriesDataToV4Result(v5Data *qbtypes.TimeSeriesData) *v3.Resul
 
 		for _, tsValue := range ts.Values {
 			if tsValue.Partial {
+				continue
+			}
+
+			// skip the point if it is nan, inf, or timestamp is zero
+			if math.IsNaN(tsValue.Value) || math.IsInf(tsValue.Value, 0) || tsValue.Timestamp == 0 {
 				continue
 			}
 

@@ -83,7 +83,7 @@ func (eval EvalData) HasActiveAlert(sampleLabelFp uint64) bool {
 type RuleThreshold interface {
 	// Eval runs the given series through the threshold rules
 	// using the given EvalData and returns the matching series
-	Eval(series v3.Series, unit string, evalData EvalData) (Vector, error)
+	Eval(series *v3.Series, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
 }
 
@@ -122,7 +122,7 @@ func (r BasicRuleThresholds) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalData) (Vector, error) {
+func (r BasicRuleThresholds) Eval(series *v3.Series, unit string, evalData EvalData) (Vector, error) {
 	var resultVector Vector
 	thresholds := []BasicRuleThreshold(r)
 	sortThresholds(thresholds)
@@ -137,8 +137,6 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 			resultVector = append(resultVector, smpl)
 			continue
 		} else if evalData.SendUnmatched {
-			// Sanitise the series points to remove any NaN or Inf values
-			series.Points = removeGroupinSetPoints(series)
 			if len(series.Points) == 0 {
 				continue
 			}
@@ -255,21 +253,11 @@ func (b BasicRuleThreshold) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (b BasicRuleThreshold) matchesRecoveryThreshold(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) matchesRecoveryThreshold(series *v3.Series, ruleUnit string) (Sample, bool) {
 	return b.shouldAlertWithTarget(series, b.recoveryTarget(ruleUnit))
 }
-func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlert(series *v3.Series, ruleUnit string) (Sample, bool) {
 	return b.shouldAlertWithTarget(series, b.target(ruleUnit))
-}
-
-func removeGroupinSetPoints(series v3.Series) []v3.Point {
-	var result []v3.Point
-	for _, s := range series.Points {
-		if s.Timestamp >= 0 && !math.IsNaN(s.Value) && !math.IsInf(s.Value, 0) {
-			result = append(result, s)
-		}
-	}
-	return result
 }
 
 // PrepareSampleLabelsForRule prepares the labels for the sample to be used in the alerting.
@@ -284,13 +272,10 @@ func PrepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName st
 	return lb.Labels()
 }
 
-func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float64) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlertWithTarget(series *v3.Series, target float64) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample
 	lbls := PrepareSampleLabelsForRule(series.Labels, b.Name)
-
-	series.Points = removeGroupinSetPoints(series)
-
 	// nothing to evaluate
 	if len(series.Points) == 0 {
 		return alertSmpl, false
