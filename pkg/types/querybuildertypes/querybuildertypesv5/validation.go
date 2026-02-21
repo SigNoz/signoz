@@ -443,7 +443,7 @@ func (r *QueryRangeRequest) Validate() error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace, RequestTypeDistribution, RequestTypeHeatmap:
 		// Valid request types
 	default:
 		return errors.NewInvalidInputf(
@@ -451,7 +451,7 @@ func (r *QueryRangeRequest) Validate() error {
 			"invalid request type: %s",
 			r.RequestType,
 		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar",
+			"Valid request types are: raw, timeseries, scalar, trace, distribution, bucket",
 		)
 	}
 

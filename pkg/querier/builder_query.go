@@ -52,7 +52,9 @@ func newBuilderQuery[T any](
 func (q *builderQuery[T]) Fingerprint() string {
 
 	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries {
+		q.spec.Signal == telemetrytypes.SignalLogs) &&
+		q.kind != qbtypes.RequestTypeTimeSeries &&
+		q.kind != qbtypes.RequestTypeHeatmap {
 		// No caching for non-timeseries queries
 		return ""
 	}
@@ -60,6 +62,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
 	parts := []string{"builder"}
+
+	// Add request type
+	parts = append(parts, fmt.Sprintf("type=%s", q.kind.StringValue()))
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
@@ -161,6 +166,10 @@ func (q *builderQuery[T]) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
 }
 
+func (q *builderQuery[T]) GetKind() qbtypes.RequestType {
+	return q.kind
+}
+
 // must be a single query, ordered by timestamp (logs need an id tie-break).
 func (q *builderQuery[T]) isWindowList() bool {
 	if len(q.spec.Order) == 0 {
@@ -240,8 +249,10 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	kind := q.kind
-	// all metric queries are time series then reduced if required
-	if q.spec.Signal == telemetrytypes.SignalMetrics {
+	// All metric queries are time series then reduced if required
+	// Except heatmap requests which should be executed as-is
+	if q.spec.Signal == telemetrytypes.SignalMetrics &&
+		kind != qbtypes.RequestTypeHeatmap {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 

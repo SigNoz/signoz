@@ -555,8 +555,10 @@ func (q *querier) run(
 	}
 
 	for name, query := range qs {
-		// Skip cache if NoCache is set, or if cache is not available
-		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
+		// Skip cache if NoCache is set or cache is not available
+		skipCache := req.NoCache || q.bucketCache == nil || query.Fingerprint() == ""
+
+		if skipCache {
 			if req.NoCache {
 				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", "query", name)
 			} else {
@@ -566,6 +568,22 @@ func (q *querier) run(
 			qbEvent.HasData = qbEvent.HasData || hasData(result)
 			if err != nil {
 				return nil, err
+			}
+			results[name] = result.Value
+			warnings = append(warnings, result.Warnings...)
+			warningsDocURL = result.WarningsDocURL
+			stats.RowsScanned += result.Stats.RowsScanned
+			stats.BytesScanned += result.Stats.BytesScanned
+			stats.DurationMS += result.Stats.DurationMS
+		} else if req.RequestType == qbtypes.RequestTypeHeatmap {
+			result, err := q.executeHeatmapWithCache(ctx, orgID, query, steps[name])
+			qbEvent.HasData = qbEvent.HasData || hasData(result)
+			if err != nil {
+				return nil, err
+			}
+			switch v := result.Value.(type) {
+			case *qbtypes.TimeSeriesData:
+				v.QueryName = name
 			}
 			results[name] = result.Value
 			warnings = append(warnings, result.Warnings...)
@@ -645,6 +663,25 @@ func (q *querier) run(
 		}
 	}
 	return resp, nil
+}
+
+// executeHeatmapWithCache executes a heatmap query with cache support
+func (q *querier) executeHeatmapWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step) (*qbtypes.Result, error) {
+	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
+
+	// Exact cache hit - no missing ranges
+	if len(missingRanges) == 0 && cachedResult != nil {
+		return cachedResult, nil
+	}
+
+	// Cache miss - execute full query (partial merging not supported for heatmaps)
+	result, err := query.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	q.bucketCache.Put(ctx, orgID, query, step, result)
+	return result, nil
 }
 
 // executeWithCache executes a query using the bucket cache
@@ -900,6 +937,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 					// Create a copy to avoid modifying the cached data
 					seriesCopy := &qbtypes.TimeSeries{
 						Labels: series.Labels,
+						Bounds: series.Bounds,
 						Values: make([]*qbtypes.TimeSeriesValue, len(series.Values)),
 					}
 					copy(seriesCopy.Values, series.Values)
