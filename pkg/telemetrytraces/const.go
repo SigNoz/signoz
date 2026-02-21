@@ -77,6 +77,13 @@ var (
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
+		"events": {
+			Name:          "events",
+			Description:   "Span events",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeArrayString,
+		},
 	}
 	IntrinsicFieldsDeprecated = map[string]telemetrytypes.TelemetryFieldKey{
 		"traceID": {

@@ -452,7 +452,7 @@ class Traces(ABC):
         self.events = []
         for event in events:
             self.events.append(
-                json.dumps([event.name, event.time_unix_nano, event.attribute_map])
+                json.dumps([event.name, int(event.time_unix_nano), event.attribute_map])
             )
 
             # Create error events for exception events (following Go exporter logic)

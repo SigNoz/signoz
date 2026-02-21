@@ -301,9 +301,15 @@ func (m *defaultFieldMapper) FieldFor(
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
 		}
+	case schema.ColumnTypeEnumArray:
+		valueType := column.Type.(schema.ArrayColumnType).ElementType
+		if valueType.GetType() != schema.ColumnTypeEnumString {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for array column type %s", valueType, column.Type)
+		}
+		return fmt.Sprintf("arrayStringConcat(%s, ' ')", column.Name), nil
 	}
 	// should not reach here
-	return column.Name, nil
+	return column.Name, errors.NewInvalidInputf(errors.CodeInternal, "unable to identify field for %s", key)
 }
 
 // ColumnExpressionFor returns the column expression for the given field

@@ -1,10 +1,16 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import List
+from typing import Any, Callable, List
 
 import requests
 
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import (
+    TraceIdGenerator,
+    Traces,
+    TracesEvent,
+    TracesKind,
+    TracesStatusCode,
+)
 
 
 def format_timestamp(dt: datetime) -> str:
@@ -38,7 +44,7 @@ def assert_identical_query_response(
         ), "Response data do not match"
 
 
-def generate_traces_with_corrupt_metadata() -> List[Traces]:
+def generate_traces_with_corrupt_metadata(with_trace_events=False) -> List[Traces]:
     """
     Specifically, entries with 'id', 'timestamp', 'trace_id' and 'duration_nano' fields in metadata
     """
@@ -71,6 +77,17 @@ def generate_traces_with_corrupt_metadata() -> List[Traces]:
                 "cloud.account.id": "000",
                 "trace_id": "corrupt_data",
             },
+            events=(
+                []
+                if not with_trace_events
+                else [
+                    TracesEvent(
+                        name="user_login",
+                        timestamp=now - timedelta(seconds=4),
+                        attribute_map={"login.session.id": "123"},
+                    )
+                ]
+            ),
             attributes={
                 "net.transport": "IP.TCP",
                 "http.scheme": "http",
@@ -130,6 +147,17 @@ def generate_traces_with_corrupt_metadata() -> List[Traces]:
                 "http.status_code": "404",
                 "id": "1",
             },
+            events=(
+                []
+                if not with_trace_events
+                else [
+                    TracesEvent(
+                        name="user_logout",
+                        timestamp=now - timedelta(seconds=4),
+                        attribute_map={"login.session.id": "123"},
+                    )
+                ]
+            ),
         ),
         Traces(
             timestamp=now - timedelta(seconds=1),
@@ -157,4 +185,16 @@ def generate_traces_with_corrupt_metadata() -> List[Traces]:
                 "id": 1,
             },
         ),
+    ]
+
+
+def default_select_fields_results_lambda(i: int) -> Callable[[List[Traces]], List[Any]]:
+    return lambda x: [
+        x[i].duration_nano,
+        x[i].name,
+        x[i].response_status_code,
+        x[i].service_name,
+        x[i].span_id,
+        format_timestamp(x[i].timestamp),
+        x[i].trace_id,
     ]
