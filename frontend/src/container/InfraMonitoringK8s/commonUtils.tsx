@@ -5,6 +5,7 @@
 /* eslint-disable prefer-destructuring */
 
 import { useMemo } from 'react';
+import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Table, Tooltip, Typography } from 'antd';
 import { Progress } from 'antd/lib';
@@ -12,6 +13,8 @@ import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
+import { SuccessResponse } from 'types/api';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	IBuilderQuery,
 	TagFilterItem,
@@ -187,28 +190,35 @@ export function EventContents({
 	);
 }
 
-export const getMetricsTableData = (data: any): any[] => {
-	if (data?.params && data?.payload?.data?.result?.length) {
-		const rowsData = (data?.payload.data.result[0] as any).table.rows;
-		const columnsData = (data?.payload.data.result[0] as any).table.columns;
-		const builderQueries = data.params?.compositeQuery?.builderQueries;
-		const columns = columnsData.map((columnData: any) => {
-			if (columnData.isValueColumn) {
+export const getMetricsTableData = (
+	data: SuccessResponse<MetricRangePayloadProps> | undefined,
+): { rows: any[]; columns: any[] }[] => {
+	const params = data?.params as any;
+	if (params && data?.payload?.data?.result?.length) {
+		const result = data.payload.data.result[0] as any;
+		if (result.table) {
+			const rowsData = result.table.rows || [];
+			const columnsData = result.table.columns || [];
+			const builderQueries = params.compositeQuery?.builderQueries || {};
+
+			const columns = columnsData.map((columnData: any) => {
+				if (columnData.isValueColumn) {
+					return {
+						key: columnData.name,
+						label: builderQueries[columnData.name]?.legend || columnData.name,
+						isValueColumn: true,
+					};
+				}
 				return {
 					key: columnData.name,
-					label: builderQueries[columnData.name].legend,
-					isValueColumn: true,
+					label: columnData.name,
+					isValueColumn: false,
 				};
-			}
-			return {
-				key: columnData.name,
-				label: columnData.name,
-				isValueColumn: false,
-			};
-		});
+			});
 
-		const rows = rowsData.map((rowData: any) => rowData.data);
-		return [{ rows, columns }];
+			const rows = rowsData.map((rowData: any) => rowData.data);
+			return [{ rows, columns }];
+		}
 	}
 	return [{ rows: [], columns: [] }];
 };
@@ -260,6 +270,27 @@ export const filterDuplicateFilters = (
 	return uniqueFilters;
 };
 
+export const safeParseJSON = <T,>(value: string): T | null => {
+	if (!value) {
+		return null;
+	}
+
+	try {
+		// Attempting to parse potentially untrusted user input from the URL.
+		// If the user pastes a corrupted link or modifies the URL manually (e.g., ?filters=invalidJSON),
+		// JSON.parse() will throw a SyntaxError. Without this try/catch block, that unhandled
+		// exception would bubble up during the React component render cycle and crash.
+		return JSON.parse(value) as T;
+	} catch (e) {
+		// By catching the SyntaxError, we gracefully degrade the user experience.
+		// Instead of crashing, the app ignores the malformed URL parameter and cleanly
+		// falls back to the default state (e.g., no filters applied).
+		console.error('Error parsing JSON from URL parameter:', e);
+		// TODO: Should we capture this error in Sentry?
+		return null;
+	}
+};
+
 export const getOrderByFromParams = (
 	searchParams: URLSearchParams,
 	returnNullAsDefault = false,
@@ -271,9 +302,12 @@ export const getOrderByFromParams = (
 		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
 	);
 	if (orderByFromParams) {
-		const decoded = decodeURIComponent(orderByFromParams);
-		const parsed = JSON.parse(decoded);
-		return parsed as { columnName: string; order: 'asc' | 'desc' };
+		const parsed = safeParseJSON<{ columnName: string; order: 'asc' | 'desc' }>(
+			orderByFromParams,
+		);
+		if (parsed) {
+			return parsed;
+		}
 	}
 	if (returnNullAsDefault) {
 		return null;
@@ -287,13 +321,7 @@ export const getFiltersFromParams = (
 ): IBuilderQuery['filters'] | null => {
 	const filtersFromParams = searchParams.get(queryKey);
 	if (filtersFromParams) {
-		try {
-			const decoded = decodeURIComponent(filtersFromParams);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['filters'];
-		} catch (error) {
-			return null;
-		}
+		return safeParseJSON<IBuilderQuery['filters']>(filtersFromParams);
 	}
 	return null;
 };

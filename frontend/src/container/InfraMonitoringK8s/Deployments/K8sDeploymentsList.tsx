@@ -28,7 +28,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
-import { getOrderByFromParams } from '../commonUtils';
+import { getOrderByFromParams, safeParseJSON } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
@@ -106,9 +106,10 @@ function K8sDeploymentsList({
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
 		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
 		if (groupBy) {
-			const decoded = decodeURIComponent(groupBy);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['groupBy'];
+			const parsed = safeParseJSON<IBuilderQuery['groupBy']>(groupBy);
+			if (parsed) {
+				return parsed;
+			}
 		}
 		return [];
 	});
