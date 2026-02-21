@@ -54,6 +54,10 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["ignore_data_skipping_indices"] = h.settings.IgnoreDataSkippingIndices
 	}
 
+	if h.settings.PreferColumnNameToAlias != 0 {
+		settings["prefer_column_name_to_alias"] = h.settings.PreferColumnNameToAlias
+	}
+
 	if ctx.Value("clickhouse_max_threads") != nil {
 		if maxThreads, ok := ctx.Value("clickhouse_max_threads").(int); ok {
 			settings["max_threads"] = maxThreads
