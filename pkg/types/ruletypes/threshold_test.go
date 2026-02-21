@@ -6,16 +6,24 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 	target := 100.0
 
+	makeLabel := func(name, value string) *qbtypes.Label {
+		return &qbtypes.Label{Key: telemetrytypes.TelemetryFieldKey{Name: name}, Value: value}
+	}
+	makeValue := func(value float64, ts int64) *qbtypes.TimeSeriesValue {
+		return &qbtypes.TimeSeriesValue{Value: value, Timestamp: ts}
+	}
+
 	tests := []struct {
 		name        string
 		threshold   BasicRuleThreshold
-		series      v3.Series
+		series      qbtypes.TimeSeries
 		ruleUnit    string
 		shouldAlert bool
 	}{
@@ -28,11 +36,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.15, Timestamp: 1000}, // 150ms in seconds
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(0.15, 1000)}, // 150ms in seconds
 			},
 			ruleUnit:    "s",
 			shouldAlert: true,
@@ -46,11 +52,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.05, Timestamp: 1000}, // 50ms in seconds
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(0.05, 1000)}, // 50ms in seconds
 			},
 			ruleUnit:    "s",
 			shouldAlert: false,
@@ -64,11 +68,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 150000, Timestamp: 1000}, // 150000ms = 150s
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(150000, 1000)}, // 150000ms = 150s
 			},
 			ruleUnit:    "ms",
 			shouldAlert: true,
@@ -83,11 +85,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.15, Timestamp: 1000}, // 0.15KiB ≈ 153.6 bytes
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(0.15, 1000)}, // 0.15KiB ≈ 153.6 bytes
 			},
 			ruleUnit:    "kbytes",
 			shouldAlert: true,
@@ -101,11 +101,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.15, Timestamp: 1000},
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(0.15, 1000)},
 			},
 			ruleUnit:    "mbytes",
 			shouldAlert: true,
@@ -120,11 +118,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsBelow,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.05, Timestamp: 1000}, // 50ms in seconds
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(0.05, 1000)}, // 50ms in seconds
 			},
 			ruleUnit:    "s",
 			shouldAlert: true,
@@ -138,12 +134,12 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   OnAverage,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.08, Timestamp: 1000}, // 80ms
-					{Value: 0.12, Timestamp: 2000}, // 120ms
-					{Value: 0.15, Timestamp: 3000}, // 150ms
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{
+					makeValue(0.08, 1000), // 80ms
+					makeValue(0.12, 2000), // 120ms
+					makeValue(0.15, 3000), // 150ms
 				},
 			},
 			ruleUnit:    "s",
@@ -158,12 +154,12 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   InTotal,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.04, Timestamp: 1000}, // 40MB
-					{Value: 0.05, Timestamp: 2000}, // 50MB
-					{Value: 0.03, Timestamp: 3000}, // 30MB
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{
+					makeValue(0.04, 1000), // 40MB
+					makeValue(0.05, 2000), // 50MB
+					makeValue(0.03, 3000), // 30MB
 				},
 			},
 			ruleUnit:    "decgbytes",
@@ -178,12 +174,12 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AllTheTimes,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.11, Timestamp: 1000}, // 110ms
-					{Value: 0.12, Timestamp: 2000}, // 120ms
-					{Value: 0.15, Timestamp: 3000}, // 150ms
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{
+					makeValue(0.11, 1000), // 110ms
+					makeValue(0.12, 2000), // 120ms
+					makeValue(0.15, 3000), // 150ms
 				},
 			},
 			ruleUnit:    "s",
@@ -198,11 +194,11 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   Last,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.15, Timestamp: 1000}, // 150kB
-					{Value: 0.05, Timestamp: 2000}, // 50kB (last value)
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{
+					makeValue(0.15, 1000), // 150kB
+					makeValue(0.05, 2000), // 50kB (last value)
 				},
 			},
 			ruleUnit:    "decmbytes",
@@ -218,11 +214,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 0.15, Timestamp: 1000},
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(0.15, 1000)},
 			},
 			ruleUnit:    "KBs",
 			shouldAlert: true,
@@ -237,11 +231,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 150, Timestamp: 1000}, // 150ms
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(150, 1000)}, // 150ms
 			},
 			ruleUnit:    "ms",
 			shouldAlert: true,
@@ -256,11 +248,9 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				MatchType:   AtleastOnce,
 				CompareOp:   ValueIsAbove,
 			},
-			series: v3.Series{
-				Labels: map[string]string{"service": "test"},
-				Points: []v3.Point{
-					{Value: 150, Timestamp: 1000}, // 150 (unitless)
-				},
+			series: qbtypes.TimeSeries{
+				Labels: []*qbtypes.Label{makeLabel("service", "test")},
+				Values: []*qbtypes.TimeSeriesValue{makeValue(150, 1000)}, // 150 (unitless)
 			},
 			ruleUnit:    "",
 			shouldAlert: true,

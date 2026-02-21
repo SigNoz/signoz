@@ -8,8 +8,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/converter"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -83,7 +83,7 @@ func (eval EvalData) HasActiveAlert(sampleLabelFp uint64) bool {
 type RuleThreshold interface {
 	// Eval runs the given series through the threshold rules
 	// using the given EvalData and returns the matching series
-	Eval(series v3.Series, unit string, evalData EvalData) (Vector, error)
+	Eval(series qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
 }
 
@@ -122,10 +122,11 @@ func (r BasicRuleThresholds) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalData) (Vector, error) {
+func (r BasicRuleThresholds) Eval(series qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error) {
 	var resultVector Vector
 	thresholds := []BasicRuleThreshold(r)
 	sortThresholds(thresholds)
+	seriesLabels := series.LabelsMap()
 	for _, threshold := range thresholds {
 		smpl, shouldAlert := threshold.shouldAlert(series, unit)
 		if shouldAlert {
@@ -137,15 +138,15 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 			resultVector = append(resultVector, smpl)
 			continue
 		} else if evalData.SendUnmatched {
-			// Sanitise the series points to remove any NaN or Inf values
-			series.Points = removeGroupinSetPoints(series)
-			if len(series.Points) == 0 {
+			// Sanitise the series values to remove any NaN, Inf, or partial values
+			values := filterValidValues(series.Values)
+			if len(values) == 0 {
 				continue
 			}
-			// prepare the sample with the first point of the series
+			// prepare the sample with the first value of the series
 			smpl := Sample{
-				Point:      Point{T: series.Points[0].Timestamp, V: series.Points[0].Value},
-				Metric:     PrepareSampleLabelsForRule(series.Labels, threshold.Name),
+				Point:      Point{T: values[0].Timestamp, V: values[0].Value},
+				Metric:     PrepareSampleLabelsForRule(seriesLabels, threshold.Name),
 				Target:     *threshold.TargetValue,
 				TargetUnit: threshold.TargetUnit,
 			}
@@ -160,7 +161,7 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 		if threshold.RecoveryTarget == nil {
 			continue
 		}
-		sampleLabels := PrepareSampleLabelsForRule(series.Labels, threshold.Name)
+		sampleLabels := PrepareSampleLabelsForRule(seriesLabels, threshold.Name)
 		alertHash := sampleLabels.Hash()
 		// check if alert is active and then check if recovery threshold matches
 		if evalData.HasActiveAlert(alertHash) {
@@ -255,18 +256,23 @@ func (b BasicRuleThreshold) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (b BasicRuleThreshold) matchesRecoveryThreshold(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) matchesRecoveryThreshold(series qbtypes.TimeSeries, ruleUnit string) (Sample, bool) {
 	return b.shouldAlertWithTarget(series, b.recoveryTarget(ruleUnit))
 }
-func (b BasicRuleThreshold) shouldAlert(series v3.Series, ruleUnit string) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlert(series qbtypes.TimeSeries, ruleUnit string) (Sample, bool) {
 	return b.shouldAlertWithTarget(series, b.target(ruleUnit))
 }
 
-func removeGroupinSetPoints(series v3.Series) []v3.Point {
-	var result []v3.Point
-	for _, s := range series.Points {
-		if s.Timestamp >= 0 && !math.IsNaN(s.Value) && !math.IsInf(s.Value, 0) {
-			result = append(result, s)
+// filterValidValues returns only the values that are valid for alert evaluation:
+// non-partial, non-NaN, non-Inf, and with non-negative timestamps.
+func filterValidValues(values []*qbtypes.TimeSeriesValue) []*qbtypes.TimeSeriesValue {
+	var result []*qbtypes.TimeSeriesValue
+	for _, v := range values {
+		if v.Partial {
+			continue
+		}
+		if v.Timestamp >= 0 && !math.IsNaN(v.Value) && !math.IsInf(v.Value, 0) {
+			result = append(result, v)
 		}
 	}
 	return result
@@ -284,15 +290,15 @@ func PrepareSampleLabelsForRule(seriesLabels map[string]string, thresholdName st
 	return lb.Labels()
 }
 
-func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float64) (Sample, bool) {
+func (b BasicRuleThreshold) shouldAlertWithTarget(series qbtypes.TimeSeries, target float64) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample
-	lbls := PrepareSampleLabelsForRule(series.Labels, b.Name)
+	lbls := PrepareSampleLabelsForRule(series.LabelsMap(), b.Name)
 
-	series.Points = removeGroupinSetPoints(series)
+	values := filterValidValues(series.Values)
 
 	// nothing to evaluate
-	if len(series.Points) == 0 {
+	if len(values) == 0 {
 		return alertSmpl, false
 	}
 
@@ -300,7 +306,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 	case AtleastOnce:
 		// If any sample matches the condition, the rule is firing.
 		if b.CompareOp == ValueIsAbove {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value > target {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
@@ -308,7 +314,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				}
 			}
 		} else if b.CompareOp == ValueIsBelow {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value < target {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
@@ -316,7 +322,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				}
 			}
 		} else if b.CompareOp == ValueIsEq {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value == target {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
@@ -324,7 +330,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				}
 			}
 		} else if b.CompareOp == ValueIsNotEq {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value != target {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
@@ -332,7 +338,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				}
 			}
 		} else if b.CompareOp == ValueOutsideBounds {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if math.Abs(smpl.Value) >= target {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
@@ -345,7 +351,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 		shouldAlert = true
 		alertSmpl = Sample{Point: Point{V: target}, Metric: lbls}
 		if b.CompareOp == ValueIsAbove {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value <= target {
 					shouldAlert = false
 					break
@@ -354,7 +360,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 			// use min value from the series
 			if shouldAlert {
 				var minValue float64 = math.Inf(1)
-				for _, smpl := range series.Points {
+				for _, smpl := range values {
 					if smpl.Value < minValue {
 						minValue = smpl.Value
 					}
@@ -362,7 +368,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lbls}
 			}
 		} else if b.CompareOp == ValueIsBelow {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value >= target {
 					shouldAlert = false
 					break
@@ -370,7 +376,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 			}
 			if shouldAlert {
 				var maxValue float64 = math.Inf(-1)
-				for _, smpl := range series.Points {
+				for _, smpl := range values {
 					if smpl.Value > maxValue {
 						maxValue = smpl.Value
 					}
@@ -378,14 +384,14 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lbls}
 			}
 		} else if b.CompareOp == ValueIsEq {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value != target {
 					shouldAlert = false
 					break
 				}
 			}
 		} else if b.CompareOp == ValueIsNotEq {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if smpl.Value == target {
 					shouldAlert = false
 					break
@@ -393,7 +399,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 			}
 			// use any non-inf or nan value from the series
 			if shouldAlert {
-				for _, smpl := range series.Points {
+				for _, smpl := range values {
 					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
 						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 						break
@@ -401,7 +407,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 				}
 			}
 		} else if b.CompareOp == ValueOutsideBounds {
-			for _, smpl := range series.Points {
+			for _, smpl := range values {
 				if math.Abs(smpl.Value) < target {
 					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = false
@@ -412,7 +418,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 	case OnAverage:
 		// If the average of all samples matches the condition, the rule is firing.
 		var sum, count float64
-		for _, smpl := range series.Points {
+		for _, smpl := range values {
 			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
 				continue
 			}
@@ -446,7 +452,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 		// If the sum of all samples matches the condition, the rule is firing.
 		var sum float64
 
-		for _, smpl := range series.Points {
+		for _, smpl := range values {
 			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
 				continue
 			}
@@ -477,21 +483,22 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series v3.Series, target float
 	case Last:
 		// If the last sample matches the condition, the rule is firing.
 		shouldAlert = false
-		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
+		lastValue := values[len(values)-1].Value
+		alertSmpl = Sample{Point: Point{V: lastValue}, Metric: lbls}
 		if b.CompareOp == ValueIsAbove {
-			if series.Points[len(series.Points)-1].Value > target {
+			if lastValue > target {
 				shouldAlert = true
 			}
 		} else if b.CompareOp == ValueIsBelow {
-			if series.Points[len(series.Points)-1].Value < target {
+			if lastValue < target {
 				shouldAlert = true
 			}
 		} else if b.CompareOp == ValueIsEq {
-			if series.Points[len(series.Points)-1].Value == target {
+			if lastValue == target {
 				shouldAlert = true
 			}
 		} else if b.CompareOp == ValueIsNotEq {
-			if series.Points[len(series.Points)-1].Value != target {
+			if lastValue != target {
 				shouldAlert = true
 			}
 		}

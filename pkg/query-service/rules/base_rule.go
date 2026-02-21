@@ -625,7 +625,7 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) (map[string][]s
 
 // FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
 // Returns the filtered series (old ones) excluding new series that are still within the grace period.
-func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*qbtypes.TimeSeries) ([]*qbtypes.TimeSeries, error) {
 	// Extract metric names and groupBy keys
 	metricToGroupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
@@ -642,7 +642,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	seriesIdxToLookupKeys := make(map[int][]telemetrytypes.MetricMetadataLookupKey) // series index -> lookup keys
 
 	for i := 0; i < len(series); i++ {
-		metricLabelMap := series[i].Labels
+		metricLabelMap := series[i].LabelsMap()
 
 		// Collect groupBy attribute-value pairs for this series
 		seriesKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
@@ -689,7 +689,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	// Filter series based on first_seen + delay
-	filteredSeries := make([]*v3.Series, 0, len(series))
+	filteredSeries := make([]*qbtypes.TimeSeries, 0, len(series))
 	evalTimeMs := ts.UnixMilli()
 	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
 
@@ -727,7 +727,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		// Check if first_seen + delay has passed
 		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
-			r.logger.InfoContext(ctx, "Skipping new series", "rule_name", r.Name(), "series_idx", i, "max_first_seen", maxFirstSeen, "eval_time_ms", evalTimeMs, "delay_ms", newGroupEvalDelayMs, "labels", series[i].Labels)
+			r.logger.InfoContext(ctx, "Skipping new series", "rule_name", r.Name(), "series_idx", i, "max_first_seen", maxFirstSeen, "eval_time_ms", evalTimeMs, "delay_ms", newGroupEvalDelayMs, "labels", series[i].LabelsMap())
 			continue
 		}
 
