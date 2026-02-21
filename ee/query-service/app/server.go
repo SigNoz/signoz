@@ -121,12 +121,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create cloud provider integrations controller: %w", err,
-		)
-	}
+	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(signoz.Instrumentation.Logger(), signoz.SQLStore, signoz.Querier)
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
@@ -161,11 +156,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		RulesManager:                  rm,
 		UsageManager:                  usageManager,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsController:   cloudIntegrationsController,
+		CloudIntegrationsRegistry:     cloudIntegrationsRegistry,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
 		GatewayUrl:                    config.Gateway.URL.String(),
 		GlobalConfig:                  config.Global,
+		Logger:                        signoz.Instrumentation.Logger(),
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts, signoz, config)
