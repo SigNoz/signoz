@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -164,6 +165,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
 	}
 
+	// if there is nothing to filter, return true
 	if cond == "" {
 		cond = "true"
 	}
@@ -221,7 +223,6 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 }
 
 func (v *filterExpressionVisitor) VisitQuery(ctx *grammar.QueryContext) any {
-
 	return v.Visit(ctx.Expression())
 }
 
@@ -519,7 +520,15 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	// Get all values for operations that need them
 	values := ctx.AllValue()
 	if len(values) > 0 {
+		// there should only be one value for the following operators, even if there is more than one
+		// we just take the first value
 		value := v.Visit(values[0])
+
+		// Check if the value is a skip marker (embedded variable with __all__ value)
+		if strVal, ok := value.(string); ok && strVal == specialSkipConditionMarker {
+			v.logger.Info("skipping condition due to __all__ variable", "keys", keys, "value", value) //nolint:sloglint
+			return ""
+		}
 
 		if var_, ok := value.(string); ok {
 			// check if this is a variables
@@ -532,6 +541,13 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 
 			if ok {
+				if varItem.Type == qbtypes.DynamicVariableType {
+					if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
+						// this is likely overlooked by user, we treat it as if it was IN instead of =
+						v.logger.Warn("received unexpected __all__ value for single select dynamic variable", "variable", var_, "keys", keys, "value", value) //nolint:sloglint
+						return ""
+					}
+				}
 				switch varValues := varItem.Value.(type) {
 				case []any:
 					if len(varValues) == 0 {
@@ -822,7 +838,12 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 	if ctx.QUOTED_TEXT() != nil {
 		txt := ctx.QUOTED_TEXT().GetText()
 		// trim quotes and return the value
-		return trimQuotes(txt)
+		value := trimQuotes(txt)
+		// Check if the string contains embedded variables
+		if strings.Contains(value, "$") {
+			return v.interpolateVariablesInString(value)
+		}
+		return value
 	} else if ctx.NUMBER() != nil {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
@@ -839,7 +860,12 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		// When the user writes an expression like `service.name=redis`
 		// The `redis` part is a VALUE context but parsed as a KEY token
 		// so we return the text as is
-		return ctx.KEY().GetText()
+		keyText := ctx.KEY().GetText()
+		// Check if this is a composed variable like $environment-xyz
+		if strings.HasPrefix(keyText, "$") {
+			return v.interpolateVariablesInString(keyText)
+		}
+		return keyText
 	}
 
 	return "" // Should not happen with valid input
@@ -968,4 +994,104 @@ func trimQuotes(txt string) string {
 	txt = strings.ReplaceAll(txt, `\\`, `\`)
 	txt = strings.ReplaceAll(txt, `\'`, `'`)
 	return txt
+}
+
+// specialSkipConditionMarker is used to indicate that the entire condition should be removed
+const specialSkipConditionMarker = "__signoz_skip_condition__"
+
+// interpolateVariablesInString finds and replaces variable references within a string
+// by checking against actual variable names in the variables map.
+// Pure variable references (e.g., "$service") are returned as-is to let the
+// existing variable handling code process them.
+// Returns specialSkipConditionMarker if any variable has __all__ value.
+func (v *filterExpressionVisitor) interpolateVariablesInString(s string) string {
+	// if this is a complete variable reference (just $varname with nothing else)
+	// if so, return as-is
+	varName := s
+	if strings.HasPrefix(varName, "$") {
+		_, exactMatch := v.variables[varName]
+		if !exactMatch {
+			_, exactMatch = v.variables[varName[1:]]
+		}
+		if exactMatch {
+			return s
+		}
+	}
+
+	result := s
+
+	// find and replace variables by checking each variable name in the map
+	// process longer variable names first to handle cases with prefix substring
+	varNames := make([]string, 0, len(v.variables)*2)
+	for name := range v.variables {
+		varNames = append(varNames, name)
+		// add with $ prefix if not already present
+		if !strings.HasPrefix(name, "$") {
+			varNames = append(varNames, "$"+name)
+		}
+	}
+
+	// sort by length (longest first) to match longer variable names before shorter ones
+	sort.Slice(varNames, func(i, j int) bool {
+		return len(varNames[i]) > len(varNames[j])
+	})
+
+	for _, vName := range varNames {
+		searchPattern := vName
+		if !strings.HasPrefix(searchPattern, "$") {
+			searchPattern = "$" + vName
+		}
+
+		if strings.Contains(result, searchPattern) {
+			// direct lookup
+			varItem, ok := v.variables[vName]
+			if !ok {
+				// Try without $ prefix
+				varItem, ok = v.variables[strings.TrimPrefix(vName, "$")]
+			}
+
+			if ok {
+				// special check for __all__ value - skip the entire condition
+				if varItem.Type == qbtypes.DynamicVariableType {
+					if allVal, ok := varItem.Value.(string); ok && allVal == "__all__" {
+						return specialSkipConditionMarker
+					}
+				}
+
+				replacement := v.formatVariableValueForInterpolation(varItem.Value, strings.TrimPrefix(vName, "$"))
+				result = strings.ReplaceAll(result, searchPattern, replacement)
+			}
+		}
+	}
+
+	return result
+}
+
+func (v *filterExpressionVisitor) formatVariableValueForInterpolation(value any, varName string) string {
+	switch val := value.(type) {
+	case string:
+		return val
+	case []string:
+		if len(val) > 1 {
+			v.warnings = append(v.warnings, fmt.Sprintf("variable `%s` has multiple values, using first value `%s` for string interpolation", varName, val[0]))
+		}
+		if len(val) > 0 {
+			return val[0]
+		}
+		return ""
+	case []any:
+		if len(val) > 1 {
+			v.warnings = append(v.warnings, fmt.Sprintf("variable `%s` has multiple values, using first value for string interpolation", varName))
+		}
+		if len(val) > 0 {
+			return v.formatVariableValueForInterpolation(val[0], varName)
+		}
+		return ""
+	case int, int32, int64, float32, float64:
+		return fmt.Sprintf("%v", val)
+	case bool:
+		return strconv.FormatBool(val)
+	default:
+		return fmt.Sprintf("%v", val)
+	}
 }
