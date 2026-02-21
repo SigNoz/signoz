@@ -259,6 +259,11 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if claims.UserID == id {
+		render.Error(w, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "users cannot delete themselves"))
+		return
+	}
+
 	if err := h.module.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
 		render.Error(w, err)
 		return
