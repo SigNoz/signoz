@@ -26,6 +26,7 @@ export interface MetricsSearchProps {
 	onChange: (expression: string) => void;
 	currentQueryFilterExpression: string;
 	setCurrentQueryFilterExpression: (expression: string) => void;
+	isLoading: boolean;
 }
 
 export interface MetricsTreemapProps {
