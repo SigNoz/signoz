@@ -13,8 +13,6 @@ import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	IBuilderQuery,
 	TagFilterItem,
@@ -190,35 +188,28 @@ export function EventContents({
 	);
 }
 
-export const getMetricsTableData = (
-	data: SuccessResponse<MetricRangePayloadProps> | undefined,
-): { rows: any[]; columns: any[] }[] => {
-	const params = data?.params as any;
-	if (params && data?.payload?.data?.result?.length) {
-		const result = data.payload.data.result[0] as any;
-		if (result.table) {
-			const rowsData = result.table.rows || [];
-			const columnsData = result.table.columns || [];
-			const builderQueries = params.compositeQuery?.builderQueries || {};
-
-			const columns = columnsData.map((columnData: any) => {
-				if (columnData.isValueColumn) {
-					return {
-						key: columnData.name,
-						label: builderQueries[columnData.name]?.legend || columnData.name,
-						isValueColumn: true,
-					};
-				}
+export const getMetricsTableData = (data: any): any[] => {
+	if (data?.params && data?.payload?.data?.result?.length) {
+		const rowsData = (data?.payload.data.result[0] as any).table.rows;
+		const columnsData = (data?.payload.data.result[0] as any).table.columns;
+		const builderQueries = data.params?.compositeQuery?.builderQueries;
+		const columns = columnsData.map((columnData: any) => {
+			if (columnData.isValueColumn) {
 				return {
 					key: columnData.name,
-					label: columnData.name,
-					isValueColumn: false,
+					label: builderQueries[columnData.name].legend,
+					isValueColumn: true,
 				};
-			});
+			}
+			return {
+				key: columnData.name,
+				label: columnData.name,
+				isValueColumn: false,
+			};
+		});
 
-			const rows = rowsData.map((rowData: any) => rowData.data);
-			return [{ rows, columns }];
-		}
+		const rows = rowsData.map((rowData: any) => rowData.data);
+		return [{ rows, columns }];
 	}
 	return [{ rows: [], columns: [] }];
 };
