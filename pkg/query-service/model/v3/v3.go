@@ -381,11 +381,12 @@ func (t AttributeKeyType) String() string {
 }
 
 type AttributeKey struct {
-	Key      string               `json:"key"`
-	DataType AttributeKeyDataType `json:"dataType"`
-	Type     AttributeKeyType     `json:"type"`
-	IsColumn bool                 `json:"isColumn"`
-	IsJSON   bool                 `json:"isJSON"`
+	Key         string               `json:"key"`
+	DataType    AttributeKeyDataType `json:"dataType"`
+	Type        AttributeKeyType     `json:"type"`
+	IsColumn    bool                 `json:"isColumn"`
+	IsMonotonic bool                 `json:"isMonotonic"`
+	IsJSON      bool                 `json:"isJSON"`
 }
 
 func (a AttributeKey) CacheKey() string {
