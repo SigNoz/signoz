@@ -1,6 +1,12 @@
 import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
+import {
+	BellOff,
+	CircleCheck,
+	CircleOff,
+	Flame,
+	TrendingDown,
+} from 'lucide-react';
 
 import './AlertState.styles.scss';
 
@@ -55,6 +61,17 @@ export default function AlertState({
 				/>
 			);
 			label = <span style={{ color: Color.BG_FOREST_500 }}>Resolved</span>;
+			break;
+
+		case 'recovering':
+			icon = (
+				<TrendingDown
+					size={18}
+					fill={Color.BG_CHERRY_300}
+					color={isDarkMode ? Color.BG_CHERRY_300 : Color.BG_VANILLA_100}
+				/>
+			);
+			label = <span style={{ color: Color.BG_CHERRY_300 }}>Recovering</span>;
 			break;
 
 		default:

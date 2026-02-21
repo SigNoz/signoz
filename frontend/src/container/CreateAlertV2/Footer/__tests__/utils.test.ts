@@ -82,6 +82,32 @@ describe('Footer utils', () => {
 			);
 		});
 
+		it('when recovery threshold value is higher than threshold value', () => {
+			const currentArgs: BuildCreateAlertRulePayloadArgs = {
+				...args,
+				basicAlertState: {
+					...args.basicAlertState,
+					name: 'test alert',
+				},
+				thresholdState: {
+					...args.thresholdState,
+					thresholds: [
+						{
+							...args.thresholdState.thresholds[0],
+							label: 'critical',
+							channels: ['test-channel'],
+							thresholdValue: 100,
+							recoveryThresholdValue: 200,
+						},
+					],
+				},
+			};
+			expect(validateCreateAlertState(currentArgs)).toBeDefined();
+			expect(validateCreateAlertState(currentArgs)).toBe(
+				'Recovery threshold should be less than threshold value',
+			);
+		});
+
 		it('when threshold channels are not provided', () => {
 			const currentArgs: BuildCreateAlertRulePayloadArgs = {
 				...args,
@@ -479,6 +505,7 @@ describe('Footer utils', () => {
 								op: '1',
 								target: 0,
 								targetUnit: '',
+								recoveryTarget: undefined,
 							},
 						],
 					},
