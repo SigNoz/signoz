@@ -72,6 +72,12 @@ var (
 		"load15": GetDotMetrics("system_cpu_load_average_15m"),
 		"wait":   GetDotMetrics("system_cpu_time"),
 	}
+	uniqueMetricNamesForHosts = []string{
+		GetDotMetrics("system_cpu_time"),
+		GetDotMetrics("system_memory_usage"),
+		GetDotMetrics("system_cpu_load_average_15m"),
+		GetDotMetrics("system_filesystem_usage"),
+	}
 )
 
 func NewHostsRepo(reader interfaces.Reader, querierV2 interfaces.Querier) *HostsRepo {
@@ -130,62 +136,9 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	return &v3.FilterAttributeValueResponse{StringAttributeValues: hostNames}, nil
 }
 
-func (h *HostsRepo) getActiveHosts(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (map[string]bool, error) {
-	activeStatus := map[string]bool{}
-	step := common.MinAllowedStepInterval(req.Start, req.End)
-
-	hasHostName := false
-	for _, key := range req.GroupBy {
-		if key.Key == hostNameAttrKey {
-			hasHostName = true
-		}
-	}
-
-	if !hasHostName {
-		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: hostNameAttrKey})
-	}
-
-	params := v3.QueryRangeParamsV3{
-		Start: time.Now().Add(-time.Minute * 10).UTC().UnixMilli(),
-		End:   time.Now().UTC().UnixMilli(),
-		Step:  step,
-		CompositeQuery: &v3.CompositeQuery{
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"A": {
-					QueryName:    "A",
-					StepInterval: step,
-					DataSource:   v3.DataSourceMetrics,
-					AggregateAttribute: v3.AttributeKey{
-						Key:      metricToUseForHostAttributes,
-						DataType: v3.AttributeKeyDataTypeFloat64,
-					},
-					Temporality:      v3.Unspecified,
-					Filters:          req.Filters,
-					GroupBy:          req.GroupBy,
-					Expression:       "A",
-					TimeAggregation:  v3.TimeAggregationAvg,
-					SpaceAggregation: v3.SpaceAggregationAvg,
-					Disabled:         false,
-				},
-			},
-			QueryType: v3.QueryTypeBuilder,
-			PanelType: v3.PanelTypeGraph,
-		},
-	}
-
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, &params)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, result := range queryResponse {
-		for _, series := range result.Series {
-			name := series.Labels[hostNameAttrKey]
-			activeStatus[name] = true
-		}
-	}
-
-	return activeStatus, nil
+func (h *HostsRepo) getActiveHosts(ctx context.Context) (map[string]bool, error) {
+	tenMinAgo := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	return h.reader.GetActiveHostsFromMetricMetadata(ctx, uniqueMetricNamesForHosts, hostNameAttrKey, tenMinAgo)
 }
 
 func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostListRequest) (map[string]map[string]string, error) {
@@ -441,7 +394,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		return resp, err
 	}
 
-	activeHosts, err := h.getActiveHosts(ctx, orgID, req)
+	activeHosts, err := h.getActiveHosts(ctx)
 	if err != nil {
 		return resp, err
 	}

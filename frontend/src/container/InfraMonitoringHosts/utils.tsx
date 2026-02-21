@@ -80,7 +80,14 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		),
 	},
 	{
-		title: 'Status',
+		title: (
+			<div className="status-header">
+				Status
+				<Tooltip title="Sent system metrics in last 10 mins">
+					<InfoCircleOutlined />
+				</Tooltip>
+			</div>
+		),
 		dataIndex: 'active',
 		key: 'active',
 		width: 100,
