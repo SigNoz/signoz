@@ -1,5 +1,6 @@
 import axios from 'api';
 import { AxiosResponse } from 'axios';
+import store from 'store';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
@@ -17,6 +18,12 @@ export const getKeySuggestions = (
 		signalSource = '',
 	} = props;
 
+	const { globalTime } = store.getState();
+	const resolvedTimeRange = {
+		startUnixMilli: Math.floor(globalTime.minTime / 1000000),
+		endUnixMilli: Math.floor(globalTime.maxTime / 1000000),
+	};
+
 	const encodedSignal = encodeURIComponent(signal);
 	const encodedSearchText = encodeURIComponent(searchText);
 	const encodedMetricName = encodeURIComponent(metricName);
@@ -24,7 +31,14 @@ export const getKeySuggestions = (
 	const encodedFieldDataType = encodeURIComponent(fieldDataType);
 	const encodedSource = encodeURIComponent(signalSource);
 
-	return axios.get(
-		`/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}&source=${encodedSource}`,
-	);
+	let url = `/fields/keys?signal=${encodedSignal}&searchText=${encodedSearchText}&metricName=${encodedMetricName}&fieldContext=${encodedFieldContext}&fieldDataType=${encodedFieldDataType}&source=${encodedSource}`;
+
+	if (resolvedTimeRange.startUnixMilli !== undefined) {
+		url += `&startUnixMilli=${resolvedTimeRange.startUnixMilli}`;
+	}
+	if (resolvedTimeRange.endUnixMilli !== undefined) {
+		url += `&endUnixMilli=${resolvedTimeRange.endUnixMilli}`;
+	}
+
+	return axios.get(url);
 };

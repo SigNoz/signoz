@@ -152,7 +152,7 @@ describe('CheckboxFilter - User Flows', () => {
 		expect(screen.getByText('Service Name')).toBeInTheDocument();
 		await waitFor(() => {
 			// eslint-disable-next-line sonarjs/no-duplicate-string
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
 		});
 
 		// User should see visual separator between checked and unchecked items

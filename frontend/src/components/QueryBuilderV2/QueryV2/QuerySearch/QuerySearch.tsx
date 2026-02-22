@@ -271,7 +271,6 @@ function QuerySearch({
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
 			});
-
 			if (response.data.data) {
 				const { keys } = response.data.data;
 				const options = generateOptions(keys);
@@ -431,6 +430,7 @@ function QuerySearch({
 			}
 
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
+			const existingQuery = queryData.filter?.expression || '';
 
 			try {
 				const response = await getValueSuggestions({
@@ -439,9 +439,9 @@ function QuerySearch({
 					signal: dataSource,
 					signalSource: signalSource as 'meter' | '',
 					metricName: debouncedMetricName ?? undefined,
-				});
+					existingQuery,
+				}); // Skip updates if component unmounted or key changed
 
-				// Skip updates if component unmounted or key changed
 				if (
 					!isMountedRef.current ||
 					lastKeyRef.current !== key ||
@@ -453,7 +453,9 @@ function QuerySearch({
 				// Process the response data
 				const responseData = response.data as any;
 				const values = responseData.data?.values || {};
-				const stringValues = values.stringValues || [];
+				const relatedValues = values.relatedValues || [];
+				const stringValues =
+					relatedValues.length > 0 ? relatedValues : values.stringValues || [];
 				const numberValues = values.numberValues || [];
 
 				// Generate options from string values - explicitly handle empty strings
@@ -528,11 +530,12 @@ function QuerySearch({
 		},
 		[
 			activeKey,
-			dataSource,
 			isLoadingSuggestions,
-			debouncedMetricName,
-			signalSource,
+			queryData.filter?.expression,
 			toggleSuggestions,
+			dataSource,
+			signalSource,
+			debouncedMetricName,
 		],
 	);
 
@@ -1249,19 +1252,17 @@ function QuerySearch({
 		if (!queryContext) {
 			return;
 		}
-		// Trigger suggestions based on context
-		if (editorRef.current) {
+		// Only trigger suggestions and fetch if editor is focused (i.e., user is interacting)
+		if (isFocused && editorRef.current) {
 			toggleSuggestions(10);
-		}
-
-		// Handle value suggestions for value context
-		if (queryContext.isInValue) {
-			const { keyToken, currentToken } = queryContext;
-			const key = keyToken || currentToken;
-
-			// Only fetch if needed and if we have a valid key
-			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions({ key });
+			// Handle value suggestions for value context
+			if (queryContext.isInValue) {
+				const { keyToken, currentToken } = queryContext;
+				const key = keyToken || currentToken;
+				// Only fetch if needed and if we have a valid key
+				if (key && key !== activeKey && !isLoadingSuggestions) {
+					fetchValueSuggestions({ key });
+				}
 			}
 		}
 	}, [
@@ -1270,6 +1271,7 @@ function QuerySearch({
 		isLoadingSuggestions,
 		activeKey,
 		fetchValueSuggestions,
+		isFocused,
 	]);
 
 	const getTooltipContent = (): JSX.Element => (

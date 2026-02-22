@@ -34,7 +34,6 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useQuery({
 		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
 		queryFn: async () => {

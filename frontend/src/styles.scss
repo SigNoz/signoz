@@ -592,6 +592,39 @@ body {
 		}
 	}
 
+	.ant-btn-text:hover,
+	.ant-btn-text:focus-visible {
+		background-color: var(--bg-vanilla-200) !important;
+	}
+
+	.ant-btn-link:hover,
+	.ant-btn-link:focus-visible {
+		background-color: transparent !important;
+	}
+
+	.ant-btn-default:hover,
+	.ant-btn-default:focus-visible,
+	.ant-btn-text:not(.ant-btn-primary):hover,
+	.ant-btn-text:not(.ant-btn-primary):focus-visible,
+	.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):hover,
+	.ant-btn:not(.ant-btn-primary):not(.ant-btn-dangerous):focus-visible {
+		background-color: var(--bg-vanilla-200) !important;
+	}
+
+	.ant-typography:hover,
+	.ant-typography:focus-visible {
+		background-color: transparent !important;
+	}
+
+	.ant-tooltip {
+		--antd-arrow-background-color: var(--bg-vanilla-300);
+
+		.ant-tooltip-inner {
+			background-color: var(--bg-vanilla-200);
+			color: var(--bg-ink-500);
+		}
+	}
+
 	// Enhanced legend light mode styles
 	.u-legend-enhanced {
 		// Light mode scrollbar styling
