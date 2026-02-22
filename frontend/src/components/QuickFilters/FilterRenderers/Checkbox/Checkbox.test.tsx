@@ -150,7 +150,8 @@ describe('CheckboxFilter - User Flows', () => {
 		// User should see the filter is automatically opened (not collapsed)
 		expect(screen.getByText('Service Name')).toBeInTheDocument();
 		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+			// eslint-disable-next-line sonarjs/no-duplicate-string
+			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
 		});
 
 		// User should see visual separator between checked and unchecked items
