@@ -251,7 +251,10 @@ function InviteTeamMembers({
 		onNext();
 	};
 
+	const hasInvites =
+		(teamMembersToInvite?.filter(isMemberTouched) ?? []).length > 0;
 	const isButtonDisabled = isSendingInvites || isLoading;
+	const isInviteButtonDisabled = isButtonDisabled || !hasInvites;
 
 	return (
 		<div className="questions-container">
@@ -361,9 +364,11 @@ function InviteTeamMembers({
 					<Button
 						variant="solid"
 						color="primary"
-						className={`onboarding-next-button ${isButtonDisabled ? 'disabled' : ''}`}
+						className={`onboarding-next-button ${
+							isInviteButtonDisabled ? 'disabled' : ''
+						}`}
 						onClick={handleNext}
-						disabled={isButtonDisabled}
+						disabled={isInviteButtonDisabled}
 						suffixIcon={
 							isButtonDisabled ? (
 								<Loader2 className="animate-spin" size={12} />

@@ -367,25 +367,20 @@ describe('InviteTeamMembers', () => {
 			});
 		});
 
-		it('does not show a validation callout when all rows are untouched (empty)', async () => {
+		it('disables the Send Invites button when all rows are untouched (empty)', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderComponent();
 
-			await user.click(screen.getByRole('button', { name: /send invites/i }));
+			const sendInvitesBtn = screen.getByRole('button', { name: /send invites/i });
+			expect(sendInvitesBtn).toBeDisabled();
 
-			await waitFor(() => {
-				expect(
-					screen.queryByText(/please enter valid emails/i),
-				).not.toBeInTheDocument();
-				expect(screen.queryByText(/please select roles/i)).not.toBeInTheDocument();
-			});
-
-			await waitFor(
-				() => {
-					expect(mockOnNext).toHaveBeenCalled();
-				},
-				{ timeout: 1200 },
+			// Type something to make a row touched
+			const [firstInput] = screen.getAllByPlaceholderText(
+				/e\.g\. john@signoz\.io/i,
 			);
+			await user.type(firstInput, 'a');
+
+			expect(sendInvitesBtn).not.toBeDisabled();
 		});
 	});
 
