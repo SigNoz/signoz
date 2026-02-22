@@ -12,7 +12,7 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from '@signozhq/combobox';
-import { Button, Skeleton, Switch, Tooltip, Typography } from 'antd';
+import { Skeleton, Switch, Tooltip, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -51,7 +51,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	} = props;
 	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	const [isFiltersInfoOpen, setIsFiltersInfoOpen] = useState(false);
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
@@ -293,19 +292,25 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				</div>
 			)}
 			<section className="filters-info">
-				<Button
-					type="link"
-					className="filters-info-toggle"
-					onClick={(): void => setIsFiltersInfoOpen((prev) => !prev)}
+				<Tooltip
+					title={
+						<div className="filters-info-tooltip">
+							<div className="filters-info-tooltip-title">Adaptive Filters</div>
+							<div>Values update automatically as you apply filters.</div>
+							<div className="filters-info-tooltip-detail">
+								The most relevant values are shown first, followed by all other
+								available options.
+							</div>
+						</div>
+					}
+					placement="right"
+					mouseEnterDelay={0.3}
 				>
-					<Lightbulb size={15} />
-					{isFiltersInfoOpen ? 'Hide info' : 'Adaptive filters'}
-				</Button>
-				{isFiltersInfoOpen && (
-					<Typography.Text className="filters-info-text">
-						Filter values update automatically based on other selected filters
+					<Typography.Text className="filters-info-toggle">
+						<Lightbulb size={15} />
+						Adaptive filters
 					</Typography.Text>
-				)}
+				</Tooltip>
 			</section>
 			<section className="filters">
 				{filterConfig.map((filter) => {

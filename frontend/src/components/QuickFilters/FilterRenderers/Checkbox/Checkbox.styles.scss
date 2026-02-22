@@ -48,7 +48,12 @@
 		.filter-separator {
 			height: 1px;
 			background-color: var(--bg-slate-400);
-			margin: 4px 0;
+			margin: 7px 0;
+
+			&.related-separator {
+				opacity: 0.5;
+				margin: 0.5px 0;
+			}
 		}
 
 		.value {
