@@ -48,11 +48,7 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return provider.server.Stop(ctx)
 }
 
-func (provider *provider) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
-	return provider.server.Check(ctx, tupleReq)
-}
-
-func (provider *provider) BatchCheck(ctx context.Context, tupleReq []*openfgav1.TupleKey) error {
+func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error) {
 	return provider.server.BatchCheck(ctx, tupleReq)
 }
 
@@ -178,10 +174,6 @@ func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID,
 		return err
 	}
 
-	return nil
-}
-
-func (provider *provider) SetManagedRoleTransactions(context.Context, valuer.UUID) error {
 	return nil
 }
 
