@@ -558,8 +558,6 @@ function QuerySearch({
 			dataSource,
 			signalSource,
 			debouncedMetricName,
-			timeRange.startUnixMilli,
-			timeRange.endUnixMilli,
 		],
 	);
 

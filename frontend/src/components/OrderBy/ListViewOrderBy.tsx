@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
 import { Select, Spin } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { AppState } from 'store/reducers';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import './ListViewOrderBy.styles.scss';
 
@@ -37,20 +34,8 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Get time range from Redux global state
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useQuery({
-		queryKey: [
-			'orderByKeySuggestions',
-			dataSource,
-			debouncedInput,
-			globalTime.minTime,
-			globalTime.maxTime,
-		],
+		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
 		queryFn: async () => {
 			const response = await getKeySuggestions({
 				signal: dataSource,
