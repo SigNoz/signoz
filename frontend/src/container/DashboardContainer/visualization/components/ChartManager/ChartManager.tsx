@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Input } from 'antd';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { ResizeTable } from 'components/ResizeTable';
-import { getGraphManagerTableColumns } from 'container/GridCardLayout/GridCard/FullView/TableRender/GraphManagerColumns';
-import { ExtendedChartDataset } from 'container/GridCardLayout/GridCard/FullView/types';
-import { getDefaultTableDataSet } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+
+import { getChartManagerColumns } from './columns';
+import { ExtendedChartDataset, getDefaultTableDataSet } from './utils';
 
 import './ChartManager.styles.scss';
 
@@ -16,8 +17,11 @@ interface ChartManagerProps {
 	config: UPlotConfigBuilder;
 	alignedData: uPlot.AlignedData;
 	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 	onCancel?: () => void;
 }
+
+const X_AXIS_INDEX = 0;
 
 /**
  * ChartManager provides a tabular view to manage the visibility of
@@ -28,16 +32,12 @@ interface ChartManagerProps {
  * - filter series by label
  * - toggle individual series on/off
  * - persist the visibility configuration to local storage.
- *
- * @param config - `UPlotConfigBuilder` instance used to derive chart options.
- * @param alignedData - uPlot aligned data used to build the initial table dataset.
- * @param yAxisUnit - Optional unit label for Y-axis values shown in the table.
- * @param onCancel - Optional callback invoked when the user cancels the dialog.
  */
 export default function ChartManager({
 	config,
 	alignedData,
 	yAxisUnit,
+	decimalPrecision = PrecisionOptionsEnum.TWO,
 	onCancel,
 }: ChartManagerProps): JSX.Element {
 	const { notifications } = useNotifications();
@@ -53,8 +53,13 @@ export default function ChartManager({
 	const { isDashboardLocked } = useDashboard();
 
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(() =>
-		getDefaultTableDataSet(config.getConfig() as uPlot.Options, alignedData),
+		getDefaultTableDataSet(
+			config.getConfig() as uPlot.Options,
+			alignedData,
+			decimalPrecision,
+		),
 	);
+	const [filterValue, setFilterValue] = useState('');
 
 	const graphVisibilityState = useMemo(
 		() =>
@@ -67,46 +72,62 @@ export default function ChartManager({
 
 	useEffect(() => {
 		setTableDataSet(
-			getDefaultTableDataSet(config.getConfig() as uPlot.Options, alignedData),
-		);
-	}, [alignedData, config]);
-
-	const filterHandler = useCallback(
-		(event: React.ChangeEvent<HTMLInputElement>): void => {
-			const value = event.target.value.toString().toLowerCase();
-			const updatedDataSet = tableDataSet.map((item) => {
-				if (item.label?.toLocaleLowerCase().includes(value)) {
-					return { ...item, show: true };
-				}
-				return { ...item, show: false };
-			});
-			setTableDataSet(updatedDataSet);
-		},
-		[tableDataSet],
-	);
-
-	const dataSource = useMemo(
-		() =>
-			tableDataSet.filter(
-				(item, index) => index !== 0 && item.show, // skipping the first item as it is the x-axis
+			getDefaultTableDataSet(
+				config.getConfig() as uPlot.Options,
+				alignedData,
+				decimalPrecision,
 			),
-		[tableDataSet],
+		);
+		setFilterValue('');
+	}, [alignedData, config, decimalPrecision]);
+
+	const handleFilterChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>): void => {
+			setFilterValue(e.target.value.toLowerCase());
+		},
+		[],
 	);
+
+	const handleToggleSeriesOnOff = useCallback(
+		(index: number): void => {
+			onToggleSeriesOnOff(index);
+		},
+		[onToggleSeriesOnOff],
+	);
+
+	const dataSource = useMemo(() => {
+		const filter = filterValue.trim();
+		return tableDataSet.filter((item, index) => {
+			if (index === X_AXIS_INDEX) {
+				return false;
+			}
+			if (!filter) {
+				return true;
+			}
+			return item.label?.toLowerCase().includes(filter) ?? false;
+		});
+	}, [tableDataSet, filterValue]);
 
 	const columns = useMemo(
 		() =>
-			getGraphManagerTableColumns({
+			getChartManagerColumns({
 				tableDataSet,
-				checkBoxOnChangeHandler: (_e, index) => {
-					onToggleSeriesOnOff(index);
-				},
 				graphVisibilityState,
-				labelClickedHandler: onToggleSeriesVisibility,
+				onToggleSeriesOnOff: handleToggleSeriesOnOff,
+				onToggleSeriesVisibility,
 				yAxisUnit,
 				isGraphDisabled: isDashboardLocked,
+				decimalPrecision,
 			}),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[tableDataSet, graphVisibilityState, yAxisUnit, isDashboardLocked],
+		[
+			tableDataSet,
+			graphVisibilityState,
+			handleToggleSeriesOnOff,
+			onToggleSeriesVisibility,
+			yAxisUnit,
+			isDashboardLocked,
+			decimalPrecision,
+		],
 	);
 
 	const handleSave = useCallback((): void => {
@@ -114,20 +135,23 @@ export default function ChartManager({
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
-		if (onCancel) {
-			onCancel();
-		}
+		onCancel?.();
 	}, [syncSeriesVisibilityToLocalStorage, notifications, onCancel]);
 
 	return (
 		<div className="chart-manager-container">
 			<div className="chart-manager-header">
-				<Input onChange={filterHandler} placeholder="Filter Series" />
+				<Input
+					placeholder="Filter Series"
+					value={filterValue}
+					onChange={handleFilterChange}
+					data-testid="filter-input"
+				/>
 				<div className="chart-manager-actions-container">
-					<Button type="default" onClick={onCancel}>
+					<Button type="default" onClick={onCancel} data-testid="cancel-button">
 						Cancel
 					</Button>
-					<Button type="primary" onClick={handleSave}>
+					<Button type="primary" onClick={handleSave} data-testid="save-button">
 						Save
 					</Button>
 				</div>
@@ -136,10 +160,10 @@ export default function ChartManager({
 				<ResizeTable
 					columns={columns}
 					dataSource={dataSource}
-					virtual
 					rowKey="index"
 					scroll={{ y: 200 }}
 					pagination={false}
+					virtual
 				/>
 			</div>
 		</div>
