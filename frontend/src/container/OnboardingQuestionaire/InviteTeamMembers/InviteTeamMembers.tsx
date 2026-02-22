@@ -8,7 +8,7 @@ import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
 import { useNotifications } from 'hooks/useNotifications';
-import { cloneDeep, debounce, isEmpty } from 'lodash-es';
+import { cloneDeep, debounce } from 'lodash-es';
 import {
 	ArrowRight,
 	ChevronDown,
@@ -65,7 +65,7 @@ function InviteTeamMembers({
 	};
 
 	useEffect(() => {
-		if (isEmpty(teamMembers)) {
+		if (teamMembers === null) {
 			const initialTeamMembers = Array.from({ length: 3 }, () => ({
 				...defaultTeamMember,
 				id: uuid(),
@@ -88,7 +88,10 @@ function InviteTeamMembers({
 		setTeamMembersToInvite((prev) => (prev || []).filter((m) => m.id !== id));
 	};
 
-	// Validation function to check all users
+	const isMemberTouched = (member: TeamMember): boolean =>
+		member.email.trim() !== '' ||
+		Boolean(member.role && member.role.trim() !== '');
+
 	const validateAllUsers = (): boolean => {
 		let isValid = true;
 		let hasEmailErrors = false;
@@ -96,7 +99,9 @@ function InviteTeamMembers({
 
 		const updatedEmailValidity: Record<string, boolean> = {};
 
-		teamMembersToInvite?.forEach((member) => {
+		const touchedMembers = teamMembersToInvite?.filter(isMemberTouched) ?? [];
+
+		touchedMembers?.forEach((member) => {
 			const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email);
 			const roleValid = Boolean(member.role && member.role.trim() !== '');
 
@@ -150,12 +155,12 @@ function InviteTeamMembers({
 
 	const handleNext = (): void => {
 		if (validateAllUsers()) {
-			setTeamMembers(teamMembersToInvite || []);
+			setTeamMembers(teamMembersToInvite?.filter(isMemberTouched) ?? []);
 			setHasInvalidEmails(false);
 			setHasInvalidRoles(false);
 			setInviteError(null);
 			sendInvites({
-				invites: teamMembersToInvite || [],
+				invites: teamMembersToInvite?.filter(isMemberTouched) ?? [],
 			});
 		}
 	};
@@ -230,12 +235,12 @@ function InviteTeamMembers({
 
 	const getValidationErrorMessage = (): string => {
 		if (hasInvalidEmails && hasInvalidRoles) {
-			return 'Please enter valid emails and select roles for all team members';
+			return 'Please enter valid emails and select roles for team members';
 		}
 		if (hasInvalidEmails) {
-			return 'Please enter valid emails for all team members';
+			return 'Please enter valid emails for team members';
 		}
-		return 'Please select roles for all team members';
+		return 'Please select roles for team members';
 	};
 
 	const handleDoLater = (): void => {
@@ -367,7 +372,7 @@ function InviteTeamMembers({
 							)
 						}
 					>
-						Complete
+						Send Invites
 					</Button>
 					<Button
 						variant="ghost"
