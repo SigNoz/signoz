@@ -69,6 +69,16 @@ type Definition interface {
 	GetId() string
 	Validate() error
 	PopulateDashboardURLs(cloudProvider CloudProviderType, svcId string)
+	GetIngestionStatusCheck() *IngestionStatusCheck
+	GetAssets() Assets
+}
+
+func (def *ServiceDefinition[T]) GetIngestionStatusCheck() *IngestionStatusCheck {
+	return def.IngestionStatusCheck
+}
+
+func (def *ServiceDefinition[T]) GetAssets() Assets {
+	return def.Assets
 }
 
 type IngestionStatusCheck struct {

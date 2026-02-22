@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"path"
 
@@ -49,7 +48,7 @@ func NewAWSCloudProviderServices() (*ServicesProvider[*integrationtypes.AWSDefin
 	for id, def := range definitions {
 		typedDef, ok := def.(*integrationtypes.AWSDefinition)
 		if !ok {
-			return nil, fmt.Errorf("invalid type for AWS service definition %s", id)
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for AWS service definition %s", id)
 		}
 		serviceDefinitions[id] = typedDef
 	}
@@ -69,7 +68,7 @@ func NewAzureCloudProviderServices() (*ServicesProvider[*integrationtypes.AzureD
 	for id, def := range definitions {
 		typedDef, ok := def.(*integrationtypes.AzureDefinition)
 		if !ok {
-			return nil, fmt.Errorf("invalid type for Azure service definition %s", id)
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for Azure service definition %s", id)
 		}
 		serviceDefinitions[id] = typedDef
 	}

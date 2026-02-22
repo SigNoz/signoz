@@ -223,9 +223,45 @@ type AWSCloudServiceConfig struct {
 	Metrics *AWSCloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
+// IsMetricsEnabled returns true if metrics collection is configured and enabled
+func (a *AWSCloudServiceConfig) IsMetricsEnabled() bool {
+	return a.Metrics != nil && a.Metrics.Enabled
+}
+
+// IsLogsEnabled returns true if logs collection is configured and enabled
+func (a *AWSCloudServiceConfig) IsLogsEnabled() bool {
+	return a.Logs != nil && a.Logs.Enabled
+}
+
 type AzureCloudServiceConfig struct {
 	Logs    []*AzureCloudServiceLogsConfig    `json:"logs,omitempty"`
 	Metrics []*AzureCloudServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+// IsMetricsEnabled returns true if any metric is configured and enabled
+func (a *AzureCloudServiceConfig) IsMetricsEnabled() bool {
+	if a.Metrics == nil {
+		return false
+	}
+	for _, m := range a.Metrics {
+		if m.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
+// IsLogsEnabled returns true if any log is configured and enabled
+func (a *AzureCloudServiceConfig) IsLogsEnabled() bool {
+	if a.Logs == nil {
+		return false
+	}
+	for _, l := range a.Logs {
+		if l.Enabled {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {

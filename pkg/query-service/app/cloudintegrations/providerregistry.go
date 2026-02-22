@@ -15,16 +15,23 @@ func NewCloudProviderRegistry(
 	logger *slog.Logger,
 	store sqlstore.SQLStore,
 	querier querier.Querier,
-) map[integrationtypes.CloudProviderType]integrationtypes.CloudProvider {
+) (map[integrationtypes.CloudProviderType]integrationtypes.CloudProvider, error) {
 	registry := make(map[integrationtypes.CloudProviderType]integrationtypes.CloudProvider)
 
 	accountsRepo := integrationstore.NewCloudProviderAccountsRepository(store)
 	serviceConfigRepo := integrationstore.NewServiceConfigRepository(store)
 
-	awsProviderImpl := implawsprovider.NewAWSCloudProvider(logger, accountsRepo, serviceConfigRepo, querier)
+	awsProviderImpl, err := implawsprovider.NewAWSCloudProvider(logger, accountsRepo, serviceConfigRepo, querier)
+	if err != nil {
+		return nil, err
+	}
 	registry[integrationtypes.CloudProviderAWS] = awsProviderImpl
-	azureProviderImpl := implazureprovider.NewAzureCloudProvider(logger, accountsRepo, serviceConfigRepo, querier)
+
+	azureProviderImpl, err := implazureprovider.NewAzureCloudProvider(logger, accountsRepo, serviceConfigRepo, querier)
+	if err != nil {
+		return nil, err
+	}
 	registry[integrationtypes.CloudProviderAzure] = azureProviderImpl
 
-	return registry
+	return registry, nil
 }
