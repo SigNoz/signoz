@@ -280,7 +280,7 @@ func New(
 	}
 
 	// Initialize user getter
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
 
 	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
@@ -388,7 +388,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, flagger)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
