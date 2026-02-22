@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { useGetHosts } from 'api/generated/services/zeus';
 import ROUTES from 'constants/routes';
-import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import history from 'lib/history';
-import { Globe, Link2 } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
@@ -26,36 +26,21 @@ function DataSourceInfo({
 	const isEnabled =
 		activeLicense && activeLicense.platform === LicensePlatform.CLOUD;
 
-	const {
-		data: deploymentsData,
-		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData(isEnabled || false);
+	const { data: hostsData, isError } = useGetHosts({
+		query: { enabled: isEnabled || false },
+	});
 
-	const [region, setRegion] = useState<string>('');
 	const [url, setUrl] = useState<string>('');
 
 	useEffect(() => {
-		if (deploymentsData) {
-			switch (deploymentsData?.data.data.cluster.region.name) {
-				case 'in':
-					setRegion('India');
-					break;
-				case 'us':
-					setRegion('United States');
-					break;
-				case 'eu':
-					setRegion('Europe');
-					break;
-				default:
-					setRegion(deploymentsData?.data.data.cluster.region.name);
-					break;
+		if (hostsData) {
+			const defaultHost = hostsData?.data?.data?.hosts?.find((h) => h.is_default);
+			if (defaultHost?.url) {
+				const url = defaultHost?.url?.split('://')[1] ?? '';
+				setUrl(url);
 			}
-
-			setUrl(
-				`${deploymentsData?.data.data.name}.${deploymentsData?.data.data.cluster.region.dns}`,
-			);
 		}
-	}, [deploymentsData]);
+	}, [hostsData]);
 
 	const renderNotSendingData = (): JSX.Element => (
 		<>
@@ -123,14 +108,8 @@ function DataSourceInfo({
 							</Button>
 						</div>
 
-						{!isErrorDeploymentsData && deploymentsData && (
+						{!isError && hostsData && (
 							<div className="workspace-details">
-								<div className="workspace-region">
-									<Globe size={10} />
-
-									<Typography>{region}</Typography>
-								</div>
-
 								<div className="workspace-url">
 									<Link2 size={12} />
 
@@ -156,17 +135,11 @@ function DataSourceInfo({
 				Hello there, Welcome to your SigNoz workspace
 			</Typography>
 
-			{!isErrorDeploymentsData && deploymentsData && (
+			{!isError && hostsData && (
 				<Card className="welcome-card">
 					<Card.Content>
 						<div className="workspace-ready-container">
 							<div className="workspace-details">
-								<div className="workspace-region">
-									<Globe size={10} />
-
-									<Typography>{region}</Typography>
-								</div>
-
 								<div className="workspace-url">
 									<Link2 size={12} />
 

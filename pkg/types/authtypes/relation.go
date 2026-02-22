@@ -15,15 +15,14 @@ var (
 	RelationUpdate   = Relation{valuer.NewString("update")}
 	RelationDelete   = Relation{valuer.NewString("delete")}
 	RelationList     = Relation{valuer.NewString("list")}
-	RelationBlock    = Relation{valuer.NewString("block")}
 	RelationAssignee = Relation{valuer.NewString("assignee")}
 )
 
 var TypeableRelations = map[Type][]Relation{
 	TypeUser:          {RelationRead, RelationUpdate, RelationDelete},
 	TypeRole:          {RelationAssignee, RelationRead, RelationUpdate, RelationDelete},
-	TypeOrganization:  {RelationCreate, RelationRead, RelationUpdate, RelationDelete, RelationList},
-	TypeMetaResource:  {RelationRead, RelationUpdate, RelationDelete, RelationBlock},
+	TypeOrganization:  {RelationRead, RelationUpdate, RelationDelete},
+	TypeMetaResource:  {RelationRead, RelationUpdate, RelationDelete},
 	TypeMetaResources: {RelationCreate, RelationList},
 }
 
@@ -41,8 +40,6 @@ func NewRelation(relation string) (Relation, error) {
 		return RelationDelete, nil
 	case "list":
 		return RelationList, nil
-	case "block":
-		return RelationBlock, nil
 	case "assignee":
 		return RelationAssignee, nil
 	default:

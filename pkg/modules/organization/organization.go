@@ -14,6 +14,9 @@ type Getter interface {
 
 	// ListByOwnedKeyRange gets all the organizations owned by the instance
 	ListByOwnedKeyRange(context.Context) ([]*types.Organization, error)
+
+	// Gets the organization by name
+	GetByName(context.Context, string) (*types.Organization, error)
 }
 
 type Setter interface {

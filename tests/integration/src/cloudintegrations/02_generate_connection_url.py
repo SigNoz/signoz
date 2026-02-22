@@ -1,7 +1,6 @@
 from http import HTTPStatus
 from typing import Callable
 
-import pytest
 import requests
 
 from fixtures import types
@@ -21,7 +20,9 @@ def test_generate_connection_url(
     # Get authentication token for admin user
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     cloud_provider = "aws"
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
+    endpoint = (
+        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
+    )
 
     # Prepare request payload
     request_payload = {
@@ -65,9 +66,7 @@ def test_generate_connection_url(
     data = response_data["data"]
 
     # Assert account_id is a valid UUID format
-    assert (
-        len(data["account_id"]) > 0
-    ), "account_id should be a non-empty string (UUID)"
+    assert len(data["account_id"]) > 0, "account_id should be a non-empty string (UUID)"
 
     # Assert connection_url contains expected CloudFormation parameters
     connection_url = data["connection_url"]
@@ -111,7 +110,9 @@ def test_generate_connection_url_unsupported_provider(
     # Try with GCP (unsupported)
     cloud_provider = "gcp"
 
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
+    endpoint = (
+        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
+    )
 
     request_payload = {
         "account_config": {"regions": ["us-central1"]},

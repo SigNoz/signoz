@@ -7,6 +7,7 @@ interface BaseChartProps {
 	width: number;
 	height: number;
 	showTooltip?: boolean;
+	showLegend?: boolean;
 	timezone: string;
 	canPinTooltip?: boolean;
 	yAxisUnit?: string;
@@ -17,6 +18,7 @@ interface BaseChartProps {
 interface UPlotBasedChartProps {
 	config: UPlotConfigBuilder;
 	data: uPlot.AlignedData;
+	legendConfig: LegendConfig;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
 	plotRef?: (plot: uPlot | null) => void;
@@ -27,13 +29,19 @@ interface UPlotBasedChartProps {
 
 export interface TimeSeriesChartProps
 	extends BaseChartProps,
+		UPlotBasedChartProps {}
+
+export interface HistogramChartProps
+	extends BaseChartProps,
 		UPlotBasedChartProps {
-	legendConfig: LegendConfig;
+	isQueriesMerged?: boolean;
 }
 
 export interface BarChartProps extends BaseChartProps, UPlotBasedChartProps {
-	legendConfig: LegendConfig;
 	isStackedBarChart?: boolean;
 }
 
-export type ChartProps = TimeSeriesChartProps | BarChartProps;
+export type ChartProps =
+	| TimeSeriesChartProps
+	| BarChartProps
+	| HistogramChartProps;
