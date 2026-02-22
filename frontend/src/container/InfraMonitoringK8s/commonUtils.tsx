@@ -265,17 +265,9 @@ export const safeParseJSON = <T,>(value: string): T | null => {
 	if (!value) {
 		return null;
 	}
-
 	try {
-		// Attempting to parse potentially untrusted user input from the URL.
-		// If the user pastes a corrupted link or modifies the URL manually (e.g., ?filters=invalidJSON),
-		// JSON.parse() will throw a SyntaxError. Without this try/catch block, that unhandled
-		// exception would bubble up during the React component render cycle and crash.
 		return JSON.parse(value) as T;
 	} catch (e) {
-		// By catching the SyntaxError, we gracefully degrade the user experience.
-		// Instead of crashing, the app ignores the malformed URL parameter and cleanly
-		// falls back to the default state (e.g., no filters applied).
 		console.error('Error parsing JSON from URL parameter:', e);
 		// TODO: Should we capture this error in Sentry?
 		return null;
