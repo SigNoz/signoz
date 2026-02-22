@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
@@ -34,7 +33,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
 import { Info, TriangleAlert } from 'lucide-react';
-import { AppState } from 'store/reducers';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -43,7 +41,6 @@ import {
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,
@@ -114,20 +111,6 @@ function QuerySearch({
 	const [isEditorReady, setIsEditorReady] = useState(false);
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
-
-	// Get time range from Redux global state
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	// Convert nanoseconds to milliseconds - use useMemo with both deps to avoid multiple updates
-	const timeRange = useMemo(
-		() => ({
-			startUnixMilli: Math.floor(globalTime.minTime / 1000000),
-			endUnixMilli: Math.floor(globalTime.maxTime / 1000000),
-		}),
-		[globalTime.minTime, globalTime.maxTime],
-	);
 
 	const handleQueryValidation = useCallback((newExpression: string): void => {
 		try {
@@ -329,12 +312,7 @@ function QuerySearch({
 		setKeySuggestions([]);
 		debouncedFetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		dataSource,
-		debouncedMetricName,
-		timeRange.startUnixMilli,
-		timeRange.endUnixMilli,
-	]);
+	}, [dataSource, debouncedMetricName]);
 
 	// Add a state for tracking editing mode
 	const [editingMode, setEditingMode] = useState<
