@@ -798,6 +798,14 @@ components:
       - temporality
       - isMonotonic
       type: object
+    MetrictypesComparisonSpaceAggregationParam:
+      properties:
+        operator:
+          type: string
+        threshold:
+          format: double
+          type: number
+      type: object
     MetrictypesSpaceAggregation:
       enum:
       - sum
@@ -810,6 +818,7 @@ components:
       - p90
       - p95
       - p99
+      - histogram_count
       type: string
     MetrictypesTemporality:
       enum:
@@ -1094,6 +1103,8 @@ components:
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
+        comparisonSpaceAggregationParam:
+          $ref: '#/components/schemas/MetrictypesComparisonSpaceAggregationParam'
         metricName:
           type: string
         reduceTo:
