@@ -280,7 +280,7 @@ func New(
 	}
 
 	// Initialize user getter
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
 
 	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(

@@ -92,7 +92,7 @@ func NewModules(
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User)
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings))
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{

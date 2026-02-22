@@ -3,9 +3,9 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics       = featuretypes.MustNewName("use_span_metrics")
-	FeatureKafkaSpanEval        = featuretypes.MustNewName("kafka_span_eval")
-	FeatureListUsersIncludeRoot = featuretypes.MustNewName("list_users_include_root")
+	FeatureUseSpanMetrics = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval  = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUsers  = featuretypes.MustNewName("hide_root_users")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -27,11 +27,11 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureListUsersIncludeRoot,
+			Name:           FeatureHideRootUsers,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageStable,
-			Description:    "Controls whether root admin users are shown in the list users API",
-			DefaultVariant: featuretypes.MustNewName("enabled"),
+			Description:    "Controls whether root admin users are hidden or not",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 	)
