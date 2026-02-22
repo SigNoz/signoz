@@ -62,6 +62,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	// null = no user action, true = user opened, false = user closed
 	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
 	const [visibleItemsCount, setVisibleItemsCount] = useState<number>(10);
+	const [visibleUncheckedCount, setVisibleUncheckedCount] = useState<number>(5);
 
 	const {
 		lastUsedQuery,
@@ -214,19 +215,15 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const previousUncheckedValuesRef = useRef<string[]>([]);
 
-	const attributeValues: string[] = useMemo(() => {
-		// const dataType = filter.attributeKey.dataType || DataTypes.String;
-
+	const { attributeValues, relatedValuesSet } = useMemo(() => {
 		if (keyValueSuggestions) {
-			// Process the response data for all pages
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const responseData = keyValueSuggestions?.data as any;
 			const values = responseData.data?.values || {};
-			const relatedValues = values.relatedValues || [];
-			const stringValues = values.stringValues || [];
-			const numberValues = values.numberValues || [];
+			const relatedValues: string[] = values.relatedValues || [];
+			const stringValues: string[] = values.stringValues || [];
+			const numberValues: number[] = values.numberValues || [];
 
-			// Combine relatedValues first, then unique stringValues
 			const valuesToUse = [
 				...relatedValues,
 				...stringValues.filter(
@@ -238,15 +235,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				),
 			];
 
-			// Generate options from string values - explicitly handle empty strings
-			const stringOptions = valuesToUse
-				// Strict filtering for empty string - we'll handle it as a special case if needed
-				.filter(
-					(value: string | null | undefined): value is string =>
-						value !== null && value !== undefined && value !== '',
-				);
+			const stringOptions = valuesToUse.filter(
+				(value: string | null | undefined): value is string =>
+					value !== null && value !== undefined && value !== '',
+			);
 
-			// Generate options from number values
 			const numberOptions = numberValues
 				.filter(
 					(value: number | null | undefined): value is number =>
@@ -254,14 +247,26 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 				)
 				.map((value: number) => value.toString());
 
+			const filteredRelated = new Set(
+				relatedValues.filter(
+					(v): v is string => v !== null && v !== undefined && v !== '',
+				),
+			);
+
 			const baseValues = [...stringOptions, ...numberOptions];
 			const previousUnchecked = previousUncheckedValuesRef.current || [];
 			const preservedUnchecked = previousUnchecked.filter(
 				(value) => !baseValues.includes(value),
 			);
-			return [...baseValues, ...preservedUnchecked];
+			return {
+				attributeValues: [...baseValues, ...preservedUnchecked],
+				relatedValuesSet: filteredRelated,
+			};
 		}
-		return [];
+		return {
+			attributeValues: [] as string[],
+			relatedValuesSet: new Set<string>(),
+		};
 	}, [keyValueSuggestions]);
 
 	const setSearchTextDebounced = useDebouncedFn((...args) => {
@@ -340,22 +345,43 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const {
 		visibleCheckedValues,
 		uncheckedValues,
+		visibleUncheckedValues,
 		visibleCheckedCount,
 		hasMoreChecked,
+		hasMoreUnchecked,
+		checkedSeparatorIndex,
 	} = useMemo(() => {
 		const checkedValues = attributeValues.filter(
 			(val) => currentFilterState[val],
 		);
 		const unchecked = attributeValues.filter((val) => !currentFilterState[val]);
 		const visibleChecked = checkedValues.slice(0, visibleItemsCount);
+		const visibleUnchecked = unchecked.slice(0, visibleUncheckedCount);
+
+		const findSeparatorIndex = (list: string[]): number => {
+			if (relatedValuesSet.size === 0) {
+				return -1;
+			}
+			const firstNonRelated = list.findIndex((v) => !relatedValuesSet.has(v));
+			return firstNonRelated > 0 ? firstNonRelated : -1;
+		};
 
 		return {
 			visibleCheckedValues: visibleChecked,
 			uncheckedValues: unchecked,
+			visibleUncheckedValues: visibleUnchecked,
 			visibleCheckedCount: visibleChecked.length,
 			hasMoreChecked: checkedValues.length > visibleChecked.length,
+			hasMoreUnchecked: unchecked.length > visibleUnchecked.length,
+			checkedSeparatorIndex: findSeparatorIndex(visibleChecked),
 		};
-	}, [attributeValues, currentFilterState, visibleItemsCount]);
+	}, [
+		attributeValues,
+		currentFilterState,
+		visibleItemsCount,
+		visibleUncheckedCount,
+		relatedValuesSet,
+	]);
 
 	useEffect(() => {
 		previousUncheckedValuesRef.current = uncheckedValues;
@@ -400,6 +426,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		isOnlyOrAllClicked: boolean,
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
+		setVisibleUncheckedCount(5);
 		const query = cloneDeep(currentQuery.builder.queryData?.[activeQueryIndex]);
 
 		// if only or all are clicked we do not need to worry about anything just override whatever we have
@@ -660,6 +687,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					if (isOpen) {
 						setUserToggleState(false);
 						setVisibleItemsCount(10);
+						setVisibleUncheckedCount(5);
 					} else {
 						setUserToggleState(true);
 					}
@@ -707,8 +735,11 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					)}
 					{attributeValues.length > 0 ? (
 						<section className="values">
-							{visibleCheckedValues.map((value: string) => (
+							{visibleCheckedValues.map((value: string, index: number) => (
 								<Fragment key={value}>
+									{index === checkedSeparatorIndex && (
+										<div className="filter-separator related-separator" />
+									)}
 									<div className="value">
 										<Checkbox
 											onChange={(e): void => onChange(value, e.target.checked, false)}
@@ -770,7 +801,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								<div className="filter-separator" data-testid="filter-separator" />
 							)}
 
-							{uncheckedValues.map((value: string) => (
+							{visibleUncheckedValues.map((value: string) => (
 								<Fragment key={value}>
 									<div className="value">
 										<Checkbox
@@ -823,6 +854,17 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									</div>
 								</Fragment>
 							))}
+
+							{hasMoreUnchecked && (
+								<section className="show-more">
+									<Typography.Text
+										className="show-more-text"
+										onClick={(): void => setVisibleUncheckedCount((prev) => prev + 5)}
+									>
+										Show More...
+									</Typography.Text>
+								</section>
+							)}
 						</section>
 					) : isEmptyStateWithDocsEnabled ? (
 						<LogsQuickFilterEmptyState attributeKey={filter.attributeKey.key} />
