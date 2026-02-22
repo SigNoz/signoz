@@ -111,7 +111,7 @@ describe('InviteTeamMembers', () => {
 			expect(screen.getByText('Email address')).toBeInTheDocument();
 			expect(screen.getByText('Roles')).toBeInTheDocument();
 			expect(
-				screen.getByRole('button', { name: /complete/i }),
+				screen.getByRole('button', { name: /send invites/i }),
 			).toBeInTheDocument();
 			expect(
 				screen.getByRole('button', { name: /i'll do this later/i }),
@@ -121,7 +121,7 @@ describe('InviteTeamMembers', () => {
 		it('disables both action buttons while isLoading is true', () => {
 			renderComponent({ isLoading: true });
 
-			expect(screen.getByRole('button', { name: /complete/i })).toBeDisabled();
+			expect(screen.getByRole('button', { name: /send invites/i })).toBeDisabled();
 			expect(
 				screen.getByRole('button', { name: /i'll do this later/i }),
 			).toBeDisabled();
@@ -256,7 +256,7 @@ describe('InviteTeamMembers', () => {
 			);
 
 			await user.type(firstInput, 'bad-email');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
 				expect(
 					screen.getByText(
@@ -272,7 +272,7 @@ describe('InviteTeamMembers', () => {
 			});
 
 			await selectRole(user, 0, 'Viewer');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
 				expect(
 					screen.getByText(/please enter valid emails for team members/i),
@@ -290,7 +290,7 @@ describe('InviteTeamMembers', () => {
 			await user.click(screen.getByRole('button', { name: /add another/i }));
 			const allInputs = screen.getAllByPlaceholderText(/e\.g\. john@signoz\.io/i);
 			await user.type(allInputs[1], 'norole@example.com');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
 				expect(
 					screen.getByText(/please select roles for team members/i),
@@ -321,7 +321,7 @@ describe('InviteTeamMembers', () => {
 			);
 
 			await user.type(firstInput, '   ');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
 				expect(
 					screen.queryByText(/please enter valid emails/i),
@@ -331,7 +331,7 @@ describe('InviteTeamMembers', () => {
 
 			await user.clear(firstInput);
 			await user.type(firstInput, 'bad-email');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
 				expect(
 					screen.getByText(
@@ -349,7 +349,7 @@ describe('InviteTeamMembers', () => {
 			await user.clear(firstInput);
 			await user.type(firstInput, 'good@example.com');
 			await selectRole(user, 0, 'Admin');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
 				expect(
 					screen.queryByText(/please enter valid emails and select roles/i),
@@ -371,7 +371,7 @@ describe('InviteTeamMembers', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderComponent();
 
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 
 			await waitFor(() => {
 				expect(
@@ -408,7 +408,7 @@ describe('InviteTeamMembers', () => {
 			);
 			await user.type(firstInput, 'only@example.com');
 			await selectRole(user, 0, 'Admin');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 
 			await waitFor(() => {
 				expect(capturedBody).not.toBeNull();
@@ -432,7 +432,7 @@ describe('InviteTeamMembers', () => {
 			);
 			await user.type(firstInput, 'alice@example.com');
 			await selectRole(user, 0, 'Admin');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 
 			await waitFor(() => {
 				expect(mockNotificationSuccess).toHaveBeenCalledWith(
@@ -468,7 +468,7 @@ describe('InviteTeamMembers', () => {
 			);
 			await user.type(firstInput, 'fail@example.com');
 			await selectRole(user, 0, 'Viewer');
-			await user.click(screen.getByRole('button', { name: /complete/i }));
+			await user.click(screen.getByRole('button', { name: /send invites/i }));
 
 			await waitFor(() => {
 				expect(document.querySelector('.auth-error-container')).toBeInTheDocument();

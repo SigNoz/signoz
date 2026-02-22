@@ -8,7 +8,7 @@ import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
 import { useNotifications } from 'hooks/useNotifications';
-import { cloneDeep, debounce, isEmpty } from 'lodash-es';
+import { cloneDeep, debounce } from 'lodash-es';
 import {
 	ArrowRight,
 	ChevronDown,
@@ -65,7 +65,7 @@ function InviteTeamMembers({
 	};
 
 	useEffect(() => {
-		if (isEmpty(teamMembers)) {
+		if (teamMembers === null) {
 			const initialTeamMembers = Array.from({ length: 3 }, () => ({
 				...defaultTeamMember,
 				id: uuid(),
@@ -372,7 +372,7 @@ function InviteTeamMembers({
 							)
 						}
 					>
-						Complete
+						Send Invites
 					</Button>
 					<Button
 						variant="ghost"
