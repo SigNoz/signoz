@@ -90,42 +90,18 @@ func (server *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (server *Server) Check(ctx context.Context, tupleReq *openfgav1.TupleKey) error {
+func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error) {
 	storeID, modelID := server.getStoreIDandModelID()
-	checkResponse, err := server.openfgaServer.Check(
-		ctx,
-		&openfgav1.CheckRequest{
-			StoreId:              storeID,
-			AuthorizationModelId: modelID,
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     tupleReq.User,
-				Relation: tupleReq.Relation,
-				Object:   tupleReq.Object,
-			},
-		})
-	if err != nil {
-		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
-	}
-
-	if !checkResponse.Allowed {
-		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subject %s cannot %s object %s", tupleReq.User, tupleReq.Relation, tupleReq.Object)
-	}
-
-	return nil
-}
-
-func (server *Server) BatchCheck(ctx context.Context, tupleReq []*openfgav1.TupleKey) error {
-	storeID, modelID := server.getStoreIDandModelID()
-	batchCheckItems := make([]*openfgav1.BatchCheckItem, 0)
-	for idx, tuple := range tupleReq {
+	batchCheckItems := make([]*openfgav1.BatchCheckItem, 0, len(tupleReq))
+	for id, tuple := range tupleReq {
 		batchCheckItems = append(batchCheckItems, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     tuple.User,
 				Relation: tuple.Relation,
 				Object:   tuple.Object,
 			},
-			// the batch check response is map[string] keyed by correlationID.
-			CorrelationId: strconv.Itoa(idx),
+			// Use transaction ID as correlation ID for deterministic mapping
+			CorrelationId: id,
 		})
 	}
 
@@ -137,17 +113,18 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq []*openfgav1.Tupl
 			Checks:               batchCheckItems,
 		})
 	if err != nil {
-		return errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
+		return nil, errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
 	}
 
-	for _, checkResponse := range checkResponse.Result {
-		if checkResponse.GetAllowed() {
-			return nil
+	response := make(map[string]*authtypes.TupleKeyAuthorization, len(tupleReq))
+	for id, tuple := range tupleReq {
+		response[id] = &authtypes.TupleKeyAuthorization{
+			Tuple:      tuple,
+			Authorized: checkResponse.Result[id].GetAllowed(),
 		}
 	}
 
-	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
-
+	return response, nil
 }
 
 func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector, roleSelectors []authtypes.Selector) error {
@@ -156,17 +133,29 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 		return err
 	}
 
-	tuples, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
+	tupleSlice, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
 	if err != nil {
 		return err
 	}
 
-	err = server.BatchCheck(ctx, tuples)
+	// Convert slice to map with generated IDs for internal use
+	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
+	for idx, tuple := range tupleSlice {
+		tuples[strconv.Itoa(idx)] = tuple
+	}
+
+	response, err := server.BatchCheck(ctx, tuples)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	for _, resp := range response {
+		if resp.Authorized {
+			return nil
+		}
+	}
+
+	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
 func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector, roleSelectors []authtypes.Selector) error {
@@ -175,17 +164,29 @@ func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, o
 		return err
 	}
 
-	tuples, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
+	tupleSlice, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
 	if err != nil {
 		return err
 	}
 
-	err = server.BatchCheck(ctx, tuples)
+	// Convert slice to map with generated IDs for internal use
+	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
+	for idx, tuple := range tupleSlice {
+		tuples[strconv.Itoa(idx)] = tuple
+	}
+
+	response, err := server.BatchCheck(ctx, tuples)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	for _, resp := range response {
+		if resp.Authorized {
+			return nil
+		}
+	}
+
+	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
 func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {

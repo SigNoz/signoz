@@ -127,6 +127,18 @@ export interface AuthtypesGettableTokenDTO {
 	tokenType?: string;
 }
 
+export interface AuthtypesGettableTransactionDTO {
+	/**
+	 * @type boolean
+	 */
+	authorized: boolean;
+	object: AuthtypesObjectDTO;
+	/**
+	 * @type string
+	 */
+	relation: string;
+}
+
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
 	[key: string]: string;
 };
@@ -170,6 +182,10 @@ export interface AuthtypesGoogleConfigDTO {
 	serviceAccountJson?: string;
 }
 
+export interface AuthtypesNameDTO {
+	[key: string]: unknown;
+}
+
 export interface AuthtypesOIDCConfigDTO {
 	claimMapping?: AuthtypesAttributeMappingDTO;
 	/**
@@ -196,6 +212,11 @@ export interface AuthtypesOIDCConfigDTO {
 	 * @type string
 	 */
 	issuerAlias?: string;
+}
+
+export interface AuthtypesObjectDTO {
+	resource: AuthtypesResourceDTO;
+	selector: AuthtypesSelectorDTO;
 }
 
 export interface AuthtypesOrgSessionContextDTO {
@@ -248,6 +269,14 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
+export interface AuthtypesResourceDTO {
+	name: AuthtypesNameDTO;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
 /**
  * @nullable
  */
@@ -291,6 +320,10 @@ export interface AuthtypesSamlConfigDTO {
 	samlIdp?: string;
 }
 
+export interface AuthtypesSelectorDTO {
+	[key: string]: unknown;
+}
+
 export interface AuthtypesSessionContextDTO {
 	/**
 	 * @type boolean
@@ -301,6 +334,18 @@ export interface AuthtypesSessionContextDTO {
 	 * @nullable true
 	 */
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
+}
+
+export interface AuthtypesTransactionDTO {
+	/**
+	 * @type string
+	 */
+	id?: string;
+	object: AuthtypesObjectDTO;
+	/**
+	 * @type string
+	 */
+	relation: string;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -1961,6 +2006,57 @@ export interface RenderErrorResponseDTO {
 	status?: string;
 }
 
+/**
+ * @nullable
+ */
+export type RoletypesGettableResourcesDTORelations = {
+	[key: string]: string[];
+} | null;
+
+export interface RoletypesGettableResourcesDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	relations: RoletypesGettableResourcesDTORelations;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	resources: AuthtypesResourceDTO[] | null;
+}
+
+export interface RoletypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: AuthtypesObjectDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: AuthtypesObjectDTO[] | null;
+}
+
+export interface RoletypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
+export interface RoletypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface RoletypesRoleDTO {
 	/**
 	 * @type string
@@ -1970,7 +2066,7 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type string
 	 */
@@ -1978,15 +2074,15 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	orgId: string;
 	/**
 	 * @type string
 	 */
-	type?: string;
+	type: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2513,6 +2609,17 @@ export interface ZeustypesPostableProfileDTO {
 	where_did_you_discover_signoz: string;
 }
 
+export type AuthzCheck200 = {
+	/**
+	 * @type array
+	 */
+	data?: AuthtypesGettableTransactionDTO[];
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
 export type ChangePasswordPathParameters = {
 	id: string;
 };
@@ -2916,6 +3023,33 @@ export type GetRole200 = {
 export type PatchRolePathParameters = {
 	id: string;
 };
+export type GetObjectsPathParameters = {
+	id: string;
+	relation: string;
+};
+export type GetObjects200 = {
+	/**
+	 * @type array
+	 */
+	data?: AuthtypesObjectDTO[];
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
+export type PatchObjectsPathParameters = {
+	id: string;
+	relation: string;
+};
+export type GetResources200 = {
+	data?: RoletypesGettableResourcesDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
 export type ListUsers200 = {
 	/**
 	 * @type array

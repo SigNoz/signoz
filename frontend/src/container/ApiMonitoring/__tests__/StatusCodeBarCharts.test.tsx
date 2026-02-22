@@ -142,7 +142,6 @@ describe('StatusCodeBarCharts', () => {
 		endTime: 1609545600000,
 	};
 	const mockDomainName = 'test-domain';
-	const mockEndPointName = '/api/test';
 	const onDragSelectMock = jest.fn();
 	const refetchFn = jest.fn();
 
@@ -232,7 +231,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -268,7 +266,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -311,7 +308,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -356,7 +352,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -404,7 +399,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockFilters}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -419,7 +413,6 @@ describe('StatusCodeBarCharts', () => {
 		// but we've confirmed the function is mocked and ready to be tested
 		expect(getStatusCodeBarChartWidgetData).toHaveBeenCalledWith(
 			mockDomainName,
-			mockEndPointName,
 			expect.objectContaining({
 				items: [],
 				op: 'AND',
@@ -467,7 +460,6 @@ describe('StatusCodeBarCharts', () => {
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
 				endPointStatusCodeLatencyBarChartsDataQuery={mockLatencyQuery as any}
 				domainName={mockDomainName}
-				endPointName={mockEndPointName}
 				filters={mockCustomFilters as IBuilderQuery['filters']}
 				timeRange={mockTimeRange}
 				onDragSelect={onDragSelectMock}
@@ -477,7 +469,6 @@ describe('StatusCodeBarCharts', () => {
 		// Assert widget creation was called with the correct parameters
 		expect(getStatusCodeBarChartWidgetData).toHaveBeenCalledWith(
 			mockDomainName,
-			mockEndPointName,
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({ id: 'custom-filter' }),
