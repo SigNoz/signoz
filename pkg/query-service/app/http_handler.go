@@ -214,11 +214,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
-	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(
+	cloudIntegrationsRegistry, err := cloudintegrations.NewCloudProviderRegistry(
 		opts.Logger,
 		opts.Signoz.SQLStore,
 		opts.Signoz.Querier,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,

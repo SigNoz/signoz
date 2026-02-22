@@ -51,13 +51,13 @@ type CloudProvider interface {
 	GenerateConnectionArtifact(ctx context.Context, req *PostableConnectionArtifact) (any, error)
 	GetAccountStatus(ctx context.Context, orgID, accountID string) (*GettableAccountStatus, error)
 
-	ListServices(ctx context.Context, orgID string, accountID *string) (any, error) // returns either GettableAWSServices
+	ListServices(ctx context.Context, orgID string, accountID *string) (any, error) // returns either GettableAWSServices or GettableAzureServices
 	GetServiceDetails(ctx context.Context, req *GetServiceDetailsReq) (any, error)
 	ListConnectedAccounts(ctx context.Context, orgID string) (*GettableConnectedAccountsList, error)
 	GetDashboard(ctx context.Context, req *GettableDashboard) (*dashboardtypes.Dashboard, error)
 	GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
-	UpdateAccountConfig(ctx context.Context, req *PatchableAccountConfig) (any, error) // req can be either PatchableAWSAccountConfig
+	UpdateAccountConfig(ctx context.Context, req *PatchableAccountConfig) (any, error) // req can be either PatchableAWSAccountConfig or PatchableAzureAccountConfig
 	UpdateServiceConfig(ctx context.Context, req *PatchableServiceConfig) (any, error)
 
 	DisconnectAccount(ctx context.Context, orgID, accountID string) (*CloudIntegration, error)
@@ -121,7 +121,7 @@ type SigNozAWSAgentConfig struct {
 
 type PostableConnectionArtifact struct {
 	OrgID string
-	Data  []byte // either PostableAWSConnectionUrl
+	Data  []byte // either PostableAWSConnectionUrl or PostableAzureConnectionCommand
 }
 
 type PostableConnectionArtifactTyped[AgentConfigT any, AccountConfigT any] struct {
@@ -131,6 +131,16 @@ type PostableConnectionArtifactTyped[AgentConfigT any, AccountConfigT any] struc
 }
 
 type PostableAWSConnectionUrl = PostableConnectionArtifactTyped[SigNozAWSAgentConfig, AWSAccountConfig]
+type PostableAzureConnectionCommand = PostableConnectionArtifactTyped[SigNozAzureAgentConfig, AzureAccountConfig]
+
+type SigNozAzureAgentConfig struct {
+	IngestionUrl string `json:"ingestion_url"`
+	IngestionKey string `json:"ingestion_key"`
+	SigNozAPIUrl string `json:"signoz_api_url"`
+	SigNozAPIKey string `json:"signoz_api_key"`
+
+	Version string `json:"version,omitempty"`
+}
 
 // GettableConnectionArtifact represents base structure for connection artifacts
 type GettableConnectionArtifact[T any] struct {
@@ -142,9 +152,20 @@ type GettableAWSConnectionArtifact struct {
 	ConnectionUrl string `json:"connection_url"`
 }
 
+type GettableAzureConnectionArtifact struct {
+	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
+	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
+}
+
 type GettableAWSConnectionUrl struct {
 	AccountId     string `json:"account_id"`
 	ConnectionUrl string `json:"connection_url"`
+}
+
+type GettableAzureConnectionCommand struct {
+	AccountId                   string `json:"account_id"`
+	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
+	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
 }
 
 type GettableAccountStatus struct {
@@ -166,6 +187,13 @@ type AWSAgentIntegrationConfig struct {
 	TelemetryCollectionStrategy *AWSCollectionStrategy `json:"telemetry,omitempty"`
 }
 
+type AzureAgentIntegrationConfig struct {
+	DeploymentRegion      string   `json:"deployment_region"` // will not be changed once set
+	EnabledResourceGroups []string `json:"resource_groups"`
+	// TelemetryCollectionStrategy is map of service to telemetry config
+	TelemetryCollectionStrategy map[string]*AzureCollectionStrategy `json:"telemetry,omitempty"`
+}
+
 type GettableAgentCheckIn[T any] struct {
 	AccountId         string     `json:"account_id"`
 	CloudAccountId    string     `json:"cloud_account_id"`
@@ -174,6 +202,7 @@ type GettableAgentCheckIn[T any] struct {
 }
 
 type GettableAWSAgentCheckIn = GettableAgentCheckIn[AWSAgentIntegrationConfig]
+type GettableAzureAgentCheckIn = GettableAgentCheckIn[AzureAgentIntegrationConfig]
 
 type PatchableServiceConfig struct {
 	OrgID     string `json:"org_id"`
@@ -187,10 +216,52 @@ type UpdatableCloudServiceConfig[T any] struct {
 }
 
 type UpdatableAWSCloudServiceConfig = UpdatableCloudServiceConfig[AWSCloudServiceConfig]
+type UpdatableAzureCloudServiceConfig = UpdatableCloudServiceConfig[AzureCloudServiceConfig]
 
 type AWSCloudServiceConfig struct {
 	Logs    *AWSCloudServiceLogsConfig    `json:"logs,omitempty"`
 	Metrics *AWSCloudServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+// IsMetricsEnabled returns true if metrics collection is configured and enabled
+func (a *AWSCloudServiceConfig) IsMetricsEnabled() bool {
+	return a.Metrics != nil && a.Metrics.Enabled
+}
+
+// IsLogsEnabled returns true if logs collection is configured and enabled
+func (a *AWSCloudServiceConfig) IsLogsEnabled() bool {
+	return a.Logs != nil && a.Logs.Enabled
+}
+
+type AzureCloudServiceConfig struct {
+	Logs    []*AzureCloudServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics []*AzureCloudServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+// IsMetricsEnabled returns true if any metric is configured and enabled
+func (a *AzureCloudServiceConfig) IsMetricsEnabled() bool {
+	if a.Metrics == nil {
+		return false
+	}
+	for _, m := range a.Metrics {
+		if m.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
+// IsLogsEnabled returns true if any log is configured and enabled
+func (a *AzureCloudServiceConfig) IsLogsEnabled() bool {
+	if a.Logs == nil {
+		return false
+	}
+	for _, l := range a.Logs {
+		if l.Enabled {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {
@@ -207,6 +278,47 @@ func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {
 	return nil
 }
 
+func (a *AzureCloudServiceConfig) Validate(def *AzureDefinition) error {
+	logsMap := make(map[string]bool)
+	metricsMap := make(map[string]bool)
+
+	if def.Strategy != nil && def.Strategy.Logs != nil {
+		for _, log := range def.Strategy.Logs {
+			logsMap[log.Name] = true
+		}
+	}
+
+	if def.Strategy != nil && def.Strategy.Metrics != nil {
+		for _, metric := range def.Strategy.Metrics {
+			metricsMap[metric.Name] = true
+		}
+	}
+
+	for _, log := range a.Logs {
+		if _, found := logsMap[log.Name]; !found {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid log name: %s", log.Name)
+		}
+	}
+
+	for _, metric := range a.Metrics {
+		if _, found := metricsMap[metric.Name]; !found {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid metric name: %s", metric.Name)
+		}
+	}
+
+	return nil
+}
+
+type AzureCloudServiceLogsConfig struct {
+	Enabled bool   `json:"enabled"`
+	Name    string `json:"name"`
+}
+
+type AzureCloudServiceMetricsConfig struct {
+	Enabled bool   `json:"enabled"`
+	Name    string `json:"name"`
+}
+
 type PatchServiceConfigResponse struct {
 	ServiceId string `json:"id"`
 	Config    any    `json:"config"`
@@ -215,7 +327,7 @@ type PatchServiceConfigResponse struct {
 type PatchableAccountConfig struct {
 	OrgID     string
 	AccountId string
-	Data      []byte // can be either AWSAccountConfig
+	Data      []byte // can be either AWSAccountConfig or AzureAccountConfig
 }
 
 type PatchableAccountConfigTyped[T any] struct {
@@ -223,9 +335,15 @@ type PatchableAccountConfigTyped[T any] struct {
 }
 
 type PatchableAWSAccountConfig = PatchableAccountConfigTyped[AWSAccountConfig]
+type PatchableAzureAccountConfig = PatchableAccountConfigTyped[AzureAccountConfig]
 
 type AWSAccountConfig struct {
 	EnabledRegions []string `json:"regions"`
+}
+
+type AzureAccountConfig struct {
+	DeploymentRegion      string   `json:"deployment_region,omitempty"`
+	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
 }
 
 type GettableServices[T any] struct {
@@ -233,6 +351,7 @@ type GettableServices[T any] struct {
 }
 
 type GettableAWSServices = GettableServices[AWSServiceSummary]
+type GettableAzureServices = GettableServices[AzureServiceSummary]
 
 type GetServiceDetailsReq struct {
 	OrgID          valuer.UUID
@@ -289,6 +408,10 @@ func (a *CloudIntegration) Account(cloudProvider CloudProviderType) *Account {
 		config := new(AWSAccountConfig)
 		_ = UnmarshalJSON([]byte(a.Config), config)
 		ca.Config = config
+	case CloudProviderAzure:
+		config := new(AzureAccountConfig)
+		_ = UnmarshalJSON([]byte(a.Config), config)
+		ca.Config = config
 	default:
 	}
 
@@ -298,7 +421,7 @@ func (a *CloudIntegration) Account(cloudProvider CloudProviderType) *Account {
 type Account struct {
 	Id             string        `json:"id"`
 	CloudAccountId string        `json:"cloud_account_id"`
-	Config         any           `json:"config"` // AWSAccountConfig
+	Config         any           `json:"config"` // AWSAccountConfig or AzureAccountConfig
 	Status         AccountStatus `json:"status"`
 }
 
@@ -316,16 +439,30 @@ func DefaultAWSAccountConfig() AWSAccountConfig {
 	}
 }
 
+func DefaultAzureAccountConfig() AzureAccountConfig {
+	return AzureAccountConfig{
+		DeploymentRegion:      "",
+		EnabledResourceGroups: []string{},
+	}
+}
+
 type ServiceSummary[T any] struct {
 	DefinitionMetadata
 	Config *T `json:"config"`
 }
 
 type AWSServiceSummary = ServiceSummary[AWSCloudServiceConfig]
+type AzureServiceSummary = ServiceSummary[AzureCloudServiceConfig]
 
 type GettableAWSServiceDetails struct {
 	AWSDefinition
 	Config           *AWSCloudServiceConfig   `json:"config"`
+	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
+}
+
+type GettableAzureServiceDetails struct {
+	AzureDefinition
+	Config           *AzureCloudServiceConfig `json:"config"`
 	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
 }
 

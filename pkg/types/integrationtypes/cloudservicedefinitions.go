@@ -15,8 +15,10 @@ const (
 )
 
 type AWSDefinition = ServiceDefinition[AWSCollectionStrategy]
+type AzureDefinition = ServiceDefinition[AzureCollectionStrategy]
 
 var _ Definition = &AWSDefinition{}
+var _ Definition = &AzureDefinition{}
 
 type ServiceDefinition[T any] struct {
 	DefinitionMetadata
@@ -67,6 +69,16 @@ type Definition interface {
 	GetId() string
 	Validate() error
 	PopulateDashboardURLs(cloudProvider CloudProviderType, svcId string)
+	GetIngestionStatusCheck() *IngestionStatusCheck
+	GetAssets() Assets
+}
+
+func (def *ServiceDefinition[T]) GetIngestionStatusCheck() *IngestionStatusCheck {
+	return def.IngestionStatusCheck
+}
+
+func (def *ServiceDefinition[T]) GetAssets() Assets {
+	return def.Assets
 }
 
 type IngestionStatusCheck struct {
@@ -123,6 +135,11 @@ type AWSCollectionStrategy struct {
 	S3Buckets map[string][]string `json:"s3_buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
 }
 
+type AzureCollectionStrategy struct {
+	Metrics []*AzureMetricsStrategy `json:"azure_metrics,omitempty"`
+	Logs    []*AzureLogsStrategy    `json:"azure_logs,omitempty"`
+}
+
 type AWSMetricsStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	StreamFilters []struct {
@@ -143,6 +160,16 @@ type AWSLogsStrategy struct {
 		// "" implies no filtering is required.
 		FilterPattern string `json:"filter_pattern"`
 	} `json:"cloudwatch_logs_subscriptions"`
+}
+
+type AzureMetricsStrategy struct {
+	CategoryType string `json:"category_type"`
+	Name         string `json:"name"`
+}
+
+type AzureLogsStrategy struct {
+	CategoryType string `json:"category_type"`
+	Name         string `json:"name"`
 }
 
 type Dashboard struct {

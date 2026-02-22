@@ -5,7 +5,6 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"path"
 
@@ -18,28 +17,28 @@ import (
 
 var (
 	CodeServiceDefinitionNotFound = errors.MustNewCode("service_definition_not_dound")
+	CodeUnsupportedCloudProvider  = errors.MustNewCode("unsupported_cloud_provider")
+	CodeUnsupportedServiceType    = errors.MustNewCode("unsupported_service_type")
 )
 
-type (
-	AWSServicesProvider struct {
-		definitions map[string]*integrationtypes.AWSDefinition
-	}
-)
+type ServicesProvider[T integrationtypes.Definition] struct {
+	definitions map[string]T
+}
 
-func (a *AWSServicesProvider) ListServiceDefinitions(ctx context.Context) (map[string]*integrationtypes.AWSDefinition, error) {
+func (a *ServicesProvider[T]) ListServiceDefinitions(ctx context.Context) (map[string]T, error) {
 	return a.definitions, nil
 }
 
-func (a *AWSServicesProvider) GetServiceDefinition(ctx context.Context, serviceName string) (*integrationtypes.AWSDefinition, error) {
+func (a *ServicesProvider[T]) GetServiceDefinition(ctx context.Context, serviceName string) (T, error) {
 	def, ok := a.definitions[serviceName]
 	if !ok {
-		return nil, errors.NewNotFoundf(CodeServiceDefinitionNotFound, "aws service definition not found: %s", serviceName)
+		return *new(T), errors.NewNotFoundf(CodeServiceDefinitionNotFound, "azure service definition not found: %s", serviceName)
 	}
 
 	return def, nil
 }
 
-func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
+func NewAWSCloudProviderServices() (*ServicesProvider[*integrationtypes.AWSDefinition], error) {
 	definitions, err := readAllServiceDefinitions(integrationtypes.CloudProviderAWS)
 	if err != nil {
 		return nil, err
@@ -49,15 +48,37 @@ func NewAWSCloudProviderServices() (*AWSServicesProvider, error) {
 	for id, def := range definitions {
 		typedDef, ok := def.(*integrationtypes.AWSDefinition)
 		if !ok {
-			return nil, fmt.Errorf("invalid type for AWS service definition %s", id)
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for AWS service definition %s", id)
 		}
 		serviceDefinitions[id] = typedDef
 	}
 
-	return &AWSServicesProvider{
+	return &ServicesProvider[*integrationtypes.AWSDefinition]{
 		definitions: serviceDefinitions,
 	}, nil
 }
+
+func NewAzureCloudProviderServices() (*ServicesProvider[*integrationtypes.AzureDefinition], error) {
+	definitions, err := readAllServiceDefinitions(integrationtypes.CloudProviderAzure)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceDefinitions := make(map[string]*integrationtypes.AzureDefinition)
+	for id, def := range definitions {
+		typedDef, ok := def.(*integrationtypes.AzureDefinition)
+		if !ok {
+			return nil, errors.NewInternalf(errors.CodeInternal, "invalid type for Azure service definition %s", id)
+		}
+		serviceDefinitions[id] = typedDef
+	}
+
+	return &ServicesProvider[*integrationtypes.AzureDefinition]{
+		definitions: serviceDefinitions,
+	}, nil
+}
+
+// End of API. Logic for reading service definition files follows
 
 //go:embed definitions/*
 var definitionFiles embed.FS
@@ -132,6 +153,8 @@ func readServiceDefinition(cloudProvider valuer.String, svcDirpath string) (inte
 	switch cloudProvider {
 	case integrationtypes.CloudProviderAWS:
 		serviceDef = &integrationtypes.AWSDefinition{}
+	case integrationtypes.CloudProviderAzure:
+		serviceDef = &integrationtypes.AzureDefinition{}
 	default:
 		// ideally this shouldn't happen hence throwing internal error
 		return nil, errors.NewInternalf(errors.CodeInternal, "unsupported cloud provider: %s", cloudProvider)
