@@ -72,16 +72,17 @@ def test_with_steady_values_and_reset(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert len(result_values) >= 59
+    assert len(result_values) >= 58
     # the counter reset happened at 31st minute
-    assert result_values[30]["value"] == expected_value_at_31st_minute
-    assert result_values[31]["value"] == expected_value_at_32nd_minute
+    # we skip the rate value for the first data point without previous value
+    assert result_values[29]["value"] == expected_value_at_31st_minute
+    assert result_values[30]["value"] == expected_value_at_32nd_minute
     assert (
-        result_values[39]["value"] == steady_value
-    )  # 39th minute is when cumulative shifts to delta
+        result_values[38]["value"] == steady_value
+    )  # 38th minute is when cumulative shifts to delta
     count_of_steady_rate = sum(1 for v in result_values if v["value"] == steady_value)
     assert (
-        count_of_steady_rate >= 56
+        count_of_steady_rate >= 55
     )  # 59 - (1 reset + 1 high rate + 1 at the beginning)
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
@@ -316,12 +317,12 @@ def test_for_service_with_switch(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert len(result_values) >= 60
-    assert result_values[30]["value"] == expected_value_at_30th_minute  # 0.183
-    assert result_values[31]["value"] == expected_value_at_31st_minute  # 0.183
-    assert result_values[38]["value"] == value_at_switch  # 0.25
+    assert len(result_values) >= 59
+    assert result_values[29]["value"] == expected_value_at_30th_minute  # 0.183
+    assert result_values[30]["value"] == expected_value_at_31st_minute  # 0.183
+    assert result_values[37]["value"] == value_at_switch  # 0.25
     assert (
-        result_values[39]["value"] == value_at_switch  # 0.25
+        result_values[38]["value"] == value_at_switch  # 0.25
     )  # 39th minute is when cumulative shifts to delta
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:

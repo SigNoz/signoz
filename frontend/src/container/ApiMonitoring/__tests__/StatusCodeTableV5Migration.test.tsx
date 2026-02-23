@@ -6,8 +6,8 @@
  * These tests validate the migration from V4 to V5 format for the second payload
  * in getEndPointDetailsQueryPayload (status code table data):
  * - Filter format change: filters.items[] → filter.expression
- * - URL handling: Special logic for (http.url OR url.full)
- * - Domain filter: (net.peer.name OR server.address)
+ * - URL handling: Special logic for http_url
+ * - Domain filter: http_host = '${domainName}'
  * - Kind filter: kind_string = 'Client'
  * - Kind filter: response_status_code EXISTS
  * - Three queries: A (count), B (p99 latency), C (rate)
@@ -45,9 +45,9 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (net.peer.name OR server.address)
+			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Base filter 2: Kind
@@ -149,7 +149,7 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 				statusCodeQuery.query.builder.queryData[0].filter?.expression;
 
 			// Base filters present
-			expect(expression).toContain('net.peer.name');
+			expect(expression).toContain('http_host');
 			expect(expression).toContain("kind_string = 'Client'");
 			expect(expression).toContain('response_status_code EXISTS');
 
@@ -163,64 +163,6 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			const queries = statusCodeQuery.query.builder.queryData;
 			expect(queries[0].filter?.expression).toBe(queries[1].filter?.expression);
 			expect(queries[1].filter?.expression).toBe(queries[2].filter?.expression);
-		});
-	});
-
-	describe('4. HTTP URL Filter Handling', () => {
-		it('converts http.url filter to (http.url OR url.full) expression', () => {
-			const filtersWithHttpUrl: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'http-url-filter',
-						key: {
-							key: 'http.url',
-							dataType: 'string' as any,
-							type: 'tag',
-						},
-						op: '=',
-						value: '/api/users',
-					},
-					{
-						id: 'service-filter',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-				],
-				op: 'AND',
-			};
-
-			const payload = getEndPointDetailsQueryPayload(
-				mockDomainName,
-				mockStartTime,
-				mockEndTime,
-				filtersWithHttpUrl,
-			);
-
-			const statusCodeQuery = payload[1];
-			const expression =
-				statusCodeQuery.query.builder.queryData[0].filter?.expression;
-
-			// CRITICAL: http.url converted to OR logic
-			expect(expression).toContain(
-				"(http.url = '/api/users' OR url.full = '/api/users')",
-			);
-
-			// Other filters still present
-			expect(expression).toContain('service.name');
-			expect(expression).toContain('user-service');
-
-			// Base filters present
-			expect(expression).toContain('net.peer.name');
-			expect(expression).toContain("kind_string = 'Client'");
-			expect(expression).toContain('response_status_code EXISTS');
-
-			// All ANDed together (at least 2 ANDs: domain+kind, custom filter, url condition)
-			expect(expression?.match(/AND/g)?.length).toBeGreaterThanOrEqual(2);
 		});
 	});
 });

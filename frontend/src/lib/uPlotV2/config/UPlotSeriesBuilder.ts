@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
 import {
@@ -49,7 +50,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor } = this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
 			width: lineWidth ?? 2,
@@ -63,8 +64,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineConfig.cap = lineCap;
 		}
 
-		if (this.props.panelType === PANEL_TYPES.BAR) {
+		if (fillColor) {
+			lineConfig.fill = fillColor;
+		} else if (this.props.panelType === PANEL_TYPES.BAR) {
 			lineConfig.fill = resolvedLineColor;
+		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
+			lineConfig.fill = `${resolvedLineColor}40`;
 		}
 
 		return lineConfig;
@@ -147,6 +152,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			pointsConfig.show = false;
 		} else if (showPoints === VisibilityMode.Always) {
 			pointsConfig.show = true;
+		} else {
+			pointsConfig.show = false; // default to hidden
 		}
 
 		return pointsConfig;
@@ -285,21 +292,16 @@ function getBarPathBuilder({
 			idx1: number,
 		): Series.Paths | null => {
 			let effectiveBarMaxWidth = barMaxWidth;
+			const widthBasedOnStepInterval = calculateWidthBasedOnStepInterval({
+				uPlotInstance: self,
+				stepInterval,
+			});
 
-			const xScale = self.scales.x as uPlot.Scale | undefined;
-			if (xScale && typeof xScale.min === 'number') {
-				const start = xScale.min as number;
-				const end = start + stepInterval;
-				const startPx = self.valToPos(start, 'x');
-				const endPx = self.valToPos(end, 'x');
-				const intervalPx = Math.abs(endPx - startPx);
-
-				if (intervalPx > 0) {
-					effectiveBarMaxWidth =
-						typeof barMaxWidth === 'number'
-							? Math.min(barMaxWidth, intervalPx)
-							: intervalPx;
-				}
+			if (widthBasedOnStepInterval > 0) {
+				effectiveBarMaxWidth = Math.min(
+					effectiveBarMaxWidth,
+					widthBasedOnStepInterval,
+				);
 			}
 
 			const barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${effectiveBarMaxWidth}`;

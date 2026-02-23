@@ -210,20 +210,24 @@ func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role,
 	return users, nil
 }
 
-func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User) (*types.User, error) {
-	user.UpdatedAt = time.Now()
-	_, err := store.sqlstore.BunDB().NewUpdate().
+func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
 		Model(user).
 		Column("display_name").
+		Column("email").
 		Column("role").
+		Column("is_root").
 		Column("updated_at").
-		Where("id = ?", id).
 		Where("org_id = ?", orgID).
+		Where("id = ?", user.ID).
 		Exec(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist in org: %s", id, orgID)
+		return store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user does not exist in org: %s", orgID)
 	}
-	return user, nil
+	return nil
 }
 
 func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.GettableUser, error) {
@@ -600,6 +604,22 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		return cb(ctx)
 	})
+}
+
+func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
+	user := new(types.User)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		Where("org_id = ?", orgID).
+		Where("is_root = ?", true).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "root user for org %s not found", orgID)
+	}
+	return user, nil
 }
 
 func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {

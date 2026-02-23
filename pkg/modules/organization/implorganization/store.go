@@ -47,6 +47,22 @@ func (store *store) Get(ctx context.Context, id valuer.UUID) (*types.Organizatio
 	return organization, nil
 }
 
+func (store *store) GetByName(ctx context.Context, name string) (*types.Organization, error) {
+	organization := new(types.Organization)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(organization).
+		Where("name = ?", name).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrOrganizationNotFound, "organization with name %s does not exist", name)
+	}
+
+	return organization, nil
+}
+
 func (store *store) GetAll(ctx context.Context) ([]*types.Organization, error) {
 	organizations := make([]*types.Organization, 0)
 	err := store.

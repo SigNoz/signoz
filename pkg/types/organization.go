@@ -25,7 +25,7 @@ type Organization struct {
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
-func NewOrganization(displayName string) *Organization {
+func NewOrganization(displayName string, name string) *Organization {
 	id := valuer.GenerateUUID()
 	return &Organization{
 		Identifiable: Identifiable{
@@ -35,7 +35,7 @@ func NewOrganization(displayName string) *Organization {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		// Name: "default/main", TODO: take the call and uncomment this later
+		Name:        name,
 		DisplayName: displayName,
 		Key:         NewOrganizationKey(id),
 	}
@@ -74,6 +74,7 @@ type TTLSetting struct {
 type OrganizationStore interface {
 	Create(context.Context, *Organization) error
 	Get(context.Context, valuer.UUID) (*Organization, error)
+	GetByName(context.Context, string) (*Organization, error)
 	GetAll(context.Context) ([]*Organization, error)
 	ListByKeyRange(context.Context, uint32, uint32) ([]*Organization, error)
 	Update(context.Context, *Organization) error
