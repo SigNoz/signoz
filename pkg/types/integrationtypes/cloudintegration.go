@@ -58,7 +58,7 @@ type CloudProvider interface {
 	GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
 	UpdateAccountConfig(ctx context.Context, req *PatchableAccountConfig) (any, error) // req can be either PatchableAWSAccountConfig or PatchableAzureAccountConfig
-	UpdateServiceConfig(ctx context.Context, req *PatchableServiceConfig) (any, error)
+	UpdateServiceConfig(ctx context.Context, req *UpdatableServiceConfigReq) (any, error)
 
 	DisconnectAccount(ctx context.Context, orgID, accountID string) (*CloudIntegration, error)
 }
@@ -204,7 +204,7 @@ type GettableAgentCheckIn[T any] struct {
 type GettableAWSAgentCheckIn = GettableAgentCheckIn[AWSAgentIntegrationConfig]
 type GettableAzureAgentCheckIn = GettableAgentCheckIn[AzureAgentIntegrationConfig]
 
-type PatchableServiceConfig struct {
+type UpdatableServiceConfigReq struct {
 	OrgID     string `json:"org_id"`
 	ServiceId string `json:"service_id"`
 	Config    []byte `json:"config"` // json serialized config
@@ -212,11 +212,15 @@ type PatchableServiceConfig struct {
 
 type UpdatableCloudServiceConfig[T any] struct {
 	CloudAccountId string `json:"cloud_account_id"`
-	Config         *T     `json:"config"`
+	Config         T      `json:"config"`
 }
 
-type UpdatableAWSCloudServiceConfig = UpdatableCloudServiceConfig[AWSCloudServiceConfig]
-type UpdatableAzureCloudServiceConfig = UpdatableCloudServiceConfig[AzureCloudServiceConfig]
+// CloudServiceConfig is a generic interface for cloud service configurations
+type CloudServiceConfig[T Definition] interface {
+	Validate(def T) error
+	IsMetricsEnabled() bool
+	IsLogsEnabled() bool
+}
 
 type AWSCloudServiceConfig struct {
 	Logs    *AWSCloudServiceLogsConfig    `json:"logs,omitempty"`

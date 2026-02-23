@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -24,7 +23,7 @@ var (
 )
 
 type azureProvider struct {
-	baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition]
+	baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition, *integrationtypes.AzureCloudServiceConfig]
 }
 
 func NewAzureCloudProvider(
@@ -39,7 +38,7 @@ func NewAzureCloudProvider(
 	}
 
 	return &azureProvider{
-		BaseCloudProvider: baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition]{
+		BaseCloudProvider: baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition, *integrationtypes.AzureCloudServiceConfig]{
 			Logger:             logger,
 			Querier:            querier,
 			AccountsRepo:       accountsRepo,
@@ -51,53 +50,12 @@ func NewAzureCloudProvider(
 }
 
 func (a *azureProvider) AgentCheckIn(ctx context.Context, req *integrationtypes.PostableAgentCheckInPayload) (any, error) {
-	existingAccount, err := a.AccountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"can't check in with new %s account id %s for account %s with existing %s id %s",
-			a.GetName().String(), req.AccountID, existingAccount.ID.StringValue(), a.GetName().String(),
-			*existingAccount.AccountID,
-		)
-	}
-
-	existingAccount, err = a.AccountsRepo.GetConnectedCloudAccount(ctx, req.OrgID, a.GetName().String(), req.AccountID)
-	if err != nil {
-		return nil, err
-	}
-	if existingAccount != nil && existingAccount.ID.StringValue() != req.ID {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"can't check in to %s account %s with id %s. already connected with id %s",
-			a.GetName().String(), req.AccountID, req.ID, existingAccount.ID.StringValue(),
-		)
-	}
-
-	agentReport := integrationtypes.AgentReport{
-		TimestampMillis: time.Now().UnixMilli(),
-		Data:            req.Data,
-	}
-
-	account, err := a.AccountsRepo.Upsert(
-		ctx, req.OrgID, a.GetName().String(), &req.ID, nil, &req.AccountID, &agentReport, nil,
+	return baseprovider.AgentCheckIn(
+		&a.BaseCloudProvider,
+		ctx,
+		req,
+		a.getAzureAgentConfig,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	agentConfig, err := a.getAzureAgentConfig(ctx, account)
-	if err != nil {
-		return nil, err
-	}
-
-	return &integrationtypes.GettableAzureAgentCheckIn{
-		AccountId:         account.ID.StringValue(),
-		CloudAccountId:    *account.AccountID,
-		RemovedAt:         account.RemovedAt,
-		IntegrationConfig: *agentConfig,
-	}, nil
 }
 
 func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integrationtypes.CloudIntegration) (*integrationtypes.AzureAgentIntegrationConfig, error) {
@@ -261,7 +219,7 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationt
 		return details, nil
 	}
 
-	config, err := a.getServiceConfig(ctx, azureDefinition, req.OrgID.String(), req.ServiceId, *req.CloudAccountID)
+	config, err := a.GetServiceConfig(ctx, azureDefinition, req.OrgID, req.ServiceId, *req.CloudAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -317,47 +275,12 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationt
 	return details, nil
 }
 
-func (a *azureProvider) getServiceConfig(
-	ctx context.Context,
-	definition *integrationtypes.AzureDefinition,
-	orgID string,
-	serviceId string,
-	cloudAccountId string,
-) (*integrationtypes.AzureCloudServiceConfig, error) {
-	activeAccount, err := a.AccountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), cloudAccountId)
-	if err != nil {
-		return nil, err
-	}
-
-	configBytes, err := a.ServiceConfigRepo.Get(ctx, orgID, activeAccount.ID.String(), serviceId)
-	if err != nil {
-		if errors.Ast(err, errors.TypeNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	config := new(integrationtypes.AzureCloudServiceConfig)
-	err = integrationtypes.UnmarshalJSON(configBytes, config)
-	if err != nil {
-		return nil, err
-	}
-
-	if config.IsMetricsEnabled() {
-		definition.PopulateDashboardURLs(a.GetName(), serviceId)
-	}
-
-	return config, nil
-}
-
 func (a *azureProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	return baseprovider.GetAvailableDashboards(ctx, &a.BaseCloudProvider, orgID, func(c *integrationtypes.AzureCloudServiceConfig) bool {
-		return c.IsMetricsEnabled()
-	})
+	return a.BaseCloudProvider.GetAvailableDashboards(ctx, orgID)
 }
 
 func (a *azureProvider) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
-	return a.BaseCloudProvider.GetDashboard(ctx, req, a.GetAvailableDashboards)
+	return a.BaseCloudProvider.GetDashboard(ctx, req)
 }
 
 func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationtypes.PostableConnectionArtifact) (any, error) {
@@ -406,52 +329,6 @@ func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *int
 		AccountId:                   account.ID.String(),
 		AzureShellConnectionCommand: "az create",
 		AzureCliConnectionCommand:   strings.Join(cliCommand, " "),
-	}, nil
-}
-
-func (a *azureProvider) UpdateServiceConfig(ctx context.Context, req *integrationtypes.PatchableServiceConfig) (any, error) {
-	definition, err := a.ServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceConfig := new(integrationtypes.UpdatableAzureCloudServiceConfig)
-	err = integrationtypes.UnmarshalJSON(req.Config, serviceConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = serviceConfig.Config.Validate(definition); err != nil {
-		return nil, err
-	}
-
-	// can only update config for a connected cloud account id
-	_, err = a.AccountsRepo.GetConnectedCloudAccount(
-		ctx, req.OrgID, a.GetName().String(), serviceConfig.CloudAccountId,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceConfigBytes, err := integrationtypes.MarshalJSON(serviceConfig.Config)
-	if err != nil {
-		return nil, err
-	}
-
-	updatedConfig, err := a.ServiceConfigRepo.Upsert(
-		ctx, req.OrgID, a.GetName().String(), serviceConfig.CloudAccountId, req.ServiceId, serviceConfigBytes,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = integrationtypes.UnmarshalJSON(updatedConfig, serviceConfig); err != nil {
-		return nil, err
-	}
-
-	return &integrationtypes.PatchServiceConfigResponse{
-		ServiceId: req.ServiceId,
-		Config:    serviceConfig,
 	}, nil
 }
 

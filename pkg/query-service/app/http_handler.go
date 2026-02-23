@@ -3823,7 +3823,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter
 	}
 
 	result, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateServiceConfig(
-		r.Context(), &integrationtypes.PatchableServiceConfig{
+		r.Context(), &integrationtypes.UpdatableServiceConfigReq{
 			OrgID:     claims.OrgID,
 			ServiceId: serviceId,
 			Config:    reqBody,

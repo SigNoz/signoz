@@ -34,7 +34,7 @@ func hasValidTimeSeriesData(queryResponse *qbtypes.TimeSeriesData) bool {
 		len(queryResponse.Aggregations[0].Series[0].Values) > 0
 }
 
-type BaseCloudProvider[T integrationtypes.Definition] struct {
+type BaseCloudProvider[T integrationtypes.Definition, C integrationtypes.CloudServiceConfig[T]] struct {
 	Logger             *slog.Logger
 	Querier            querier.Querier
 	AccountsRepo       store.CloudProviderAccountsRepository
@@ -43,11 +43,69 @@ type BaseCloudProvider[T integrationtypes.Definition] struct {
 	ProviderType       integrationtypes.CloudProviderType
 }
 
-func (b *BaseCloudProvider[T]) GetName() integrationtypes.CloudProviderType {
+func (b *BaseCloudProvider[T, C]) GetName() integrationtypes.CloudProviderType {
 	return b.ProviderType
 }
 
-func (b *BaseCloudProvider[T]) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationtypes.GettableAccountStatus, error) {
+// AgentCheckIn is a helper function that handles common agent check-in logic.
+// The getAgentConfigFunc should return the provider-specific agent configuration.
+func AgentCheckIn[T integrationtypes.Definition, C integrationtypes.CloudServiceConfig[T], AgentConfigT any](
+	b *BaseCloudProvider[T, C],
+	ctx context.Context,
+	req *integrationtypes.PostableAgentCheckInPayload,
+	getAgentConfigFunc func(context.Context, *integrationtypes.CloudIntegration) (*AgentConfigT, error),
+) (*integrationtypes.GettableAgentCheckIn[AgentConfigT], error) {
+	// agent can't check in unless the account is already created
+	existingAccount, err := b.AccountsRepo.Get(ctx, req.OrgID, b.GetName().String(), req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"can't check in with new %s account id %s for account %s with existing %s id %s",
+			b.GetName().String(), req.AccountID, existingAccount.ID.StringValue(), b.GetName().String(),
+			*existingAccount.AccountID,
+		)
+	}
+
+	existingAccount, err = b.AccountsRepo.GetConnectedCloudAccount(ctx, req.OrgID, b.GetName().String(), req.AccountID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+	if existingAccount != nil && existingAccount.ID.StringValue() != req.ID {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"can't check in to %s account %s with id %s. already connected with id %s",
+			b.GetName().String(), req.AccountID, req.ID, existingAccount.ID.StringValue(),
+		)
+	}
+
+	agentReport := integrationtypes.AgentReport{
+		TimestampMillis: time.Now().UnixMilli(),
+		Data:            req.Data,
+	}
+
+	account, err := b.AccountsRepo.Upsert(
+		ctx, req.OrgID, b.GetName().String(), &req.ID, nil, &req.AccountID, &agentReport, nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	agentConfig, err := getAgentConfigFunc(ctx, account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &integrationtypes.GettableAgentCheckIn[AgentConfigT]{
+		AccountId:         account.ID.StringValue(),
+		CloudAccountId:    *account.AccountID,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: *agentConfig,
+	}, nil
+}
+
+func (b *BaseCloudProvider[T, C]) GetAccountStatus(ctx context.Context, orgID, accountID string) (*integrationtypes.GettableAccountStatus, error) {
 	accountRecord, err := b.AccountsRepo.Get(ctx, orgID, b.ProviderType.String(), accountID)
 	if err != nil {
 		return nil, err
@@ -60,7 +118,7 @@ func (b *BaseCloudProvider[T]) GetAccountStatus(ctx context.Context, orgID, acco
 	}, nil
 }
 
-func (b *BaseCloudProvider[T]) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationtypes.GettableConnectedAccountsList, error) {
+func (b *BaseCloudProvider[T, C]) ListConnectedAccounts(ctx context.Context, orgID string) (*integrationtypes.GettableConnectedAccountsList, error) {
 	accountRecords, err := b.AccountsRepo.ListConnected(ctx, orgID, b.ProviderType.String())
 	if err != nil {
 		return nil, err
@@ -76,7 +134,7 @@ func (b *BaseCloudProvider[T]) ListConnectedAccounts(ctx context.Context, orgID 
 	}, nil
 }
 
-func (b *BaseCloudProvider[T]) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationtypes.CloudIntegration, error) {
+func (b *BaseCloudProvider[T, C]) DisconnectAccount(ctx context.Context, orgID, accountID string) (*integrationtypes.CloudIntegration, error) {
 	account, err := b.AccountsRepo.Get(ctx, orgID, b.ProviderType.String(), accountID)
 	if err != nil {
 		return nil, err
@@ -93,8 +151,8 @@ func (b *BaseCloudProvider[T]) DisconnectAccount(ctx context.Context, orgID, acc
 	return account, nil
 }
 
-func (b *BaseCloudProvider[T]) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard, getAvailableDashboards func(context.Context, valuer.UUID) ([]*dashboardtypes.Dashboard, error)) (*dashboardtypes.Dashboard, error) {
-	allDashboards, err := getAvailableDashboards(ctx, req.OrgID)
+func (b *BaseCloudProvider[T, C]) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
+	allDashboards, err := b.GetAvailableDashboards(ctx, req.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +166,7 @@ func (b *BaseCloudProvider[T]) GetDashboard(ctx context.Context, req *integratio
 	return nil, errors.NewNotFoundf(CodeDashboardNotFound, "dashboard with id %s not found", req.ID)
 }
 
-func (b *BaseCloudProvider[T]) GetServiceConnectionStatus(
+func (b *BaseCloudProvider[T, C]) GetServiceConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
@@ -164,7 +222,7 @@ func (b *BaseCloudProvider[T]) GetServiceConnectionStatus(
 	return resp, nil
 }
 
-func (b *BaseCloudProvider[T]) getServiceMetricsConnectionStatus(
+func (b *BaseCloudProvider[T, C]) getServiceMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
@@ -261,7 +319,7 @@ func (b *BaseCloudProvider[T]) getServiceMetricsConnectionStatus(
 	return statusResp, nil
 }
 
-func (b *BaseCloudProvider[T]) getServiceLogsConnectionStatus(
+func (b *BaseCloudProvider[T, C]) getServiceLogsConnectionStatus(
 	ctx context.Context,
 	cloudAccountID string,
 	orgID valuer.UUID,
@@ -358,11 +416,9 @@ func (b *BaseCloudProvider[T]) getServiceLogsConnectionStatus(
 	return statusResp, nil
 }
 
-func GetAvailableDashboards[T integrationtypes.Definition, C any](
+func (b *BaseCloudProvider[T, C]) GetAvailableDashboards(
 	ctx context.Context,
-	b *BaseCloudProvider[T],
 	orgID valuer.UUID,
-	isMetricsEnabled func(C) bool,
 ) ([]*dashboardtypes.Dashboard, error) {
 	accountRecords, err := b.AccountsRepo.ListConnected(ctx, orgID.StringValue(), b.ProviderType.String())
 	if err != nil {
@@ -385,7 +441,7 @@ func GetAvailableDashboards[T integrationtypes.Definition, C any](
 					return nil, err
 				}
 
-				if isMetricsEnabled(serviceConfig) {
+				if serviceConfig.IsMetricsEnabled() {
 					servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
 				}
 			}
@@ -419,4 +475,93 @@ func GetAvailableDashboards[T integrationtypes.Definition, C any](
 	}
 
 	return svcDashboards, nil
+}
+
+func (b *BaseCloudProvider[T, C]) GetServiceConfig(
+	ctx context.Context,
+	def T,
+	orgID valuer.UUID,
+	serviceId,
+	cloudAccountId string,
+) (C, error) {
+	var zero C
+
+	activeAccount, err := b.AccountsRepo.GetConnectedCloudAccount(ctx, orgID.String(), b.ProviderType.String(), cloudAccountId)
+	if err != nil {
+		return zero, err
+	}
+
+	config, err := b.ServiceConfigRepo.Get(ctx, orgID.String(), activeAccount.ID.StringValue(), serviceId)
+	if err != nil {
+		if errors.Ast(err, errors.TypeNotFound) {
+			return zero, nil
+		}
+
+		return zero, err
+	}
+
+	var serviceConfig C
+	err = integrationtypes.UnmarshalJSON(config, &serviceConfig)
+	if err != nil {
+		return zero, err
+	}
+
+	if config != nil && serviceConfig.IsMetricsEnabled() {
+		def.PopulateDashboardURLs(b.ProviderType, serviceId)
+	}
+
+	return serviceConfig, nil
+}
+
+func (b *BaseCloudProvider[T, C]) UpdateServiceConfig(ctx context.Context, req *integrationtypes.UpdatableServiceConfigReq) (any, error) {
+	definition, err := b.ServiceDefinitions.GetServiceDefinition(ctx, req.ServiceId)
+	if err != nil {
+		return nil, err
+	}
+
+	var updateReq integrationtypes.UpdatableCloudServiceConfig[C]
+	err = integrationtypes.UnmarshalJSON(req.Config, &updateReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if config is provided (use any type assertion for nil check with generics)
+	if any(updateReq.Config) == nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "config is required")
+	}
+
+	if err = updateReq.Config.Validate(definition); err != nil {
+		return nil, err
+	}
+
+	// can only update config for a connected cloud account id
+	_, err = b.AccountsRepo.GetConnectedCloudAccount(
+		ctx, req.OrgID, b.GetName().String(), updateReq.CloudAccountId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceConfigBytes, err := integrationtypes.MarshalJSON(&updateReq.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedConfigBytes, err := b.ServiceConfigRepo.Upsert(
+		ctx, req.OrgID, b.GetName().String(), updateReq.CloudAccountId, req.ServiceId, serviceConfigBytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedConfig C
+	err = integrationtypes.UnmarshalJSON(updatedConfigBytes, &updatedConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &integrationtypes.PatchServiceConfigResponse{
+		ServiceId: req.ServiceId,
+		Config:    updatedConfig,
+	}, nil
 }
