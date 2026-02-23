@@ -33,7 +33,7 @@ describe('Highlights', () => {
 		);
 	});
 
-	it('should render "-" for highlights data when there is an error', () => {
+	it('should render error state with icon and tooltip when there is an error', () => {
 		useGetMetricHighlightsMock.mockReturnValue(
 			getMockMetricHighlightsData(
 				{},
@@ -48,9 +48,10 @@ describe('Highlights', () => {
 		const metricHighlightsValues = container.querySelectorAll(
 			METRIC_DETAILS_GRID_VALUE_SELECTOR,
 		);
-		expect(metricHighlightsValues[0].textContent).toBe('-');
-		expect(metricHighlightsValues[1].textContent).toBe('-');
-		expect(metricHighlightsValues[2].textContent).toBe('-');
+		expect(metricHighlightsValues).toHaveLength(3);
+		metricHighlightsValues.forEach((el) => {
+			expect(el.querySelector('svg')).toBeInTheDocument();
+		});
 	});
 
 	it('should render loading state when data is loading', () => {
