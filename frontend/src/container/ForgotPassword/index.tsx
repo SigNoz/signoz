@@ -3,13 +3,11 @@ import { Button } from '@signozhq/button';
 import { ArrowLeft, ArrowRight } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { Form, Select } from 'antd';
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useForgotPassword } from 'api/generated/services/users';
-import { AxiosError } from 'axios';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
@@ -48,9 +46,7 @@ function ForgotPassword({
 		}
 
 		try {
-			ErrorResponseHandlerV2(
-				(mutationError as unknown) as AxiosError<ErrorV2Resp>,
-			);
+			ErrorResponseHandlerForGeneratedAPIs(mutationError);
 		} catch (apiError) {
 			return apiError as APIError;
 		}
