@@ -106,6 +106,13 @@ var (
 		GetDotMetrics("system_network_connection_count"),
 		GetDotMetrics("system_process_count"),
 		GetDotMetrics("system_process_created"),
+		GetDotMetrics("system_disk_pending_operations"),
+		GetDotMetrics("system_disk_weighted_io_time"),
+		GetDotMetrics("system_filesystem_inodes_usage"),
+		GetDotMetrics("system_network_conntrack_count"),
+		GetDotMetrics("system_network_conntrack_max"),
+		GetDotMetrics("system_cpu_load_average_1m"),
+		GetDotMetrics("system_cpu_load_average_5m"),
 	}
 )
 
