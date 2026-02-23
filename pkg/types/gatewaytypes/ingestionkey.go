@@ -33,8 +33,8 @@ type LimitConfig struct {
 }
 
 type LimitValue struct {
-	Size  int64 `json:"size"`
-	Count int64 `json:"count"`
+	Size  *int64 `json:"size,omitempty"`
+	Count *int64 `json:"count,omitempty"`
 }
 
 type LimitMetric struct {

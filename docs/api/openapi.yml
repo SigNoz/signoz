@@ -80,6 +80,37 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
+      type: object
+    AuthtypesGettableObjects:
+      properties:
+        resource:
+          $ref: '#/components/schemas/AuthtypesResource'
+        selectors:
+          items:
+            type: string
+          type: array
+      required:
+      - resource
+      - selectors
+      type: object
+    AuthtypesGettableResources:
+      properties:
+        relations:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          nullable: true
+          type: object
+        resources:
+          items:
+            $ref: '#/components/schemas/AuthtypesResource'
+          type: array
+      required:
+      - resources
+      - relations
       type: object
     AuthtypesGettableToken:
       properties:
@@ -91,6 +122,19 @@ components:
           type: string
         tokenType:
           type: string
+      type: object
+    AuthtypesGettableTransaction:
+      properties:
+        authorized:
+          type: boolean
+        object:
+          $ref: '#/components/schemas/AuthtypesObject'
+        relation:
+          type: string
+      required:
+      - relation
+      - object
+      - authorized
       type: object
     AuthtypesGoogleConfig:
       properties:
@@ -134,6 +178,16 @@ components:
         issuerAlias:
           type: string
       type: object
+    AuthtypesObject:
+      properties:
+        resource:
+          $ref: '#/components/schemas/AuthtypesResource'
+        selector:
+          type: string
+      required:
+      - resource
+      - selector
+      type: object
     AuthtypesOrgSessionContext:
       properties:
         authNSupport:
@@ -149,6 +203,22 @@ components:
       properties:
         provider:
           type: string
+      type: object
+    AuthtypesPatchableObjects:
+      properties:
+        additions:
+          items:
+            $ref: '#/components/schemas/AuthtypesGettableObjects'
+          nullable: true
+          type: array
+        deletions:
+          items:
+            $ref: '#/components/schemas/AuthtypesGettableObjects'
+          nullable: true
+          type: array
+      required:
+      - additions
+      - deletions
       type: object
     AuthtypesPostableAuthDomain:
       properties:
@@ -170,6 +240,16 @@ components:
       properties:
         refreshToken:
           type: string
+      type: object
+    AuthtypesResource:
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+      required:
+      - name
+      - type
       type: object
     AuthtypesRoleMapping:
       properties:
@@ -205,6 +285,16 @@ components:
             $ref: '#/components/schemas/AuthtypesOrgSessionContext'
           nullable: true
           type: array
+      type: object
+    AuthtypesTransaction:
+      properties:
+        object:
+          $ref: '#/components/schemas/AuthtypesObject'
+        relation:
+          type: string
+      required:
+      - relation
+      - object
       type: object
     AuthtypesUpdateableAuthDomain:
       properties:
@@ -277,6 +367,9 @@ components:
           type: string
         url:
           type: string
+      required:
+      - code
+      - message
       type: object
     ErrorsResponseerroradditional:
       properties:
@@ -408,10 +501,10 @@ components:
     GatewaytypesLimitValue:
       properties:
         count:
-          format: int64
+          nullable: true
           type: integer
         size:
-          format: int64
+          nullable: true
           type: integer
       type: object
     GatewaytypesPagination:
@@ -1612,6 +1705,25 @@ components:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
           type: string
+      required:
+      - status
+      - error
+      type: object
+    RoletypesPatchableRole:
+      properties:
+        description:
+          type: string
+      required:
+      - description
+      type: object
+    RoletypesPostableRole:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
       type: object
     RoletypesRole:
       properties:
@@ -1631,6 +1743,12 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -1764,6 +1882,8 @@ components:
           $ref: '#/components/schemas/TypesUser'
         userId:
           type: string
+      required:
+      - id
       type: object
     TypesGettableGlobalConfig:
       properties:
@@ -1776,6 +1896,8 @@ components:
       properties:
         id:
           type: string
+      required:
+      - id
       type: object
     TypesInvite:
       properties:
@@ -1799,6 +1921,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     TypesOrganization:
       properties:
@@ -1819,6 +1943,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     TypesPostableAPIKey:
       properties:
@@ -1882,6 +2008,8 @@ components:
           type: string
         token:
           type: string
+      required:
+      - id
       type: object
     TypesStorableAPIKey:
       properties:
@@ -1907,6 +2035,8 @@ components:
           type: string
         userId:
           type: string
+      required:
+      - id
       type: object
     TypesUser:
       properties:
@@ -1928,6 +2058,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     ZeustypesGettableHost:
       properties:
@@ -2022,6 +2154,73 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
+  /api/v1/authz/check:
+    post:
+      deprecated: false
+      description: Checks if the authenticated user has permissions for given transactions
+      operationId: AuthzCheck
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/AuthtypesTransaction'
+              type: array
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesGettableTransaction'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Check permissions
+      tags:
+      - authz
+  /api/v1/authz/resources:
+    get:
+      deprecated: false
+      description: Gets all the available resources
+      operationId: AuthzResources
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableResources'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Get resources
+      tags:
+      - authz
   /api/v1/changePassword/{id}:
     post:
       deprecated: false
@@ -2094,6 +2293,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: See Other
         "400":
@@ -2132,6 +2334,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: See Other
         "400":
@@ -2195,6 +2400,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: See Other
         "400":
@@ -2289,6 +2497,9 @@ paths:
                     $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2343,6 +2554,9 @@ paths:
                     $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "401":
@@ -2436,6 +2650,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2483,6 +2700,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -2679,6 +2899,9 @@ paths:
                     $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2769,6 +2992,9 @@ paths:
                     $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2818,6 +3044,9 @@ paths:
                     $ref: '#/components/schemas/TypesResetPasswordToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -2873,6 +3102,9 @@ paths:
                     $ref: '#/components/schemas/TypesGettableGlobalConfig'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2918,6 +3150,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2965,6 +3200,9 @@ paths:
                     $ref: '#/components/schemas/TypesInvite'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -3078,6 +3316,9 @@ paths:
                     $ref: '#/components/schemas/TypesInvite'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3121,6 +3362,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -3215,6 +3459,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3313,6 +3560,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3362,6 +3612,9 @@ paths:
                     $ref: '#/components/schemas/PreferencetypesPreference'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3475,6 +3728,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3522,6 +3778,9 @@ paths:
                     $ref: '#/components/schemas/TypesGettableAPIKey'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -3689,6 +3948,9 @@ paths:
                     $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardData'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3742,6 +4004,9 @@ paths:
                     $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3819,6 +4084,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3851,6 +4119,11 @@ paths:
       deprecated: false
       description: This endpoint creates a role
       operationId: CreateRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoletypesPostableRole'
       responses:
         "201":
           content:
@@ -3861,8 +4134,17 @@ paths:
                     $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -3875,12 +4157,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -3919,12 +4219,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
@@ -3953,6 +4271,9 @@ paths:
                     $ref: '#/components/schemas/RoletypesRole'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3991,6 +4312,11 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoletypesPatchableRole'
       responses:
         "204":
           content:
@@ -4010,18 +4336,192 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - api_key:
         - ADMIN
       - tokenizer:
         - ADMIN
       summary: Patch role
+      tags:
+      - role
+  /api/v1/roles/{id}/relation/{relation}/objects:
+    get:
+      deprecated: false
+      description: Gets all objects connected to the specified role via a given relation
+        type
+      operationId: GetObjects
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: relation
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesGettableObjects'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get objects for a role by relation
+      tags:
+      - role
+    patch:
+      deprecated: false
+      description: Patches the objects connected to the specified role via a given
+        relation type
+      operationId: PatchObjects
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: relation
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPatchableObjects'
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "451":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unavailable For Legal Reasons
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Patch objects for a role by relation
       tags:
       - role
   /api/v1/user:
@@ -4041,6 +4541,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4135,6 +4638,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4194,6 +4700,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -4249,6 +4758,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4291,6 +4803,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4340,6 +4855,9 @@ paths:
                     $ref: '#/components/schemas/PreferencetypesPreference'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4482,6 +5000,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4534,6 +5055,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableIngestionKeys'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4572,7 +5096,7 @@ paths:
             schema:
               $ref: '#/components/schemas/GatewaytypesPostableIngestionKey'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -4581,8 +5105,11 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableCreatedIngestionKey'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
-          description: OK
+          description: Created
         "401":
           content:
             application/json:
@@ -4719,6 +5246,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableCreatedIngestionKeyLimit'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "401":
@@ -4860,6 +5390,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableIngestionKeys'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4923,6 +5456,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesListMetricsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -4978,6 +5514,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricAlertsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -4998,6 +5537,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -5044,6 +5589,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5064,6 +5612,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -5099,6 +5653,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5119,6 +5676,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -5155,6 +5718,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricHighlightsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5175,6 +5741,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -5211,6 +5783,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricMetadata'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5327,6 +5902,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesStatsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5382,6 +5960,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesTreemapResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5431,6 +6012,9 @@ paths:
                     $ref: '#/components/schemas/TypesOrganization'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -5561,6 +6145,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesSessionContext'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5598,6 +6185,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5641,6 +6231,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5673,6 +6266,9 @@ paths:
                     $ref: '#/components/schemas/ZeustypesGettableHost'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -6187,6 +6783,9 @@ paths:
                     $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -6241,6 +6840,9 @@ paths:
                     $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":

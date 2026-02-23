@@ -3,7 +3,6 @@ package roletypes
 import (
 	"encoding/json"
 	"regexp"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -69,24 +68,19 @@ type StorableRole struct {
 type Role struct {
 	types.Identifiable
 	types.TimeAuditable
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Type        valuer.String `json:"type"`
-	OrgID       valuer.UUID   `json:"orgId"`
+	Name        string        `json:"name" required:"true"`
+	Description string        `json:"description" required:"true"`
+	Type        valuer.String `json:"type" required:"true"`
+	OrgID       valuer.UUID   `json:"orgId" required:"true"`
 }
 
 type PostableRole struct {
-	Name        string `json:"name"`
+	Name        string `json:"name" required:"true"`
 	Description string `json:"description"`
 }
 
 type PatchableRole struct {
-	Description *string `json:"description"`
-}
-
-type PatchableObjects struct {
-	Additions []*authtypes.Object `json:"additions"`
-	Deletions []*authtypes.Object `json:"deletions"`
+	Description string `json:"description" required:"true"`
 }
 
 func NewStorableRoleFromRole(role *Role) *StorableRole {
@@ -137,45 +131,18 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 
 }
 
-func (role *Role) PatchMetadata(description *string) error {
-	err := role.CanEditDelete()
+func (role *Role) PatchMetadata(description string) error {
+	err := role.ErrIfManaged()
 	if err != nil {
 		return err
 	}
 
-	if description != nil {
-		role.Description = *description
-	}
+	role.Description = description
 	role.UpdatedAt = time.Now()
 	return nil
 }
 
-func (role *Role) NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
-	err := role.CanEditDelete()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(additions) == 0 && len(deletions) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request received, at least one of additions or deletions must be present")
-	}
-
-	for _, object := range additions {
-		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
-			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-		}
-	}
-
-	for _, object := range deletions {
-		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
-			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-		}
-	}
-
-	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
-}
-
-func (role *Role) CanEditDelete() error {
+func (role *Role) ErrIfManaged() error {
 	if role.Type == RoleTypeManaged {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot edit/delete managed role: %s", role.Name)
 	}
@@ -210,7 +177,7 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 
 func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	type shadowPatchableRole struct {
-		Description *string `json:"description"`
+		Description string `json:"description"`
 	}
 
 	var shadowRole shadowPatchableRole
@@ -218,7 +185,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if shadowRole.Description == nil {
+	if shadowRole.Description == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, description must be present")
 	}
 
