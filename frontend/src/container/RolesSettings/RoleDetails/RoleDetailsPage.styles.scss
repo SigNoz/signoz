@@ -167,6 +167,8 @@
 		flex: 1;
 		border: none;
 		border-top: 2px dotted var(--bg-slate-300);
+		border-bottom: 2px dotted var(--bg-slate-300);
+		height: 7px;
 		margin: 0;
 	}
 
@@ -225,15 +227,88 @@
 	}
 
 	// ─── Members Tab ─────────────────────────────────────────────────────
-	.role-details-members-empty {
+	.role-details-members {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.role-details-members-search {
 		display: flex;
 		align-items: center;
+		gap: 6px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		background: var(--bg-ink-300);
+		border: 1px solid var(--bg-slate-400);
+		border-radius: 2px;
+
+		.role-details-members-search-icon {
+			flex-shrink: 0;
+			color: var(--foreground);
+			opacity: 0.5;
+		}
+
+		.role-details-members-search-input {
+			flex: 1;
+			height: 100%;
+			background: transparent;
+			border: none;
+			outline: none;
+			font-family: Inter;
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.07px;
+			color: var(--foreground);
+
+			&::placeholder {
+				color: var(--foreground);
+				opacity: 0.4;
+			}
+		}
+	}
+
+	.role-details-members-content {
+		display: flex;
+		flex-direction: column;
+		min-height: 420px;
+		border: 1px dashed var(--bg-slate-500);
+		border-radius: 3px;
+		margin-top: -1px;
+	}
+
+	.role-details-members-empty-state {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		align-items: center;
 		justify-content: center;
+		gap: 4px;
 		padding: 48px 0;
-		color: var(--foreground);
-		font-family: Inter;
-		font-size: 14px;
-		font-weight: 400;
+		flex-grow: 1;
+
+		.role-details-members-empty-emoji {
+			font-size: 32px;
+			line-height: 1;
+		}
+
+		.role-details-members-empty-text {
+			font-family: Inter;
+			font-size: 14px;
+			line-height: 18px;
+			letter-spacing: -0.07px;
+
+			&--bold {
+				font-weight: 500;
+				color: var(--text-base-white);
+			}
+
+			&--muted {
+				font-weight: 400;
+				color: var(--foreground);
+			}
+		}
 	}
 
 	// ─── Loading / Error ──────────────────────────────────────────────────
@@ -383,6 +458,21 @@
 	.role-details-page {
 		.role-details-title {
 			color: var(--text-base-black);
+		}
+
+		.role-details-members-search {
+			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.role-details-members-content {
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.role-details-members-empty-state {
+			.role-details-members-empty-text--bold {
+				color: var(--text-base-black);
+			}
 		}
 
 		.role-details-tabs {
