@@ -1,6 +1,8 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
 import { X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { Modal, Skeleton } from 'antd';
@@ -67,6 +69,7 @@ const PERMISSION_TYPES: PermissionType[] = [
 
 interface OverviewTabProps {
 	role: RoletypesRoleDTO;
+	isManaged: boolean;
 	onPermissionClick: (permissionLabel: string) => void;
 }
 
@@ -92,10 +95,19 @@ function TimestampBadge({ date }: { date?: Date | string }): JSX.Element {
 
 function OverviewTab({
 	role,
+	isManaged,
 	onPermissionClick,
 }: OverviewTabProps): JSX.Element {
 	return (
 		<div className="role-details-overview">
+			{isManaged && (
+				<Callout
+					type="warning"
+					showIcon
+					message="This is a managed role. Permissions and settings are view-only and cannot be modified."
+				/>
+			)}
+
 			<div className="role-details-meta">
 				<div>
 					<p className="role-details-section-label">Description</p>
@@ -125,26 +137,38 @@ function OverviewTab({
 				</div>
 
 				<div className="role-details-permission-list">
-					{PERMISSION_TYPES.map(({ key, label, icon }) => (
-						<div
-							key={key}
-							className="role-details-permission-item"
-							role="button"
-							tabIndex={0}
-							onClick={(): void => onPermissionClick(label)}
-							onKeyDown={(e): void => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									onPermissionClick(label);
-								}
-							}}
-						>
-							<div className="role-details-permission-item-left">
-								{icon}
-								<span className="role-details-permission-item-label">{label}</span>
+					{PERMISSION_TYPES.map(({ key, label, icon }) =>
+						isManaged ? (
+							<div
+								key={key}
+								className="role-details-permission-item role-details-permission-item--readonly"
+							>
+								<div className="role-details-permission-item-left">
+									{icon}
+									<span className="role-details-permission-item-label">{label}</span>
+								</div>
 							</div>
-							<ChevronRight size={14} color="var(--foreground)" />
-						</div>
-					))}
+						) : (
+							<div
+								key={key}
+								className="role-details-permission-item"
+								role="button"
+								tabIndex={0}
+								onClick={(): void => onPermissionClick(label)}
+								onKeyDown={(e): void => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										onPermissionClick(label);
+									}
+								}}
+							>
+								<div className="role-details-permission-item-left">
+									{icon}
+									<span className="role-details-permission-item-label">{label}</span>
+								</div>
+								<ChevronRight size={14} color="var(--foreground)" />
+							</div>
+						),
+					)}
 				</div>
 			</div>
 		</div>
@@ -207,8 +231,12 @@ function RoleDetailsPage(): JSX.Element {
 		Record<string, PermissionConfig>
 	>({});
 
-	const { data, isLoading, isError, error } = useGetRole({ id: roleId });
+	const { data, isLoading, isFetching, isError, error } = useGetRole({
+		id: roleId,
+	});
 	const role = data?.data?.data;
+	const isTransitioning = isFetching && role?.id !== roleId;
+	const isManaged = role?.type === 'managed';
 
 	const { mutate: deleteRole, isLoading: isDeleting } = useDeleteRole({
 		mutation: {
@@ -230,7 +258,7 @@ function RoleDetailsPage(): JSX.Element {
 		setIsEditModalOpen(true);
 	};
 
-	if (isLoading) {
+	if (isLoading || isTransitioning) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -257,12 +285,10 @@ function RoleDetailsPage(): JSX.Element {
 
 	return (
 		<div className="role-details-page">
-			{/* Header */}
 			<div className="role-details-header">
 				<h2 className="role-details-title">Role — {role.name}</h2>
 			</div>
 
-			{/* Tab bar + Actions */}
 			<div className="role-details-nav">
 				<div className="role-details-tabs">
 					<button
@@ -288,64 +314,70 @@ function RoleDetailsPage(): JSX.Element {
 					</button>
 				</div>
 
-				<div className="role-details-actions">
-					<Button
-						variant="ghost"
-						color="secondary"
-						className="role-details-delete-action-btn"
-						onClick={(): void => setIsDeleteModalOpen(true)}
-						aria-label="Delete role"
-					>
-						<Trash2 size={14} />
-					</Button>
-					<Button
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={openEditModal}
-					>
-						Edit Role Details
-					</Button>
-				</div>
+				{!isManaged && (
+					<div className="role-details-actions">
+						<Button
+							variant="ghost"
+							color="secondary"
+							className="role-details-delete-action-btn"
+							onClick={(): void => setIsDeleteModalOpen(true)}
+							aria-label="Delete role"
+						>
+							<Trash2 size={14} />
+						</Button>
+						<Button
+							variant="solid"
+							color="secondary"
+							size="sm"
+							onClick={openEditModal}
+						>
+							Edit Role Details
+						</Button>
+					</div>
+				)}
 			</div>
 
 			{/* Content */}
 			{activeTab === 'overview' && (
 				<OverviewTab
 					role={role}
+					isManaged={isManaged}
 					onPermissionClick={(label): void => setActivePermission(label)}
 				/>
 			)}
 			{activeTab === 'members' && <MembersTab />}
 
-			<PermissionSidePanel
-				open={activePermission !== null}
-				onClose={(): void => setActivePermission(null)}
-				permissionLabel={activePermission ?? ''}
-				resources={PERMISSION_RESOURCES}
-				initialConfig={
-					activePermission ? permissionConfigs[activePermission] : undefined
-				}
-				onSave={(config): void => {
-					if (activePermission) {
-						setPermissionConfigs((prev) => ({
-							...prev,
-							[activePermission]: config,
-						}));
-					}
-				}}
-			/>
+			{!isManaged && (
+				<>
+					<PermissionSidePanel
+						open={activePermission !== null}
+						onClose={(): void => setActivePermission(null)}
+						permissionLabel={activePermission ?? ''}
+						resources={PERMISSION_RESOURCES}
+						initialConfig={
+							activePermission ? permissionConfigs[activePermission] : undefined
+						}
+						onSave={(config): void => {
+							if (activePermission) {
+								setPermissionConfigs((prev) => ({
+									...prev,
+									[activePermission]: config,
+								}));
+							}
+						}}
+					/>
+					<CreateRoleModal
+						isOpen={isEditModalOpen}
+						onClose={(): void => setIsEditModalOpen(false)}
+						initialData={{
+							id: roleId,
+							name: role.name || '',
+							description: role.description || '',
+						}}
+					/>
+				</>
+			)}
 
-			{/* Edit Role Modal */}
-			<CreateRoleModal
-				isOpen={isEditModalOpen}
-				onClose={(): void => setIsEditModalOpen(false)}
-				initialData={{
-					id: roleId,
-					name: role.name || '',
-					description: role.description || '',
-				}}
-			/>
 			{/* Delete Role Confirmation Modal */}
 			<Modal
 				open={isDeleteModalOpen}

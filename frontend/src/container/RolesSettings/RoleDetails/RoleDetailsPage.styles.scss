@@ -22,6 +22,16 @@
 		letter-spacing: -0.09px;
 	}
 
+	.role-details-permission-item--readonly {
+		cursor: default !important;
+		pointer-events: none;
+		opacity: 0.55;
+
+		&:hover {
+			background: rgba(171, 189, 255, 0.08) !important;
+		}
+	}
+
 	.role-details-nav {
 		display: flex;
 		align-items: center;
@@ -109,7 +119,7 @@
 
 	.role-details-description-text {
 		font-family: Inter;
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 500;
 		line-height: 20px;
 		letter-spacing: -0.07px;
