@@ -1,3 +1,5 @@
+import { YAxisCategoryNames } from './constants';
+
 export interface YAxisUnitSelectorProps {
 	value: string | undefined;
 	onChange: (value: UniversalYAxisUnit) => void;
@@ -669,7 +671,7 @@ export interface UnitFamilyConfig {
 }
 
 export interface YAxisCategory {
-	name: string;
+	name: YAxisCategoryNames;
 	units: {
 		name: string;
 		id: UniversalYAxisUnit;
