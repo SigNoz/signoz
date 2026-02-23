@@ -3560,21 +3560,21 @@ func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context,
 		clickhouse.Named("sinceUnixMilli", sinceUnixMilli),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error querying active hosts: %w", err)
+		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error querying active hosts")
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var hostName string
 		if err := rows.Scan(&hostName); err != nil {
-			return nil, fmt.Errorf("error scanning active host row: %w", err)
+			return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error scanning active host row")
 		}
 		if hostName != "" {
 			activeHosts[hostName] = true
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating active host rows: %w", err)
+		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error iterating active host rows")
 	}
 
 	return activeHosts, nil
