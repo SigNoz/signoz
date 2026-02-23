@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding"
 	"encoding/json"
 	"net/http"
 	"regexp"
@@ -15,7 +16,10 @@ var (
 )
 
 var (
-	_ json.Unmarshaler = new(Selector)
+	_ json.Marshaler           = new(Selector)
+	_ json.Unmarshaler         = new(Selector)
+	_ encoding.TextMarshaler   = new(Selector)
+	_ encoding.TextUnmarshaler = new(Selector)
 )
 
 var (
@@ -35,7 +39,9 @@ var (
 type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]Selector, error)
 type SelectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]Selector, valuer.UUID, error)
 
-type Selector struct{ valuer.String }
+type Selector struct {
+	val string
+}
 
 func NewSelector(typed Type, selector string) (Selector, error) {
 	err := IsValidSelector(typed, selector)
@@ -43,7 +49,7 @@ func NewSelector(typed Type, selector string) (Selector, error) {
 		return Selector{}, err
 	}
 
-	return Selector{valuer.NewString(selector)}, nil
+	return Selector{val: selector}, nil
 }
 
 func MustNewSelector(typed Type, input string) Selector {
@@ -55,6 +61,14 @@ func MustNewSelector(typed Type, input string) Selector {
 	return selector
 }
 
+func (selector *Selector) MarshalJSON() ([]byte, error) {
+	return json.Marshal(selector.val)
+}
+
+func (selector Selector) String() string {
+	return selector.val
+}
+
 func (typed *Selector) UnmarshalJSON(data []byte) error {
 	str := ""
 	err := json.Unmarshal(data, &str)
@@ -62,8 +76,18 @@ func (typed *Selector) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*typed = Selector{valuer.NewString(str)}
+	alias := Selector{val: str}
+	*typed = alias
 
+	return nil
+}
+
+func (selector Selector) MarshalText() ([]byte, error) {
+	return []byte(selector.val), nil
+}
+
+func (selector *Selector) UnmarshalText(text []byte) error {
+	*selector = Selector{val: string(text)}
 	return nil
 }
 

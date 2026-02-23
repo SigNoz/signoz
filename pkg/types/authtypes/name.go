@@ -1,27 +1,32 @@
 package authtypes
 
 import (
+	"encoding"
 	"encoding/json"
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
 	nameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
 
-	_ json.Unmarshaler = new(Name)
+	_ json.Marshaler           = new(Name)
+	_ json.Unmarshaler         = new(Name)
+	_ encoding.TextMarshaler   = new(Name)
+	_ encoding.TextUnmarshaler = new(Name)
 )
 
-type Name struct{ valuer.String }
+type Name struct {
+	val string
+}
 
 func NewName(name string) (Name, error) {
 	if !nameRegex.MatchString(name) {
 		return Name{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name must conform to regex %s", nameRegex.String())
 	}
 
-	return Name{valuer.NewString(name)}, nil
+	return Name{val: name}, nil
 }
 
 func MustNewName(name string) Name {
@@ -31,6 +36,14 @@ func MustNewName(name string) Name {
 	}
 
 	return named
+}
+
+func (name Name) String() string {
+	return name.val
+}
+
+func (name *Name) MarshalJSON() ([]byte, error) {
+	return json.Marshal(name.val)
 }
 
 func (name *Name) UnmarshalJSON(data []byte) error {
@@ -45,6 +58,19 @@ func (name *Name) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	*name = shadow
+	return nil
+}
+
+func (name Name) MarshalText() ([]byte, error) {
+	return []byte(name.val), nil
+}
+
+func (name *Name) UnmarshalText(text []byte) error {
+	shadow, err := NewName(string(text))
+	if err != nil {
+		return err
+	}
 	*name = shadow
 	return nil
 }

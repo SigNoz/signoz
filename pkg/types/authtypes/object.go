@@ -34,7 +34,7 @@ type PatchableObjects struct {
 }
 
 func NewObject(resource Resource, selector Selector) (*Object, error) {
-	err := IsValidSelector(resource.Type, selector.StringValue())
+	err := IsValidSelector(resource.Type, selector.String())
 	if err != nil {
 		return nil, err
 	}

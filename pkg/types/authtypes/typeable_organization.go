@@ -15,7 +15,7 @@ func (typeableOrganization *typeableOrganization) Tuples(subject string, relatio
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
-		object := strings.Join([]string{typeableOrganization.Type().StringValue(), selector.StringValue()}, ":")
+		object := strings.Join([]string{typeableOrganization.Type().StringValue(), selector.String()}, ":")
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 
@@ -35,5 +35,5 @@ func (typeableOrganization *typeableOrganization) Prefix(_ valuer.UUID) string {
 }
 
 func (typeableOrganization *typeableOrganization) Scope(relation Relation) string {
-	return typeableOrganization.Name().StringValue() + ":" + relation.StringValue()
+	return typeableOrganization.Name().String() + ":" + relation.StringValue()
 }
