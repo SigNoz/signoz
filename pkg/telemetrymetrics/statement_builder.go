@@ -414,7 +414,11 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecifiedWit
 	}
 	moreInfoQueryBuilder.SelectMore(fmt.Sprintf("%s AS max_value", aggCol))
 
-	moreInfoQueryBuilder.SelectMore("argMax(value, unix_milli) AS latest_value")
+	colWithLatestValue, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, metrictypes.TimeAggregationLatest, query.Aggregations[0].TableHints)
+	if err != nil {
+		return "", nil, err
+	}
+	moreInfoQueryBuilder.SelectMore(fmt.Sprintf("%s AS latest_value", colWithLatestValue))
 	moreInfoQueryBuilder.SelectMore("max(unix_milli) AS latest_timestamp")
 
 	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
