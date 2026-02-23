@@ -14,7 +14,8 @@ import type {
 } from 'react-query';
 import { useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
+import type { ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetGlobalConfig200,
 	RenderErrorResponseDTO,
@@ -37,12 +38,12 @@ export const getGlobalConfig = (signal?: AbortSignal) => {
 };
 
 export const getGetGlobalConfigQueryKey = () => {
-	return ['getGlobalConfig'] as const;
+	return [`/api/v1/global/config`] as const;
 };
 
 export const getGetGlobalConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,
@@ -68,7 +69,7 @@ export const getGetGlobalConfigQueryOptions = <
 export type GetGlobalConfigQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getGlobalConfig>>
 >;
-export type GetGlobalConfigQueryError = RenderErrorResponseDTO;
+export type GetGlobalConfigQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get global config
@@ -76,7 +77,7 @@ export type GetGlobalConfigQueryError = RenderErrorResponseDTO;
 
 export function useGetGlobalConfig<
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,

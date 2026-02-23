@@ -335,14 +335,14 @@ function MultiIngestionSettings(): JSX.Element {
 	const isError = isSearching ? isSearchError : isGetError;
 
 	useEffect(() => {
-		setDataSource(ingestionKeys?.data.data?.keys || []);
-		setTotalIngestionKeys(ingestionKeys?.data?.data?._pagination?.total || 0);
+		setDataSource(ingestionKeys?.data.keys || []);
+		setTotalIngestionKeys(ingestionKeys?.data._pagination?.total || 0);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ingestionKeys?.data?.data]);
+	}, [ingestionKeys?.data]);
 
 	useEffect(() => {
-		if (isError) {
-			showErrorNotification(notifications, (error as unknown) as AxiosError);
+		if (isError && error) {
+			showErrorNotification(notifications, error);
 		}
 	}, [error, isError, notifications]);
 
