@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import type { InputRef } from 'antd';
@@ -53,11 +53,16 @@ function Overview({
 	);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
+	const focusTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
 	const searchInputRef = useCallback((node: InputRef | null) => {
+		clearTimeout(focusTimerRef.current);
 		if (node) {
-			setTimeout(() => node.focus(), 100);
+			focusTimerRef.current = setTimeout(() => node.focus(), 100);
 		}
 	}, []);
+
+	useEffect(() => (): void => clearTimeout(focusTimerRef.current), []);
 
 	const isDarkMode = useIsDarkMode();
 
