@@ -48,7 +48,9 @@ function ForgotPassword({
 		}
 
 		try {
-			ErrorResponseHandlerV2(mutationError as AxiosError<ErrorV2Resp>);
+			ErrorResponseHandlerV2(
+				(mutationError as unknown) as AxiosError<ErrorV2Resp>,
+			);
 		} catch (apiError) {
 			return apiError as APIError;
 		}
