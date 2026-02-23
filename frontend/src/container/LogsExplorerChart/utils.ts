@@ -1,8 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
 import { colors } from 'lib/getRandomColor';
 
-// Check if a color is red-like
-function isRedLike(hex: string): boolean {
+// Function to determine if a color is "red-like" based on its RGB values
+export function isRedLike(hex: string): boolean {
 	const r = parseInt(hex.slice(1, 3), 16);
 	const g = parseInt(hex.slice(3, 5), 16);
 	const b = parseInt(hex.slice(5, 7), 16);
