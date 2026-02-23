@@ -29,7 +29,7 @@ function GraphView({
 	popoverOptions,
 	setShowExpandedView,
 	setExpandedViewOptions,
-	appliedMetricInspectionOptions,
+	metricInspectionAppliedOptions,
 	isInspectMetricsRefetching,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -233,7 +233,7 @@ function GraphView({
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 						setShowExpandedView={setShowExpandedView}
 						setExpandedViewOptions={setExpandedViewOptions}
-						appliedMetricInspectionOptions={appliedMetricInspectionOptions}
+						metricInspectionAppliedOptions={metricInspectionAppliedOptions}
 						isInspectMetricsRefetching={isInspectMetricsRefetching}
 					/>
 				)}
@@ -255,7 +255,7 @@ function GraphView({
 				<HoverPopover
 					options={hoverPopoverOptions}
 					step={inspectionStep}
-					appliedMetricInspectionOptions={appliedMetricInspectionOptions}
+					metricInspectionAppliedOptions={metricInspectionAppliedOptions}
 				/>
 			)}
 		</div>

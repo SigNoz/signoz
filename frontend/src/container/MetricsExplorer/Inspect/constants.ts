@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import {
-	MetricInspectionOptions,
+	MetricInspectionState,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from './types';
@@ -71,7 +71,7 @@ export const SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW: Record<
 	[SpaceAggregationOptions.AVG_BY]: 'Avg',
 };
 
-export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionOptions = {
+export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionState = {
 	currentOptions: {
 		timeAggregationOption: undefined,
 		timeAggregationInterval: undefined,

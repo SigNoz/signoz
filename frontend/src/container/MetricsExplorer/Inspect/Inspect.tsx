@@ -225,7 +225,7 @@ function Inspect({
 						showExpandedView={showExpandedView}
 						setExpandedViewOptions={setExpandedViewOptions}
 						popoverOptions={popoverOptions}
-						appliedMetricInspectionOptions={metricInspectionOptions.appliedOptions}
+						metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
 						isInspectMetricsRefetching={isInspectMetricsRefetching}
 					/>
 					<QueryBuilder
@@ -251,7 +251,7 @@ function Inspect({
 							options={expandedViewOptions}
 							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
 							step={inspectionStep}
-							appliedMetricInspectionOptions={metricInspectionOptions.appliedOptions}
+							metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
 							timeAggregatedSeriesMap={timeAggregatedSeriesMap}
 						/>
 					)}

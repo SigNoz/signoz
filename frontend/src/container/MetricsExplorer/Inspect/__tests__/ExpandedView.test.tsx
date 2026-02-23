@@ -10,7 +10,7 @@ import ExpandedView from '../ExpandedView';
 import {
 	GraphPopoverData,
 	InspectionStep,
-	InspectOptions,
+	MetricInspectOptions,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
@@ -62,7 +62,7 @@ describe('ExpandedView', () => {
 		],
 	]);
 
-	const mockMetricInspectionOptions: InspectOptions = {
+	const mockMetricInspectionOptions: MetricInspectOptions = {
 		timeAggregationOption: TimeAggregationOptions.MAX,
 		timeAggregationInterval: 60,
 		spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
@@ -79,7 +79,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.TIME_AGGREGATION}
-				appliedMetricInspectionOptions={mockMetricInspectionOptions}
+				metricInspectionAppliedOptions={mockMetricInspectionOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);
@@ -96,7 +96,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.SPACE_AGGREGATION}
-				appliedMetricInspectionOptions={{
+				metricInspectionAppliedOptions={{
 					...mockMetricInspectionOptions,
 					timeAggregationInterval: TIME_AGGREGATION_INTERVAL,
 				}}
@@ -127,7 +127,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.COMPLETED}
-				appliedMetricInspectionOptions={mockMetricInspectionOptions}
+				metricInspectionAppliedOptions={mockMetricInspectionOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);
@@ -153,7 +153,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.TIME_AGGREGATION}
-				appliedMetricInspectionOptions={mockMetricInspectionOptions}
+				metricInspectionAppliedOptions={mockMetricInspectionOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);

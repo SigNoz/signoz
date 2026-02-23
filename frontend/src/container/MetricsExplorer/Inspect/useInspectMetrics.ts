@@ -10,7 +10,7 @@ import {
 	GraphPopoverData,
 	InspectionStep,
 	MetricInspectionAction,
-	MetricInspectionOptions,
+	MetricInspectionState,
 	UseInspectMetricsReturnData,
 } from './types';
 import {
@@ -20,9 +20,9 @@ import {
 } from './utils';
 
 const metricInspectionReducer = (
-	state: MetricInspectionOptions,
+	state: MetricInspectionState,
 	action: MetricInspectionAction,
-): MetricInspectionOptions => {
+): MetricInspectionState => {
 	switch (action.type) {
 		case 'SET_TIME_AGGREGATION_OPTION':
 			return {
@@ -64,7 +64,7 @@ const metricInspectionReducer = (
 					filters: action.payload,
 				},
 			};
-		case 'APPLY_INSPECTION_OPTIONS':
+		case 'APPLY_METRIC_INSPECTION_OPTIONS':
 			return {
 				...state,
 				appliedOptions: {

@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Card, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
@@ -22,8 +22,8 @@ import {
 	GraphPopoverData,
 	GraphPopoverOptions,
 	InspectionStep,
-	InspectOptions,
 	MetricFiltersProps,
+	MetricInspectOptions,
 	MetricNameSearchProps,
 	MetricSpaceAggregationProps,
 	MetricTimeAggregationProps,
@@ -103,28 +103,31 @@ export function MetricFilters({
 	currentQuery,
 	setCurrentQuery,
 }: MetricFiltersProps): JSX.Element {
-	const handleOnChange = (expression: string): void => {
-		logEvent(MetricsExplorerEvents.FilterApplied, {
-			[MetricsExplorerEventKeys.Modal]: 'inspect',
-		});
-		const tagFilter = {
-			items: convertExpressionToFilters(expression),
-			op: 'AND',
-		};
-		setCurrentQuery({
-			...currentQuery,
-			filters: tagFilter,
-			filter: {
-				...currentQuery.filter,
+	const handleOnChange = useCallback(
+		(expression: string): void => {
+			logEvent(MetricsExplorerEvents.FilterApplied, {
+				[MetricsExplorerEventKeys.Modal]: 'inspect',
+			});
+			const tagFilter = {
+				items: convertExpressionToFilters(expression),
+				op: 'AND',
+			};
+			setCurrentQuery({
+				...currentQuery,
+				filters: tagFilter,
+				filter: {
+					...currentQuery.filter,
+					expression,
+				},
 				expression,
-			},
-			expression,
-		});
-		dispatchMetricInspectionOptions({
-			type: 'SET_FILTERS',
-			payload: tagFilter,
-		});
-	};
+			});
+			dispatchMetricInspectionOptions({
+				type: 'SET_FILTERS',
+				payload: tagFilter,
+			});
+		},
+		[currentQuery, dispatchMetricInspectionOptions, setCurrentQuery],
+	);
 
 	return (
 		<div
@@ -311,7 +314,7 @@ export function applyFilters(
 
 export function applyTimeAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	appliedMetricInspectionOptions: InspectOptions,
+	metricInspectionAppliedOptions: MetricInspectOptions,
 ): {
 	timeAggregatedSeries: InspectMetricsSeries[];
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
@@ -319,7 +322,7 @@ export function applyTimeAggregation(
 	const {
 		timeAggregationOption,
 		timeAggregationInterval,
-	} = appliedMetricInspectionOptions;
+	} = metricInspectionAppliedOptions;
 
 	if (!timeAggregationInterval) {
 		return {
@@ -404,7 +407,7 @@ export function applyTimeAggregation(
 
 export function applySpaceAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	appliedMetricInspectionOptions: InspectOptions,
+	metricInspectionAppliedOptions: MetricInspectOptions,
 ): {
 	aggregatedSeries: InspectMetricsSeries[];
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
@@ -414,7 +417,7 @@ export function applySpaceAggregation(
 
 	inspectMetricsTimeSeries.forEach((series) => {
 		// Create composite key from selected labels
-		const key = appliedMetricInspectionOptions.spaceAggregationLabels
+		const key = metricInspectionAppliedOptions.spaceAggregationLabels
 			.map((label) => `${label}:${series.labels[label]}`)
 			.join(',');
 
@@ -449,7 +452,7 @@ export function applySpaceAggregation(
 			([timestamp, values]) => {
 				let aggregatedValue: number;
 
-				switch (appliedMetricInspectionOptions.spaceAggregationOption) {
+				switch (metricInspectionAppliedOptions.spaceAggregationOption) {
 					case SpaceAggregationOptions.SUM_BY:
 						aggregatedValue = values.reduce((sum, val) => sum + val, 0);
 						break;
@@ -705,11 +708,11 @@ export function getTimeSeriesLabel(
 export function HoverPopover({
 	options,
 	step,
-	appliedMetricInspectionOptions,
+	metricInspectionAppliedOptions,
 }: {
 	options: GraphPopoverOptions;
 	step: InspectionStep;
-	appliedMetricInspectionOptions: InspectOptions;
+	metricInspectionAppliedOptions: MetricInspectOptions;
 }): JSX.Element {
 	const closestTimestamp = useMemo(() => {
 		if (!options.timeSeries) {
@@ -737,7 +740,7 @@ export function HoverPopover({
 	const title = useMemo(() => {
 		if (
 			step === InspectionStep.COMPLETED &&
-			appliedMetricInspectionOptions.spaceAggregationLabels.length === 0
+			metricInspectionAppliedOptions.spaceAggregationLabels.length === 0
 		) {
 			return undefined;
 		}
@@ -751,7 +754,7 @@ export function HoverPopover({
 			options.timeSeries,
 			options.timeSeries?.strokeColor,
 		);
-	}, [step, options.timeSeries, appliedMetricInspectionOptions]);
+	}, [step, options.timeSeries, metricInspectionAppliedOptions]);
 
 	return (
 		<Card

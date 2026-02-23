@@ -105,7 +105,7 @@ describe('QueryBuilder', () => {
 		jest.clearAllMocks();
 	});
 
-	it('renders query builder header', () => {
+	it('renders query builder with all components', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -114,49 +114,9 @@ describe('QueryBuilder', () => {
 			</QueryClientProvider>,
 		);
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
-	});
-
-	it('renders metric name search component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-name-search')).toBeInTheDocument();
-	});
-
-	it('renders metric filters component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-filters')).toBeInTheDocument();
-	});
-
-	it('renders time aggregation component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-time-aggregation')).toBeInTheDocument();
-	});
-
-	it('renders space aggregation component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-space-aggregation')).toBeInTheDocument();
 	});
 
@@ -180,7 +140,7 @@ describe('QueryBuilder', () => {
 		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
 	});
 
-	it('should call setAppliedMetricName when query is applied', () => {
+	it('should call setAppliedMetricName and apply inspection options when query is applied', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -189,27 +149,14 @@ describe('QueryBuilder', () => {
 			</QueryClientProvider>,
 		);
 
-		const applyQueryButton = screen.getByTestId('apply-query-button');
+		const applyQueryButton = screen.getByText('Run Query');
 		fireEvent.click(applyQueryButton);
 
 		expect(mockSetCurrentMetricName).toHaveBeenCalledTimes(0);
 		expect(mockSetAppliedMetricName).toHaveBeenCalledWith('test_metric');
-	});
-
-	it('should apply inspect options when query is applied', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
-
-		const applyQueryButton = screen.getByTestId('apply-query-button');
-		fireEvent.click(applyQueryButton);
 
 		expect(defaultProps.dispatchMetricInspectionOptions).toHaveBeenCalledWith({
-			type: 'APPLY_INSPECTION_OPTIONS',
+			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
 		});
 	});
 });

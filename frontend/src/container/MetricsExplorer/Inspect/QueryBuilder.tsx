@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Button, Card } from 'antd';
-import { Atom, Play } from 'lucide-react';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
+import { Atom } from 'lucide-react';
 
 import { QueryBuilderProps } from './types';
 import {
@@ -25,7 +26,7 @@ function QueryBuilder({
 	const applyInspectionOptions = useCallback(() => {
 		setAppliedMetricName(currentMetricName ?? '');
 		dispatchMetricInspectionOptions({
-			type: 'APPLY_INSPECTION_OPTIONS',
+			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
 		});
 	}, [currentMetricName, setAppliedMetricName, dispatchMetricInspectionOptions]);
 
@@ -40,15 +41,7 @@ function QueryBuilder({
 				>
 					Query Builder
 				</Button>
-				<Button
-					type="primary"
-					className="stage-run-query"
-					icon={<Play size={14} />}
-					onClick={applyInspectionOptions}
-					data-testid="apply-query-button"
-				>
-					Stage & Run Query
-				</Button>
+				<RunQueryBtn onStageRunQuery={applyInspectionOptions} />
 			</div>
 			<Card className="inspect-metrics-query-builder-content">
 				<MetricNameSearch
