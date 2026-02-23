@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
-import { getChartManagerColumns } from '../columns';
+import { getChartManagerColumns } from '../getChartMangerColumns';
 import { ExtendedChartDataset } from '../utils';
 
 const createMockDataset = (
@@ -61,7 +61,7 @@ describe('getChartManagerColumns', () => {
 		});
 
 		const labelCol = columns.find((c) => c.key === 'label');
-		expect(labelCol?.title).toBe('Label');
+		expect(labelCol!.title).toBe('Label');
 	});
 
 	it('formats column titles with yAxisUnit', () => {
@@ -74,7 +74,7 @@ describe('getChartManagerColumns', () => {
 		});
 
 		const avgCol = columns.find((c) => c.key === 'avg');
-		expect(avgCol?.title).toBe(
+		expect(avgCol!.title).toBe(
 			`Avg (in ${Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MILLISECONDS]})`,
 		);
 	});
@@ -93,7 +93,7 @@ describe('getChartManagerColumns', () => {
 			| ((val: number, record: ExtendedChartDataset, index: number) => string)
 			| undefined;
 		expect(renderFn).toBeDefined();
-		const output = renderFn?.(123.45, tableDataSet[1], 1);
+		const output = renderFn!(123.45, tableDataSet[1], 1);
 		expect(output).toBe('123.45 ms');
 	});
 
@@ -114,7 +114,7 @@ describe('getChartManagerColumns', () => {
 					index: number,
 			  ) => string)
 			| undefined;
-		const output = renderFn?.(undefined, tableDataSet[1], 1);
+		const output = renderFn!(undefined, tableDataSet[1], 1);
 		expect(output).toBe('0');
 	});
 
@@ -127,7 +127,7 @@ describe('getChartManagerColumns', () => {
 		});
 
 		const labelCol = columns.find((c) => c.key === 'label');
-		const renderFn = labelCol?.render as
+		const renderFn = labelCol!.render as
 			| ((
 					label: string,
 					record: ExtendedChartDataset,
@@ -150,7 +150,7 @@ describe('getChartManagerColumns', () => {
 		});
 
 		const indexCol = columns.find((c) => c.key === 'index');
-		const renderFn = indexCol?.render as
+		const renderFn = indexCol!.render as
 			| ((
 					_val: unknown,
 					record: ExtendedChartDataset,

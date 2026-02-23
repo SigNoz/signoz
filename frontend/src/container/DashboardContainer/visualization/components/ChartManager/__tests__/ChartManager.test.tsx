@@ -127,7 +127,7 @@ describe('ChartManager', () => {
 			/>,
 		);
 
-		await userEvent.click(screen.getByTestId('cancel-button'));
+		await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
 		expect(mockOnCancel).toHaveBeenCalledTimes(1);
 	});
@@ -161,7 +161,7 @@ describe('ChartManager', () => {
 			/>,
 		);
 
-		await userEvent.click(screen.getByTestId('save-button'));
+		await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
 		expect(mockSyncSeriesVisibilityToLocalStorage).toHaveBeenCalledTimes(1);
 		expect(mockNotificationsSuccess).toHaveBeenCalledWith({

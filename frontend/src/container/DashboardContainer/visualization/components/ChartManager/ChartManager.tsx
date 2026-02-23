@@ -8,7 +8,7 @@ import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 
-import { getChartManagerColumns } from './columns';
+import { getChartManagerColumns } from './getChartMangerColumns';
 import { ExtendedChartDataset, getDefaultTableDataSet } from './utils';
 
 import './ChartManager.styles.scss';
@@ -148,10 +148,10 @@ export default function ChartManager({
 					data-testid="filter-input"
 				/>
 				<div className="chart-manager-actions-container">
-					<Button type="default" onClick={onCancel} data-testid="cancel-button">
+					<Button type="default" onClick={onCancel}>
 						Cancel
 					</Button>
-					<Button type="primary" onClick={handleSave} data-testid="save-button">
+					<Button type="primary" onClick={handleSave}>
 						Save
 					</Button>
 				</div>
