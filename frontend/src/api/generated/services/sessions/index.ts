@@ -17,7 +17,8 @@ import type {
 } from 'react-query';
 import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AuthtypesPostableEmailPasswordSessionDTO,
 	AuthtypesPostableRotateTokenDTO,
@@ -49,12 +50,12 @@ export const createSessionByGoogleCallback = (signal?: AbortSignal) => {
 };
 
 export const getCreateSessionByGoogleCallbackQueryKey = () => {
-	return ['createSessionByGoogleCallback'] as const;
+	return [`/api/v1/complete/google`] as const;
 };
 
 export const getCreateSessionByGoogleCallbackQueryOptions = <
 	TData = Awaited<ReturnType<typeof createSessionByGoogleCallback>>,
-	TError = CreateSessionByGoogleCallback303 | RenderErrorResponseDTO
+	TError = ErrorType<CreateSessionByGoogleCallback303 | RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof createSessionByGoogleCallback>>,
@@ -81,9 +82,9 @@ export const getCreateSessionByGoogleCallbackQueryOptions = <
 export type CreateSessionByGoogleCallbackQueryResult = NonNullable<
 	Awaited<ReturnType<typeof createSessionByGoogleCallback>>
 >;
-export type CreateSessionByGoogleCallbackQueryError =
-	| CreateSessionByGoogleCallback303
-	| RenderErrorResponseDTO;
+export type CreateSessionByGoogleCallbackQueryError = ErrorType<
+	CreateSessionByGoogleCallback303 | RenderErrorResponseDTO
+>;
 
 /**
  * @summary Create session by google callback
@@ -91,7 +92,7 @@ export type CreateSessionByGoogleCallbackQueryError =
 
 export function useCreateSessionByGoogleCallback<
 	TData = Awaited<ReturnType<typeof createSessionByGoogleCallback>>,
-	TError = CreateSessionByGoogleCallback303 | RenderErrorResponseDTO
+	TError = ErrorType<CreateSessionByGoogleCallback303 | RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof createSessionByGoogleCallback>>,
@@ -138,12 +139,12 @@ export const createSessionByOIDCCallback = (signal?: AbortSignal) => {
 };
 
 export const getCreateSessionByOIDCCallbackQueryKey = () => {
-	return ['createSessionByOIDCCallback'] as const;
+	return [`/api/v1/complete/oidc`] as const;
 };
 
 export const getCreateSessionByOIDCCallbackQueryOptions = <
 	TData = Awaited<ReturnType<typeof createSessionByOIDCCallback>>,
-	TError = CreateSessionByOIDCCallback303 | RenderErrorResponseDTO
+	TError = ErrorType<CreateSessionByOIDCCallback303 | RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof createSessionByOIDCCallback>>,
@@ -170,9 +171,9 @@ export const getCreateSessionByOIDCCallbackQueryOptions = <
 export type CreateSessionByOIDCCallbackQueryResult = NonNullable<
 	Awaited<ReturnType<typeof createSessionByOIDCCallback>>
 >;
-export type CreateSessionByOIDCCallbackQueryError =
-	| CreateSessionByOIDCCallback303
-	| RenderErrorResponseDTO;
+export type CreateSessionByOIDCCallbackQueryError = ErrorType<
+	CreateSessionByOIDCCallback303 | RenderErrorResponseDTO
+>;
 
 /**
  * @summary Create session by oidc callback
@@ -180,7 +181,7 @@ export type CreateSessionByOIDCCallbackQueryError =
 
 export function useCreateSessionByOIDCCallback<
 	TData = Awaited<ReturnType<typeof createSessionByOIDCCallback>>,
-	TError = CreateSessionByOIDCCallback303 | RenderErrorResponseDTO
+	TError = ErrorType<CreateSessionByOIDCCallback303 | RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof createSessionByOIDCCallback>>,
@@ -219,7 +220,7 @@ export const invalidateCreateSessionByOIDCCallback = async (
  * @summary Create session by saml callback
  */
 export const createSessionBySAMLCallback = (
-	createSessionBySAMLCallbackBody: CreateSessionBySAMLCallbackBody,
+	createSessionBySAMLCallbackBody: BodyType<CreateSessionBySAMLCallbackBody>,
 	params?: CreateSessionBySAMLCallbackParams,
 	signal?: AbortSignal,
 ) => {
@@ -248,14 +249,14 @@ export const createSessionBySAMLCallback = (
 };
 
 export const getCreateSessionBySAMLCallbackMutationOptions = <
-	TError = CreateSessionBySAMLCallback303 | RenderErrorResponseDTO,
+	TError = ErrorType<CreateSessionBySAMLCallback303 | RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSessionBySAMLCallback>>,
 		TError,
 		{
-			data: CreateSessionBySAMLCallbackBody;
+			data: BodyType<CreateSessionBySAMLCallbackBody>;
 			params?: CreateSessionBySAMLCallbackParams;
 		},
 		TContext
@@ -264,7 +265,7 @@ export const getCreateSessionBySAMLCallbackMutationOptions = <
 	Awaited<ReturnType<typeof createSessionBySAMLCallback>>,
 	TError,
 	{
-		data: CreateSessionBySAMLCallbackBody;
+		data: BodyType<CreateSessionBySAMLCallbackBody>;
 		params?: CreateSessionBySAMLCallbackParams;
 	},
 	TContext
@@ -281,7 +282,7 @@ export const getCreateSessionBySAMLCallbackMutationOptions = <
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createSessionBySAMLCallback>>,
 		{
-			data: CreateSessionBySAMLCallbackBody;
+			data: BodyType<CreateSessionBySAMLCallbackBody>;
 			params?: CreateSessionBySAMLCallbackParams;
 		}
 	> = (props) => {
@@ -296,23 +297,23 @@ export const getCreateSessionBySAMLCallbackMutationOptions = <
 export type CreateSessionBySAMLCallbackMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createSessionBySAMLCallback>>
 >;
-export type CreateSessionBySAMLCallbackMutationBody = CreateSessionBySAMLCallbackBody;
-export type CreateSessionBySAMLCallbackMutationError =
-	| CreateSessionBySAMLCallback303
-	| RenderErrorResponseDTO;
+export type CreateSessionBySAMLCallbackMutationBody = BodyType<CreateSessionBySAMLCallbackBody>;
+export type CreateSessionBySAMLCallbackMutationError = ErrorType<
+	CreateSessionBySAMLCallback303 | RenderErrorResponseDTO
+>;
 
 /**
  * @summary Create session by saml callback
  */
 export const useCreateSessionBySAMLCallback = <
-	TError = CreateSessionBySAMLCallback303 | RenderErrorResponseDTO,
+	TError = ErrorType<CreateSessionBySAMLCallback303 | RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSessionBySAMLCallback>>,
 		TError,
 		{
-			data: CreateSessionBySAMLCallbackBody;
+			data: BodyType<CreateSessionBySAMLCallbackBody>;
 			params?: CreateSessionBySAMLCallbackParams;
 		},
 		TContext
@@ -321,7 +322,7 @@ export const useCreateSessionBySAMLCallback = <
 	Awaited<ReturnType<typeof createSessionBySAMLCallback>>,
 	TError,
 	{
-		data: CreateSessionBySAMLCallbackBody;
+		data: BodyType<CreateSessionBySAMLCallbackBody>;
 		params?: CreateSessionBySAMLCallbackParams;
 	},
 	TContext
@@ -342,7 +343,7 @@ export const deleteSession = () => {
 };
 
 export const getDeleteSessionMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -380,13 +381,13 @@ export type DeleteSessionMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteSession>>
 >;
 
-export type DeleteSessionMutationError = RenderErrorResponseDTO;
+export type DeleteSessionMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete session
  */
 export const useDeleteSession = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -418,12 +419,12 @@ export const getSessionContext = (signal?: AbortSignal) => {
 };
 
 export const getGetSessionContextQueryKey = () => {
-	return ['getSessionContext'] as const;
+	return [`/api/v2/sessions/context`] as const;
 };
 
 export const getGetSessionContextQueryOptions = <
 	TData = Awaited<ReturnType<typeof getSessionContext>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getSessionContext>>,
@@ -449,7 +450,7 @@ export const getGetSessionContextQueryOptions = <
 export type GetSessionContextQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getSessionContext>>
 >;
-export type GetSessionContextQueryError = RenderErrorResponseDTO;
+export type GetSessionContextQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get session context
@@ -457,7 +458,7 @@ export type GetSessionContextQueryError = RenderErrorResponseDTO;
 
 export function useGetSessionContext<
 	TData = Awaited<ReturnType<typeof getSessionContext>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getSessionContext>>,
@@ -496,7 +497,7 @@ export const invalidateGetSessionContext = async (
  * @summary Create session by email and password
  */
 export const createSessionByEmailPassword = (
-	authtypesPostableEmailPasswordSessionDTO: AuthtypesPostableEmailPasswordSessionDTO,
+	authtypesPostableEmailPasswordSessionDTO: BodyType<AuthtypesPostableEmailPasswordSessionDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateSessionByEmailPassword200>({
@@ -509,19 +510,19 @@ export const createSessionByEmailPassword = (
 };
 
 export const getCreateSessionByEmailPasswordMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSessionByEmailPassword>>,
 		TError,
-		{ data: AuthtypesPostableEmailPasswordSessionDTO },
+		{ data: BodyType<AuthtypesPostableEmailPasswordSessionDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createSessionByEmailPassword>>,
 	TError,
-	{ data: AuthtypesPostableEmailPasswordSessionDTO },
+	{ data: BodyType<AuthtypesPostableEmailPasswordSessionDTO> },
 	TContext
 > => {
 	const mutationKey = ['createSessionByEmailPassword'];
@@ -535,7 +536,7 @@ export const getCreateSessionByEmailPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createSessionByEmailPassword>>,
-		{ data: AuthtypesPostableEmailPasswordSessionDTO }
+		{ data: BodyType<AuthtypesPostableEmailPasswordSessionDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -548,26 +549,26 @@ export const getCreateSessionByEmailPasswordMutationOptions = <
 export type CreateSessionByEmailPasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createSessionByEmailPassword>>
 >;
-export type CreateSessionByEmailPasswordMutationBody = AuthtypesPostableEmailPasswordSessionDTO;
-export type CreateSessionByEmailPasswordMutationError = RenderErrorResponseDTO;
+export type CreateSessionByEmailPasswordMutationBody = BodyType<AuthtypesPostableEmailPasswordSessionDTO>;
+export type CreateSessionByEmailPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create session by email and password
  */
 export const useCreateSessionByEmailPassword = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSessionByEmailPassword>>,
 		TError,
-		{ data: AuthtypesPostableEmailPasswordSessionDTO },
+		{ data: BodyType<AuthtypesPostableEmailPasswordSessionDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createSessionByEmailPassword>>,
 	TError,
-	{ data: AuthtypesPostableEmailPasswordSessionDTO },
+	{ data: BodyType<AuthtypesPostableEmailPasswordSessionDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateSessionByEmailPasswordMutationOptions(
@@ -581,7 +582,7 @@ export const useCreateSessionByEmailPassword = <
  * @summary Rotate session
  */
 export const rotateSession = (
-	authtypesPostableRotateTokenDTO: AuthtypesPostableRotateTokenDTO,
+	authtypesPostableRotateTokenDTO: BodyType<AuthtypesPostableRotateTokenDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<RotateSession200>({
@@ -594,19 +595,19 @@ export const rotateSession = (
 };
 
 export const getRotateSessionMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof rotateSession>>,
 		TError,
-		{ data: AuthtypesPostableRotateTokenDTO },
+		{ data: BodyType<AuthtypesPostableRotateTokenDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof rotateSession>>,
 	TError,
-	{ data: AuthtypesPostableRotateTokenDTO },
+	{ data: BodyType<AuthtypesPostableRotateTokenDTO> },
 	TContext
 > => {
 	const mutationKey = ['rotateSession'];
@@ -620,7 +621,7 @@ export const getRotateSessionMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof rotateSession>>,
-		{ data: AuthtypesPostableRotateTokenDTO }
+		{ data: BodyType<AuthtypesPostableRotateTokenDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -633,26 +634,26 @@ export const getRotateSessionMutationOptions = <
 export type RotateSessionMutationResult = NonNullable<
 	Awaited<ReturnType<typeof rotateSession>>
 >;
-export type RotateSessionMutationBody = AuthtypesPostableRotateTokenDTO;
-export type RotateSessionMutationError = RenderErrorResponseDTO;
+export type RotateSessionMutationBody = BodyType<AuthtypesPostableRotateTokenDTO>;
+export type RotateSessionMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Rotate session
  */
 export const useRotateSession = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof rotateSession>>,
 		TError,
-		{ data: AuthtypesPostableRotateTokenDTO },
+		{ data: BodyType<AuthtypesPostableRotateTokenDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof rotateSession>>,
 	TError,
-	{ data: AuthtypesPostableRotateTokenDTO },
+	{ data: BodyType<AuthtypesPostableRotateTokenDTO> },
 	TContext
 > => {
 	const mutationOptions = getRotateSessionMutationOptions(options);
