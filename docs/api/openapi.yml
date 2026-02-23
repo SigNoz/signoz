@@ -326,6 +326,9 @@ components:
           type: string
         url:
           type: string
+      required:
+      - code
+      - message
       type: object
     ErrorsResponseerroradditional:
       properties:
@@ -1661,6 +1664,9 @@ components:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
           type: string
+      required:
+      - status
+      - error
       type: object
     RoletypesGettableResources:
       properties:

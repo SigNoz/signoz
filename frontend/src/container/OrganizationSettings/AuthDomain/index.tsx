@@ -110,7 +110,7 @@ function AuthDomain(): JSX.Element {
 		let errorResult: APIError | null = null;
 		try {
 			ErrorResponseHandlerV2(
-				errorFetchingAuthDomainListResponse as AxiosError<ErrorV2Resp>,
+				(errorFetchingAuthDomainListResponse as unknown) as AxiosError<ErrorV2Resp>,
 			);
 		} catch (error) {
 			errorResult = error as APIError;
