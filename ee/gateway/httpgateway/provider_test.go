@@ -66,7 +66,7 @@ func int64Ptr(v int64) *int64 {
 
 // setupTestProvider creates a test HTTP server that captures request bodies,
 // and returns the provider and a channel to read captured bodies from.
-func setupTestProvider(t *testing.T) (gateway.Gateway, <-chan []byte, *httptest.Server) {
+func setupTestProvider(t *testing.T) (gateway.Gateway, <-chan []byte) {
 	t.Helper()
 
 	bodyCh := make(chan []byte, 1)
@@ -82,7 +82,10 @@ func setupTestProvider(t *testing.T) (gateway.Gateway, <-chan []byte, *httptest.
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a minimal valid response with data wrapper.
-		w.Write([]byte(`{"data": {"id": "test-id"}}`))
+		_, err = w.Write([]byte(`{"data": {"id": "test-id"}}`))
+		if err != nil {
+			require.NoError(t, err)
+		}
 	}))
 
 	serverURL, err := url.Parse(server.URL)
@@ -96,11 +99,11 @@ func setupTestProvider(t *testing.T) (gateway.Gateway, <-chan []byte, *httptest.
 		server.Close()
 	})
 
-	return provider, bodyCh, server
+	return provider, bodyCh
 }
 
 func TestUpdateIngestionKeyLimit_OnlySizeSet(t *testing.T) {
-	provider, bodyCh, _ := setupTestProvider(t)
+	provider, bodyCh := setupTestProvider(t)
 
 	limitConfig := gatewaytypes.LimitConfig{
 		Day: &gatewaytypes.LimitValue{
@@ -132,7 +135,7 @@ func TestUpdateIngestionKeyLimit_OnlySizeSet(t *testing.T) {
 }
 
 func TestUpdateIngestionKeyLimit_OnlyCountSet(t *testing.T) {
-	provider, bodyCh, _ := setupTestProvider(t)
+	provider, bodyCh := setupTestProvider(t)
 
 	limitConfig := gatewaytypes.LimitConfig{
 		Day: &gatewaytypes.LimitValue{
@@ -161,7 +164,7 @@ func TestUpdateIngestionKeyLimit_OnlyCountSet(t *testing.T) {
 }
 
 func TestUpdateIngestionKeyLimit_BothSizeAndCountSet(t *testing.T) {
-	provider, bodyCh, _ := setupTestProvider(t)
+	provider, bodyCh := setupTestProvider(t)
 
 	limitConfig := gatewaytypes.LimitConfig{
 		Day: &gatewaytypes.LimitValue{
@@ -191,7 +194,7 @@ func TestUpdateIngestionKeyLimit_BothSizeAndCountSet(t *testing.T) {
 }
 
 func TestCreateIngestionKeyLimit_OnlySizeSet(t *testing.T) {
-	provider, bodyCh, _ := setupTestProvider(t)
+	provider, bodyCh := setupTestProvider(t)
 
 	limitConfig := gatewaytypes.LimitConfig{
 		Day: &gatewaytypes.LimitValue{
@@ -223,7 +226,7 @@ func TestCreateIngestionKeyLimit_OnlySizeSet(t *testing.T) {
 }
 
 func TestCreateIngestionKeyLimit_OnlyCountSet(t *testing.T) {
-	provider, bodyCh, _ := setupTestProvider(t)
+	provider, bodyCh := setupTestProvider(t)
 
 	limitConfig := gatewaytypes.LimitConfig{
 		Day: &gatewaytypes.LimitValue{
