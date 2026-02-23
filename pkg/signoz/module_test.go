@@ -45,9 +45,7 @@ func TestNewModules(t *testing.T) {
 	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
-	if err != nil {
-		t.Fatalf("failed to create flagger: %v", err)
-	}
+	require.NoError(t, err)
 
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
 
