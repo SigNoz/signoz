@@ -342,7 +342,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 	useEffect(() => {
 		if (isError) {
-			showErrorNotification(notifications, error as AxiosError);
+			showErrorNotification(notifications, (error as unknown) as AxiosError);
 		}
 	}, [error, isError, notifications]);
 
