@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
+import { InfoIcon } from 'lucide-react';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { HighlightsProps } from './types';
@@ -31,7 +31,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		() => (
 			<Tooltip title="Error fetching metric highlights">
 				<Typography.Text className="metric-details-grid-value">
-					<InfoCircleOutlined size={16} color={Color.BG_CHERRY_500} />
+					<InfoIcon size={16} color={Color.BG_CHERRY_500} />
 				</Typography.Text>
 			</Tooltip>
 		),
@@ -46,7 +46,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		if (!metricHighlights) {
 			return null;
 		}
-		if (!isErrorMetricHighlights) {
+		if (isErrorMetricHighlights) {
 			return errorMessage;
 		}
 		return (
