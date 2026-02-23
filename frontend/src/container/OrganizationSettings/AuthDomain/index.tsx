@@ -1,151 +1,214 @@
-import { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Table, Typography } from 'antd';
+import { Button } from '@signozhq/button';
+import { Trash2, X } from '@signozhq/icons';
+import { toast } from '@signozhq/sonner';
+import { Modal } from 'antd';
+import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import deleteDomain from 'api/v1/domains/id/delete';
-import listAllDomain from 'api/v1/domains/list';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import {
+	useDeleteAuthDomain,
+	useListAuthDomains,
+} from 'api/generated/services/authdomains';
+import {
+	AuthtypesGettableAuthDomainDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
-import { GettableAuthDomain, SSOType } from 'types/api/v1/domains/list';
 
 import CreateEdit from './CreateEdit/CreateEdit';
-import Toggle from './Toggle';
+import SSOEnforcementToggle from './SSOEnforcementToggle';
 
 import './AuthDomain.styles.scss';
+import '../../IngestionSettings/IngestionSettings.styles.scss';
 
-const columns: ColumnsType<GettableAuthDomain> = [
-	{
-		title: 'Domain',
-		dataIndex: 'name',
-		key: 'name',
-		width: 100,
-		render: (val): JSX.Element => <Typography.Text>{val}</Typography.Text>,
-	},
-	{
-		title: 'Enforce SSO',
-		dataIndex: 'ssoEnabled',
-		key: 'ssoEnabled',
-		width: 80,
-		render: (value: boolean, record: GettableAuthDomain): JSX.Element => (
-			<Toggle isDefaultChecked={value} record={record} />
-		),
-	},
-	{
-		title: 'IDP Initiated SSO URL',
-		dataIndex: 'relayState',
-		key: 'relayState',
-		width: 80,
-		render: (_, record: GettableAuthDomain): JSX.Element => {
-			const relayPath = record.authNProviderInfo.relayStatePath;
-			if (!relayPath) {
-				return (
-					<Typography.Text style={{ paddingLeft: '6px' }}>N/A</Typography.Text>
-				);
-			}
-
-			const href = `${window.location.origin}/${relayPath}`;
-			return <CopyToClipboard textToCopy={href} />;
-		},
-	},
-	{
-		title: 'Action',
-		dataIndex: 'action',
-		key: 'action',
-		width: 100,
-		render: (_, record: GettableAuthDomain): JSX.Element => (
-			<section className="auth-domain-list-column-action">
-				<Typography.Link data-column-action="configure">
-					Configure {SSOType.get(record.ssoType)}
-				</Typography.Link>
-				<Typography.Link type="danger" data-column-action="delete">
-					Delete
-				</Typography.Link>
-			</section>
-		),
-	},
-];
-
-async function deleteDomainById(
-	id: string,
-	showErrorModal: (error: APIError) => void,
-	refetchAuthDomainListResponse: () => void,
-): Promise<void> {
-	try {
-		await deleteDomain(id);
-		refetchAuthDomainListResponse();
-	} catch (error) {
-		showErrorModal(error as APIError);
-	}
-}
+export const SSOType = new Map<string, string>([
+	['google_auth', 'Google Auth'],
+	['saml', 'SAML'],
+	['email_password', 'Email Password'],
+	['oidc', 'OIDC'],
+]);
 
 function AuthDomain(): JSX.Element {
-	const [record, setRecord] = useState<GettableAuthDomain>();
+	const [record, setRecord] = useState<AuthtypesGettableAuthDomainDTO>();
 	const [addDomain, setAddDomain] = useState<boolean>(false);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [
+		activeDomain,
+		setActiveDomain,
+	] = useState<AuthtypesGettableAuthDomainDTO | null>(null);
+
 	const { showErrorModal } = useErrorModal();
+
 	const {
 		data: authDomainListResponse,
 		isLoading: isLoadingAuthDomainListResponse,
 		isFetching: isFetchingAuthDomainListResponse,
 		error: errorFetchingAuthDomainListResponse,
 		refetch: refetchAuthDomainListResponse,
-	} = useQuery({
-		queryFn: listAllDomain,
-		queryKey: ['/api/v1/domains', 'list'],
-		enabled: true,
-	});
+	} = useListAuthDomains();
+
+	const { mutate: deleteAuthDomain, isLoading } = useDeleteAuthDomain<
+		AxiosError<RenderErrorResponseDTO>
+	>();
+
+	const showDeleteModal = useCallback(
+		(domain: AuthtypesGettableAuthDomainDTO): void => {
+			setActiveDomain(domain);
+			setIsDeleteModalOpen(true);
+		},
+		[],
+	);
+
+	const hideDeleteModal = useCallback((): void => {
+		setIsDeleteModalOpen(false);
+		setActiveDomain(null);
+	}, []);
+
+	const handleDeleteDomain = useCallback((): void => {
+		if (!activeDomain?.id) {
+			return;
+		}
+
+		deleteAuthDomain(
+			{ pathParams: { id: activeDomain.id } },
+			{
+				onSuccess: () => {
+					toast.success('Domain deleted successfully');
+					refetchAuthDomainListResponse();
+					hideDeleteModal();
+				},
+				onError: (error) => {
+					try {
+						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+					} catch (apiError) {
+						showErrorModal(apiError as APIError);
+					}
+				},
+			},
+		);
+	}, [
+		activeDomain,
+		deleteAuthDomain,
+		hideDeleteModal,
+
+		refetchAuthDomainListResponse,
+		showErrorModal,
+	]);
+
+	const formattedError = useMemo(() => {
+		if (!errorFetchingAuthDomainListResponse) {
+			return null;
+		}
+
+		let errorResult: APIError | null = null;
+		try {
+			ErrorResponseHandlerV2(
+				errorFetchingAuthDomainListResponse as AxiosError<ErrorV2Resp>,
+			);
+		} catch (error) {
+			errorResult = error as APIError;
+		}
+		return errorResult;
+	}, [errorFetchingAuthDomainListResponse]);
+
+	const columns: ColumnsType<AuthtypesGettableAuthDomainDTO> = useMemo(
+		() => [
+			{
+				title: 'Domain',
+				dataIndex: 'name',
+				key: 'name',
+				width: 100,
+				render: (val): JSX.Element => <span>{val}</span>,
+			},
+			{
+				title: 'Enforce SSO',
+				dataIndex: 'ssoEnabled',
+				key: 'ssoEnabled',
+				width: 80,
+				render: (
+					value: boolean,
+					record: AuthtypesGettableAuthDomainDTO,
+				): JSX.Element => (
+					<SSOEnforcementToggle isDefaultChecked={value} record={record} />
+				),
+			},
+			{
+				title: 'IDP Initiated SSO URL',
+				dataIndex: 'relayState',
+				key: 'relayState',
+				width: 80,
+				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => {
+					const relayPath = record.authNProviderInfo?.relayStatePath;
+					if (!relayPath) {
+						return <span className="auth-domain-list-na">N/A</span>;
+					}
+
+					const href = `${window.location.origin}/${relayPath}`;
+					return <CopyToClipboard textToCopy={href} />;
+				},
+			},
+			{
+				title: 'Action',
+				dataIndex: 'action',
+				key: 'action',
+				width: 100,
+				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
+					<section className="auth-domain-list-column-action">
+						<Button
+							className="auth-domain-list-action-link"
+							onClick={(): void => setRecord(record)}
+							variant="link"
+						>
+							Configure {SSOType.get(record.ssoType || '')}
+						</Button>
+						<Button
+							className="auth-domain-list-action-link delete"
+							onClick={(): void => showDeleteModal(record)}
+							variant="link"
+						>
+							Delete
+						</Button>
+					</section>
+				),
+			},
+		],
+		[showDeleteModal],
+	);
 
 	return (
 		<div className="auth-domain">
 			<section className="auth-domain-header">
-				<Typography.Title level={3}>Authenticated Domains</Typography.Title>
+				<h3 className="auth-domain-title">Authenticated Domains</h3>
 				<Button
-					type="primary"
-					icon={<PlusOutlined />}
+					prefixIcon={<PlusOutlined />}
 					onClick={(): void => {
 						setAddDomain(true);
 					}}
-					className="button"
+					variant="solid"
+					size="sm"
+					color="primary"
 				>
 					Add Domain
 				</Button>
 			</section>
-			{(errorFetchingAuthDomainListResponse as APIError) && (
-				<ErrorContent error={errorFetchingAuthDomainListResponse as APIError} />
-			)}
-			{!(errorFetchingAuthDomainListResponse as APIError) && (
+			{formattedError && <ErrorContent error={formattedError} />}
+			{!errorFetchingAuthDomainListResponse && (
 				<Table
 					columns={columns}
-					dataSource={authDomainListResponse?.data}
-					onRow={(record): any => ({
-						onClick: (
-							event: React.SyntheticEvent<HTMLLinkElement, MouseEvent>,
-						): void => {
-							const target = event.target as HTMLLinkElement;
-							const { columnAction } = target.dataset;
-							switch (columnAction) {
-								case 'configure':
-									setRecord(record);
-
-									break;
-								case 'delete':
-									deleteDomainById(
-										record.id,
-										showErrorModal,
-										refetchAuthDomainListResponse,
-									);
-									break;
-								default:
-									console.error('Unknown action:', columnAction);
-							}
-						},
-					})}
+					dataSource={authDomainListResponse?.data?.data}
+					onRow={undefined}
 					loading={
 						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
 					}
 					className="auth-domain-list"
+					rowKey="id"
 				/>
 			)}
 			{(addDomain || record) && (
@@ -159,6 +222,39 @@ function AuthDomain(): JSX.Element {
 					}}
 				/>
 			)}
+
+			<Modal
+				className="delete-ingestion-key-modal"
+				title={<span className="title">Delete Domain</span>}
+				open={isDeleteModalOpen}
+				closable
+				onCancel={hideDeleteModal}
+				destroyOnClose
+				footer={[
+					<Button
+						key="cancel"
+						onClick={hideDeleteModal}
+						className="cancel-btn"
+						prefixIcon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						prefixIcon={<Trash2 size={16} />}
+						onClick={handleDeleteDomain}
+						className="delete-btn"
+						loading={isLoading}
+					>
+						Delete Domain
+					</Button>,
+				]}
+			>
+				<p className="delete-text">
+					Are you sure you want to delete the domain{' '}
+					<strong>{activeDomain?.name}</strong>? This action cannot be undone.
+				</p>
+			</Modal>
 		</div>
 	);
 }

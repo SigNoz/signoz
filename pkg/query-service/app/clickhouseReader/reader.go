@@ -1913,7 +1913,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			// No V2 configuration found, return defaults
 			response.DefaultTTLDays = 15
 			response.TTLConditions = []model.CustomRetentionRule{}
-			response.Status = constants.StatusFailed
+			response.Status = constants.StatusSuccess
 			response.ColdStorageTTLDays = -1
 			return response, nil
 		}

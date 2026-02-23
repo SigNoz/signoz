@@ -1,4 +1,4 @@
-import { SeriesVisibilityState } from 'container/DashboardContainer/visualization/panels/types';
+import { SeriesVisibilityItem } from 'container/DashboardContainer/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
@@ -8,10 +8,15 @@ import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
+	DEFAULT_CURSOR_CONFIG,
+	DEFAULT_HOVER_PROXIMITY_VALUE,
+	DEFAULT_PLOT_CONFIG,
+	STEP_INTERVAL_MULTIPLIER,
+} from '../constants';
+import { calculateWidthBasedOnStepInterval } from '../utils';
+import {
 	ConfigBuilder,
 	ConfigBuilderProps,
-	DEFAULT_CURSOR_CONFIG,
-	DEFAULT_PLOT_CONFIG,
 	LegendItem,
 	SelectionPreferencesSource,
 } from './types';
@@ -44,6 +49,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	private shouldSaveSelectionPreference = false;
 
 	private axes: Record<string, UPlotAxisBuilder> = {};
+
+	private stepInterval: number | undefined;
 
 	readonly scales: UPlotScaleBuilder[] = [];
 
@@ -79,6 +86,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			tzDate,
 			selectionPreferencesSource,
 			shouldSaveSelectionPreference,
+			stepInterval,
 		} = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
@@ -94,6 +102,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 		if (shouldSaveSelectionPreference) {
 			this.shouldSaveSelectionPreference = shouldSaveSelectionPreference;
+		}
+
+		if (stepInterval) {
+			this.stepInterval = stepInterval;
 		}
 
 		this.onDragSelect = noop;
@@ -238,7 +250,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	/**
 	 * Returns stored series visibility by index from localStorage when preferences source is LOCAL_STORAGE, otherwise null.
 	 */
-	private getStoredVisibility(): SeriesVisibilityState | null {
+	private getStoredVisibility(): SeriesVisibilityItem[] | null {
 		if (
 			this.widgetId &&
 			this.selectionPreferencesSource === SelectionPreferencesSource.LOCAL_STORAGE
@@ -249,13 +261,97 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
+	 * Derive visibility resolution state from stored preferences and current series:
+	 * - visibleStoredLabels: labels that should always be visible
+	 * - hiddenStoredLabels: labels that should always be hidden
+	 * - hasActivePreference: whether a "mix" preference applies to new labels
+	 */
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	private getVisibilityResolutionState(): {
+		visibleStoredLabels: Set<string>;
+		hiddenStoredLabels: Set<string>;
+		hasActivePreference: boolean;
+	} {
+		const seriesVisibilityState = this.getStoredVisibility();
+		if (!seriesVisibilityState || seriesVisibilityState.length === 0) {
+			return {
+				visibleStoredLabels: new Set<string>(),
+				hiddenStoredLabels: new Set<string>(),
+				hasActivePreference: false,
+			};
+		}
+
+		// Single pass over stored items to derive:
+		// - visibleStoredLabels: any label that is ever stored as visible
+		// - hiddenStoredLabels: labels that are only ever stored as hidden
+		// - hasMixPreference: there is at least one visible and one hidden entry
+		const visibleStoredLabels = new Set<string>();
+		const hiddenStoredLabels = new Set<string>();
+		let hasAnyVisible = false;
+		let hasAnyHidden = false;
+
+		for (const { label, show } of seriesVisibilityState) {
+			if (show) {
+				hasAnyVisible = true;
+				visibleStoredLabels.add(label);
+				// If a label is ever visible, it should not be treated as "only hidden"
+				if (hiddenStoredLabels.has(label)) {
+					hiddenStoredLabels.delete(label);
+				}
+			} else {
+				hasAnyHidden = true;
+				// Only track as hidden if we have not already seen it as visible
+				if (!visibleStoredLabels.has(label)) {
+					hiddenStoredLabels.add(label);
+				}
+			}
+		}
+
+		const hasMixPreference = hasAnyVisible && hasAnyHidden;
+
+		// Current series labels in this chart.
+		const currentSeriesLabels = this.series.map(
+			(s: UPlotSeriesBuilder) => s.getConfig().label ?? '',
+		);
+
+		// Check if any stored "visible" label exists in the current series list.
+		const hasVisibleIntersection =
+			visibleStoredLabels.size > 0 &&
+			currentSeriesLabels.some((label) => visibleStoredLabels.has(label));
+
+		// Active preference only when there is a mix AND at least one visible
+		// stored label is present in the current series list.
+		const hasActivePreference = hasMixPreference && hasVisibleIntersection;
+
+		// We apply stored visibility in two cases:
+		// - There is an active preference (mix + intersection), OR
+		// - There is no mix (all true or all false) – preserve legacy behavior.
+		const shouldApplyStoredVisibility = !hasMixPreference || hasActivePreference;
+
+		if (!shouldApplyStoredVisibility) {
+			return {
+				visibleStoredLabels: new Set<string>(),
+				hiddenStoredLabels: new Set<string>(),
+				hasActivePreference,
+			};
+		}
+
+		return {
+			visibleStoredLabels,
+			hiddenStoredLabels,
+			hasActivePreference,
+		};
+	}
+
+	/**
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const seriesVisibilityState = this.getStoredVisibility();
-		const isAnySeriesHidden = !!seriesVisibilityState?.visibility?.some(
-			(show) => !show,
-		);
+		const {
+			visibleStoredLabels,
+			hiddenStoredLabels,
+			hasActivePreference,
+		} = this.getVisibilityResolutionState();
 
 		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
 			const seriesConfig = s.getConfig();
@@ -263,11 +359,11 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			// +1 because uPlot series 0 is x-axis/time; data series are at 1, 2, ... (also matches stored visibility[0]=time, visibility[1]=first data, ...)
 			const seriesIndex = index + 1;
 			const show = resolveSeriesVisibility({
-				seriesIndex,
 				seriesShow: seriesConfig.show,
 				seriesLabel: label,
-				seriesVisibilityState,
-				isAnySeriesHidden,
+				visibleStoredLabels,
+				hiddenStoredLabels,
+				hasActivePreference,
 			});
 
 			acc[seriesIndex] = {
@@ -289,6 +385,31 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
+	 * Get cursor configuration
+	 */
+	getCursorConfig(): Cursor {
+		if (this.stepInterval) {
+			const cursorConfig = {
+				...DEFAULT_CURSOR_CONFIG,
+				hover: {
+					...DEFAULT_CURSOR_CONFIG.hover,
+					prox: this.stepInterval
+						? (uPlotInstance: uPlot): number => {
+								const width = calculateWidthBasedOnStepInterval({
+									uPlotInstance,
+									stepInterval: this.stepInterval ?? 0,
+								});
+								return width * STEP_INTERVAL_MULTIPLIER;
+						  }
+						: DEFAULT_HOVER_PROXIMITY_VALUE,
+				},
+			};
+			return merge({}, DEFAULT_CURSOR_CONFIG, cursorConfig, this.cursor);
+		}
+		return merge({}, DEFAULT_CURSOR_CONFIG, this.cursor);
+	}
+
+	/**
 	 * Build the final uPlot.Options configuration
 	 */
 	getConfig(): Partial<Options> {
@@ -296,22 +417,23 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
-		const seriesVisibilityState = this.getStoredVisibility();
-		const isAnySeriesHidden = !!seriesVisibilityState?.visibility?.some(
-			(show) => !show,
-		);
+		const {
+			visibleStoredLabels,
+			hiddenStoredLabels,
+			hasActivePreference,
+		} = this.getVisibilityResolutionState();
 
 		config.series = [
-			{ value: (): string => '' }, // Base series for timestamp
-			...this.series.map((s, index) => {
+			{ value: (): string => '', label: 'Timestamp' }, // Base series for timestamp
+			...this.series.map((s) => {
 				const series = s.getConfig();
 				// Stored visibility[0] is x-axis/time; data series start at visibility[1]
 				const visible = resolveSeriesVisibility({
-					seriesIndex: index + 1,
 					seriesShow: series.show,
 					seriesLabel: series.label ?? '',
-					seriesVisibilityState,
-					isAnySeriesHidden,
+					visibleStoredLabels,
+					hiddenStoredLabels,
+					hasActivePreference,
 				});
 				return {
 					...series,
@@ -328,7 +450,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		config.hooks = this.hooks;
 		config.select = this.select;
 
-		config.cursor = merge({}, DEFAULT_CURSOR_CONFIG, this.cursor);
+		config.cursor = this.getCursorConfig();
 		config.tzDate = this.tzDate;
 		config.plugins = this.plugins.length > 0 ? this.plugins : undefined;
 		config.bands = this.bands.length > 0 ? this.bands : undefined;

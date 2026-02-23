@@ -1,3 +1,4 @@
+import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import { ILog } from 'types/api/logs/log';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -22,7 +23,7 @@ export const mockSpan: Span = {
 	event: [],
 	tagMap: {
 		'http.method': 'GET',
-		'http.url': '/api/test',
+		[SPAN_ATTRIBUTES.HTTP_URL]: '/api/test',
 		'http.status_code': '200',
 	},
 	hasError: false,
