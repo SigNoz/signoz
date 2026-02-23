@@ -45,9 +45,6 @@ export const RawLogViewContainer = styled(Row)<{
 				: `margin: 2px 0;`}
 	}
 
-	${({ $isActiveLog, $logType }): string =>
-		getActiveLogBackground($isActiveLog, true, $logType)}
-
 	${({ $isReadOnly, $isActiveLog, $isDarkMode, $logType }): string =>
 		$isActiveLog
 			? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)

@@ -16,6 +16,10 @@ func NewGetter(store types.UserStore) user.Getter {
 	return &getter{store: store}
 }
 
+func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
+	return module.store.GetRootUserByOrgID(ctx, orgID)
+}
+
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {

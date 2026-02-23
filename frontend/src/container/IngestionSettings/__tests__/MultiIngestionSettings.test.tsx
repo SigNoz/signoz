@@ -36,24 +36,6 @@ jest.mock('react-router-dom', () => {
 	};
 });
 
-// Mock deployments data hook to avoid unrelated network calls in this page
-jest.mock(
-	'hooks/CustomDomain/useGetDeploymentsData',
-	(): Record<string, unknown> => ({
-		useGetDeploymentsData: (): {
-			data: undefined;
-			isLoading: boolean;
-			isFetching: boolean;
-			isError: boolean;
-		} => ({
-			data: undefined,
-			isLoading: false,
-			isFetching: false,
-			isError: false,
-		}),
-	}),
-);
-
 const TEST_CREATED_UPDATED = '2024-01-01T00:00:00Z';
 const TEST_EXPIRES_AT = '2030-01-01T00:00:00Z';
 const TEST_WORKSPACE_ID = 'w1';

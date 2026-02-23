@@ -3,8 +3,9 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useVariableFetchState } from 'hooks/dashboard/useVariableFetchState';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
-import { isArray, isString } from 'lodash-es';
+import { isArray, isEmpty, isString } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -12,26 +13,18 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { variablePropsToPayloadVariables } from '../utils';
 import SelectVariableInput from './SelectVariableInput';
 import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHelper';
-import { areArraysEqual, checkAPIInvocation } from './util';
+import { areArraysEqual, settleVariableFetch } from './util';
 import { VariableItemProps } from './VariableItem';
 import { queryVariableSelectStrategy } from './variableSelectStrategy/queryVariableSelectStrategy';
 
 type QueryVariableInputProps = Pick<
 	VariableItemProps,
-	| 'variableData'
-	| 'existingVariables'
-	| 'onValueUpdate'
-	| 'variablesToGetUpdated'
-	| 'setVariablesToGetUpdated'
-	| 'dependencyData'
+	'variableData' | 'existingVariables' | 'onValueUpdate'
 >;
 
 function QueryVariableInput({
 	variableData,
 	existingVariables,
-	variablesToGetUpdated,
-	setVariablesToGetUpdated,
-	dependencyData,
 	onValueUpdate,
 }: QueryVariableInputProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
@@ -42,6 +35,15 @@ function QueryVariableInput({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const {
+		variableFetchCycleId,
+		isVariableSettled,
+		isVariableFetching,
+		hasVariableFetchedOnce,
+		isVariableWaitingForDependencies,
+		variableDependencyWaitMessage,
+	} = useVariableFetchState(variableData.name || '');
 
 	const {
 		tempSelection,
@@ -59,16 +61,6 @@ function QueryVariableInput({
 		onValueUpdate,
 		strategy: queryVariableSelectStrategy,
 	});
-
-	const validVariableUpdate = useCallback((): boolean => {
-		if (!variableData.name) {
-			return false;
-		}
-		return Boolean(
-			variablesToGetUpdated.length &&
-				variablesToGetUpdated[0] === variableData.name,
-		);
-	}, [variableData.name, variablesToGetUpdated]);
 
 	const getOptions = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -103,18 +95,24 @@ function QueryVariableInput({
 							valueNotInList = true;
 						}
 
-						// variablesData.allSelected is added for the case where on change of options we need to update the
-						// local storage
-						if (
-							variableData.name &&
-							(validVariableUpdate() || valueNotInList || variableData.allSelected)
-						) {
+						if (variableData.name && (valueNotInList || variableData.allSelected)) {
 							if (
 								variableData.allSelected &&
 								variableData.multiSelect &&
 								variableData.showALLOption
 							) {
-								onValueUpdate(variableData.name, variableData.id, newOptionsData, true);
+								if (
+									variableData.name &&
+									variableData.id &&
+									!isEmpty(variableData.selectedValue)
+								) {
+									onValueUpdate(
+										variableData.name,
+										variableData.id,
+										newOptionsData,
+										true,
+									);
+								}
 
 								// Update tempSelection to maintain ALL state when dropdown is open
 								if (tempSelection !== undefined) {
@@ -132,7 +130,11 @@ function QueryVariableInput({
 										newOptionsData.every((option) => selectedValue.includes(option));
 								}
 
-								if (variableData.name && variableData.id) {
+								if (
+									variableData.name &&
+									variableData.id &&
+									!isEmpty(variableData.selectedValue)
+								) {
 									onValueUpdate(variableData.name, variableData.id, value, allSelected);
 								}
 							}
@@ -141,10 +143,6 @@ function QueryVariableInput({
 						setOptionsData(newOptionsData);
 						// Apply default if no value is selected (e.g., new variable, first load)
 						applyDefaultIfNeeded(newOptionsData);
-					} else {
-						setVariablesToGetUpdated((prev) =>
-							prev.filter((name) => name !== variableData.name),
-						);
 					}
 				}
 			} catch (e) {
@@ -157,8 +155,6 @@ function QueryVariableInput({
 			onValueUpdate,
 			tempSelection,
 			setTempSelection,
-			validVariableUpdate,
-			setVariablesToGetUpdated,
 			applyDefaultIfNeeded,
 		],
 	);
@@ -169,27 +165,28 @@ function QueryVariableInput({
 			variableData.name || '',
 			`${minTime}`,
 			`${maxTime}`,
-			JSON.stringify(dependencyData?.order),
+			variableFetchCycleId,
 		],
 		{
-			enabled:
-				variableData &&
-				checkAPIInvocation(
-					variablesToGetUpdated,
-					variableData,
-					dependencyData?.parentDependencyGraph,
+			/*
+			 * enabled if
+			 *   - we're either still fetching variable options
+			 *   - OR
+			 *   - if variable is in idle state and we have already fetched options for it
+			 **/
+			enabled: isVariableFetching || (isVariableSettled && hasVariableFetchedOnce),
+			queryFn: ({ signal }) =>
+				dashboardVariablesQuery(
+					{
+						query: variableData.queryValue || '',
+						variables: variablePropsToPayloadVariables(existingVariables),
+					},
+					signal,
 				),
-			queryFn: () =>
-				dashboardVariablesQuery({
-					query: variableData.queryValue || '',
-					variables: variablePropsToPayloadVariables(existingVariables),
-				}),
 			refetchOnWindowFocus: false,
 			onSuccess: (response) => {
 				getOptions(response.payload);
-				setVariablesToGetUpdated((prev) =>
-					prev.filter((v) => v !== variableData.name),
-				);
+				settleVariableFetch(variableData.name, 'complete');
 			},
 			onError: (error: {
 				details: {
@@ -206,9 +203,7 @@ function QueryVariableInput({
 					}
 					setErrorMessage(message);
 				}
-				setVariablesToGetUpdated((prev) =>
-					prev.filter((v) => v !== variableData.name),
-				);
+				settleVariableFetch(variableData.name, 'failure');
 			},
 		},
 	);
@@ -242,6 +237,8 @@ function QueryVariableInput({
 			loading={isLoading}
 			errorMessage={errorMessage}
 			onRetry={handleRetry}
+			waiting={isVariableWaitingForDependencies}
+			waitingMessage={variableDependencyWaitMessage}
 		/>
 	);
 }

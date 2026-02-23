@@ -47,7 +47,7 @@ func FromTimeUnit(u Unit) Duration {
 		return Hour
 	case "d":
 		return Day
-	case "w":
+	case "w", "wk":
 		return Week
 	default:
 		return Second

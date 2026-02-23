@@ -6,21 +6,29 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Resource struct {
-	Name Name `json:"name"`
-	Type Type `json:"type"`
+	Name Name `json:"name" required:"true"`
+	Type Type `json:"type" required:"true"`
 }
 
 type Object struct {
-	Resource Resource `json:"resource"`
-	Selector Selector `json:"selector"`
+	Resource Resource `json:"resource" required:"true"`
+	Selector Selector `json:"selector" required:"true"`
 }
 
 type Transaction struct {
-	Relation Relation `json:"relation"`
-	Object   Object   `json:"object"`
+	ID       valuer.UUID `json:"id"`
+	Relation Relation    `json:"relation" required:"true"`
+	Object   Object      `json:"object" required:"true"`
+}
+
+type GettableTransaction struct {
+	Relation   Relation `json:"relation" required:"true"`
+	Object     Object   `json:"object" required:"true"`
+	Authorized bool     `json:"authorized" required:"true"`
 }
 
 func NewObject(resource Resource, selector Selector) (*Object, error) {
@@ -75,7 +83,21 @@ func NewTransaction(relation Relation, object Object) (*Transaction, error) {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
 	}
 
-	return &Transaction{Relation: relation, Object: object}, nil
+	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
+}
+
+func NewGettableTransaction(transactions []*Transaction, results map[string]*TupleKeyAuthorization) []*GettableTransaction {
+	gettableTransactions := make([]*GettableTransaction, len(transactions))
+	for i, txn := range transactions {
+		result := results[txn.ID.StringValue()]
+		gettableTransactions[i] = &GettableTransaction{
+			Relation:   txn.Relation,
+			Object:     txn.Object,
+			Authorized: result.Authorized,
+		}
+	}
+
+	return gettableTransactions
 }
 
 func (object *Object) UnmarshalJSON(data []byte) error {

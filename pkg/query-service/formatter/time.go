@@ -32,7 +32,7 @@ func (f *durationFormatter) Format(value float64, unit string) string {
 		return toHours(value)
 	case "d":
 		return toDays(value)
-	case "w":
+	case "w", "wk":
 		return toWeeks(value)
 	}
 	// When unit is not matched, return the value as it is.

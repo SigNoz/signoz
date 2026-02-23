@@ -10,13 +10,12 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import { SuccessResponse, Warning } from 'types/api';
 import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
-	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	MetricQueryRangeSuccessResponse,
 	APIError | Error
 >;
 
@@ -30,10 +29,7 @@ type UseGetQueryRange = (
 		widgetIndex: number;
 		publicDashboardId: string;
 	},
-) => UseQueryResult<
-	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
-	Error
->;
+) => UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
@@ -145,10 +141,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 		};
 	}, [options?.retry]);
 
-	return useQuery<
-		SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
-		APIError | Error
-	>({
+	return useQuery<MetricQueryRangeSuccessResponse, APIError | Error>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(
 				modifiedRequestData,

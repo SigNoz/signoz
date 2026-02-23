@@ -76,7 +76,7 @@ export function getVariableDependencyContext(): VariableFetchContext {
 		(variable) => {
 			if (
 				variable.type === 'DYNAMIC' &&
-				variable.selectedValue === null &&
+				(variable.selectedValue === null || isEmpty(variable.selectedValue)) &&
 				variable.allSelected === true
 			) {
 				return true;

@@ -60,6 +60,7 @@ export interface TooltipRenderArgs {
 }
 
 export interface BaseTooltipProps {
+	showTooltipHeader?: boolean;
 	timezone: string;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
@@ -74,7 +75,14 @@ export interface BarTooltipProps extends BaseTooltipProps, TooltipRenderArgs {
 	isStackedBarChart?: boolean;
 }
 
-export type TooltipProps = TimeSeriesTooltipProps | BarTooltipProps;
+export interface HistogramTooltipProps
+	extends BaseTooltipProps,
+		TooltipRenderArgs {}
+
+export type TooltipProps =
+	| TimeSeriesTooltipProps
+	| BarTooltipProps
+	| HistogramTooltipProps;
 
 export enum LegendPosition {
 	BOTTOM = 'bottom',

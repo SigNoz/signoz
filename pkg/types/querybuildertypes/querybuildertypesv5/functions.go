@@ -36,6 +36,30 @@ var (
 	FunctionNameFillZero      = FunctionName{valuer.NewString("fillZero")}
 )
 
+// Enum returns the acceptable values for FunctionName.
+func (FunctionName) Enum() []any {
+	return []any{
+		FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameRunningDiff,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumulativeSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7,
+		FunctionNameTimeShift,
+		FunctionNameAnomaly,
+		FunctionNameFillZero,
+	}
+}
+
 // Validate checks if the FunctionName is valid and one of the known types
 func (fn FunctionName) Validate() error {
 	validFunctions := []FunctionName{

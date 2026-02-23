@@ -12,22 +12,6 @@ import { findMinMaxThresholdValues } from './threshold';
 import { LogScaleLimits, RangeFunctionParams } from './types';
 
 /**
- * Rounds a number down to the nearest multiple of incr.
- * Used for linear scale min so the axis starts on a clean tick.
- */
-export function incrRoundDn(num: number, incr: number): number {
-	return Math.floor(num / incr) * incr;
-}
-
-/**
- * Rounds a number up to the nearest multiple of incr.
- * Used for linear scale max so the axis ends on a clean tick.
- */
-export function incrRoundUp(num: number, incr: number): number {
-	return Math.ceil(num / incr) * incr;
-}
-
-/**
  * Snaps min/max/softMin/softMax to valid log-scale values (powers of logBase).
  * Only applies when distribution is logarithmic; otherwise returns limits unchanged.
  * Ensures axis bounds align to log "magnitude" for readable tick labels.
@@ -214,25 +198,6 @@ function getLogScaleRange(
 }
 
 /**
- * Snaps linear scale min down and max up to whole numbers so axis bounds are clean.
- */
-function roundLinearRange(minMax: Range.MinMax): Range.MinMax {
-	const [currentMin, currentMax] = minMax;
-	let roundedMin = currentMin;
-	let roundedMax = currentMax;
-
-	if (roundedMin != null) {
-		roundedMin = incrRoundDn(roundedMin, 1);
-	}
-
-	if (roundedMax != null) {
-		roundedMax = incrRoundUp(roundedMax, 1);
-	}
-
-	return [roundedMin, roundedMax];
-}
-
-/**
  * Snaps log-scale [min, max] to exact powers of logBase (nearest magnitude below/above).
  * If min and max would be equal after snapping, max is increased by one magnitude so the range is valid.
  */
@@ -330,7 +295,6 @@ export function createRangeFunction(
 
 		if (scale.distr === 1) {
 			minMax = getLinearScaleRange(minMax, params, dataMin, dataMax);
-			minMax = roundLinearRange(minMax);
 		} else if (scale.distr === 3) {
 			minMax = getLogScaleRange(minMax, params, dataMin, dataMax, logBase);
 			const logFn = scale.log === 2 ? Math.log2 : Math.log10;

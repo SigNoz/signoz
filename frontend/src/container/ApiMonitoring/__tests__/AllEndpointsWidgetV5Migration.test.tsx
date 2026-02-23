@@ -6,10 +6,10 @@
  * These tests validate the migration from V4 to V5 format for getAllEndpointsWidgetData:
  * - Filter format change: filters.items[] → filter.expression
  * - Aggregation format: aggregateAttribute → aggregations[] array
- * - Domain filter: (net.peer.name OR server.address)
+ * - Domain filter: http_host = '${domainName}'
  * - Kind filter: kind_string = 'Client'
  * - Four queries: A (count), B (p99 latency), C (max timestamp), D (error count - disabled)
- * - GroupBy: Both http.url AND url.full with type 'attribute'
+ * - GroupBy: http_url with type 'attribute'
  */
 import { getAllEndpointsWidgetData } from 'container/ApiMonitoring/utils';
 import {
@@ -17,6 +17,8 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+
+import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 
 describe('AllEndpointsWidget - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
@@ -92,28 +94,28 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			const [queryA, queryB, queryC, queryD] = widget.query.builder.queryData;
 
-			const baseExpression = `(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') AND kind_string = 'Client'`;
+			const baseExpression = `http_host = '${mockDomainName}' AND kind_string = 'Client'`;
 
 			// Queries A, B, C have identical base filter
 			expect(queryA.filter?.expression).toBe(
-				`${baseExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+				`${baseExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 			expect(queryB.filter?.expression).toBe(
-				`${baseExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+				`${baseExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 			expect(queryC.filter?.expression).toBe(
-				`${baseExpression} AND (http.url EXISTS OR url.full EXISTS)`,
+				`${baseExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 
 			// Query D has additional has_error filter
 			expect(queryD.filter?.expression).toBe(
-				`${baseExpression} AND has_error = true AND (http.url EXISTS OR url.full EXISTS)`,
+				`${baseExpression} AND has_error = true AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 		});
 	});
 
 	describe('2. GroupBy Structure', () => {
-		it('default groupBy includes both http.url and url.full with type attribute', () => {
+		it(`default groupBy includes ${SPAN_ATTRIBUTES.HTTP_URL} with type attribute`, () => {
 			const widget = getAllEndpointsWidgetData(
 				emptyGroupBy,
 				mockDomainName,
@@ -124,23 +126,13 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			// All queries should have the same default groupBy
 			queryData.forEach((query) => {
-				expect(query.groupBy).toHaveLength(2);
+				expect(query.groupBy).toHaveLength(1);
 
-				// http.url
 				expect(query.groupBy).toContainEqual({
 					dataType: DataTypes.String,
 					isColumn: false,
 					isJSON: false,
-					key: 'http.url',
-					type: 'attribute',
-				});
-
-				// url.full
-				expect(query.groupBy).toContainEqual({
-					dataType: DataTypes.String,
-					isColumn: false,
-					isJSON: false,
-					key: 'url.full',
+					key: SPAN_ATTRIBUTES.HTTP_URL,
 					type: 'attribute',
 				});
 			});
@@ -170,19 +162,18 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 
 			// All queries should have defaults + custom groupBy
 			queryData.forEach((query) => {
-				expect(query.groupBy).toHaveLength(4); // 2 defaults + 2 custom
+				expect(query.groupBy).toHaveLength(3); // 1 default + 2 custom
 
-				// First two should be defaults (http.url, url.full)
-				expect(query.groupBy[0].key).toBe('http.url');
-				expect(query.groupBy[1].key).toBe('url.full');
+				// First two should be defaults (http_url)
+				expect(query.groupBy[0].key).toBe(SPAN_ATTRIBUTES.HTTP_URL);
 
 				// Last two should be custom (matching subset of properties)
-				expect(query.groupBy[2]).toMatchObject({
+				expect(query.groupBy[1]).toMatchObject({
 					dataType: DataTypes.String,
 					key: 'service.name',
 					type: 'resource',
 				});
-				expect(query.groupBy[3]).toMatchObject({
+				expect(query.groupBy[2]).toMatchObject({
 					dataType: DataTypes.String,
 					key: 'deployment.environment',
 					type: 'resource',
