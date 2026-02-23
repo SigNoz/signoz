@@ -31,7 +31,7 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 
 	// filter root users if feature flag `hide_root_users` is true
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUsers, evalCtx)
+	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
 
 	if !hideRootUsers {
 		return users, nil
