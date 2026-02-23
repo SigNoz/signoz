@@ -89,19 +89,6 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
-// traverseTrace performs a pre-order traversal of the span tree.
-// depthFromSelectedSpan tracks how many levels below the selected span we are:
-//
-//	-1 means we have not yet entered the selected span's subtree (or have left it),
-//	>0 means we are that many levels below the selected span.
-//
-// Child spans are included in the output if their parent is uncollapsed OR if
-// the child is within MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN levels of the selected span.
-//
-// The second return value is the list of span IDs that were auto-expanded solely
-// due to the maxDepth logic (not because they were already in uncollapsedSpans).
-// Callers should merge these into the uncollapsedSpans response so the frontend
-// can render their chevrons in the expanded state.
 func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreOrder bool, hasSibling bool, selectedSpanId string, depthFromSelectedSpan int, isSelectedSpanIDUnCollapsed bool) ([]*model.Span, []string) {
 	preOrderTraversal := []*model.Span{}
 	autoExpandedSpans := []string{}
@@ -141,10 +128,6 @@ func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, is
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 	}
 
-	// Compute the depthFromSelectedSpan value to pass to children.
-	// When we are AT the selected span, children start at depth 1.
-	// When we are within the maxDepth window, increment the counter.
-	// Otherwise, -1 signals that children are not in the forced-expansion zone.
 	nextDepthFromSelectedSpan := -1
 	if span.SpanID == selectedSpanId && isSelectedSpanIDUnCollapsed {
 		nextDepthFromSelectedSpan = 1
@@ -160,10 +143,6 @@ func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, is
 		isAlreadyUncollapsed := slices.Contains(uncollapsedSpans, span.SpanID)
 		childIsPartOfPreOrder := isPartOfPreOrder && (isAlreadyUncollapsed || isChildWithinMaxDepth)
 
-		// If this span's children are being included solely because of the maxDepth
-		// auto-expansion (not because the span was already in uncollapsedSpans), record
-		// it so the caller can include it in the uncollapsedSpans API response. This
-		// ensures the frontend renders the chevron as expanded (ChevronDown).
 		if isPartOfPreOrder && isChildWithinMaxDepth && !isAlreadyUncollapsed {
 			if !slices.Contains(autoExpandedSpans, span.SpanID) {
 				autoExpandedSpans = append(autoExpandedSpans, span.SpanID)
@@ -213,9 +192,7 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 			updatedUncollapsedSpans = append(updatedUncollapsedSpans, spansFromRootToNode...)
 
 			_preOrderTraversal, _autoExpanded := traverseTrace(rootNode, updatedUncollapsedSpans, 0, true, false, selectedSpanID, -1, isSelectedSpanIDUnCollapsed)
-			// Merge auto-expanded spans into updatedUncollapsedSpans so the frontend
-			// knows to render their chevrons as expanded (ChevronDown) even though they
-			// were not in the original uncollapsedSpans request.
+			// Merge auto-expanded spans into updatedUncollapsedSpans for returning in response
 			for _, spanID := range _autoExpanded {
 				if !slices.Contains(updatedUncollapsedSpans, spanID) {
 					updatedUncollapsedSpans = append(updatedUncollapsedSpans, spanID)

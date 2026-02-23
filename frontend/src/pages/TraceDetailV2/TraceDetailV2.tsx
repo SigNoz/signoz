@@ -30,6 +30,7 @@ function TraceDetailsV2(): JSX.Element {
 		() => ({
 			spanId: urlQuery.get('spanId') || '',
 			isUncollapsed: urlQuery.get('spanId') !== '',
+			shouldScrollToSpan: urlQuery.get('spanId') !== '',
 		}),
 	);
 	const [
@@ -43,6 +44,7 @@ function TraceDetailsV2(): JSX.Element {
 		setInterestedSpanId({
 			spanId: urlQuery.get('spanId') || '',
 			isUncollapsed: urlQuery.get('spanId') !== '',
+			shouldScrollToSpan: true,
 		});
 	}, [urlQuery]);
 
