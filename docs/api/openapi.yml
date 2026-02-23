@@ -5085,7 +5085,7 @@ paths:
             schema:
               $ref: '#/components/schemas/GatewaytypesPostableIngestionKey'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -5098,7 +5098,7 @@ paths:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "401":
           content:
             application/json:

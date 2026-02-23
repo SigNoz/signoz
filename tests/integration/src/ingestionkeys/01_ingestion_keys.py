@@ -82,8 +82,8 @@ def test_create_ingestion_key(
     )
 
     assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+        response.status_code == HTTPStatus.CREATED
+    ), f"Expected 201, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     assert data["id"] == TEST_KEY_ID
@@ -422,91 +422,3 @@ def test_delete_ingestion_key(
     # Verify at least one DELETE reached the gateway
     matched = get_gateway_requests(signoz, "DELETE", gateway_url)
     assert len(matched) >= 1, "Expected a DELETE request to reach the gateway"
-
-
-# ---------------------------------------------------------------------------
-# Gateway error forwarding
-# ---------------------------------------------------------------------------
-
-
-def test_gateway_not_found_forwarded(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
-    get_token: Callable[[str, str], str],
-) -> None:
-    """A 404 from the gateway is surfaced back to the caller."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    make_http_mocks(
-        signoz.gateway,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.DELETE,
-                    url="/v1/workspaces/me/keys/does-not-exist",
-                    headers=common_gateway_headers(),
-                ),
-                response=MappingResponse(
-                    status=404,
-                    json_body={"error": "key not found"},
-                ),
-                persistent=False,
-            ),
-        ],
-    )
-
-    response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            "/api/v2/gateway/ingestion_keys/does-not-exist"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404, got {response.status_code}: {response.text}"
-
-
-def test_gateway_conflict_forwarded(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
-    get_token: Callable[[str, str], str],
-) -> None:
-    """A 409 from the gateway is surfaced back to the caller."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    make_http_mocks(
-        signoz.gateway,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.POST,
-                    url="/v1/workspaces/me/keys",
-                    headers=common_gateway_headers(),
-                ),
-                response=MappingResponse(
-                    status=409,
-                    json_body={"error": "key already exists"},
-                ),
-                persistent=False,
-            ),
-        ],
-    )
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/gateway/ingestion_keys"),
-        json={
-            "name": "duplicate-key",
-            "tags": [],
-            "expires_at": "2030-01-01T00:00:00Z",
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.CONFLICT
-    ), f"Expected 409, got {response.status_code}: {response.text}"

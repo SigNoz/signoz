@@ -92,9 +92,10 @@ def test_create_ingestion_key_limit_only_size(
     body = get_latest_gateway_request_body(signoz, "POST", gateway_url)
     assert body is not None, "Expected a POST request to reach the gateway"
     assert body["signal"] == "logs"
-    assert "size" in body["config"]["day"], "size should be present"
+    assert body["config"]["day"]["size"] == 1000
     assert "count" not in body["config"]["day"], "count should be absent when not set"
     assert "second" not in body["config"], "second should be absent when not set"
+    assert body["tags"] == ["test"]
 
 
 def test_create_ingestion_key_limit_only_count(
@@ -149,8 +150,9 @@ def test_create_ingestion_key_limit_only_count(
     body = get_latest_gateway_request_body(signoz, "POST", gateway_url)
     assert body is not None, "Expected a POST request to reach the gateway"
     assert body["signal"] == "traces"
-    assert "count" in body["config"]["day"], "count should be present"
+    assert body["config"]["day"]["count"] == 500
     assert "size" not in body["config"]["day"], "size should be absent when not set"
+    assert body["tags"] == ["test"]
 
 
 def test_create_ingestion_key_limit_both_size_and_count(
@@ -208,10 +210,11 @@ def test_create_ingestion_key_limit_both_size_and_count(
     body = get_latest_gateway_request_body(signoz, "POST", gateway_url)
     assert body is not None, "Expected a POST request to reach the gateway"
     assert body["signal"] == "metrics"
-    assert "size" in body["config"]["day"]
-    assert "count" in body["config"]["day"]
-    assert "size" in body["config"]["second"]
-    assert "count" in body["config"]["second"]
+    assert body["config"]["day"]["size"] == 2000
+    assert body["config"]["day"]["count"] == 750
+    assert body["config"]["second"]["size"] == 100
+    assert body["config"]["second"]["count"] == 50
+    assert body["tags"] == ["test"]
 
 
 # ---------------------------------------------------------------------------
@@ -263,9 +266,10 @@ def test_update_ingestion_key_limit_only_size(
 
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
     assert body is not None, "Expected a PATCH request to reach the gateway"
-    assert "size" in body["config"]["day"], "size should be present"
+    assert body["config"]["day"]["size"] == 2000
     assert "count" not in body["config"]["day"], "count should be absent when not set"
     assert "second" not in body["config"], "second should be absent when not set"
+    assert body["tags"] == ["test"]
 
 
 def test_update_ingestion_key_limit_only_count(
@@ -312,8 +316,9 @@ def test_update_ingestion_key_limit_only_count(
 
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
     assert body is not None, "Expected a PATCH request to reach the gateway"
-    assert "count" in body["config"]["day"], "count should be present"
+    assert body["config"]["day"]["count"] == 750
     assert "size" not in body["config"]["day"], "size should be absent when not set"
+    assert body["tags"] == ["test"]
 
 
 def test_update_ingestion_key_limit_both_size_and_count(
@@ -360,8 +365,9 @@ def test_update_ingestion_key_limit_both_size_and_count(
 
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
     assert body is not None, "Expected a PATCH request to reach the gateway"
-    assert "size" in body["config"]["day"], "size should be present"
-    assert "count" in body["config"]["day"], "count should be present"
+    assert body["config"]["day"]["size"] == 1000
+    assert body["config"]["day"]["count"] == 500
+    assert body["tags"] == ["test"]
 
 
 # ---------------------------------------------------------------------------
