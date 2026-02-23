@@ -6,7 +6,7 @@ import { toast } from '@signozhq/sonner';
 import { Modal } from 'antd';
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
+import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useDeleteAuthDomain,
 	useListAuthDomains,
@@ -19,7 +19,6 @@ import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
 import CreateEdit from './CreateEdit/CreateEdit';
@@ -86,7 +85,7 @@ function AuthDomain(): JSX.Element {
 				},
 				onError: (error) => {
 					try {
-						ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+						ErrorResponseHandlerForGeneratedAPIs(error);
 					} catch (apiError) {
 						showErrorModal(apiError as APIError);
 					}
@@ -109,9 +108,7 @@ function AuthDomain(): JSX.Element {
 
 		let errorResult: APIError | null = null;
 		try {
-			ErrorResponseHandlerV2(
-				(errorFetchingAuthDomainListResponse as unknown) as AxiosError<ErrorV2Resp>,
-			);
+			ErrorResponseHandlerForGeneratedAPIs(errorFetchingAuthDomainListResponse);
 		} catch (error) {
 			errorResult = error as APIError;
 		}
@@ -202,7 +199,7 @@ function AuthDomain(): JSX.Element {
 			{!errorFetchingAuthDomainListResponse && (
 				<Table
 					columns={columns}
-					dataSource={authDomainListResponse?.data?.data}
+					dataSource={authDomainListResponse?.data}
 					onRow={undefined}
 					loading={
 						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
