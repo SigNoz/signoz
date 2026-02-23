@@ -33,18 +33,18 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
 	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUsers, evalCtx)
 
-	if hideRootUsers {
-		filteredUsers := users[:0]
-		for _, u := range users {
-			if !u.IsRoot {
-				filteredUsers = append(filteredUsers, u)
-			}
-		}
-
-		return filteredUsers, nil
+	if !hideRootUsers {
+		return users, nil
 	}
 
-	return users, nil
+	filteredUsers := users[:0]
+	for _, user := range users {
+		if !user.IsRoot {
+			filteredUsers = append(filteredUsers, user)
+		}
+	}
+
+	return filteredUsers, nil
 }
 
 func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
