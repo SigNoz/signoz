@@ -172,3 +172,18 @@ func isContextValidForSignal(ctx FieldContext, signal Signal) bool {
 	}
 	return true
 }
+
+// Enum returns the acceptable values for FieldContext.
+func (FieldContext) Enum() []any {
+	return []any{
+		FieldContextMetric,
+		FieldContextLog,
+		FieldContextSpan,
+		// FieldContextTrace,
+		FieldContextResource,
+		// FieldContextScope,
+		FieldContextAttribute,
+		// FieldContextEvent,
+		FieldContextBody,
+	}
+}

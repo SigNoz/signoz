@@ -17,6 +17,19 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import DynamicVariableInput from '../DashboardVariablesSelection/DynamicVariableInput';
 
+// Mock useVariableFetchState to return "fetching" state so useQuery is enabled
+jest.mock('hooks/dashboard/useVariableFetchState', () => ({
+	useVariableFetchState: (): Record<string, unknown> => ({
+		variableFetchCycleId: 0,
+		variableFetchState: 'loading',
+		isVariableSettled: false,
+		isVariableFetching: true,
+		hasVariableFetchedOnce: false,
+		isVariableWaitingForDependencies: false,
+		variableDependencyWaitMessage: '',
+	}),
+}));
+
 // Mock the getFieldValues API
 jest.mock('api/dynamicVariables/getFieldValues', () => ({
 	getFieldValues: jest.fn(),
@@ -95,7 +108,7 @@ describe('Dynamic Variable Default Behavior', () => {
 						}
 					}
 					if (queryFn) {
-						queryFn();
+						queryFn({ signal: undefined });
 					}
 				}
 			}, [enabled, variableName, dynamicVarsKey]); // Only depend on enabled/keys
@@ -234,6 +247,7 @@ describe('Dynamic Variable Default Behavior', () => {
 					'2023-01-01T00:00:00Z',
 					'2023-01-02T00:00:00Z',
 					'',
+					undefined, // signal
 				);
 			});
 
@@ -487,6 +501,7 @@ describe('Dynamic Variable Default Behavior', () => {
 					'2023-01-01T00:00:00Z',
 					'2023-01-02T00:00:00Z',
 					'',
+					undefined, // signal
 				);
 			});
 

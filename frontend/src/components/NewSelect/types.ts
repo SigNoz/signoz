@@ -30,6 +30,7 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	showIncompleteDataMessage?: boolean;
 	showRetryButton?: boolean;
 	isDynamicVariable?: boolean;
+	waitingMessage?: string;
 }
 
 export interface CustomTagProps {
@@ -66,4 +67,5 @@ export interface CustomMultiSelectProps
 	enableRegexOption?: boolean;
 	isDynamicVariable?: boolean;
 	showRetryButton?: boolean;
+	waitingMessage?: string;
 }

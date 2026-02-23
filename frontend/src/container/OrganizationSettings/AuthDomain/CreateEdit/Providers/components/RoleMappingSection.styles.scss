@@ -1,0 +1,288 @@
+.role-mapping-section {
+	display: flex;
+	flex-direction: column;
+	margin-top: 24px;
+
+	&__collapse {
+		background: transparent !important;
+
+		.ant-collapse-item {
+			border: none !important;
+		}
+
+		.ant-collapse-header {
+			padding: 0 !important;
+		}
+
+		.ant-collapse-content {
+			border-top: none !important;
+			background: transparent !important;
+		}
+
+		.ant-collapse-content-box {
+			padding: 12px 0 0 24px !important;
+		}
+	}
+
+	&__collapse-header {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		cursor: pointer;
+		position: relative;
+		width: 100%;
+
+		svg {
+			margin-top: 2px;
+			color: var(--l3-foreground);
+			flex-shrink: 0;
+		}
+	}
+
+	&__collapse-header-text {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__section-title {
+		margin: 0;
+		color: var(--l1-foreground);
+	}
+
+	&__section-description {
+		margin: 0;
+		color: var(--l3-foreground);
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		max-height: 45vh;
+		overflow-y: auto;
+		padding-right: 4px;
+
+		// Thin scrollbar
+		&::-webkit-scrollbar {
+			width: 4px;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--l3-foreground);
+			border-radius: 4px;
+
+			&:hover {
+				background: var(--l2-foreground);
+			}
+		}
+
+		scrollbar-width: thin;
+		scrollbar-color: var(--l3-foreground) transparent;
+	}
+
+	&__field-group {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--l1-foreground);
+	}
+
+	&__form-item {
+		margin-bottom: 0 !important;
+	}
+
+	&__checkbox-row {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	&__select {
+		width: 100%;
+
+		&.ant-select {
+			.ant-select-selector {
+				height: 32px;
+				background: var(--l3-background) !important;
+				border: 1px solid var(--l3-border) !important;
+				border-radius: 2px;
+				color: var(--l1-foreground) !important;
+
+				.ant-select-selection-item {
+					color: var(--l1-foreground) !important;
+				}
+			}
+
+			&:hover .ant-select-selector {
+				border-color: var(--l3-border) !important;
+			}
+
+			&.ant-select-focused .ant-select-selector {
+				border-color: var(--primary) !important;
+				box-shadow: none !important;
+			}
+
+			.ant-select-arrow {
+				color: var(--l3-foreground);
+			}
+		}
+	}
+
+	&__group-mappings {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__group-header {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		margin-bottom: 4px;
+	}
+
+	&__group-title {
+		margin: 0;
+		color: var(--l1-foreground);
+	}
+
+	&__group-description {
+		margin: 0;
+		color: var(--l3-foreground);
+	}
+
+	&__items {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__row {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+
+		.ant-form-item {
+			margin-bottom: 0;
+		}
+	}
+
+	&__field {
+		&--group {
+			flex: 2;
+		}
+
+		&--role {
+			flex: 1;
+			min-width: 120px;
+		}
+	}
+
+	&__remove-btn {
+		flex-shrink: 0;
+		width: 32px !important;
+		height: 32px !important;
+		min-width: 32px !important;
+		padding: 0 !important;
+		border: none !important;
+		border-radius: 2px !important;
+		background: transparent !important;
+		color: var(--destructive) !important;
+		opacity: 0.6 !important;
+		cursor: pointer;
+		transition: background-color 0.2s, opacity 0.2s;
+		box-shadow: none !important;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		svg {
+			color: var(--destructive) !important;
+			width: 12px !important;
+			height: 12px !important;
+		}
+
+		&:hover {
+			background: rgba(229, 72, 77, 0.1) !important;
+			opacity: 0.9 !important;
+			color: var(--destructive) !important;
+
+			svg {
+				color: var(--destructive) !important;
+			}
+		}
+
+		&:active {
+			opacity: 0.7 !important;
+			background: rgba(229, 72, 77, 0.15) !important;
+		}
+	}
+
+	&__add-btn {
+		width: 100%;
+
+		// Ensure icon is visible
+		svg,
+		[class*='icon'] {
+			color: var(--l2-foreground) !important;
+			display: inline-block !important;
+			opacity: 1 !important;
+		}
+
+		&:hover {
+			color: var(--l1-foreground);
+
+			svg,
+			[class*='icon'] {
+				color: var(--l1-foreground) !important;
+			}
+		}
+	}
+
+	// --- Checkbox border visibility ---
+	button[role='checkbox'] {
+		border: 1px solid var(--l2-foreground) !important;
+		border-radius: 2px;
+
+		&[data-state='checked'] {
+			background-color: var(--primary) !important;
+			border-color: var(--primary) !important;
+		}
+	}
+
+	// todo: https://github.com/SigNoz/components/issues/116
+	input {
+		height: 32px;
+		background: var(--l3-background) !important;
+		border: 1px solid var(--l3-border) !important;
+		border-radius: 2px;
+		color: var(--l1-foreground) !important;
+
+		&::placeholder {
+			color: var(--l3-foreground) !important;
+			opacity: 1;
+		}
+
+		&:hover {
+			border-color: var(--l3-border) !important;
+		}
+
+		&:focus,
+		&:focus-visible {
+			border-color: var(--primary) !important;
+			box-shadow: none !important;
+			outline: none;
+		}
+	}
+}

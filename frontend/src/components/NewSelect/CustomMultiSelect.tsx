@@ -73,6 +73,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	enableRegexOption = false,
 	isDynamicVariable = false,
 	showRetryButton = true,
+	waitingMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -1681,6 +1682,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
+						!waitingMessage &&
 						!(showIncompleteDataMessage && isScrolledToBottom) && (
 							<section className="navigate">
 								<ArrowDown size={8} className="icons" />
@@ -1698,7 +1700,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
 					)}
-					{errorMessage && !loading && (
+					{!loading && waitingMessage && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<LoadingOutlined />
+							</div>
+							<div className="navigation-text" title={waitingMessage}>
+								{waitingMessage}
+							</div>
+						</div>
+					)}
+					{errorMessage && !loading && !waitingMessage && (
 						<div className="navigation-error">
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
@@ -1720,6 +1732,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{showIncompleteDataMessage &&
 						isScrolledToBottom &&
 						!loading &&
+						!waitingMessage &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
 								Don&apos;t see the value? Use search
@@ -1762,6 +1775,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isDarkMode,
 		isDynamicVariable,
 		showRetryButton,
+		waitingMessage,
 	]);
 
 	// Custom handler for dropdown visibility changes

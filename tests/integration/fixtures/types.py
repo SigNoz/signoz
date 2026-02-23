@@ -191,3 +191,15 @@ class AlertExpectation:
     # seconds to wait for the alerts to be fired, if no
     # alerts are fired in the expected time, the test will fail
     wait_time_seconds: int
+
+
+@dataclass(frozen=True)
+class AlertTestCase:
+    # name of the test case
+    name: str
+    # path to the rule file in testdata directory
+    rule_path: str
+    # list of alert data that will be inserted into the database
+    alert_data: List[AlertData]
+    # list of alert expectations for the test case
+    alert_expectation: AlertExpectation

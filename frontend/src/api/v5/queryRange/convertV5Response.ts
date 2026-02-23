@@ -388,6 +388,7 @@ export function convertV5ResponseToLegacy(
 					warnings: v5Data?.data?.warning || [],
 				},
 				warning: v5Data?.warning || undefined,
+				meta: v5Data?.meta,
 			},
 			warning: v5Data?.warning || undefined,
 		};
@@ -406,6 +407,7 @@ export function convertV5ResponseToLegacy(
 		payload: {
 			data: convertedData,
 			warning: v5Response.payload?.data?.warning || undefined,
+			meta: v5Data?.meta,
 		},
 	};
 
