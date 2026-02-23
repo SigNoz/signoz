@@ -41,7 +41,6 @@ function MetricDetails({
 		{
 			query: {
 				enabled: !!metricName,
-				queryKey: ['getMetricMetadata', metricName],
 			},
 		},
 	);
