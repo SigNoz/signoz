@@ -17,7 +17,8 @@ import type {
 } from 'react-query';
 import { useMutation, useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AcceptInvite201,
 	ChangePasswordPathParameters,
@@ -60,7 +61,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  */
 export const changePassword = (
 	{ id }: ChangePasswordPathParameters,
-	typesChangePasswordRequestDTO: TypesChangePasswordRequestDTO,
+	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -73,7 +74,7 @@ export const changePassword = (
 };
 
 export const getChangePasswordMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -81,7 +82,7 @@ export const getChangePasswordMutationOptions = <
 		TError,
 		{
 			pathParams: ChangePasswordPathParameters;
-			data: TypesChangePasswordRequestDTO;
+			data: BodyType<TypesChangePasswordRequestDTO>;
 		},
 		TContext
 	>;
@@ -90,7 +91,7 @@ export const getChangePasswordMutationOptions = <
 	TError,
 	{
 		pathParams: ChangePasswordPathParameters;
-		data: TypesChangePasswordRequestDTO;
+		data: BodyType<TypesChangePasswordRequestDTO>;
 	},
 	TContext
 > => {
@@ -107,7 +108,7 @@ export const getChangePasswordMutationOptions = <
 		Awaited<ReturnType<typeof changePassword>>,
 		{
 			pathParams: ChangePasswordPathParameters;
-			data: TypesChangePasswordRequestDTO;
+			data: BodyType<TypesChangePasswordRequestDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -121,14 +122,14 @@ export const getChangePasswordMutationOptions = <
 export type ChangePasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof changePassword>>
 >;
-export type ChangePasswordMutationBody = TypesChangePasswordRequestDTO;
-export type ChangePasswordMutationError = RenderErrorResponseDTO;
+export type ChangePasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
+export type ChangePasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Change password
  */
 export const useChangePassword = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -136,7 +137,7 @@ export const useChangePassword = <
 		TError,
 		{
 			pathParams: ChangePasswordPathParameters;
-			data: TypesChangePasswordRequestDTO;
+			data: BodyType<TypesChangePasswordRequestDTO>;
 		},
 		TContext
 	>;
@@ -145,7 +146,7 @@ export const useChangePassword = <
 	TError,
 	{
 		pathParams: ChangePasswordPathParameters;
-		data: TypesChangePasswordRequestDTO;
+		data: BodyType<TypesChangePasswordRequestDTO>;
 	},
 	TContext
 > => {
@@ -171,12 +172,12 @@ export const getResetPasswordToken = (
 export const getGetResetPasswordTokenQueryKey = ({
 	id,
 }: GetResetPasswordTokenPathParameters) => {
-	return ['getResetPasswordToken'] as const;
+	return [`/api/v1/getResetPasswordToken/${id}`] as const;
 };
 
 export const getGetResetPasswordTokenQueryOptions = <
 	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ id }: GetResetPasswordTokenPathParameters,
 	options?: {
@@ -211,7 +212,7 @@ export const getGetResetPasswordTokenQueryOptions = <
 export type GetResetPasswordTokenQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getResetPasswordToken>>
 >;
-export type GetResetPasswordTokenQueryError = RenderErrorResponseDTO;
+export type GetResetPasswordTokenQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get reset password token
@@ -219,7 +220,7 @@ export type GetResetPasswordTokenQueryError = RenderErrorResponseDTO;
 
 export function useGetResetPasswordToken<
 	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ id }: GetResetPasswordTokenPathParameters,
 	options?: {
@@ -270,12 +271,12 @@ export const listInvite = (signal?: AbortSignal) => {
 };
 
 export const getListInviteQueryKey = () => {
-	return ['listInvite'] as const;
+	return [`/api/v1/invite`] as const;
 };
 
 export const getListInviteQueryOptions = <
 	TData = Awaited<ReturnType<typeof listInvite>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listInvite>>, TError, TData>;
 }) => {
@@ -297,7 +298,7 @@ export const getListInviteQueryOptions = <
 export type ListInviteQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listInvite>>
 >;
-export type ListInviteQueryError = RenderErrorResponseDTO;
+export type ListInviteQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List invites
@@ -305,7 +306,7 @@ export type ListInviteQueryError = RenderErrorResponseDTO;
 
 export function useListInvite<
 	TData = Awaited<ReturnType<typeof listInvite>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listInvite>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -340,7 +341,7 @@ export const invalidateListInvite = async (
  * @summary Create invite
  */
 export const createInvite = (
-	typesPostableInviteDTO: TypesPostableInviteDTO,
+	typesPostableInviteDTO: BodyType<TypesPostableInviteDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateInvite201>({
@@ -353,19 +354,19 @@ export const createInvite = (
 };
 
 export const getCreateInviteMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createInvite>>,
 		TError,
-		{ data: TypesPostableInviteDTO },
+		{ data: BodyType<TypesPostableInviteDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createInvite>>,
 	TError,
-	{ data: TypesPostableInviteDTO },
+	{ data: BodyType<TypesPostableInviteDTO> },
 	TContext
 > => {
 	const mutationKey = ['createInvite'];
@@ -379,7 +380,7 @@ export const getCreateInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createInvite>>,
-		{ data: TypesPostableInviteDTO }
+		{ data: BodyType<TypesPostableInviteDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -392,26 +393,26 @@ export const getCreateInviteMutationOptions = <
 export type CreateInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createInvite>>
 >;
-export type CreateInviteMutationBody = TypesPostableInviteDTO;
-export type CreateInviteMutationError = RenderErrorResponseDTO;
+export type CreateInviteMutationBody = BodyType<TypesPostableInviteDTO>;
+export type CreateInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create invite
  */
 export const useCreateInvite = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createInvite>>,
 		TError,
-		{ data: TypesPostableInviteDTO },
+		{ data: BodyType<TypesPostableInviteDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createInvite>>,
 	TError,
-	{ data: TypesPostableInviteDTO },
+	{ data: BodyType<TypesPostableInviteDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateInviteMutationOptions(options);
@@ -430,7 +431,7 @@ export const deleteInvite = ({ id }: DeleteInvitePathParameters) => {
 };
 
 export const getDeleteInviteMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -470,13 +471,13 @@ export type DeleteInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteInvite>>
 >;
 
-export type DeleteInviteMutationError = RenderErrorResponseDTO;
+export type DeleteInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete invite
  */
 export const useDeleteInvite = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -511,12 +512,12 @@ export const getInvite = (
 };
 
 export const getGetInviteQueryKey = ({ token }: GetInvitePathParameters) => {
-	return ['getInvite'] as const;
+	return [`/api/v1/invite/${token}`] as const;
 };
 
 export const getGetInviteQueryOptions = <
 	TData = Awaited<ReturnType<typeof getInvite>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ token }: GetInvitePathParameters,
 	options?: {
@@ -544,7 +545,7 @@ export const getGetInviteQueryOptions = <
 export type GetInviteQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getInvite>>
 >;
-export type GetInviteQueryError = RenderErrorResponseDTO;
+export type GetInviteQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get invite
@@ -552,7 +553,7 @@ export type GetInviteQueryError = RenderErrorResponseDTO;
 
 export function useGetInvite<
 	TData = Awaited<ReturnType<typeof getInvite>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ token }: GetInvitePathParameters,
 	options?: {
@@ -591,7 +592,7 @@ export const invalidateGetInvite = async (
  * @summary Accept invite
  */
 export const acceptInvite = (
-	typesPostableAcceptInviteDTO: TypesPostableAcceptInviteDTO,
+	typesPostableAcceptInviteDTO: BodyType<TypesPostableAcceptInviteDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AcceptInvite201>({
@@ -604,19 +605,19 @@ export const acceptInvite = (
 };
 
 export const getAcceptInviteMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof acceptInvite>>,
 		TError,
-		{ data: TypesPostableAcceptInviteDTO },
+		{ data: BodyType<TypesPostableAcceptInviteDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof acceptInvite>>,
 	TError,
-	{ data: TypesPostableAcceptInviteDTO },
+	{ data: BodyType<TypesPostableAcceptInviteDTO> },
 	TContext
 > => {
 	const mutationKey = ['acceptInvite'];
@@ -630,7 +631,7 @@ export const getAcceptInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof acceptInvite>>,
-		{ data: TypesPostableAcceptInviteDTO }
+		{ data: BodyType<TypesPostableAcceptInviteDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -643,26 +644,26 @@ export const getAcceptInviteMutationOptions = <
 export type AcceptInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof acceptInvite>>
 >;
-export type AcceptInviteMutationBody = TypesPostableAcceptInviteDTO;
-export type AcceptInviteMutationError = RenderErrorResponseDTO;
+export type AcceptInviteMutationBody = BodyType<TypesPostableAcceptInviteDTO>;
+export type AcceptInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Accept invite
  */
 export const useAcceptInvite = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof acceptInvite>>,
 		TError,
-		{ data: TypesPostableAcceptInviteDTO },
+		{ data: BodyType<TypesPostableAcceptInviteDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof acceptInvite>>,
 	TError,
-	{ data: TypesPostableAcceptInviteDTO },
+	{ data: BodyType<TypesPostableAcceptInviteDTO> },
 	TContext
 > => {
 	const mutationOptions = getAcceptInviteMutationOptions(options);
@@ -674,7 +675,7 @@ export const useAcceptInvite = <
  * @summary Create bulk invite
  */
 export const createBulkInvite = (
-	typesPostableInviteDTO: TypesPostableInviteDTO[],
+	typesPostableInviteDTO: BodyType<TypesPostableInviteDTO[]>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -687,19 +688,19 @@ export const createBulkInvite = (
 };
 
 export const getCreateBulkInviteMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
 		TError,
-		{ data: TypesPostableInviteDTO[] },
+		{ data: BodyType<TypesPostableInviteDTO[]> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createBulkInvite>>,
 	TError,
-	{ data: TypesPostableInviteDTO[] },
+	{ data: BodyType<TypesPostableInviteDTO[]> },
 	TContext
 > => {
 	const mutationKey = ['createBulkInvite'];
@@ -713,7 +714,7 @@ export const getCreateBulkInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createBulkInvite>>,
-		{ data: TypesPostableInviteDTO[] }
+		{ data: BodyType<TypesPostableInviteDTO[]> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -726,26 +727,26 @@ export const getCreateBulkInviteMutationOptions = <
 export type CreateBulkInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createBulkInvite>>
 >;
-export type CreateBulkInviteMutationBody = TypesPostableInviteDTO[];
-export type CreateBulkInviteMutationError = RenderErrorResponseDTO;
+export type CreateBulkInviteMutationBody = BodyType<TypesPostableInviteDTO[]>;
+export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create bulk invite
  */
 export const useCreateBulkInvite = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
 		TError,
-		{ data: TypesPostableInviteDTO[] },
+		{ data: BodyType<TypesPostableInviteDTO[]> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createBulkInvite>>,
 	TError,
-	{ data: TypesPostableInviteDTO[] },
+	{ data: BodyType<TypesPostableInviteDTO[]> },
 	TContext
 > => {
 	const mutationOptions = getCreateBulkInviteMutationOptions(options);
@@ -765,12 +766,12 @@ export const listAPIKeys = (signal?: AbortSignal) => {
 };
 
 export const getListAPIKeysQueryKey = () => {
-	return ['listAPIKeys'] as const;
+	return [`/api/v1/pats`] as const;
 };
 
 export const getListAPIKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAPIKeys>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAPIKeys>>,
@@ -796,7 +797,7 @@ export const getListAPIKeysQueryOptions = <
 export type ListAPIKeysQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listAPIKeys>>
 >;
-export type ListAPIKeysQueryError = RenderErrorResponseDTO;
+export type ListAPIKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List api keys
@@ -804,7 +805,7 @@ export type ListAPIKeysQueryError = RenderErrorResponseDTO;
 
 export function useListAPIKeys<
 	TData = Awaited<ReturnType<typeof listAPIKeys>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAPIKeys>>,
@@ -843,7 +844,7 @@ export const invalidateListAPIKeys = async (
  * @summary Create api key
  */
 export const createAPIKey = (
-	typesPostableAPIKeyDTO: TypesPostableAPIKeyDTO,
+	typesPostableAPIKeyDTO: BodyType<TypesPostableAPIKeyDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateAPIKey201>({
@@ -856,19 +857,19 @@ export const createAPIKey = (
 };
 
 export const getCreateAPIKeyMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAPIKey>>,
 		TError,
-		{ data: TypesPostableAPIKeyDTO },
+		{ data: BodyType<TypesPostableAPIKeyDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createAPIKey>>,
 	TError,
-	{ data: TypesPostableAPIKeyDTO },
+	{ data: BodyType<TypesPostableAPIKeyDTO> },
 	TContext
 > => {
 	const mutationKey = ['createAPIKey'];
@@ -882,7 +883,7 @@ export const getCreateAPIKeyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createAPIKey>>,
-		{ data: TypesPostableAPIKeyDTO }
+		{ data: BodyType<TypesPostableAPIKeyDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -895,26 +896,26 @@ export const getCreateAPIKeyMutationOptions = <
 export type CreateAPIKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAPIKey>>
 >;
-export type CreateAPIKeyMutationBody = TypesPostableAPIKeyDTO;
-export type CreateAPIKeyMutationError = RenderErrorResponseDTO;
+export type CreateAPIKeyMutationBody = BodyType<TypesPostableAPIKeyDTO>;
+export type CreateAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create api key
  */
 export const useCreateAPIKey = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAPIKey>>,
 		TError,
-		{ data: TypesPostableAPIKeyDTO },
+		{ data: BodyType<TypesPostableAPIKeyDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createAPIKey>>,
 	TError,
-	{ data: TypesPostableAPIKeyDTO },
+	{ data: BodyType<TypesPostableAPIKeyDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateAPIKeyMutationOptions(options);
@@ -933,7 +934,7 @@ export const revokeAPIKey = ({ id }: RevokeAPIKeyPathParameters) => {
 };
 
 export const getRevokeAPIKeyMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -973,13 +974,13 @@ export type RevokeAPIKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof revokeAPIKey>>
 >;
 
-export type RevokeAPIKeyMutationError = RenderErrorResponseDTO;
+export type RevokeAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Revoke api key
  */
 export const useRevokeAPIKey = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -1004,7 +1005,7 @@ export const useRevokeAPIKey = <
  */
 export const updateAPIKey = (
 	{ id }: UpdateAPIKeyPathParameters,
-	typesStorableAPIKeyDTO: TypesStorableAPIKeyDTO,
+	typesStorableAPIKeyDTO: BodyType<TypesStorableAPIKeyDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/pats/${id}`,
@@ -1015,19 +1016,25 @@ export const updateAPIKey = (
 };
 
 export const getUpdateAPIKeyMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAPIKey>>,
 		TError,
-		{ pathParams: UpdateAPIKeyPathParameters; data: TypesStorableAPIKeyDTO },
+		{
+			pathParams: UpdateAPIKeyPathParameters;
+			data: BodyType<TypesStorableAPIKeyDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateAPIKey>>,
 	TError,
-	{ pathParams: UpdateAPIKeyPathParameters; data: TypesStorableAPIKeyDTO },
+	{
+		pathParams: UpdateAPIKeyPathParameters;
+		data: BodyType<TypesStorableAPIKeyDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateAPIKey'];
@@ -1041,7 +1048,10 @@ export const getUpdateAPIKeyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateAPIKey>>,
-		{ pathParams: UpdateAPIKeyPathParameters; data: TypesStorableAPIKeyDTO }
+		{
+			pathParams: UpdateAPIKeyPathParameters;
+			data: BodyType<TypesStorableAPIKeyDTO>;
+		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1054,26 +1064,32 @@ export const getUpdateAPIKeyMutationOptions = <
 export type UpdateAPIKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAPIKey>>
 >;
-export type UpdateAPIKeyMutationBody = TypesStorableAPIKeyDTO;
-export type UpdateAPIKeyMutationError = RenderErrorResponseDTO;
+export type UpdateAPIKeyMutationBody = BodyType<TypesStorableAPIKeyDTO>;
+export type UpdateAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update api key
  */
 export const useUpdateAPIKey = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAPIKey>>,
 		TError,
-		{ pathParams: UpdateAPIKeyPathParameters; data: TypesStorableAPIKeyDTO },
+		{
+			pathParams: UpdateAPIKeyPathParameters;
+			data: BodyType<TypesStorableAPIKeyDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateAPIKey>>,
 	TError,
-	{ pathParams: UpdateAPIKeyPathParameters; data: TypesStorableAPIKeyDTO },
+	{
+		pathParams: UpdateAPIKeyPathParameters;
+		data: BodyType<TypesStorableAPIKeyDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getUpdateAPIKeyMutationOptions(options);
@@ -1085,7 +1101,7 @@ export const useUpdateAPIKey = <
  * @summary Reset password
  */
 export const resetPassword = (
-	typesPostableResetPasswordDTO: TypesPostableResetPasswordDTO,
+	typesPostableResetPasswordDTO: BodyType<TypesPostableResetPasswordDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -1098,19 +1114,19 @@ export const resetPassword = (
 };
 
 export const getResetPasswordMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
 		TError,
-		{ data: TypesPostableResetPasswordDTO },
+		{ data: BodyType<TypesPostableResetPasswordDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof resetPassword>>,
 	TError,
-	{ data: TypesPostableResetPasswordDTO },
+	{ data: BodyType<TypesPostableResetPasswordDTO> },
 	TContext
 > => {
 	const mutationKey = ['resetPassword'];
@@ -1124,7 +1140,7 @@ export const getResetPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof resetPassword>>,
-		{ data: TypesPostableResetPasswordDTO }
+		{ data: BodyType<TypesPostableResetPasswordDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1137,26 +1153,26 @@ export const getResetPasswordMutationOptions = <
 export type ResetPasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof resetPassword>>
 >;
-export type ResetPasswordMutationBody = TypesPostableResetPasswordDTO;
-export type ResetPasswordMutationError = RenderErrorResponseDTO;
+export type ResetPasswordMutationBody = BodyType<TypesPostableResetPasswordDTO>;
+export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Reset password
  */
 export const useResetPassword = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
 		TError,
-		{ data: TypesPostableResetPasswordDTO },
+		{ data: BodyType<TypesPostableResetPasswordDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof resetPassword>>,
 	TError,
-	{ data: TypesPostableResetPasswordDTO },
+	{ data: BodyType<TypesPostableResetPasswordDTO> },
 	TContext
 > => {
 	const mutationOptions = getResetPasswordMutationOptions(options);
@@ -1176,12 +1192,12 @@ export const listUsers = (signal?: AbortSignal) => {
 };
 
 export const getListUsersQueryKey = () => {
-	return ['listUsers'] as const;
+	return [`/api/v1/user`] as const;
 };
 
 export const getListUsersQueryOptions = <
 	TData = Awaited<ReturnType<typeof listUsers>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
 }) => {
@@ -1203,7 +1219,7 @@ export const getListUsersQueryOptions = <
 export type ListUsersQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listUsers>>
 >;
-export type ListUsersQueryError = RenderErrorResponseDTO;
+export type ListUsersQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List users
@@ -1211,7 +1227,7 @@ export type ListUsersQueryError = RenderErrorResponseDTO;
 
 export function useListUsers<
 	TData = Awaited<ReturnType<typeof listUsers>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1253,7 +1269,7 @@ export const deleteUser = ({ id }: DeleteUserPathParameters) => {
 };
 
 export const getDeleteUserMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -1293,13 +1309,13 @@ export type DeleteUserMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteUser>>
 >;
 
-export type DeleteUserMutationError = RenderErrorResponseDTO;
+export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete user
  */
 export const useDeleteUser = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
@@ -1334,12 +1350,12 @@ export const getUser = (
 };
 
 export const getGetUserQueryKey = ({ id }: GetUserPathParameters) => {
-	return ['getUser'] as const;
+	return [`/api/v1/user/${id}`] as const;
 };
 
 export const getGetUserQueryOptions = <
 	TData = Awaited<ReturnType<typeof getUser>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ id }: GetUserPathParameters,
 	options?: {
@@ -1367,7 +1383,7 @@ export const getGetUserQueryOptions = <
 export type GetUserQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getUser>>
 >;
-export type GetUserQueryError = RenderErrorResponseDTO;
+export type GetUserQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get user
@@ -1375,7 +1391,7 @@ export type GetUserQueryError = RenderErrorResponseDTO;
 
 export function useGetUser<
 	TData = Awaited<ReturnType<typeof getUser>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ id }: GetUserPathParameters,
 	options?: {
@@ -1415,7 +1431,7 @@ export const invalidateGetUser = async (
  */
 export const updateUser = (
 	{ id }: UpdateUserPathParameters,
-	typesUserDTO: TypesUserDTO,
+	typesUserDTO: BodyType<TypesUserDTO>,
 ) => {
 	return GeneratedAPIInstance<UpdateUser200>({
 		url: `/api/v1/user/${id}`,
@@ -1426,19 +1442,19 @@ export const updateUser = (
 };
 
 export const getUpdateUserMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: TypesUserDTO },
+		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: TypesUserDTO },
+	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
 	TContext
 > => {
 	const mutationKey = ['updateUser'];
@@ -1452,7 +1468,7 @@ export const getUpdateUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateUser>>,
-		{ pathParams: UpdateUserPathParameters; data: TypesUserDTO }
+		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> }
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1465,26 +1481,26 @@ export const getUpdateUserMutationOptions = <
 export type UpdateUserMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateUser>>
 >;
-export type UpdateUserMutationBody = TypesUserDTO;
-export type UpdateUserMutationError = RenderErrorResponseDTO;
+export type UpdateUserMutationBody = BodyType<TypesUserDTO>;
+export type UpdateUserMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update user
  */
 export const useUpdateUser = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: TypesUserDTO },
+		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: TypesUserDTO },
+	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
 	TContext
 > => {
 	const mutationOptions = getUpdateUserMutationOptions(options);
@@ -1504,12 +1520,12 @@ export const getMyUser = (signal?: AbortSignal) => {
 };
 
 export const getGetMyUserQueryKey = () => {
-	return ['getMyUser'] as const;
+	return [`/api/v1/user/me`] as const;
 };
 
 export const getGetMyUserQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyUser>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
 }) => {
@@ -1531,7 +1547,7 @@ export const getGetMyUserQueryOptions = <
 export type GetMyUserQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMyUser>>
 >;
-export type GetMyUserQueryError = RenderErrorResponseDTO;
+export type GetMyUserQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get my user
@@ -1539,7 +1555,7 @@ export type GetMyUserQueryError = RenderErrorResponseDTO;
 
 export function useGetMyUser<
 	TData = Awaited<ReturnType<typeof getMyUser>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1574,7 +1590,7 @@ export const invalidateGetMyUser = async (
  * @summary Forgot password
  */
 export const forgotPassword = (
-	typesPostableForgotPasswordDTO: TypesPostableForgotPasswordDTO,
+	typesPostableForgotPasswordDTO: BodyType<TypesPostableForgotPasswordDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -1587,19 +1603,19 @@ export const forgotPassword = (
 };
 
 export const getForgotPasswordMutationOptions = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
 		TError,
-		{ data: TypesPostableForgotPasswordDTO },
+		{ data: BodyType<TypesPostableForgotPasswordDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof forgotPassword>>,
 	TError,
-	{ data: TypesPostableForgotPasswordDTO },
+	{ data: BodyType<TypesPostableForgotPasswordDTO> },
 	TContext
 > => {
 	const mutationKey = ['forgotPassword'];
@@ -1613,7 +1629,7 @@ export const getForgotPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof forgotPassword>>,
-		{ data: TypesPostableForgotPasswordDTO }
+		{ data: BodyType<TypesPostableForgotPasswordDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1626,26 +1642,26 @@ export const getForgotPasswordMutationOptions = <
 export type ForgotPasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof forgotPassword>>
 >;
-export type ForgotPasswordMutationBody = TypesPostableForgotPasswordDTO;
-export type ForgotPasswordMutationError = RenderErrorResponseDTO;
+export type ForgotPasswordMutationBody = BodyType<TypesPostableForgotPasswordDTO>;
+export type ForgotPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Forgot password
  */
 export const useForgotPassword = <
-	TError = RenderErrorResponseDTO,
+	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
 		TError,
-		{ data: TypesPostableForgotPasswordDTO },
+		{ data: BodyType<TypesPostableForgotPasswordDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof forgotPassword>>,
 	TError,
-	{ data: TypesPostableForgotPasswordDTO },
+	{ data: BodyType<TypesPostableForgotPasswordDTO> },
 	TContext
 > => {
 	const mutationOptions = getForgotPasswordMutationOptions(options);
