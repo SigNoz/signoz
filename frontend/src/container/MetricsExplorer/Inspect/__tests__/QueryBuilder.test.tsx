@@ -1,7 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
@@ -120,7 +121,9 @@ describe('QueryBuilder', () => {
 		expect(screen.getByTestId('metric-space-aggregation')).toBeInTheDocument();
 	});
 
-	it('should call setCurrentMetricName when metric name is selected', () => {
+	it('should call setCurrentMetricName when metric name is selected', async () => {
+		const user = userEvent.setup();
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -135,12 +138,14 @@ describe('QueryBuilder', () => {
 		expect(screen.getByText('From')).toBeInTheDocument();
 
 		const selectButton = screen.getByTestId('select-metric-button');
-		fireEvent.click(selectButton);
+		await user.click(selectButton);
 
 		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
 	});
 
-	it('should call setAppliedMetricName and apply inspection options when query is applied', () => {
+	it('should call setAppliedMetricName and apply inspection options when query is applied', async () => {
+		const user = userEvent.setup();
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -150,7 +155,7 @@ describe('QueryBuilder', () => {
 		);
 
 		const applyQueryButton = screen.getByText('Run Query');
-		fireEvent.click(applyQueryButton);
+		await user.click(applyQueryButton);
 
 		expect(mockSetCurrentMetricName).toHaveBeenCalledTimes(0);
 		expect(mockSetAppliedMetricName).toHaveBeenCalledWith('test_metric');

@@ -10,7 +10,7 @@ import ExpandedView from '../ExpandedView';
 import {
 	GraphPopoverData,
 	InspectionStep,
-	MetricInspectOptions,
+	MetricInspectionOptions,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
@@ -62,7 +62,7 @@ describe('ExpandedView', () => {
 		],
 	]);
 
-	const mockMetricInspectionOptions: MetricInspectOptions = {
+	const mockMetricInspectionOptions: MetricInspectionOptions = {
 		timeAggregationOption: TimeAggregationOptions.MAX,
 		timeAggregationInterval: 60,
 		spaceAggregationOption: SpaceAggregationOptions.MAX_BY,

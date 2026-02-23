@@ -23,7 +23,7 @@ import {
 	GraphPopoverOptions,
 	InspectionStep,
 	MetricFiltersProps,
-	MetricInspectOptions,
+	MetricInspectionOptions,
 	MetricNameSearchProps,
 	MetricSpaceAggregationProps,
 	MetricTimeAggregationProps,
@@ -314,7 +314,7 @@ export function applyFilters(
 
 export function applyTimeAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	metricInspectionAppliedOptions: MetricInspectOptions,
+	metricInspectionAppliedOptions: MetricInspectionOptions,
 ): {
 	timeAggregatedSeries: InspectMetricsSeries[];
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
@@ -407,7 +407,7 @@ export function applyTimeAggregation(
 
 export function applySpaceAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	metricInspectionAppliedOptions: MetricInspectOptions,
+	metricInspectionAppliedOptions: MetricInspectionOptions,
 ): {
 	aggregatedSeries: InspectMetricsSeries[];
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
@@ -712,7 +712,7 @@ export function HoverPopover({
 }: {
 	options: GraphPopoverOptions;
 	step: InspectionStep;
-	metricInspectionAppliedOptions: MetricInspectOptions;
+	metricInspectionAppliedOptions: MetricInspectionOptions;
 }): JSX.Element {
 	const closestTimestamp = useMemo(() => {
 		if (!options.timeSeries) {
