@@ -15,6 +15,7 @@ import {
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	roleDetails,
 	rolesSettings,
 } from './config';
 
@@ -76,6 +77,7 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		...roleDetails(),
 	);
 
 	return settings;

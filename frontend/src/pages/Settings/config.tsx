@@ -13,6 +13,7 @@ import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSe
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
+import RoleDetailsPage from 'container/RolesSettings/RoleDetails';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
@@ -160,6 +161,15 @@ export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.ROLES_SETTINGS,
 		key: ROUTES.ROLES_SETTINGS,
+	},
+];
+
+export const roleDetails = (): RouteTabProps['routes'] => [
+	{
+		Component: RoleDetailsPage,
+		name: <div className="periscope-tab">Role Details</div>,
+		route: ROUTES.ROLE_DETAILS,
+		key: ROUTES.ROLE_DETAILS,
 	},
 ];
 

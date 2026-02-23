@@ -1,14 +1,16 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Input, inputVariants } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import { Form, Input as AntInput, Modal } from 'antd';
+import { Form, Modal } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
+	invalidateGetRole,
 	invalidateListRoles,
 	useCreateRole,
+	usePatchRole,
 } from 'api/generated/services/role';
 import type { RoletypesPostableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -18,9 +20,16 @@ import APIError from 'types/api/error';
 
 import '../RolesSettings.styles.scss';
 
+export interface CreateRoleModalInitialData {
+	id: string;
+	name: string;
+	description?: string;
+}
+
 interface CreateRoleModalProps {
 	isOpen: boolean;
 	onClose: () => void;
+	initialData?: CreateRoleModalInitialData;
 }
 
 interface CreateRoleFormValues {
@@ -31,53 +40,91 @@ interface CreateRoleFormValues {
 function CreateRoleModal({
 	isOpen,
 	onClose,
+	initialData,
 }: CreateRoleModalProps): JSX.Element {
 	const [form] = Form.useForm<CreateRoleFormValues>();
 	const queryClient = useQueryClient();
-
 	const { showErrorModal } = useErrorModal();
 
-	const { mutate: createRole, isLoading } = useCreateRole({
-		mutation: {
-			onSuccess: async (): Promise<void> => {
-				await invalidateListRoles(queryClient);
-				toast.success('Role created successfully');
+	const isEditMode = !!initialData?.id;
+
+	useEffect(() => {
+		if (isOpen) {
+			if (isEditMode && initialData) {
+				form.setFieldsValue({
+					name: initialData.name,
+					description: initialData.description || '',
+				});
+			} else {
 				form.resetFields();
-				onClose();
-			},
-			onError: (error) => {
-				try {
-					ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-				} catch (apiError) {
-					showErrorModal(apiError as APIError);
-				}
-			},
+			}
+		}
+	}, [isOpen, isEditMode, initialData, form]);
+
+	const handleSuccess = async (message: string): Promise<void> => {
+		await invalidateListRoles(queryClient);
+		if (isEditMode && initialData?.id) {
+			await invalidateGetRole(queryClient, { id: initialData.id });
+		}
+		toast.success(message);
+		form.resetFields();
+		onClose();
+	};
+
+	const handleError = (error: unknown): void => {
+		try {
+			ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		} catch (apiError) {
+			showErrorModal(apiError as APIError);
+		}
+	};
+
+	const { mutate: createRole, isLoading: isCreating } = useCreateRole({
+		mutation: {
+			onSuccess: () => handleSuccess('Role created successfully'),
+			onError: handleError,
+		},
+	});
+
+	const { mutate: patchRole, isLoading: isPatching } = usePatchRole({
+		mutation: {
+			onSuccess: () => handleSuccess('Role updated successfully'),
+			onError: handleError,
 		},
 	});
 
 	const onSubmit = useCallback(async (): Promise<void> => {
 		try {
 			const values = await form.validateFields();
-			const data: RoletypesPostableRoleDTO = {
-				name: values.name,
-				...(values.description ? { description: values.description } : {}),
-			};
-			createRole({ data });
+			if (isEditMode && initialData?.id) {
+				patchRole({
+					pathParams: { id: initialData.id },
+					data: { description: values.description || '' },
+				});
+			} else {
+				const data: RoletypesPostableRoleDTO = {
+					name: values.name,
+					...(values.description ? { description: values.description } : {}),
+				};
+				createRole({ data });
+			}
 		} catch {
 			// form validation failed; antd handles inline error display
 		}
-	}, [form, createRole]);
+	}, [form, createRole, patchRole, isEditMode, initialData]);
 
 	const onCancel = useCallback((): void => {
 		form.resetFields();
 		onClose();
 	}, [form, onClose]);
 
+	const isLoading = isCreating || isPatching;
+
 	return (
 		<Modal
 			open={isOpen}
 			onCancel={onCancel}
-			title="Create a New Role"
+			title={isEditMode ? 'Edit Role Details' : 'Create a New Role'}
 			footer={[
 				<Button
 					key="cancel"
@@ -97,7 +144,7 @@ function CreateRoleModal({
 					loading={isLoading}
 					size="sm"
 				>
-					Create Role
+					{isEditMode ? 'Save Changes' : 'Create Role'}
 				</Button>,
 			]}
 			destroyOnClose
@@ -110,10 +157,16 @@ function CreateRoleModal({
 					label="Name"
 					rules={[{ required: true, message: 'Role name is required' }]}
 				>
-					<Input placeholder="Enter role name e.g. : Service Owner" />
+					<Input
+						disabled={isEditMode}
+						placeholder="Enter role name e.g. : Service Owner"
+					/>
 				</Form.Item>
 				<Form.Item name="description" label="Description">
-					<AntInput.TextArea placeholder="A helpful description of the role" />
+					<textarea
+						className={inputVariants()}
+						placeholder="A helpful description of the role"
+					/>
 				</Form.Item>
 			</Form>
 		</Modal>
