@@ -313,7 +313,7 @@ func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *int
 		return nil, err
 	}
 
-	agentVersion := "v0.0.1"
+	agentVersion := "v0.0.8"
 
 	if connection.AgentConfig.Version != "" {
 		agentVersion = connection.AgentConfig.Version
