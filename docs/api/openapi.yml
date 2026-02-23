@@ -457,10 +457,10 @@ components:
     GatewaytypesLimitValue:
       properties:
         count:
-          format: int64
+          nullable: true
           type: integer
         size:
-          format: int64
+          nullable: true
           type: integer
       type: object
     GatewaytypesPagination:
