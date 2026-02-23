@@ -1,9 +1,10 @@
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { evaluateThresholdWithConvertedValue } from 'container/GridTableComponent/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 
-function compareThreshold(
+function doesValueSatisfyThreshold(
 	rawValue: number,
 	threshold: ThresholdProps,
+	yAxisUnit?: string,
 ): boolean {
 	if (
 		threshold.thresholdOperator === undefined ||
@@ -11,31 +12,14 @@ function compareThreshold(
 	) {
 		return false;
 	}
-	switch (threshold.thresholdOperator) {
-		case '>':
-			return rawValue > threshold.thresholdValue;
-		case '>=':
-			return rawValue >= threshold.thresholdValue;
-		case '<':
-			return rawValue < threshold.thresholdValue;
-		case '<=':
-			return rawValue <= threshold.thresholdValue;
-		case '=':
-			return rawValue === threshold.thresholdValue;
-		default:
-			return false;
-	}
-}
 
-function extractNumbersFromString(inputString: string): number[] {
-	const regex = /[+-]?\d+(\.\d+)?/g;
-	const matches = inputString.match(regex);
-
-	if (matches) {
-		return matches.map(Number);
-	}
-
-	return [];
+	return evaluateThresholdWithConvertedValue(
+		rawValue,
+		threshold.thresholdValue,
+		threshold.thresholdOperator,
+		threshold.thresholdUnit,
+		yAxisUnit,
+	);
 }
 
 function getHighestPrecedenceThreshold(
@@ -63,17 +47,13 @@ function getHighestPrecedenceThreshold(
 export function getBackgroundColorAndThresholdCheck(
 	thresholds: ThresholdProps[],
 	rawValue: number,
+	yAxisUnit?: string,
 ): {
 	threshold: ThresholdProps;
 	isConflictingThresholds: boolean;
 } {
 	const matchingThresholds = thresholds.filter((threshold) =>
-		compareThreshold(
-			extractNumbersFromString(
-				getYAxisFormattedValue(rawValue.toString(), threshold.thresholdUnit || ''),
-			)[0],
-			threshold,
-		),
+		doesValueSatisfyThreshold(rawValue, threshold, yAxisUnit),
 	);
 
 	if (matchingThresholds.length === 0) {
