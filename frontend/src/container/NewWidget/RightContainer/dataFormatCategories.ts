@@ -2,10 +2,7 @@ import {
 	UniversalUnitToGrafanaUnit,
 	YAxisCategoryNames,
 } from 'components/YAxisUnitSelector/constants';
-import {
-	UniversalYAxisUnit,
-	YAxisSource,
-} from 'components/YAxisUnitSelector/types';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import { convertValue } from 'lib/getConvertedValue';
 import { flattenDeep } from 'lodash-es';
@@ -464,7 +461,7 @@ export const getCategoryName = (unitId: string): YAxisCategoryNames | null => {
 				return true;
 			}
 
-			const grafanaId = UniversalUnitToGrafanaUnit[unit.id as UniversalYAxisUnit];
+			const grafanaId = UniversalUnitToGrafanaUnit[unit.id];
 			return grafanaId === unitId;
 		}),
 	);
