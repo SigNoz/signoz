@@ -11,7 +11,6 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 import PipelineListsView from '../PipelineListsView';
@@ -86,7 +85,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 }));
 
 const BASE_URL = ENVIRONMENT.baseURL;
-const attributeKeysURL = `${BASE_URL}/api/v3/autocomplete/attribute_keys`;
+const attributeKeysURL = `${BASE_URL}/api/v3/filter_suggestions`;
 
 describe('PipelinePage container test', () => {
 	beforeAll(() => {
@@ -333,26 +332,34 @@ describe('PipelinePage container test', () => {
 					ctx.json({
 						status: 'success',
 						data: {
-							attributeKeys: [
+							attributes: [
 								{
 									key: 'otelServiceName',
-									dataType: DataTypes.String,
+									dataType: 'string',
 									type: 'tag',
+									isColumn: false,
+									isJSON: false,
+								},
+								{
+									key: 'service.name',
+									dataType: 'string',
+									type: 'resource',
+									isColumn: false,
+									isJSON: false,
 								},
 								{
 									key: 'service.instance.id',
-									dataType: DataTypes.String,
+									dataType: 'string',
 									type: 'resource',
+									isColumn: false,
+									isJSON: false,
 								},
 								{
 									key: 'service.name',
-									dataType: DataTypes.String,
-									type: 'resource',
-								},
-								{
-									key: 'service.name',
-									dataType: DataTypes.String,
+									dataType: 'string',
 									type: 'tag',
+									isColumn: false,
+									isJSON: false,
 								},
 							],
 						},
