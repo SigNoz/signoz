@@ -15,7 +15,6 @@ var (
 )
 
 var (
-	_ json.Marshaler   = new(Selector)
 	_ json.Unmarshaler = new(Selector)
 )
 
@@ -36,9 +35,7 @@ var (
 type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]Selector, error)
 type SelectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]Selector, valuer.UUID, error)
 
-type Selector struct {
-	val string
-}
+type Selector struct{ valuer.String }
 
 func NewSelector(typed Type, selector string) (Selector, error) {
 	err := IsValidSelector(typed, selector)
@@ -46,7 +43,7 @@ func NewSelector(typed Type, selector string) (Selector, error) {
 		return Selector{}, err
 	}
 
-	return Selector{val: selector}, nil
+	return Selector{valuer.NewString(selector)}, nil
 }
 
 func MustNewSelector(typed Type, input string) Selector {
@@ -58,14 +55,6 @@ func MustNewSelector(typed Type, input string) Selector {
 	return selector
 }
 
-func (selector *Selector) MarshalJSON() ([]byte, error) {
-	return json.Marshal(selector.val)
-}
-
-func (selector Selector) String() string {
-	return selector.val
-}
-
 func (typed *Selector) UnmarshalJSON(data []byte) error {
 	str := ""
 	err := json.Unmarshal(data, &str)
@@ -73,8 +62,7 @@ func (typed *Selector) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	alias := Selector{val: str}
-	*typed = alias
+	*typed = Selector{valuer.NewString(str)}
 
 	return nil
 }

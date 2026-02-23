@@ -5,25 +5,23 @@ import (
 	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
 	nameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
 
-	_ json.Marshaler   = new(Name)
 	_ json.Unmarshaler = new(Name)
 )
 
-type Name struct {
-	val string
-}
+type Name struct{ valuer.String }
 
 func NewName(name string) (Name, error) {
 	if !nameRegex.MatchString(name) {
 		return Name{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name must conform to regex %s", nameRegex.String())
 	}
 
-	return Name{val: name}, nil
+	return Name{valuer.NewString(name)}, nil
 }
 
 func MustNewName(name string) Name {
@@ -33,14 +31,6 @@ func MustNewName(name string) Name {
 	}
 
 	return named
-}
-
-func (name Name) String() string {
-	return name.val
-}
-
-func (name *Name) MarshalJSON() ([]byte, error) {
-	return json.Marshal(name.val)
 }
 
 func (name *Name) UnmarshalJSON(data []byte) error {

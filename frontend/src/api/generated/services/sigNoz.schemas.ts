@@ -81,7 +81,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -112,9 +112,8 @@ export interface AuthtypesGettableObjectsDTO {
 	resource: AuthtypesResourceDTO;
 	/**
 	 * @type array
-	 * @nullable true
 	 */
-	selectors: AuthtypesSelectorDTO[] | null;
+	selectors: string[];
 }
 
 /**
@@ -132,9 +131,8 @@ export interface AuthtypesGettableResourcesDTO {
 	relations: AuthtypesGettableResourcesDTORelations;
 	/**
 	 * @type array
-	 * @nullable true
 	 */
-	resources: AuthtypesResourceDTO[] | null;
+	resources: AuthtypesResourceDTO[];
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -211,10 +209,6 @@ export interface AuthtypesGoogleConfigDTO {
 	serviceAccountJson?: string;
 }
 
-export interface AuthtypesNameDTO {
-	[key: string]: unknown;
-}
-
 export interface AuthtypesOIDCConfigDTO {
 	claimMapping?: AuthtypesAttributeMappingDTO;
 	/**
@@ -245,7 +239,10 @@ export interface AuthtypesOIDCConfigDTO {
 
 export interface AuthtypesObjectDTO {
 	resource: AuthtypesResourceDTO;
-	selector: AuthtypesSelectorDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
 }
 
 export interface AuthtypesOrgSessionContextDTO {
@@ -312,7 +309,10 @@ export interface AuthtypesPostableRotateTokenDTO {
 }
 
 export interface AuthtypesResourceDTO {
-	name: AuthtypesNameDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
 	/**
 	 * @type string
 	 */
@@ -360,10 +360,6 @@ export interface AuthtypesSamlConfigDTO {
 	 * @type string
 	 */
 	samlIdp?: string;
-}
-
-export interface AuthtypesSelectorDTO {
-	[key: string]: unknown;
 }
 
 export interface AuthtypesSessionContextDTO {
@@ -2061,7 +2057,7 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2202,7 +2198,7 @@ export interface TypesGettableAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type integer
 	 * @format int64
@@ -2255,7 +2251,7 @@ export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 }
 
 export interface TypesInviteDTO {
@@ -2271,7 +2267,7 @@ export interface TypesInviteDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2316,7 +2312,7 @@ export interface TypesOrganizationDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -2422,7 +2418,7 @@ export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2446,7 +2442,7 @@ export interface TypesStorableAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2495,7 +2491,7 @@ export interface TypesUserDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type boolean
 	 */

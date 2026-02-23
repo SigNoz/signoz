@@ -26,7 +26,7 @@ func (provider *provider) addAuthzRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/authz/resources", handler.New(provider.authZ.AdminAccess(provider.authzHandler.GetResources), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/authz/resources", handler.New(provider.authZ.OpenAccess(provider.authzHandler.GetResources), handler.OpenAPIDef{
 		ID:                  "AuthzResources",
 		Tags:                []string{"authz"},
 		Summary:             "Get resources",

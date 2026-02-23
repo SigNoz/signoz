@@ -171,8 +171,6 @@ func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource 
 	for _, register := range provider.registry {
 		typeables = append(typeables, register.MustGetTypeables()...)
 	}
-	// authz service cannot self register itself!
-	typeables = append(typeables, provider.MustGetTypeables()...)
 
 	resources := make([]*authtypes.Resource, 0)
 	for _, typeable := range typeables {

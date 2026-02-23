@@ -13,7 +13,7 @@ func (typeableRole *typeableRole) Tuples(subject string, relation Relation, sele
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
-		object := typeableRole.Prefix(orgID) + "/" + selector.String()
+		object := typeableRole.Prefix(orgID) + "/" + selector.StringValue()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 
@@ -30,9 +30,9 @@ func (typeableRole *typeableRole) Name() Name {
 
 // example: role:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/role
 func (typeableRole *typeableRole) Prefix(orgID valuer.UUID) string {
-	return typeableRole.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableRole.Name().String()
+	return typeableRole.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableRole.Name().StringValue()
 }
 
 func (typeableRole *typeableRole) Scope(relation Relation) string {
-	return typeableRole.Name().String() + ":" + relation.StringValue()
+	return typeableRole.Name().StringValue() + ":" + relation.StringValue()
 }

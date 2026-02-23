@@ -28,7 +28,7 @@ func (typeableResources *typeableMetaResources) Tuples(subject string, relation 
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
-		object := typeableResources.Prefix(orgID) + "/" + selector.String()
+		object := typeableResources.Prefix(orgID) + "/" + selector.StringValue()
 		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 
@@ -45,9 +45,9 @@ func (typeableMetaResources *typeableMetaResources) Name() Name {
 
 // example: metaresources:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/dashboards
 func (typeableMetaResources *typeableMetaResources) Prefix(orgID valuer.UUID) string {
-	return typeableMetaResources.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableMetaResources.Name().String()
+	return typeableMetaResources.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableMetaResources.Name().StringValue()
 }
 
 func (typeableMetaResources *typeableMetaResources) Scope(relation Relation) string {
-	return typeableMetaResources.Name().String() + ":" + relation.StringValue()
+	return typeableMetaResources.Name().StringValue() + ":" + relation.StringValue()
 }

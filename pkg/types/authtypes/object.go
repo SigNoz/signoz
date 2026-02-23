@@ -14,7 +14,7 @@ type Resource struct {
 }
 
 type GettableResources struct {
-	Resources []*Resource         `json:"resources" required:"true"`
+	Resources []*Resource         `json:"resources" required:"true" nullable:"false"`
 	Relations map[Relation][]Type `json:"relations" required:"true"`
 }
 
@@ -25,16 +25,16 @@ type Object struct {
 
 type GettableObjects struct {
 	Resource  Resource   `json:"resource" required:"true"`
-	Selectors []Selector `json:"selectors" required:"true"`
+	Selectors []Selector `json:"selectors" required:"true" nullable:"false"`
 }
 
 type PatchableObjects struct {
-	Additions []*GettableObjects `json:"additions" required:"true"`
-	Deletions []*GettableObjects `json:"deletions" required:"true"`
+	Additions []*GettableObjects `json:"additions" required:"true" nullable:"true"`
+	Deletions []*GettableObjects `json:"deletions" required:"true" nullable:"true"`
 }
 
 func NewObject(resource Resource, selector Selector) (*Object, error) {
-	err := IsValidSelector(resource.Type, selector.val)
+	err := IsValidSelector(resource.Type, selector.StringValue())
 	if err != nil {
 		return nil, err
 	}

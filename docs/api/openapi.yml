@@ -80,6 +80,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     AuthtypesGettableObjects:
       properties:
@@ -87,8 +89,7 @@ components:
           $ref: '#/components/schemas/AuthtypesResource'
         selectors:
           items:
-            $ref: '#/components/schemas/AuthtypesSelector'
-          nullable: true
+            type: string
           type: array
       required:
       - resource
@@ -106,7 +107,6 @@ components:
         resources:
           items:
             $ref: '#/components/schemas/AuthtypesResource'
-          nullable: true
           type: array
       required:
       - resources
@@ -161,8 +161,6 @@ components:
         serviceAccountJson:
           type: string
       type: object
-    AuthtypesName:
-      type: object
     AuthtypesOIDCConfig:
       properties:
         claimMapping:
@@ -185,7 +183,7 @@ components:
         resource:
           $ref: '#/components/schemas/AuthtypesResource'
         selector:
-          $ref: '#/components/schemas/AuthtypesSelector'
+          type: string
       required:
       - resource
       - selector
@@ -246,7 +244,7 @@ components:
     AuthtypesResource:
       properties:
         name:
-          $ref: '#/components/schemas/AuthtypesName'
+          type: string
         type:
           type: string
       required:
@@ -277,8 +275,6 @@ components:
           type: string
         samlIdp:
           type: string
-      type: object
-    AuthtypesSelector:
       type: object
     AuthtypesSessionContext:
       properties:
@@ -1748,6 +1744,7 @@ components:
           format: date-time
           type: string
       required:
+      - id
       - name
       - description
       - type
@@ -1885,6 +1882,8 @@ components:
           $ref: '#/components/schemas/TypesUser'
         userId:
           type: string
+      required:
+      - id
       type: object
     TypesGettableGlobalConfig:
       properties:
@@ -1897,6 +1896,8 @@ components:
       properties:
         id:
           type: string
+      required:
+      - id
       type: object
     TypesInvite:
       properties:
@@ -1920,6 +1921,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     TypesOrganization:
       properties:
@@ -1940,6 +1943,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     TypesPostableAPIKey:
       properties:
@@ -2003,6 +2008,8 @@ components:
           type: string
         token:
           type: string
+      required:
+      - id
       type: object
     TypesStorableAPIKey:
       properties:
@@ -2028,6 +2035,8 @@ components:
           type: string
         userId:
           type: string
+      required:
+      - id
       type: object
     TypesUser:
       properties:
@@ -2049,6 +2058,8 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
       type: object
     ZeustypesGettableHost:
       properties:
