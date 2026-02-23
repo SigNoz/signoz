@@ -56,7 +56,7 @@ def test_create_ingestion_key(
                     headers=common_gateway_headers(),
                 ),
                 response=MappingResponse(
-                    status=200,
+                    status=201,
                     json_body={
                         "status": "success",
                         "data": {
