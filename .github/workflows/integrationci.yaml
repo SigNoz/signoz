@@ -48,7 +48,7 @@ jobs:
           - role
           - ttl
           - alerts
-          - gateway
+          - ingestionkeys
         sqlstore-provider:
           - postgres
           - sqlite
