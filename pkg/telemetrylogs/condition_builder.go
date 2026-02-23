@@ -35,19 +35,13 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.Type.GetType() == schema.ColumnTypeEnumJSON {
-		// If field data is Not JSON Column Itself, then we need to build a JSON condition
-		if querybuilder.BodyJSONQueryEnabled && key.MustBuildJSONCondition() {
-			valueType, value := InferDataType(value, operator, key)
-			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
-			if err != nil {
-				return "", err
-			}
-			return cond, nil
-		} else if key.FieldDataType == telemetrytypes.FieldDataTypeJSON && !operator.IsOpValidForJSON() {
-			// Skip building condition for invalid operators on JSON columns
-			return "", nil
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled {
+		valueType, value := InferDataType(value, operator, key)
+		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
+		if err != nil {
+			return "", err
 		}
+		return cond, nil
 	}
 
 	if operator.IsStringSearchOperator() {

@@ -61,7 +61,7 @@ var (
 	}
 )
 
-type fieldMapper struct {}
+type fieldMapper struct{}
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
@@ -147,9 +147,6 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			}
 
 			return m.buildFieldForJSON(key)
-		case telemetrytypes.FieldContextLog:
-			// return the column name as is for log context fields
-			return column.Name, nil
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}

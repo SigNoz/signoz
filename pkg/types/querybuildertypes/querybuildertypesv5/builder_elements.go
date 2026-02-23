@@ -197,15 +197,6 @@ func (f FilterOperator) IsArrayOperator() bool {
 	}
 }
 
-func (f FilterOperator) IsOpValidForJSON() bool {
-	switch f {
-	case FilterOperatorExists, FilterOperatorNotExists, FilterOperatorContains, FilterOperatorNotContains:
-		return true
-	default:
-		return false
-	}
-}
-
 type OrderDirection struct {
 	valuer.String
 }

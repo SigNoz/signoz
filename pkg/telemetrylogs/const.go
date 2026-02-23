@@ -40,7 +40,7 @@ const (
 	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
 	MessageSubColumn         = "message"
-	bodySearchDefaultWarning = "When you search on `body` (full text or by field), Query Builder uses body.message:string by default. Check that this matches what you want to search."
+	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (
