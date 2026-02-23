@@ -143,9 +143,9 @@ type SigNozAzureAgentConfig struct {
 }
 
 // GettableConnectionArtifact represents base structure for connection artifacts
-type GettableConnectionArtifact[T any] struct {
-	AccountId string `json:"account_id"`
-	Artifact  T      `json:",inline"`
+type GettableConnectionArtifact[ArtifactT any] struct {
+	AccountId string    `json:"account_id"`
+	Artifact  ArtifactT `json:",inline"`
 }
 
 type GettableAWSConnectionArtifact struct {
@@ -194,11 +194,11 @@ type AzureAgentIntegrationConfig struct {
 	TelemetryCollectionStrategy map[string]*AzureCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-type GettableAgentCheckIn[T any] struct {
-	AccountId         string     `json:"account_id"`
-	CloudAccountId    string     `json:"cloud_account_id"`
-	RemovedAt         *time.Time `json:"removed_at"`
-	IntegrationConfig T          `json:"integration_config"`
+type GettableAgentCheckIn[AgentConfigT any] struct {
+	AccountId         string       `json:"account_id"`
+	CloudAccountId    string       `json:"cloud_account_id"`
+	RemovedAt         *time.Time   `json:"removed_at"`
+	IntegrationConfig AgentConfigT `json:"integration_config"`
 }
 
 type GettableAWSAgentCheckIn = GettableAgentCheckIn[AWSAgentIntegrationConfig]
@@ -210,14 +210,14 @@ type UpdatableServiceConfigReq struct {
 	Config    []byte `json:"config"` // json serialized config
 }
 
-type UpdatableCloudServiceConfig[T any] struct {
-	CloudAccountId string `json:"cloud_account_id"`
-	Config         T      `json:"config"`
+type UpdatableCloudServiceConfig[ServiceConfigT any] struct {
+	CloudAccountId string         `json:"cloud_account_id"`
+	Config         ServiceConfigT `json:"config"`
 }
 
 // CloudServiceConfig is a generic interface for cloud service configurations
-type CloudServiceConfig[T Definition] interface {
-	Validate(def T) error
+type CloudServiceConfig[definition Definition] interface {
+	Validate(def definition) error
 	IsMetricsEnabled() bool
 	IsLogsEnabled() bool
 }
@@ -334,8 +334,8 @@ type PatchableAccountConfig struct {
 	Data      []byte // can be either AWSAccountConfig or AzureAccountConfig
 }
 
-type PatchableAccountConfigTyped[T any] struct {
-	Config *T `json:"config"`
+type PatchableAccountConfigTyped[AccountConfigT any] struct {
+	Config *AccountConfigT `json:"config"`
 }
 
 type PatchableAWSAccountConfig = PatchableAccountConfigTyped[AWSAccountConfig]
@@ -350,8 +350,8 @@ type AzureAccountConfig struct {
 	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
 }
 
-type GettableServices[T any] struct {
-	Services []T `json:"services"`
+type GettableServices[ServiceSummaryT any] struct {
+	Services []ServiceSummaryT `json:"services"`
 }
 
 type GettableAWSServices = GettableServices[AWSServiceSummary]
@@ -450,9 +450,9 @@ func DefaultAzureAccountConfig() AzureAccountConfig {
 	}
 }
 
-type ServiceSummary[T any] struct {
+type ServiceSummary[ServiceConfigT any] struct {
 	DefinitionMetadata
-	Config *T `json:"config"`
+	Config *ServiceConfigT `json:"config"`
 }
 
 type AWSServiceSummary = ServiceSummary[AWSCloudServiceConfig]

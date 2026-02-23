@@ -20,17 +20,17 @@ type AzureDefinition = ServiceDefinition[AzureCollectionStrategy]
 var _ Definition = &AWSDefinition{}
 var _ Definition = &AzureDefinition{}
 
-type ServiceDefinition[T any] struct {
+type ServiceDefinition[StrategyT any] struct {
 	DefinitionMetadata
 	Overview             string                `json:"overview"` // markdown
 	Assets               Assets                `json:"assets"`
 	SupportedSignals     SupportedSignals      `json:"supported_signals"`
 	DataCollected        DataCollected         `json:"data_collected"`
 	IngestionStatusCheck *IngestionStatusCheck `json:"ingestion_status_check,omitempty"`
-	Strategy             *T                    `json:"telemetry_collection_strategy"`
+	Strategy             *StrategyT                    `json:"telemetry_collection_strategy"`
 }
 
-func (def *ServiceDefinition[T]) PopulateDashboardURLs(cloudProvider CloudProviderType, svcId string) {
+func (def *ServiceDefinition[StrategyT]) PopulateDashboardURLs(cloudProvider CloudProviderType, svcId string) {
 	for i := range def.Assets.Dashboards {
 		dashboardId := def.Assets.Dashboards[i].Id
 		url := "/dashboard/" + GetCloudIntegrationDashboardID(cloudProvider, svcId, dashboardId)
@@ -38,11 +38,11 @@ func (def *ServiceDefinition[T]) PopulateDashboardURLs(cloudProvider CloudProvid
 	}
 }
 
-func (def *ServiceDefinition[T]) GetId() string {
+func (def *ServiceDefinition[StrategyT]) GetId() string {
 	return def.Id
 }
 
-func (def *ServiceDefinition[T]) Validate() error {
+func (def *ServiceDefinition[StrategyT]) Validate() error {
 	seenDashboardIds := map[string]interface{}{}
 
 	if def.Strategy == nil {
@@ -73,11 +73,11 @@ type Definition interface {
 	GetAssets() Assets
 }
 
-func (def *ServiceDefinition[T]) GetIngestionStatusCheck() *IngestionStatusCheck {
+func (def *ServiceDefinition[StrategyT]) GetIngestionStatusCheck() *IngestionStatusCheck {
 	return def.IngestionStatusCheck
 }
 
-func (def *ServiceDefinition[T]) GetAssets() Assets {
+func (def *ServiceDefinition[StrategyT]) GetAssets() Assets {
 	return def.Assets
 }
 
