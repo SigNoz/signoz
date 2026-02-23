@@ -40,7 +40,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-
 	hooks := make([]telemetrystore.TelemetryStoreHook, len(hookFactories))
 	for i, hookFactory := range hookFactories {
 		hook, err := hookFactory.New(ctx, providerSettings, config)
@@ -83,11 +82,18 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	rows, err := p.clickHouseConn.Query(ctx, query, args...)
+	if err != nil {
+		event.Err = err
+		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		return nil, err
+	}
 
-	event.Err = err
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
-
-	return rows, err
+	return &rowsWithHooks{
+		Rows:    rows,
+		ctx:     ctx,
+		event:   event,
+		onClose: func() { telemetrystore.WrapAfterQuery(p.hooks, ctx, event) },
+	}, nil
 }
 
 func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {

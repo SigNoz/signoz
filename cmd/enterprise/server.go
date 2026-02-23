@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
+	eequerier "github.com/SigNoz/signoz/ee/querier"
 	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
@@ -123,6 +124,10 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(licensing licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return httpgateway.NewProviderFactory(licensing)
+		},
+		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
+			communityHandler := querier.NewHandler(ps, q, a)
+			return eequerier.NewHandler(ps, q, communityHandler)
 		},
 	)
 

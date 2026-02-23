@@ -96,6 +96,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 				config={config}
 				alignedData={chartData}
 				yAxisUnit={widget.yAxisUnit}
+				decimalPrecision={widget.decimalPrecision}
 				onCancel={onToggleModelHandler}
 			/>
 		);
@@ -105,6 +106,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		chartData,
 		widget.yAxisUnit,
 		onToggleModelHandler,
+		widget.decimalPrecision,
 	]);
 
 	const onPlotDestroy = useCallback(() => {

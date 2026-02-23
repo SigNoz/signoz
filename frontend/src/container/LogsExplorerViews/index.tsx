@@ -466,7 +466,10 @@ function LogsExplorerViewsContainer({
 						</div>
 					)}
 
-				<div className="logs-explorer-views-type-content">
+				<div
+					className="logs-explorer-views-type-content"
+					data-log-detail-ignore="true"
+				>
 					{showLiveLogs && (
 						<LiveLogs handleChangeSelectedView={handleChangeSelectedView} />
 					)}

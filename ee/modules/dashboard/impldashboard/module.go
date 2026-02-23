@@ -220,6 +220,7 @@ func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.T
 	return map[string][]*authtypes.Transaction{
 		roletypes.SigNozAnonymousRoleName: {
 			{
+				ID:       valuer.GenerateUUID(),
 				Relation: authtypes.RelationRead,
 				Object: *authtypes.MustNewObject(
 					authtypes.Resource{

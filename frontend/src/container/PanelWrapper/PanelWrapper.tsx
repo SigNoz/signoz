@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import Spinner from 'components/Spinner';
 
 import { PanelTypeVsPanelWrapper } from './constants';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -32,6 +33,11 @@ function PanelWrapper({
 		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
+
+	if (queryResponse.isFetching || queryResponse.isLoading) {
+		return <Spinner height="100%" size="large" tip="Loading..." />;
+	}
+
 	return (
 		<Component
 			panelMode={panelMode}
