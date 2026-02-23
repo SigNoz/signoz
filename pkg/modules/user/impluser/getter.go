@@ -2,6 +2,7 @@ package impluser
 
 import (
 	"context"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -33,18 +34,11 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
 	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
 
-	if !hideRootUsers {
-		return users, nil
+	if hideRootUsers {
+		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
 	}
 
-	filteredUsers := users[:0]
-	for _, user := range users {
-		if !user.IsRoot {
-			filteredUsers = append(filteredUsers, user)
-		}
-	}
-
-	return filteredUsers, nil
+	return users, nil
 }
 
 func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
