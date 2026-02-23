@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Typography } from 'antd';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
@@ -12,6 +12,7 @@ import {
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';
 
+// TODO: @amlannandy Delete this component after API migration is complete
 function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
 	const [icon, color] = useMemo(() => {
 		switch (type) {
@@ -45,17 +46,27 @@ function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
 		}
 	}, [type]);
 
+	const metricTypeRendererStyle = useCallback(
+		(color: string) => ({
+			backgroundColor: `${color}33`,
+			border: `1px solid ${color}`,
+			color,
+		}),
+		[],
+	);
+
+	const metricTypeRendererTextStyle = useCallback(
+		(color: string) => ({
+			color,
+			fontSize: 12,
+		}),
+		[],
+	);
+
 	return (
-		<div
-			className="metric-type-renderer"
-			style={{
-				backgroundColor: `${color}33`,
-				border: `1px solid ${color}`,
-				color,
-			}}
-		>
+		<div className="metric-type-renderer" style={metricTypeRendererStyle(color)}>
 			{icon}
-			<Typography.Text style={{ color, fontSize: 12 }}>
+			<Typography.Text style={metricTypeRendererTextStyle(color)}>
 				{METRIC_TYPE_LABEL_MAP[type]}
 			</Typography.Text>
 		</div>

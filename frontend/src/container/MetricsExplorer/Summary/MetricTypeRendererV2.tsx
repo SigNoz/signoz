@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Typography } from 'antd';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
@@ -49,17 +49,27 @@ export function MetricTypeRendererV2({
 		}
 	}, [type]);
 
+	const metricTypeRendererStyle = useCallback(
+		(color: string) => ({
+			backgroundColor: `${color}33`,
+			border: `1px solid ${color}`,
+			color,
+		}),
+		[],
+	);
+
+	const metricTypeRendererTextStyle = useCallback(
+		(color: string) => ({
+			color,
+			fontSize: 12,
+		}),
+		[],
+	);
+
 	return (
-		<div
-			className="metric-type-renderer"
-			style={{
-				backgroundColor: `${color}33`,
-				border: `1px solid ${color}`,
-				color,
-			}}
-		>
+		<div className="metric-type-renderer" style={metricTypeRendererStyle(color)}>
 			{icon}
-			<Typography.Text style={{ color, fontSize: 12 }}>
+			<Typography.Text style={metricTypeRendererTextStyle(color)}>
 				{METRIC_TYPE_LABEL_MAP_V2[type]}
 			</Typography.Text>
 		</div>

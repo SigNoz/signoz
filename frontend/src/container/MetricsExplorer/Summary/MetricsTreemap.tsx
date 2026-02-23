@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip, Typography } from 'antd';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
-import { stratify, treemapBinary } from 'd3-hierarchy';
+import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from 'lucide-react';
 
 import {
@@ -54,10 +54,35 @@ function TreemapContent({
 	const xMax = treemapWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT;
 	const yMax = TREEMAP_HEIGHT - TREEMAP_MARGINS.TOP - TREEMAP_MARGINS.BOTTOM;
 
+	const treemapStylesWithoutPadding = useMemo(
+		() => ({
+			width: treemapWidth,
+			height: TREEMAP_HEIGHT,
+		}),
+		[treemapWidth],
+	);
+
+	const treemapStylesWithPadding = useMemo(
+		() => ({
+			width: treemapWidth,
+			height: TREEMAP_HEIGHT,
+			paddingTop: 30,
+		}),
+		[treemapWidth],
+	);
+
+	const treemapTileStyle = useCallback(
+		(node: HierarchyNode<TreemapTile>) => ({
+			...getTreemapTileStyle(node.data),
+			...getTreemapTileTextStyle(),
+		}),
+		[],
+	);
+
 	if (isLoading) {
 		return (
 			<div data-testid="metrics-treemap-loading-state">
-				<Skeleton style={{ width: treemapWidth, height: TREEMAP_HEIGHT }} active />
+				<Skeleton style={treemapStylesWithoutPadding} active />
 			</div>
 		);
 	}
@@ -67,7 +92,7 @@ function TreemapContent({
 			<Empty
 				description="Error fetching metrics. If the problem persists, please contact support."
 				data-testid="metrics-treemap-error-state"
-				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+				style={treemapStylesWithPadding}
 			/>
 		);
 	}
@@ -77,7 +102,7 @@ function TreemapContent({
 			<Empty
 				description="No metrics found"
 				data-testid="metrics-treemap-empty-state"
-				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+				style={treemapStylesWithPadding}
 			/>
 		);
 	}
@@ -125,12 +150,7 @@ function TreemapContent({
 													height={nodeHeight}
 													onClick={(): void => openMetricDetails(node.data.id, 'treemap')}
 												>
-													<div
-														style={{
-															...getTreemapTileStyle(node.data),
-															...getTreemapTileTextStyle(),
-														}}
-													>
+													<div style={treemapTileStyle(node)}>
 														{`${node.data.displayValue}%`}
 													</div>
 												</foreignObject>

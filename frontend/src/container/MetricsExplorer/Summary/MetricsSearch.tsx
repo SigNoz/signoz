@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Tooltip } from 'antd';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -14,12 +15,16 @@ function MetricsSearch({
 	setCurrentQueryFilterExpression,
 	isLoading,
 }: MetricsSearchProps): JSX.Element {
-	const handleOnChange = (expression: string): void => {
-		setCurrentQueryFilterExpression(expression);
-	};
+	const handleOnChange = useCallback(
+		(expression: string): void => {
+			setCurrentQueryFilterExpression(expression);
+		},
+		[setCurrentQueryFilterExpression],
+	);
 
-	const handleStageAndRunQuery = (): void =>
+	const handleStageAndRunQuery = useCallback(() => {
 		onChange(currentQueryFilterExpression);
+	}, [currentQueryFilterExpression, onChange]);
 
 	return (
 		<div className="metrics-search-container">
