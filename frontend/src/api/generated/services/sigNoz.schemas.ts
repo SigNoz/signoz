@@ -623,14 +623,14 @@ export interface GatewaytypesLimitMetricValueDTO {
 export interface GatewaytypesLimitValueDTO {
 	/**
 	 * @type integer
-	 * @format int64
+	 * @nullable true
 	 */
-	count?: number;
+	count?: number | null;
 	/**
 	 * @type integer
-	 * @format int64
+	 * @nullable true
 	 */
-	size?: number;
+	size?: number | null;
 }
 
 export interface GatewaytypesPaginationDTO {
