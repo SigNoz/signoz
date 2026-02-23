@@ -3137,7 +3137,7 @@ export type GetIngestionKeys200 = {
 	status: string;
 };
 
-export type CreateIngestionKey200 = {
+export type CreateIngestionKey201 = {
 	data: GatewaytypesGettableCreatedIngestionKeyDTO;
 	/**
 	 * @type string

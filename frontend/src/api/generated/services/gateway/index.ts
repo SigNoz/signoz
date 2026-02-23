@@ -19,7 +19,7 @@ import { useMutation, useQuery } from 'react-query';
 
 import { GeneratedAPIInstance } from '../../../index';
 import type {
-	CreateIngestionKey200,
+	CreateIngestionKey201,
 	CreateIngestionKeyLimit201,
 	CreateIngestionKeyLimitPathParameters,
 	DeleteIngestionKeyLimitPathParameters,
@@ -147,7 +147,7 @@ export const createIngestionKey = (
 	gatewaytypesPostableIngestionKeyDTO: GatewaytypesPostableIngestionKeyDTO,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateIngestionKey200>({
+	return GeneratedAPIInstance<CreateIngestionKey201>({
 		url: `/api/v2/gateway/ingestion_keys`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
