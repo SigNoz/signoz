@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
+import {
+	Button,
+	Collapse,
+	Empty,
+	Input,
+	Select,
+	Skeleton,
+	Typography,
+} from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import {
@@ -50,6 +58,7 @@ function Metadata({
 		description: '',
 		temporality: MetrictypesTemporalityDTO.unspecified,
 		unit: '',
+		isMonotonic: false,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -69,6 +78,7 @@ function Metadata({
 				description: metadata.description,
 				temporality: metadata.temporality,
 				unit: metadata.unit,
+				isMonotonic: metadata.isMonotonic,
 			});
 		}
 	}, [metadata]);
@@ -76,16 +86,13 @@ function Metadata({
 	const tableData = useMemo(
 		() =>
 			metadata
-				? Object.keys(metadata)
-						// Filter out monotonic as user input is not required
-						.filter((key) => key !== TableFields.IS_MONOTONIC)
-						.map((key) => ({
+				? Object.keys(metadata).map((key) => ({
+						key,
+						value: {
+							value: metadata[key as keyof typeof metadata],
 							key,
-							value: {
-								value: metadata[key as keyof typeof metadata],
-								key,
-							},
-						}))
+						},
+				  }))
 				: [],
 		[metadata],
 	);
@@ -98,6 +105,9 @@ function Metadata({
 			}
 			if (key === TableFields.TYPE) {
 				return <MetricTypeViewRenderer type={value as MetrictypesTypeDTO} />;
+			}
+			if (key === TableFields.IS_MONOTONIC) {
+				return <FieldRenderer field={value ? 'Yes' : 'No'} />;
 			}
 			if (key === TableFields.Temporality) {
 				const temporality = METRIC_METADATA_TEMPORALITY_OPTIONS.find(
@@ -124,6 +134,11 @@ function Metadata({
 			const metricUnitAlreadySet =
 				field.key === TableFields.UNIT && Boolean(metadata?.unit);
 			if (metricUnitAlreadySet) {
+				return renderUneditableField(field.key, field.value);
+			}
+
+			// Monotonic is not editable
+			if (field.key === TableFields.IS_MONOTONIC) {
 				return renderUneditableField(field.key, field.value);
 			}
 
@@ -282,6 +297,7 @@ function Metadata({
 					description: metadata.description,
 					unit: metadata.unit,
 					temporality: metadata.temporality,
+					isMonotonic: metadata.isMonotonic,
 				});
 			}
 			setIsEditing(false);
@@ -317,6 +333,9 @@ function Metadata({
 				</div>
 			);
 		}
+		if (isErrorMetricMetadata) {
+			return null;
+		}
 		return (
 			<div className="action-menu">
 				<Button
@@ -333,7 +352,13 @@ function Metadata({
 				</Button>
 			</div>
 		);
-	}, [isEditing, isUpdatingMetricsMetadata, cancelEdit, handleSave]);
+	}, [
+		isEditing,
+		isErrorMetricMetadata,
+		isUpdatingMetricsMetadata,
+		cancelEdit,
+		handleSave,
+	]);
 
 	const items = useMemo(
 		() => [
@@ -345,7 +370,12 @@ function Metadata({
 					</div>
 				),
 				key: 'metric-metadata',
-				children: (
+				children: isErrorMetricMetadata ? (
+					<Empty
+						className="metrics-metadata-error"
+						description="Error fetching metric metadata"
+					/>
+				) : (
 					<ResizeTable
 						columns={columns}
 						tableLayout="fixed"
@@ -357,7 +387,7 @@ function Metadata({
 				),
 			},
 		],
-		[actionButton, columns, tableData],
+		[actionButton, columns, isErrorMetricMetadata, tableData],
 	);
 
 	if (isLoadingMetricMetadata) {

@@ -41,6 +41,7 @@ function MetricDetails({
 		{
 			query: {
 				enabled: !!metricName,
+				queryKey: ['getMetricMetadata', metricName],
 			},
 		},
 	);
@@ -100,6 +101,9 @@ function MetricDetails({
 		});
 	}, []);
 
+	const isActionButtonDisabled =
+		!metricName || isLoadingMetricMetadata || isErrorMetricMetadata;
+
 	if (!metricName) {
 		return <Empty description="Metric not found" />;
 	}
@@ -117,7 +121,7 @@ function MetricDetails({
 						<Button
 							onClick={goToMetricsExplorerwithSelectedMetric}
 							icon={<Compass size={16} />}
-							disabled={!metricName || isLoadingMetricMetadata}
+							disabled={isActionButtonDisabled}
 							data-testid="open-in-explorer-button"
 						>
 							Open in Explorer
@@ -127,7 +131,7 @@ function MetricDetails({
 							<Button
 								className="inspect-metrics-button"
 								aria-label="Inspect Metric"
-								disabled={!metricName || isLoadingMetricMetadata}
+								disabled={isActionButtonDisabled}
 								icon={<Crosshair size={18} />}
 								onClick={(): void => {
 									if (metricName) {

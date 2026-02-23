@@ -53,6 +53,7 @@ export interface MetricMetadataState {
 	description: string;
 	temporality?: MetrictypesTemporalityDTO;
 	unit: string;
+	isMonotonic: boolean;
 }
 
 export type MetricAttribute = MetricsexplorertypesMetricAttributeDTO;

@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
 import { Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 
@@ -25,6 +27,17 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		},
 	);
 
+	const errorMessage = useMemo(
+		() => (
+			<Tooltip title="Error fetching metric highlights">
+				<Typography.Text className="metric-details-grid-value">
+					<InfoCircleOutlined size={16} color={Color.BG_CHERRY_500} />
+				</Typography.Text>
+			</Tooltip>
+		),
+		[],
+	);
+
 	const metricHighlights = useMemo(() => {
 		return metricHighlightsData?.data?.data ?? null;
 	}, [metricHighlightsData]);
@@ -33,10 +46,8 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		if (!metricHighlights) {
 			return null;
 		}
-		if (isErrorMetricHighlights) {
-			return (
-				<Typography.Text className="metric-details-grid-value">-</Typography.Text>
-			);
+		if (!isErrorMetricHighlights) {
+			return errorMessage;
 		}
 		return (
 			<Typography.Text className="metric-details-grid-value">
@@ -45,16 +56,14 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				</Tooltip>
 			</Typography.Text>
 		);
-	}, [metricHighlights, isErrorMetricHighlights]);
+	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
 
 	const timeSeries = useMemo(() => {
 		if (!metricHighlights) {
 			return null;
 		}
 		if (isErrorMetricHighlights) {
-			return (
-				<Typography.Text className="metric-details-grid-value">-</Typography.Text>
-			);
+			return errorMessage;
 		}
 
 		const timeSeriesActive = formatNumberToCompactFormat(
@@ -75,16 +84,14 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				</Tooltip>
 			</Typography.Text>
 		);
-	}, [metricHighlights, isErrorMetricHighlights]);
+	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
 
 	const lastReceived = useMemo(() => {
 		if (!metricHighlights) {
 			return null;
 		}
 		if (isErrorMetricHighlights) {
-			return (
-				<Typography.Text className="metric-details-grid-value">-</Typography.Text>
-			);
+			return errorMessage;
 		}
 		const displayText = formatTimestampToReadableDate(
 			metricHighlights.lastReceived,
@@ -94,7 +101,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				<Tooltip title={displayText}>{displayText}</Tooltip>
 			</Typography.Text>
 		);
-	}, [metricHighlights, isErrorMetricHighlights]);
+	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
 
 	if (isLoadingMetricHighlights) {
 		return (

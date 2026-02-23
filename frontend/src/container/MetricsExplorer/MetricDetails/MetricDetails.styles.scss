@@ -38,6 +38,10 @@
 		flex-direction: column;
 		gap: 12px;
 
+		.metrics-metadata-error {
+			padding: 16px !important;
+		}
+
 		.metric-details-content-grid {
 			height: 50px;
 			.labels-row,

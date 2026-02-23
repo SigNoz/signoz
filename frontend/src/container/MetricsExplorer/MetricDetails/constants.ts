@@ -8,6 +8,7 @@ export const METRIC_METADATA_KEYS = {
 	unit: 'Unit',
 	type: 'Metric Type',
 	temporality: 'Temporality',
+	isMonotonic: 'Monotonic',
 };
 
 export const METRIC_METADATA_TEMPORALITY_OPTIONS = [
