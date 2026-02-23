@@ -117,7 +117,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.112.0
+    image: signoz/signoz:v0.112.1
     ports:
       - "8080:8080" # signoz port
     volumes:
@@ -139,9 +139,9 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:v0.142.0
+    image: signoz/signoz-otel-collector:v0.142.1
     entrypoint:
-    - /bin/sh
+      - /bin/sh
     command:
       - -c
       - |
@@ -176,11 +176,11 @@ services:
     entrypoint:
       - /bin/sh
     command:
-    - -c 
-    - |
-      /signoz-otel-collector migrate bootstrap &&
-      /signoz-otel-collector migrate sync up &&
-      /signoz-otel-collector migrate async up
+      - -c
+      - |
+        /signoz-otel-collector migrate bootstrap &&
+        /signoz-otel-collector migrate sync up &&
+        /signoz-otel-collector migrate async up
 networks:
   signoz-net:
     name: signoz-net
