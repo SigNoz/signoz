@@ -81,6 +81,37 @@ components:
           format: date-time
           type: string
       type: object
+    AuthtypesGettableObjects:
+      properties:
+        resource:
+          $ref: '#/components/schemas/AuthtypesResource'
+        selectors:
+          items:
+            $ref: '#/components/schemas/AuthtypesSelector'
+          nullable: true
+          type: array
+      required:
+      - resource
+      - selectors
+      type: object
+    AuthtypesGettableResources:
+      properties:
+        relations:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          nullable: true
+          type: object
+        resources:
+          items:
+            $ref: '#/components/schemas/AuthtypesResource'
+          nullable: true
+          type: array
+      required:
+      - resources
+      - relations
+      type: object
     AuthtypesGettableToken:
       properties:
         accessToken:
@@ -175,6 +206,22 @@ components:
         provider:
           type: string
       type: object
+    AuthtypesPatchableObjects:
+      properties:
+        additions:
+          items:
+            $ref: '#/components/schemas/AuthtypesGettableObjects'
+          nullable: true
+          type: array
+        deletions:
+          items:
+            $ref: '#/components/schemas/AuthtypesGettableObjects'
+          nullable: true
+          type: array
+      required:
+      - additions
+      - deletions
+      type: object
     AuthtypesPostableAuthDomain:
       properties:
         config:
@@ -245,8 +292,6 @@ components:
       type: object
     AuthtypesTransaction:
       properties:
-        id:
-          type: string
         object:
           $ref: '#/components/schemas/AuthtypesObject'
         relation:
@@ -1662,40 +1707,6 @@ components:
         status:
           type: string
       type: object
-    RoletypesGettableResources:
-      properties:
-        relations:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          nullable: true
-          type: object
-        resources:
-          items:
-            $ref: '#/components/schemas/AuthtypesResource'
-          nullable: true
-          type: array
-      required:
-      - resources
-      - relations
-      type: object
-    RoletypesPatchableObjects:
-      properties:
-        additions:
-          items:
-            $ref: '#/components/schemas/AuthtypesObject'
-          nullable: true
-          type: array
-        deletions:
-          items:
-            $ref: '#/components/schemas/AuthtypesObject'
-          nullable: true
-          type: array
-      required:
-      - additions
-      - deletions
-      type: object
     RoletypesPatchableRole:
       properties:
         description:
@@ -2159,6 +2170,32 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       summary: Check permissions
+      tags:
+      - authz
+  /api/v1/authz/resources:
+    get:
+      deprecated: false
+      description: Gets all the available resources
+      operationId: AuthzResources
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableResources'
+                  status:
+                    type: string
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Get resources
       tags:
       - authz
   /api/v1/changePassword/{id}:
@@ -4258,7 +4295,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/AuthtypesObject'
+                      $ref: '#/components/schemas/AuthtypesGettableObjects'
                     type: array
                   status:
                     type: string
@@ -4328,7 +4365,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPatchableObjects'
+              $ref: '#/components/schemas/AuthtypesPatchableObjects'
       responses:
         "204":
           content:
@@ -4384,49 +4421,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Patch objects for a role by relation
-      tags:
-      - role
-  /api/v1/roles/resources:
-    get:
-      deprecated: false
-      description: Gets all the available resources for role assignment
-      operationId: GetResources
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/RoletypesGettableResources'
-                  status:
-                    type: string
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Get resources
       tags:
       - role
   /api/v1/user:

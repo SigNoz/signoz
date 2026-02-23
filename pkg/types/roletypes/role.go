@@ -3,7 +3,6 @@ package roletypes
 import (
 	"encoding/json"
 	"regexp"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -84,16 +83,6 @@ type PatchableRole struct {
 	Description string `json:"description" required:"true"`
 }
 
-type PatchableObjects struct {
-	Additions []*authtypes.Object `json:"additions" required:"true"`
-	Deletions []*authtypes.Object `json:"deletions" required:"true"`
-}
-
-type GettableResources struct {
-	Resources []*authtypes.Resource                   `json:"resources" required:"true"`
-	Relations map[authtypes.Type][]authtypes.Relation `json:"relations" required:"true"`
-}
-
 func NewStorableRoleFromRole(role *Role) *StorableRole {
 	return &StorableRole{
 		Identifiable:  role.Identifiable,
@@ -142,15 +131,8 @@ func NewManagedRoles(orgID valuer.UUID) []*Role {
 
 }
 
-func NewGettableResources(resources []*authtypes.Resource) *GettableResources {
-	return &GettableResources{
-		Resources: resources,
-		Relations: authtypes.TypeableRelations,
-	}
-}
-
 func (role *Role) PatchMetadata(description string) error {
-	err := role.CanEditDelete()
+	err := role.ErrIfManaged()
 	if err != nil {
 		return err
 	}
@@ -160,32 +142,7 @@ func (role *Role) PatchMetadata(description string) error {
 	return nil
 }
 
-func (role *Role) NewPatchableObjects(additions []*authtypes.Object, deletions []*authtypes.Object, relation authtypes.Relation) (*PatchableObjects, error) {
-	err := role.CanEditDelete()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(additions) == 0 && len(deletions) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty object patch request received, at least one of additions or deletions must be present")
-	}
-
-	for _, object := range additions {
-		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
-			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-		}
-	}
-
-	for _, object := range deletions {
-		if !slices.Contains(authtypes.TypeableRelations[object.Resource.Type], relation) {
-			return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-		}
-	}
-
-	return &PatchableObjects{Additions: additions, Deletions: deletions}, nil
-}
-
-func (role *Role) CanEditDelete() error {
+func (role *Role) ErrIfManaged() error {
 	if role.Type == RoleTypeManaged {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "cannot edit/delete managed role: %s", role.Name)
 	}

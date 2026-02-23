@@ -108,6 +108,35 @@ export interface AuthtypesGettableAuthDomainDTO {
 	updatedAt?: Date;
 }
 
+export interface AuthtypesGettableObjectsDTO {
+	resource: AuthtypesResourceDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	selectors: AuthtypesSelectorDTO[] | null;
+}
+
+/**
+ * @nullable
+ */
+export type AuthtypesGettableResourcesDTORelations = {
+	[key: string]: string[];
+} | null;
+
+export interface AuthtypesGettableResourcesDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	relations: AuthtypesGettableResourcesDTORelations;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	resources: AuthtypesResourceDTO[] | null;
+}
+
 export interface AuthtypesGettableTokenDTO {
 	/**
 	 * @type string
@@ -239,6 +268,19 @@ export interface AuthtypesPasswordAuthNSupportDTO {
 	provider?: string;
 }
 
+export interface AuthtypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: AuthtypesGettableObjectsDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: AuthtypesGettableObjectsDTO[] | null;
+}
+
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -337,10 +379,6 @@ export interface AuthtypesSessionContextDTO {
 }
 
 export interface AuthtypesTransactionDTO {
-	/**
-	 * @type string
-	 */
-	id?: string;
 	object: AuthtypesObjectDTO;
 	/**
 	 * @type string
@@ -1992,39 +2030,6 @@ export interface RenderErrorResponseDTO {
 	status?: string;
 }
 
-/**
- * @nullable
- */
-export type RoletypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface RoletypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: RoletypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	resources: AuthtypesResourceDTO[] | null;
-}
-
-export interface RoletypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesObjectDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesObjectDTO[] | null;
-}
-
 export interface RoletypesPatchableRoleDTO {
 	/**
 	 * @type string
@@ -2606,6 +2611,14 @@ export type AuthzCheck200 = {
 	status?: string;
 };
 
+export type AuthzResources200 = {
+	data?: AuthtypesGettableResourcesDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+};
+
 export type ChangePasswordPathParameters = {
 	id: string;
 };
@@ -3017,7 +3030,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data?: AuthtypesObjectDTO[];
+	data?: AuthtypesGettableObjectsDTO[];
 	/**
 	 * @type string
 	 */
@@ -3028,14 +3041,6 @@ export type PatchObjectsPathParameters = {
 	id: string;
 	relation: string;
 };
-export type GetResources200 = {
-	data?: RoletypesGettableResourcesDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-};
-
 export type ListUsers200 = {
 	/**
 	 * @type array
