@@ -211,8 +211,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgId := valuer.MustNewUUID(claims.OrgID)
-	users, err := h.getter.ListByOrgID(ctx, orgId)
+	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
