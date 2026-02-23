@@ -77,3 +77,10 @@ func (enum *String) UnmarshalText(text []byte) error {
 func (enum String) MarshalText() (text []byte, err error) {
 	return []byte(enum.StringValue()), nil
 }
+
+// Implement Gin's BindUnmarshaler interface
+// See https://github.com/SigNoz/signoz/pull/10219 description for additional details
+func (enum *String) UnmarshalParam(param string) error {
+	*enum = NewString(param)
+	return nil
+}

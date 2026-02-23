@@ -2,8 +2,10 @@ package zeus
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 )
 
 var (
@@ -28,8 +30,19 @@ type Zeus interface {
 	PutMeters(context.Context, string, []byte) error
 
 	// Put profile for the given license key.
-	PutProfile(context.Context, string, []byte) error
+	PutProfile(context.Context, string, *zeustypes.PostableProfile) error
 
 	// Put host for the given license key.
-	PutHost(context.Context, string, []byte) error
+	PutHost(context.Context, string, *zeustypes.PostableHost) error
+}
+
+type Handler interface {
+	// API level handler for PutProfile
+	PutProfile(http.ResponseWriter, *http.Request)
+
+	// API level handler for getting hosts a slim wrapper around GetDeployment
+	GetHosts(http.ResponseWriter, *http.Request)
+
+	// API level handler for PutHost
+	PutHost(http.ResponseWriter, *http.Request)
 }

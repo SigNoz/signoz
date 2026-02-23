@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // A Rule encapsulates a vector expression which is evaluated at a specified
@@ -19,9 +20,9 @@ type Rule interface {
 	Labels() labels.BaseLabels
 	Annotations() labels.BaseLabels
 	Condition() *ruletypes.RuleCondition
-	EvalDelay() time.Duration
-	EvalWindow() time.Duration
-	HoldDuration() time.Duration
+	EvalDelay() valuer.TextDuration
+	EvalWindow() valuer.TextDuration
+	HoldDuration() valuer.TextDuration
 	State() model.AlertState
 	ActiveAlerts() []*ruletypes.Alert
 	// ActiveAlertsLabelFP returns a map of active alert labels fingerprint

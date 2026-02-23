@@ -187,25 +187,6 @@ Jaeger 仅仅是一个分布式追踪系统。 但是 SigNoz 可以提供 metric
 
 如果你不知道如何开始？ 只需要在 [slack 社区](https://signoz.io/slack) 通过 `#contributing` 频道联系我们。
 
-### 项目维护人员
-
-#### 后端
-
-- [Ankit Nayan](https://github.com/ankitnayan)
-- [Nityananda Gohain](https://github.com/nityanandagohain)
-- [Srikanth Chekuri](https://github.com/srikanthccv)
-- [Vishal Sharma](https://github.com/makeavish)
-
-#### 前端
-
-- [Palash Gupta](https://github.com/palashgdev)
-- [Yunus M](https://github.com/YounixM)
-- [Rajat Dabade](https://github.com/Rajat-Dabade)
-
-#### 运维开发
-
-- [Prashant Shahi](https://github.com/prashant-shahi)
-
 <br /><br />
 
 ## 文档

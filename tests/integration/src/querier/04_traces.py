@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 import pytest
 import requests
@@ -14,7 +14,11 @@ from fixtures.querier import (
     make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
-from src.querier.util import assert_identical_query_response
+from src.querier.util import (
+    assert_identical_query_response,
+    format_timestamp,
+    generate_traces_with_corrupt_metadata,
+)
 
 
 def test_traces_list(
@@ -473,6 +477,234 @@ def test_traces_list(
 
     values = response.json()["data"]["values"]["stringValues"]
     assert set(values) == set(["topic-service", "http-service"])
+
+
+@pytest.mark.parametrize(
+    "payload,status_code,results",
+    [
+        # Case 1: order by timestamp field which there in attributes as well
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
+                    "limit": 1,
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[3].duration_nano,
+                x[3].name,
+                x[3].response_status_code,
+                x[3].service_name,
+                x[3].span_id,
+                format_timestamp(x[3].timestamp),
+                x[3].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 2: order by attribute timestamp field which is there in attributes as well
+        # This should break but it doesn't because attribute.timestamp gets adjusted to timestamp
+        # because of default trace.timestamp gets added by default and bug in field mapper picks
+        # instrinsic field
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "order": [
+                        {"key": {"name": "attribute.timestamp"}, "direction": "desc"}
+                    ],
+                    "limit": 1,
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[3].duration_nano,
+                x[3].name,
+                x[3].response_status_code,
+                x[3].service_name,
+                x[3].span_id,
+                format_timestamp(x[3].timestamp),
+                x[3].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 3: select timestamp with empty order by
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "timestamp"}],
+                    "limit": 1,
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[2].span_id,
+                format_timestamp(x[2].timestamp),
+                x[2].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 4: select attribute.timestamp with empty order by
+        # This doesn't return any data because of where_clause using aliased timestamp
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "filter": {"expression": "attribute.timestamp exists"},
+                    "disabled": False,
+                    "selectFields": [{"name": "attribute.timestamp"}],
+                    "limit": 1,
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 5: select timestamp with timestamp order by
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "timestamp"}],
+                    "limit": 1,
+                    "order": [{"key": {"name": "timestamp"}, "direction": "asc"}],
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[0].span_id,
+                format_timestamp(x[0].timestamp),
+                x[0].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 6: select duration_nano with duration order by
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "duration_nano"}],
+                    "limit": 1,
+                    "order": [{"key": {"name": "duration_nano"}, "direction": "desc"}],
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[1].duration_nano,
+                x[1].span_id,
+                format_timestamp(x[1].timestamp),
+                x[1].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 7: select attribute.duration_nano with attribute.duration_nano order by
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "attribute.duration_nano"}],
+                    "filter": {"expression": "attribute.duration_nano exists"},
+                    "limit": 1,
+                    "order": [
+                        {
+                            "key": {"name": "attribute.duration_nano"},
+                            "direction": "desc",
+                        }
+                    ],
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                "corrupt_data",
+                x[3].span_id,
+                format_timestamp(x[3].timestamp),
+                x[3].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+        # Case 8: select attribute.duration_nano with duration order by
+        pytest.param(
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": False,
+                    "selectFields": [{"name": "attribute.duration_nano"}],
+                    "limit": 1,
+                    "order": [{"key": {"name": "duration_nano"}, "direction": "desc"}],
+                },
+            },
+            HTTPStatus.OK,
+            lambda x: [
+                x[1].duration_nano,
+                x[1].span_id,
+                format_timestamp(x[1].timestamp),
+                x[1].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
+        ),
+    ],
+)
+def test_traces_list_with_corrupt_data(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+    payload: Dict[str, Any],
+    status_code: HTTPStatus,
+    results: Callable[[List[Traces]], List[Any]],
+) -> None:
+    """
+    Setup:
+    Insert 4 traces with corrupt attributes.
+    Tests:
+    """
+
+    traces = generate_traces_with_corrupt_metadata()
+    insert_traces(traces)
+    # 4 Traces with corrupt metadata inserted
+    # traces[i] occured before traces[j] where i < j
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="raw",
+        queries=[payload],
+    )
+
+    assert response.status_code == status_code
+
+    if response.status_code == HTTPStatus.OK:
+
+        if not results(traces):
+            # No results expected
+            assert response.json()["data"]["data"]["results"][0]["rows"] is None
+        else:
+            data = response.json()["data"]["data"]["results"][0]["rows"][0]["data"]
+            # Cannot compare values as they are randomly generated
+            for key, value in zip(list(data.keys()), results(traces)):
+                assert data[key] == value
 
 
 @pytest.mark.parametrize(

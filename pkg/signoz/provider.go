@@ -162,6 +162,13 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateOrgPreferenceFactory(sqlstore, sqlschema),
 		sqlmigration.NewRenameOrgDomainsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddResetPasswordTokenExpiryFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddManagedRolesFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAuthzIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRbacToAuthzFactory(sqlstore),
+		sqlmigration.NewMigratePublicDashboardsFactory(sqlstore),
+		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
+		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -243,8 +250,10 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
 			handlers.GatewayHandler,
-			modules.RoleGetter,
-			handlers.Role,
+			handlers.Fields,
+			handlers.AuthzHandler,
+			handlers.ZeusHandler,
+			handlers.QuerierHandler,
 		),
 	)
 }

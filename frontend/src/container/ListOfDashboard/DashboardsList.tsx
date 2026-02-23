@@ -39,8 +39,10 @@ import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
-import { sanitizeDashboardData } from 'container/DashboardContainer/DashboardDescription';
-import { downloadObjectAsJson } from 'container/DashboardContainer/DashboardDescription/utils';
+import {
+	downloadObjectAsJson,
+	sanitizeDashboardData,
+} from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';

@@ -5,10 +5,10 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
@@ -40,11 +40,11 @@ const NormalizedMetricsMapQueryThreads = 10
 var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
 var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
-func GetEvalDelay() time.Duration {
+func GetEvalDelay() valuer.TextDuration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
-	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
+	evalDelayDuration, err := valuer.ParseTextDuration(evalDelayStr)
 	if err != nil {
-		return 0
+		return valuer.TextDuration{}
 	}
 	return evalDelayDuration
 }

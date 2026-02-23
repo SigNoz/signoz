@@ -40,6 +40,7 @@ import type {
 	TypesChangePasswordRequestDTO,
 	TypesPostableAcceptInviteDTO,
 	TypesPostableAPIKeyDTO,
+	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesStorableAPIKeyDTO,
@@ -1566,4 +1567,88 @@ export const invalidateGetMyUser = async (
 	);
 
 	return queryClient;
+};
+
+/**
+ * This endpoint initiates the forgot password flow by sending a reset password email
+ * @summary Forgot password
+ */
+export const forgotPassword = (
+	typesPostableForgotPasswordDTO: TypesPostableForgotPasswordDTO,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/factor_password/forgot`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesPostableForgotPasswordDTO,
+		signal,
+	});
+};
+
+export const getForgotPasswordMutationOptions = <
+	TError = RenderErrorResponseDTO,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof forgotPassword>>,
+		TError,
+		{ data: TypesPostableForgotPasswordDTO },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof forgotPassword>>,
+	TError,
+	{ data: TypesPostableForgotPasswordDTO },
+	TContext
+> => {
+	const mutationKey = ['forgotPassword'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof forgotPassword>>,
+		{ data: TypesPostableForgotPasswordDTO }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return forgotPassword(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ForgotPasswordMutationResult = NonNullable<
+	Awaited<ReturnType<typeof forgotPassword>>
+>;
+export type ForgotPasswordMutationBody = TypesPostableForgotPasswordDTO;
+export type ForgotPasswordMutationError = RenderErrorResponseDTO;
+
+/**
+ * @summary Forgot password
+ */
+export const useForgotPassword = <
+	TError = RenderErrorResponseDTO,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof forgotPassword>>,
+		TError,
+		{ data: TypesPostableForgotPasswordDTO },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof forgotPassword>>,
+	TError,
+	{ data: TypesPostableForgotPasswordDTO },
+	TContext
+> => {
+	const mutationOptions = getForgotPasswordMutationOptions(options);
+
+	return useMutation(mutationOptions);
 };

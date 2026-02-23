@@ -4,7 +4,6 @@ services:
     container_name: signoz-otel-collector-dev
     command:
       - --config=/etc/otel-collector-config.yaml
-      - --feature-gates=-pkg.translator.prometheus.NormalizeName
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     environment:

@@ -33,8 +33,8 @@ type LimitConfig struct {
 }
 
 type LimitValue struct {
-	Size  int64 `json:"size,omitempty"`
-	Count int64 `json:"count,omitempty"`
+	Size  int64 `json:"size"`
+	Count int64 `json:"count"`
 }
 
 type LimitMetric struct {
@@ -54,20 +54,31 @@ type Pagination struct {
 	Total   int `json:"total"`
 }
 
+type IngestionKeysParams struct {
+	Page    int `query:"page"`
+	PerPage int `query:"per_page"`
+}
+
+type SearchIngestionKeysParams struct {
+	Name    string `query:"name" required:"true"`
+	Page    int    `query:"page"`
+	PerPage int    `query:"per_page"`
+}
+
 type GettableIngestionKeys struct {
 	Keys       []IngestionKey `json:"keys"`
 	Pagination Pagination     `json:"_pagination"`
 }
 
 type PostableIngestionKey struct {
-	Name      string    `json:"name"`
+	Name      string    `json:"name" required:"true"`
 	Tags      []string  `json:"tags"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type GettableCreatedIngestionKey struct {
-	ID    string `json:"id"`
-	Value string `json:"value"`
+	ID    string `json:"id" required:"true"`
+	Value string `json:"value" required:"true"`
 }
 
 type PostableIngestionKeyLimit struct {
@@ -77,10 +88,10 @@ type PostableIngestionKeyLimit struct {
 }
 
 type GettableCreatedIngestionKeyLimit struct {
-	ID string `json:"id"`
+	ID string `json:"id" required:"true"`
 }
 
 type UpdatableIngestionKeyLimit struct {
-	Config LimitConfig `json:"config"`
+	Config LimitConfig `json:"config" required:"true"`
 	Tags   []string    `json:"tags"`
 }

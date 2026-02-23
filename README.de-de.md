@@ -176,25 +176,6 @@ Wir haben Benchmarks veröffentlicht, die Loki mit SigNoz vergleichen. Schauen S
 Wir ❤️ Beiträge zum Projekt, egal ob große oder kleine. Bitte lies dir zuerst die [CONTRIBUTING.md](CONTRIBUTING.md), durch, bevor du anfängst, Beiträge zu SigNoz zu machen.
 Du bist dir nicht sicher, wie du anfangen sollst? Schreib uns einfach auf dem #contributing Kanal in unserer [slack community](https://signoz.io/slack)
 
-### Unsere Projektbetreuer
-
-#### Backend
-
-- [Ankit Nayan](https://github.com/ankitnayan)
-- [Nityananda Gohain](https://github.com/nityanandagohain)
-- [Srikanth Chekuri](https://github.com/srikanthccv)
-- [Vishal Sharma](https://github.com/makeavish)
-
-#### Frontend
-
-- [Palash Gupta](https://github.com/palashgdev)
-- [Yunus M](https://github.com/YounixM)
-- [Rajat Dabade](https://github.com/Rajat-Dabade)
-
-#### DevOps
-
-- [Prashant Shahi](https://github.com/prashant-shahi)
-
 <br /><br />
 
 ## Dokumentation

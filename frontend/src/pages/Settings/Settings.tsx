@@ -13,7 +13,7 @@ import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { Wrench } from 'lucide-react';
+import { Cog } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -77,6 +77,7 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
+							item.key === ROUTES.ROLES_SETTINGS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
 							item.key === ROUTES.API_KEYS ||
@@ -107,6 +108,7 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
+							item.key === ROUTES.ROLES_SETTINGS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.ORG_SETTINGS ||
@@ -134,7 +136,9 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.API_KEYS || item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.API_KEYS ||
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.ROLES_SETTINGS
 								? true
 								: item.isEnabled,
 					}));
@@ -236,7 +240,7 @@ function SettingsPage(): JSX.Element {
 					className="settings-page-header-title"
 					data-testid="settings-page-title"
 				>
-					<Wrench size={16} />
+					<Cog size={16} />
 					Settings
 				</div>
 			</header>
