@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding"
 	"encoding/json"
 	"net/http"
 	"regexp"
@@ -15,8 +16,10 @@ var (
 )
 
 var (
-	_ json.Marshaler   = new(Selector)
-	_ json.Unmarshaler = new(Selector)
+	_ json.Marshaler           = new(Selector)
+	_ json.Unmarshaler         = new(Selector)
+	_ encoding.TextMarshaler   = new(Selector)
+	_ encoding.TextUnmarshaler = new(Selector)
 )
 
 var (
@@ -76,6 +79,15 @@ func (typed *Selector) UnmarshalJSON(data []byte) error {
 	alias := Selector{val: str}
 	*typed = alias
 
+	return nil
+}
+
+func (selector Selector) MarshalText() ([]byte, error) {
+	return []byte(selector.val), nil
+}
+
+func (selector *Selector) UnmarshalText(text []byte) error {
+	*selector = Selector{val: string(text)}
 	return nil
 }
 

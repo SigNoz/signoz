@@ -81,7 +81,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Response:            new(metricsexplorertypes.MetricAttributesResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
@@ -138,7 +138,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Response:            new(metricsexplorertypes.MetricHighlightsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
@@ -157,7 +157,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Response:            new(metricsexplorertypes.MetricAlertsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
@@ -176,7 +176,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Response:            new(metricsexplorertypes.MetricDashboardsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
