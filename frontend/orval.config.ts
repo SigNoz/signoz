@@ -25,13 +25,13 @@ export default defineConfig({
 					useMutation: true,
 					useInvalidate: true,
 					signal: true,
-					useOperationIdAsQueryKey: true,
+					useOperationIdAsQueryKey: false,
 				},
 				useDates: true,
 				useNamedParameters: true,
 				enumGenerationType: 'enum',
 				mutator: {
-					path: './src/api/index.ts',
+					path: './src/api/generatedAPIInstance.ts',
 					name: 'GeneratedAPIInstance',
 				},
 

@@ -371,6 +371,9 @@ components:
           type: string
         url:
           type: string
+      required:
+      - code
+      - message
       type: object
     ErrorsResponseerroradditional:
       properties:
@@ -1706,6 +1709,9 @@ components:
           $ref: '#/components/schemas/ErrorsJSON'
         status:
           type: string
+      required:
+      - status
+      - error
       type: object
     RoletypesPatchableRole:
       properties:
@@ -2161,6 +2167,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "500":
@@ -2187,6 +2196,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableResources'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "500":
@@ -2270,6 +2282,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: See Other
         "400":
@@ -2308,6 +2323,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: See Other
         "400":
@@ -2371,6 +2389,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: See Other
         "400":
@@ -2465,6 +2486,9 @@ paths:
                     $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2519,6 +2543,9 @@ paths:
                     $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "401":
@@ -2612,6 +2639,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2659,6 +2689,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -2855,6 +2888,9 @@ paths:
                     $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2945,6 +2981,9 @@ paths:
                     $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -2994,6 +3033,9 @@ paths:
                     $ref: '#/components/schemas/TypesResetPasswordToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3049,6 +3091,9 @@ paths:
                     $ref: '#/components/schemas/TypesGettableGlobalConfig'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3094,6 +3139,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3141,6 +3189,9 @@ paths:
                     $ref: '#/components/schemas/TypesInvite'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -3254,6 +3305,9 @@ paths:
                     $ref: '#/components/schemas/TypesInvite'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3297,6 +3351,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -3391,6 +3448,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3489,6 +3549,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3538,6 +3601,9 @@ paths:
                     $ref: '#/components/schemas/PreferencetypesPreference'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -3651,6 +3717,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3698,6 +3767,9 @@ paths:
                     $ref: '#/components/schemas/TypesGettableAPIKey'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -3865,6 +3937,9 @@ paths:
                     $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardData'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3918,6 +3993,9 @@ paths:
                     $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -3995,6 +4073,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4042,6 +4123,9 @@ paths:
                     $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "400":
@@ -4176,6 +4260,9 @@ paths:
                     $ref: '#/components/schemas/RoletypesRole'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4299,6 +4386,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4440,6 +4530,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4534,6 +4627,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4593,6 +4689,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -4648,6 +4747,9 @@ paths:
                     $ref: '#/components/schemas/TypesUser'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4690,6 +4792,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4739,6 +4844,9 @@ paths:
                     $ref: '#/components/schemas/PreferencetypesPreference'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4881,6 +4989,9 @@ paths:
                     type: array
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4933,6 +5044,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableIngestionKeys'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -4980,6 +5094,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableCreatedIngestionKey'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -5118,6 +5235,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableCreatedIngestionKeyLimit'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: Created
         "401":
@@ -5259,6 +5379,9 @@ paths:
                     $ref: '#/components/schemas/GatewaytypesGettableIngestionKeys'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -5322,6 +5445,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesListMetricsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5377,6 +5503,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricAlertsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5443,6 +5572,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricAttributesResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5498,6 +5630,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5554,6 +5689,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricHighlightsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5610,6 +5748,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesMetricMetadata'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5726,6 +5867,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesStatsResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5781,6 +5925,9 @@ paths:
                     $ref: '#/components/schemas/MetricsexplorertypesTreemapResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5830,6 +5977,9 @@ paths:
                     $ref: '#/components/schemas/TypesOrganization'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "401":
@@ -5960,6 +6110,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesSessionContext'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -5997,6 +6150,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -6040,6 +6196,9 @@ paths:
                     $ref: '#/components/schemas/AuthtypesGettableToken'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -6072,6 +6231,9 @@ paths:
                     $ref: '#/components/schemas/ZeustypesGettableHost'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -6586,6 +6748,9 @@ paths:
                     $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
@@ -6640,6 +6805,9 @@ paths:
                     $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
                   status:
                     type: string
+                required:
+                - status
+                - data
                 type: object
           description: OK
         "400":
