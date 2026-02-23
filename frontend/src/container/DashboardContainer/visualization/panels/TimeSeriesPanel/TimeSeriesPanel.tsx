@@ -95,6 +95,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 				config={config}
 				alignedData={chartData}
 				yAxisUnit={widget.yAxisUnit}
+				decimalPrecision={widget.decimalPrecision}
 				onCancel={onToggleModelHandler}
 			/>
 		);
@@ -104,6 +105,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		chartData,
 		widget.yAxisUnit,
 		onToggleModelHandler,
+		widget.decimalPrecision,
 	]);
 
 	return (

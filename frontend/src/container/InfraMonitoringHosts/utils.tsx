@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag, Tooltip } from 'antd';
+import { Progress, TabsProps, Tag, Tooltip, Typography } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	HostData,
@@ -14,6 +14,7 @@ import {
 } from 'components/QuickFilters/types';
 import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { TriangleAlert } from 'lucide-react';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -24,12 +25,66 @@ import HostsList from './HostsList';
 import './InfraMonitoring.styles.scss';
 
 export interface HostRowData {
+	key?: string;
 	hostName: string;
 	cpu: React.ReactNode;
 	memory: React.ReactNode;
 	wait: string;
 	load15: number;
 	active: React.ReactNode;
+}
+
+const HOSTNAME_DOCS_URL =
+	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
+
+export function HostnameCell({
+	hostName,
+}: {
+	hostName?: string | null;
+}): React.ReactElement {
+	const isEmpty = !hostName || !hostName.trim();
+	if (!isEmpty) {
+		return <div className="hostname-column-value">{hostName}</div>;
+	}
+	return (
+		<div className="hostname-cell-missing">
+			<Typography.Text type="secondary" className="hostname-cell-placeholder">
+				-
+			</Typography.Text>
+			<Tooltip
+				title={
+					<div>
+						Missing host.name metadata.
+						<br />
+						<a
+							href={HOSTNAME_DOCS_URL}
+							target="_blank"
+							rel="noopener noreferrer"
+							onClick={(e): void => e.stopPropagation()}
+						>
+							Learn how to configure →
+						</a>
+					</div>
+				}
+				trigger={['hover', 'focus']}
+			>
+				<span
+					className="hostname-cell-warning-icon"
+					tabIndex={0}
+					role="img"
+					aria-label="Missing host.name metadata"
+					onClick={(e): void => e.stopPropagation()}
+					onKeyDown={(e): void => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.stopPropagation();
+						}
+					}}
+				>
+					<TriangleAlert size={14} color={Color.BG_CHERRY_500} />
+				</span>
+			</Tooltip>
+		</div>
+	);
 }
 
 export interface HostsListTableProps {
@@ -75,8 +130,8 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		dataIndex: 'hostName',
 		key: 'hostName',
 		width: 250,
-		render: (value: string): React.ReactNode => (
-			<div className="hostname-column-value">{value}</div>
+		render: (value: string | undefined): React.ReactNode => (
+			<HostnameCell hostName={value ?? ''} />
 		),
 	},
 	{
