@@ -43,11 +43,11 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	}, [metricHighlightsData]);
 
 	const dataPoints = useMemo(() => {
-		if (!metricHighlights) {
-			return null;
-		}
 		if (isErrorMetricHighlights) {
 			return errorMessage;
+		}
+		if (!metricHighlights) {
+			return null;
 		}
 		return (
 			<Typography.Text className="metric-details-grid-value">
@@ -59,13 +59,12 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
 
 	const timeSeries = useMemo(() => {
-		if (!metricHighlights) {
-			return null;
-		}
 		if (isErrorMetricHighlights) {
 			return errorMessage;
 		}
-
+		if (!metricHighlights) {
+			return null;
+		}
 		const timeSeriesActive = formatNumberToCompactFormat(
 			metricHighlights.activeTimeSeries,
 		);
@@ -87,11 +86,11 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
 
 	const lastReceived = useMemo(() => {
-		if (!metricHighlights) {
-			return null;
-		}
 		if (isErrorMetricHighlights) {
 			return errorMessage;
+		}
+		if (!metricHighlights) {
+			return null;
 		}
 		const displayText = formatTimestampToReadableDate(
 			metricHighlights.lastReceived,
