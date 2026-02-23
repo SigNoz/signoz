@@ -436,7 +436,7 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type string
 	 */
-	code?: string;
+	code: string;
 	/**
 	 * @type array
 	 */
@@ -444,7 +444,7 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type string
 	 */
-	message?: string;
+	message: string;
 	/**
 	 * @type string
 	 */
@@ -1985,11 +1985,11 @@ export enum Querybuildertypesv5VariableTypeDTO {
 	text = 'text',
 }
 export interface RenderErrorResponseDTO {
-	error?: ErrorsJSONDTO;
+	error: ErrorsJSONDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 }
 
 /**

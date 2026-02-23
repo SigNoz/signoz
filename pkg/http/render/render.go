@@ -21,8 +21,8 @@ type SuccessResponse struct {
 }
 
 type ErrorResponse struct {
-	Status string       `json:"status"`
-	Error  *errors.JSON `json:"error"`
+	Status string       `json:"status" required:"true"`
+	Error  *errors.JSON `json:"error" required:"true"`
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
