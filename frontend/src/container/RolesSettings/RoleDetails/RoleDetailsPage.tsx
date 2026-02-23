@@ -28,9 +28,26 @@ import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
+import type {
+	PermissionConfig,
+	ResourceDefinition,
+} from '../PermissionSidePanel';
+import PermissionSidePanel from '../PermissionSidePanel';
 import CreateRoleModal from '../RolesComponents/CreateRoleModal';
 
 import './RoleDetailsPage.styles.scss';
+
+// Placeholder resources — replace with API-driven data when integrating
+const PERMISSION_RESOURCES: ResourceDefinition[] = [
+	{ id: 'dashboards', label: 'Dashboards' },
+	{ id: 'alerts', label: 'Alerts' },
+	{ id: 'logs_pipelines', label: 'Logs: Pipelines' },
+	{ id: 'logs_views', label: 'Logs: Views' },
+	{ id: 'traces_funnels', label: 'Traces: Funnels' },
+	{ id: 'traces_views', label: 'Traces: Views' },
+	{ id: 'integrations', label: 'Integrations' },
+	{ id: 'exceptions', label: 'Exceptions' },
+];
 
 type TabKey = 'overview' | 'members';
 
@@ -50,6 +67,7 @@ const PERMISSION_TYPES: PermissionType[] = [
 
 interface OverviewTabProps {
 	role: RoletypesRoleDTO;
+	onPermissionClick: (permissionLabel: string) => void;
 }
 
 function TimestampBadge({ date }: { date?: Date | string }): JSX.Element {
@@ -72,7 +90,10 @@ function TimestampBadge({ date }: { date?: Date | string }): JSX.Element {
 	return <span className="role-details-badge">{formatted}</span>;
 }
 
-function OverviewTab({ role }: OverviewTabProps): JSX.Element {
+function OverviewTab({
+	role,
+	onPermissionClick,
+}: OverviewTabProps): JSX.Element {
 	return (
 		<div className="role-details-overview">
 			<div className="role-details-meta">
@@ -105,7 +126,18 @@ function OverviewTab({ role }: OverviewTabProps): JSX.Element {
 
 				<div className="role-details-permission-list">
 					{PERMISSION_TYPES.map(({ key, label, icon }) => (
-						<div key={key} className="role-details-permission-item">
+						<div
+							key={key}
+							className="role-details-permission-item"
+							role="button"
+							tabIndex={0}
+							onClick={(): void => onPermissionClick(label)}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									onPermissionClick(label);
+								}
+							}}
+						>
 							<div className="role-details-permission-item-left">
 								{icon}
 								<span className="role-details-permission-item-label">{label}</span>
@@ -170,6 +202,10 @@ function RoleDetailsPage(): JSX.Element {
 	const [activeTab, setActiveTab] = useState<TabKey>('overview');
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [activePermission, setActivePermission] = useState<string | null>(null);
+	const [permissionConfigs, setPermissionConfigs] = useState<
+		Record<string, PermissionConfig>
+	>({});
 
 	const { data, isLoading, isError, error } = useGetRole({ id: roleId });
 	const role = data?.data?.data;
@@ -274,8 +310,31 @@ function RoleDetailsPage(): JSX.Element {
 			</div>
 
 			{/* Content */}
-			{activeTab === 'overview' && <OverviewTab role={role} />}
+			{activeTab === 'overview' && (
+				<OverviewTab
+					role={role}
+					onPermissionClick={(label): void => setActivePermission(label)}
+				/>
+			)}
 			{activeTab === 'members' && <MembersTab />}
+
+			<PermissionSidePanel
+				open={activePermission !== null}
+				onClose={(): void => setActivePermission(null)}
+				permissionLabel={activePermission ?? ''}
+				resources={PERMISSION_RESOURCES}
+				initialConfig={
+					activePermission ? permissionConfigs[activePermission] : undefined
+				}
+				onSave={(config): void => {
+					if (activePermission) {
+						setPermissionConfigs((prev) => ({
+							...prev,
+							[activePermission]: config,
+						}));
+					}
+				}}
+			/>
 
 			{/* Edit Role Modal */}
 			<CreateRoleModal

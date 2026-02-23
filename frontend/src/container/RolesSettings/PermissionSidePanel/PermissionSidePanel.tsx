@@ -1,0 +1,335 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button } from '@signozhq/button';
+import { X } from '@signozhq/icons';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import {
+	RadioGroup,
+	RadioGroupItem,
+	RadioGroupLabel,
+} from '@signozhq/radio-group';
+import { Switch } from '@signozhq/switch';
+import { Select } from 'antd';
+
+import type {
+	PermissionConfig,
+	PermissionSidePanelProps,
+	ResourceConfig,
+	ResourceDefinition,
+	ScopeType,
+} from './PermissionSidePanel.types';
+
+import './PermissionSidePanel.styles.scss';
+
+const DEFAULT_RESOURCE_CONFIG: ResourceConfig = {
+	enabled: false,
+	scope: 'all',
+	selectedIds: [],
+};
+
+function buildConfig(
+	resources: ResourceDefinition[],
+	initial?: PermissionConfig,
+): PermissionConfig {
+	const config: PermissionConfig = {};
+	resources.forEach((r) => {
+		config[r.id] = initial?.[r.id] ?? { ...DEFAULT_RESOURCE_CONFIG };
+	});
+	return config;
+}
+
+function configsEqual(a: PermissionConfig, b: PermissionConfig): boolean {
+	return Object.keys(a).every((id) => {
+		const ac = a[id];
+		const bc = b[id];
+		if (!bc) {
+			return false;
+		}
+		return (
+			ac.enabled === bc.enabled &&
+			ac.scope === bc.scope &&
+			JSON.stringify([...ac.selectedIds].sort()) ===
+				JSON.stringify([...bc.selectedIds].sort())
+		);
+	});
+}
+
+interface ResourceRowProps {
+	resource: ResourceDefinition;
+	config: ResourceConfig;
+	isExpanded: boolean;
+	onToggle: (id: string, checked: boolean) => void;
+	onToggleExpand: (id: string) => void;
+	onScopeChange: (id: string, scope: ScopeType) => void;
+	onSelectedIdsChange: (id: string, ids: string[]) => void;
+}
+
+function ResourceRow({
+	resource,
+	config,
+	isExpanded,
+	onToggle,
+	onToggleExpand,
+	onScopeChange,
+	onSelectedIdsChange,
+}: ResourceRowProps): JSX.Element {
+	return (
+		<div className="psp-resource">
+			<div
+				className={`psp-resource__row${
+					isExpanded ? ' psp-resource__row--expanded' : ''
+				}`}
+				role="button"
+				tabIndex={0}
+				onClick={(): void => onToggleExpand(resource.id)}
+				onKeyDown={(e): void => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						onToggleExpand(resource.id);
+					}
+				}}
+			>
+				<div className="psp-resource__left">
+					<span className="psp-resource__chevron">
+						{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+					</span>
+					<span className="psp-resource__label">{resource.label}</span>
+				</div>
+
+				<span
+					className="psp-resource__switch-wrapper"
+					role="presentation"
+					onClick={(e): void => e.stopPropagation()}
+					onKeyDown={(e): void => e.stopPropagation()}
+				>
+					<Switch
+						checked={config.enabled}
+						onCheckedChange={(checked): void => onToggle(resource.id, checked)}
+						color="robin"
+					/>
+				</span>
+			</div>
+
+			{isExpanded && (
+				<div className="psp-resource__body">
+					<RadioGroup
+						value={config.scope}
+						onValueChange={(val): void =>
+							onScopeChange(resource.id, val as ScopeType)
+						}
+						className="psp-resource__radio-group"
+					>
+						<div className="psp-resource__radio-item">
+							<RadioGroupItem value="all" id={`${resource.id}-all`} color="robin" />
+							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
+						</div>
+
+						<div className="psp-resource__radio-item">
+							<RadioGroupItem
+								value="only_selected"
+								id={`${resource.id}-only-selected`}
+								color="robin"
+							/>
+							<RadioGroupLabel htmlFor={`${resource.id}-only-selected`}>
+								Only selected
+							</RadioGroupLabel>
+						</div>
+					</RadioGroup>
+
+					{config.scope === 'only_selected' && (
+						<div className="psp-resource__select-wrapper">
+							<Select
+								mode="multiple"
+								value={config.selectedIds}
+								onChange={(vals: string[]): void =>
+									onSelectedIdsChange(resource.id, vals)
+								}
+								options={resource.options ?? []}
+								placeholder="Select resources..."
+								className="psp-resource__select"
+								popupClassName="psp-resource__select-popup"
+								showSearch
+								filterOption={(input, option): boolean =>
+									String(option?.label ?? '')
+										.toLowerCase()
+										.includes(input.toLowerCase())
+								}
+							/>
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
+function PermissionSidePanel({
+	open,
+	onClose,
+	permissionLabel,
+	resources,
+	initialConfig,
+	onSave,
+}: PermissionSidePanelProps): JSX.Element | null {
+	const [config, setConfig] = useState<PermissionConfig>(() =>
+		buildConfig(resources, initialConfig),
+	);
+	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+	useEffect(() => {
+		if (open) {
+			setConfig(buildConfig(resources, initialConfig));
+			setExpandedIds(new Set());
+		}
+	}, [open, resources, initialConfig]);
+
+	const savedConfig = useMemo(() => buildConfig(resources, initialConfig), [
+		resources,
+		initialConfig,
+	]);
+
+	const unsavedCount = useMemo(() => {
+		if (configsEqual(config, savedConfig)) {
+			return 0;
+		}
+		return Object.keys(config).filter((id) => {
+			const a = config[id];
+			const b = savedConfig[id];
+			if (!b) {
+				return true;
+			}
+			return (
+				a.enabled !== b.enabled ||
+				a.scope !== b.scope ||
+				JSON.stringify([...a.selectedIds].sort()) !==
+					JSON.stringify([...b.selectedIds].sort())
+			);
+		}).length;
+	}, [config, savedConfig]);
+
+	const updateResource = useCallback(
+		(id: string, patch: Partial<ResourceConfig>): void => {
+			setConfig((prev) => ({
+				...prev,
+				[id]: { ...prev[id], ...patch },
+			}));
+		},
+		[],
+	);
+
+	const handleToggle = useCallback(
+		(id: string, checked: boolean): void => {
+			updateResource(id, { enabled: checked });
+		},
+		[updateResource],
+	);
+
+	const handleToggleExpand = useCallback((id: string): void => {
+		setExpandedIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			return next;
+		});
+	}, []);
+
+	const handleScopeChange = useCallback(
+		(id: string, scope: ScopeType): void => {
+			updateResource(id, { scope, selectedIds: [] });
+		},
+		[updateResource],
+	);
+
+	const handleSelectedIdsChange = useCallback(
+		(id: string, ids: string[]): void => {
+			updateResource(id, { selectedIds: ids });
+		},
+		[updateResource],
+	);
+
+	const handleSave = useCallback((): void => {
+		onSave(config);
+		onClose();
+	}, [config, onSave, onClose]);
+
+	const handleDiscard = useCallback((): void => {
+		setConfig(buildConfig(resources, initialConfig));
+		setExpandedIds(new Set());
+	}, [resources, initialConfig]);
+
+	if (!open) {
+		return null;
+	}
+
+	return (
+		<>
+			<div
+				className="permission-side-panel-backdrop"
+				role="presentation"
+				onClick={onClose}
+			/>
+
+			<div className="permission-side-panel">
+				<div className="permission-side-panel__header">
+					<button
+						type="button"
+						className="permission-side-panel__close"
+						onClick={onClose}
+						aria-label="Close panel"
+					>
+						<X size={16} />
+					</button>
+					<span className="permission-side-panel__header-divider" />
+					<span className="permission-side-panel__title">
+						Edit {permissionLabel} Permissions
+					</span>
+				</div>
+
+				<div className="permission-side-panel__content">
+					<div className="permission-side-panel__resource-list">
+						{resources.map((resource) => (
+							<ResourceRow
+								key={resource.id}
+								resource={resource}
+								config={config[resource.id] ?? DEFAULT_RESOURCE_CONFIG}
+								isExpanded={expandedIds.has(resource.id)}
+								onToggle={handleToggle}
+								onToggleExpand={handleToggleExpand}
+								onScopeChange={handleScopeChange}
+								onSelectedIdsChange={handleSelectedIdsChange}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className="permission-side-panel__footer">
+					{unsavedCount > 0 && (
+						<div className="permission-side-panel__unsaved">
+							<span className="permission-side-panel__unsaved-dot" />
+							<span className="permission-side-panel__unsaved-text">
+								{unsavedCount} unsaved change{unsavedCount !== 1 ? 's' : ''}
+							</span>
+						</div>
+					)}
+
+					<div className="permission-side-panel__footer-actions">
+						<Button
+							className="permission-side-panel__cancel-btn"
+							prefixIcon={<X size={14} />}
+							onClick={unsavedCount > 0 ? handleDiscard : onClose}
+							size="sm"
+						>
+							{unsavedCount > 0 ? 'Discard' : 'Cancel'}
+						</Button>
+						<Button variant="solid" color="primary" size="sm" onClick={handleSave}>
+							Save Changes
+						</Button>
+					</div>
+				</div>
+			</div>
+		</>
+	);
+}
+
+export default PermissionSidePanel;

@@ -4,10 +4,9 @@
 	gap: 16px;
 	padding: 16px;
 	width: 100%;
-	max-width: 960px;
+	max-width: 60vw;
 	margin: 0 auto;
 
-	// ─── Header ─────────────────────────────────────────────────────────
 	.role-details-header {
 		display: flex;
 		flex-direction: column;
@@ -23,7 +22,6 @@
 		letter-spacing: -0.09px;
 	}
 
-	// ─── Tab Bar ─────────────────────────────────────────────────────────
 	.role-details-nav {
 		display: flex;
 		align-items: center;
@@ -87,7 +85,6 @@
 		gap: 12px;
 	}
 
-	// ─── Overview Tab ─────────────────────────────────────────────────────
 	.role-details-overview {
 		display: flex;
 		flex-direction: column;
@@ -148,7 +145,6 @@
 		color: var(--foreground);
 	}
 
-	// ─── Permissions ─────────────────────────────────────────────────────
 	.role-details-permissions {
 		display: flex;
 		flex-direction: column;
@@ -210,7 +206,6 @@
 		color: var(--text-base-white);
 	}
 
-	// ─── Badge ───────────────────────────────────────────────────────────
 	.role-details-badge {
 		display: inline-flex;
 		align-items: center;
@@ -226,7 +221,6 @@
 		color: var(--foreground);
 	}
 
-	// ─── Members Tab ─────────────────────────────────────────────────────
 	.role-details-members {
 		display: flex;
 		flex-direction: column;
@@ -311,13 +305,11 @@
 		}
 	}
 
-	// ─── Loading / Error ──────────────────────────────────────────────────
 	.role-details-skeleton {
 		padding: 16px 0;
 	}
 }
 
-// ─── Delete Action Button (cherry icon, ghost) ────────────────────────────────
 .role-details-delete-action-btn {
 	display: flex !important;
 	align-items: center !important;
@@ -344,7 +336,6 @@
 	}
 }
 
-// ─── Delete Confirmation Modal ────────────────────────────────────────────────
 .role-details-delete-modal {
 	width: calc(100% - 30px) !important;
 	max-width: 384px;
