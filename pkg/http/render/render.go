@@ -16,13 +16,13 @@ const (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type SuccessResponse struct {
-	Status string      `json:"status"`
-	Data   interface{} `json:"data,omitempty"`
+	Status string      `json:"status" required:"true"`
+	Data   interface{} `json:"data,omitempty" required:"true"`
 }
 
 type ErrorResponse struct {
-	Status string       `json:"status"`
-	Error  *errors.JSON `json:"error"`
+	Status string       `json:"status" required:"true"`
+	Error  *errors.JSON `json:"error" required:"true"`
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
