@@ -40,7 +40,7 @@ function RolesListingTable({
 		[history, urlQuery],
 	);
 
-	const roles = useMemo(() => data?.data?.data ?? [], [data]);
+	const roles = useMemo(() => data?.data ?? [], [data]);
 
 	const formatTimestamp = (date?: Date | string): string => {
 		if (!date) {

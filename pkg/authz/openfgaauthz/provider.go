@@ -190,7 +190,7 @@ func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *rolet
 }
 
 func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource {
-	return nil
+	return []*authtypes.Resource{}
 }
 
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
