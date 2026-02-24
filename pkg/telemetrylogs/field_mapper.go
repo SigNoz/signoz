@@ -294,7 +294,7 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 	}
 
 	// Build arrayMap expressions for ALL available branches at the root level.
-	// Iterate branches in deterministic order (JSON then Dynamic) so generated SQL
+	// Iterate branches in deterministic order (JSON then Dynamic)
 	var arrayMapExpressions []string
 	for _, node := range plan {
 		for _, branchType := range node.BranchesInOrder() {

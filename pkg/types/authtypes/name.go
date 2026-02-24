@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding"
 	"encoding/json"
 	"regexp"
 
@@ -10,8 +11,10 @@ import (
 var (
 	nameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
 
-	_ json.Marshaler   = new(Name)
-	_ json.Unmarshaler = new(Name)
+	_ json.Marshaler           = new(Name)
+	_ json.Unmarshaler         = new(Name)
+	_ encoding.TextMarshaler   = new(Name)
+	_ encoding.TextUnmarshaler = new(Name)
 )
 
 type Name struct {
@@ -55,6 +58,19 @@ func (name *Name) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	*name = shadow
+	return nil
+}
+
+func (name Name) MarshalText() ([]byte, error) {
+	return []byte(name.val), nil
+}
+
+func (name *Name) UnmarshalText(text []byte) error {
+	shadow, err := NewName(string(text))
+	if err != nil {
+		return err
+	}
 	*name = shadow
 	return nil
 }

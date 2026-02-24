@@ -1,0 +1,28 @@
+.email-tag-input {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+
+	&__select {
+		width: 100%;
+
+		.ant-select-selector {
+			.ant-select-selection-search {
+				input {
+					height: 32px !important;
+					border: none !important;
+					background: transparent !important;
+					padding: 0 !important;
+					margin: 0 !important;
+					box-shadow: none !important;
+					font-family: inherit !important;
+				}
+			}
+		}
+	}
+
+	&__error {
+		margin: 0;
+		color: var(--destructive);
+	}
+}

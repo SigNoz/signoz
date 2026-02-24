@@ -130,7 +130,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{4.0, 5.0, 6.0},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"value","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,2,3],[4,5,6]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"value","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,2,3],[4,5,6]]}`,
 		},
 		{
 			name: "scalar data with NaN",
@@ -149,7 +149,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{math.Inf(1), 5.0, math.Inf(-1)},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"value","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,"NaN",3],["Inf",5,"-Inf"]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"value","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,"NaN",3],["Inf",5,"-Inf"]]}`,
 		},
 		{
 			name: "scalar data with mixed types",
@@ -168,7 +168,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{nil, math.Inf(1), 3.14, false},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"mixed","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[["string",42,"NaN",true],[null,"Inf",3.14,false]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"mixed","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[["string",42,"NaN",true],[null,"Inf",3.14,false]]}`,
 		},
 		{
 			name: "scalar data with nested structures",
@@ -189,7 +189,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"nested","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[{"count":10,"value":"NaN"},[1,"Inf",3]]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"nested","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[{"count":10,"value":"NaN"},[1,"Inf",3]]]}`,
 		},
 		{
 			name: "empty scalar data",

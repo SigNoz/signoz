@@ -134,6 +134,12 @@ var (
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		},
+		"timestamp": {
+			Name:          "timestamp",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+		},
 	}
 
 	CalculatedFields = map[string]telemetrytypes.TelemetryFieldKey{

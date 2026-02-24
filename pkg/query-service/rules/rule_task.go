@@ -43,7 +43,7 @@ const DefaultFrequency = 1 * time.Minute
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
 func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *RuleTask {
 
-	if time.Now() == time.Now().Add(frequency) {
+	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
 	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
@@ -78,6 +78,7 @@ func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 func (g *RuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
+// TODO: remove (unused)?
 func (g *RuleTask) Interval() time.Duration { return g.frequency }
 
 func (g *RuleTask) Pause(b bool) {

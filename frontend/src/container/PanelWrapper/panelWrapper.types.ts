@@ -1,19 +1,16 @@
 import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { WidgetGraphComponentProps } from 'container/GridCardLayout/GridCard/types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 export type PanelWrapperProps = {
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	widget: Widgets;
 	setRequestData?: WidgetGraphComponentProps['setRequestData'];
 	isFullViewMode?: boolean;
@@ -31,6 +28,7 @@ export type PanelWrapperProps = {
 	customOnRowClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	enableDrillDown?: boolean;
+	panelMode: PanelMode;
 };
 
 export type TooltipData = {

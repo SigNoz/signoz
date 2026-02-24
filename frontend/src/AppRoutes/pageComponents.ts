@@ -194,6 +194,10 @@ export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
 );
 
+export const ForgotPassword = Loadable(
+	() => import(/* webpackChunkName: "ForgotPassword" */ 'pages/ForgotPassword'),
+);
+
 export const UnAuthorized = Loadable(
 	() => import(/* webpackChunkName: "UnAuthorized" */ 'pages/UnAuthorized'),
 );

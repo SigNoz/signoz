@@ -9,10 +9,9 @@ export const getDefaultLogBackground = (
 	if (isReadOnly) {
 		return '';
 	}
-	// TODO handle the light mode here
 	return `&:hover {
     background-color: ${
-					isDarkMode ? 'rgba(171, 189, 255, 0.04)' : 'var(--bg-vanilla-200)'
+					isDarkMode ? 'rgba(171, 189, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)'
 				};
     }`;
 };
@@ -28,22 +27,38 @@ export const getActiveLogBackground = (
 	if (isDarkMode) {
 		switch (logType) {
 			case LogType.INFO:
-				return `background-color: ${Color.BG_ROBIN_500}10 !important;`;
+				return `background-color: ${Color.BG_ROBIN_500}40 !important;`;
 			case LogType.WARN:
-				return `background-color: ${Color.BG_AMBER_500}10 !important;`;
+				return `background-color: ${Color.BG_AMBER_500}40 !important;`;
 			case LogType.ERROR:
-				return `background-color: ${Color.BG_CHERRY_500}10 !important;`;
+				return `background-color: ${Color.BG_CHERRY_500}40 !important;`;
 			case LogType.TRACE:
-				return `background-color: ${Color.BG_FOREST_400}10 !important;`;
+				return `background-color: ${Color.BG_FOREST_400}40 !important;`;
 			case LogType.DEBUG:
-				return `background-color: ${Color.BG_AQUA_500}10 !important;`;
+				return `background-color: ${Color.BG_AQUA_500}40 !important;`;
 			case LogType.FATAL:
-				return `background-color: ${Color.BG_SAKURA_500}10 !important;`;
+				return `background-color: ${Color.BG_SAKURA_500}40 !important;`;
 			default:
-				return `background-color: ${Color.BG_SLATE_200} !important;`;
+				return `background-color: ${Color.BG_ROBIN_500}40 !important;`;
 		}
 	}
-	return `background-color: ${Color.BG_VANILLA_400}!important; color: ${Color.TEXT_SLATE_400} !important;`;
+	// Light mode - use lighter background colors
+	switch (logType) {
+		case LogType.INFO:
+			return `background-color: ${Color.BG_ROBIN_100} !important;`;
+		case LogType.WARN:
+			return `background-color: ${Color.BG_AMBER_100} !important;`;
+		case LogType.ERROR:
+			return `background-color: ${Color.BG_CHERRY_100} !important;`;
+		case LogType.TRACE:
+			return `background-color: ${Color.BG_FOREST_200} !important;`;
+		case LogType.DEBUG:
+			return `background-color: ${Color.BG_AQUA_100} !important;`;
+		case LogType.FATAL:
+			return `background-color: ${Color.BG_SAKURA_100} !important;`;
+		default:
+			return `background-color: ${Color.BG_VANILLA_300} !important;`;
+	}
 };
 
 export const getHightLightedLogBackground = (
