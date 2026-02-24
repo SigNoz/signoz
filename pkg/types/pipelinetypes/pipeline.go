@@ -10,6 +10,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
@@ -264,6 +265,37 @@ func (p *PostablePipeline) IsValid() error {
 		outputUnique[op.Output] = struct{}{}
 	}
 	return nil
+}
+
+func (p *PostablePipeline) ToStoreablePipeline() (*StoreablePipeline, error) {
+	rawConfig, err := json.Marshal(p.Config)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to unmarshal postable pipeline config")
+	}
+
+	filter, err := json.Marshal(p.Filter)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to marshal postable pipeline filter")
+	}
+	identifier := valuer.GenerateUUID()
+	if p.ID != "" {
+		identifier, err = valuer.NewUUID(p.ID)
+		if err != nil {
+			return nil, errors.WithAdditionalf(err, "failed to parse postable pipeline id")
+		}
+	}
+	return &StoreablePipeline{
+		Identifiable: types.Identifiable{
+			ID: identifier,
+		},
+		OrderID:      p.OrderID,
+		Enabled:      p.Enabled,
+		Name:         p.Name,
+		Alias:        p.Alias,
+		Description:  p.Description,
+		FilterString: string(filter),
+		ConfigJSON:   string(rawConfig),
+	}, nil
 }
 
 func isValidOperator(op PipelineOperator) error {

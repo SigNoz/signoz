@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -12,8 +13,8 @@ type Module interface {
 	ListPipelines(ctx context.Context, orgID valuer.UUID) ([]pipelinetypes.GettablePipeline, error)
 	ListPipelinesByVersion(ctx context.Context, orgID valuer.UUID, version int) ([]pipelinetypes.GettablePipeline, error)
 	GetPipeline(ctx context.Context, orgID valuer.UUID, id string) (*pipelinetypes.GettablePipeline, error)
-	CreatePipeline(ctx context.Context, orgID valuer.UUID, pipeline *pipelinetypes.PostablePipeline) (*pipelinetypes.GettablePipeline, error)
-	UpdatePipeline(ctx context.Context, orgID valuer.UUID, id string, pipeline *pipelinetypes.PostablePipeline) (*pipelinetypes.GettablePipeline, error)
+	CreatePipeline(ctx context.Context, orgID valuer.UUID, claims *authtypes.Claims, pipeline *pipelinetypes.PostablePipeline) (*pipelinetypes.GettablePipeline, error)
+	UpdatePipeline(ctx context.Context, orgID valuer.UUID, claims *authtypes.Claims, pipeline *pipelinetypes.PostablePipeline) (*pipelinetypes.GettablePipeline, error)
 	DeletePipeline(ctx context.Context, orgID valuer.UUID, id string) error
 }
 
