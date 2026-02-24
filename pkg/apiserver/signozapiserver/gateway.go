@@ -55,7 +55,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		Response:            new(gatewaytypes.GettableCreatedIngestionKey),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
