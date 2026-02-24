@@ -26,5 +26,22 @@ func (provider *provider) addAuthzRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/authz/resources", handler.New(provider.authZ.OpenAccess(provider.authzHandler.GetResources), handler.OpenAPIDef{
+		ID:                  "AuthzResources",
+		Tags:                []string{"authz"},
+		Summary:             "Get resources",
+		Description:         "Gets all the available resources",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(authtypes.GettableResources),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     nil,
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

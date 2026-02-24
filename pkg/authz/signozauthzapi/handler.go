@@ -110,13 +110,13 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, objects)
+	render.Success(rw, http.StatusOK, authtypes.NewGettableObjects(objects))
 }
 
 func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
 	resources := handler.authz.GetResources(r.Context())
 
-	render.Success(rw, http.StatusOK, roletypes.NewGettableResources(resources))
+	render.Success(rw, http.StatusOK, authtypes.NewGettableResources(resources))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -197,25 +197,30 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(roletypes.PatchableObjects)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	role, err := handler.authz.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	patchableObjects, err := role.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	if err := role.ErrIfManaged(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(authtypes.PatchableObjects)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	additions, deletions, err := authtypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, patchableObjects.Additions, patchableObjects.Deletions)
+	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, additions, deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
