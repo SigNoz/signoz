@@ -527,7 +527,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`, `histogram_count`]",
+			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
 		)
 	}
 	sb := sqlbuilder.NewSelectBuilder()
