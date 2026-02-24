@@ -395,6 +395,20 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecifiedWit
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
 ) (string, []any, error) {
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	if tbl == SamplesV4TableName {
+		return b.buildTemporalAggCumulativeOrUnspecifiedWithStartTsForSamplesTbl(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
+	}
+	return b.buildTemporalAggCumulativeOrUnspecified(ctx, start, end, query, timeSeriesCTE, timeSeriesCTEArgs)
+}
+
+func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecifiedWithStartTsForSamplesTbl(
+	_ context.Context,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	timeSeriesCTE string,
+	timeSeriesCTEArgs []any,
+) (string, []any, error) {
 	stepSec := int64(query.StepInterval.Seconds())
 
 	moreInfoQueryBuilder := sqlbuilder.NewSelectBuilder()
@@ -490,6 +504,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	timeSeriesCTE string,
 	timeSeriesCTEArgs []any,
 ) (string, []any, error) {
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	stepSec := int64(query.StepInterval.Seconds())
 
 	baseSb := sqlbuilder.NewSelectBuilder()
@@ -501,6 +516,9 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	for _, g := range query.GroupBy {
 		baseSb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
+	if tbl != SamplesV4TableName {
+		baseSb.SelectMore("uniqMerge(num_start_timestamps) AS num_start_timestamps")
+	}
 
 	aggCol, err := AggregationColumnForSamplesTable(start, end, query.Aggregations[0].Type, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if err != nil {
@@ -508,7 +526,6 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	}
 	baseSb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	baseSb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	baseSb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	baseSb.Where(
@@ -529,6 +546,9 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		for _, g := range query.GroupBy {
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
+		if tbl != SamplesV4TableName {
+			wrapped.SelectMore("num_start_timestamps > 1 AS has_restarts")
+		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", RateTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
@@ -539,6 +559,9 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		wrapped.Select("ts")
 		for _, g := range query.GroupBy {
 			wrapped.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+		if tbl != SamplesV4TableName {
+			wrapped.SelectMore("num_start_timestamps > 1 AS has_restarts")
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", IncreaseTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
@@ -616,11 +639,12 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 
 func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ context.Context,
-	_ uint64,
-	_ uint64,
+	start uint64,
+	end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
+	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	if query.Aggregations[0].SpaceAggregation.IsZero() {
 		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
@@ -635,6 +659,9 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
 	sb.SelectMore(fmt.Sprintf("%s(per_series_value) AS value", query.Aggregations[0].SpaceAggregation.StringValue()))
+	if tbl != SamplesV4TableName {
+		sb.SelectMore("max(has_restarts) AS has_restarts")
+	}
 	sb.From("__temporal_aggregation_cte")
 	sb.Where(sb.EQ("isNaN(per_series_value)", 0))
 	if query.Aggregations[0].ValueFilter != nil {
