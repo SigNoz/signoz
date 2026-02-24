@@ -4,13 +4,12 @@ import {
 	getMetricMetadata,
 } from 'api/generated/services/metrics';
 import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosResponse } from 'axios';
 
-type QueryResult = UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>;
+type QueryResult = UseQueryResult<GetMetricMetadata200, Error>;
 
 type UseGetMultipleMetrics = (
 	metricNames: string[],
-	options?: UseQueryOptions<AxiosResponse<GetMetricMetadata200>, Error>,
+	options?: UseQueryOptions<GetMetricMetadata200, Error>,
 	headers?: Record<string, string>,
 ) => QueryResult[];
 
@@ -33,6 +32,6 @@ export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 							signal,
 						),
 					...options,
-				} as UseQueryOptions<AxiosResponse<GetMetricMetadata200>, Error>),
+				} as UseQueryOptions<GetMetricMetadata200, Error>),
 		),
 	);

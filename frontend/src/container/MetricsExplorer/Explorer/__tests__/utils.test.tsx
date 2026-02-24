@@ -6,7 +6,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosResponse } from 'axios';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -108,12 +107,10 @@ describe('useGetMetrics', () => {
 					isLoading: false,
 					isError: false,
 					data: {
-						data: {
-							data: MOCK_METRIC_METADATA,
-							status: 'success',
-						},
+						data: MOCK_METRIC_METADATA,
+						status: 'success',
 					},
-				} as UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>,
+				} as UseQueryResult<GetMetricMetadata200, Error>,
 			]);
 	});
 
@@ -134,7 +131,7 @@ describe('useGetMetrics', () => {
 					isLoading: true,
 					isError: false,
 					data: undefined,
-				} as UseQueryResult<AxiosResponse<GetMetricMetadata200>, Error>,
+				} as UseQueryResult<GetMetricMetadata200, Error>,
 			]);
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);

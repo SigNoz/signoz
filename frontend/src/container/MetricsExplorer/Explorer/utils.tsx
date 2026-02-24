@@ -78,7 +78,7 @@ export function useGetMetrics(
 	});
 	return {
 		isLoading: metricsData.some((metric) => metric.isLoading),
-		metrics: metricsData.map((metric) => metric.data?.data?.data),
+		metrics: metricsData.map((metric) => metric.data?.data),
 		isError: metricsData.some((metric) => metric.isError),
 	};
 }
