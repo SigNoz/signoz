@@ -84,7 +84,7 @@ describe('TopErrors', () => {
 									{
 										columns: [
 											{
-												name: 'http.url',
+												name: SPAN_ATTRIBUTES.HTTP_URL,
 												fieldDataType: 'string',
 												fieldContext: 'attribute',
 											},
@@ -124,7 +124,7 @@ describe('TopErrors', () => {
 										table: {
 											rows: [
 												{
-													'http.url': '/api/test',
+													http_url: '/api/test',
 													A: 100,
 												},
 											],
@@ -206,7 +206,7 @@ describe('TopErrors', () => {
 		expect(navigateMock).toHaveBeenCalledWith({
 			filters: expect.arrayContaining([
 				expect.objectContaining({
-					key: expect.objectContaining({ key: 'http.url' }),
+					key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 					op: '=',
 					value: '/api/test',
 				}),
@@ -335,7 +335,7 @@ describe('TopErrors', () => {
 
 		// Verify all required filters are present
 		expect(filterExpression).toContain(
-			`kind_string = 'Client' AND (http.url EXISTS OR url.full EXISTS) AND (net.peer.name = 'test-domain' OR server.address = 'test-domain') AND has_error = true`,
+			`kind_string = 'Client' AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS AND ${SPAN_ATTRIBUTES.SERVER_NAME} = 'test-domain' AND has_error = true`,
 		);
 	});
 });

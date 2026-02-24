@@ -280,7 +280,7 @@ describe('API Monitoring Utils', () => {
 			const endpointFilter = result?.items?.find(
 				(item) =>
 					item.key &&
-					item.key.key === SPAN_ATTRIBUTES.URL_PATH &&
+					item.key.key === SPAN_ATTRIBUTES.HTTP_URL &&
 					item.value === endPointName,
 			);
 			expect(endpointFilter).toBeDefined();
@@ -344,13 +344,12 @@ describe('API Monitoring Utils', () => {
 	describe('getFormattedEndPointDropDownData', () => {
 		it('should format endpoint dropdown data correctly', () => {
 			// Arrange
-			const URL_PATH_KEY = SPAN_ATTRIBUTES.URL_PATH;
+			const URL_PATH_KEY = SPAN_ATTRIBUTES.HTTP_URL;
 			const mockData = [
 				{
 					data: {
 						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/users',
-						'url.full': 'http://example.com/api/users',
 						A: 150, // count or other metric
 					},
 				},
@@ -358,7 +357,6 @@ describe('API Monitoring Utils', () => {
 					data: {
 						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/orders',
-						'url.full': 'http://example.com/api/orders',
 						A: 75,
 					},
 				},
@@ -406,7 +404,7 @@ describe('API Monitoring Utils', () => {
 
 		it('should handle items without URL path', () => {
 			// Arrange
-			const URL_PATH_KEY = SPAN_ATTRIBUTES.URL_PATH;
+			const URL_PATH_KEY = SPAN_ATTRIBUTES.HTTP_URL;
 			type MockDataType = {
 				data: {
 					[key: string]: string | number;
@@ -712,13 +710,11 @@ describe('API Monitoring Utils', () => {
 		it('should generate widget configuration for status code bar chart', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const endPointName = '/api/test';
 			const filters = { items: [], op: 'AND' };
 
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				endPointName,
 				filters as IBuilderQuery['filters'],
 			);
 
@@ -741,21 +737,11 @@ describe('API Monitoring Utils', () => {
 			if (domainFilter) {
 				expect(domainFilter.value).toBe(domainName);
 			}
-
-			// Should have endpoint filter if provided
-			const endpointFilter = queryData.filters?.items?.find(
-				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.URL_PATH,
-			);
-			expect(endpointFilter).toBeDefined();
-			if (endpointFilter) {
-				expect(endpointFilter.value).toBe(endPointName);
-			}
 		});
 
 		it('should include custom filters in the widget configuration', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const endPointName = '/api/test';
 			const customFilter = {
 				id: 'custom-filter',
 				key: {
@@ -771,7 +757,6 @@ describe('API Monitoring Utils', () => {
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				endPointName,
 				filters as IBuilderQuery['filters'],
 			);
 

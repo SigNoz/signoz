@@ -2,11 +2,9 @@ package api
 
 import (
 	"net/http"
-	"net/http/httputil"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
-	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/global"
@@ -31,7 +29,6 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
-	Gateway                       *httputil.ReverseProxy
 	GatewayUrl                    string
 	// Querier Influx Interval
 	FluxInterval time.Duration
@@ -77,10 +74,6 @@ func (ah *APIHandler) UM() *usage.Manager {
 	return ah.opts.UsageManager
 }
 
-func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
-	return ah.opts.Gateway
-}
-
 // RegisterRoutes registers routes for this handler on the given router
 func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
@@ -102,9 +95,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
-
-	// Gateway
-	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.EditAccess(ah.ServeGatewayHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 
