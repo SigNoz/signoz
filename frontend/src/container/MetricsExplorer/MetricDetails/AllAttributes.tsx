@@ -21,6 +21,7 @@ import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
+import MetricDetailsErrorState from './MetricDetailsErrorState';
 import { AllAttributesProps, AllAttributesValueProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
@@ -130,14 +131,14 @@ function AllAttributes({
 		data: attributesData,
 		isLoading: isLoadingAttributes,
 		isError: isErrorAttributes,
+		refetch: refetchAttributes,
 	} = useGetMetricAttributes({
 		metricName,
 	});
 
-	const attributes = useMemo(
-		() => attributesData?.data?.data?.attributes ?? [],
-		[attributesData],
-	);
+	const attributes = useMemo(() => attributesData?.data.attributes ?? [], [
+		attributesData,
+	]);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -273,9 +274,19 @@ function AllAttributes({
 		],
 	);
 
-	const emptyText = isErrorAttributes
-		? 'Error fetching attributes'
-		: 'No attributes found';
+	const emptyText = useMemo(() => {
+		if (isErrorAttributes) {
+			return (
+				<div className="all-attributes-error-state">
+					<MetricDetailsErrorState
+						refetch={refetchAttributes}
+						errorMessage="Something went wrong while fetching attributes"
+					/>
+				</div>
+			);
+		}
+		return 'No attributes found';
+	}, [isErrorAttributes, refetchAttributes]);
 
 	const items = useMemo(
 		() => [
@@ -295,7 +306,7 @@ function AllAttributes({
 							onClick={(e): void => {
 								e.stopPropagation();
 							}}
-							disabled={isLoadingAttributes}
+							disabled={isLoadingAttributes || isErrorAttributes}
 						/>
 					</div>
 				),
@@ -317,7 +328,14 @@ function AllAttributes({
 				),
 			},
 		],
-		[searchString, columns, isLoadingAttributes, tableData, emptyText],
+		[
+			searchString,
+			isLoadingAttributes,
+			isErrorAttributes,
+			columns,
+			tableData,
+			emptyText,
+		],
 	);
 
 	if (isLoadingAttributes) {

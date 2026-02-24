@@ -52,6 +52,18 @@
 				align-items: center;
 			}
 
+			.metric-highlights-error-state {
+				display: flex;
+				gap: 8px;
+				height: 100%;
+				width: 100%;
+				align-items: center;
+
+				.ant-btn {
+					padding: 2px 4px;
+				}
+			}
+
 			.labels-row {
 				margin-bottom: 8px;
 
@@ -117,6 +129,10 @@
 		}
 
 		.metrics-accordion {
+			.all-attributes-error-state {
+				height: 300px;
+			}
+
 			.ant-table-body {
 				&::-webkit-scrollbar {
 					width: 2px;
@@ -231,6 +247,10 @@
 
 			.ant-collapse-content-box {
 				padding: 0;
+
+				.metric-metadata-error-state {
+					height: 267px;
+				}
 			}
 
 			.ant-collapse-header {
@@ -417,4 +437,14 @@
 			width: auto !important;
 		}
 	}
+}
+
+.metric-details-error-state {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100%;
 }

@@ -34,6 +34,7 @@ function MetricDetails({
 		data: metricMetadataResponse,
 		isLoading: isLoadingMetricMetadata,
 		isError: isErrorMetricMetadata,
+		refetch: refetchMetricMetadata,
 	} = useGetMetricMetadata(
 		{
 			metricName: metricName ?? '',
@@ -46,11 +47,7 @@ function MetricDetails({
 	);
 
 	const metadata = useMemo(() => {
-		if (
-			!metricMetadataResponse ||
-			!metricMetadataResponse.data ||
-			!metricMetadataResponse.data.data
-		) {
+		if (!metricMetadataResponse) {
 			return null;
 		}
 		const {
@@ -59,7 +56,7 @@ function MetricDetails({
 			unit,
 			temporality,
 			isMonotonic,
-		} = metricMetadataResponse.data.data;
+		} = metricMetadataResponse.data;
 
 		return {
 			type,
@@ -162,6 +159,7 @@ function MetricDetails({
 					metadata={metadata}
 					isErrorMetricMetadata={isErrorMetricMetadata}
 					isLoadingMetricMetadata={isLoadingMetricMetadata}
+					refetchMetricMetadata={refetchMetricMetadata}
 				/>
 				<AllAttributes metricName={metricName} metricType={metadata?.type} />
 			</div>

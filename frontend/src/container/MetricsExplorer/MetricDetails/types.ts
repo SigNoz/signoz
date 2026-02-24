@@ -28,6 +28,7 @@ export interface MetadataProps {
 	metadata: MetricMetadata | null;
 	isErrorMetricMetadata: boolean;
 	isLoadingMetricMetadata: boolean;
+	refetchMetricMetadata: () => void;
 }
 
 export interface AllAttributesProps {
@@ -64,4 +65,9 @@ export enum TableFields {
 	TYPE = 'type',
 	Temporality = 'temporality',
 	IS_MONOTONIC = 'isMonotonic',
+}
+
+export interface MetricDetailsErrorStateProps {
+	refetch?: () => void;
+	errorMessage: string;
 }

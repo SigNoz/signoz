@@ -54,11 +54,11 @@ function DashboardsAndAlertsPopover({
 	);
 
 	const alerts = useMemo(() => {
-		return alertsData?.data?.data?.alerts ?? [];
+		return alertsData?.data.alerts ?? [];
 	}, [alertsData]);
 
 	const dashboards = useMemo(() => {
-		const currentDashboards = dashboardsData?.data?.data?.dashboards ?? [];
+		const currentDashboards = dashboardsData?.data.dashboards ?? [];
 		// Remove duplicate dashboards
 		return currentDashboards.filter(
 			(dashboard, index, self) =>

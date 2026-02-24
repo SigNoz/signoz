@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 import { InfoIcon } from 'lucide-react';
 
@@ -16,6 +16,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		data: metricHighlightsData,
 		isLoading: isLoadingMetricHighlights,
 		isError: isErrorMetricHighlights,
+		refetch: refetchMetricHighlights,
 	} = useGetMetricHighlights(
 		{
 			metricName: metricName ?? '',
@@ -27,25 +28,9 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		},
 	);
 
-	const errorMessage = useMemo(
-		() => (
-			<Tooltip title="Error fetching metric highlights">
-				<Typography.Text className="metric-details-grid-value">
-					<InfoIcon size={16} color={Color.BG_CHERRY_500} />
-				</Typography.Text>
-			</Tooltip>
-		),
-		[],
-	);
-
-	const metricHighlights = useMemo(() => {
-		return metricHighlightsData?.data?.data ?? null;
-	}, [metricHighlightsData]);
+	const metricHighlights = metricHighlightsData?.data ?? null;
 
 	const dataPoints = useMemo(() => {
-		if (isErrorMetricHighlights) {
-			return errorMessage;
-		}
 		if (!metricHighlights) {
 			return null;
 		}
@@ -56,12 +41,9 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				</Tooltip>
 			</Typography.Text>
 		);
-	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
+	}, [metricHighlights]);
 
 	const timeSeries = useMemo(() => {
-		if (isErrorMetricHighlights) {
-			return errorMessage;
-		}
 		if (!metricHighlights) {
 			return null;
 		}
@@ -83,12 +65,9 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				</Tooltip>
 			</Typography.Text>
 		);
-	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
+	}, [metricHighlights]);
 
 	const lastReceived = useMemo(() => {
-		if (isErrorMetricHighlights) {
-			return errorMessage;
-		}
 		if (!metricHighlights) {
 			return null;
 		}
@@ -100,12 +79,34 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				<Tooltip title={displayText}>{displayText}</Tooltip>
 			</Typography.Text>
 		);
-	}, [metricHighlights, isErrorMetricHighlights, errorMessage]);
+	}, [metricHighlights]);
 
 	if (isLoadingMetricHighlights) {
 		return (
 			<div className="metric-details-content-grid">
 				<Skeleton title={false} paragraph={{ rows: 2 }} active />
+			</div>
+		);
+	}
+
+	if (isErrorMetricHighlights) {
+		return (
+			<div className="metric-details-content-grid">
+				<div className="metric-highlights-error-state">
+					<InfoIcon size={16} color={Color.BG_CHERRY_500} />
+					<Typography.Text>
+						Something went wrong while fetching metric highlights
+					</Typography.Text>
+					<Button
+						type="link"
+						size="large"
+						onClick={(): void => {
+							refetchMetricHighlights();
+						}}
+					>
+						Retry ?
+					</Button>
+				</div>
 			</div>
 		);
 	}

@@ -1,18 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import {
-	Button,
-	Collapse,
-	Empty,
-	Input,
-	Select,
-	Skeleton,
-	Typography,
-} from 'antd';
+import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetMetricMetadata,
+	invalidateListMetrics,
 	useUpdateMetricMetadata,
 } from 'api/generated/services/metrics';
 import {
@@ -25,7 +18,6 @@ import { ResizeTable } from 'components/ResizeTable';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
@@ -39,6 +31,7 @@ import {
 	METRIC_METADATA_TYPE_OPTIONS,
 	METRIC_METADATA_UPDATE_ERROR_MESSAGE,
 } from './constants';
+import MetricDetailsErrorState from './MetricDetailsErrorState';
 import { MetadataProps, MetricMetadataState, TableFields } from './types';
 import { transformUpdateMetricMetadataRequest } from './utils';
 
@@ -47,6 +40,7 @@ function Metadata({
 	metadata,
 	isErrorMetricMetadata,
 	isLoadingMetricMetadata,
+	refetchMetricMetadata,
 }: MetadataProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
 
@@ -248,28 +242,20 @@ function Metadata({
 				data: transformUpdateMetricMetadataRequest(metricName, metricMetadataState),
 			},
 			{
-				onSuccess: (response): void => {
-					if (response.status === 200) {
-						logEvent(MetricsExplorerEvents.MetricMetadataUpdated, {
-							[MetricsExplorerEventKeys.MetricName]: metricName,
-							[MetricsExplorerEventKeys.Tab]: 'summary',
-							[MetricsExplorerEventKeys.Modal]: 'metric-details',
-						});
-						notifications.success({
-							message: 'Metadata updated successfully',
-						});
-						setIsEditing(false);
-						// TODO(@amlannandy): To update this to use invalidateGetMetricList
-						// once we have switched to the V2 API in summary page
-						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_METRICS_LIST]);
-						invalidateGetMetricMetadata(queryClient, {
-							metricName,
-						});
-					} else {
-						notifications.error({
-							message: METRIC_METADATA_UPDATE_ERROR_MESSAGE,
-						});
-					}
+				onSuccess: (): void => {
+					logEvent(MetricsExplorerEvents.MetricMetadataUpdated, {
+						[MetricsExplorerEventKeys.MetricName]: metricName,
+						[MetricsExplorerEventKeys.Tab]: 'summary',
+						[MetricsExplorerEventKeys.Modal]: 'metric-details',
+					});
+					notifications.success({
+						message: 'Metadata updated successfully',
+					});
+					setIsEditing(false);
+					invalidateListMetrics(queryClient);
+					invalidateGetMetricMetadata(queryClient, {
+						metricName,
+					});
 				},
 				onError: (error): void => {
 					const errorMessage = (error as AxiosError<RenderErrorResponseDTO>).response
@@ -371,10 +357,12 @@ function Metadata({
 				),
 				key: 'metric-metadata',
 				children: isErrorMetricMetadata ? (
-					<Empty
-						className="metrics-metadata-error"
-						description="Error fetching metric metadata"
-					/>
+					<div className="metric-metadata-error-state">
+						<MetricDetailsErrorState
+							refetch={refetchMetricMetadata}
+							errorMessage="Something went wrong while fetching metric metadata"
+						/>
+					</div>
 				) : (
 					<ResizeTable
 						columns={columns}
@@ -387,7 +375,13 @@ function Metadata({
 				),
 			},
 		],
-		[actionButton, columns, isErrorMetricMetadata, tableData],
+		[
+			actionButton,
+			columns,
+			isErrorMetricMetadata,
+			refetchMetricMetadata,
+			tableData,
+		],
 	);
 
 	if (isLoadingMetricMetadata) {
