@@ -64,7 +64,7 @@ def test_histogram_count_for_one_endpoint(
         "A",
         metric_name,
         "rate",
-        "histogram_count",
+        "count",
         comparisonSpaceAggregationParam={
             "threshold": threshold,
             "operator": operator
@@ -123,7 +123,7 @@ def test_histogram_count_for_one_service(
         "A",
         metric_name,
         "rate",
-        "histogram_count",
+        "count",
         comparisonSpaceAggregationParam={
             "threshold": threshold,
             "operator": operator
@@ -182,7 +182,7 @@ def test_histogram_count_for_delta_service(
         "A",
         metric_name,
         "rate",
-        "histogram_count",
+        "count",
         comparisonSpaceAggregationParam={
             "threshold": threshold,
             "operator": operator
@@ -241,7 +241,7 @@ def test_histogram_count_for_all_services(
         "A",
         metric_name,
         "rate",
-        "histogram_count",
+        "count",
         comparisonSpaceAggregationParam={
             "threshold": threshold,
             "operator": operator
