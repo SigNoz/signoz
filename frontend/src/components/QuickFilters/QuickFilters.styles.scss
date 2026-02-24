@@ -1,6 +1,7 @@
 .quick-filters-container {
 	display: flex;
 	height: 100%;
+	min-height: 0;
 	position: relative;
 
 	.quick-filters-settings-container {
@@ -13,8 +14,14 @@
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
+	min-height: 0;
 	border-right: 1px solid var(--bg-slate-400);
 	color: var(--bg-vanilla-100);
+
+	.overlay-scrollbar {
+		flex: 1;
+		min-height: 0;
+	}
 
 	.header {
 		display: flex;
