@@ -1029,7 +1029,6 @@ export enum MetrictypesSpaceAggregationDTO {
 	p90 = 'p90',
 	p95 = 'p95',
 	p99 = 'p99',
-	histogram_count = 'histogram_count',
 }
 export enum MetrictypesTemporalityDTO {
 	delta = 'delta',
