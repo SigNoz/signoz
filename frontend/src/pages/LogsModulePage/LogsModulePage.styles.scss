@@ -1,14 +1,10 @@
 .logs-module-container {
 	flex: 1;
-	min-height: 0;
 	display: flex;
 	flex-direction: column;
 
 	.ant-tabs {
 		flex: 1;
-		min-height: 0;
-		display: flex;
-		flex-direction: column;
 	}
 
 	.ant-tabs-nav {
@@ -22,17 +18,14 @@
 
 	.ant-tabs-content-holder {
 		display: flex;
-		min-height: 0;
 
 		.ant-tabs-content {
 			flex: 1;
-			min-height: 0;
 			display: flex;
 			flex-direction: column;
 
 			.ant-tabs-tabpane {
 				flex: 1;
-				min-height: 0;
 				display: flex;
 				flex-direction: column;
 			}
