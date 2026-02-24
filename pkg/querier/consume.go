@@ -128,7 +128,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			case *time.Time:
 				ts = v.UnixMilli()
 
-			case *float64, *float32, *int64, *int32, *uint64, *uint32:
+			case *float64, *float32, *int64, *int32, *uint64, *uint32, *uint8:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
 				if m := aggRe.FindStringSubmatch(name); m != nil {
 					id, _ := strconv.Atoi(m[1])
@@ -148,7 +148,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					})
 				}
 
-			case **float64, **float32, **int64, **int32, **uint64, **uint32:
+			case **float64, **float32, **int64, **int32, **uint64, **uint32, **uint8:
 				tempVal := reflect.ValueOf(ptr)
 				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
 					val := numericAsFloat(tempVal.Elem().Elem().Interface())
