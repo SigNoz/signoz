@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/modules/logspipeline/impllogspipeline"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
@@ -4048,26 +4049,6 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
-func parseAgentConfigVersion(r *http.Request) (int, error) {
-	versionString := mux.Vars(r)["version"]
-
-	if versionString == "latest" {
-		return -1, nil
-	}
-
-	version64, err := strconv.ParseInt(versionString, 0, 8)
-
-	if err != nil {
-		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid version number")
-	}
-
-	if version64 <= 0 {
-		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid version number")
-	}
-
-	return int(version64), nil
-}
-
 func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
@@ -4098,7 +4079,7 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	version, err := parseAgentConfigVersion(r)
+	version, err := impllogspipeline.ParseAgentConfigVersion(r)
 	if err != nil {
 		render.Error(w, err)
 		return

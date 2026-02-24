@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
+	"github.com/SigNoz/signoz/pkg/modules/logspipeline/impllogspipeline"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
@@ -254,6 +255,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.AuthzHandler,
 			handlers.ZeusHandler,
 			handlers.QuerierHandler,
+			impllogspipeline.NewHandler(modules.LogsPipeline),
 		),
 	)
 }

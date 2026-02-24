@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/modules/logspipeline"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -48,6 +49,7 @@ type provider struct {
 	authzHandler           authz.Handler
 	zeusHandler            zeus.Handler
 	querierHandler         querier.Handler
+	logspipelineHandler    logspipeline.Handler
 }
 
 func NewFactory(
@@ -69,6 +71,7 @@ func NewFactory(
 	authzHandler authz.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	logspipelineHandler logspipeline.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -93,6 +96,7 @@ func NewFactory(
 			authzHandler,
 			zeusHandler,
 			querierHandler,
+			logspipelineHandler,
 		)
 	})
 }
@@ -119,6 +123,7 @@ func newProvider(
 	authzHandler authz.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	logspipelineHandler logspipeline.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -143,6 +148,7 @@ func newProvider(
 		authzHandler:           authzHandler,
 		zeusHandler:            zeusHandler,
 		querierHandler:         querierHandler,
+		logspipelineHandler:    logspipelineHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -223,8 +229,13 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addLogspipelineRoutes(router); err != nil {
+		return err
+	}
+
 	return nil
 }
+
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
