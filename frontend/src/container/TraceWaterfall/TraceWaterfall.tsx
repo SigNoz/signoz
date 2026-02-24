@@ -15,7 +15,6 @@ import './TraceWaterfall.styles.scss';
 export interface IInterestedSpan {
 	spanId: string;
 	isUncollapsed: boolean;
-	shouldScrollToSpan?: boolean;
 }
 
 interface ITraceWaterfallProps {
@@ -110,7 +109,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
-						isFetchingTraceData={isFetchingTraceData}
 					/>
 				);
 			default:
@@ -119,7 +117,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	}, [
 		errorFetchingTraceData,
 		interestedSpanId,
-		isFetchingTraceData,
 		selectedSpan,
 		setInterestedSpanId,
 		setSelectedSpan,
