@@ -336,6 +336,7 @@ type GetFlamegraphSpansForTraceResponse struct {
 	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
 	DurationNano         uint64              `json:"durationNano"`
 	Spans                [][]*FlamegraphSpan `json:"spans"`
+	HasMore              bool                `json:"hasMore"`
 }
 
 type OtelSpanRef struct {

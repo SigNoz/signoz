@@ -337,6 +337,7 @@ type GetWaterfallSpansForTraceWithMetadataParams struct {
 
 type GetFlamegraphSpansForTraceParams struct {
 	SelectedSpanID string `json:"selectedSpanId"`
+	Limit          uint   `json:"limit"`
 }
 
 type SpanFilterParams struct {
