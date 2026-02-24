@@ -3,6 +3,7 @@ package configflagger
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
@@ -32,6 +33,10 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 	for name, value := range c.Config.Boolean {
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "boolean")
+				continue
+			}
 			return nil, err
 		}
 
@@ -46,6 +51,10 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 	for name, value := range c.Config.String {
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "string")
+				continue
+			}
 			return nil, err
 		}
 
@@ -60,6 +69,10 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 	for name, value := range c.Config.Float {
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "float")
+				continue
+			}
 			return nil, err
 		}
 
@@ -74,6 +87,10 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 	for name, value := range c.Config.Integer {
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "integer")
+				continue
+			}
 			return nil, err
 		}
 
@@ -88,6 +105,10 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 	for name, value := range c.Config.Object {
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "object")
+				continue
+			}
 			return nil, err
 		}
 
