@@ -146,11 +146,6 @@ function Summary(): JSX.Element {
 		isError: isGetMetricsStatsError,
 	} = useGetMetricsStats();
 
-	const isListViewError = useMemo(
-		() => isGetMetricsStatsError || metricsData?.status !== 200,
-		[isGetMetricsStatsError, metricsData],
-	);
-
 	const {
 		data: treeMapData,
 		mutate: getMetricsTreemap,
@@ -169,11 +164,6 @@ function Summary(): JSX.Element {
 			data: metricsTreemapQuery,
 		});
 	}, [metricsTreemapQuery, getMetricsTreemap]);
-
-	const isProportionViewError = useMemo(
-		() => isGetMetricsTreemapError || treeMapData?.status !== 200,
-		[isGetMetricsTreemapError, treeMapData],
-	);
 
 	const handleFilterChange = useCallback(
 		(expression: string) => {
@@ -221,7 +211,7 @@ function Summary(): JSX.Element {
 	};
 
 	const formattedMetricsData = useMemo(
-		() => formatDataForMetricsTable(metricsData?.data?.data?.metrics || []),
+		() => formatDataForMetricsTable(metricsData?.data.metrics || []),
 		[metricsData],
 	);
 
@@ -296,13 +286,12 @@ function Summary(): JSX.Element {
 		formattedMetricsData.length === 0 && !isGetMetricsStatsLoading;
 
 	const isMetricsTreeMapDataEmpty =
-		!treeMapData?.data?.data?.[heatmapView]?.length &&
-		!isGetMetricsTreemapLoading;
+		!treeMapData?.data[heatmapView]?.length && !isGetMetricsTreemapLoading;
 
 	const showFullScreenLoading =
 		(isGetMetricsStatsLoading || isGetMetricsTreemapLoading) &&
 		formattedMetricsData.length === 0 &&
-		!treeMapData?.data?.data?.[heatmapView]?.length;
+		!treeMapData?.data[heatmapView]?.length;
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -321,22 +310,22 @@ function Summary(): JSX.Element {
 				) : (
 					<>
 						<MetricsTreemap
-							data={treeMapData?.data?.data}
+							data={treeMapData?.data}
 							isLoading={isGetMetricsTreemapLoading}
-							isError={isProportionViewError}
+							isError={isGetMetricsTreemapError}
 							viewType={heatmapView}
 							openMetricDetails={openMetricDetails}
 							setHeatmapView={handleSetHeatmapView}
 						/>
 						<MetricsTable
 							isLoading={isGetMetricsStatsLoading}
-							isError={isListViewError}
+							isError={isGetMetricsStatsError}
 							data={formattedMetricsData}
 							pageSize={pageSize}
 							currentPage={currentPage}
 							onPaginationChange={onPaginationChange}
 							setOrderBy={handleSetOrderBy}
-							totalCount={metricsData?.data?.data?.total || 0}
+							totalCount={metricsData?.data.total || 0}
 							openMetricDetails={openMetricDetails}
 							queryFilterExpression={queryFilterExpression}
 							onFilterChange={handleFilterChange}
