@@ -258,7 +258,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),
@@ -278,7 +278,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),
@@ -360,7 +360,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),
@@ -373,7 +373,7 @@ describe('EndPointDetails Component', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.URL_PATH }),
+						key: expect.objectContaining({ key: SPAN_ATTRIBUTES.HTTP_URL }),
 						value: '/api/test',
 					}),
 				]),

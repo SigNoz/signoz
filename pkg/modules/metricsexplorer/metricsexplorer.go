@@ -23,6 +23,7 @@ type Handler interface {
 
 // Module represents the metrics module interface.
 type Module interface {
+	CheckMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) (bool, error)
 	ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error)
 	GetStats(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.StatsRequest) (*metricsexplorertypes.StatsResponse, error)
 	GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error)

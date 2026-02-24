@@ -77,6 +77,7 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
+							item.key === ROUTES.ROLES_SETTINGS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
 							item.key === ROUTES.API_KEYS ||
@@ -107,6 +108,7 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
+							item.key === ROUTES.ROLES_SETTINGS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.ORG_SETTINGS ||
@@ -134,7 +136,9 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.API_KEYS || item.key === ROUTES.ORG_SETTINGS
+							item.key === ROUTES.API_KEYS ||
+							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.ROLES_SETTINGS
 								? true
 								: item.isEnabled,
 					}));

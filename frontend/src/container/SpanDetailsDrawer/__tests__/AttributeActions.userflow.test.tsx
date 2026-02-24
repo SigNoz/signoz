@@ -3,6 +3,7 @@ import { MemoryRouter, Route } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
+import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import { AppProvider } from 'providers/App/App';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -108,7 +109,7 @@ const createMockSpan = (): Span => ({
 	statusMessage: '',
 	tagMap: {
 		'http.method': 'GET',
-		'http.url': '/api/users?page=1',
+		[SPAN_ATTRIBUTES.HTTP_URL]: '/api/users?page=1',
 		'http.status_code': '200',
 		'service.name': 'frontend-service',
 		'span.kind': 'server',

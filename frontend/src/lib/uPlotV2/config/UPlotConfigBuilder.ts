@@ -8,10 +8,15 @@ import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
+	DEFAULT_CURSOR_CONFIG,
+	DEFAULT_HOVER_PROXIMITY_VALUE,
+	DEFAULT_PLOT_CONFIG,
+	STEP_INTERVAL_MULTIPLIER,
+} from '../constants';
+import { calculateWidthBasedOnStepInterval } from '../utils';
+import {
 	ConfigBuilder,
 	ConfigBuilderProps,
-	DEFAULT_CURSOR_CONFIG,
-	DEFAULT_PLOT_CONFIG,
 	LegendItem,
 	SelectionPreferencesSource,
 } from './types';
@@ -44,6 +49,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	private shouldSaveSelectionPreference = false;
 
 	private axes: Record<string, UPlotAxisBuilder> = {};
+
+	private stepInterval: number | undefined;
 
 	readonly scales: UPlotScaleBuilder[] = [];
 
@@ -79,6 +86,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			tzDate,
 			selectionPreferencesSource,
 			shouldSaveSelectionPreference,
+			stepInterval,
 		} = args ?? {};
 		if (widgetId) {
 			this.widgetId = widgetId;
@@ -94,6 +102,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 		if (shouldSaveSelectionPreference) {
 			this.shouldSaveSelectionPreference = shouldSaveSelectionPreference;
+		}
+
+		if (stepInterval) {
+			this.stepInterval = stepInterval;
 		}
 
 		this.onDragSelect = noop;
@@ -373,6 +385,31 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
+	 * Get cursor configuration
+	 */
+	getCursorConfig(): Cursor {
+		if (this.stepInterval) {
+			const cursorConfig = {
+				...DEFAULT_CURSOR_CONFIG,
+				hover: {
+					...DEFAULT_CURSOR_CONFIG.hover,
+					prox: this.stepInterval
+						? (uPlotInstance: uPlot): number => {
+								const width = calculateWidthBasedOnStepInterval({
+									uPlotInstance,
+									stepInterval: this.stepInterval ?? 0,
+								});
+								return width * STEP_INTERVAL_MULTIPLIER;
+						  }
+						: DEFAULT_HOVER_PROXIMITY_VALUE,
+				},
+			};
+			return merge({}, DEFAULT_CURSOR_CONFIG, cursorConfig, this.cursor);
+		}
+		return merge({}, DEFAULT_CURSOR_CONFIG, this.cursor);
+	}
+
+	/**
 	 * Build the final uPlot.Options configuration
 	 */
 	getConfig(): Partial<Options> {
@@ -413,7 +450,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		config.hooks = this.hooks;
 		config.select = this.select;
 
-		config.cursor = merge({}, DEFAULT_CURSOR_CONFIG, this.cursor);
+		config.cursor = this.getCursorConfig();
 		config.tzDate = this.tzDate;
 		config.plugins = this.plugins.length > 0 ? this.plugins : undefined;
 		config.bands = this.bands.length > 0 ? this.bands : undefined;
