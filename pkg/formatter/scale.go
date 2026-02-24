@@ -78,9 +78,8 @@ func toFixed(value float64, decimals DecimalCount) string {
 	}
 
 	decimalPos := strings.Index(formatted, ".")
-	precision := 0
 	if decimalPos != -1 {
-		precision = len(formatted) - decimalPos - 1
+		precision := len(formatted) - decimalPos - 1
 		if precision < *decimals {
 			return formatted + strings.Repeat("0", *decimals-precision)
 		}
@@ -89,8 +88,8 @@ func toFixed(value float64, decimals DecimalCount) string {
 	return formatted
 }
 
-func toFixedScaled(value float64, decimals DecimalCount, scaleFormat string) string {
-	return toFixed(value, decimals) + scaleFormat
+func toFixedScaled(value float64, scaleFormat string) string {
+	return toFixed(value, nil) + scaleFormat
 }
 
 func getDecimalsForValue(value float64) int {
