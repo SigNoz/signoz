@@ -1720,7 +1720,10 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 			temporalities[metricName] = append(temporalities[metricName], temporality)
 		}
 		var metricType metrictypes.Type
-		metricType.Scan(metricTypeStr)
+		err = metricType.Scan(metricTypeStr)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan metric-type result")
+		}
 		types[metricName] = metricType
 	}
 	if err := rows.Err(); err != nil {
@@ -1779,7 +1782,10 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 
 		temporalities[metricName] = temporality
 		var metricType metrictypes.Type
-		metricType.Scan(meterMetricTypeStr)
+		err = metricType.Scan(meterMetricTypeStr)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan metric-type result")
+		}
 		types[metricName] = metricType
 	}
 
