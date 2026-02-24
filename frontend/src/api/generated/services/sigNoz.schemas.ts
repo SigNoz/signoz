@@ -81,7 +81,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -106,6 +106,33 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @format date-time
 	 */
 	updatedAt?: Date;
+}
+
+export interface AuthtypesGettableObjectsDTO {
+	resource: AuthtypesResourceDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+/**
+ * @nullable
+ */
+export type AuthtypesGettableResourcesDTORelations = {
+	[key: string]: string[];
+} | null;
+
+export interface AuthtypesGettableResourcesDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	relations: AuthtypesGettableResourcesDTORelations;
+	/**
+	 * @type array
+	 */
+	resources: AuthtypesResourceDTO[];
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -182,10 +209,6 @@ export interface AuthtypesGoogleConfigDTO {
 	serviceAccountJson?: string;
 }
 
-export interface AuthtypesNameDTO {
-	[key: string]: unknown;
-}
-
 export interface AuthtypesOIDCConfigDTO {
 	claimMapping?: AuthtypesAttributeMappingDTO;
 	/**
@@ -216,7 +239,10 @@ export interface AuthtypesOIDCConfigDTO {
 
 export interface AuthtypesObjectDTO {
 	resource: AuthtypesResourceDTO;
-	selector: AuthtypesSelectorDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
 }
 
 export interface AuthtypesOrgSessionContextDTO {
@@ -237,6 +263,19 @@ export interface AuthtypesPasswordAuthNSupportDTO {
 	 * @type string
 	 */
 	provider?: string;
+}
+
+export interface AuthtypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: AuthtypesGettableObjectsDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
 export interface AuthtypesPostableAuthDomainDTO {
@@ -270,7 +309,10 @@ export interface AuthtypesPostableRotateTokenDTO {
 }
 
 export interface AuthtypesResourceDTO {
-	name: AuthtypesNameDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
 	/**
 	 * @type string
 	 */
@@ -320,10 +362,6 @@ export interface AuthtypesSamlConfigDTO {
 	samlIdp?: string;
 }
 
-export interface AuthtypesSelectorDTO {
-	[key: string]: unknown;
-}
-
 export interface AuthtypesSessionContextDTO {
 	/**
 	 * @type boolean
@@ -337,10 +375,6 @@ export interface AuthtypesSessionContextDTO {
 }
 
 export interface AuthtypesTransactionDTO {
-	/**
-	 * @type string
-	 */
-	id?: string;
 	object: AuthtypesObjectDTO;
 	/**
 	 * @type string
@@ -623,14 +657,14 @@ export interface GatewaytypesLimitMetricValueDTO {
 export interface GatewaytypesLimitValueDTO {
 	/**
 	 * @type integer
-	 * @format int64
+	 * @nullable true
 	 */
-	count?: number;
+	count?: number | null;
 	/**
 	 * @type integer
-	 * @format int64
+	 * @nullable true
 	 */
-	size?: number;
+	size?: number | null;
 }
 
 export interface GatewaytypesPaginationDTO {
@@ -2006,39 +2040,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-/**
- * @nullable
- */
-export type RoletypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface RoletypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: RoletypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	resources: AuthtypesResourceDTO[] | null;
-}
-
-export interface RoletypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesObjectDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesObjectDTO[] | null;
-}
-
 export interface RoletypesPatchableRoleDTO {
 	/**
 	 * @type string
@@ -2070,7 +2071,7 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2211,7 +2212,7 @@ export interface TypesGettableAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type integer
 	 * @format int64
@@ -2264,7 +2265,7 @@ export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 }
 
 export interface TypesInviteDTO {
@@ -2280,7 +2281,7 @@ export interface TypesInviteDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2325,7 +2326,7 @@ export interface TypesOrganizationDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -2431,7 +2432,7 @@ export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2455,7 +2456,7 @@ export interface TypesStorableAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2504,7 +2505,7 @@ export interface TypesUserDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type boolean
 	 */
@@ -2614,6 +2615,14 @@ export type AuthzCheck200 = {
 	 * @type array
 	 */
 	data: AuthtypesGettableTransactionDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type AuthzResources200 = {
+	data: AuthtypesGettableResourcesDTO;
 	/**
 	 * @type string
 	 */
@@ -3031,7 +3040,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesObjectDTO[];
+	data: AuthtypesGettableObjectsDTO[];
 	/**
 	 * @type string
 	 */
@@ -3042,14 +3051,6 @@ export type PatchObjectsPathParameters = {
 	id: string;
 	relation: string;
 };
-export type GetResources200 = {
-	data: RoletypesGettableResourcesDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListUsers200 = {
 	/**
 	 * @type array
@@ -3151,7 +3152,7 @@ export type GetIngestionKeys200 = {
 	status: string;
 };
 
-export type CreateIngestionKey200 = {
+export type CreateIngestionKey201 = {
 	data: GatewaytypesGettableCreatedIngestionKeyDTO;
 	/**
 	 * @type string
