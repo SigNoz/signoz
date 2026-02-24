@@ -33,7 +33,7 @@ import (
 
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/formatter"
+	"github.com/SigNoz/signoz/pkg/formatter"
 
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 

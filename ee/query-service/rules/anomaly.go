@@ -26,7 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 
-	"github.com/SigNoz/signoz/pkg/query-service/formatter"
+	"github.com/SigNoz/signoz/pkg/formatter"
 
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 
