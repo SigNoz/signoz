@@ -178,8 +178,7 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 
 	var result string
 
-	switch node.Op {
-	case qbtypes.LogicalOpLeaf:
+	if len(node.Children) == 0 {
 		var parts []string
 		for _, c := range node.Conditions {
 			s, err := parseCondition(c)
@@ -194,50 +193,53 @@ func nodeToExpr(node *qbtypes.FilterExprNode) (string, error) {
 		// For a simple leaf, just join conditions with AND without wrapping
 		// the whole clause in parentheses
 		result = strings.Join(parts, " and ")
-	case qbtypes.LogicalOpAnd:
-		var parts []string
-		for _, child := range node.Children {
-			if child == nil {
-				continue
+	} else {
+		switch node.Op {
+		case qbtypes.LogicalOpAnd:
+			var parts []string
+			for _, child := range node.Children {
+				if child == nil {
+					continue
+				}
+				s, err := nodeToExpr(child)
+				if err != nil {
+					return "", err
+				}
+				// When mixing AND/OR, we need parentheses around any OR child to
+				// preserve the intended precedence: (a and (b or c)).
+				if len(child.Children) > 0 && child.Op == qbtypes.LogicalOpOr {
+					s = fmt.Sprintf("(%s)", s)
+				}
+				parts = append(parts, s)
 			}
-			s, err := nodeToExpr(child)
-			if err != nil {
-				return "", err
+			if len(parts) == 0 {
+				return "", nil
 			}
-			// When mixing AND/OR, we need parentheses around any OR child to
-			// preserve the intended precedence: (a and (b or c)).
-			if child.Op == qbtypes.LogicalOpOr {
-				s = fmt.Sprintf("(%s)", s)
+			result = strings.Join(parts, " and ")
+		case qbtypes.LogicalOpOr:
+			var parts []string
+			for _, child := range node.Children {
+				if child == nil {
+					continue
+				}
+				s, err := nodeToExpr(child)
+				if err != nil {
+					return "", err
+				}
+				// When mixing AND/OR, we need parentheses around any AND child to
+				// preserve the intended precedence: ((a and b) or c).
+				if len(child.Children) > 0 && child.Op == qbtypes.LogicalOpAnd {
+					s = fmt.Sprintf("(%s)", s)
+				}
+				parts = append(parts, s)
 			}
-			parts = append(parts, s)
+			if len(parts) == 0 {
+				return "", nil
+			}
+			result = strings.Join(parts, " or ")
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported logical op: %s", node.Op)
 		}
-		if len(parts) == 0 {
-			return "", nil
-		}
-		result = strings.Join(parts, " and ")
-	case qbtypes.LogicalOpOr:
-		var parts []string
-		for _, child := range node.Children {
-			if child == nil {
-				continue
-			}
-			s, err := nodeToExpr(child)
-			if err != nil {
-				return "", err
-			}
-			// When mixing AND/OR, we need parentheses around any AND child to
-			// preserve the intended precedence: ((a and b) or c).
-			if child.Op == qbtypes.LogicalOpAnd {
-				s = fmt.Sprintf("(%s)", s)
-			}
-			parts = append(parts, s)
-		}
-		if len(parts) == 0 {
-			return "", nil
-		}
-		result = strings.Join(parts, " or ")
-	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported logical op: %s", node.Op)
 	}
 
 	if node.Negated {

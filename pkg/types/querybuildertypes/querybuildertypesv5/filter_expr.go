@@ -6,8 +6,6 @@ import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 type LogicalOp string
 
 const (
-	// LogicalOpLeaf represents a leaf node containing one or more simple conditions.
-	LogicalOpLeaf LogicalOp = "LEAF"
 	// LogicalOpAnd represents an AND combination of children.
 	LogicalOpAnd LogicalOp = "AND"
 	// LogicalOpOr represents an OR combination of children.
@@ -16,7 +14,7 @@ const (
 
 // FilterExprNode is a reusable logical representation of a filter expression.
 //
-// - Leaf nodes (Op == LogicalOpLeaf) contain one or more ParsedFilterCondition.
+// - Leaf nodes (no Children) contain one or more Conditions.
 // - Non-leaf nodes (Op == LogicalOpAnd/LogicalOpOr) contain Children.
 // - Negated indicates a leading NOT applied to this subtree.
 type FilterExprNode struct {
@@ -27,9 +25,7 @@ type FilterExprNode struct {
 }
 
 func NewEmptyFilterExprNode() *FilterExprNode {
-	return &FilterExprNode{
-		Op: LogicalOpLeaf,
-	}
+	return &FilterExprNode{}
 }
 
 func (f *FilterExprNode) Flatten() []FilterCondition {
@@ -40,7 +36,7 @@ func (f *FilterExprNode) Flatten() []FilterCondition {
 		if node == nil {
 			return
 		}
-		if node.Op == LogicalOpLeaf {
+		if len(node.Children) == 0 {
 			conditions = append(conditions, node.Conditions...)
 		}
 		for _, child := range node.Children {

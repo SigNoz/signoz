@@ -35,7 +35,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 			name: "single simple equality leaf",
 			expr: "attributes.host.name = 'frontend'",
 			want: &qbtypes.FilterExprNode{
-				Op: qbtypes.LogicalOpLeaf,
 				Conditions: []qbtypes.FilterCondition{
 					{
 						Key:   fk(t, "attributes.host.name"),
@@ -52,7 +51,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpAnd,
 				Children: []*qbtypes.FilterExprNode{
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key: fk(t, "attributes.status_code"),
@@ -66,7 +64,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 					},
 					{
 						Negated: true,
-						Op:      qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.is_error"),
@@ -85,7 +82,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpOr,
 				Children: []*qbtypes.FilterExprNode{
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key: fk(t, "attributes.service.name"),
@@ -98,7 +94,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						},
 					},
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key: fk(t, "resource.region"),
@@ -120,7 +115,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpAnd,
 				Children: []*qbtypes.FilterExprNode{
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.message"),
@@ -130,7 +124,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						},
 					},
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.message"),
@@ -140,7 +133,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						},
 					},
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.message"),
@@ -150,7 +142,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						},
 					},
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.message"),
@@ -169,7 +160,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpOr,
 				Children: []*qbtypes.FilterExprNode{
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.host"),
@@ -179,7 +169,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						},
 					},
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.cluster"),
@@ -195,7 +184,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 			name: "KEY used as value in equality",
 			expr: "attributes.left = other_key",
 			want: &qbtypes.FilterExprNode{
-				Op: qbtypes.LogicalOpLeaf,
 				Conditions: []qbtypes.FilterCondition{
 					{
 						Key:   fk(t, "attributes.left"),
@@ -213,7 +201,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 				Op: qbtypes.LogicalOpAnd,
 				Children: []*qbtypes.FilterExprNode{
 					{
-						Op: qbtypes.LogicalOpLeaf,
 						Conditions: []qbtypes.FilterCondition{
 							{
 								Key:   fk(t, "attributes.env"),
@@ -227,7 +214,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						Op:      qbtypes.LogicalOpOr,
 						Children: []*qbtypes.FilterExprNode{
 							{
-								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
 										Key:   fk(t, "attributes.team"),
@@ -237,7 +223,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 								},
 							},
 							{
-								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
 										Key:   fk(t, "attributes.team"),
@@ -261,7 +246,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpOr,
 						Children: []*qbtypes.FilterExprNode{
 							{
-								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
 										Key:   fk(t, "attributes.status"),
@@ -271,7 +255,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 								},
 							},
 							{
-								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
 										Key:   fk(t, "attributes.status"),
@@ -286,7 +269,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 						Op: qbtypes.LogicalOpOr,
 						Children: []*qbtypes.FilterExprNode{
 							{
-								Op: qbtypes.LogicalOpLeaf,
 								Conditions: []qbtypes.FilterCondition{
 									{
 										Key:   fk(t, "resource.region"),
@@ -299,7 +281,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 								Op: qbtypes.LogicalOpAnd,
 								Children: []*qbtypes.FilterExprNode{
 									{
-										Op: qbtypes.LogicalOpLeaf,
 										Conditions: []qbtypes.FilterCondition{
 											{
 												Key:   fk(t, "resource.region"),
@@ -309,7 +290,6 @@ func TestParseFilterExpr_NestedConditions(t *testing.T) {
 										},
 									},
 									{
-										Op: qbtypes.LogicalOpLeaf,
 										Conditions: []qbtypes.FilterCondition{
 											{
 												Key:   fk(t, "attributes.tier"),
