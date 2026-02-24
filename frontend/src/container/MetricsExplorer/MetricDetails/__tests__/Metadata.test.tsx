@@ -7,7 +7,6 @@ import {
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { AxiosResponse } from 'axios';
 import {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
@@ -91,7 +90,7 @@ type UseUpdateMetricMetadataResult = ReturnType<
 const mockUseUpdateMetricMetadata = jest.fn();
 
 const mockMetricMetadata = transformMetricMetadata(
-	(getMockMetricMetadataData().data as AxiosResponse<GetMetricMetadata200>).data,
+	getMockMetricMetadataData().data as GetMetricMetadata200,
 ) as MetricMetadata;
 
 const mockErrorNotification = jest.fn();
@@ -104,6 +103,7 @@ jest.spyOn(useNotificationsHooks, 'useNotifications').mockReturnValue({
 } as any);
 
 const mockMetricName = 'test_metric';
+const mockRefetchMetricMetadata = jest.fn();
 
 describe('Metadata', () => {
 	beforeEach(() => {
@@ -119,6 +119,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -139,6 +140,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -161,6 +163,7 @@ describe('Metadata', () => {
 				}}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -215,6 +218,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -244,6 +248,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -257,9 +262,8 @@ describe('Metadata', () => {
 		const saveButton = screen.getByText('Save');
 		await userEvent.click(saveButton);
 
-		const onSuccessCallback =
-			mockUseUpdateMetricMetadata.mock.calls[0][1].onSuccess;
-		onSuccessCallback({ status: 500 });
+		const onErrorCallback = mockUseUpdateMetricMetadata.mock.calls[0][1].onError;
+		onErrorCallback({ status: 500 });
 
 		expect(mockErrorNotification).toHaveBeenCalledWith({
 			message:
@@ -274,6 +278,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -305,6 +310,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
@@ -327,6 +333,7 @@ describe('Metadata', () => {
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 

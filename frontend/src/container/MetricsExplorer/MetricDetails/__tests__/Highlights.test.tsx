@@ -33,7 +33,7 @@ describe('Highlights', () => {
 		);
 	});
 
-	it('should render error state with icon and tooltip when there is an error', () => {
+	it('should render error state correctly', () => {
 		useGetMetricHighlightsMock.mockReturnValue(
 			getMockMetricHighlightsData(
 				{},
@@ -45,13 +45,12 @@ describe('Highlights', () => {
 
 		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
-		const metricHighlightsValues = container.querySelectorAll(
-			METRIC_DETAILS_GRID_VALUE_SELECTOR,
-		);
-		expect(metricHighlightsValues).toHaveLength(3);
-		metricHighlightsValues.forEach((el) => {
-			expect(el.querySelector('svg')).toBeInTheDocument();
-		});
+		expect(
+			container.querySelector('.metric-highlights-error-state'),
+		).toBeInTheDocument();
+		expect(
+			container.querySelector('.metric-highlights-error-state .ant-btn'),
+		).toBeInTheDocument();
 	});
 
 	it('should render loading state when data is loading', () => {

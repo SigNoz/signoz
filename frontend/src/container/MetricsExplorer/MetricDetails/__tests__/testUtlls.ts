@@ -22,15 +22,13 @@ export function getMockMetricHighlightsData(
 	return {
 		data: {
 			data: {
-				data: {
-					dataPoints: 1000000,
-					lastReceived: '2026-01-24T00:00:00Z',
-					totalTimeSeries: 1000000,
-					activeTimeSeries: 1000000,
-				},
-				status: 'success',
-				...overrides,
+				dataPoints: 1000000,
+				lastReceived: '2026-01-24T00:00:00Z',
+				totalTimeSeries: 1000000,
+				activeTimeSeries: 1000000,
 			},
+			status: 'success',
+			...overrides,
 		},
 		isLoading,
 		isError,
@@ -71,13 +69,12 @@ export function getMockDashboardsData(
 	return {
 		data: {
 			data: {
-				data: {
-					dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2],
-				},
-				status: 'success',
-				...overrides,
+				dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2],
 			},
+			status: 'success',
+			...overrides,
 		},
+
 		isLoading,
 		isError,
 	} as ReturnType<typeof metricsExplorerHooks.useGetMetricDashboards>;
@@ -96,12 +93,10 @@ export function getMockAlertsData(
 	return {
 		data: {
 			data: {
-				data: {
-					alerts: [MOCK_ALERT_1, MOCK_ALERT_2],
-				},
-				status: 'success',
-				...overrides,
+				alerts: [MOCK_ALERT_1, MOCK_ALERT_2],
 			},
+			status: 'success',
+			...overrides,
 		},
 		isLoading,
 		isError,
@@ -121,24 +116,22 @@ export function getMockMetricAttributesData(
 	return {
 		data: {
 			data: {
-				data: {
-					attributes: [
-						{
-							key: 'attribute1',
-							values: ['value1', 'value2'],
-							valueCount: 2,
-						},
-						{
-							key: 'attribute2',
-							values: ['value3'],
-							valueCount: 1,
-						},
-					],
-					totalKeys: 2,
-				},
-				status: 'success',
-				...overrides,
+				attributes: [
+					{
+						key: 'attribute1',
+						values: ['value1', 'value2'],
+						valueCount: 2,
+					},
+					{
+						key: 'attribute2',
+						values: ['value3'],
+						valueCount: 1,
+					},
+				],
+				totalKeys: 2,
 			},
+			status: 'success',
+			...overrides,
 		},
 		isLoading,
 		isError,
@@ -158,16 +151,14 @@ export function getMockMetricMetadataData(
 	return {
 		data: {
 			data: {
-				data: {
-					description: 'test_description',
-					type: MetrictypesTypeDTO.gauge,
-					unit: 'test_unit',
-					temporality: MetrictypesTemporalityDTO.delta,
-					isMonotonic: false,
-				},
-				status: 'success',
-				...overrides,
+				description: 'test_description',
+				type: MetrictypesTypeDTO.gauge,
+				unit: 'test_unit',
+				temporality: MetrictypesTemporalityDTO.delta,
+				isMonotonic: false,
 			},
+			status: 'success',
+			...overrides,
 		},
 		isLoading,
 		isError,

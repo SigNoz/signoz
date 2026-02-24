@@ -56,12 +56,16 @@ describe('DashboardsAndAlertsPopover', () => {
 	it('renders null with no dashboards and alerts', () => {
 		useGetMetricAlertsMock.mockReturnValue(
 			getMockAlertsData({
-				data: undefined,
+				data: {
+					alerts: [],
+				},
 			}),
 		);
 		useGetMetricDashboardsMock.mockReturnValue(
 			getMockDashboardsData({
-				data: undefined,
+				data: {
+					dashboards: [],
+				},
 			}),
 		);
 
