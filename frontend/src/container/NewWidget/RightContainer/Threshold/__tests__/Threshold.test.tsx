@@ -18,8 +18,8 @@ jest.mock('lib/query/createTableColumnsFromQuery', () => ({
 jest.mock('container/NewWidget/utils', () => ({
 	unitOptions: jest.fn(() => [
 		{ value: 'none', label: 'None' },
-		{ value: 'percent', label: 'Percent' },
-		{ value: 'ms', label: 'Milliseconds' },
+		{ value: '%', label: 'Percent (0 - 100)' },
+		{ value: 'ms', label: 'Milliseconds (ms)' },
 	]),
 }));
 
@@ -39,7 +39,7 @@ const defaultProps = {
 	],
 	thresholdTableOptions: 'cpu_usage',
 	columnUnits: { cpu_usage: 'percent', memory_usage: 'bytes' },
-	yAxisUnit: 'percent',
+	yAxisUnit: '%',
 	moveThreshold: jest.fn(),
 };
 
