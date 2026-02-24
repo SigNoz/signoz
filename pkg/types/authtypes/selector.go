@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"encoding"
 	"encoding/json"
 	"net/http"
 	"regexp"
@@ -15,18 +16,24 @@ var (
 )
 
 var (
-	_ json.Marshaler   = new(Selector)
-	_ json.Unmarshaler = new(Selector)
+	_ json.Marshaler           = new(Selector)
+	_ json.Unmarshaler         = new(Selector)
+	_ encoding.TextMarshaler   = new(Selector)
+	_ encoding.TextUnmarshaler = new(Selector)
 )
 
 var (
-	typeUserSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
-	typeRoleSelectorRegex         = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	typeUserSelectorRegex         = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
+	typeRoleSelectorRegex         = regexp.MustCompile(`^([a-z-]{1,50}|\*)$`)
 	typeAnonymousSelectorRegex    = regexp.MustCompile(`^\*$`)
-	typeOrganizationSelectorRegex = regexp.MustCompile(`^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$`)
+	typeOrganizationSelectorRegex = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
 	typeMetaResourceSelectorRegex = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
-	// metaresources selectors are used to select either all or none
+	// metaresources selectors are used to select either all or none until we introduce some hierarchy here.
 	typeMetaResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
+)
+
+var (
+	WildCardSelectorString = "*"
 )
 
 type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]Selector, error)
@@ -72,6 +79,15 @@ func (typed *Selector) UnmarshalJSON(data []byte) error {
 	alias := Selector{val: str}
 	*typed = alias
 
+	return nil
+}
+
+func (selector Selector) MarshalText() ([]byte, error) {
+	return []byte(selector.val), nil
+}
+
+func (selector *Selector) UnmarshalText(text []byte) error {
+	*selector = Selector{val: string(text)}
 	return nil
 }
 

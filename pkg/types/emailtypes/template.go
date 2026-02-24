@@ -12,13 +12,12 @@ import (
 var (
 	// Templates is a list of all the templates that are supported by the emailing service.
 	// This list should be updated whenever a new template is added.
-	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameUpdateRole, TemplateNameResetPassword}
+	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameResetPassword}
 )
 
 var (
-	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation_email")}
-	TemplateNameUpdateRole      = TemplateName{valuer.NewString("update_role")}
-	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password_email")}
+	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation")}
+	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password")}
 )
 
 type TemplateName struct{ valuer.String }
@@ -27,8 +26,6 @@ func NewTemplateName(name string) (TemplateName, error) {
 	switch name {
 	case TemplateNameInvitationEmail.StringValue():
 		return TemplateNameInvitationEmail, nil
-	case TemplateNameUpdateRole.StringValue():
-		return TemplateNameUpdateRole, nil
 	case TemplateNameResetPassword.StringValue():
 		return TemplateNameResetPassword, nil
 	default:
@@ -40,7 +37,7 @@ func NewContent(template *template.Template, data map[string]any) ([]byte, error
 	buf := bytes.NewBuffer(nil)
 	err := template.Execute(buf, data)
 	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute template")
+		return nil, err
 	}
 
 	return buf.Bytes(), nil

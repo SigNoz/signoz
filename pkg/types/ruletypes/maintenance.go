@@ -131,7 +131,7 @@ func (m *GettablePlannedMaintenance) checkDaily(currentTime time.Time, rec *Recu
 	if candidate.After(currentTime) {
 		candidate = candidate.AddDate(0, 0, -1)
 	}
-	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
+	return currentTime.Sub(candidate) <= rec.Duration.Duration()
 }
 
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
@@ -160,7 +160,7 @@ func (m *GettablePlannedMaintenance) checkWeekly(currentTime time.Time, rec *Rec
 		if candidate.After(currentTime) {
 			candidate = candidate.AddDate(0, 0, -7)
 		}
-		if currentTime.Sub(candidate) <= time.Duration(rec.Duration) {
+		if currentTime.Sub(candidate) <= rec.Duration.Duration() {
 			return true
 		}
 	}
@@ -198,7 +198,7 @@ func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Re
 			)
 		}
 	}
-	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
+	return currentTime.Sub(candidate) <= rec.Duration.Duration()
 }
 
 func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
@@ -255,7 +255,7 @@ func (m *GettablePlannedMaintenance) Validate() error {
 		if m.Schedule.Recurrence.RepeatType == "" {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
 		}
-		if m.Schedule.Recurrence.Duration == 0 {
+		if m.Schedule.Recurrence.Duration.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
 		}
 		if m.Schedule.Recurrence.EndTime != nil && m.Schedule.Recurrence.EndTime.Before(m.Schedule.Recurrence.StartTime) {

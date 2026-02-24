@@ -282,11 +282,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						size="small"
 						style={{ marginLeft: 'auto' }}
 						checked={showIP ?? true}
-						onClick={(): void => {
+						onChange={(checked): void => {
 							logEvent('API Monitoring: Show IP addresses clicked', {
-								showIP: !(showIP ?? true),
+								showIP: checked,
 							});
-							setParams({ showIP });
+							setParams({ showIP: checked });
 						}}
 					/>
 				</div>

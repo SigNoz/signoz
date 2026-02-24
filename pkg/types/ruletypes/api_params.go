@@ -8,15 +8,15 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/prometheus/alertmanager/config"
+
 	signozError "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-
-	"github.com/prometheus/alertmanager/config"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type AlertType string
@@ -40,12 +40,12 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	AlertName   string    `json:"alert,omitempty"`
-	AlertType   AlertType `json:"alertType,omitempty"`
-	Description string    `json:"description,omitempty"`
-	RuleType    RuleType  `json:"ruleType,omitempty"`
-	EvalWindow  Duration  `json:"evalWindow,omitempty"`
-	Frequency   Duration  `json:"frequency,omitempty"`
+	AlertName   string              `json:"alert,omitempty"`
+	AlertType   AlertType           `json:"alertType,omitempty"`
+	Description string              `json:"description,omitempty"`
+	RuleType    RuleType            `json:"ruleType,omitempty"`
+	EvalWindow  valuer.TextDuration `json:"evalWindow,omitempty"`
+	Frequency   valuer.TextDuration `json:"frequency,omitempty"`
 
 	RuleCondition *RuleCondition    `json:"condition,omitempty"`
 	Labels        map[string]string `json:"labels,omitempty"`
@@ -71,13 +71,13 @@ type NotificationSettings struct {
 	Renotify  Renotify `json:"renotify,omitempty"`
 	UsePolicy bool     `json:"usePolicy,omitempty"`
 	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
-	NewGroupEvalDelay *Duration `json:"newGroupEvalDelay,omitempty"`
+	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero"`
 }
 
 type Renotify struct {
-	Enabled          bool               `json:"enabled"`
-	ReNotifyInterval Duration           `json:"interval,omitempty"`
-	AlertStates      []model.AlertState `json:"alertStates,omitempty"`
+	Enabled          bool                `json:"enabled"`
+	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero"`
+	AlertStates      []model.AlertState  `json:"alertStates,omitempty"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
@@ -85,10 +85,10 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	var noDataRenotifyInterval time.Duration
 	if ns.Renotify.Enabled {
 		if slices.Contains(ns.Renotify.AlertStates, model.StateNoData) {
-			noDataRenotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+			noDataRenotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 		if slices.Contains(ns.Renotify.AlertStates, model.StateFiring) {
-			renotifyInterval = time.Duration(ns.Renotify.ReNotifyInterval)
+			renotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 	} else {
 		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
@@ -190,12 +190,12 @@ func (r *PostableRule) processRuleDefaults() {
 		r.SchemaVersion = DefaultSchemaVersion
 	}
 
-	if r.EvalWindow == 0 {
-		r.EvalWindow = Duration(5 * time.Minute)
+	if r.EvalWindow.IsZero() {
+		r.EvalWindow = valuer.MustParseTextDuration("5m")
 	}
 
-	if r.Frequency == 0 {
-		r.Frequency = Duration(1 * time.Minute)
+	if r.Frequency.IsZero() {
+		r.Frequency = valuer.MustParseTextDuration("1m")
 	}
 
 	if r.RuleCondition != nil {
@@ -246,7 +246,7 @@ func (r *PostableRule) processRuleDefaults() {
 			r.NotificationSettings = &NotificationSettings{
 				Renotify: Renotify{
 					Enabled:          true,
-					ReNotifyInterval: Duration(4 * time.Hour),
+					ReNotifyInterval: valuer.MustParseTextDuration("4h"),
 					AlertStates:      []model.AlertState{model.StateFiring},
 				},
 			}

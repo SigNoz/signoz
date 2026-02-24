@@ -54,4 +54,13 @@ func TestDurationConvert(t *testing.T) {
 	assert.Equal(t, Value{F: 1, U: "ms"}, timeConverter.Convert(Value{F: 1000, U: "us"}, "ms"))
 	// 1000000000 ns = 1 s
 	assert.Equal(t, Value{F: 1, U: "s"}, timeConverter.Convert(Value{F: 1000000000, U: "ns"}, "s"))
+
+	// 7 d = 1 wk
+	assert.Equal(t, Value{F: 1, U: "wk"}, timeConverter.Convert(Value{F: 7, U: "d"}, "wk"))
+	// 1 wk = 7 d
+	assert.Equal(t, Value{F: 7, U: "d"}, timeConverter.Convert(Value{F: 1, U: "wk"}, "d"))
+	// 1 wk = 168 h
+	assert.Equal(t, Value{F: 168, U: "h"}, timeConverter.Convert(Value{F: 1, U: "wk"}, "h"))
+	// 604800 s = 1 wk
+	assert.Equal(t, Value{F: 1, U: "wk"}, timeConverter.Convert(Value{F: 604800, U: "s"}, "wk"))
 }

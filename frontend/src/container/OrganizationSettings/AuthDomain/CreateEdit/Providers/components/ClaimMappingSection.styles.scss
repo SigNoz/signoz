@@ -1,0 +1,128 @@
+.claim-mapping-section {
+	display: flex;
+	flex-direction: column;
+
+	&__collapse {
+		background: transparent !important;
+
+		.ant-collapse-item {
+			border: none !important;
+		}
+
+		.ant-collapse-header {
+			padding: 0 !important;
+		}
+
+		.ant-collapse-content {
+			border-top: none !important;
+			background: transparent !important;
+		}
+
+		.ant-collapse-content-box {
+			padding: 12px 0 0 24px !important;
+		}
+	}
+
+	&__collapse-header {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		cursor: pointer;
+		position: relative;
+		width: 100%;
+
+		svg {
+			margin-top: 2px;
+			color: var(--l3-foreground);
+			flex-shrink: 0;
+		}
+	}
+
+	&__collapse-header-text {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__section-title {
+		margin: 0;
+		color: var(--l1-foreground);
+	}
+
+	&__section-description {
+		margin: 0;
+		color: var(--l3-foreground);
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		max-height: 45vh;
+		overflow-y: auto;
+		padding-right: 4px;
+
+		// Thin scrollbar
+		&::-webkit-scrollbar {
+			width: 4px;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--l3-foreground);
+			border-radius: 4px;
+
+			&:hover {
+				background: var(--l2-foreground);
+			}
+		}
+
+		scrollbar-width: thin;
+		scrollbar-color: var(--l3-foreground) transparent;
+	}
+
+	&__field-group {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--l1-foreground);
+	}
+
+	&__form-item {
+		margin-bottom: 0 !important;
+	}
+
+	// todo: https://github.com/SigNoz/components/issues/116
+	input {
+		height: 32px;
+		background: var(--l3-background) !important;
+		border: 1px solid var(--l3-border) !important;
+		border-radius: 2px;
+		color: var(--l1-foreground) !important;
+
+		&::placeholder {
+			color: var(--l3-foreground) !important;
+			opacity: 1;
+		}
+
+		&:hover {
+			border-color: var(--l3-border) !important;
+		}
+
+		&:focus,
+		&:focus-visible {
+			border-color: var(--primary) !important;
+			box-shadow: none !important;
+			outline: none;
+		}
+	}
+}

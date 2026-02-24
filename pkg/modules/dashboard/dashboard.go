@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/modules/role"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -51,7 +51,7 @@ type Module interface {
 
 	statsreporter.StatsCollector
 
-	role.RegisterTypeable
+	authz.RegisterTypeable
 }
 
 type Handler interface {

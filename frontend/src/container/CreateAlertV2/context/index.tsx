@@ -17,26 +17,22 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
+import { INITIAL_CREATE_ALERT_STATE } from './constants';
 import {
-	INITIAL_ADVANCED_OPTIONS_STATE,
-	INITIAL_ALERT_STATE,
-	INITIAL_ALERT_THRESHOLD_STATE,
-	INITIAL_EVALUATION_WINDOW_STATE,
-	INITIAL_NOTIFICATION_SETTINGS_STATE,
-} from './constants';
-import {
+	AdvancedOptionsAction,
+	AlertThresholdAction,
 	AlertThresholdMatchType,
+	CreateAlertAction,
+	CreateAlertSlice,
+	EvaluationWindowAction,
 	ICreateAlertContextProps,
 	ICreateAlertProviderProps,
+	NotificationSettingsAction,
 } from './types';
 import {
-	advancedOptionsReducer,
-	alertCreationReducer,
-	alertThresholdReducer,
 	buildInitialAlertDef,
-	evaluationWindowReducer,
+	createAlertReducer,
 	getInitialAlertTypeFromURL,
-	notificationSettingsReducer,
 } from './utils';
 
 const CreateAlertContext = createContext<ICreateAlertContextProps | null>(null);
@@ -65,10 +61,65 @@ export function CreateAlertProvider(
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
-	const [alertState, setAlertState] = useReducer(alertCreationReducer, {
-		...INITIAL_ALERT_STATE,
-		yAxisUnit: currentQuery.unit,
-	});
+	const [createAlertState, setCreateAlertState] = useReducer(
+		createAlertReducer,
+		{
+			...INITIAL_CREATE_ALERT_STATE,
+			basic: {
+				...INITIAL_CREATE_ALERT_STATE.basic,
+				yAxisUnit: currentQuery.unit,
+			},
+		},
+	);
+
+	const setAlertState = useCallback(
+		(action: CreateAlertAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+
+	const setThresholdState = useCallback(
+		(action: AlertThresholdAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+
+	const setEvaluationWindow = useCallback(
+		(action: EvaluationWindowAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.EVALUATION_WINDOW,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+
+	const setAdvancedOptions = useCallback(
+		(action: AdvancedOptionsAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.ADVANCED_OPTIONS,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
+	const setNotificationSettings = useCallback(
+		(action: NotificationSettingsAction) => {
+			setCreateAlertState({
+				slice: CreateAlertSlice.NOTIFICATION_SETTINGS,
+				action,
+			});
+		},
+		[setCreateAlertState],
+	);
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
@@ -104,92 +155,56 @@ export function CreateAlertProvider(
 		[redirectWithQueryBuilderData],
 	);
 
-	const [thresholdState, setThresholdState] = useReducer(
-		alertThresholdReducer,
-		INITIAL_ALERT_THRESHOLD_STATE,
-	);
-
-	const [evaluationWindow, setEvaluationWindow] = useReducer(
-		evaluationWindowReducer,
-		INITIAL_EVALUATION_WINDOW_STATE,
-	);
-
-	const [advancedOptions, setAdvancedOptions] = useReducer(
-		advancedOptionsReducer,
-		INITIAL_ADVANCED_OPTIONS_STATE,
-	);
-
-	const [notificationSettings, setNotificationSettings] = useReducer(
-		notificationSettingsReducer,
-		INITIAL_NOTIFICATION_SETTINGS_STATE,
-	);
-
 	useEffect(() => {
-		setThresholdState({
-			type: 'RESET',
+		setCreateAlertState({
+			slice: CreateAlertSlice.THRESHOLD,
+			action: {
+				type: 'RESET',
+			},
 		});
 
 		if (thresholdsFromURL) {
 			try {
 				const thresholds = JSON.parse(thresholdsFromURL);
-				setThresholdState({
-					type: 'SET_THRESHOLDS',
-					payload: thresholds,
+				setCreateAlertState({
+					slice: CreateAlertSlice.THRESHOLD,
+					action: {
+						type: 'SET_THRESHOLDS',
+						payload: thresholds,
+					},
 				});
 			} catch (error) {
 				console.error('Error parsing thresholds from URL:', error);
 			}
 
-			setEvaluationWindow({
-				type: 'SET_INITIAL_STATE_FOR_METER',
+			setCreateAlertState({
+				slice: CreateAlertSlice.EVALUATION_WINDOW,
+				action: {
+					type: 'SET_INITIAL_STATE_FOR_METER',
+				},
 			});
 
-			setThresholdState({
-				type: 'SET_MATCH_TYPE',
-				payload: AlertThresholdMatchType.IN_TOTAL,
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_MATCH_TYPE',
+					payload: AlertThresholdMatchType.IN_TOTAL,
+				},
 			});
 		}
 	}, [alertType, thresholdsFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {
-			setAlertState({
+			setCreateAlertState({
 				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.basicAlertState,
-			});
-			setThresholdState({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.thresholdState,
-			});
-			setEvaluationWindow({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.evaluationWindowState,
-			});
-			setAdvancedOptions({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.advancedOptionsState,
-			});
-			setNotificationSettings({
-				type: 'SET_INITIAL_STATE',
-				payload: initialAlertState.notificationSettingsState,
+				payload: initialAlertState,
 			});
 		}
 	}, [initialAlertState, isEditMode]);
 
 	const discardAlertRule = useCallback(() => {
-		setAlertState({
-			type: 'RESET',
-		});
-		setThresholdState({
-			type: 'RESET',
-		});
-		setEvaluationWindow({
-			type: 'RESET',
-		});
-		setAdvancedOptions({
-			type: 'RESET',
-		});
-		setNotificationSettings({
+		setCreateAlertState({
 			type: 'RESET',
 		});
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
@@ -212,17 +227,17 @@ export function CreateAlertProvider(
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
-			alertState,
+			alertState: createAlertState.basic,
 			setAlertState,
 			alertType,
 			setAlertType: handleAlertTypeChange,
-			thresholdState,
+			thresholdState: createAlertState.threshold,
 			setThresholdState,
-			evaluationWindow,
+			evaluationWindow: createAlertState.evaluationWindow,
 			setEvaluationWindow,
-			advancedOptions,
+			advancedOptions: createAlertState.advancedOptions,
 			setAdvancedOptions,
-			notificationSettings,
+			notificationSettings: createAlertState.notificationSettings,
 			setNotificationSettings,
 			discardAlertRule,
 			createAlertRule,
@@ -234,13 +249,14 @@ export function CreateAlertProvider(
 			isEditMode: isEditMode || false,
 		}),
 		[
-			alertState,
+			createAlertState,
+			setAlertState,
+			setThresholdState,
+			setEvaluationWindow,
+			setAdvancedOptions,
+			setNotificationSettings,
 			alertType,
 			handleAlertTypeChange,
-			thresholdState,
-			evaluationWindow,
-			advancedOptions,
-			notificationSettings,
 			discardAlertRule,
 			createAlertRule,
 			isCreatingAlertRule,

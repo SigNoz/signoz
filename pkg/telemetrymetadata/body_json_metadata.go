@@ -111,7 +111,8 @@ func (t *telemetryMetaStore) buildBodyJSONPaths(ctx context.Context,
 	}
 
 	for _, fieldKey := range fieldKeys {
-		fieldKey.Materialized = promoted[fieldKey.Name]
+		promotedKey := strings.Split(fieldKey.Name, telemetrytypes.ArraySep)[0]
+		fieldKey.Materialized = promoted[promotedKey]
 		fieldKey.Indexes = indexes[fieldKey.Name]
 	}
 
@@ -480,8 +481,9 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 	}
 	if len(paths) > 0 {
 		pathArgs := make([]interface{}, len(paths))
-		for i, p := range paths {
-			pathArgs[i] = p
+		for i, path := range paths {
+			split := strings.Split(path, telemetrytypes.ArraySep)
+			pathArgs[i] = split[0]
 		}
 		conditions = append(conditions, sb.In("field_name", pathArgs))
 	}

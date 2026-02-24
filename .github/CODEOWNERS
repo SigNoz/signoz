@@ -43,6 +43,12 @@
 /pkg/analytics/ @vikrantgupta25
 /pkg/statsreporter/ @vikrantgupta25
 
+# Emailing Owners
+
+/pkg/emailing/ @vikrantgupta25
+/pkg/types/emailtypes/ @vikrantgupta25
+/templates/email/ @vikrantgupta25
+
 # Querier Owners
 
 /pkg/querier/ @srikanthccv
@@ -132,3 +138,9 @@
 
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
+
+## Dashboard Libs + Components
+/frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
+/frontend/src/components/NewSelect/ @SigNoz/pulse-frontend

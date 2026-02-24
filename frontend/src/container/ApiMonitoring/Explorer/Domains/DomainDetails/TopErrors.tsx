@@ -56,15 +56,15 @@ function TopErrors({
 				{
 					items: endPointName
 						? [
-								// Remove any existing http.url filters from initialFilters to avoid duplicates
+								// Remove any existing http_url filters from initialFilters to avoid duplicates
 								...(initialFilters?.items?.filter(
-									(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+									(item) => item.key?.key !== SPAN_ATTRIBUTES.HTTP_URL,
 								) || []),
 								{
 									id: '92b8a1c1',
 									key: {
 										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.URL_PATH,
+										key: SPAN_ATTRIBUTES.HTTP_URL,
 										type: 'tag',
 									},
 									op: '=',

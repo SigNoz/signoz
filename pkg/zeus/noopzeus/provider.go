@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
@@ -40,10 +41,10 @@ func (provider *provider) PutMeters(_ context.Context, _ string, _ []byte) error
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters is not supported")
 }
 
-func (provider *provider) PutProfile(_ context.Context, _ string, _ []byte) error {
+func (provider *provider) PutProfile(_ context.Context, _ string, _ *zeustypes.PostableProfile) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting profile is not supported")
 }
 
-func (provider *provider) PutHost(_ context.Context, _ string, _ []byte) error {
+func (provider *provider) PutHost(_ context.Context, _ string, _ *zeustypes.PostableHost) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting host is not supported")
 }

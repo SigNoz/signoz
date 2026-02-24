@@ -19,6 +19,7 @@ import {
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
+import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -26,8 +27,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -88,6 +89,8 @@ function NewWidget({
 		setSelectedRowWidgetId,
 		columnWidths,
 	} = useDashboard();
+
+	const { dashboardVariables } = useDashboardVariables();
 
 	const { t } = useTranslation(['dashboard']);
 
@@ -377,7 +380,7 @@ function NewWidget({
 					graphType: PANEL_TYPES.LIST,
 					selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 					globalSelectedInterval: customGlobalSelectedInterval,
-					variables: getDashboardVariables(selectedDashboard?.data.variables),
+					variables: getDashboardVariables(dashboardVariables),
 					tableParams: {
 						pagination: {
 							offset: 0,
@@ -394,7 +397,7 @@ function NewWidget({
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
-				variables: getDashboardVariables(selectedDashboard?.data.variables),
+				variables: getDashboardVariables(dashboardVariables),
 				originalGraphType: selectedGraph || selectedWidget?.panelTypes,
 			};
 		}
@@ -408,7 +411,7 @@ function NewWidget({
 			graphType: selectedGraph,
 			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 			globalSelectedInterval: customGlobalSelectedInterval,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(dashboardVariables),
 		};
 	});
 

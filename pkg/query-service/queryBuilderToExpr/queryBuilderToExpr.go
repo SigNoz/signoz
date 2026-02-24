@@ -71,7 +71,18 @@ func Parse(filters *v3.FilterSet) (string, error) {
 			// accustom log filters like `body.log.message EXISTS` into EXPR language
 			// where User is attempting to check for keys present in JSON log body
 			if strings.HasPrefix(v.Key.Key, "body.") {
-				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(strings.TrimPrefix(v.Key.Key, "body.")), logOperatorsToExpr[v.Operator], "fromJSON(body)")
+				// if body is a string and is a valid JSON, then check if the key exists in the JSON
+				filter = fmt.Sprintf(`((type(body) == "string" && isJSON(body)) && %s %s %s)`, exprFormattedValue(strings.TrimPrefix(v.Key.Key, "body.")), logOperatorsToExpr[v.Operator], "fromJSON(body)")
+
+				// if body is a map, then check if the key exists in the map
+				operator := v3.FilterOperatorNotEqual
+				if v.Operator == v3.FilterOperatorNotExists {
+					operator = v3.FilterOperatorEqual
+				}
+				nilCheckFilter := fmt.Sprintf("%s %s nil", v.Key.Key, logOperatorsToExpr[operator])
+
+				// join the two filters with OR
+				filter = fmt.Sprintf(`(%s or (type(body) == "map" && (%s)))`, filter, nilCheckFilter)
 			} else if typ := getTypeName(v.Key.Type); typ != "" {
 				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], typ)
 			} else {
