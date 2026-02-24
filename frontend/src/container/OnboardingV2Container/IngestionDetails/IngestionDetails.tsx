@@ -3,11 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
-import {
-	GatewaytypesIngestionKeyDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { DOCS_BASE_URL } from 'constants/app';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import { useNotifications } from 'hooks/useNotifications';
@@ -72,24 +68,21 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (
-			ingestionKeys?.data?.data?.keys &&
-			ingestionKeys?.data.data.keys.length > 0
-		) {
-			setFirstIngestionKey(ingestionKeys?.data.data.keys[0]);
+		if (!ingestionKeys || isIngestionKeysLoading) {
+			return;
 		}
-	}, [ingestionKeys]);
+
+		if (ingestionKeys.data.keys && ingestionKeys.data.keys.length > 0) {
+			setFirstIngestionKey(ingestionKeys.data.keys[0]);
+		}
+	}, [isIngestionKeysLoading, ingestionKeys]);
 
 	return (
 		<div className="configure-product-ingestion-section-content">
 			{isError && (
 				<div className="ingestion-endpoint-section-error-container">
 					<Typography.Text className="ingestion-endpoint-section-error-text error">
-						<TriangleAlert size={14} />{' '}
-						{((error as unknown) as AxiosError<RenderErrorResponseDTO>)?.response
-							?.data?.error.message ||
-							((error as unknown) as AxiosError)?.message ||
-							'Something went wrong'}
+						<TriangleAlert size={14} /> {error.message || 'Something went wrong'}
 					</Typography.Text>
 
 					<div className="ingestion-setup-details-links">

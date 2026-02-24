@@ -120,6 +120,8 @@ func FilterResponse(results []*qbtypes.QueryRangeResponse) []*qbtypes.QueryRange
 					}
 				}
 				resultData.Rows = filteredRows
+			case *qbtypes.ScalarData:
+				resultData.Data = filterScalarDataIPs(resultData.Columns, resultData.Data)
 			}
 
 			filteredData = append(filteredData, result)
@@ -143,6 +145,39 @@ func shouldIncludeSeries(series *qbtypes.TimeSeries) bool {
 		}
 	}
 	return true
+}
+
+func filterScalarDataIPs(columns []*qbtypes.ColumnDescriptor, data [][]any) [][]any {
+	// Find column indices for server address fields
+	serverColIndices := make([]int, 0)
+	for i, col := range columns {
+		if col.Name == derivedKeyHTTPHost {
+			serverColIndices = append(serverColIndices, i)
+		}
+	}
+
+	if len(serverColIndices) == 0 {
+		return data
+	}
+
+	filtered := make([][]any, 0, len(data))
+	for _, row := range data {
+		includeRow := true
+		for _, colIdx := range serverColIndices {
+			if colIdx < len(row) {
+				if strVal, ok := row[colIdx].(string); ok {
+					if net.ParseIP(strVal) != nil {
+						includeRow = false
+						break
+					}
+				}
+			}
+		}
+		if includeRow {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
 }
 
 func shouldIncludeRow(row *qbtypes.RawRow) bool {
