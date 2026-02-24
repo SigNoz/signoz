@@ -38,19 +38,20 @@ var logOperatorsToExpr = map[qbtypes.FilterOperator]string{
 	// LIKE/NOT LIKE and ILIKE/NOT ILIKE are not supported yet
 }
 
-func getName(key *telemetrytypes.TelemetryFieldKey) string {
+func getName(key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	if key == nil {
-		return ""
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field key is nil")
 	}
+
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextAttribute:
-		return fmt.Sprintf(`attributes["%s"]`, key.Name)
+		return fmt.Sprintf(`attributes["%s"]`, key.Name), nil
 	case telemetrytypes.FieldContextResource:
-		return fmt.Sprintf(`resource["%s"]`, key.Name)
+		return fmt.Sprintf(`resource["%s"]`, key.Name), nil
 	case telemetrytypes.FieldContextBody:
-		return fmt.Sprintf("%s.%s", key.FieldContext.StringValue(), key.Name)
+		return fmt.Sprintf("%s.%s", key.FieldContext.StringValue(), key.Name), nil
 	default:
-		return key.Name
+		return key.Name, nil
 	}
 }
 
@@ -109,18 +110,22 @@ func parseCondition(c qbtypes.FilterCondition) (string, error) {
 			filter = fmt.Sprintf("%s %s nil", c.Key.Name, logOperatorsToExpr[operator])
 		}
 	default:
-		filter = fmt.Sprintf("%s %s %s", getName(c.Key), logOperatorsToExpr[c.Op], value)
+		keyName, err := getName(c.Key)
+		if err != nil {
+			return "", err
+		}
+		filter = fmt.Sprintf("%s %s %s", keyName, logOperatorsToExpr[c.Op], value)
 		if c.Op == qbtypes.FilterOperatorContains || c.Op == qbtypes.FilterOperatorNotContains {
 			// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
 			filter = fmt.Sprintf(
 				"lower(%s) %s lower(%s)",
-				getName(c.Key), logOperatorsToExpr[c.Op], value,
+				keyName, logOperatorsToExpr[c.Op], value,
 			)
 		}
 
 		// Avoid running operators on nil values
 		if c.Op != qbtypes.FilterOperatorEqual && c.Op != qbtypes.FilterOperatorNotEqual {
-			filter = fmt.Sprintf("%s != nil && %s", getName(c.Key), filter)
+			filter = fmt.Sprintf("%s != nil && %s", keyName, filter)
 		}
 	}
 

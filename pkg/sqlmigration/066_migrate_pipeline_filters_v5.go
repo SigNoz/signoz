@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/transition"
-	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -57,6 +57,12 @@ func (migration *migratePipelineFiltersV5) Register(migrations *migrate.Migratio
 	return nil
 }
 
+// pipelineFilterRow is used only during migration to read filter_deprecated and write to filter.
+type pipelineFilterRow struct {
+	ID               string `bun:"id,pk,type:text"`
+	FilterDeprecated string `bun:"filter_deprecated,type:text,notnull"`
+}
+
 func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -67,47 +73,44 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 		_ = tx.Rollback()
 	}()
 
-	var pipelines []pipelinetypes.StoreablePipeline
-	if err := tx.NewSelect().
-		Table("pipelines").
-		Column("id", "filter").
-		Scan(ctx, &pipelines); err != nil {
+	// 1. Rename existing filter column to filter_deprecated
+	if _, err := migration.store.Dialect().RenameColumn(ctx, tx, "pipelines", "filter", "filter_deprecated"); err != nil {
 		return err
 	}
 
-	for _, p := range pipelines {
-		raw := strings.TrimSpace(p.FilterString)
-		if raw == "" {
-			continue
-		}
+	// 2. Add new filter column (v5); existing rows get default ''
+	if err := migration.store.Dialect().AddColumn(ctx, tx, "pipelines", "filter", "TEXT NOT NULL DEFAULT ''"); err != nil {
+		return err
+	}
 
-		// Skip migration if this already looks like a v5 filter
-		// ({ "expression": "..." }), but still persist the normalized form
-		// if we changed it.
-		var vf qbtypes.Filter
-		if err := json.Unmarshal([]byte(raw), &vf); err == nil && strings.TrimSpace(vf.Expression) != "" {
-			continue
+	// 3. Copy v5 filter data: read from filter_deprecated, migrate to v5 expression, write to filter
+	var rows []pipelineFilterRow
+	if err := tx.NewSelect().
+		Table("pipelines").
+		Column("id", "filter_deprecated").
+		Scan(ctx, &rows); err != nil {
+		return err
+	}
+
+	for _, r := range rows {
+		raw := strings.TrimSpace(r.FilterDeprecated)
+		if raw == "" {
+			return errors.NewInternalf(errors.CodeInternal, "filter_deprecated is empty")
 		}
 
 		var filterSet v3.FilterSet
 		if err := json.Unmarshal([]byte(raw), &filterSet); err != nil {
 			return err
 		}
-
-		// Attempt to treat the existing JSON as a v3 FilterSet and build a v5
-		// expression from it, using the normalized payload.
 		expr, migrated, err := transition.BuildFilterExpressionFromFilterSet(ctx, migration.logger, "logs", &filterSet)
 		if err != nil || !migrated || strings.TrimSpace(expr) == "" {
 			return err
 		}
 
 		filter := &qbtypes.Filter{Expression: expr}
-		_, err = queryBuilderToExpr.Parse(filter)
-		if err != nil {
+		if _, err = queryBuilderToExpr.Parse(filter); err != nil {
 			return err
 		}
-
-		// Store back as v5-style Filter JSON.
 		out, err := json.Marshal(filter)
 		if err != nil {
 			return err
@@ -116,7 +119,7 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 		if _, err := tx.NewUpdate().
 			Table("pipelines").
 			Set("filter = ?", string(out)).
-			Where("id = ?", p.ID).
+			Where("id = ?", r.ID).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -130,6 +133,28 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 }
 
 func (migration *migratePipelineFiltersV5) Down(ctx context.Context, db *bun.DB) error {
-	// Not reversible: v3 FilterSet structure is lost once we convert to a v5 expression.
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	// 1. Drop the new filter column
+	if err := migration.store.Dialect().DropColumn(ctx, tx, "pipelines", "filter"); err != nil {
+		return err
+	}
+
+	// 2. Rename filter_deprecated back to filter
+	if _, err := migration.store.Dialect().RenameColumn(ctx, tx, "pipelines", "filter_deprecated", "filter"); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
