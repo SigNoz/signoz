@@ -28,18 +28,23 @@
 		font-weight: 500;
 	}
 
-	.uplot-tooltip-list {
-		&::-webkit-scrollbar {
-			width: 0.3rem;
-		}
+	.uplot-tooltip-list-container {
+		overflow-y: auto;
+		max-height: 330px;
 
-		&::-webkit-scrollbar-track {
-			background: transparent;
-		}
+		.uplot-tooltip-list {
+			&::-webkit-scrollbar {
+				width: 0.3rem;
+			}
 
-		&::-webkit-scrollbar-thumb {
-			background: var(--bg-slate-100);
-			border-radius: 0.5rem;
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-slate-100);
+				border-radius: 0.5rem;
+			}
 		}
 	}
 

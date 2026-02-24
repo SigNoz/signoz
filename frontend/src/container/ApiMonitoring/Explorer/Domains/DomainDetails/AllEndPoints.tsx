@@ -202,7 +202,7 @@ function AllEndPoints({
 
 	const onRowClick = useCallback(
 		(props: any): void => {
-			setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
+			setSelectedEndPointName(props[SPAN_ATTRIBUTES.HTTP_URL] as string);
 			setSelectedView(VIEWS.ENDPOINT_STATS);
 			const initialItems = [
 				...(filters?.items || []),
@@ -213,7 +213,7 @@ function AllEndPoints({
 				op: 'AND',
 			});
 			setParams({
-				selectedEndPointName: props[SPAN_ATTRIBUTES.URL_PATH] as string,
+				selectedEndPointName: props[SPAN_ATTRIBUTES.HTTP_URL] as string,
 				selectedView: VIEWS.ENDPOINT_STATS,
 				endPointDetailsLocalFilters: {
 					items: initialItems,
