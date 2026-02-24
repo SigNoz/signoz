@@ -310,7 +310,7 @@ func AggregationColumnForSamplesTable(
 	return aggregationColumn, nil
 }
 
-func AggregationQueryForHistogramCount(param *metrictypes.ComparisonSpaceAggregationParam) (string, error) {
+func AggregationQueryForHistogramCountWithParams(param *metrictypes.ComparisonSpaceAggregationParam) (string, error) {
 	if param == nil {
 		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no aggregation param provided for histogram count")
 	}

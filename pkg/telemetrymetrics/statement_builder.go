@@ -587,14 +587,14 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
 			sb.Having(rewrittenExpr)
 		}
-	} else if query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount {
+	} else if query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount && query.Aggregations[0].ComparisonSpaceAggregationParam != nil {
 		sb.Select("ts")
 
 		for _, g := range query.GroupBy {
 			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 
-		aggQuery, err := AggregationQueryForHistogramCount(query.Aggregations[0].ComparisonSpaceAggregationParam)
+		aggQuery, err := AggregationQueryForHistogramCountWithParams(query.Aggregations[0].ComparisonSpaceAggregationParam)
 		if err != nil {
 			return nil, err
 		}
@@ -611,6 +611,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.Having(rewrittenExpr)
 		}
 	} else {
+		// for count aggregation on histograms with no params, the exact result of spatial aggregation can be sent forward
 		sb.Select("*")
 		sb.From("__spatial_aggregation_cte")
 		if query.Having != nil && query.Having.Expression != "" {
@@ -621,6 +622,9 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	}
 	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	sb.OrderBy("ts")
+	if query.Aggregations[0].SpaceAggregation == metrictypes.SpaceAggregationHistogramCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
+		sb.OrderBy("toFloat64(le)")
+	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
