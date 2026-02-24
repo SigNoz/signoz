@@ -1,6 +1,7 @@
 package implmetricsexplorer
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -187,6 +188,12 @@ func (h *handler) GetMetricAlerts(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	out, err := h.module.GetMetricAlerts(req.Context(), orgID, metricName)
 	if err != nil {
 		render.Error(rw, err)
@@ -209,6 +216,12 @@ func (h *handler) GetMetricDashboards(rw http.ResponseWriter, req *http.Request)
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	out, err := h.module.GetMetricDashboards(req.Context(), orgID, metricName)
 	if err != nil {
 		render.Error(rw, err)
@@ -231,6 +244,12 @@ func (h *handler) GetMetricHighlights(rw http.ResponseWriter, req *http.Request)
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	highlights, err := h.module.GetMetricHighlights(req.Context(), orgID, metricName)
 	if err != nil {
 		render.Error(rw, err)
@@ -266,6 +285,12 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	if err := h.checkMetricExists(req.Context(), orgID, metricName); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	out, err := h.module.GetMetricAttributes(req.Context(), orgID, &in)
 	if err != nil {
 		render.Error(rw, err)
@@ -273,4 +298,15 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 	}
 
 	render.Success(rw, http.StatusOK, out)
+}
+
+func (h *handler) checkMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) error {
+	exists, err := h.module.CheckMetricExists(ctx, orgID, metricName)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.NewNotFoundf(errors.CodeNotFound, "metric not found: %q", metricName)
+	}
+	return nil
 }
