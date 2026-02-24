@@ -1622,7 +1622,7 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 
 func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
 	if len(metricNames) == 0 {
-		return make(map[string]metrictypes.Temporality), nil, nil
+		return make(map[string]metrictypes.Temporality), make(map[string]metrictypes.Type), nil
 	}
 
 	temporalities := make(map[string]metrictypes.Temporality)
