@@ -862,7 +862,6 @@ components:
       - p90
       - p95
       - p99
-      - histogram_count
       type: string
     MetrictypesTemporality:
       enum:
