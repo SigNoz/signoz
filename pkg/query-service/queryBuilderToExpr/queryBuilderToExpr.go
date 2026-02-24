@@ -35,7 +35,7 @@ var logOperatorsToExpr = map[qbtypes.FilterOperator]string{
 	qbtypes.FilterOperatorNotIn:           "not in",
 	qbtypes.FilterOperatorExists:          "in",
 	qbtypes.FilterOperatorNotExists:       "not in",
-	// nlike and like are not supported yet
+	// LIKE/NOT LIKE and ILIKE/NOT ILIKE are not supported yet
 }
 
 func getName(key *telemetrytypes.TelemetryFieldKey) string {
