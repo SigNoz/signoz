@@ -30,6 +30,7 @@ import {
 	ChevronDown,
 	ChevronRight,
 	Leaf,
+	Loader2,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -42,6 +43,20 @@ import './Success.styles.scss';
 // css config
 const CONNECTOR_WIDTH = 28;
 const VERTICAL_CONNECTOR_WIDTH = 1;
+
+// Component to render chevron icon with spinner
+function ChevronIcon({
+	isFetching,
+	isCollapsed,
+}: {
+	isFetching: boolean;
+	isCollapsed: boolean;
+}): JSX.Element {
+	if (isFetching) {
+		return <Loader2 size={14} className="animate-spin" />;
+	}
+	return isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />;
+}
 
 interface ITraceMetadata {
 	traceId: string;
@@ -58,6 +73,7 @@ interface ISuccessProps {
 	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	isFetchingTraceData: boolean;
 }
 
 function SpanOverview({
@@ -70,6 +86,8 @@ function SpanOverview({
 	filteredSpanIds,
 	isFilterActive,
 	traceMetadata,
+	isFetchingTraceData,
+	interestedSpanId,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
@@ -80,6 +98,8 @@ function SpanOverview({
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	traceMetadata: ITraceMetadata;
+	isFetchingTraceData: boolean;
+	interestedSpanId: IInterestedSpan;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const { hasEditPermission } = useAppContext();
@@ -145,11 +165,12 @@ function SpanOverview({
 									}}
 									className="collapse-uncollapse-button"
 								>
-									{isSpanCollapsed ? (
-										<ChevronRight size={14} />
-									) : (
-										<ChevronDown size={14} />
-									)}
+									<ChevronIcon
+										isFetching={
+											isFetchingTraceData && interestedSpanId.spanId === span.spanId
+										}
+										isCollapsed={isSpanCollapsed}
+									/>
 									<Typography.Text className="children-count">
 										{span.subTreeNodeCount}
 									</Typography.Text>
@@ -342,6 +363,8 @@ function getWaterfallColumns({
 	handleAddSpanToFunnel,
 	filteredSpanIds,
 	isFilterActive,
+	isFetchingTraceData,
+	interestedSpanId,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
@@ -351,8 +374,10 @@ function getWaterfallColumns({
 	handleAddSpanToFunnel: (span: Span) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
-}): ColumnDef<Span, any>[] {
-	const waterfallColumns: ColumnDef<Span, any>[] = [
+	isFetchingTraceData: boolean;
+	interestedSpanId: IInterestedSpan;
+}): ColumnDef<Span, string>[] {
+	const waterfallColumns: ColumnDef<Span, string>[] = [
 		columnDefHelper.display({
 			id: 'span-name',
 			header: '',
@@ -367,6 +392,8 @@ function getWaterfallColumns({
 					traceMetadata={traceMetadata}
 					filteredSpanIds={filteredSpanIds}
 					isFilterActive={isFilterActive}
+					isFetchingTraceData={isFetchingTraceData}
+					interestedSpanId={interestedSpanId}
 				/>
 			),
 			size: 450,
@@ -411,6 +438,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
 		selectedSpan,
+		isFetchingTraceData,
 	} = props;
 
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
@@ -427,7 +455,11 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
-			setInterestedSpanId({ spanId, isUncollapsed: !collapse });
+			setInterestedSpanId({
+				spanId,
+				isUncollapsed: !collapse,
+				shouldScrollToSpan: false,
+			});
 		},
 		[setInterestedSpanId],
 	);
@@ -445,7 +477,11 @@ function Success(props: ISuccessProps): JSX.Element {
 		if (range?.startIndex === 0 && instance.isScrolling) {
 			// do not trigger for trace root as nothing to fetch above
 			if (spans[0].level !== 0) {
-				setInterestedSpanId({ spanId: spans[0].spanId, isUncollapsed: false });
+				setInterestedSpanId({
+					spanId: spans[0].spanId,
+					isUncollapsed: false,
+					shouldScrollToSpan: false,
+				});
 			}
 			return;
 		}
@@ -454,6 +490,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			setInterestedSpanId({
 				spanId: spans[spans.length - 1].spanId,
 				isUncollapsed: false,
+				shouldScrollToSpan: false,
 			});
 		}
 	};
@@ -495,6 +532,8 @@ function Success(props: ISuccessProps): JSX.Element {
 				handleAddSpanToFunnel,
 				filteredSpanIds,
 				isFilterActive,
+				isFetchingTraceData,
+				interestedSpanId,
 			}),
 		[
 			handleCollapseUncollapse,
@@ -505,6 +544,8 @@ function Success(props: ISuccessProps): JSX.Element {
 			handleAddSpanToFunnel,
 			filteredSpanIds,
 			isFilterActive,
+			isFetchingTraceData,
+			interestedSpanId,
 		],
 	);
 
@@ -514,12 +555,16 @@ function Success(props: ISuccessProps): JSX.Element {
 				(span) => span.spanId === interestedSpanId.spanId,
 			);
 			if (idx !== -1) {
-				setTimeout(() => {
-					virtualizerRef.current?.scrollToIndex(idx, {
-						align: 'center',
-						behavior: 'auto',
-					});
-				}, 400);
+				// Only scroll to center when navigating (URL/flamegraph), not on
+				// expand/collapse or virtualizer boundary fetches.
+				if (interestedSpanId.shouldScrollToSpan) {
+					setTimeout(() => {
+						virtualizerRef.current?.scrollToIndex(idx, {
+							align: 'center',
+							behavior: 'auto',
+						});
+					}, 400);
+				}
 
 				setSelectedSpan(spans[idx]);
 			}
