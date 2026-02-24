@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,19 +24,8 @@ func TestTimestampParsingProcessor(t *testing.T) {
 				Alias:   "pipeline1",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{},
 		},

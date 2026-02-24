@@ -7,9 +7,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	. "github.com/smartystreets/goconvey/convey"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -96,10 +96,10 @@ var buildProcessorTestData = []struct {
 
 func TestBuildLogParsingProcessors(t *testing.T) {
 	for _, test := range buildProcessorTestData {
-		Convey(test.Name, t, func() {
+		t.Run(test.Name, func(t *testing.T) {
 			err := updateProcessorConfigsInCollectorConf(test.agentConf, test.pipelineProcessor)
-			So(err, ShouldBeNil)
-			So(test.agentConf, ShouldResemble, test.outputConf)
+			assert.NoError(t, err)
+			assert.Equal(t, test.outputConf, test.agentConf)
 		})
 	}
 
@@ -202,11 +202,11 @@ var BuildLogsPipelineTestData = []struct {
 
 func TestBuildLogsPipeline(t *testing.T) {
 	for _, test := range BuildLogsPipelineTestData {
-		Convey(test.Name, t, func() {
+		t.Run(test.Name, func(t *testing.T) {
 			v, err := buildCollectorPipelineProcessorsList(test.currentPipeline, test.logsPipeline)
-			So(err, ShouldBeNil)
+			assert.NoError(t, err)
 			fmt.Println(test.Name, "\n", test.currentPipeline, "\n", v, "\n", test.expectedPipeline)
-			So(v, ShouldResemble, test.expectedPipeline)
+			assert.Equal(t, test.expectedPipeline, v)
 		})
 	}
 }
@@ -239,19 +239,8 @@ func TestPipelineAliasCollisionsDontResultInDuplicateCollectorProcessors(t *test
 				Alias:   alias,
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{
@@ -310,19 +299,8 @@ func TestPipelineRouterWorksEvenIfFirstOpIsDisabled(t *testing.T) {
 				Alias:   "pipeline1",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{
@@ -383,19 +361,8 @@ func TestPipeCharInAliasDoesntBreakCollectorConfig(t *testing.T) {
 				Alias:   "test|pipeline",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "method",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-						},
-						Operator: "=",
-						Value:    "GET",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: "attribute.method = 'GET'",
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{

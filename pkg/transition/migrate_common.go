@@ -19,7 +19,8 @@ type migrateCommon struct {
 
 func NewMigrateCommon(logger *slog.Logger) *migrateCommon {
 	return &migrateCommon{
-		logger: logger,
+		logger:    logger,
+		ambiguity: make(map[string][]string),
 	}
 }
 

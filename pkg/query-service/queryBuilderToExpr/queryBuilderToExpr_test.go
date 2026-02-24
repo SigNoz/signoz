@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/expr-lang/expr/vm"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	"github.com/stretchr/testify/assert"
@@ -13,183 +13,191 @@ import (
 func TestParseExpression(t *testing.T) {
 	var testCases = []struct {
 		Name        string
-		Query       *v3.FilterSet
+		Query       *qbtypes.Filter
 		Expr        string
 		ExpectError bool
 	}{
 		{
 			Name: "equal",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "checkbody", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key = 'checkbody'",
+			},
 			Expr: `attributes["key"] == "checkbody"`,
 		},
 		{
+			Name: "NOT equal (unary NOT)",
+			Query: &qbtypes.Filter{
+				Expression: "NOT (attribute.key = 'checkbody')",
+			},
+			Expr: `not (attributes["key"] == "checkbody")`,
+		},
+		{
 			Name: "not equal",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "checkbody", Operator: "!="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key != 'checkbody'",
+			},
 			Expr: `attributes["key"] != "checkbody"`,
 		},
 		{
 			Name: "less than",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key < 10",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] < 10`,
 		},
 		{
 			Name: "greater than",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: ">"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key > 10",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] > 10`,
 		},
 		{
 			Name: "less than equal",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key <= 10",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] <= 10`,
 		},
 		{
 			Name: "greater than equal",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: ">="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key >= 10",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] >= 10`,
 		},
 		// case sensitive
 		{
 			Name: "body contains",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "contains"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body contains 'checkbody'",
+			},
 			Expr: `body != nil && lower(body) contains lower("checkbody")`,
 		},
 		{
 			Name: "body.log.message exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body.log.message exists",
+			},
 			Expr: `(((type(body) == "string" && isJSON(body)) && "log.message" in fromJSON(body)) or (type(body) == "map" && (body.log.message != nil)))`,
 		},
 		{
 			Name: "body.log.message not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body.log.message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body.log.message not exists",
+			},
 			Expr: `(((type(body) == "string" && isJSON(body)) && "log.message" not in fromJSON(body)) or (type(body) == "map" && (body.log.message == nil)))`,
 		},
 		{
-			Name: "body ncontains",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "ncontains"},
-			}},
+			Name: "body NOT CONTAINS",
+			Query: &qbtypes.Filter{
+				Expression: "body NOT CONTAINS 'checkbody'",
+			},
 			Expr: `body != nil && lower(body) not contains lower("checkbody")`,
 		},
 		{
-			Name: "body regex",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "regex"},
-			}},
+			Name: "body REGEXP",
+			Query: &qbtypes.Filter{
+				Expression: "body REGEXP '[0-1]+regex$'",
+			},
 			Expr: `body != nil && body matches "[0-1]+regex$"`,
 		},
 		{
-			Name: "body not regex",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "nregex"},
-			}},
+			Name: "body NOT REGEXP",
+			Query: &qbtypes.Filter{
+				Expression: "body NOT REGEXP '[0-1]+regex$'",
+			},
 			Expr: `body != nil && body not matches "[0-1]+regex$"`,
 		},
 		{
 			Name: "regex with escape characters",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: `^Executing \[\S+@\S+:[0-9]+\] \S+".*`, Operator: "regex"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body REGEXP '^Executing \\[\\S+@\\S+:[0-9]+\\] \\S+\".*'",
+			},
 			Expr: `body != nil && body matches "^Executing \\[\\S+@\\S+:[0-9]+\\] \\S+\".*"`,
 		},
 		{
 			Name: "invalid regex",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
-			}},
-			Expr:        `body != nil && lower(body) not matches "[0-9]++"`,
+			Query: &qbtypes.Filter{
+				Expression: "body not REGEXP '[0-9]++'",
+			},
 			ExpectError: true,
 		},
 		{
 			Name: "in",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []any{1, 2, 3, 4}, Operator: "in"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key in [1,2,3,4]",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] in [1,2,3,4]`,
 		},
 		{
 			Name: "not in",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []any{"1", "2"}, Operator: "nin"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key not in ['1','2']",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] not in ['1','2']`,
 		},
 		{
 			Name: "exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key exists",
+			},
 			Expr: `"key" in attributes`,
 		},
 		{
 			Name: "not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key not exists",
+			},
 			Expr: `"key" not in attributes`,
 		},
 		{
 			Name: "trace_id not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "trace_id not exists",
+			},
 			Expr: `trace_id == nil`,
 		},
 		{
 			Name: "trace_id exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "trace_id exists",
+			},
 			Expr: `trace_id != nil`,
 		},
 		{
 			Name: "span_id not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "span_id not exists",
+			},
 			Expr: `span_id == nil`,
 		},
 		{
 			Name: "span_id exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "span_id exists",
+			},
 			Expr: `span_id != nil`,
 		},
 		{
 			Name: "Multi filter",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<="},
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "nregex"},
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key <= 10 and body not regexp '[0-1]+regex$' and attribute.key not exists",
+			},
 			Expr: `attributes["key"] != nil && attributes["key"] <= 10 and body != nil && body not matches "[0-1]+regex$" and "key" not in attributes`,
 		},
 		{
 			Name: "incorrect multi filter",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<="},
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
-				{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
-			}},
-			Expr:        `attributes["key"] != nil && attributes["key"] <= 10 and body not matches "[0-9]++" and "key" not in attributes`,
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key <= 10 and body not regexp '[0-9]++' and attribute.key not exists",
+			},
+			ExpectError: true,
+		},
+		{
+			Name: "attributes. is unsupported",
+			Query: &qbtypes.Filter{
+				Expression: "attributes.key = 'checkbody'",
+			},
 			ExpectError: true,
 		},
 	}
@@ -267,248 +275,241 @@ func TestExpressionVSEntry(t *testing.T) {
 
 	var testCases = []struct {
 		Name            string
-		Query           *v3.FilterSet
+		Query           *qbtypes.Filter
 		ExpectedMatches []int
 	}{
 		{
 			Name: "resource equal (env)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "prod", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "resource.env = 'prod'",
+			},
 			ExpectedMatches: []int{0, 1, 4, 5, 9, 11, 13, 14, 17, 18},
 		},
 		{
+			Name: "NOT resource equal (unary NOT)",
+			Query: &qbtypes.Filter{
+				Expression: "NOT (resource.env = 'prod')",
+			},
+			ExpectedMatches: []int{2, 3, 6, 7, 8, 10, 12, 15, 16, 19, 20},
+		},
+		{
 			Name: "resource not equal (env)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "prod", Operator: "!="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "resource.env != 'prod'",
+			},
 			ExpectedMatches: []int{2, 3, 6, 7, 8, 10, 12, 15, 16, 19, 20},
 		},
 		{
 			Name: "attribute less than (numeric)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "count", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 8, Operator: "<"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.count < 8",
+			},
 			ExpectedMatches: []int{4},
 		},
 		{
 			Name: "attribute greater than (numeric)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "count", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 8, Operator: ">"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.count > 8",
+			},
 			ExpectedMatches: []int{5},
 		},
 		{
 			Name: "body contains (case insensitive)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "contains"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body contains 'checkbody'",
+			},
 			ExpectedMatches: []int{2, 9, 10, 16},
 		},
 		{
-			Name: "body ncontains",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "ncontains"},
-			}},
+			Name: "body NOT CONTAINS",
+			Query: &qbtypes.Filter{
+				Expression: "body NOT CONTAINS 'checkbody'",
+			},
 			ExpectedMatches: []int{0, 1, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 17},
 		},
 		{
 			Name: "body.msg (case insensitive)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body.msg", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: false}, Value: "checkbody", Operator: "contains"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body.msg contains 'checkbody'",
+			},
 			ExpectedMatches: []int{2, 9, 10, 18},
 		},
 		{
-			Name: "body regex",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex", Operator: "regex"},
-			}},
+			Name: "body REGEXP",
+			Query: &qbtypes.Filter{
+				Expression: "body REGEXP '[0-1]+regex'",
+			},
 			ExpectedMatches: []int{4},
 		},
 		{
-			Name: "body not regex",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex", Operator: "nregex"},
-			}},
+			Name: "body NOT REGEXP",
+			Query: &qbtypes.Filter{
+				Expression: "body NOT REGEXP '[0-1]+regex'",
+			},
 			ExpectedMatches: []int{0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
 		},
 		// body.log.message exists/nexists: expr checks "log.message" in fromJSON(body); nested key
 		// semantics depend on signoz stanza helper. Omitted here to avoid coupling to env shape.
 		{
 			Name: "body top-level key exists (body.msg)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body.msg", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body.msg exists",
+			},
 			ExpectedMatches: []int{0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 18},
 		},
 		{
 			Name: "body top-level key not exists (body.missing)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body.missing", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body.missing not exists",
+			},
 			ExpectedMatches: []int{0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 20},
 		},
 		{
 			Name: "attribute exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.service exists",
+			},
 			ExpectedMatches: []int{6, 7, 8, 15},
 		},
 		{
 			Name: "attribute not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.service not exists",
+			},
 			ExpectedMatches: []int{0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20},
 		},
 		{
 			Name: "trace_id exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "trace_id exists",
+			},
 			ExpectedMatches: []int{1, 2, 5, 7, 12, 15, 19},
 		},
 		{
 			Name: "trace_id not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "trace_id not exists",
+			},
 			ExpectedMatches: []int{0, 3, 4, 6, 8, 9, 10, 11, 13, 14, 16, 17, 18, 20},
 		},
 		{
 			Name: "span_id exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "span_id exists",
+			},
 			ExpectedMatches: []int{1, 3, 5, 12, 17, 20},
 		},
 		{
 			Name: "span_id not exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "span_id not exists",
+			},
 			ExpectedMatches: []int{0, 2, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 18, 19},
 		},
 		{
 			Name: "in (attribute in list)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []any{"info", "error"}, Operator: "in"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level in ['info', 'error']",
+			},
 			ExpectedMatches: []int{0, 1, 2, 14, 16, 20},
 		},
 		{
 			Name: "not in (attribute not in list)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []any{"error", "warn"}, Operator: "nin"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level not in ['error', 'warn']",
+			},
 			ExpectedMatches: []int{0, 2, 3, 16, 20},
 		},
 		{
 			Name: "multi filter AND",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "staging", Operator: "="},
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "info", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "resource.env = 'staging' and attribute.level = 'info'",
+			},
 			ExpectedMatches: []int{2, 16},
 		},
 		{
 			Name: "multi filter AND (two attributes)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "auth", Operator: "="},
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.service = 'auth' and attribute.level not exists",
+			},
 			ExpectedMatches: []int{6, 7},
 		},
 		// Multi-filter variations: body + attribute, three conditions, trace/span + attribute
 		{
 			Name: "multi filter AND body contains + attribute",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "Connection", Operator: "contains"},
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "prod", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body contains 'Connection' and resource.env = 'prod'",
+			},
 			ExpectedMatches: []int{14},
 		},
 		{
 			Name: "multi filter AND body contains + service",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "login", Operator: "contains"},
-				{Key: v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "auth", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body contains 'login' and attribute.service = 'auth'",
+			},
 			ExpectedMatches: []int{6, 15},
 		},
 		{
 			Name: "multi filter AND env + level (prod error)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "prod", Operator: "="},
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "error", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "resource.env = 'prod' and attribute.level = 'error'",
+			},
 			ExpectedMatches: []int{1, 14},
 		},
 		{
 			Name: "multi filter AND three conditions (staging + checkbody + info)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "staging", Operator: "="},
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "contains"},
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "info", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "resource.env = 'staging' and body contains 'checkbody' and attribute.level = 'info'",
+			},
 			ExpectedMatches: []int{2, 16},
 		},
 		{
 			Name: "multi filter AND trace_id exists + body contains",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "contains"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "trace_id exists and body contains 'checkbody'",
+			},
 			ExpectedMatches: []int{2},
 		},
 		{
 			Name: "multi filter AND span_id nexists + service auth",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-				{Key: v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "auth", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "span_id not exists and attribute.service = 'auth'",
+			},
 			ExpectedMatches: []int{6, 7, 15},
 		},
 		{
 			Name: "multi filter AND body regex + attribute",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex", Operator: "regex"},
-				{Key: v3.AttributeKey{Key: "code", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "200", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "body regexp '[0-1]+regex' and attribute.code = '200'",
+			},
 			ExpectedMatches: []int{4},
 		},
 		{
 			Name: "multi filter AND no trace_id + no span_id + env prod",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-				{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "nexists"},
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "prod", Operator: "="},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "trace_id not exists and span_id not exists and resource.env = 'prod'",
+			},
 			ExpectedMatches: []int{0, 4, 9, 11, 13, 14, 18},
 		},
 		{
 			Name: "multi filter AND level warn + body contains",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "level", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "warn", Operator: "="},
-				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "disk", Operator: "contains"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level = 'warn' and body contains 'disk'",
+			},
 			ExpectedMatches: []int{17},
 		},
 		{
-			Name: "no matches (attribute value not present)",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "env", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "never", Operator: "="},
-			}},
+			Name: "no matches (resource value not present)",
+			Query: &qbtypes.Filter{
+				Expression: "resource.env = 'never'",
+			},
 			ExpectedMatches: []int{},
 		},
 		{
 			Name: "attribute equal and trace_id exists",
-			Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "code", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "404", Operator: "="},
-				{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "", Operator: "exists"},
-			}},
+			Query: &qbtypes.Filter{
+				Expression: "attribute.code = '404' and trace_id exists",
+			},
 			ExpectedMatches: []int{5},
 		},
 	}

@@ -9,14 +9,14 @@ import (
 
 	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -203,10 +203,10 @@ var prepareProcessorTestData = []struct {
 
 func TestPreparePipelineProcessor(t *testing.T) {
 	for _, test := range prepareProcessorTestData {
-		Convey(test.Name, t, func() {
+		t.Run(test.Name, func(t *testing.T) {
 			res, err := getOperators(test.Operators)
-			So(err, ShouldBeNil)
-			So(res, ShouldResemble, test.Output)
+			assert.NoError(t, err)
+			assert.Equal(t, test.Output, res)
 		})
 	}
 }
@@ -214,19 +214,8 @@ func TestPreparePipelineProcessor(t *testing.T) {
 func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 	require := require.New(t)
 
-	testPipelineFilter := &v3.FilterSet{
-		Operator: "AND",
-		Items: []v3.FilterItem{
-			{
-				Key: v3.AttributeKey{
-					Key:      "method",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-				},
-				Operator: "=",
-				Value:    "GET",
-			},
-		},
+	testPipelineFilter := &qbtypes.Filter{
+		Expression: "attribute.method = 'GET'",
 	}
 	makeTestPipeline := func(config []pipelinetypes.PipelineOperator) pipelinetypes.GettablePipeline {
 		return pipelinetypes.GettablePipeline{
@@ -470,19 +459,8 @@ func TestResourceFiltersWork(t *testing.T) {
 			Alias:   "pipeline1",
 			Enabled: true,
 		},
-		Filter: &v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key:      "service",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					Operator: "=",
-					Value:    "nginx",
-				},
-			},
+		Filter: &qbtypes.Filter{
+			Expression: "resource.service = 'nginx'",
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
@@ -524,11 +502,11 @@ func TestResourceFiltersWork(t *testing.T) {
 func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t *testing.T) {
 	require := require.New(t)
 
-	for _, operator := range []v3.FilterOperator{
-		v3.FilterOperatorContains,
-		v3.FilterOperatorNotContains,
-		v3.FilterOperatorRegex,
-		v3.FilterOperatorNotRegex,
+	for _, operator := range []string{
+		"CONTAINS",
+		"NOT CONTAINS",
+		"REGEXP",
+		"NOT REGEXP",
 	} {
 		testPipeline := pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
@@ -540,19 +518,8 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 				Alias:   "pipeline1",
 				Enabled: true,
 			},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key:      "service",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeResource,
-						},
-						Operator: operator,
-						Value:    "nginx",
-					},
-				},
+			Filter: &qbtypes.Filter{
+				Expression: fmt.Sprintf("resource.service %s 'nginx'", operator),
 			},
 			Config: []pipelinetypes.PipelineOperator{
 				{
@@ -601,19 +568,8 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 			Alias:   "pipeline1",
 			Enabled: true,
 		},
-		Filter: &v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key:      "$test",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
-					},
-					Operator: "=",
-					Value:    "test",
-				},
-			},
+		Filter: &qbtypes.Filter{
+			Expression: "attribute.$test = 'test'",
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
@@ -664,19 +620,8 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 			Alias:   "pipeline1",
 			Enabled: true,
 		},
-		Filter: &v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key:      "http.method",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeTag,
-					},
-					Operator: "=",
-					Value:    "GET",
-				},
-			},
+		Filter: &qbtypes.Filter{
+			Expression: "attribute.http.method = 'GET'",
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
@@ -755,7 +700,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 }
 
 func TestContainsFilterIsCaseInsensitive(t *testing.T) {
-	// The contains and ncontains query builder filters are case insensitive when querying logs.
+	// The CONTAINS and NOT CONTAINS query builder filters are case insensitive when querying logs.
 	// Pipeline filter should also behave in the same way.
 	require := require.New(t)
 
@@ -773,18 +718,8 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 			Alias:   "pipeline1",
 			Enabled: true,
 		},
-		Filter: &v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{{
-				Key: v3.AttributeKey{
-					Key:      "body",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeUnspecified,
-					IsColumn: true,
-				},
-				Operator: "contains",
-				Value:    "log",
-			}},
+		Filter: &qbtypes.Filter{
+			Expression: "body CONTAINS 'log'",
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
@@ -806,18 +741,8 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 			Alias:   "pipeline2",
 			Enabled: true,
 		},
-		Filter: &v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{{
-				Key: v3.AttributeKey{
-					Key:      "body",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeUnspecified,
-					IsColumn: true,
-				},
-				Operator: "ncontains",
-				Value:    "ecom",
-			}},
+		Filter: &qbtypes.Filter{
+			Expression: "body NOT CONTAINS 'ecom'",
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
