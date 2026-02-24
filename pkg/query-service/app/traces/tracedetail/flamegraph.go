@@ -10,6 +10,8 @@ var (
 	SPAN_LIMIT_PER_REQUEST_FOR_FLAMEGRAPH float64 = 50
 	SPAN_LIMIT_PER_LEVEL                  int     = 100
 	TIMESTAMP_SAMPLING_BUCKET_COUNT       int     = 50
+
+	MaxLimitWithoutSampling uint = 120_000
 )
 
 func ContainsFlamegraphSpan(slice []*model.FlamegraphSpan, item *model.FlamegraphSpan) bool {
@@ -183,4 +185,13 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 	}
 
 	return selectedSpansForRequest
+}
+
+func GetTotalSpanCount(spans [][]*model.FlamegraphSpan) uint64 {
+	levelCount := len(spans)
+	spanCount := uint64(0)
+	for i := range levelCount {
+		spanCount += uint64(len(spans[i]))
+	}
+	return spanCount
 }
