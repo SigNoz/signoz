@@ -8,28 +8,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/ee/query-service/anomaly"
+	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// mockAnomalyProvider is a mock implementation of anomaly.Provider for testing.
-// We need this because the anomaly provider makes 6 different queries for various
-// time periods (current, past period, current season, past season, past 2 seasons,
-// past 3 seasons), making it cumbersome to create mock data.
-type mockAnomalyProvider struct {
-	responses []*anomaly.GetAnomaliesResponse
+// mockAnomalyProviderV2 is a mock implementation of anomalyV2.Provider for testing.
+type mockAnomalyProviderV2 struct {
+	responses []*anomalyV2.AnomaliesResponse
 	callCount int
 }
 
-func (m *mockAnomalyProvider) GetAnomalies(ctx context.Context, orgID valuer.UUID, req *anomaly.GetAnomaliesRequest) (*anomaly.GetAnomaliesResponse, error) {
+func (m *mockAnomalyProviderV2) GetAnomalies(ctx context.Context, orgID valuer.UUID, req *anomalyV2.AnomaliesRequest) (*anomalyV2.AnomaliesResponse, error) {
 	if m.callCount >= len(m.responses) {
-		return &anomaly.GetAnomaliesResponse{Results: []*v3.Result{}}, nil
+		return &anomalyV2.AnomaliesResponse{Results: []*qbtypes.TimeSeriesData{}}, nil
 	}
 	resp := m.responses[m.callCount]
 	m.callCount++
@@ -82,11 +81,11 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 		},
 	}
 
-	responseNoData := &anomaly.GetAnomaliesResponse{
-		Results: []*v3.Result{
+	responseNoData := &anomalyV2.AnomaliesResponse{
+		Results: []*qbtypes.TimeSeriesData{
 			{
-				QueryName:     "A",
-				AnomalyScores: []*v3.Series{},
+				QueryName:    "A",
+				Aggregations: []*qbtypes.AggregationBucket{},
 			},
 		},
 	}
@@ -129,8 +128,8 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			rule.provider = &mockAnomalyProvider{
-				responses: []*anomaly.GetAnomaliesResponse{responseNoData},
+			rule.providerV2 = &mockAnomalyProviderV2{
+				responses: []*anomalyV2.AnomaliesResponse{responseNoData},
 			}
 
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
@@ -190,11 +189,11 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 		},
 	}
 
-	responseNoData := &anomaly.GetAnomaliesResponse{
-		Results: []*v3.Result{
+	responseNoData := &anomalyV2.AnomaliesResponse{
+		Results: []*qbtypes.TimeSeriesData{
 			{
-				QueryName:     "A",
-				AnomalyScores: []*v3.Series{},
+				QueryName:    "A",
+				Aggregations: []*qbtypes.AggregationBucket{},
 			},
 		},
 	}
@@ -228,16 +227,22 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 			t1 := baseTime.Add(5 * time.Minute)
 			t2 := t1.Add(c.timeBetweenEvals)
 
-			responseWithData := &anomaly.GetAnomaliesResponse{
-				Results: []*v3.Result{
+			responseWithData := &anomalyV2.AnomaliesResponse{
+				Results: []*qbtypes.TimeSeriesData{
 					{
 						QueryName: "A",
-						AnomalyScores: []*v3.Series{
+						Aggregations: []*qbtypes.AggregationBucket{
 							{
-								Labels: map[string]string{"test": "label"},
-								Points: []v3.Point{
-									{Timestamp: baseTime.UnixMilli(), Value: 1.0},
-									{Timestamp: baseTime.Add(time.Minute).UnixMilli(), Value: 1.5},
+								AnomalyScores: []*qbtypes.TimeSeries{
+									{
+										Labels: []*qbtypes.Label{
+											{Key: telemetrytypes.TelemetryFieldKey{Name: "test"}, Value: "label"},
+										},
+										Values: []*qbtypes.TimeSeriesValue{
+											{Timestamp: baseTime.UnixMilli(), Value: 1.0},
+											{Timestamp: baseTime.Add(time.Minute).UnixMilli(), Value: 1.5},
+										},
+									},
 								},
 							},
 						},
@@ -252,8 +257,8 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, reader, nil, logger, nil)
 			require.NoError(t, err)
 
-			rule.provider = &mockAnomalyProvider{
-				responses: []*anomaly.GetAnomaliesResponse{responseWithData, responseNoData},
+			rule.providerV2 = &mockAnomalyProviderV2{
+				responses: []*anomalyV2.AnomaliesResponse{responseWithData, responseNoData},
 			}
 
 			alertsFound1, err := rule.Eval(context.Background(), t1)
