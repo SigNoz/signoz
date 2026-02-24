@@ -42,61 +42,62 @@ var ValidAWSRegions = map[string]bool{
 	"us-west-2":      true, // US West (Oregon).
 }
 
+// List of all valid cloud regions for Microsoft Azure
 var ValidAzureRegions = map[string]bool{
-	"australiacentral":   true,
-	"australiacentral2":  true,
-	"australiaeast":      true,
-	"australiasoutheast": true,
-	"austriaeast":        true,
-	"belgiumcentral":     true,
-	"brazilsouth":        true,
-	"brazilsoutheast":    true,
-	"canadacentral":      true,
-	"canadaeast":         true,
-	"centralindia":       true,
-	"centralus":          true,
-	"chilecentral":       true,
-	"denmarkeast":        true,
-	"eastasia":           true,
-	"eastus":             true,
-	"eastus2":            true,
-	"francecentral":      true,
-	"francesouth":        true,
-	"germanynorth":       true,
-	"germanywestcentral": true,
-	"indonesiacentral":   true,
-	"israelcentral":      true,
-	"italynorth":         true,
-	"japaneast":          true,
-	"japanwest":          true,
-	"koreacentral":       true,
-	"koreasouth":         true,
-	"malaysiawest":       true,
-	"mexicocentral":      true,
-	"newzealandnorth":    true,
-	"northcentralus":     true,
-	"northeurope":        true,
-	"norwayeast":         true,
-	"norwaywest":         true,
-	"polandcentral":      true,
-	"qatarcentral":       true,
-	"southafricanorth":   true,
-	"southafricawest":    true,
-	"southcentralus":     true,
-	"southindia":         true,
-	"southeastasia":      true,
-	"spaincentral":       true,
-	"swedencentral":      true,
-	"switzerlandnorth":   true,
-	"switzerlandwest":    true,
-	"uaecentral":         true,
-	"uaenorth":           true,
-	"uksouth":            true,
-	"ukwest":             true,
-	"westcentralus":      true,
-	"westeurope":         true,
-	"westindia":          true,
-	"westus":             true,
-	"westus2":            true,
-	"westus3":            true,
+	"australiacentral":   true, // Australia Central
+	"australiacentral2":  true, // Australia Central 2
+	"australiaeast":      true, // Australia East
+	"australiasoutheast": true, // Australia Southeast
+	"austriaeast":        true, // Austria East
+	"belgiumcentral":     true, // Belgium Central
+	"brazilsouth":        true, // Brazil South
+	"brazilsoutheast":    true, // Brazil Southeast
+	"canadacentral":      true, // Canada Central
+	"canadaeast":         true, // Canada East
+	"centralindia":       true, // Central India
+	"centralus":          true, // Central US
+	"chilecentral":       true, // Chile Central
+	"denmarkeast":        true, // Denmark East
+	"eastasia":           true, // East Asia
+	"eastus":             true, // East US
+	"eastus2":            true, // East US 2
+	"francecentral":      true, // France Central
+	"francesouth":        true, // France South
+	"germanynorth":       true, // Germany North
+	"germanywestcentral": true, // Germany West Central
+	"indonesiacentral":   true, // Indonesia Central
+	"israelcentral":      true, // Israel Central
+	"italynorth":         true, // Italy North
+	"japaneast":          true, // Japan East
+	"japanwest":          true, // Japan West
+	"koreacentral":       true, // Korea Central
+	"koreasouth":         true, // Korea South
+	"malaysiawest":       true, // Malaysia West
+	"mexicocentral":      true, // Mexico Central
+	"newzealandnorth":    true, // New Zealand North
+	"northcentralus":     true, // North Central US
+	"northeurope":        true, // North Europe
+	"norwayeast":         true, // Norway East
+	"norwaywest":         true, // Norway West
+	"polandcentral":      true, // Poland Central
+	"qatarcentral":       true, // Qatar Central
+	"southafricanorth":   true, // South Africa North
+	"southafricawest":    true, // South Africa West
+	"southcentralus":     true, // South Central US
+	"southindia":         true, // South India
+	"southeastasia":      true, // Southeast Asia
+	"spaincentral":       true, // Spain Central
+	"swedencentral":      true, // Sweden Central
+	"switzerlandnorth":   true, // Switzerland North
+	"switzerlandwest":    true, // Switzerland West
+	"uaecentral":         true, // UAE Central
+	"uaenorth":           true, // UAE North
+	"uksouth":            true, // UK South
+	"ukwest":             true, // UK West
+	"westcentralus":      true, // West Central US
+	"westeurope":         true, // West Europe
+	"westindia":          true, // West India
+	"westus":             true, // West US
+	"westus2":            true, // West US 2
+	"westus3":            true, // West US 3
 }

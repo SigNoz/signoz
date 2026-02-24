@@ -7,15 +7,15 @@ import (
 	"net/url"
 	"slices"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/baseprovider"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	integrationstore "github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/store"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 )
 
 type awsProvider struct {
-	baseprovider.BaseCloudProvider[*integrationtypes.AWSDefinition, *integrationtypes.AWSCloudServiceConfig]
+	baseprovider.BaseCloudProvider[*integrationtypes.AWSDefinition, *integrationtypes.AWSServiceConfig]
 }
 
 func NewAWSCloudProvider(
@@ -38,7 +38,7 @@ func NewAWSCloudProvider(
 	}
 
 	return &awsProvider{
-		BaseCloudProvider: baseprovider.BaseCloudProvider[*integrationtypes.AWSDefinition, *integrationtypes.AWSCloudServiceConfig]{
+		BaseCloudProvider: baseprovider.BaseCloudProvider[*integrationtypes.AWSDefinition, *integrationtypes.AWSServiceConfig]{
 			Logger:             logger,
 			Querier:            querier,
 			AccountsRepo:       accountsRepo,
@@ -97,7 +97,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 		}
 		config := svcConfigs[svcType]
 
-		serviceConfig := new(integrationtypes.AWSCloudServiceConfig)
+		serviceConfig := new(integrationtypes.AWSServiceConfig)
 		err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 		if err != nil {
 			continue
@@ -128,7 +128,7 @@ func (a *awsProvider) getAWSAgentConfig(ctx context.Context, account *integratio
 }
 
 func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccountID *string) (any, error) {
-	svcConfigs := make(map[string]*integrationtypes.AWSCloudServiceConfig)
+	svcConfigs := make(map[string]*integrationtypes.AWSServiceConfig)
 	if cloudAccountID != nil {
 		activeAccount, err := a.AccountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), *cloudAccountID)
 		if err != nil {
@@ -141,7 +141,7 @@ func (a *awsProvider) ListServices(ctx context.Context, orgID string, cloudAccou
 		}
 
 		for svcType, config := range serviceConfigs {
-			serviceConfig := new(integrationtypes.AWSCloudServiceConfig)
+			serviceConfig := new(integrationtypes.AWSServiceConfig)
 			err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
@@ -191,7 +191,7 @@ func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationtyp
 		return nil, err
 	}
 
-	details.AWSDefinition = *awsDefinition
+	details.Definition = *awsDefinition
 	if req.CloudAccountID == nil {
 		return details, nil
 	}
@@ -225,14 +225,6 @@ func (a *awsProvider) GetServiceDetails(ctx context.Context, req *integrationtyp
 	details.ConnectionStatus = connectionStatus
 
 	return details, nil
-}
-
-func (a *awsProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	return a.BaseCloudProvider.GetAvailableDashboards(ctx, orgID)
-}
-
-func (a *awsProvider) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
-	return a.BaseCloudProvider.GetDashboard(ctx, req)
 }
 
 func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationtypes.PostableConnectionArtifact) (any, error) {
@@ -297,10 +289,10 @@ func (a *awsProvider) GenerateConnectionArtifact(ctx context.Context, req *integ
 	}, nil
 }
 
-func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrationtypes.PatchableAccountConfig) (any, error) {
-	config := new(integrationtypes.PatchableAWSAccountConfig)
+func (a *awsProvider) UpdateAccountConfig(ctx context.Context, orgId valuer.UUID, accountId string, configBytes []byte) (any, error) {
+	config := new(integrationtypes.UpdatableAWSAccountConfig)
 
-	err := integrationtypes.UnmarshalJSON(req.Data, config)
+	err := integrationtypes.UnmarshalJSON(configBytes, config)
 	if err != nil {
 		return nil, err
 	}
@@ -317,19 +309,19 @@ func (a *awsProvider) UpdateAccountConfig(ctx context.Context, req *integrationt
 		return nil, errors.NewInvalidInputf(CodeInvalidAWSRegion, "invalid aws region: %s", region)
 	}
 
-	configBytes, err := integrationtypes.MarshalJSON(config.Config)
+	// account must exist to update config, but it doesn't need to be connected
+	_, err = a.AccountsRepo.Get(ctx, orgId.String(), a.GetName().String(), accountId)
 	if err != nil {
 		return nil, err
 	}
 
-	// account must exist to update config, but it doesn't need to be connected
-	_, err = a.AccountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.AccountId)
+	configBytes, err = integrationtypes.MarshalJSON(config.Config)
 	if err != nil {
 		return nil, err
 	}
 
 	accountRecord, err := a.AccountsRepo.Upsert(
-		ctx, req.OrgID, a.GetName().String(), &req.AccountId, configBytes, nil, nil, nil,
+		ctx, orgId.String(), a.GetName().String(), &accountId, configBytes, nil, nil, nil,
 	)
 	if err != nil {
 		return nil, err

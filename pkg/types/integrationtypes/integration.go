@@ -24,6 +24,7 @@ var (
 	CodeCloudProviderInvalidInput = errors.MustNewCode("invalid_cloud_provider")
 )
 
+// NewCloudProvider returns a new CloudProviderType from a string. It validates the input and returns an error if the input is not valid.
 func NewCloudProvider(provider string) (CloudProviderType, error) {
 	switch provider {
 	case CloudProviderAWS.String(), CloudProviderAzure.String():
@@ -38,7 +39,9 @@ var (
 	AzureIntegrationUserEmail = valuer.MustNewEmail("azure-integration@signoz.io")
 )
 
-var IntegrationUserEmails = []valuer.Email{
+// CloudIntegrationUserEmails is the list of valid emails for Cloud One Click integrations.
+// This is used for validation and restrictions in different contexts, across codebase.
+var CloudIntegrationUserEmails = []valuer.Email{
 	AWSIntegrationUserEmail,
 	AzureIntegrationUserEmail,
 }
@@ -52,6 +55,8 @@ func IsCloudIntegrationDashboardUuid(dashboardUuid string) bool {
 	return parts[0] == "cloud-integration"
 }
 
+// GetCloudIntegrationDashboardID returns the cloud provider from dashboard id, if it's a cloud integration dashboard id.
+// throws an error if invalid format or invalid cloud provider is provided in the dashboard id. 
 func GetCloudProviderFromDashboardID(dashboardUuid string) (CloudProviderType, error) {
 	parts := strings.SplitN(dashboardUuid, "--", 4)
 	if len(parts) != 4 {

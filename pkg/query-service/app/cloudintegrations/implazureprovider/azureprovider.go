@@ -7,15 +7,15 @@ import (
 	"slices"
 	"strings"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/baseprovider"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/store"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 )
 
 type azureProvider struct {
-	baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition, *integrationtypes.AzureCloudServiceConfig]
+	baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition, *integrationtypes.AzureServiceConfig]
 }
 
 func NewAzureCloudProvider(
@@ -38,7 +38,7 @@ func NewAzureCloudProvider(
 	}
 
 	return &azureProvider{
-		BaseCloudProvider: baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition, *integrationtypes.AzureCloudServiceConfig]{
+		BaseCloudProvider: baseprovider.BaseCloudProvider[*integrationtypes.AzureDefinition, *integrationtypes.AzureServiceConfig]{
 			Logger:             logger,
 			Querier:            querier,
 			AccountsRepo:       accountsRepo,
@@ -93,7 +93,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 		}
 		config := svcConfigs[svcType]
 
-		serviceConfig := new(integrationtypes.AzureCloudServiceConfig)
+		serviceConfig := new(integrationtypes.AzureServiceConfig)
 		err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 		if err != nil {
 			continue
@@ -151,7 +151,7 @@ func (a *azureProvider) getAzureAgentConfig(ctx context.Context, account *integr
 }
 
 func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAccountID *string) (any, error) {
-	svcConfigs := make(map[string]*integrationtypes.AzureCloudServiceConfig)
+	svcConfigs := make(map[string]*integrationtypes.AzureServiceConfig)
 	if cloudAccountID != nil {
 		activeAccount, err := a.AccountsRepo.GetConnectedCloudAccount(ctx, orgID, a.GetName().String(), *cloudAccountID)
 		if err != nil {
@@ -164,7 +164,7 @@ func (a *azureProvider) ListServices(ctx context.Context, orgID string, cloudAcc
 		}
 
 		for svcType, config := range serviceConfigs {
-			serviceConfig := new(integrationtypes.AzureCloudServiceConfig)
+			serviceConfig := new(integrationtypes.AzureServiceConfig)
 			err = integrationtypes.UnmarshalJSON(config, serviceConfig)
 			if err != nil {
 				return nil, err
@@ -214,7 +214,7 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationt
 		return nil, err
 	}
 
-	details.AzureDefinition = *azureDefinition
+	details.Definition = *azureDefinition
 	if req.CloudAccountID == nil {
 		return details, nil
 	}
@@ -228,22 +228,22 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationt
 
 	// fill default values for config
 	if details.Config == nil {
-		cfg := new(integrationtypes.AzureCloudServiceConfig)
+		cfg := new(integrationtypes.AzureServiceConfig)
 
-		logs := make([]*integrationtypes.AzureCloudServiceLogsConfig, 0)
+		logs := make([]*integrationtypes.AzureServiceLogsConfig, 0)
 		if azureDefinition.Strategy != nil && azureDefinition.Strategy.Logs != nil {
 			for _, log := range azureDefinition.Strategy.Logs {
-				logs = append(logs, &integrationtypes.AzureCloudServiceLogsConfig{
+				logs = append(logs, &integrationtypes.AzureServiceLogsConfig{
 					Enabled: false,
 					Name:    log.Name,
 				})
 			}
 		}
 
-		metrics := make([]*integrationtypes.AzureCloudServiceMetricsConfig, 0)
+		metrics := make([]*integrationtypes.AzureServiceMetricsConfig, 0)
 		if azureDefinition.Strategy != nil && azureDefinition.Strategy.Metrics != nil {
 			for _, metric := range azureDefinition.Strategy.Metrics {
-				metrics = append(metrics, &integrationtypes.AzureCloudServiceMetricsConfig{
+				metrics = append(metrics, &integrationtypes.AzureServiceMetricsConfig{
 					Enabled: false,
 					Name:    metric.Name,
 				})
@@ -273,14 +273,6 @@ func (a *azureProvider) GetServiceDetails(ctx context.Context, req *integrationt
 
 	details.ConnectionStatus = connectionStatus
 	return details, nil
-}
-
-func (a *azureProvider) GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	return a.BaseCloudProvider.GetAvailableDashboards(ctx, orgID)
-}
-
-func (a *azureProvider) GetDashboard(ctx context.Context, req *integrationtypes.GettableDashboard) (*dashboardtypes.Dashboard, error) {
-	return a.BaseCloudProvider.GetDashboard(ctx, req)
 }
 
 func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *integrationtypes.PostableConnectionArtifact) (any, error) {
@@ -332,20 +324,20 @@ func (a *azureProvider) GenerateConnectionArtifact(ctx context.Context, req *int
 	}, nil
 }
 
-func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integrationtypes.PatchableAccountConfig) (any, error) {
-	config := new(integrationtypes.PatchableAzureAccountConfig)
+func (a *azureProvider) UpdateAccountConfig(ctx context.Context, orgId valuer.UUID, accountId string, configBytes []byte) (any, error) {
+	config := new(integrationtypes.UpdatableAzureAccountConfig)
 
-	err := integrationtypes.UnmarshalJSON(req.Data, config)
+	err := integrationtypes.UnmarshalJSON(configBytes, config)
 	if err != nil {
 		return nil, err
 	}
 
-	if config.Config == nil && len(config.Config.EnabledResourceGroups) < 1 {
+	if len(config.Config.EnabledResourceGroups) < 1 {
 		return nil, errors.NewInvalidInputf(CodeInvalidAzureRegion, "azure region and resource groups must be provided")
 	}
 
 	//for azure, preserve deployment region if already set
-	account, err := a.AccountsRepo.Get(ctx, req.OrgID, a.GetName().String(), req.AccountId)
+	account, err := a.AccountsRepo.Get(ctx, orgId.String(), a.GetName().String(), accountId)
 	if err != nil {
 		return nil, err
 	}
@@ -360,13 +352,13 @@ func (a *azureProvider) UpdateAccountConfig(ctx context.Context, req *integratio
 		config.Config.DeploymentRegion = storedConfig.DeploymentRegion
 	}
 
-	configBytes, err := integrationtypes.MarshalJSON(config.Config)
+	configBytes, err = integrationtypes.MarshalJSON(config.Config)
 	if err != nil {
 		return nil, err
 	}
 
 	accountRecord, err := a.AccountsRepo.Upsert(
-		ctx, req.OrgID, a.GetName().String(), &req.AccountId, configBytes, nil, nil, nil,
+		ctx, orgId.String(), a.GetName().String(), &accountId, configBytes, nil, nil, nil,
 	)
 	if err != nil {
 		return nil, err
