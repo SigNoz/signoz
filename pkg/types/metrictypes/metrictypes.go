@@ -190,18 +190,17 @@ type SpaceAggregation struct {
 }
 
 var (
-	SpaceAggregationUnspecified    = SpaceAggregation{valuer.NewString("")}
-	SpaceAggregationSum            = SpaceAggregation{valuer.NewString("sum")}
-	SpaceAggregationAvg            = SpaceAggregation{valuer.NewString("avg")}
-	SpaceAggregationMin            = SpaceAggregation{valuer.NewString("min")}
-	SpaceAggregationMax            = SpaceAggregation{valuer.NewString("max")}
-	SpaceAggregationCount          = SpaceAggregation{valuer.NewString("count")}
-	SpaceAggregationPercentile50   = SpaceAggregation{valuer.NewString("p50")}
-	SpaceAggregationPercentile75   = SpaceAggregation{valuer.NewString("p75")}
-	SpaceAggregationPercentile90   = SpaceAggregation{valuer.NewString("p90")}
-	SpaceAggregationPercentile95   = SpaceAggregation{valuer.NewString("p95")}
-	SpaceAggregationPercentile99   = SpaceAggregation{valuer.NewString("p99")}
-	SpaceAggregationHistogramCount = SpaceAggregation{valuer.NewString("histogram_count")}
+	SpaceAggregationUnspecified  = SpaceAggregation{valuer.NewString("")}
+	SpaceAggregationSum          = SpaceAggregation{valuer.NewString("sum")}
+	SpaceAggregationAvg          = SpaceAggregation{valuer.NewString("avg")}
+	SpaceAggregationMin          = SpaceAggregation{valuer.NewString("min")}
+	SpaceAggregationMax          = SpaceAggregation{valuer.NewString("max")}
+	SpaceAggregationCount        = SpaceAggregation{valuer.NewString("count")}
+	SpaceAggregationPercentile50 = SpaceAggregation{valuer.NewString("p50")}
+	SpaceAggregationPercentile75 = SpaceAggregation{valuer.NewString("p75")}
+	SpaceAggregationPercentile90 = SpaceAggregation{valuer.NewString("p90")}
+	SpaceAggregationPercentile95 = SpaceAggregation{valuer.NewString("p95")}
+	SpaceAggregationPercentile99 = SpaceAggregation{valuer.NewString("p99")}
 )
 
 func (SpaceAggregation) Enum() []any {
@@ -216,7 +215,6 @@ func (SpaceAggregation) Enum() []any {
 		SpaceAggregationPercentile90,
 		SpaceAggregationPercentile95,
 		SpaceAggregationPercentile99,
-		SpaceAggregationHistogramCount,
 	}
 }
 
