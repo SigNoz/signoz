@@ -49,6 +49,12 @@ export const Container = styled(Card)<{
 
 		${({ $isActiveLog, $isDarkMode, $logType }): string =>
 			getActiveLogBackground($isActiveLog, $isDarkMode, $logType)}
+	}
+
+	&:hover .ant-card-body {
+		${({ $isDarkMode, $logType }): string =>
+			getActiveLogBackground(true, $isDarkMode, $logType)}
+	}
 `;
 
 export const LogContainer = styled.div<LogContainerProps>`
