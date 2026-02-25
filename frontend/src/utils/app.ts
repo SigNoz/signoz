@@ -14,12 +14,20 @@ export function extractDomain(email: string): string {
 	return emailParts[1];
 }
 
+/**
+ * Strips the leading 'v' or 'V' prefix from a version string.
+ * e.g. "v0.76.2" -> "0.76.2", "0.76.2" -> "0.76.2"
+ */
+const stripVersionPrefix = (version: string): string =>
+	version?.replace(/^v/i, '') ?? '';
+
 export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
 ): boolean => {
-	const versionCore = currentVersion?.split('-')[0];
-	return versionCore === latestVersion;
+	const current = stripVersionPrefix(currentVersion?.split('-')[0]);
+	const latest = stripVersionPrefix(latestVersion);
+	return current === latest;
 };
 
 // list of forbidden tags to remove in dompurify

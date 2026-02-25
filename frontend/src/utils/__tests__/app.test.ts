@@ -1,4 +1,4 @@
-import { buildAbsolutePath } from '../app';
+import { buildAbsolutePath, checkVersionState } from '../app';
 
 const BASE_PATH = '/some-base-path';
 
@@ -121,6 +121,48 @@ describe('buildAbsolutePath', () => {
 				urlQueryString: '',
 			});
 			expect(result).toBe(`${BASE_PATH}/users`);
+		});
+	});
+});
+
+describe('checkVersionState', () => {
+	describe('when versions match', () => {
+		it('should return true when both versions are identical without prefix', () => {
+			expect(checkVersionState('0.76.2', '0.76.2')).toBe(true);
+		});
+
+		it('should return true when latest version has a v prefix', () => {
+			expect(checkVersionState('0.76.2', 'v0.76.2')).toBe(true);
+		});
+
+		it('should return true when current version has a v prefix', () => {
+			expect(checkVersionState('v0.76.2', '0.76.2')).toBe(true);
+		});
+
+		it('should return true when both versions have a v prefix', () => {
+			expect(checkVersionState('v0.76.2', 'v0.76.2')).toBe(true);
+		});
+
+		it('should return true when current version has a build suffix', () => {
+			expect(checkVersionState('0.76.2-rc1', 'v0.76.2')).toBe(true);
+		});
+
+		it('should return true with uppercase V prefix', () => {
+			expect(checkVersionState('V0.76.2', 'V0.76.2')).toBe(true);
+		});
+	});
+
+	describe('when versions do not match', () => {
+		it('should return false when versions differ', () => {
+			expect(checkVersionState('0.76.1', '0.76.2')).toBe(false);
+		});
+
+		it('should return false when versions differ with v prefix', () => {
+			expect(checkVersionState('0.75.0', 'v0.76.2')).toBe(false);
+		});
+
+		it('should return false when major versions differ', () => {
+			expect(checkVersionState('1.0.0', 'v0.76.2')).toBe(false);
 		});
 	});
 });
