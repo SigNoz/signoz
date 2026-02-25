@@ -1,3 +1,4 @@
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
@@ -5,7 +6,6 @@ from typing import Callable, List, Set
 
 import pytest
 import requests
-import os
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -13,6 +13,7 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
 FILTER_EXPRESSIONS_FILE = os.path.join(TESTDATA_DIR, "filter_expressions_10000.txt")
+
 
 def _make_raw_traces_query(
     signoz: types.SigNoz,
@@ -225,22 +226,19 @@ def test_not_filter_expression(
     "expression",
     [
         # --- Incomplete / truncated expressions ---
-
         # Bare NOT: parser expects a Primary after NOT but hits EOF
         pytest.param("NOT", id="bare_not"),
         # Chained NOTs with nothing following: second NOT is not a valid Primary
         pytest.param("NOT NOT", id="chained_not_no_expr"),
         # Missing value after '=': parser expects a value token but finds ')'
-        pytest.param('NOT (resource.f1 = )', id="missing_value_in_parens"),
+        pytest.param("NOT (resource.f1 = )", id="missing_value_in_parens"),
         # Missing value entirely: NOT key = <EOF>
-        pytest.param('NOT resource.f1 = ', id="missing_value_bare"),
+        pytest.param("NOT resource.f1 = ", id="missing_value_bare"),
         # LIKE with no value: parser expects a value token but finds EOF
-        pytest.param('NOT resource.f1 LIKE ', id="like_no_value"),
+        pytest.param("NOT resource.f1 LIKE ", id="like_no_value"),
         # BETWEEN with only one value: BETWEEN requires exactly two values
         pytest.param('NOT resource.f1 BETWEEN "a"', id="between_single_value"),
-
         # --- Structural / bracket errors ---
-
         # Unclosed parenthesis: missing ')' at end
         pytest.param('NOT (resource.f1 = "v10"', id="unclosed_paren"),
         # Empty parentheses: parser expects at least one expression inside '()'
@@ -251,9 +249,7 @@ def test_not_filter_expression(
         pytest.param("resource.f1 NOT IN []", id="not_in_empty_list"),
         # IN without a key: IN is a keyword, not a valid Primary
         pytest.param('NOT IN ["v10"]', id="in_without_key"),
-
         # --- Invalid tokens / operators ---
-
         # NOT followed immediately by AND keyword
         pytest.param('NOT AND resource.f1 = "v10"', id="not_followed_by_and"),
         # NOT followed immediately by OR keyword
@@ -264,9 +260,7 @@ def test_not_filter_expression(
         pytest.param('NOT resource.f1 == "v10"', id="double_equals_operator"),
         # SQL IS NULL syntax: IS NULL is not part of the filter grammar
         pytest.param("NOT resource.f1 IS NULL", id="sql_is_null"),
-
         # --- Unclosed / mismatched string literals ---
-
         # Unclosed double-quoted string
         pytest.param('NOT resource.f1 = "unclosed', id="unclosed_double_quote"),
         # Unclosed single-quoted string
@@ -299,6 +293,7 @@ def test_not_invalid_filter_expression(
 def test_filter_expressions_no_server_error(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
+    insert_traces: Callable[[List[Traces]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -314,10 +309,12 @@ def test_filter_expressions_no_server_error(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     failures: List[str] = []
-    with ThreadPoolExecutor(max_workers=32) as executor:
+    with ThreadPoolExecutor(max_workers=40) as executor:
         with open(FILTER_EXPRESSIONS_FILE, encoding="utf-8") as f:
             futures = {
-                executor.submit(_make_raw_traces_query, signoz, token, expr.rstrip('\n')): expr.rstrip('\n')
+                executor.submit(
+                    _make_raw_traces_query, signoz, token, expr.rstrip("\n")
+                ): expr.rstrip("\n")
                 for expr in f
             }
             for future in as_completed(futures):
@@ -325,7 +322,8 @@ def test_filter_expressions_no_server_error(
                 if future.result().status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
                     failures.append(expr)
 
-    assert len(failures) < 200, (
-        f"{len(failures)} expression(s) caused HTTP 500:\n"
-        + "\n".join(f"  {expr!r}" for expr in failures)
+    assert (
+        len(failures) < 200
+    ), f"{len(failures)} expression(s) caused HTTP 500:\n" + "\n".join(
+        f"  {expr!r}" for expr in failures
     )
