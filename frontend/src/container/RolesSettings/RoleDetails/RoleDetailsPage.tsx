@@ -25,6 +25,7 @@ import { toAPIError } from 'utils/errorUtils';
 import type { PermissionConfig } from '../PermissionSidePanel';
 import PermissionSidePanel from '../PermissionSidePanel';
 import CreateRoleModal from '../RolesComponents/CreateRoleModal';
+import DeleteRoleModal from '../RolesComponents/DeleteRoleModal';
 import {
 	buildPatchPayload,
 	derivePermissionTypes,
@@ -34,7 +35,6 @@ import {
 	TimestampBadge,
 } from '../utils';
 import { ROLE_ID_REGEX } from './constants';
-import DeleteRoleModal from './DeleteRoleModal';
 
 import './RoleDetailsPage.styles.scss';
 
@@ -317,7 +317,7 @@ function RoleDetailsPage(): JSX.Element {
 			pathParams: { id: roleId, relation: activePermission },
 			data: buildPatchPayload({
 				newConfig: config,
-				currentObjects: objectsData?.data ?? [],
+				initialConfig: initialConfig ?? {},
 				resources: resourcesForActivePermission,
 				authzRes: authzResources,
 			}),

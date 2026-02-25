@@ -6,7 +6,6 @@ import {
 	RadioGroupItem,
 	RadioGroupLabel,
 } from '@signozhq/radio-group';
-import { Switch } from '@signozhq/switch';
 import { Select, Skeleton } from 'antd';
 
 import { buildConfig, configsEqual, DEFAULT_RESOURCE_CONFIG } from '../utils';
@@ -25,7 +24,6 @@ interface ResourceRowProps {
 	resource: ResourceDefinition;
 	config: ResourceConfig;
 	isExpanded: boolean;
-	onToggle: (id: string, checked: boolean) => void;
 	onToggleExpand: (id: string) => void;
 	onScopeChange: (id: string, scope: ScopeType) => void;
 	onSelectedIdsChange: (id: string, ids: string[]) => void;
@@ -35,7 +33,6 @@ function ResourceRow({
 	resource,
 	config,
 	isExpanded,
-	onToggle,
 	onToggleExpand,
 	onScopeChange,
 	onSelectedIdsChange,
@@ -61,19 +58,6 @@ function ResourceRow({
 					</span>
 					<span className="psp-resource__label">{resource.label}</span>
 				</div>
-
-				<span
-					className="psp-resource__switch-wrapper"
-					role="presentation"
-					onClick={(e): void => e.stopPropagation()}
-					onKeyDown={(e): void => e.stopPropagation()}
-				>
-					<Switch
-						checked={config.enabled}
-						onCheckedChange={(checked): void => onToggle(resource.id, checked)}
-						color="robin"
-					/>
-				</span>
 			</div>
 
 			{isExpanded && (
@@ -167,7 +151,6 @@ function PermissionSidePanel({
 				return true;
 			}
 			return (
-				a.enabled !== b.enabled ||
 				a.scope !== b.scope ||
 				JSON.stringify([...a.selectedIds].sort()) !==
 					JSON.stringify([...b.selectedIds].sort())
@@ -183,13 +166,6 @@ function PermissionSidePanel({
 			}));
 		},
 		[],
-	);
-
-	const handleToggle = useCallback(
-		(id: string, checked: boolean): void => {
-			updateResource(id, { enabled: checked });
-		},
-		[updateResource],
 	);
 
 	const handleToggleExpand = useCallback((id: string): void => {
@@ -266,7 +242,6 @@ function PermissionSidePanel({
 									resource={resource}
 									config={config[resource.id] ?? DEFAULT_RESOURCE_CONFIG}
 									isExpanded={expandedIds.has(resource.id)}
-									onToggle={handleToggle}
 									onToggleExpand={handleToggleExpand}
 									onScopeChange={handleScopeChange}
 									onSelectedIdsChange={handleSelectedIdsChange}

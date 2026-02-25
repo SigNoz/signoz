@@ -17,7 +17,6 @@ export enum PermissionScope {
 export type ScopeType = PermissionScope;
 
 export interface ResourceConfig {
-	enabled: boolean;
 	scope: ScopeType;
 	selectedIds: string[];
 }

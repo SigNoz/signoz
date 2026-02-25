@@ -15,8 +15,8 @@ import type {
 	PermissionConfig,
 	ResourceConfig,
 	ResourceDefinition,
-} from './PermissionSidePanel';
-import { PermissionScope } from './PermissionSidePanel';
+} from './PermissionSidePanel/PermissionSidePanel.types';
+import { PermissionScope } from './PermissionSidePanel/PermissionSidePanel.types';
 import {
 	FALLBACK_PERMISSION_ICON,
 	PERMISSION_ICON_MAP,
@@ -32,7 +32,7 @@ export interface PermissionType {
 
 export interface PatchPayloadOptions {
 	newConfig: PermissionConfig;
-	currentObjects: AuthtypesGettableObjectsDTO[];
+	initialConfig: PermissionConfig;
 	resources: ResourceDefinition[];
 	authzRes: AuthtypesGettableResourcesDTO;
 }
@@ -85,14 +85,12 @@ export function objectsToPermissionConfig(
 		const obj = objects.find((o) => o.resource.name === res.id);
 		if (!obj) {
 			config[res.id] = {
-				enabled: false,
-				scope: PermissionScope.ALL,
+				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [],
 			};
 		} else {
 			const isAll = obj.selectors.includes('*');
 			config[res.id] = {
-				enabled: true,
 				scope: isAll ? PermissionScope.ALL : PermissionScope.ONLY_SELECTED,
 				selectedIds: isAll ? [] : obj.selectors,
 			};
@@ -101,36 +99,63 @@ export function objectsToPermissionConfig(
 	return config;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function buildPatchPayload({
 	newConfig,
-	currentObjects,
+	initialConfig,
 	resources,
 	authzRes,
 }: PatchPayloadOptions): {
 	additions: AuthtypesGettableObjectsDTO[] | null;
 	deletions: AuthtypesGettableObjectsDTO[] | null;
 } {
-	const deletions = currentObjects.length > 0 ? currentObjects : null;
-
 	const additions: AuthtypesGettableObjectsDTO[] = [];
+	const deletions: AuthtypesGettableObjectsDTO[] = [];
+
 	for (const res of resources) {
-		const cfg = newConfig[res.id];
-		if (!cfg?.enabled) {
-			continue;
-		}
+		const initial = initialConfig[res.id];
+		const current = newConfig[res.id];
 		const resourceDef = authzRes.resources.find((r) => r.name === res.id);
 		if (!resourceDef) {
 			continue;
 		}
-		additions.push({
-			resource: resourceDef,
-			selectors: cfg.scope === PermissionScope.ALL ? ['*'] : cfg.selectedIds,
-		});
+
+		const initialScope = initial?.scope ?? PermissionScope.ONLY_SELECTED;
+		const currentScope = current?.scope ?? PermissionScope.ONLY_SELECTED;
+
+		if (initialScope === currentScope) {
+			// Same scope — only diff individual selectors when both are ONLY_SELECTED
+			if (initialScope === PermissionScope.ONLY_SELECTED) {
+				const initialIds = new Set(initial?.selectedIds ?? []);
+				const currentIds = new Set(current?.selectedIds ?? []);
+				const removed = [...initialIds].filter((id) => !currentIds.has(id));
+				const added = [...currentIds].filter((id) => !initialIds.has(id));
+				if (removed.length > 0) {
+					deletions.push({ resource: resourceDef, selectors: removed });
+				}
+				if (added.length > 0) {
+					additions.push({ resource: resourceDef, selectors: added });
+				}
+			}
+			// Both ALL → no change, skip
+		} else {
+			// Scope changed (ALL ↔ ONLY_SELECTED) — replace old with new
+			const initialSelectors =
+				initialScope === PermissionScope.ALL ? ['*'] : initial?.selectedIds ?? [];
+			if (initialSelectors.length > 0) {
+				deletions.push({ resource: resourceDef, selectors: initialSelectors });
+			}
+			const currentSelectors =
+				currentScope === PermissionScope.ALL ? ['*'] : current?.selectedIds ?? [];
+			if (currentSelectors.length > 0) {
+				additions.push({ resource: resourceDef, selectors: currentSelectors });
+			}
+		}
 	}
 
 	return {
 		additions: additions.length > 0 ? additions : null,
-		deletions,
+		deletions: deletions.length > 0 ? deletions : null,
 	};
 }
 
@@ -170,8 +195,7 @@ export function handleApiError(
 }
 
 export const DEFAULT_RESOURCE_CONFIG: ResourceConfig = {
-	enabled: false,
-	scope: PermissionScope.ALL,
+	scope: PermissionScope.ONLY_SELECTED,
 	selectedIds: [],
 };
 
@@ -197,7 +221,6 @@ export function configsEqual(
 			return false;
 		}
 		return (
-			ac.enabled === bc.enabled &&
 			ac.scope === bc.scope &&
 			JSON.stringify([...ac.selectedIds].sort()) ===
 				JSON.stringify([...bc.selectedIds].sort())
