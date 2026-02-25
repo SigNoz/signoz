@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -146,13 +147,9 @@ func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
 		mappings = append(mappings, mapping{from: from, to: to})
 	}
 
-	for i := 0; i < len(mappings); i++ {
-		for j := i + 1; j < len(mappings); j++ {
-			if len(mappings[j].from) > len(mappings[i].from) {
-				mappings[i], mappings[j] = mappings[j], mappings[i]
-			}
-		}
-	}
+	slices.SortFunc(mappings, func(a, b mapping) int {
+		return len(b.from) - len(a.from)
+	})
 
 	for _, m := range mappings {
 		if strings.Contains(m.from, "(") {
