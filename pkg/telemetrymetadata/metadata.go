@@ -333,7 +333,7 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 }
 
 // getLogsKeys returns the keys from the spans that match the field selection criteria
-func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (telemetrytypes.TelemetryFieldKeys, bool, error) {
+func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
 	}
@@ -346,7 +346,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	// setOfKeys to reuse the same key object for qualified names
 	setOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range matKeys {
-		setOfKeys[key.QualifiedName()] = key
+		setOfKeys[key.Text()] = key
 	}
 
 	// queries for both attribute and resource keys tables
@@ -475,7 +475,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 	defer rows.Close()
 
-	mapOfKeys := make(telemetrytypes.TelemetryFieldKeys)
+	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	rowCount := 0
 	searchTexts := []string{}
 	dataTypes := []telemetrytypes.FieldDataType{}
