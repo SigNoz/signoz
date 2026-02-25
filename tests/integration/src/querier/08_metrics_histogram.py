@@ -1,5 +1,5 @@
 """
-Look at the multi_temporality_counters_1h.jsonl file for the relevant data
+Look at the histogram_data_1h.jsonl file for the relevant data
 """
 
 import random
